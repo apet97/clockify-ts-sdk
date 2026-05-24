@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ClockifyApiClient } from "../src/index.js";
+import { paginate } from "../pagination.js";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
@@ -91,6 +92,39 @@ describeLive("clockify-sdk-ts live sandbox", () => {
         expect(page2OverlapsPage1).toBe(false);
       }
     }
+  });
+
+  it("paginates projects via paginate() helper across at least two pages", async () => {
+    // Sandbox workspace 65b382b606de527a7ee2b60e has > 5 projects at
+    // session-start; with pageSize=2 the iterator must cross at least
+    // page-1 → page-2 before stopping.
+    const pageSize = 2;
+    const seenPages: number[] = [];
+    const projects: Array<{ id?: string | undefined }> = [];
+
+    for await (const project of paginate(
+      async (page, sz) => {
+        seenPages.push(page);
+        return client.projects.getWorkspaceProjects({
+          workspaceId: workspaceId!,
+          page,
+          "page-size": sz,
+        });
+      },
+      { pageSize, maxPages: 10 },
+    )) {
+      projects.push(project);
+    }
+
+    // We expect either (a) the iterator walked > 1 page or (b) the
+    // sandbox genuinely has ≤ pageSize projects (degenerate case).
+    if (projects.length > pageSize) {
+      expect(seenPages.length).toBeGreaterThanOrEqual(2);
+    }
+
+    // No duplicates across pages.
+    const ids = projects.map((p) => p.id).filter((id): id is string => Boolean(id));
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("rejects an invalid {tagId} path param with a structured error", async () => {

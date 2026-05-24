@@ -56,7 +56,34 @@ Each sub-client exposes one method per operation, with the operationId-derived n
 
 List endpoints accept `page` (1-based) and `page-size` (default 50, max 200) query parameters. Responses are bare JSON arrays; the live API sets a `Last-Page: <bool>` response header indicating whether more pages exist.
 
-This SDK does **not** ship auto-pagination helpers — Fern CLI 5.37.9's `x-fern-pagination` offset-mode requires an envelope-shaped response (`results: $response.<field>`) which Clockify's bare-array responses don't satisfy. Loop manually:
+Fern's built-in `x-fern-pagination` auto-iterator is **not** wired up in this SDK — Fern CLI 5.37.9's offset mode requires an envelope-shaped response (`results: $response.<field>`) which Clockify's bare-array responses don't satisfy. The wrapper ships a hand-written `paginate()` helper that fills the same role:
+
+```typescript
+import { ClockifyApiClient } from "clockify-sdk-ts";
+import { paginate } from "clockify-sdk-ts/pagination";
+
+for await (const project of paginate(
+  (page, pageSize) =>
+    client.projects.getWorkspaceProjects({
+      workspaceId,
+      page,
+      "page-size": pageSize,
+    }),
+  { pageSize: 50 },
+)) {
+  console.log(project.name);
+}
+```
+
+`paginate` walks pages until `fetchPage` returns fewer than `pageSize` items (the live API's "last page" signal). Options:
+
+| Option      | Default | Meaning                                      |
+| ----------- | ------- | -------------------------------------------- |
+| `pageSize`  | `50`    | Page size to request.                        |
+| `maxPages`  | `∞`     | Maximum number of pages to walk.             |
+| `startPage` | `1`     | 1-based page to start at (for resume flows). |
+
+Prefer the manual loop only if you need per-page error recovery or fine-grained control over the page parameter:
 
 ```typescript
 const pageSize = 50;
@@ -64,7 +91,7 @@ for (let page = 1; ; page++) {
   const records = await client.clients.getWorkspacesWorkspaceIdClients({
     workspaceId,
     page,
-    pageSize,
+    "page-size": pageSize,
   });
   if (records.length === 0) break;
   for (const record of records) handle(record);
@@ -72,7 +99,7 @@ for (let page = 1; ; page++) {
 }
 ```
 
-A first-class iterator helper is on the roadmap once the upstream pagination support catches up.
+`paginate()` itself is unaware of Clockify response shapes — it operates over any `(page, pageSize) => Promise<readonly T[]>` callback, so it composes with every list endpoint that follows the `page` + `page-size` convention.
 
 ## Build & publish workflow
 

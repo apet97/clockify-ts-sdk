@@ -28,6 +28,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./pagination": {
+      "import": "./dist/pagination.js",
+      "types": "./dist/pagination.d.ts"
     }
   },
   "files": [
@@ -41,7 +45,7 @@
   "scripts": {
     "sync": "bash scripts/sync-sdk.sh",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.pagination.json",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
