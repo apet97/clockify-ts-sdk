@@ -6,28 +6,28 @@
 
 ## Methods
 
-### `getMemberProfile`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.memberProfiles.getMemberProfile({
+    await client.memberProfiles.get({
         workspaceId: "64a687e29ae1f428e7ebe303",
         userId: "5a0ab5acb07987125438b60f"
     })
 ```
 
-**Request fields** (`GetMemberProfileRequest`):
+**Request fields** (`GetMemberProfilesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `updateMemberProfile`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.memberProfiles.updateMemberProfile({
+    await client.memberProfiles.update({
         workspaceId: "64a687e29ae1f428e7ebe303",
         userId: "5a0ab5acb07987125438b60f",
         imageUrl: "https://www.url.com/imageurl-1234567890.jpg",

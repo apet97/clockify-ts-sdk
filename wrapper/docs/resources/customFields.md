@@ -6,28 +6,28 @@
 
 ## Methods
 
-### `listWorkspaceCustomFields`
+### `listForWorkspace`
 
 **Example:**
 
 ```typescript
-    await client.customFields.listWorkspaceCustomFields({
+    await client.customFields.listForWorkspace({
         workspaceId: "64a687e29ae1f428e7ebe303"
     })
 ```
 
-**Request fields** (`ListWorkspaceCustomFieldsRequest`):
+**Request fields** (`ListForWorkspaceCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `createWorkspaceCustomField`
+### `createForWorkspace`
 
 **Example:**
 
 ```typescript
-    await client.customFields.createWorkspaceCustomField({
+    await client.customFields.createForWorkspace({
         workspaceId: "64a687e29ae1f428e7ebe303",
         allowedValues: ["New York", "London", "Manila", "Sydney", "Belgrade"],
         description: "This field contains a location.",
@@ -54,12 +54,12 @@
 - `type` (`ClockifyApi.CustomFieldType`, required)
 - `workspaceDefaultValue` (`ClockifyApi.CustomFieldValue \| null`, optional)
 
-### `updateWorkspaceCustomField`
+### `updateForWorkspace`
 
 **Example:**
 
 ```typescript
-    await client.customFields.updateWorkspaceCustomField({
+    await client.customFields.updateForWorkspace({
         workspaceId: "64a687e29ae1f428e7ebe303",
         customFieldId: "customFieldId",
         allowedValues: ["New York", "London", "Manila", "Sydney", "Belgrade"],
@@ -88,64 +88,64 @@
 - `type` (`ClockifyApi.CustomFieldType`, required)
 - `workspaceDefaultValue` (`ClockifyApi.CustomFieldValue \| null`, optional)
 
-### `deleteWorkspaceCustomField`
+### `deleteForWorkspace`
 
 **Example:**
 
 ```typescript
-    await client.customFields.deleteWorkspaceCustomField({
+    await client.customFields.deleteForWorkspace({
         workspaceId: "64a687e29ae1f428e7ebe303",
         customFieldId: "customFieldId"
     })
 ```
 
-**Request fields** (`DeleteWorkspaceCustomFieldRequest`):
+**Request fields** (`DeleteForWorkspaceCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `customFieldId` (`string`, required)
 
-### `listProjectCustomFields`
+### `listForProject`
 
 **Example:**
 
 ```typescript
-    await client.customFields.listProjectCustomFields({
+    await client.customFields.listForProject({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "projectId"
     })
 ```
 
-**Request fields** (`ListProjectCustomFieldsRequest`):
+**Request fields** (`ListForProjectCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required)
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `removeProjectCustomField`
+### `removeFromProject`
 
 **Example:**
 
 ```typescript
-    await client.customFields.removeProjectCustomField({
+    await client.customFields.removeFromProject({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "projectId",
         customFieldId: "customFieldId"
     })
 ```
 
-**Request fields** (`RemoveProjectCustomFieldRequest`):
+**Request fields** (`RemoveFromProjectCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required)
 - `customFieldId` (`string`, required)
 
-### `updateProjectCustomField`
+### `updateForProject`
 
 **Example:**
 
 ```typescript
-    await client.customFields.updateProjectCustomField({
+    await client.customFields.updateForProject({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "projectId",
         customFieldId: "customFieldId",

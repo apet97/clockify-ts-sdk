@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `generateAttendanceReport`
+### `attendance`
 
 **Example:**
 
 ```typescript
-    await client.reports.generateAttendanceReport({
+    await client.reports.attendance({
         workspaceId: "workspaceId",
         amountShown: "COST",
         amounts: ["EARNED", "COST"],
@@ -116,12 +116,12 @@
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`AttendanceReportRequest.ZoomLevel`, optional) — Report zoom level.
 
-### `generateDetailedReport`
+### `detailed`
 
 **Example:**
 
 ```typescript
-    await client.reports.generateDetailedReport({
+    await client.reports.detailed({
         workspaceId: "workspaceId",
         amountShown: "COST",
         amounts: ["EARNED", "COST"],
@@ -218,12 +218,12 @@
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`DetailedReportRequest.ZoomLevel`, optional) — Report zoom level.
 
-### `generateSummaryReport`
+### `summary`
 
 **Example:**
 
 ```typescript
-    await client.reports.generateSummaryReport({
+    await client.reports.summary({
         workspaceId: "workspaceId",
         amountShown: "COST",
         amounts: ["EARNED", "COST"],
@@ -311,12 +311,12 @@
 - `withoutDescription` (`boolean`, optional) — If true, report includes only entries with empty description.
 - `zoomLevel` (`SummaryReportRequest.ZoomLevel`, optional) — Report zoom level.
 
-### `generateWeeklyReport`
+### `weekly`
 
 **Example:**
 
 ```typescript
-    await client.reports.generateWeeklyReport({
+    await client.reports.weekly({
         workspaceId: "workspaceId",
         amountShown: "COST",
         amounts: ["EARNED", "COST"],

@@ -23,23 +23,23 @@ export class ExpensesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceExpensesRequest} request
+     * @param {ClockifyApi.ListExpensesRequest} request
      * @param {ExpensesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenses.getWorkspaceExpenses({
+     *     await client.expenses.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspaceExpenses(
-        request: ClockifyApi.GetWorkspaceExpensesRequest,
+    public list(
+        request: ClockifyApi.ListExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WorkspaceExpensesDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceExpenses(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspaceExpenses(
-        request: ClockifyApi.GetWorkspaceExpensesRequest,
+    private async __list(
+        request: ClockifyApi.ListExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WorkspaceExpensesDtoV1>> {
         const { workspaceId } = request;
@@ -92,7 +92,7 @@ export class ExpensesClient {
      *
      * @example
      *     import { createReadStream } from "fs";
-     *     await client.expenses.createExpense({
+     *     await client.expenses.create({
      *         file: fs.createReadStream("/path/to/your/file"),
      *         workspaceId: "workspaceId",
      *         amount: 1.1,
@@ -102,14 +102,14 @@ export class ExpensesClient {
      *         userId: "userId"
      *     })
      */
-    public createExpense(
+    public create(
         request: ClockifyApi.ExpenseCreateRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__createExpense(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __createExpense(
+    private async __create(
         request: ClockifyApi.ExpenseCreateRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseDtoV1>> {
@@ -183,24 +183,24 @@ export class ExpensesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetExpenseByIdRequest} request
+     * @param {ClockifyApi.GetExpensesRequest} request
      * @param {ExpensesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenses.getExpenseById({
+     *     await client.expenses.get({
      *         workspaceId: "workspaceId",
      *         expenseId: "expenseId"
      *     })
      */
-    public getExpenseById(
-        request: ClockifyApi.GetExpenseByIdRequest,
+    public get(
+        request: ClockifyApi.GetExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getExpenseById(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getExpenseById(
-        request: ClockifyApi.GetExpenseByIdRequest,
+    private async __get(
+        request: ClockifyApi.GetExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseDtoV1>> {
         const { workspaceId, expenseId } = request;
@@ -253,7 +253,7 @@ export class ExpensesClient {
      *
      * @example
      *     import { createReadStream } from "fs";
-     *     await client.expenses.updateExpense({
+     *     await client.expenses.update({
      *         file: fs.createReadStream("/path/to/your/file"),
      *         workspaceId: "workspaceId",
      *         expenseId: "expenseId",
@@ -264,14 +264,14 @@ export class ExpensesClient {
      *         userId: "userId"
      *     })
      */
-    public updateExpense(
+    public update(
         request: ClockifyApi.ExpenseUpdateRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateExpense(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateExpense(
+    private async __update(
         request: ClockifyApi.ExpenseUpdateRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseDtoV1>> {
@@ -352,24 +352,24 @@ export class ExpensesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteExpenseRequest} request
+     * @param {ClockifyApi.DeleteExpensesRequest} request
      * @param {ExpensesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenses.deleteExpense({
+     *     await client.expenses.delete({
      *         workspaceId: "workspaceId",
      *         expenseId: "expenseId"
      *     })
      */
-    public deleteExpense(
-        request: ClockifyApi.DeleteExpenseRequest,
+    public delete(
+        request: ClockifyApi.DeleteExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteExpense(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteExpense(
-        request: ClockifyApi.DeleteExpenseRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, expenseId } = request;
@@ -419,15 +419,15 @@ export class ExpensesClient {
     /**
      * Download an expense receipt file. The uploaded Markdown includes this operation's parameters and response but omits the method/path line; this path is completed from the official Clockify documentation.
      */
-    public downloadExpenseReceipt(
-        request: ClockifyApi.DownloadExpenseReceiptRequest,
+    public downloadReceipt(
+        request: ClockifyApi.DownloadReceiptExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<core.BinaryResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__downloadExpenseReceipt(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__downloadReceipt(request, requestOptions));
     }
 
-    private async __downloadExpenseReceipt(
-        request: ClockifyApi.DownloadExpenseReceiptRequest,
+    private async __downloadReceipt(
+        request: ClockifyApi.DownloadReceiptExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<core.BinaryResponse>> {
         const { workspaceId, expenseId, fileId } = request;

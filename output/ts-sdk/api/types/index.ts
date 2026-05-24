@@ -227,7 +227,6 @@ export * from "./TimeOffRequestPeriodDto.js";
 export * from "./TimeOffRequestPeriodV1Request.js";
 export * from "./TimeOffRequestStatus.js";
 export * from "./TimeOffRequestsResponse.js";
-export * from "./TimeOffTimeOffRequest.js";
 export * from "./TimeRangeRequestDtoV1.js";
 export * from "./TimeUnit.js";
 export * from "./TimeViewMode.js";

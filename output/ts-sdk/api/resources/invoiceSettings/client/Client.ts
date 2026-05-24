@@ -29,18 +29,18 @@ export class InvoiceSettingsClient {
      * @param {InvoiceSettingsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoiceSettings.getInvoiceSettings({
+     *     await client.invoiceSettings.get({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getInvoiceSettings(
+    public get(
         request: ClockifyApi.GetInvoiceSettingsRequest,
         requestOptions?: InvoiceSettingsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceSettingsResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getInvoiceSettings(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getInvoiceSettings(
+    private async __get(
         request: ClockifyApi.GetInvoiceSettingsRequest,
         requestOptions?: InvoiceSettingsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceSettingsResponse>> {
@@ -93,7 +93,7 @@ export class InvoiceSettingsClient {
      * @param {InvoiceSettingsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoiceSettings.updateInvoiceSettings({
+     *     await client.invoiceSettings.update({
      *         workspaceId: "workspaceId",
      *         defaults: {
      *             notes: "notes",
@@ -120,14 +120,14 @@ export class InvoiceSettingsClient {
      *         }
      *     })
      */
-    public updateInvoiceSettings(
+    public update(
         request: ClockifyApi.InvoiceSettingsRequest,
         requestOptions?: InvoiceSettingsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__updateInvoiceSettings(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateInvoiceSettings(
+    private async __update(
         request: ClockifyApi.InvoiceSettingsRequest,
         requestOptions?: InvoiceSettingsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {

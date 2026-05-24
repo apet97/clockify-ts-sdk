@@ -29,7 +29,7 @@ One markdown file per Clockify API resource (31 resources total). Auto-generated
 | tags | 5 | [`tags.md`](./tags.md) |
 | tasks | 7 | [`tasks.md`](./tasks.md) |
 | timeEntries | 14 | [`timeEntries.md`](./timeEntries.md) |
-| timeOff | 12 | [`timeOff.md`](./timeOff.md) |
+| timeOff | 9 | [`timeOff.md`](./timeOff.md) |
 | timeOffPolicies | 6 | [`timeOffPolicies.md`](./timeOffPolicies.md) |
 | userGroups | 8 | [`userGroups.md`](./userGroups.md) |
 | users | 6 | [`users.md`](./users.md) |

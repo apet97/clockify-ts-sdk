@@ -6,26 +6,26 @@
 
 ## Methods
 
-### `getWorkspaceInvoices`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.invoices.getWorkspaceInvoices({
+    await client.invoices.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspaceInvoicesRequest`):
+**Request fields** (`ListInvoicesRequest`):
 
 - `workspaceId` (`string`, required)
 
-### `addInvoice`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.invoices.addInvoice({
+    await client.invoices.create({
         workspaceId: "workspaceId",
         clientId: "34p687e29ae1f428e7ebe562",
         currency: "USD",
@@ -46,12 +46,12 @@
 - `number` (`string`, required) — Represents an invoice number.
 - `timeViewMode` (`ClockifyApi.TimeViewMode`, optional)
 
-### `filterInvoices`
+### `filter`
 
 **Example:**
 
 ```typescript
-    await client.invoices.filterInvoices({
+    await client.invoices.filter({
         workspaceId: "workspaceId",
         clients: {
             contains: "CONTAINS",
@@ -102,28 +102,28 @@
 - `statuses` (`ClockifyApi.InvoiceStatus[]`, optional) — Represents a list of invoice statuses.
 - `strictSearch` (`boolean`, optional) — When true, search by invoice number only returns invoices whose number exactly matches the provided string.
 
-### `getInvoiceById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.invoices.getInvoiceById({
+    await client.invoices.get({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId"
     })
 ```
 
-**Request fields** (`GetInvoiceByIdRequest`):
+**Request fields** (`GetInvoicesRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 
-### `updateInvoice`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.invoices.updateInvoice({
+    await client.invoices.update({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         clientId: "98h687e29ae1f428e7ebe707",
@@ -160,52 +160,52 @@
 - `taxType` (`ClockifyApi.TaxType`, optional)
 - `visibleZeroFields` (`UpdateInvoiceRequest.VisibleZeroFields`, optional) — Represents one or more zero value invoice fields that will be visible.
 
-### `deleteInvoice`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.invoices.deleteInvoice({
+    await client.invoices.delete({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId"
     })
 ```
 
-**Request fields** (`DeleteInvoiceRequest`):
+**Request fields** (`DeleteInvoicesRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 
-### `duplicateInvoice`
+### `duplicate`
 
 **Example:**
 
 ```typescript
-    await client.invoices.duplicateInvoice({
+    await client.invoices.duplicate({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId"
     })
 ```
 
-**Request fields** (`DuplicateInvoiceRequest`):
+**Request fields** (`DuplicateInvoicesRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 
-### `exportInvoice`
+### `export`
 
-**Request fields** (`ExportInvoiceRequest`):
+**Request fields** (`ExportInvoicesRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 - `userLocale` (`string`, required) — Required by live Clockify invoice export; the MCP defaults it to en-US.
 
-### `changeInvoiceStatus`
+### `updateStatus`
 
 **Example:**
 
 ```typescript
-    await client.invoices.changeInvoiceStatus({
+    await client.invoices.updateStatus({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         invoiceStatus: "PAID"

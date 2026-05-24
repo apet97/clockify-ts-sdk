@@ -27,21 +27,19 @@ export class TimeEntriesClient {
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.postWorkspacesWorkspaceIdTimeEntries({
+     *     await client.timeEntries.create({
      *         workspaceId: "workspaceId",
      *         start: "2024-01-15T09:30:00Z"
      *     })
      */
-    public postWorkspacesWorkspaceIdTimeEntries(
+    public create(
         request: ClockifyApi.CreateTimeEntryRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntriesTimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdTimeEntries(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdTimeEntries(
+    private async __create(
         request: ClockifyApi.CreateTimeEntryRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntriesTimeEntry>> {
@@ -93,27 +91,25 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedRequest} request
+     * @param {ClockifyApi.MarkInvoicedTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.patchWorkspacesWorkspaceIdTimeEntriesInvoiced({
+     *     await client.timeEntries.markInvoiced({
      *         workspaceId: "workspaceId",
      *         invoiced: true,
      *         timeEntryIds: ["timeEntryIds"]
      *     })
      */
-    public patchWorkspacesWorkspaceIdTimeEntriesInvoiced(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedRequest,
+    public markInvoiced(
+        request: ClockifyApi.MarkInvoicedTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdTimeEntriesInvoiced(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__markInvoiced(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdTimeEntriesInvoiced(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedRequest,
+    private async __markInvoiced(
+        request: ClockifyApi.MarkInvoicedTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, ..._body } = request;
@@ -164,25 +160,23 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedBulkRequest} request
+     * @param {ClockifyApi.MarkInvoicedBulkTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk({
+     *     await client.timeEntries.markInvoicedBulk({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedBulkRequest,
+    public markInvoicedBulk(
+        request: ClockifyApi.MarkInvoicedBulkTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__markInvoicedBulk(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeEntriesInvoicedBulkRequest,
+    private async __markInvoicedBulk(
+        request: ClockifyApi.MarkInvoicedBulkTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, ..._body } = request;
@@ -233,25 +227,23 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesStatusInProgressRequest} request
+     * @param {ClockifyApi.ListInProgressTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.getWorkspacesWorkspaceIdTimeEntriesStatusInProgress({
+     *     await client.timeEntries.listInProgress({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTimeEntriesStatusInProgress(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesStatusInProgressRequest,
+    public listInProgress(
+        request: ClockifyApi.ListInProgressTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntriesTimeEntry[]> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdTimeEntriesStatusInProgress(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__listInProgress(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTimeEntriesStatusInProgress(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesStatusInProgressRequest,
+    private async __listInProgress(
+        request: ClockifyApi.ListInProgressTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntriesTimeEntry[]>> {
         const { workspaceId, page, "page-size": pageSize } = request;
@@ -307,26 +299,24 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest} request
+     * @param {ClockifyApi.GetTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.getWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+     *     await client.timeEntries.get({
      *         workspaceId: "workspaceId",
      *         timeEntryId: "timeEntryId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    public get(
+        request: ClockifyApi.GetTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdTimeEntriesTimeEntryId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    private async __get(
+        request: ClockifyApi.GetTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntry>> {
         const { workspaceId, timeEntryId, hydrated, "consider-duration-format": considerDurationFormat } = request;
@@ -382,11 +372,11 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest} request
+     * @param {ClockifyApi.UpdateTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.putWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+     *     await client.timeEntries.update({
      *         workspaceId: "workspaceId",
      *         timeEntryId: "timeEntryId",
      *         body: {
@@ -394,17 +384,15 @@ export class TimeEntriesClient {
      *         }
      *     })
      */
-    public putWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    public update(
+        request: ClockifyApi.UpdateTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdTimeEntriesTimeEntryId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntry>> {
         const { workspaceId, timeEntryId, body: _body } = request;
@@ -455,26 +443,24 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest} request
+     * @param {ClockifyApi.DeleteTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+     *     await client.timeEntries.delete({
      *         workspaceId: "workspaceId",
      *         timeEntryId: "timeEntryId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, timeEntryId } = request;
@@ -522,26 +508,24 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest} request
+     * @param {ClockifyApi.ListForUserTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.getWorkspacesWorkspaceIdUserUserIdTimeEntries({
+     *     await client.timeEntries.listForUser({
      *         workspaceId: "workspaceId",
      *         userId: "userId"
      *     })
      */
-    public getWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    public listForUser(
+        request: ClockifyApi.ListForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntry[]> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdUserUserIdTimeEntries(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__listForUser(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    private async __listForUser(
+        request: ClockifyApi.ListForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntry[]>> {
         const {
@@ -624,11 +608,11 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest} request
+     * @param {ClockifyApi.CreateForUserTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.postWorkspacesWorkspaceIdUserUserIdTimeEntries({
+     *     await client.timeEntries.createForUser({
      *         workspaceId: "workspaceId",
      *         userId: "userId",
      *         body: {
@@ -636,17 +620,15 @@ export class TimeEntriesClient {
      *         }
      *     })
      */
-    public postWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    public createForUser(
+        request: ClockifyApi.CreateForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdUserUserIdTimeEntries(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__createForUser(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    private async __createForUser(
+        request: ClockifyApi.CreateForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntry>> {
         const { workspaceId, userId, body: _body } = request;
@@ -697,11 +679,11 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest} request
+     * @param {ClockifyApi.StartTimerTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.putWorkspacesWorkspaceIdUserUserIdTimeEntries({
+     *     await client.timeEntries.startTimer({
      *         workspaceId: "workspaceId",
      *         userId: "userId",
      *         body: [{
@@ -711,17 +693,15 @@ export class TimeEntriesClient {
      *             }]
      *     })
      */
-    public putWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    public startTimer(
+        request: ClockifyApi.StartTimerTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntriesTimeEntry[]> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdUserUserIdTimeEntries(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__startTimer(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    private async __startTimer(
+        request: ClockifyApi.StartTimerTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntriesTimeEntry[]>> {
         const { workspaceId, userId, body: _body } = request;
@@ -845,27 +825,25 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest} request
+     * @param {ClockifyApi.UpdateForUserTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.patchWorkspacesWorkspaceIdUserUserIdTimeEntries({
+     *     await client.timeEntries.updateForUser({
      *         workspaceId: "workspaceId",
      *         userId: "userId",
      *         end: "2024-01-15T09:30:00Z"
      *     })
      */
-    public patchWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    public updateForUser(
+        request: ClockifyApi.UpdateForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntriesTimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdUserUserIdTimeEntries(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateForUser(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdUserUserIdTimeEntries(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest,
+    private async __updateForUser(
+        request: ClockifyApi.UpdateForUserTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntriesTimeEntry>> {
         const { workspaceId, userId, ..._body } = request;
@@ -916,27 +894,25 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesStopRequest} request
+     * @param {ClockifyApi.StopTimerTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop({
+     *     await client.timeEntries.stopTimer({
      *         workspaceId: "workspaceId",
      *         userId: "userId",
      *         end: "2024-01-15T09:30:00Z"
      *     })
      */
-    public patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesStopRequest,
+    public stopTimer(
+        request: ClockifyApi.StopTimerTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__stopTimer(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesStopRequest,
+    private async __stopTimer(
+        request: ClockifyApi.StopTimerTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntry>> {
         const { workspaceId, userId, ..._body } = request;
@@ -987,27 +963,25 @@ export class TimeEntriesClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicateRequest} request
+     * @param {ClockifyApi.DuplicateTimeEntriesRequest} request
      * @param {TimeEntriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeEntries.postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate({
+     *     await client.timeEntries.duplicate({
      *         workspaceId: "workspaceId",
      *         userId: "userId",
      *         timeEntryId: "timeEntryId"
      *     })
      */
-    public postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicateRequest,
+    public duplicate(
+        request: ClockifyApi.DuplicateTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeEntriesTimeEntry> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__duplicate(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicateRequest,
+    private async __duplicate(
+        request: ClockifyApi.DuplicateTimeEntriesRequest,
         requestOptions?: TimeEntriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeEntriesTimeEntry>> {
         const { workspaceId, userId, timeEntryId } = request;

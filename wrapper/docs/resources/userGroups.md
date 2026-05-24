@@ -6,28 +6,28 @@
 
 ## Methods
 
-### `findAllGroupsOnWorkspace`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.findAllGroupsOnWorkspace({
+    await client.userGroups.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`FindAllGroupsOnWorkspaceRequest`):
+**Request fields** (`ListUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `addNewGroup`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.addNewGroup({
+    await client.userGroups.create({
         workspaceId: "workspaceId",
         body: {
             name: "development_team"
@@ -35,33 +35,33 @@
     })
 ```
 
-**Request fields** (`AddNewGroupRequest`):
+**Request fields** (`CreateUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.UserGroupRequest`, required)
 
-### `getWorkspacesWorkspaceIdUserGroupsGroupId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupId({
+    await client.userGroups.get({
         workspaceId: "workspaceId",
         groupId: "groupId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest`):
+**Request fields** (`GetUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 
-### `updateGroup`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.updateGroup({
+    await client.userGroups.update({
         workspaceId: "workspaceId",
         groupId: "groupId",
         body: {
@@ -70,50 +70,50 @@
     })
 ```
 
-**Request fields** (`UpdateGroupRequest`):
+**Request fields** (`UpdateUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 - `body` (`ClockifyApi.UserGroupRequest`, required)
 
-### `deleteGroup`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.deleteGroup({
+    await client.userGroups.delete({
         workspaceId: "workspaceId",
         groupId: "groupId"
     })
 ```
 
-**Request fields** (`DeleteGroupRequest`):
+**Request fields** (`DeleteUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 
-### `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers`
+### `listMembers`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupIdUsers({
+    await client.userGroups.listMembers({
         workspaceId: "workspaceId",
         groupId: "groupId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest`):
+**Request fields** (`ListMembersUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 
-### `addUsersToGroup`
+### `addMembers`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.addUsersToGroup({
+    await client.userGroups.addMembers({
         workspaceId: "workspaceId",
         groupId: "groupId",
         userId: "5a0ab5acb07987125438b60f"
@@ -126,19 +126,19 @@
 - `groupId` (`string`, required)
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `removeUserFromGroup`
+### `removeMember`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.removeUserFromGroup({
+    await client.userGroups.removeMember({
         workspaceId: "workspaceId",
         groupId: "groupId",
         userId: "userId"
     })
 ```
 
-**Request fields** (`RemoveUserFromGroupRequest`):
+**Request fields** (`RemoveMemberUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)

@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `getCreatedEntityInfo`
+### `listCreated`
 
 **Example:**
 
 ```typescript
-    await client.entityChangesExperimental.getCreatedEntityInfo({
+    await client.entityChangesExperimental.listCreated({
         workspaceId: "64a687e29ae1f428e7ebe303",
         type: ["TIME_ENTRY"],
         start: "2024-10-29T10:00:00Z",
@@ -19,7 +19,7 @@
     })
 ```
 
-**Request fields** (`GetCreatedEntityInfoRequest`):
+**Request fields** (`ListCreatedEntityChangesExperimentalRequest`):
 
 - `workspaceId` (`string`, required) — Represents workspace identifier across the system.
 - `type` (`string \| string[]`, optional) — Specifies the type of document to be retrieved. Expected values are CLIENTS, PROJECTS, TAGS, TASKS, SCHEDULED_ASSIGNMENT, TIME_ENTRY, TIME_ENTRY_RATE, TIME_ENTRY_CUSTOM_FIELD_VALUE.This parameter can accept multiple values, and at least one option must be provided. Based on the input, the application will return results corresponding to the selected document types.
@@ -28,12 +28,12 @@
 - `page` (`string`, optional)
 - `limit` (`string`, optional)
 
-### `getDeletedEntityInfo`
+### `listDeleted`
 
 **Example:**
 
 ```typescript
-    await client.entityChangesExperimental.getDeletedEntityInfo({
+    await client.entityChangesExperimental.listDeleted({
         workspaceId: "64a687e29ae1f428e7ebe303",
         type: ["TIME_ENTRY"],
         start: "2024-10-29T10:00:00Z",
@@ -41,7 +41,7 @@
     })
 ```
 
-**Request fields** (`GetDeletedEntityInfoRequest`):
+**Request fields** (`ListDeletedEntityChangesExperimentalRequest`):
 
 - `workspaceId` (`string`, required) — Represents workspace identifier across the system (Experimental)
 - `type` (`string \| string[]`, optional) — Specifies the type of document to be retrieved. Expected values are CLIENTS, PROJECTS, TAGS, TASKS, SCHEDULED_ASSIGNMENT, TIME_ENTRY, TIME_ENTRY_RATE, TIME_ENTRY_CUSTOM_FIELD_VALUE.This parameter can accept multiple values, and at least one option must be provided. Based on the input, the application will return results corresponding to the selected document types.
@@ -50,12 +50,12 @@
 - `page` (`string`, optional)
 - `limit` (`string`, optional)
 
-### `getUpdatedEntityInfo`
+### `listUpdated`
 
 **Example:**
 
 ```typescript
-    await client.entityChangesExperimental.getUpdatedEntityInfo({
+    await client.entityChangesExperimental.listUpdated({
         workspaceId: "64a687e29ae1f428e7ebe303",
         type: ["TIME_ENTRY"],
         start: "2024-10-29T10:00:00Z",
@@ -63,7 +63,7 @@
     })
 ```
 
-**Request fields** (`GetUpdatedEntityInfoRequest`):
+**Request fields** (`ListUpdatedEntityChangesExperimentalRequest`):
 
 - `workspaceId` (`string`, required) — Represents workspace identifier across the system.
 - `type` (`string \| string[]`, optional) — Specifies the type of document to be retrieved. Expected values are CLIENTS, PROJECTS, TAGS, TASKS, SCHEDULED_ASSIGNMENT, TIME_ENTRY, TIME_ENTRY_RATE, TIME_ENTRY_CUSTOM_FIELD_VALUE.This parameter can accept multiple values, and at least one option must be provided. Based on the input, the application will return results corresponding to the selected document types.

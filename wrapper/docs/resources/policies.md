@@ -6,99 +6,99 @@
 
 ## Methods
 
-### `getWorkspacesWorkspaceIdPolicies`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.policies.getWorkspacesWorkspaceIdPolicies({
+    await client.policies.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdPoliciesRequest`):
+**Request fields** (`ListPoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `archived` (`boolean`, optional)
 
-### `postWorkspacesWorkspaceIdPolicies`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.policies.postWorkspacesWorkspaceIdPolicies({
+    await client.policies.create({
         workspaceId: "workspaceId",
         body: {}
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdPoliciesRequest`):
+**Request fields** (`CreatePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.TimeOffPolicy`, required)
 
-### `getWorkspacesWorkspaceIdPoliciesPolicyId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.policies.getWorkspacesWorkspaceIdPoliciesPolicyId({
+    await client.policies.get({
         workspaceId: "workspaceId",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdPoliciesPolicyIdRequest`):
+**Request fields** (`GetPoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
 
-### `putWorkspacesWorkspaceIdPoliciesPolicyId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.policies.putWorkspacesWorkspaceIdPoliciesPolicyId({
+    await client.policies.update({
         workspaceId: "workspaceId",
         policyId: "policyId",
         body: {}
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdPoliciesPolicyIdRequest`):
+**Request fields** (`UpdatePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
 - `body` (`ClockifyApi.TimeOffPolicy`, required)
 
-### `deleteWorkspacesWorkspaceIdPoliciesPolicyId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.policies.deleteWorkspacesWorkspaceIdPoliciesPolicyId({
+    await client.policies.delete({
         workspaceId: "workspaceId",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequest`):
+**Request fields** (`DeletePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
 
-### `patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive`
+### `archive`
 
 **Example:**
 
 ```typescript
-    await client.policies.patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive({
+    await client.policies.archive({
         workspaceId: "workspaceId",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdPoliciesPolicyIdArchiveRequest`):
+**Request fields** (`ArchivePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)

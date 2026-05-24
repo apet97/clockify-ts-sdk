@@ -1,6 +1,6 @@
-export type { DeleteExpenseRequest } from "./DeleteExpenseRequest.js";
-export type { DownloadExpenseReceiptRequest } from "./DownloadExpenseReceiptRequest.js";
+export type { DeleteExpensesRequest } from "./DeleteExpensesRequest.js";
+export type { DownloadReceiptExpensesRequest } from "./DownloadReceiptExpensesRequest.js";
 export type { ExpenseCreateRequest } from "./ExpenseCreateRequest.js";
 export { ExpenseUpdateRequest } from "./ExpenseUpdateRequest.js";
-export type { GetExpenseByIdRequest } from "./GetExpenseByIdRequest.js";
-export type { GetWorkspaceExpensesRequest } from "./GetWorkspaceExpensesRequest.js";
+export type { GetExpensesRequest } from "./GetExpensesRequest.js";
+export type { ListExpensesRequest } from "./ListExpensesRequest.js";

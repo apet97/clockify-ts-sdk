@@ -64,7 +64,7 @@ const client = createClockifyClient({
     apiKey: process.env.CLOCKIFY_API_KEY!,
 });
 
-const tags = await client.tags.getWorkspacesWorkspaceIdTags({
+const tags = await client.tags.list({
     workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
 });
 
@@ -104,13 +104,32 @@ const addon = createClockifyClient({ addonToken: "..." });
 const broken = createClockifyClient({ apiKey: "a", addonToken: "t" });
 ```
 
+### Env-var fallback (Stripe / OpenAI / Anthropic convention)
+
+If you omit both `apiKey` and `addonToken`, the factory reads
+from the environment:
+
+| Env var                  | Used as       | Precedence |
+| ------------------------ | ------------- | ---------- |
+| `CLOCKIFY_API_KEY`       | `apiKey`      | 1 (highest) |
+| `CLOCKIFY_ADDON_TOKEN`   | `addonToken`  | 2          |
+
+Explicit options always win over env vars. Empty-string env-var
+values are treated as absent. The factory throws if both env
+vars are also unset.
+
+```typescript
+// Reads CLOCKIFY_API_KEY (or CLOCKIFY_ADDON_TOKEN) at construction:
+const client = createClockifyClient();
+```
+
 `apiKey` and `addonToken` accept any `Supplier<string>` — a
 string, a `Promise<string>`, or a sync/async function returning
-one. Use a function for tokens that get rotated:
+one. Use a function for tokens that get rotated at runtime:
 
 ```typescript
 const client = createClockifyClient({
-    apiKey: () => process.env.CLOCKIFY_API_KEY!,
+    apiKey: () => fetchTokenFromVault(),
 });
 ```
 
@@ -148,15 +167,69 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 `timeOff`, `timeOffPolicies`, `userGroups`, `users`, `webhooks`,
 `workspaces`.
 
-Each sub-client exposes one method per operation. Method names
-are operationId-derived from the spec
-(e.g. `client.tags.getWorkspacesWorkspaceIdTags(...)`) rather than
-CRUDL (`client.tags.list(...)`). This is a known limitation —
-the CRUDL stamping bumped a Fern-side bug that dropped 12 of 31
-resource modules from the TS output. Tracked in
-`spec/evidence/discrepancies.md` →
-`fern.x-fern-sdk-method-name.drops-resource-modules`. We
-re-evaluate on every Fern CLI bump.
+Each sub-client exposes one method per operation. Two name shapes
+co-exist:
+
+- **Idiomatic method names on 27 of the 31 modules (170 ops, ~90% of
+  the 188-op live API surface).** Each stamped op pairs
+  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
+  lands at `client.<resource>.<verb>()`:
+  - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
+    `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
+    `webhooks`, `expenses`, `expenseCategories`, `policies` — each
+    exposes the subset of `list`, `create`, `get`, `update`, `delete`
+    that the API genuinely supports.
+  - **CRUDL + action verb:** `clients.archive`,
+    `expenseCategories.archive`, `policies.archive`.
+  - **Partial CRUDL:** `timeEntries.{create,get,update,delete}` on
+    the `/time-entries/{teId}` family (Clockify has no top-level
+    workspace LIST; the per-user `/user/{userId}/time-entries` family
+    keeps its operationId-derived names).
+    `invoiceItems.{create,import,delete}` (no LIST or GET-by-id on
+    the API).
+    `invoicePayments.{list,create,delete}` (no GET-by-id, no update
+    on the API).
+  - **Scoped naming:**
+    `customFields.{listForWorkspace,createForWorkspace,
+    updateForWorkspace,deleteForWorkspace,listForProject,
+    updateForProject,removeFromProject}` — the module covers two
+    surfaces (workspace + project); explicit suffixes disambiguate.
+  - **Workflow verbs (not pure CRUDL):**
+    `approvals.{list,submit,submitForUser,resubmit,resubmitForUser,updateStatus}`,
+    `timeOff.{list,get,delete,updateStatus,submit}`,
+    `scheduling.{create,list,update,delete,publish,copy,createRecurring,updateRecurring,deleteRecurring}`.
+    These modules expose state-machine and workflow operations rather
+    than CRUDL; the verbs match the upstream semantics
+    (`submit` / `approve` / `withdraw` for approvals;
+    `submit` + admin `updateStatus` for time-off requests;
+    `publish` for assignment workflows).
+  - **CRUDL + workflow actions:**
+    `invoices.{list,create,filter,get,update,delete,duplicate,export,updateStatus}`
+    — CRUDL plus `filter` (POST-with-body at `/invoices/info`,
+    distinct from the bare `list`), `duplicate`, `export`, and
+    `updateStatus` (PATCH .../status — same pattern as approvals /
+    timeOff / policies). The Clockify API has no `send` endpoint;
+    use a Clockify-internal "send" workflow via the UI or a follow-up
+    tool.
+  - **Family-name verbs:**
+    `reports.{attendance,detailed,summary,weekly}` — each report is
+    a POST-with-body call; the verb is the family name directly.
+- **OperationId-derived on the remaining ~24 ops (intentional).**
+  Each falls in one of two categories:
+  - **Already a clean verb-noun name** — `client.files.uploadImage(...)`,
+    `client.roles.giveUserManagerRole(...)`,
+    `client.expenseReport.generateDetailedReportV1(...)` (the `V1`
+    suffix is load-bearing), `client.workspaces.updateUserStatus(...)`.
+  - **Per-module domain edge case** — `client.projects.assignOrRemoveProjectUsers(...)`
+    (semantic overlap with `updateMemberships`); the timeOff legacy
+    `/policies/{policyId}/requests` family that duplicates
+    `/time-off/policies/{policyId}/requests`; the `Balances`-tagged
+    `getWorkspacesWorkspaceIdTimeOffRequests` /
+    `getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances` reads.
+    Each needs a domain-specific naming review.
+
+  Tracked under `spec/evidence/discrepancies.md` →
+  `fern.x-fern-sdk-method-name.drops-resource-modules`.
 
 ## Pagination
 
@@ -171,7 +244,7 @@ levels of abstraction:
 import { createClockifyClient, iterAll } from "clockify-sdk-ts";
 
 const client = createClockifyClient({ apiKey: "..." });
-const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
+const listProjects = client.projects.list.bind(client.projects);
 
 for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
     console.log(project.name);
@@ -184,7 +257,7 @@ accepts `pageSize` (default 50), `maxPages` (default ∞),
 `startPage` (default 1, useful for resume flows).
 
 > **Why `.bind()`?** Passing the method reference directly
-> (`client.projects.getWorkspaceProjects`) loses the implicit `this`
+> (`client.projects.list`) loses the implicit `this`
 > binding to its owning sub-client. Wrapping in an arrow function
 > works at runtime but loses type inference (TypeScript falls back
 > to the helper's generic constraint). `.bind(client.projects)`
@@ -196,7 +269,7 @@ accepts `pageSize` (default 50), `maxPages` (default ∞),
 ```typescript
 import { iterPages } from "clockify-sdk-ts";
 
-const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
+const listTags = client.tags.list.bind(client.tags);
 
 for await (const { items, page, hasNextPage } of iterPages(
     listTags,
@@ -215,7 +288,7 @@ import { paginate } from "clockify-sdk-ts";
 
 for await (const client_ of paginate(
     (page, pageSize) =>
-        client.clients.getWorkspacesWorkspaceIdClients({
+        client.clients.list({
             workspaceId: "...",
             page,
             "page-size": pageSize,
@@ -278,7 +351,7 @@ import {
 } from "clockify-sdk-ts";
 
 try {
-    await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+    await client.tags.get({
         workspaceId: "...",
         tagId: "deleted-tag-id",
     });
@@ -358,7 +431,7 @@ Every method's second argument accepts `requestOptions` with
 `maxRetries`:
 
 ```typescript
-await client.tags.getWorkspacesWorkspaceIdTags(
+await client.tags.list(
     { workspaceId: "..." },
     { maxRetries: 0 }, // this call only
 );
@@ -376,7 +449,7 @@ const client = createClockifyClient({
 const ctrl = new AbortController();
 setTimeout(() => ctrl.abort(), 5000);
 
-await client.projects.getWorkspaceProjects(
+await client.projects.list(
     { workspaceId: "..." },
     { timeoutInSeconds: 3, abortSignal: ctrl.signal },
 );

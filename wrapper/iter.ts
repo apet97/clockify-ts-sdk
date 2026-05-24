@@ -73,29 +73,23 @@ export interface PageEnvelope<TItem> {
  *   file if a method is renamed or removed upstream.
  */
 export type KnownPaginatedMethod =
-    | { readonly resource: "approvals"; readonly method: "getApprovalRequests" }
-    | { readonly resource: "auditLogReport"; readonly method: "searchAuditLogs" }
-    | { readonly resource: "balances"; readonly method: "getBalanceForUser" }
-    | { readonly resource: "balances"; readonly method: "getBalancesForPolicy" }
-    | { readonly resource: "clients"; readonly method: "getWorkspacesWorkspaceIdClients" }
-    | { readonly resource: "customFields"; readonly method: "listProjectCustomFields" }
-    | { readonly resource: "customFields"; readonly method: "listWorkspaceCustomFields" }
-    | { readonly resource: "holidays"; readonly method: "getWorkspaceHolidays" }
-    | { readonly resource: "invoicePayments"; readonly method: "getInvoicePayments" }
-    | { readonly resource: "projects"; readonly method: "getWorkspaceProjects" }
-    | { readonly resource: "scheduling"; readonly method: "getAllSchedulingAssignments" }
-    | { readonly resource: "tags"; readonly method: "getWorkspacesWorkspaceIdTags" }
-    | { readonly resource: "tasks"; readonly method: "findTasksOnProject" }
-    | {
-          readonly resource: "timeEntries";
-          readonly method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress";
-      }
-    | {
-          readonly resource: "timeEntries";
-          readonly method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries";
-      }
-    | { readonly resource: "timeOffPolicies"; readonly method: "getTimeOffPolicies" }
-    | { readonly resource: "userGroups"; readonly method: "findAllGroupsOnWorkspace" }
+    | { readonly resource: "approvals"; readonly method: "list" }
+    | { readonly resource: "auditLogReport"; readonly method: "search" }
+    | { readonly resource: "balances"; readonly method: "getForUser" }
+    | { readonly resource: "balances"; readonly method: "listForPolicy" }
+    | { readonly resource: "clients"; readonly method: "list" }
+    | { readonly resource: "customFields"; readonly method: "listForProject" }
+    | { readonly resource: "customFields"; readonly method: "listForWorkspace" }
+    | { readonly resource: "holidays"; readonly method: "list" }
+    | { readonly resource: "invoicePayments"; readonly method: "list" }
+    | { readonly resource: "projects"; readonly method: "list" }
+    | { readonly resource: "scheduling"; readonly method: "list" }
+    | { readonly resource: "tags"; readonly method: "list" }
+    | { readonly resource: "tasks"; readonly method: "list" }
+    | { readonly resource: "timeEntries"; readonly method: "listInProgress" }
+    | { readonly resource: "timeEntries"; readonly method: "listForUser" }
+    | { readonly resource: "timeOffPolicies"; readonly method: "list" }
+    | { readonly resource: "userGroups"; readonly method: "list" }
     | { readonly resource: "users"; readonly method: "findUserTeamManagers" }
     | { readonly resource: "users"; readonly method: "findWorkspaceUsers" };
 
@@ -105,23 +99,23 @@ export type KnownPaginatedMethod =
  * for tests, codegen, and CI drift assertions.
  */
 export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
-    { resource: "approvals", method: "getApprovalRequests" },
-    { resource: "auditLogReport", method: "searchAuditLogs" },
-    { resource: "balances", method: "getBalanceForUser" },
-    { resource: "balances", method: "getBalancesForPolicy" },
-    { resource: "clients", method: "getWorkspacesWorkspaceIdClients" },
-    { resource: "customFields", method: "listProjectCustomFields" },
-    { resource: "customFields", method: "listWorkspaceCustomFields" },
-    { resource: "holidays", method: "getWorkspaceHolidays" },
-    { resource: "invoicePayments", method: "getInvoicePayments" },
-    { resource: "projects", method: "getWorkspaceProjects" },
-    { resource: "scheduling", method: "getAllSchedulingAssignments" },
-    { resource: "tags", method: "getWorkspacesWorkspaceIdTags" },
-    { resource: "tasks", method: "findTasksOnProject" },
-    { resource: "timeEntries", method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress" },
-    { resource: "timeEntries", method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries" },
-    { resource: "timeOffPolicies", method: "getTimeOffPolicies" },
-    { resource: "userGroups", method: "findAllGroupsOnWorkspace" },
+    { resource: "approvals", method: "list" },
+    { resource: "auditLogReport", method: "search" },
+    { resource: "balances", method: "getForUser" },
+    { resource: "balances", method: "listForPolicy" },
+    { resource: "clients", method: "list" },
+    { resource: "customFields", method: "listForProject" },
+    { resource: "customFields", method: "listForWorkspace" },
+    { resource: "holidays", method: "list" },
+    { resource: "invoicePayments", method: "list" },
+    { resource: "projects", method: "list" },
+    { resource: "scheduling", method: "list" },
+    { resource: "tags", method: "list" },
+    { resource: "tasks", method: "list" },
+    { resource: "timeEntries", method: "listInProgress" },
+    { resource: "timeEntries", method: "listForUser" },
+    { resource: "timeOffPolicies", method: "list" },
+    { resource: "userGroups", method: "list" },
     { resource: "users", method: "findUserTeamManagers" },
     { resource: "users", method: "findWorkspaceUsers" },
 ] as const;
@@ -143,8 +137,7 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * // `.bind()` preserves the method's full type signature so TS
  * // infers the request shape and item shape correctly. An arrow
  * // wrapper works at runtime but loses inference.
- * const listProjects = client.projects.getWorkspaceProjects
- *   .bind(client.projects);
+ * const listProjects = client.projects.list.bind(client.projects);
  *
  * for await (const project of iterAll(listProjects, {
  *   workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
@@ -170,7 +163,7 @@ export async function* iterAll<TRequest, TItem>(
  *
  * @example
  * ```ts
- * const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
+ * const listTags = client.tags.list.bind(client.tags);
  * for await (const { items, page, hasNextPage } of iterPages(
  *   listTags,
  *   { workspaceId },
@@ -181,6 +174,37 @@ export async function* iterAll<TRequest, TItem>(
  * }
  * ```
  */
+/** Internal: minimum shape we need to extract Last-Page from a
+ *  Fern-generated method's return value. Matches `HttpResponsePromise<T>`
+ *  produced by every method on the synced SDK; structural type so the
+ *  helper works with any compatible thenable. */
+interface RawResponseAware<T> extends PromiseLike<T> {
+    withRawResponse(): Promise<{
+        readonly data: T;
+        readonly rawResponse: { readonly headers: { get(name: string): string | null } };
+    }>;
+}
+
+function hasWithRawResponse<T>(value: PromiseLike<T>): value is RawResponseAware<T> {
+    return (
+        value != null &&
+        typeof (value as { withRawResponse?: unknown }).withRawResponse === "function"
+    );
+}
+
+/** Parse the `Last-Page` response header (case-insensitive lookup
+ *  via the Headers API; value comparison case-insensitive too).
+ *  Returns `true` if the server marked this as the final page,
+ *  `false` if more pages are available, `undefined` if the header
+ *  was absent or unparsable. */
+function parseLastPageHeader(value: string | null | undefined): boolean | undefined {
+    if (value == null) return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return undefined;
+}
+
 export async function* iterPages<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
@@ -207,8 +231,37 @@ export async function* iterPages<TRequest, TItem>(
             page,
             "page-size": pageSize,
         } as TRequest;
-        const items = (await fetcher(request)) as readonly TItem[];
-        const hasNextPage = items.length === pageSize;
+
+        // Audited 2026-05-25: 15 of the 18 paginated Clockify list
+        // endpoints emit a `Last-Page: true|false` response header
+        // (see addons-me/fern/spec/evidence/discrepancies.md →
+        // `pagination.last-page-header.live-audit-2026-05-25`). When
+        // present, the header is the authoritative end-of-pages
+        // signal — more robust than the legacy
+        // `items.length === pageSize` heuristic, which fails when a
+        // final page coincidentally fills. We feature-detect
+        // `withRawResponse` on the fetcher return; the Fern-generated
+        // SDK methods always have it, but a custom fetcher passed by
+        // a test or a Speakeasy/Stainless variant might not.
+        const result = fetcher(request);
+        let items: readonly TItem[];
+        let lastPageFromHeader: boolean | undefined;
+        if (hasWithRawResponse(result)) {
+            const wrapped = await result.withRawResponse();
+            items = wrapped.data as readonly TItem[];
+            lastPageFromHeader = parseLastPageHeader(wrapped.rawResponse.headers.get("Last-Page"));
+        } else {
+            items = (await result) as readonly TItem[];
+        }
+
+        // Combine signals: header `true` is authoritative stop;
+        // otherwise fall back to "did we receive a full page?"
+        // (the legacy heuristic). The two combine safely — header
+        // `false` means the server expects more, but if we also got
+        // a short page we still stop (server inconsistency edge
+        // case where Last-Page lies; safer to stop than to loop).
+        const hasNextPage =
+            lastPageFromHeader === true ? false : items.length === pageSize;
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }

@@ -6,24 +6,24 @@
 
 ## Methods
 
-### `getAllMyWorkspaces`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.getAllMyWorkspaces()
+    await client.workspaces.list()
 ```
 
-**Request fields** (`GetAllMyWorkspacesRequest`):
+**Request fields** (`ListWorkspacesRequest`):
 
-- `roles` (`ClockifyApi.GetAllMyWorkspacesRequestRolesItem \| ClockifyApi.GetAllMyWorkspacesRequestRolesItem[]`, optional) — If provided, returns workspaces where the user has any of the specified roles. Owners are not counted as admins when filtering.
+- `roles` (`ClockifyApi.ListWorkspacesRequestRolesItem \| ClockifyApi.ListWorkspacesRequestRolesItem[]`, optional) — If provided, returns workspaces where the user has any of the specified roles. Owners are not counted as admins when filtering.
 
-### `addWorkspace`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.addWorkspace({
+    await client.workspaces.create({
         name: "Cool Company",
         organizationId: "67d471fb56aa9668b7bfa295"
     })
@@ -34,40 +34,40 @@
 - `name` (`string`, required) — Represents a workspace name.
 - `organizationId` (`string`, required) — Represents the Cake organization identifier across the system.
 
-### `getWorkspaceInfo`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.getWorkspaceInfo({
+    await client.workspaces.get({
         workspaceId: "64a687e29ae1f428e7ebe303"
     })
 ```
 
-**Request fields** (`GetWorkspaceInfoRequest`):
+**Request fields** (`GetWorkspacesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 
-### `putWorkspacesWorkspaceId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.putWorkspacesWorkspaceId({
+    await client.workspaces.update({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdRequest`):
+**Request fields** (`UpdateWorkspacesRequest`):
 
 - `workspaceId` (`string`, required)
 
-### `updateWorkspaceCostRate`
+### `updateCostRate`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.updateWorkspaceCostRate({
+    await client.workspaces.updateCostRate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         body: {
             amount: 20000,
@@ -76,17 +76,17 @@
     })
 ```
 
-**Request fields** (`UpdateWorkspaceCostRateRequest`):
+**Request fields** (`UpdateCostRateWorkspacesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`ClockifyApi.UpdateCostRateRequest`, required)
 
-### `updateWorkspaceBillableRate`
+### `updateBillableRate`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.updateWorkspaceBillableRate({
+    await client.workspaces.updateBillableRate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         amount: 2000,
         currency: "USD",
@@ -101,12 +101,12 @@
 - `currency` (`string`, required) — Represents a currency.
 - `since` (`string`, optional) — Represents a date and time in yyyy-MM-ddThh:mm:ssZ format.
 
-### `addUserToWorkspace`
+### `addUser`
 
 **Example:**
 
 ```typescript
-    await client.workspaces.addUserToWorkspace({
+    await client.workspaces.addUser({
         workspaceId: "64a687e29ae1f428e7ebe303",
         "send-email": "true",
         email: "<EMAIL>"
@@ -116,7 +116,7 @@
 **Request fields** (`AddUserToWorkspaceRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `send-email` (`ClockifyApi.AddUserToWorkspaceRequestSendEmail`, required) — Indicates whether to send an email when user is added to the workspace.
+- `send-email` (`ClockifyApi.AddUserWorkspacesRequestSendEmail`, required) — Indicates whether to send an email when user is added to the workspace.
 - `email` (`string`, required) — Represents an email address of the user.
 
 ### `updateUserStatus`

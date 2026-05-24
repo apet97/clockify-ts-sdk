@@ -27,7 +27,7 @@ export class InvoiceItemsClient {
      * @param {InvoiceItemsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoiceItems.addInvoiceItem({
+     *     await client.invoiceItems.create({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         applyTaxes: "TAX1TAX2",
@@ -37,14 +37,14 @@ export class InvoiceItemsClient {
      *         unitPrice: 500
      *     })
      */
-    public addInvoiceItem(
+    public create(
         request: ClockifyApi.AddInvoiceItemRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__addInvoiceItem(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addInvoiceItem(
+    private async __create(
         request: ClockifyApi.AddInvoiceItemRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
@@ -100,7 +100,7 @@ export class InvoiceItemsClient {
      * @param {InvoiceItemsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoiceItems.importInvoiceItems({
+     *     await client.invoiceItems.import({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         expenseFieldsForDetailedGroup: ["NOTE"],
@@ -121,14 +121,14 @@ export class InvoiceItemsClient {
      *         to: "2025-06-07T00:00:00Z"
      *     })
      */
-    public importInvoiceItems(
+    public import(
         request: ClockifyApi.ImportInvoiceItemsRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__importInvoiceItems(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__import(request, requestOptions));
     }
 
-    private async __importInvoiceItems(
+    private async __import(
         request: ClockifyApi.ImportInvoiceItemsRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
@@ -180,25 +180,25 @@ export class InvoiceItemsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteInvoiceItemRequest} request
+     * @param {ClockifyApi.DeleteInvoiceItemsRequest} request
      * @param {InvoiceItemsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoiceItems.deleteInvoiceItem({
+     *     await client.invoiceItems.delete({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         order: "order"
      *     })
      */
-    public deleteInvoiceItem(
-        request: ClockifyApi.DeleteInvoiceItemRequest,
+    public delete(
+        request: ClockifyApi.DeleteInvoiceItemsRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteInvoiceItem(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteInvoiceItem(
-        request: ClockifyApi.DeleteInvoiceItemRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteInvoiceItemsRequest,
         requestOptions?: InvoiceItemsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
         const { workspaceId, invoiceId, order } = request;

@@ -23,23 +23,23 @@ export class InvoicesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceInvoicesRequest} request
+     * @param {ClockifyApi.ListInvoicesRequest} request
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.getWorkspaceInvoices({
+     *     await client.invoices.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspaceInvoices(
-        request: ClockifyApi.GetWorkspaceInvoicesRequest,
+    public list(
+        request: ClockifyApi.ListInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceListResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceInvoices(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspaceInvoices(
-        request: ClockifyApi.GetWorkspaceInvoicesRequest,
+    private async __list(
+        request: ClockifyApi.ListInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceListResponse>> {
         const { workspaceId } = request;
@@ -91,7 +91,7 @@ export class InvoicesClient {
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.addInvoice({
+     *     await client.invoices.create({
      *         workspaceId: "workspaceId",
      *         clientId: "34p687e29ae1f428e7ebe562",
      *         currency: "USD",
@@ -101,14 +101,14 @@ export class InvoicesClient {
      *         timeViewMode: "AGGREGATED_TIME_VIEW"
      *     })
      */
-    public addInvoice(
+    public create(
         request: ClockifyApi.InvoiceCreateRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceCreateResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__addInvoice(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addInvoice(
+    private async __create(
         request: ClockifyApi.InvoiceCreateRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceCreateResponse>> {
@@ -164,7 +164,7 @@ export class InvoicesClient {
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.filterInvoices({
+     *     await client.invoices.filter({
      *         workspaceId: "workspaceId",
      *         clients: {
      *             contains: "CONTAINS",
@@ -194,14 +194,14 @@ export class InvoicesClient {
      *         strictSearch: false
      *     })
      */
-    public filterInvoices(
+    public filter(
         request: ClockifyApi.InvoiceFilterRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceInfoListResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__filterInvoices(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__filter(request, requestOptions));
     }
 
-    private async __filterInvoices(
+    private async __filter(
         request: ClockifyApi.InvoiceFilterRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceInfoListResponse>> {
@@ -253,24 +253,24 @@ export class InvoicesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetInvoiceByIdRequest} request
+     * @param {ClockifyApi.GetInvoicesRequest} request
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.getInvoiceById({
+     *     await client.invoices.get({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId"
      *     })
      */
-    public getInvoiceById(
-        request: ClockifyApi.GetInvoiceByIdRequest,
+    public get(
+        request: ClockifyApi.GetInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__getInvoiceById(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getInvoiceById(
-        request: ClockifyApi.GetInvoiceByIdRequest,
+    private async __get(
+        request: ClockifyApi.GetInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
         const { workspaceId, invoiceId } = request;
@@ -322,7 +322,7 @@ export class InvoicesClient {
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.updateInvoice({
+     *     await client.invoices.update({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         clientId: "98h687e29ae1f428e7ebe707",
@@ -340,14 +340,14 @@ export class InvoicesClient {
      *         visibleZeroFields: ["TAX", "TAX_2", "DISCOUNT"]
      *     })
      */
-    public updateInvoice(
+    public update(
         request: ClockifyApi.UpdateInvoiceRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__updateInvoice(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateInvoice(
+    private async __update(
         request: ClockifyApi.UpdateInvoiceRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
@@ -399,24 +399,24 @@ export class InvoicesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteInvoiceRequest} request
+     * @param {ClockifyApi.DeleteInvoicesRequest} request
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.deleteInvoice({
+     *     await client.invoices.delete({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId"
      *     })
      */
-    public deleteInvoice(
-        request: ClockifyApi.DeleteInvoiceRequest,
+    public delete(
+        request: ClockifyApi.DeleteInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteInvoice(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteInvoice(
-        request: ClockifyApi.DeleteInvoiceRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, invoiceId } = request;
@@ -464,24 +464,24 @@ export class InvoicesClient {
     }
 
     /**
-     * @param {ClockifyApi.DuplicateInvoiceRequest} request
+     * @param {ClockifyApi.DuplicateInvoicesRequest} request
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.duplicateInvoice({
+     *     await client.invoices.duplicate({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId"
      *     })
      */
-    public duplicateInvoice(
-        request: ClockifyApi.DuplicateInvoiceRequest,
+    public duplicate(
+        request: ClockifyApi.DuplicateInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__duplicateInvoice(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__duplicate(request, requestOptions));
     }
 
-    private async __duplicateInvoice(
-        request: ClockifyApi.DuplicateInvoiceRequest,
+    private async __duplicate(
+        request: ClockifyApi.DuplicateInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
         const { workspaceId, invoiceId } = request;
@@ -528,15 +528,15 @@ export class InvoicesClient {
         );
     }
 
-    public exportInvoice(
-        request: ClockifyApi.ExportInvoiceRequest,
+    public export(
+        request: ClockifyApi.ExportInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<core.BinaryResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__exportInvoice(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__export(request, requestOptions));
     }
 
-    private async __exportInvoice(
-        request: ClockifyApi.ExportInvoiceRequest,
+    private async __export(
+        request: ClockifyApi.ExportInvoicesRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<core.BinaryResponse>> {
         const { workspaceId, invoiceId, userLocale } = request;
@@ -596,20 +596,20 @@ export class InvoicesClient {
      * @param {InvoicesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoices.changeInvoiceStatus({
+     *     await client.invoices.updateStatus({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         invoiceStatus: "PAID"
      *     })
      */
-    public changeInvoiceStatus(
+    public updateStatus(
         request: ClockifyApi.InvoiceStatusRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__changeInvoiceStatus(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateStatus(request, requestOptions));
     }
 
-    private async __changeInvoiceStatus(
+    private async __updateStatus(
         request: ClockifyApi.InvoiceStatusRequest,
         requestOptions?: InvoicesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {

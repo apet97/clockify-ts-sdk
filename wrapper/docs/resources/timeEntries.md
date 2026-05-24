@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `postWorkspacesWorkspaceIdTimeEntries`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.postWorkspacesWorkspaceIdTimeEntries({
+    await client.timeEntries.create({
         workspaceId: "workspaceId",
         start: "2024-01-15T09:30:00Z"
     })
@@ -29,80 +29,80 @@
 - `taskId` (`string`, optional)
 - `type` (`CreateTimeEntryRequest.Type`, optional)
 
-### `patchWorkspacesWorkspaceIdTimeEntriesInvoiced`
+### `markInvoiced`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.patchWorkspacesWorkspaceIdTimeEntriesInvoiced({
+    await client.timeEntries.markInvoiced({
         workspaceId: "workspaceId",
         invoiced: true,
         timeEntryIds: ["timeEntryIds"]
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdTimeEntriesInvoicedRequest`):
+**Request fields** (`MarkInvoicedTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiced` (`boolean`, required)
 - `timeEntryIds` (`string[]`, required)
 
-### `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk`
+### `markInvoicedBulk`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk({
+    await client.timeEntries.markInvoicedBulk({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdTimeEntriesInvoicedBulkRequest`):
+**Request fields** (`MarkInvoicedBulkTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `ids` (`string[]`, optional)
 - `invoiced` (`boolean`, optional)
 
-### `getWorkspacesWorkspaceIdTimeEntriesStatusInProgress`
+### `listInProgress`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.getWorkspacesWorkspaceIdTimeEntriesStatusInProgress({
+    await client.timeEntries.listInProgress({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTimeEntriesStatusInProgressRequest`):
+**Request fields** (`ListInProgressTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)
 
-### `getWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.getWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.get({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`GetTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 - `hydrated` (`boolean`, optional)
 - `consider-duration-format` (`boolean`, optional)
 
-### `putWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.putWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.update({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId",
         body: {
@@ -111,40 +111,40 @@
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`UpdateTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 - `body` (`ClockifyApi.TimeEntryUpdate`, required)
 
-### `deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.delete({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`DeleteTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 
-### `getWorkspacesWorkspaceIdUserUserIdTimeEntries`
+### `listForUser`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.getWorkspacesWorkspaceIdUserUserIdTimeEntries({
+    await client.timeEntries.listForUser({
         workspaceId: "workspaceId",
         userId: "userId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest`):
+**Request fields** (`ListForUserTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
@@ -162,12 +162,12 @@
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `postWorkspacesWorkspaceIdUserUserIdTimeEntries`
+### `createForUser`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.postWorkspacesWorkspaceIdUserUserIdTimeEntries({
+    await client.timeEntries.createForUser({
         workspaceId: "workspaceId",
         userId: "userId",
         body: {
@@ -176,18 +176,18 @@
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest`):
+**Request fields** (`CreateForUserTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
 - `body` (`ClockifyApi.TimeEntryCreate`, required)
 
-### `putWorkspacesWorkspaceIdUserUserIdTimeEntries`
+### `startTimer`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.putWorkspacesWorkspaceIdUserUserIdTimeEntries({
+    await client.timeEntries.startTimer({
         workspaceId: "workspaceId",
         userId: "userId",
         body: [{
@@ -198,7 +198,7 @@
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest`):
+**Request fields** (`StartTimerTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
@@ -222,55 +222,55 @@
 - `userId` (`string`, required) — Represents a user identifier across the system.
 - `time-entry-ids` (`string \| string[]`, optional) — Represents a list of time entry ids to delete.
 
-### `patchWorkspacesWorkspaceIdUserUserIdTimeEntries`
+### `updateForUser`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.patchWorkspacesWorkspaceIdUserUserIdTimeEntries({
+    await client.timeEntries.updateForUser({
         workspaceId: "workspaceId",
         userId: "userId",
         end: "2024-01-15T09:30:00Z"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest`):
+**Request fields** (`UpdateForUserTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
 - `end` (`string`, required)
 
-### `patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop`
+### `stopTimer`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop({
+    await client.timeEntries.stopTimer({
         workspaceId: "workspaceId",
         userId: "userId",
         end: "2024-01-15T09:30:00Z"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesStopRequest`):
+**Request fields** (`StopTimerTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
 - `end` (`string`, required)
 
-### `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate`
+### `duplicate`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate({
+    await client.timeEntries.duplicate({
         workspaceId: "workspaceId",
         userId: "userId",
         timeEntryId: "timeEntryId"
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicateRequest`):
+**Request fields** (`DuplicateTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)

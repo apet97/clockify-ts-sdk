@@ -26,11 +26,11 @@ export class SchedulingClient {
      * For a single one-off assignment, use the recurring path with
      * `repeat=false`, `weeks=1`.
      *
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest} request
+     * @param {ClockifyApi.CreateSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.postWorkspacesWorkspaceIdSchedulingAssignments({
+     *     await client.scheduling.create({
      *         workspaceId: "workspaceId",
      *         hoursPerDay: 1.1,
      *         period: {},
@@ -38,17 +38,15 @@ export class SchedulingClient {
      *         userId: "userId"
      *     })
      */
-    public postWorkspacesWorkspaceIdSchedulingAssignments(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest,
+    public create(
+        request: ClockifyApi.CreateSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.OpenapiSchedulingAssignment> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdSchedulingAssignments(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdSchedulingAssignments(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest,
+    private async __create(
+        request: ClockifyApi.CreateSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.OpenapiSchedulingAssignment>> {
         const { workspaceId, ..._body } = request;
@@ -102,24 +100,24 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.GetAllSchedulingAssignmentsRequest} request
+     * @param {ClockifyApi.ListSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.getAllSchedulingAssignments({
+     *     await client.scheduling.list({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         name: "Bugfixing"
      *     })
      */
-    public getAllSchedulingAssignments(
-        request: ClockifyApi.GetAllSchedulingAssignmentsRequest,
+    public list(
+        request: ClockifyApi.ListSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.AssignmentListItem[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getAllSchedulingAssignments(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getAllSchedulingAssignments(
-        request: ClockifyApi.GetAllSchedulingAssignmentsRequest,
+    private async __list(
+        request: ClockifyApi.ListSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.AssignmentListItem[]>> {
         const {
@@ -189,7 +187,7 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.getScheduledAssignmentsPerProject({
+     *     await client.scheduling.listPerProject({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         end: "2021-01-01T00:00:00Z",
      *         page: 1,
@@ -199,14 +197,14 @@ export class SchedulingClient {
      *         statusFilter: "ALL"
      *     })
      */
-    public getScheduledAssignmentsPerProject(
+    public listPerProject(
         request: ClockifyApi.ProjectTotalsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ProjectAssignmentsTotal[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getScheduledAssignmentsPerProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listPerProject(request, requestOptions));
     }
 
-    private async __getScheduledAssignmentsPerProject(
+    private async __listPerProject(
         request: ClockifyApi.ProjectTotalsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ProjectAssignmentsTotal[]>> {
@@ -261,24 +259,24 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.GetScheduledAssignmentsOnProjectRequest} request
+     * @param {ClockifyApi.ListOnProjectSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.getScheduledAssignmentsOnProject({
+     *     await client.scheduling.listOnProject({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "56b687e29ae1f428e7ebe504"
      *     })
      */
-    public getScheduledAssignmentsOnProject(
-        request: ClockifyApi.GetScheduledAssignmentsOnProjectRequest,
+    public listOnProject(
+        request: ClockifyApi.ListOnProjectSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ProjectAssignmentsTotal> {
-        return core.HttpResponsePromise.fromPromise(this.__getScheduledAssignmentsOnProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listOnProject(request, requestOptions));
     }
 
-    private async __getScheduledAssignmentsOnProject(
-        request: ClockifyApi.GetScheduledAssignmentsOnProjectRequest,
+    private async __listOnProject(
+        request: ClockifyApi.ListOnProjectSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ProjectAssignmentsTotal>> {
         const { workspaceId, projectId } = request;
@@ -330,7 +328,7 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.publishAssignments({
+     *     await client.scheduling.publish({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         end: "2021-01-01T00:00:00Z",
      *         notifyUsers: false,
@@ -339,14 +337,14 @@ export class SchedulingClient {
      *         viewType: "ALL"
      *     })
      */
-    public publishAssignments(
+    public publish(
         request: ClockifyApi.PublishAssignmentsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__publishAssignments(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__publish(request, requestOptions));
     }
 
-    private async __publishAssignments(
+    private async __publish(
         request: ClockifyApi.PublishAssignmentsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
@@ -402,7 +400,7 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.createRecurringAssignment({
+     *     await client.scheduling.createRecurring({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         billable: false,
      *         end: "2021-01-01T00:00:00Z",
@@ -420,14 +418,14 @@ export class SchedulingClient {
      *         userId: "72k687e29ae1f428e7ebe109"
      *     })
      */
-    public createRecurringAssignment(
+    public createRecurring(
         request: ClockifyApi.CreateRecurringAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SchedulingAssignment[]> {
-        return core.HttpResponsePromise.fromPromise(this.__createRecurringAssignment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__createRecurring(request, requestOptions));
     }
 
-    private async __createRecurringAssignment(
+    private async __createRecurring(
         request: ClockifyApi.CreateRecurringAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SchedulingAssignment[]>> {
@@ -479,11 +477,11 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest} request
+     * @param {ClockifyApi.ReplaceRecurringSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId({
+     *     await client.scheduling.replaceRecurring({
      *         workspaceId: "workspaceId",
      *         assignmentId: "assignmentId",
      *         body: {
@@ -491,17 +489,15 @@ export class SchedulingClient {
      *         }
      *     })
      */
-    public putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest,
+    public replaceRecurring(
+        request: ClockifyApi.ReplaceRecurringSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<Record<string, unknown>[]> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__replaceRecurring(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest,
+    private async __replaceRecurring(
+        request: ClockifyApi.ReplaceRecurringSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<Record<string, unknown>[]>> {
         const { workspaceId, assignmentId, body: _body } = request;
@@ -552,24 +548,24 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteRecurringAssignmentRequest} request
+     * @param {ClockifyApi.DeleteRecurringSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.deleteRecurringAssignment({
+     *     await client.scheduling.deleteRecurring({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         assignmentId: "5b641568b07987035750505e"
      *     })
      */
-    public deleteRecurringAssignment(
-        request: ClockifyApi.DeleteRecurringAssignmentRequest,
+    public deleteRecurring(
+        request: ClockifyApi.DeleteRecurringSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SchedulingAssignment[]> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteRecurringAssignment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__deleteRecurring(request, requestOptions));
     }
 
-    private async __deleteRecurringAssignment(
-        request: ClockifyApi.DeleteRecurringAssignmentRequest,
+    private async __deleteRecurring(
+        request: ClockifyApi.DeleteRecurringSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SchedulingAssignment[]>> {
         const { workspaceId, assignmentId } = request;
@@ -621,7 +617,7 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.updateRecurringAssignment({
+     *     await client.scheduling.updateRecurring({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         assignmentId: "5b641568b07987035750505e",
      *         billable: false,
@@ -635,14 +631,14 @@ export class SchedulingClient {
      *         taskId: "36b687e29ae1f428e7ebe109"
      *     })
      */
-    public updateRecurringAssignment(
+    public updateRecurring(
         request: ClockifyApi.UpdateRecurringAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SchedulingAssignment[]> {
-        return core.HttpResponsePromise.fromPromise(this.__updateRecurringAssignment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateRecurring(request, requestOptions));
     }
 
-    private async __updateRecurringAssignment(
+    private async __updateRecurring(
         request: ClockifyApi.UpdateRecurringAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SchedulingAssignment[]>> {
@@ -768,7 +764,7 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.getUsersCapacityTotals({
+     *     await client.scheduling.getUsersCapacityFiltered({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         end: "2021-01-01T00:00:00Z",
      *         page: 1,
@@ -778,14 +774,14 @@ export class SchedulingClient {
      *         statusFilter: "ALL"
      *     })
      */
-    public getUsersCapacityTotals(
+    public getUsersCapacityFiltered(
         request: ClockifyApi.UserCapacityTotalsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserCapacityTotal[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getUsersCapacityTotals(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__getUsersCapacityFiltered(request, requestOptions));
     }
 
-    private async __getUsersCapacityTotals(
+    private async __getUsersCapacityFiltered(
         request: ClockifyApi.UserCapacityTotalsRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserCapacityTotal[]>> {
@@ -837,27 +833,25 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest} request
+     * @param {ClockifyApi.CalculateUsersTotalsSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals({
+     *     await client.scheduling.calculateUsersTotals({
      *         workspaceId: "workspaceId",
      *         end: "2024-01-15T09:30:00Z",
      *         start: "2024-01-15T09:30:00Z"
      *     })
      */
-    public postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest,
+    public calculateUsersTotals(
+        request: ClockifyApi.CalculateUsersTotalsSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__calculateUsersTotals(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest,
+    private async __calculateUsersTotals(
+        request: ClockifyApi.CalculateUsersTotalsSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, ..._body } = request;
@@ -908,24 +902,24 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.GetUserCapacityTotalRequest} request
+     * @param {ClockifyApi.GetUserCapacitySchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.getUserCapacityTotal({
+     *     await client.scheduling.getUserCapacity({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         userId: "5a0ab5acb07987125438b60f"
      *     })
      */
-    public getUserCapacityTotal(
-        request: ClockifyApi.GetUserCapacityTotalRequest,
+    public getUserCapacity(
+        request: ClockifyApi.GetUserCapacitySchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserCapacityTotal> {
-        return core.HttpResponsePromise.fromPromise(this.__getUserCapacityTotal(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__getUserCapacity(request, requestOptions));
     }
 
-    private async __getUserCapacityTotal(
-        request: ClockifyApi.GetUserCapacityTotalRequest,
+    private async __getUserCapacity(
+        request: ClockifyApi.GetUserCapacitySchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserCapacityTotal>> {
         const { workspaceId, userId } = request;
@@ -973,27 +967,25 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest} request
+     * @param {ClockifyApi.UpdateSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId({
+     *     await client.scheduling.update({
      *         workspaceId: "workspaceId",
      *         assignmentId: "assignmentId",
      *         body: {}
      *     })
      */
-    public putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest,
+    public update(
+        request: ClockifyApi.UpdateSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, assignmentId, body: _body } = request;
@@ -1044,26 +1036,24 @@ export class SchedulingClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest} request
+     * @param {ClockifyApi.DeleteSchedulingRequest} request
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId({
+     *     await client.scheduling.delete({
      *         workspaceId: "workspaceId",
      *         assignmentId: "assignmentId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteSchedulingRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, assignmentId } = request;
@@ -1115,21 +1105,21 @@ export class SchedulingClient {
      * @param {SchedulingClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.scheduling.copyScheduledAssignment({
+     *     await client.scheduling.copy({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         assignmentId: "5b641568b07987035750505e",
      *         seriesUpdateOption: "THIS_ONE",
      *         userId: "72k687e29ae1f428e7ebe109"
      *     })
      */
-    public copyScheduledAssignment(
+    public copy(
         request: ClockifyApi.CopyAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SchedulingAssignment[]> {
-        return core.HttpResponsePromise.fromPromise(this.__copyScheduledAssignment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__copy(request, requestOptions));
     }
 
-    private async __copyScheduledAssignment(
+    private async __copy(
         request: ClockifyApi.CopyAssignmentRequest,
         requestOptions?: SchedulingClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SchedulingAssignment[]>> {

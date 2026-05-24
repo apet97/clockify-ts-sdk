@@ -34,7 +34,7 @@ export class ReportsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.reports.generateAttendanceReport({
+     *     await client.reports.attendance({
      *         workspaceId: "workspaceId",
      *         amountShown: "COST",
      *         amounts: ["EARNED", "COST"],
@@ -105,14 +105,14 @@ export class ReportsClient {
      *         zoomLevel: "WEEK"
      *     })
      */
-    public generateAttendanceReport(
+    public attendance(
         request: ClockifyApi.AttendanceReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.AttendanceReportResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__generateAttendanceReport(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__attendance(request, requestOptions));
     }
 
-    private async __generateAttendanceReport(
+    private async __attendance(
         request: ClockifyApi.AttendanceReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.AttendanceReportResponse>> {
@@ -150,7 +150,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -186,7 +189,7 @@ export class ReportsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.reports.generateDetailedReport({
+     *     await client.reports.detailed({
      *         workspaceId: "workspaceId",
      *         amountShown: "COST",
      *         amounts: ["EARNED", "COST"],
@@ -248,14 +251,14 @@ export class ReportsClient {
      *         zoomLevel: "WEEK"
      *     })
      */
-    public generateDetailedReport(
+    public detailed(
         request: ClockifyApi.DetailedReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.DetailedReportResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__generateDetailedReport(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__detailed(request, requestOptions));
     }
 
-    private async __generateDetailedReport(
+    private async __detailed(
         request: ClockifyApi.DetailedReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.DetailedReportResponse>> {
@@ -293,7 +296,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -329,7 +335,7 @@ export class ReportsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.reports.generateSummaryReport({
+     *     await client.reports.summary({
      *         workspaceId: "workspaceId",
      *         amountShown: "COST",
      *         amounts: ["EARNED", "COST"],
@@ -382,14 +388,14 @@ export class ReportsClient {
      *         zoomLevel: "WEEK"
      *     })
      */
-    public generateSummaryReport(
+    public summary(
         request: ClockifyApi.SummaryReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SummaryReportResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__generateSummaryReport(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__summary(request, requestOptions));
     }
 
-    private async __generateSummaryReport(
+    private async __summary(
         request: ClockifyApi.SummaryReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SummaryReportResponse>> {
@@ -427,7 +433,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -463,7 +472,7 @@ export class ReportsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.reports.generateWeeklyReport({
+     *     await client.reports.weekly({
      *         workspaceId: "workspaceId",
      *         amountShown: "COST",
      *         amounts: ["EARNED", "COST"],
@@ -515,14 +524,14 @@ export class ReportsClient {
      *         zoomLevel: "WEEK"
      *     })
      */
-    public generateWeeklyReport(
+    public weekly(
         request: ClockifyApi.WeeklyReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WeeklyReportResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__generateWeeklyReport(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__weekly(request, requestOptions));
     }
 
-    private async __generateWeeklyReport(
+    private async __weekly(
         request: ClockifyApi.WeeklyReportRequest,
         requestOptions?: ReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WeeklyReportResponse>> {
@@ -560,7 +569,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:

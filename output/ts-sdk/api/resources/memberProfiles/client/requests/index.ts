@@ -1,2 +1,2 @@
-export type { GetMemberProfileRequest } from "./GetMemberProfileRequest.js";
+export type { GetMemberProfilesRequest } from "./GetMemberProfilesRequest.js";
 export { MemberProfileUpdateRequest } from "./MemberProfileUpdateRequest.js";

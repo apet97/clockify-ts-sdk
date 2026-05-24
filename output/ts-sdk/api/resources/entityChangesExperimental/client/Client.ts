@@ -26,26 +26,26 @@ export class EntityChangesExperimentalClient {
      * Retrieves records from the database collection that were created within a specified date range.
      * The date range is determined by two parameters: start and end.
      *
-     * @param {ClockifyApi.GetCreatedEntityInfoRequest} request
+     * @param {ClockifyApi.ListCreatedEntityChangesExperimentalRequest} request
      * @param {EntityChangesExperimentalClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.entityChangesExperimental.getCreatedEntityInfo({
+     *     await client.entityChangesExperimental.listCreated({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         type: ["TIME_ENTRY"],
      *         start: "2024-10-29T10:00:00Z",
      *         end: "2024-11-28T10:00:00Z"
      *     })
      */
-    public getCreatedEntityInfo(
-        request: ClockifyApi.GetCreatedEntityInfoRequest,
+    public listCreated(
+        request: ClockifyApi.ListCreatedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): core.HttpResponsePromise<string> {
-        return core.HttpResponsePromise.fromPromise(this.__getCreatedEntityInfo(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listCreated(request, requestOptions));
     }
 
-    private async __getCreatedEntityInfo(
-        request: ClockifyApi.GetCreatedEntityInfoRequest,
+    private async __listCreated(
+        request: ClockifyApi.ListCreatedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): Promise<core.WithRawResponse<string>> {
         const { workspaceId, type: type_, start, end, page, limit } = request;
@@ -110,26 +110,26 @@ export class EntityChangesExperimentalClient {
      * > ### 💡 Note
      * > Deleted entities will be updated and reflected in this endpoint approximately one minute after the deletion occurs. Also, entities that are created and deleted within the request date range will not appear in the /deleted endpoint.
      *
-     * @param {ClockifyApi.GetDeletedEntityInfoRequest} request
+     * @param {ClockifyApi.ListDeletedEntityChangesExperimentalRequest} request
      * @param {EntityChangesExperimentalClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.entityChangesExperimental.getDeletedEntityInfo({
+     *     await client.entityChangesExperimental.listDeleted({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         type: ["TIME_ENTRY"],
      *         start: "2024-10-29T10:00:00Z",
      *         end: "2024-11-28T10:00:00Z"
      *     })
      */
-    public getDeletedEntityInfo(
-        request: ClockifyApi.GetDeletedEntityInfoRequest,
+    public listDeleted(
+        request: ClockifyApi.ListDeletedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.PageableCollectionLogBinDocumentDto> {
-        return core.HttpResponsePromise.fromPromise(this.__getDeletedEntityInfo(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listDeleted(request, requestOptions));
     }
 
-    private async __getDeletedEntityInfo(
-        request: ClockifyApi.GetDeletedEntityInfoRequest,
+    private async __listDeleted(
+        request: ClockifyApi.ListDeletedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.PageableCollectionLogBinDocumentDto>> {
         const { workspaceId, type: type_, start, end, page, limit } = request;
@@ -197,26 +197,26 @@ export class EntityChangesExperimentalClient {
      * > ### 💡 Note
      * > If an entity is both created and updated within the requested date range, it will be excluded from the /updated endpoint results.
      *
-     * @param {ClockifyApi.GetUpdatedEntityInfoRequest} request
+     * @param {ClockifyApi.ListUpdatedEntityChangesExperimentalRequest} request
      * @param {EntityChangesExperimentalClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.entityChangesExperimental.getUpdatedEntityInfo({
+     *     await client.entityChangesExperimental.listUpdated({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         type: ["TIME_ENTRY"],
      *         start: "2024-10-29T10:00:00Z",
      *         end: "2024-11-28T10:00:00Z"
      *     })
      */
-    public getUpdatedEntityInfo(
-        request: ClockifyApi.GetUpdatedEntityInfoRequest,
+    public listUpdated(
+        request: ClockifyApi.ListUpdatedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): core.HttpResponsePromise<string> {
-        return core.HttpResponsePromise.fromPromise(this.__getUpdatedEntityInfo(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listUpdated(request, requestOptions));
     }
 
-    private async __getUpdatedEntityInfo(
-        request: ClockifyApi.GetUpdatedEntityInfoRequest,
+    private async __listUpdated(
+        request: ClockifyApi.ListUpdatedEntityChangesExperimentalRequest,
         requestOptions?: EntityChangesExperimentalClient.RequestOptions,
     ): Promise<core.WithRawResponse<string>> {
         const { workspaceId, type: type_, start, end, page, limit } = request;

@@ -1,5 +1,5 @@
-export type { DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest } from "./DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest.js";
-export type { GetSharedReportsSharedReportIdRequest } from "./GetSharedReportsSharedReportIdRequest.js";
-export type { GetWorkspacesWorkspaceIdSharedReportsRequest } from "./GetWorkspacesWorkspaceIdSharedReportsRequest.js";
-export type { PostWorkspacesWorkspaceIdSharedReportsRequest } from "./PostWorkspacesWorkspaceIdSharedReportsRequest.js";
-export type { PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest } from "./PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest.js";
+export type { CreateSharedReportsRequest } from "./CreateSharedReportsRequest.js";
+export type { DeleteSharedReportsRequest } from "./DeleteSharedReportsRequest.js";
+export type { ListSharedReportsRequest } from "./ListSharedReportsRequest.js";
+export type { UpdateSharedReportsRequest } from "./UpdateSharedReportsRequest.js";
+export type { ViewSharedReportsRequest } from "./ViewSharedReportsRequest.js";

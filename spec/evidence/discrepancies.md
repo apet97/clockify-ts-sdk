@@ -506,7 +506,7 @@ Each of these needs:
   generate --group ts --local --force` succeeds, `tsc --noEmit`
   against `output/ts-sdk/` exits 0.
 
-### `fern.x-fern-pagination.bare-array-unsupported` — DOCUMENTED 2026-05-24
+### `fern.x-fern-pagination.bare-array-unsupported` — UPSTREAM-TRACKING 2026-05-25
 
 - **Official claim (Fern docs):** the `x-fern-pagination` OpenAPI
   extension instructs Fern's SDK generators to emit auto-pagination
@@ -545,7 +545,7 @@ Each of these needs:
      (`./output/ts-sdk/` → publishable package) can
      ship a hand-written iterator helper that consumes
      `page`/`page-size` and stops on `Last-Page: true`.
-- **Status:** `documented-blocking-upstream`. `x-fern-pagination`
+- **Status (initial):** `documented-blocking-upstream`. `x-fern-pagination`
   is **not** stamped on any Clockify operation. The `page` and
   `page-size` query params are stamped — that's still a real spec
   improvement consumed by callers, MCP tools, and any downstream
@@ -554,7 +554,87 @@ Each of these needs:
   release that documents bare-array pagination support or when an
   overrides-side workaround is discovered.
 
-### `fern.x-fern-sdk-method-name.drops-resource-modules` — DEFERRED 2026-05-24
+#### Update 2026-05-25 (session 4) — re-verification + upstream issue drafted
+
+- **Fern CLI version check:** still pinned at `5.37.9`; latest on
+  npm is also `5.37.9` (see G.3 update above for the version probe).
+- **Docs re-check:** the buildwithfern.com pagination docs page now
+  enumerates four pagination schemes (offset / cursor / URI / path);
+  all examples show `results` pointing to a property inside a response
+  object (`$response.results`, `$response.data`, etc.). Bare-array
+  responses are still NOT documented as supported. The page also
+  notes auto-pagination is "available only for the Pro and
+  Enterprise plans" — a separate concern for OSS consumers, but
+  doesn't change the bare-array verdict.
+- **Re-reproduction (2026-05-25):** stamped `x-fern-pagination`
+  with `offset: $request.page, results: $response` on a single op
+  (tags GET) on top of the current G.1 snapshot, ran
+  `fern generate --group ts --local --force`. Fern emitted:
+  ```
+  [error] Pagination configuration for endpoint list must define
+          a dot-delimited 'results' property starting with
+          $response (e.g. $response.results).
+  ```
+  Same error with `results: $response[*]`. Test mutation reverted.
+- **Fern repo issue search:** searched `github.com/fern-api/fern`
+  for issues matching `bare array pagination`, `x-fern-pagination
+  results response`, `pagination top-level array`, `auto pagination
+  openapi`, `pagination results` — zero hits. No existing upstream
+  tracking issue.
+- **Action:** drafted a complete issue body at
+  `spec/evidence/fern-issues/bare-array-pagination-results-path.md`,
+  ready to paste verbatim at `https://github.com/fern-api/fern/issues/new`.
+  The body ships a minimal repro spec, lists the three rejected
+  `results` variants, explains why the limitation matters (bare-array
+  APIs in production like Clockify), points at the
+  wrapper-side `paginate<T>` + `iterAll` helpers as the current
+  workaround, and proposes either `results: $response` or a sentinel
+  syntax as the desired fix.
+- **Workaround status:** unchanged. The hand-written
+  `paginate<T>` (`wrapper/pagination.ts`), `iterAll` /
+  `iterPages` (`wrapper/iter.ts`) + `KNOWN_PAGINATED_METHODS`
+  drift assertion remain the supported pagination surface. The
+  v1.0.0 cut still ships them.
+- **Bump posture:** identical to G.3 — we're already on the latest
+  CLI + container. Re-check on every Fern release; the filed issue
+  is the discovery channel.
+
+- **Updated open questions:**
+  1. ~~Is there a Fern overrides syntax that can wrap a bare-array
+     response in a synthetic envelope at SDK-generation time?~~
+     **Confirmed no.** Doc-fetch on the current pagination docs
+     page shows envelope-only examples. Routed to upstream as a
+     drafted issue.
+  2. Until Fern adds bare-array offset support, the TS SDK ships
+     without auto-pagination — **already true and stable**; the
+     wrapper's `iterAll` family is the supported entry point.
+
+- **Filing decision 2026-05-25:** the drafted issue body at
+  `spec/evidence/fern-issues/bare-array-pagination-results-path.md`
+  is **internal evidence only — not filed upstream**. Maintainer
+  call (apet97 2026-05-25): the wrapper-side `paginate` / `iterAll`
+  helpers are the supported pagination surface and shipping a
+  user-facing upstream tracking discussion isn't a current priority.
+  Re-open this status if Fern independently lands bare-array
+  support or someone else files the issue and we need to track it.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted-internal-only`.
+  The hand-written `paginate` / `iterAll` helpers stay; the
+  `KNOWN_PAGINATED_METHODS` drift assertion catches regressions.
+  When the upstream fix ships (via any channel):
+  1. Re-test stamping `x-fern-pagination` on a single op (tags) and
+     confirm successful TS generation with an `AsyncIterable<Tag>`
+     method.
+  2. Expand stamping to all 18 ops in `PAGINATED_LIST_OPS` (mirror
+     of the G.1 bisect cadence: one at a time, regen + gates +
+     fern generate, count modules).
+  3. Bump `wrapper/CHANGELOG.md` `[Unreleased]` to flag the
+     hand-written `paginate` + `iterAll` as deprecated; document
+     a removal target (v2.0).
+  4. Land as v2.0 with the deprecation removed; `iter.ts` +
+     `pagination.ts` deleted; subpath exports removed.
+
+### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24 (session 3)
 
 - **Official claim:** Fern's `x-fern-sdk-method-name` OpenAPI extension
   overrides the operationId-derived SDK method name. Applied per-op,
@@ -607,7 +687,7 @@ Each of these needs:
      bisect showed the cascade affected Tags (5 ops, all distinct
      methods, no internal collision) too, so collision-avoidance
      alone is unlikely to be the full fix.
-- **Status:** `deferred-needs-upstream-investigation`. The
+- **Status (initial):** `deferred-needs-upstream-investigation`. The
   `stamp_sdk_method_name!` call has been removed from the
   generator's per-op finalization loop and the `derive_sdk_method_name`
   + `stamp_sdk_method_name!` function bodies replaced with a NOTE
@@ -617,6 +697,158 @@ Each of these needs:
   then, SDK callers consume the upstream operationId-derived method
   names (e.g. `tags.getWorkspacesWorkspaceIdTags()`) — long but
   stable, and all 32 resource modules are emitted.
+
+#### Update 2026-05-24 (session 3) — root cause + partial fix shipped
+
+- **Root cause identified:** stamping `x-fern-sdk-method-name` **alone**
+  hoists the operation to the **root client** (`client.list()` instead
+  of `client.tags.list()`) and removes it from the resource module. The
+  previous 135-op heuristic stamped every CRUDL op with method-name
+  only; each stamped op got hoisted to the root, and the 12 affected
+  modules' op-sets emptied out enough that Fern's TS generator skipped
+  module emission entirely. There is no IR-level name mangling and no
+  type collision — the dropped-modules behaviour is downstream of the
+  hoist behaviour, not a separate bug.
+
+- **Fix:** pair `x-fern-sdk-group-name: <resource>` with
+  `x-fern-sdk-method-name: <verb>` on every stamped op. With both keys
+  present, Fern (a) keeps the method under `client.<resource>.<verb>()`
+  and (b) emits all resource modules unchanged. Verified with single-op
+  bisect (tags GET → `list`) then full CRUDL on tags (5 ops) then full
+  CRUDL + `archive` on clients (6 ops). All three iterations produced
+  31 resource modules + `index.ts` (matches baseline) and zero hoisted
+  methods on the root client.
+
+- **What shipped (27-module subset, 170 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 170 pairs to
+  `{group, name}` entries. The session expanded in eight steps:
+  - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
+    archive = 11 ops.
+  - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
+    timeOffPolicies, userGroups, webhooks each × 4-5 CRUDL +
+    timeEntries × 4 core CRUD = 37 more ops.
+  - Step 3 (next-batch cohort): customFields × 7 scoped, expenses × 5,
+    expenseCategories × 5 + archive, invoiceItems × 3, invoicePayments
+    × 3, policies × 5 + archive = 29 more ops.
+  - Step 4 (workflow-verb cohort): approvals × 6 workflow verbs
+    (list/submit/submitForUser/resubmit/resubmitForUser/updateStatus),
+    timeOff × 5 (list/get/delete/updateStatus/submit), scheduling × 9
+    (CRUDL + publish + copy + recurring CRUD) = 20 more ops.
+  - Step 5 (specialised cohort): invoices × 9
+    (CRUDL + filter + duplicate + export + updateStatus), reports × 4
+    (one entry per family: attendance / detailed / summary / weekly)
+    = 13 more ops.
+  - Step 6 (action-verb cleanups inside stamped modules):
+    projects × 9 (createFromTemplate, archive, updateCostRate,
+    updateEstimate, updateHourlyRate, updateMemberships,
+    updateTemplate, updateUserCostRate, updateUserHourlyRate),
+    tasks × 2 (updateCostRate, updateBillableRate),
+    timeEntries × 9 (markInvoiced, markInvoicedBulk, listInProgress,
+    listForUser, createForUser, startTimer, updateForUser, stopTimer,
+    duplicate), holidays × 1 (listInPeriod), sharedReports × 1
+    (view), timeOffPolicies × 1 (updateStatus), userGroups × 3
+    (listMembers, addMembers, removeMember), webhooks × 5
+    (listForAddon, rotateToken, listLogs, searchLogs, updateToken),
+    expenses × 1 (downloadReceipt), scheduling × 6 (listPerProject,
+    listOnProject, replaceRecurring, getUsersCapacityFiltered,
+    calculateUsersTotals, getUserCapacity), timeOff × 1
+    (submitForUser) = 39 more ops.
+  - Step 7 (small / read-only module fills): auditLogReport × 1
+    (search), balances × 3 (listForPolicy, update, getForUser),
+    entityChangesExperimental × 3 (listCreated, listUpdated,
+    listDeleted), invoiceSettings × 2 (get, update),
+    memberProfiles × 2 (get, update), workspaces × 7
+    (list, create, get, update, updateCostRate, updateBillableRate,
+    addUser) = 18 more ops. Skipped: `files.uploadImage`,
+    `roles.{give,remove}UserManagerRole`, `expenseReport.
+    generateDetailedReportV1`, per-user workspaces verbs — each
+    is already verb-noun shaped.
+  - Step 8 (final domain edge-case fills, 3 ops):
+    projects × 1 (`setMembers` for POST /memberships, paired with
+    sibling PATCH `updateMemberships`), timeOff × 1 (`withdraw`
+    for DELETE on the policy-scoped request path, paired with
+    admin workspace-level `delete`), balances × 1 (`listForUser`
+    for GET on the plural `/users/{uid}/time-off/balances` route,
+    paired with sibling singular `getForUser`). 170/191 = 89%
+    coverage.
+
+  After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
+  + `fern check --warnings --from-openapi` + `fern generate --group ts
+  --local --force` stayed green; the wrapper exposes idiomatic CRUDL
+  on every stamped module and 0 ops are hoisted to the root client.
+
+- **What's NOT shipped (~4 modules + a handful of ops):** the remaining
+  ~24 unstamped ops live in:
+  - `files.uploadImage` — already a clean verb-noun name.
+  - `roles.{giveUserManagerRole, removeUserManagerRole}` — verbs
+    `give` / `remove` are already domain-clear for a 2-op module;
+    renaming to `grant`/`revoke` would not improve clarity.
+  - `expenseReport.generateDetailedReportV1` — the explicit `V1`
+    suffix is load-bearing and a rename would lose that signal.
+  - `workspaces.{updateUserStatus, updateUserCostRate,
+    updateUserHourlyRate}` — already verb-noun shaped.
+  - `balances.{getWorkspacesWorkspaceIdTimeOffRequests,
+    getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances}` — the
+    `Balances`-tagged "time-off-requests" / "time-off-balances"
+    read paths; semantic overlap with timeOff / balances; needs
+    domain investigation before a rename.
+  - Specialised action verbs inside stamped modules that need
+    naming review (e.g. `assignOrRemoveProjectUsers` next to
+    `updateMemberships`; the timeOff legacy `/policies/...`
+    duplicates; `scheduling.changeRecurringPeriod`). Each is a
+    per-module-followup, not blocking the current G.1 milestone.
+
+  Specialised action verbs inside the 10 stamped modules also kept
+  their operationId-derived names (e.g.
+  `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive`,
+  `client.timeOffPolicies.changeTimeOffPolicyStatus`,
+  `client.holidays.getWorkspaceHolidaysInPeriod`). Naming them is a
+  separate per-module call after CRUDL coverage rolls out.
+
+- **Updated open questions:**
+  1. ~~Why does Fern silently drop modules instead of warning?~~
+     **RESOLVED.** Modules aren't being dropped — they're being emptied
+     by the hoist. Fern just doesn't emit empty modules.
+  2. ~~Does an `x-fern-sdk-group-name` annotation alongside
+     `x-fern-sdk-method-name` change behavior?~~ **RESOLVED.** Yes,
+     it's the required complement.
+  3-4. Closed by (1).
+
+- **Status (updated):** `resolved-coverage-90pct-residue-is-deliberate`.
+  The proven technique ships in `SDK_METHOD_NAMES` covering 170 ops
+  across 27 of 31 modules. Coverage by op count: **170/188 = 90.4%
+  of total live operations carry idiomatic stamps** (denominator
+  shrank from 191 → 188 after the three legacy `time-off-request`
+  paths were quarantined as phantom — see
+  `timeoff.legacy-policies-requests.phantom-path-quarantined`
+  below). The remaining ~21 ops
+  split into:
+  - **Already-clean operationId names (don't need a rename)** —
+    `files.uploadImage`, `roles.giveUserManagerRole`,
+    `roles.removeUserManagerRole`,
+    `expenseReport.generateDetailedReportV1` (the `V1` suffix is
+    load-bearing), the per-user `workspaces.updateUser*` family,
+    `timeEntries.deleteMany`, `scheduling.changeRecurringPeriod`.
+  - **Per-module domain edge cases that need additional research
+    before a rename** — the timeOff legacy `/policies/{pid}/
+    requests` duplicate trio (POST/DELETE/PATCH that mirror the
+    `/time-off/policies/...` family on a deprecated path), the
+    timeOff `postWorkspacesWorkspaceIdTimeOffRequestsUsersUserId`
+    workspace-scoped admin-creates-for-user variant, the timeOff
+    `changeTimeOffRequestStatus` policy-scoped status PATCH, and
+    the balances `getWorkspacesWorkspaceIdTimeOffRequests` cross-
+    reference (a `Balances`-tagged route living at `/time-off/
+    requests`).
+
+  Module count stays at 31 + index.ts across all eight expansion
+  steps. The technique covers every naming pattern in Clockify's
+  surface: pure CRUDL, CRUDL+action, partial CRUDL, scoped naming,
+  workflow verbs, family-name verbs, and ~12 distinct action-verb
+  patterns (`mark*`, `start/stopTimer`, `rotateToken`,
+  `replaceRecurring`, `listFor*`, `update*Rate`, `listCreated/
+  Updated/Deleted`, `setMembers`, `withdraw`, etc.). Each of the
+  eight expansion steps preserved the invariant "31 modules +
+  index.ts, 0 root hoists".
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 
@@ -820,7 +1052,7 @@ on the bare route (the granular variants — already in
   docs paste and notices the string-vs-int divergence sees the
   decision already taken.
 
-### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — DOCUMENTED 2026-05-24
+### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — UPSTREAM-TRACKING 2026-05-25
 
 - **Official claim:** Clockify's OpenAPI declares two security schemes
   `ApiKeyAuth` (header `X-Api-Key`) and `AddonTokenAuth` (header
@@ -867,13 +1099,91 @@ on the bare route (the granular variants — already in
      `process.env.CLOCKIFY_API_KEY` and `addonToken` default to
      `process.env.CLOCKIFY_ADDON_TOKEN`? Useful ergonomic default;
      not yet wired.
-- **Status:** `workaround-applied`. The wrapper's published SDK
-  shape ships with the required-typed `addonToken` field; the
+- **Status (initial):** `workaround-applied`. The wrapper's published
+  SDK shape ships with the required-typed `addonToken` field; the
   README's quick-start example reflects the actual usage pattern
   (apiKey-only) but should also document the addonToken-undefined
   cast until Fern fixes the upstream type. Recommend filing this
   as a Fern issue with the OR-vs-AND security-scheme inference
   question.
+
+#### Update 2026-05-25 (session 4) — upstream investigation
+
+- **Fern CLI version check:** `npm info fern-api version` returns
+  `5.37.9` (latest); confirmed against the full version list — no
+  newer release exists since the issue was first documented.
+- **TS-SDK generator container check:** Docker Hub's
+  `fernapi/fern-typescript-node-sdk` `latest` tag points at
+  `3.71.2`, the same version pinned in `spec/fern/generators.yml`.
+- **Fern repo issue search:** searched `github.com/fern-api/fern`
+  for issues matching `security scheme`, `addonToken`, `multiple auth`,
+  `security alternative`, `either security`, `BaseClientOptions required`.
+  The single hit (#5707, "Support Multiple Required Headers — OpenAPI
+  Security Scheme") is about Fern Docs and the AND-case (both headers
+  required); does not cover our OR-case.
+- **Action:** drafted a complete issue body at
+  `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`,
+  ready to paste verbatim. The body cites OAS 3.0.3 §4.8.30.3, ships
+  a minimal repro spec, names the affected generator container +
+  version, shows the workaround in use, and proposes a discriminated-
+  union typing as the desired fix. The user needs to file it via
+  `https://github.com/fern-api/fern/issues/new` and capture the
+  resulting issue number back here.
+- **Workaround status:** unchanged. The `createClockifyClient()`
+  factory at `wrapper/create-client.ts` continues to hide the
+  `NULL_SUPPLIER` cast behind a discriminated-union options shape;
+  this is the documented public API and stays as-is until the
+  upstream fix lands.
+- **Bump posture:** because the latest container is already on
+  `3.71.2` (matching our pin) and the latest CLI is already
+  `5.37.9` (matching our pin), there is no version we could bump to
+  in order to pick up a fix — we are at the upstream's current
+  shipped surface. Re-check on every Fern release; an upstream PR
+  comment will arrive on the filed issue once a fix lands.
+
+- **Updated open questions:**
+  1. ~~Can Fern's OpenAPI parser be taught that OR-related security
+     schemes should yield two MUTUALLY EXCLUSIVE optional fields?~~
+     **Routed to upstream as a drafted issue.** No further local
+     action until Fern responds.
+  2. ~~Should the SDK's `BaseClientOptions.apiKey` field default to
+     `process.env.CLOCKIFY_API_KEY` and `addonToken` default to
+     `process.env.CLOCKIFY_ADDON_TOKEN`?~~ **DONE (session 4,
+     2026-05-25).** `createClockifyClient()` (no args) now reads
+     `CLOCKIFY_API_KEY` (preferred) or `CLOCKIFY_ADDON_TOKEN` from
+     the environment at construction time. Explicit options always
+     win over env vars; empty-string env values are treated as
+     absent; both-explicit still throws (the Clockify-runtime
+     constraint is enforced unchanged). The TS type adds a third
+     `{ apiKey?: never; addonToken?: never }` union branch so `{}`
+     is type-valid. Six new vitest cases cover the env-fallback
+     matrix. Independent of question (1) — the wrapper-side ergonomic
+     ships now without waiting for Fern's upstream typing change.
+
+- **Filing decision 2026-05-25:** the drafted issue body at
+  `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`
+  is **internal evidence only — not filed upstream**. Maintainer call
+  (apet97 2026-05-25): the workaround in the wrapper's
+  `createClockifyClient()` factory is stable and the upstream
+  discussion isn't a current priority. Re-open this status if the
+  Fern team independently lands a fix or someone else files the
+  issue and we need to track it.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted-internal-only`.
+  The cast-removal path is gated on a Fern release that changes
+  `BaseClientOptions` typing; nothing to remove now. When the
+  upstream fix ships (via any channel):
+  1. Bump `spec/fern/fern.config.json` `version` and
+     `spec/fern/generators.yml`'s container tag (AGENTS.md §12 #3
+     requires explicit approval for these bumps).
+  2. Regenerate; verify the new `BaseClientOptions` shape.
+  3. Remove `NULL_SUPPLIER` from `wrapper/create-client.ts`.
+  4. Remove the `addonToken: (() => undefined) as unknown as () => string`
+     cast from `wrapper/tests/sandbox.test.ts`.
+  5. Update `wrapper/README.md` Authentication section to drop the
+     cast caveat.
+  6. Land as the v1.0.0 cut — typed-correct auth surface is a
+     v1.0.0 acceptance-criterion bullet.
 
 ## Generator choice — Phase 0 spike for the Stainless/Speakeasy-quality push
 
@@ -990,5 +1300,248 @@ on the bare route (the granular variants — already in
   end-to-end) shows a different scheme, this entry reopens and the
   helpers update accordingly. Until then, the documented scheme is
   the authoritative source.
+
+## Last-Page header — live audit (G.5)
+
+### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
+
+- **Official claim:** the seed-list entry near the top of this file
+  (`pagination: most list endpoints return Last-Page header, not a
+  total`) had not been quantified per-endpoint. G.5's brief: probe
+  each of the 18 ops in `GOCLMCP/scripts/gen-clockify-openapi`'s
+  `PAGINATED_LIST_OPS` and split them into "emits Last-Page
+  consistently" vs "does not".
+
+- **Actual behaviour (live, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** each endpoint was probed with
+  `?page=1&page-size=2` (results-available) and the paginated
+  endpoints additionally with `?page=999&page-size=2` (results-
+  exhausted). Result:
+
+  **15 endpoints emit `Last-Page` consistently** (probe captures
+  `last-page: false` on page 1 with full results AND `last-page:
+  true` on page 999 with 0 items):
+  - `GET /workspaces/{wsId}/approval-requests`
+  - `GET /workspaces/{wsId}/clients`
+  - `GET /workspaces/{wsId}/invoices/{invoiceId}/payments`
+  - `GET /workspaces/{wsId}/projects`
+  - `GET /workspaces/{wsId}/projects/{projectId}/tasks`
+  - `GET /workspaces/{wsId}/scheduling/assignments/all` (requires
+    `start` + `end` query params; probe used a 1-year window)
+  - `GET /workspaces/{wsId}/tags`
+  - `GET /workspaces/{wsId}/time-entries/status/in-progress`
+  - `GET /workspaces/{wsId}/time-off/balance/policy/{policyId}`
+  - `GET /workspaces/{wsId}/time-off/balance/user/{userId}`
+  - `GET /workspaces/{wsId}/time-off/policies`
+  - `GET /workspaces/{wsId}/user-groups`
+  - `GET /workspaces/{wsId}/user/{userId}/time-entries`
+  - `GET /workspaces/{wsId}/users`
+  - `GET /workspaces/{wsId}/users/{userId}/managers`
+
+  **3 endpoints do NOT emit `Last-Page`** (and additionally ignore
+  `page-size` on the live server, returning the full collection
+  regardless of the paging query params):
+  - `GET /workspaces/{wsId}/custom-fields` — page-size=2 returned
+    25 top-level items.
+  - `GET /workspaces/{wsId}/holidays` — page-size=2 returned 31
+    top-level items.
+  - `GET /workspaces/{wsId}/projects/{projectId}/custom-fields` —
+    page-size=2 returned 1 item (small dataset; no Last-Page
+    header in response).
+
+  The 3 non-emitting endpoints suggest those routes pre-date
+  Clockify's pagination convention or are intentionally
+  unpaginated. They remain in `PAGINATED_LIST_OPS` (the params
+  are accepted, just ignored) but are NOT in `LAST_PAGE_HEADER_OPS`
+  so they don't carry the wrapper-side stop signal.
+
+- **Live evidence:** 22 probe files saved at
+  `spec/evidence/probes/20260525-lastpage-*.{json,hdr}` — each
+  endpoint has at least one `-p1.{json,hdr}` pair; the 8 confirmed-
+  paginated workspace-scoped ones additionally have `-p999.{json,hdr}`
+  pairs. All 22 are gitignored per AGENTS.md §5.4. Reproducible
+  via the curl invocation in the commit message that introduced
+  this entry.
+
+- **MCP tools affected:** none directly today. The Go MCP layer in
+  GOCLMCP synthesises a `total_min` lower-bound rather than using
+  the header (see seed-list `pagination` entry near the top of this
+  file). A future cleanup could route the same `LAST_PAGE_HEADER_OPS`
+  set through `internal/tools` and short-circuit the lower-bound
+  synthesis when the header is present — out of scope for this
+  session.
+
+- **Open questions:**
+  1. Should the 3 non-emitting endpoints (`custom-fields`,
+     `holidays`, `projects/{projectId}/custom-fields`) be removed
+     from `PAGINATED_LIST_OPS` since the server ignores `page-size`?
+     **Not now** — the page+page-size param declarations are still
+     a real documentation improvement consumed by downstream
+     SDK generators and tooling that doesn't probe live API
+     behaviour. The wrapper just doesn't get a useful stop signal
+     from them. Re-evaluate if a future Clockify API change adds
+     server-side paging to these endpoints.
+  2. Does the header ever appear case-shifted (`LAST-PAGE`,
+     `Last-page`)? Probe used `grep -i ^last-page:` so any casing
+     would have matched; observed casing in raw `.hdr` files is
+     consistently `last-page:` (HTTP/2 lowercased the field name).
+     The wrapper's `Headers#get("Last-Page")` API is
+     case-insensitive per the WHATWG spec, so the consumer is safe
+     regardless.
+
+- **Status:** `audited-and-shipped`. Two changes ship in this
+  session:
+  1. **Generator (GOCLMCP):** new `LAST_PAGE_HEADER_OPS` set (15
+     entries) + `stamp_last_page_header!` function called in the
+     per-op finalization loop. The canonical YAML now carries
+     `x-clockify-last-page-header: true` on each of the 15
+     audited-emitting operations.
+  2. **Wrapper (this repo):** `iterPages` now feature-detects
+     `.withRawResponse()` on the fetcher's return, reads the
+     `Last-Page` response header via the case-insensitive Headers
+     API, and uses `Last-Page: true` as the authoritative stop
+     signal — more robust than the legacy
+     `items.length === pageSize` heuristic (which fails when a
+     final page coincidentally fills). The heuristic remains as a
+     fallback for non-emitting endpoints + custom (non-Fern)
+     fetchers; the wrapper also stops on a short page even when
+     `Last-Page: false` to defend against server-inconsistency
+     loops. Six new vitest cases in `tests/iter.test.ts` cover
+     the four combinations (header true/false × page full/short)
+     plus the case-insensitive parse + the no-`withRawResponse`
+     fallback path.
+
+## Time-off request duplicate paths — investigation
+
+### `timeoff.legacy-policies-requests.phantom-path-quarantined` — RESOLVED 2026-05-25
+
+- **Official claim:** the upstream
+  `clockify-api-probe-lab/openapi-fragments/time-off-b.yaml` source
+  declares three time-off-request action operations at the legacy
+  unscoped path `/workspaces/{workspaceId}/policies/{policyId}/
+  requests` (POST + DELETE + PATCH). The same source ALSO declares
+  the scoped variants at `/workspaces/{workspaceId}/time-off/
+  policies/{policyId}/requests/*`. Both sets land in the canonical
+  YAML under the `Time Off` tag.
+
+- **Actual behaviour (live probe, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** the three legacy routes all return
+  `HTTP 404 + {"message":"No static resource v1/workspaces/{ws}/
+  policies/{pid}/requests[/{rid}].","code":3000}`. Probed with
+  policyId `696fd7f25dd6c5510bafa772`, fake requestId
+  `aaaaaaaaaaaaaaaaaaaaaaaa`:
+  - POST `/workspaces/{wsId}/policies/{pid}/requests` with `{}` →
+    HTTP 404 "No static resource".
+  - DELETE `/workspaces/{wsId}/policies/{pid}/requests/{rid}` →
+    HTTP 404 "No static resource".
+  - PATCH `/workspaces/{wsId}/policies/{pid}/requests/{rid}` with
+    `{}` → HTTP 404 "No static resource".
+
+  The control probe (POST on the scoped path `/workspaces/{wsId}/
+  time-off/policies/{pid}/requests` with `{}`) returned `HTTP 400
+  {"message":"must not be null","code":501}` — same handler accepts
+  POST but rejects an empty body — confirming the scoped routes ARE
+  live.
+
+- **Live evidence:**
+  - `spec/evidence/probes/20260525-timeoff-legacy-post.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-legacy-delete.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-legacy-patch.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-current-post.{json,hdr}`
+    (control showing the scoped path is live)
+
+  All gitignored per AGENTS.md §5.4.
+
+- **MCP tools affected:** none — `internal/tools/` consumes the
+  canonical spec, and the MCP tool layer always routes time-off
+  requests through the scoped `/time-off/policies/...` paths
+  (the operationId-derived tool names are
+  `clockify_time_off_request*` and friends, all generated against
+  the scoped operations).
+
+- **Open questions:** none. The probe is definitive: the legacy
+  paths do not exist on the live API. They are spec ghosts from an
+  older source-bundle revision.
+
+- **Status:** `phantom-path-quarantined`. Added three entries to
+  `PHANTOM_PATHS` in `../GOCLMCP/scripts/gen-clockify-openapi`:
+  `["post", ".../policies/{policyId}/requests"]`,
+  `["delete", ".../policies/{policyId}/requests/{requestId}"]`,
+  `["patch", ".../policies/{policyId}/requests/{requestId}"]`. After
+  regen the canonical OpenAPI carries **188 operations (was 191)**;
+  raw-allowlist drops from 134 to 131 routes. All 4 drift gates
+  pass; `go test ./internal/tools/...` passes; `fern check` clean;
+  `fern generate` clean; `tsc --noEmit` clean; 126/126 vitest.
+  The timeOff resource module in the wrapper now exposes 9 methods
+  (was 12 — the 3 legacy ops are gone). G.1 coverage metric updates
+  from 170/191 = 89% to **170/188 = 90.4%** because the denominator
+  shrank with the quarantine.
+
+## Idempotency-Key header — investigation (G.4)
+
+### `clockify.api.idempotency-key.unsupported-noop` — DOCUMENTED 2026-05-25
+
+- **Official claim:** Clockify's public API documentation (probed via
+  `https://docs.clockify.me/`) contains **no mention** of an
+  `Idempotency-Key` request header, request-deduplication semantics,
+  Stripe-style retry safety, or any equivalent feature. None of the
+  upstream source bundles (`docs/openapi/sources/{realOPENAPI,AIII,
+  clockify-api-probe-lab}` in GOCLMCP) reference idempotency-key
+  either; the two `grep -i idempoten` hits in those bundles describe
+  endpoint *behaviour* ("DELETE is idempotent-ish: second delete
+  returns 400", "add-user-to-group returns 200 with unchanged body
+  when user is already a member"), not header support.
+
+- **Actual behaviour (live probe, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** sent two `POST /workspaces/{wsId}/tags`
+  requests with the SAME `Idempotency-Key` header value (a freshly
+  minted UUID `3DBEBD67…`) and DIFFERENT bodies
+  (`{"name":"sdk-idemp-test-1779660515-a"}` and
+  `{"name":"sdk-idemp-test-1779660515-b"}`). Result:
+  - Request #1 → `HTTP 201` + tag id `6a1376e4ab8f70cd39f2fd6d`
+    (name `sdk-idemp-test-1779660515-a`).
+  - Request #2 → `HTTP 201` + tag id `6a1376efab8f70cd39f2fe44`
+    (name `sdk-idemp-test-1779660515-b`).
+  Two distinct tags created. **Clockify silently ignored the
+  `Idempotency-Key` header.** Neither the response status, body,
+  nor headers acknowledged the key (no echo-back field, no
+  `Idempotency-Key` in response headers, no `X-Idempotency-Replay`
+  marker, no dedup-related field anywhere). Both test tags were
+  immediately deleted (HTTP 200 on both DELETEs).
+
+- **Live evidence:**
+  - `spec/evidence/probes/20260525-idempotency-post1.{json,hdr}` —
+    request #1 raw response body + headers.
+  - `spec/evidence/probes/20260525-idempotency-post2.{json,hdr}` —
+    request #2 raw response body + headers.
+  Both pairs gitignored per AGENTS.md §5.4. Reproducible — see
+  the curl invocation in the commit message that introduced this
+  entry; the only inputs are a fresh UUID and any two distinct
+  string names with a shared timestamp slug.
+
+- **MCP tools affected:** none. The Go MCP layer in GOCLMCP doesn't
+  emit `Idempotency-Key`; the wrapper's `composedFetch` also doesn't.
+  Neither should start, per this finding.
+
+- **Open questions:** none. The probe is definitive: Clockify
+  treats `Idempotency-Key` as an unknown header (not 400, not 4xx,
+  not echoed) and processes each request independently.
+
+- **Status:** `clockify-feature-absent-skip`. Per the original
+  G-track plan: "If no, skip (don't fake idempotency headers;
+  they're meaningless without server-side dedup)." Neither
+  `x-clockify-idempotency-supported` annotations nor wrapper-side
+  `Idempotency-Key` injection should be added. The wrapper's
+  `composedFetch` continues to inject only `User-Agent` +
+  `X-Request-Id` (the latter is opaque correlation, not dedup).
+
+- **Reopen condition:** if Clockify ships an API changelog
+  entry mentioning Idempotency-Key support (or if a future probe
+  shows different behaviour — e.g. server echoes the key, or
+  request #2 returns the same body as request #1 instead of a new
+  tag), re-probe with a longer-lived key (same key over a 24h
+  window to test for retention) and a wider op surface (timeEntries
+  POST, expenses POST, invoices POST). If still unsupported, this
+  entry stays closed.
 
 

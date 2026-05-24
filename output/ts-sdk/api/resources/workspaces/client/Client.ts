@@ -25,21 +25,21 @@ export class WorkspacesClient {
     /**
      * Returns the current user's workspaces. Optionally filters workspaces by role.
      *
-     * @param {ClockifyApi.GetAllMyWorkspacesRequest} request
+     * @param {ClockifyApi.ListWorkspacesRequest} request
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.getAllMyWorkspaces()
+     *     await client.workspaces.list()
      */
-    public getAllMyWorkspaces(
-        request: ClockifyApi.GetAllMyWorkspacesRequest = {},
+    public list(
+        request: ClockifyApi.ListWorkspacesRequest = {},
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getAllMyWorkspaces(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getAllMyWorkspaces(
-        request: ClockifyApi.GetAllMyWorkspacesRequest = {},
+    private async __list(
+        request: ClockifyApi.ListWorkspacesRequest = {},
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace[]>> {
         const { roles } = request;
@@ -93,19 +93,19 @@ export class WorkspacesClient {
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.addWorkspace({
+     *     await client.workspaces.create({
      *         name: "Cool Company",
      *         organizationId: "67d471fb56aa9668b7bfa295"
      *     })
      */
-    public addWorkspace(
+    public create(
         request: ClockifyApi.CreateWorkspaceRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace> {
-        return core.HttpResponsePromise.fromPromise(this.__addWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addWorkspace(
+    private async __create(
         request: ClockifyApi.CreateWorkspaceRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace>> {
@@ -151,23 +151,23 @@ export class WorkspacesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceInfoRequest} request
+     * @param {ClockifyApi.GetWorkspacesRequest} request
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.getWorkspaceInfo({
+     *     await client.workspaces.get({
      *         workspaceId: "64a687e29ae1f428e7ebe303"
      *     })
      */
-    public getWorkspaceInfo(
-        request: ClockifyApi.GetWorkspaceInfoRequest,
+    public get(
+        request: ClockifyApi.GetWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceInfo(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspaceInfo(
-        request: ClockifyApi.GetWorkspaceInfoRequest,
+    private async __get(
+        request: ClockifyApi.GetWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace>> {
         const { workspaceId } = request;
@@ -215,25 +215,25 @@ export class WorkspacesClient {
      * or this endpoint lives on a different host. Tested both empty body
      * and a name+currency body; both 405.
      *
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdRequest} request
+     * @param {ClockifyApi.UpdateWorkspacesRequest} request
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.MethodNotAllowedError}
      *
      * @example
-     *     await client.workspaces.putWorkspacesWorkspaceId({
+     *     await client.workspaces.update({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public putWorkspacesWorkspaceId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdRequest,
+    public update(
+        request: ClockifyApi.UpdateWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__putWorkspacesWorkspaceId(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId } = request;
@@ -281,11 +281,11 @@ export class WorkspacesClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateWorkspaceCostRateRequest} request
+     * @param {ClockifyApi.UpdateCostRateWorkspacesRequest} request
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.updateWorkspaceCostRate({
+     *     await client.workspaces.updateCostRate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         body: {
      *             amount: 20000,
@@ -293,15 +293,15 @@ export class WorkspacesClient {
      *         }
      *     })
      */
-    public updateWorkspaceCostRate(
-        request: ClockifyApi.UpdateWorkspaceCostRateRequest,
+    public updateCostRate(
+        request: ClockifyApi.UpdateCostRateWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace> {
-        return core.HttpResponsePromise.fromPromise(this.__updateWorkspaceCostRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateCostRate(request, requestOptions));
     }
 
-    private async __updateWorkspaceCostRate(
-        request: ClockifyApi.UpdateWorkspaceCostRateRequest,
+    private async __updateCostRate(
+        request: ClockifyApi.UpdateCostRateWorkspacesRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace>> {
         const { workspaceId, body: _body } = request;
@@ -356,21 +356,21 @@ export class WorkspacesClient {
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.updateWorkspaceBillableRate({
+     *     await client.workspaces.updateBillableRate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         amount: 2000,
      *         currency: "USD",
      *         since: "2020-01-01T00:00:00Z"
      *     })
      */
-    public updateWorkspaceBillableRate(
+    public updateBillableRate(
         request: ClockifyApi.UpdateWorkspaceBillableRateRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace> {
-        return core.HttpResponsePromise.fromPromise(this.__updateWorkspaceBillableRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateBillableRate(request, requestOptions));
     }
 
-    private async __updateWorkspaceBillableRate(
+    private async __updateBillableRate(
         request: ClockifyApi.UpdateWorkspaceBillableRateRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace>> {
@@ -428,20 +428,20 @@ export class WorkspacesClient {
      * @param {WorkspacesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.workspaces.addUserToWorkspace({
+     *     await client.workspaces.addUser({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         "send-email": "true",
      *         email: "<EMAIL>"
      *     })
      */
-    public addUserToWorkspace(
+    public addUser(
         request: ClockifyApi.AddUserToWorkspaceRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Workspace> {
-        return core.HttpResponsePromise.fromPromise(this.__addUserToWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__addUser(request, requestOptions));
     }
 
-    private async __addUserToWorkspace(
+    private async __addUser(
         request: ClockifyApi.AddUserToWorkspaceRequest,
         requestOptions?: WorkspacesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Workspace>> {

@@ -25,24 +25,24 @@ export class BalancesClient {
     /**
      * Get time-off balances for a specific policy in a workspace.
      *
-     * @param {ClockifyApi.GetBalancesForPolicyRequest} request
+     * @param {ClockifyApi.ListForPolicyBalancesRequest} request
      * @param {BalancesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.balances.getBalancesForPolicy({
+     *     await client.balances.listForPolicy({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId"
      *     })
      */
-    public getBalancesForPolicy(
-        request: ClockifyApi.GetBalancesForPolicyRequest,
+    public listForPolicy(
+        request: ClockifyApi.ListForPolicyBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.BalanceListResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getBalancesForPolicy(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listForPolicy(request, requestOptions));
     }
 
-    private async __getBalancesForPolicy(
-        request: ClockifyApi.GetBalancesForPolicyRequest,
+    private async __listForPolicy(
+        request: ClockifyApi.ListForPolicyBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.BalanceListResponse>> {
         const { workspaceId, policyId, page, "page-size": pageSize, sort, "sort-order": sortOrder } = request;
@@ -106,7 +106,7 @@ export class BalancesClient {
      * @param {BalancesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.balances.updateBalance({
+     *     await client.balances.update({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         note: "Bonus days added.",
@@ -114,14 +114,14 @@ export class BalancesClient {
      *         value: 22
      *     })
      */
-    public updateBalance(
+    public update(
         request: ClockifyApi.UpdateBalanceRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__updateBalance(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateBalance(
+    private async __update(
         request: ClockifyApi.UpdateBalanceRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
@@ -175,24 +175,24 @@ export class BalancesClient {
     /**
      * Get time-off balances for a specific user in a workspace.
      *
-     * @param {ClockifyApi.GetBalanceForUserRequest} request
+     * @param {ClockifyApi.GetForUserBalancesRequest} request
      * @param {BalancesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.balances.getBalanceForUser({
+     *     await client.balances.getForUser({
      *         workspaceId: "workspaceId",
      *         userId: "userId"
      *     })
      */
-    public getBalanceForUser(
-        request: ClockifyApi.GetBalanceForUserRequest,
+    public getForUser(
+        request: ClockifyApi.GetForUserBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.BalanceListResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getBalanceForUser(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__getForUser(request, requestOptions));
     }
 
-    private async __getBalanceForUser(
-        request: ClockifyApi.GetBalanceForUserRequest,
+    private async __getForUser(
+        request: ClockifyApi.GetForUserBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.BalanceListResponse>> {
         const { workspaceId, userId, page, "page-size": pageSize, sort, "sort-order": sortOrder } = request;
@@ -319,28 +319,26 @@ export class BalancesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesRequest} request
+     * @param {ClockifyApi.ListForUserBalancesRequest} request
      * @param {BalancesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.balances.getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances({
+     *     await client.balances.listForUser({
      *         workspaceId: "workspaceId",
      *         userId: "userId"
      *     })
      */
-    public getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesRequest,
+    public listForUser(
+        request: ClockifyApi.ListForUserBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
-    ): core.HttpResponsePromise<ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesResponse> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances(request, requestOptions),
-        );
+    ): core.HttpResponsePromise<ClockifyApi.ListForUserBalancesResponse> {
+        return core.HttpResponsePromise.fromPromise(this.__listForUser(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesRequest,
+    private async __listForUser(
+        request: ClockifyApi.ListForUserBalancesRequest,
         requestOptions?: BalancesClient.RequestOptions,
-    ): Promise<core.WithRawResponse<ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesResponse>> {
+    ): Promise<core.WithRawResponse<ClockifyApi.ListForUserBalancesResponse>> {
         const { workspaceId, userId } = request;
         const _authRequest: core.AuthRequest = await this._options.authProvider.getAuthRequest();
         const _headers: core.Fetcher.Args["headers"] = mergeHeaders(
@@ -367,7 +365,7 @@ export class BalancesClient {
         });
         if (_response.ok) {
             return {
-                data: _response.body as ClockifyApi.GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesResponse,
+                data: _response.body as ClockifyApi.ListForUserBalancesResponse,
                 rawResponse: _response.rawResponse,
             };
         }

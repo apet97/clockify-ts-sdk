@@ -23,25 +23,25 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.FindTasksOnProjectRequest} request
+     * @param {ClockifyApi.ListTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.findTasksOnProject({
+     *     await client.tasks.list({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         name: "Bugfixing"
      *     })
      */
-    public findTasksOnProject(
-        request: ClockifyApi.FindTasksOnProjectRequest,
+    public list(
+        request: ClockifyApi.ListTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task[]> {
-        return core.HttpResponsePromise.fromPromise(this.__findTasksOnProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __findTasksOnProject(
-        request: ClockifyApi.FindTasksOnProjectRequest,
+    private async __list(
+        request: ClockifyApi.ListTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task[]>> {
         const {
@@ -112,7 +112,7 @@ export class TasksClient {
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.addTaskOnProject({
+     *     await client.tasks.create({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         assigneeIds: ["45b687e29ae1f428e7ebe123", "67s687e29ae1f428e7ebe678"],
@@ -124,14 +124,14 @@ export class TasksClient {
      *         userGroupIds: ["67b687e29ae1f428e7ebe123", "12s687e29ae1f428e7ebe678"]
      *     })
      */
-    public addTaskOnProject(
+    public create(
         request: ClockifyApi.TaskCreateRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__addTaskOnProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addTaskOnProject(
+    private async __create(
         request: ClockifyApi.TaskCreateRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
@@ -183,25 +183,25 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.GetTaskByIdRequest} request
+     * @param {ClockifyApi.GetTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.getTaskById({
+     *     await client.tasks.get({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId"
      *     })
      */
-    public getTaskById(
-        request: ClockifyApi.GetTaskByIdRequest,
+    public get(
+        request: ClockifyApi.GetTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__getTaskById(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getTaskById(
-        request: ClockifyApi.GetTaskByIdRequest,
+    private async __get(
+        request: ClockifyApi.GetTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId } = request;
@@ -255,7 +255,7 @@ export class TasksClient {
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.updateTaskOnProject({
+     *     await client.tasks.update({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId",
@@ -268,14 +268,14 @@ export class TasksClient {
      *         userGroupIds: ["67b687e29ae1f428e7ebe123", "12s687e29ae1f428e7ebe678"]
      *     })
      */
-    public updateTaskOnProject(
+    public update(
         request: ClockifyApi.TaskUpdateRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTaskOnProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateTaskOnProject(
+    private async __update(
         request: ClockifyApi.TaskUpdateRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
@@ -327,25 +327,25 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteTaskFromProjectRequest} request
+     * @param {ClockifyApi.DeleteTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.deleteTaskFromProject({
+     *     await client.tasks.delete({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId"
      *     })
      */
-    public deleteTaskFromProject(
-        request: ClockifyApi.DeleteTaskFromProjectRequest,
+    public delete(
+        request: ClockifyApi.DeleteTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteTaskFromProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteTaskFromProject(
-        request: ClockifyApi.DeleteTaskFromProjectRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId } = request;
@@ -393,11 +393,11 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateTaskCostRateRequest} request
+     * @param {ClockifyApi.UpdateCostRateTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.updateTaskCostRate({
+     *     await client.tasks.updateCostRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId",
@@ -407,15 +407,15 @@ export class TasksClient {
      *         }
      *     })
      */
-    public updateTaskCostRate(
-        request: ClockifyApi.UpdateTaskCostRateRequest,
+    public updateCostRate(
+        request: ClockifyApi.UpdateCostRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTaskCostRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateCostRate(request, requestOptions));
     }
 
-    private async __updateTaskCostRate(
-        request: ClockifyApi.UpdateTaskCostRateRequest,
+    private async __updateCostRate(
+        request: ClockifyApi.UpdateCostRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId, body: _body } = request;
@@ -466,11 +466,11 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateTaskBillableRateRequest} request
+     * @param {ClockifyApi.UpdateBillableRateTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.updateTaskBillableRate({
+     *     await client.tasks.updateBillableRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId",
@@ -480,15 +480,15 @@ export class TasksClient {
      *         }
      *     })
      */
-    public updateTaskBillableRate(
-        request: ClockifyApi.UpdateTaskBillableRateRequest,
+    public updateBillableRate(
+        request: ClockifyApi.UpdateBillableRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTaskBillableRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateBillableRate(request, requestOptions));
     }
 
-    private async __updateTaskBillableRate(
-        request: ClockifyApi.UpdateTaskBillableRateRequest,
+    private async __updateBillableRate(
+        request: ClockifyApi.UpdateBillableRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId, body: _body } = request;

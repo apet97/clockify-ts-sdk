@@ -249,7 +249,7 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
  *
  * @example
  * ```ts
- * try { await client.tags.getWorkspacesWorkspaceIdTags({...}); }
+ * try { await client.tags.list({...}); }
  * catch (err) {
  *   const id = getRequestIdFromError(err);
  *   logger.error({ requestId: id, message: (err as Error).message });

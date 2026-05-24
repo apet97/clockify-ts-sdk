@@ -23,24 +23,24 @@ export class InvoicePaymentsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetInvoicePaymentsRequest} request
+     * @param {ClockifyApi.ListInvoicePaymentsRequest} request
      * @param {InvoicePaymentsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoicePayments.getInvoicePayments({
+     *     await client.invoicePayments.list({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId"
      *     })
      */
-    public getInvoicePayments(
-        request: ClockifyApi.GetInvoicePaymentsRequest,
+    public list(
+        request: ClockifyApi.ListInvoicePaymentsRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoicePaymentDto[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getInvoicePayments(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getInvoicePayments(
-        request: ClockifyApi.GetInvoicePaymentsRequest,
+    private async __list(
+        request: ClockifyApi.ListInvoicePaymentsRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoicePaymentDto[]>> {
         const { workspaceId, invoiceId, page, "page-size": pageSize } = request;
@@ -100,7 +100,7 @@ export class InvoicePaymentsClient {
      * @param {InvoicePaymentsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoicePayments.addInvoicePayment({
+     *     await client.invoicePayments.create({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         amount: 100,
@@ -108,14 +108,14 @@ export class InvoicePaymentsClient {
      *         paymentDate: "2021-01-01T12:00:00Z"
      *     })
      */
-    public addInvoicePayment(
+    public create(
         request: ClockifyApi.AddInvoicePaymentRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__addInvoicePayment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addInvoicePayment(
+    private async __create(
         request: ClockifyApi.AddInvoicePaymentRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
@@ -167,25 +167,25 @@ export class InvoicePaymentsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteInvoicePaymentRequest} request
+     * @param {ClockifyApi.DeleteInvoicePaymentsRequest} request
      * @param {InvoicePaymentsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.invoicePayments.deleteInvoicePayment({
+     *     await client.invoicePayments.delete({
      *         workspaceId: "workspaceId",
      *         invoiceId: "invoiceId",
      *         paymentId: "paymentId"
      *     })
      */
-    public deleteInvoicePayment(
-        request: ClockifyApi.DeleteInvoicePaymentRequest,
+    public delete(
+        request: ClockifyApi.DeleteInvoicePaymentsRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.InvoiceDtoFull> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteInvoicePayment(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteInvoicePayment(
-        request: ClockifyApi.DeleteInvoicePaymentRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteInvoicePaymentsRequest,
         requestOptions?: InvoicePaymentsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.InvoiceDtoFull>> {
         const { workspaceId, invoiceId, paymentId } = request;

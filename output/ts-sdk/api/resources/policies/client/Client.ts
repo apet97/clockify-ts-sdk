@@ -23,23 +23,23 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdPoliciesRequest} request
+     * @param {ClockifyApi.ListPoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.getWorkspacesWorkspaceIdPolicies({
+     *     await client.policies.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspacesWorkspaceIdPolicies(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdPoliciesRequest,
+    public list(
+        request: ClockifyApi.ListPoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffPolicy[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspacesWorkspaceIdPolicies(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdPolicies(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdPoliciesRequest,
+    private async __list(
+        request: ClockifyApi.ListPoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffPolicy[]>> {
         const { workspaceId, archived } = request;
@@ -94,24 +94,24 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdPoliciesRequest} request
+     * @param {ClockifyApi.CreatePoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.postWorkspacesWorkspaceIdPolicies({
+     *     await client.policies.create({
      *         workspaceId: "workspaceId",
      *         body: {}
      *     })
      */
-    public postWorkspacesWorkspaceIdPolicies(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdPoliciesRequest,
+    public create(
+        request: ClockifyApi.CreatePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffPolicy> {
-        return core.HttpResponsePromise.fromPromise(this.__postWorkspacesWorkspaceIdPolicies(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdPolicies(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdPoliciesRequest,
+    private async __create(
+        request: ClockifyApi.CreatePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffPolicy>> {
         const { workspaceId, body: _body } = request;
@@ -162,26 +162,24 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdPoliciesPolicyIdRequest} request
+     * @param {ClockifyApi.GetPoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.getWorkspacesWorkspaceIdPoliciesPolicyId({
+     *     await client.policies.get({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId"
      *     })
      */
-    public getWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    public get(
+        request: ClockifyApi.GetPoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffPolicy> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdPoliciesPolicyId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    private async __get(
+        request: ClockifyApi.GetPoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffPolicy>> {
         const { workspaceId, policyId } = request;
@@ -229,27 +227,25 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdPoliciesPolicyIdRequest} request
+     * @param {ClockifyApi.UpdatePoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.putWorkspacesWorkspaceIdPoliciesPolicyId({
+     *     await client.policies.update({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         body: {}
      *     })
      */
-    public putWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    public update(
+        request: ClockifyApi.UpdatePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdPoliciesPolicyId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdatePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, policyId, body: _body } = request;
@@ -300,26 +296,24 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequest} request
+     * @param {ClockifyApi.DeletePoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.deleteWorkspacesWorkspaceIdPoliciesPolicyId({
+     *     await client.policies.delete({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    public delete(
+        request: ClockifyApi.DeletePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdPoliciesPolicyId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdPoliciesPolicyId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeletePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, policyId } = request;
@@ -367,26 +361,24 @@ export class PoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdArchiveRequest} request
+     * @param {ClockifyApi.ArchivePoliciesRequest} request
      * @param {PoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.policies.patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive({
+     *     await client.policies.archive({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdArchiveRequest,
+    public archive(
+        request: ClockifyApi.ArchivePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__archive(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdArchiveRequest,
+    private async __archive(
+        request: ClockifyApi.ArchivePoliciesRequest,
         requestOptions?: PoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, policyId, ..._body } = request;

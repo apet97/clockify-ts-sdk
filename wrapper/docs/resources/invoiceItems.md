@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `addInvoiceItem`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.invoiceItems.addInvoiceItem({
+    await client.invoiceItems.create({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         applyTaxes: "TAX1TAX2",
@@ -32,12 +32,12 @@
 - `quantity` (`number`, required) — Represents an item quantity.
 - `unitPrice` (`number`, required) — Represents an item unit price.
 
-### `importInvoiceItems`
+### `import`
 
 **Example:**
 
 ```typescript
-    await client.invoiceItems.importInvoiceItems({
+    await client.invoiceItems.import({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         expenseFieldsForDetailedGroup: ["NOTE"],
@@ -76,19 +76,19 @@
 - `timeEntrySecondaryGroupBy` (`ClockifyApi.TimeEntrySecondaryGroupBy`, optional)
 - `to` (`string`, required) — Represents date and time in the yyyy-MM-ddThh:mm:ssZ format.
 
-### `deleteInvoiceItem`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.invoiceItems.deleteInvoiceItem({
+    await client.invoiceItems.delete({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         order: "order"
     })
 ```
 
-**Request fields** (`DeleteInvoiceItemRequest`):
+**Request fields** (`DeleteInvoiceItemsRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)

@@ -23,23 +23,23 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdClientsRequest} request
+     * @param {ClockifyApi.ListClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.getWorkspacesWorkspaceIdClients({
+     *     await client.clients.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspacesWorkspaceIdClients(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdClientsRequest,
+    public list(
+        request: ClockifyApi.ListClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Client[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspacesWorkspaceIdClients(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdClients(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdClientsRequest,
+    private async __list(
+        request: ClockifyApi.ListClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Client[]>> {
         const {
@@ -111,26 +111,26 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdClientsRequest} request
+     * @param {ClockifyApi.CreateClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.postWorkspacesWorkspaceIdClients({
+     *     await client.clients.create({
      *         workspaceId: "workspaceId",
      *         body: {
      *             name: "name"
      *         }
      *     })
      */
-    public postWorkspacesWorkspaceIdClients(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdClientsRequest,
+    public create(
+        request: ClockifyApi.CreateClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Client> {
-        return core.HttpResponsePromise.fromPromise(this.__postWorkspacesWorkspaceIdClients(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdClients(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdClientsRequest,
+    private async __create(
+        request: ClockifyApi.CreateClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Client>> {
         const { workspaceId, body: _body } = request;
@@ -181,26 +181,24 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdClientsClientIdRequest} request
+     * @param {ClockifyApi.GetClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.getWorkspacesWorkspaceIdClientsClientId({
+     *     await client.clients.get({
      *         workspaceId: "workspaceId",
      *         clientId: "clientId"
      *     })
      */
-    public getWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdClientsClientIdRequest,
+    public get(
+        request: ClockifyApi.GetClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Client> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdClientsClientId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdClientsClientIdRequest,
+    private async __get(
+        request: ClockifyApi.GetClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Client>> {
         const { workspaceId, clientId } = request;
@@ -248,11 +246,11 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdRequest} request
+     * @param {ClockifyApi.UpdateClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.putWorkspacesWorkspaceIdClientsClientId({
+     *     await client.clients.update({
      *         workspaceId: "workspaceId",
      *         clientId: "clientId",
      *         body: {
@@ -260,17 +258,15 @@ export class ClientsClient {
      *         }
      *     })
      */
-    public putWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdRequest,
+    public update(
+        request: ClockifyApi.UpdateClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Client> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdClientsClientId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Client>> {
         const { workspaceId, clientId, body: _body } = request;
@@ -321,26 +317,24 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdClientsClientIdRequest} request
+     * @param {ClockifyApi.DeleteClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.deleteWorkspacesWorkspaceIdClientsClientId({
+     *     await client.clients.delete({
      *         workspaceId: "workspaceId",
      *         clientId: "clientId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdClientsClientIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdClientsClientId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdClientsClientId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdClientsClientIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, clientId } = request;
@@ -388,26 +382,24 @@ export class ClientsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdArchiveRequest} request
+     * @param {ClockifyApi.ArchiveClientsRequest} request
      * @param {ClientsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.clients.putWorkspacesWorkspaceIdClientsClientIdArchive({
+     *     await client.clients.archive({
      *         workspaceId: "workspaceId",
      *         clientId: "clientId"
      *     })
      */
-    public putWorkspacesWorkspaceIdClientsClientIdArchive(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdArchiveRequest,
+    public archive(
+        request: ClockifyApi.ArchiveClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdClientsClientIdArchive(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__archive(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdClientsClientIdArchive(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdClientsClientIdArchiveRequest,
+    private async __archive(
+        request: ClockifyApi.ArchiveClientsRequest,
         requestOptions?: ClientsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, clientId, ..._body } = request;

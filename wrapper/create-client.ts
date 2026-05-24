@@ -57,10 +57,22 @@ export interface ClockifyClientEnhancements {
 }
 
 /**
- * Options for {@link createClockifyClient}. Discriminated union: pass
- * `apiKey` XOR `addonToken`, never both. Other `BaseClientOptions`
- * fields (`environment`, `baseUrl`, `headers`, `timeoutInSeconds`,
- * `logging`, `auth`) flow through unchanged.
+ * Options for {@link createClockifyClient}. Three valid shapes:
+ *
+ * - **Explicit `apiKey`** (personal-token auth via `X-Api-Key`).
+ * - **Explicit `addonToken`** (marketplace-addon auth via
+ *   `X-Addon-Token`).
+ * - **Neither** — both keys omitted; the factory then reads
+ *   `process.env.CLOCKIFY_API_KEY` (preferred) or
+ *   `process.env.CLOCKIFY_ADDON_TOKEN` at construction time. Throws
+ *   if both env vars are also absent.
+ *
+ * Providing both `apiKey` AND `addonToken` is rejected at the TS
+ * type level AND at runtime (`HTTP 401 "Multiple or none auth
+ * tokens present"` otherwise — Clockify enforces exclusivity).
+ * Other `BaseClientOptions` fields (`environment`, `baseUrl`,
+ * `headers`, `timeoutInSeconds`, `logging`, `auth`) flow through
+ * unchanged.
  */
 export type CreateClockifyClientOptions =
     | (WithoutAuthOrEnhancements &
@@ -74,9 +86,32 @@ export type CreateClockifyClientOptions =
               /** Marketplace-addon auth header (`X-Addon-Token`). */
               addonToken: BaseClientOptions["addonToken"];
               apiKey?: never;
+          })
+    | (WithoutAuthOrEnhancements &
+          ClockifyClientEnhancements & {
+              /** Both auth keys omitted — factory reads from env at
+               *  construction time (CLOCKIFY_API_KEY preferred over
+               *  CLOCKIFY_ADDON_TOKEN). */
+              apiKey?: never;
+              addonToken?: never;
           });
 
 const NULL_SUPPLIER = (() => undefined) as unknown as () => string;
+
+/** Env-var names the factory reads when neither auth option is
+ *  passed explicitly. The naming mirrors Clockify's own documented
+ *  shell-env conventions (used in their CLI examples) and matches
+ *  the Stripe / OpenAI / Anthropic SDKs' precedent. */
+const ENV_APIKEY = "CLOCKIFY_API_KEY";
+const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
+
+/** Read a non-empty env-var value (returns `undefined` for absent
+ *  or empty strings). Centralised so the factory's env-fallback
+ *  logic is testable in isolation if it grows. */
+function readEnv(name: string): string | undefined {
+    const value = typeof process !== "undefined" ? process.env?.[name] : undefined;
+    return value != null && value !== "" ? value : undefined;
+}
 
 /**
  * Construct a `ClockifyApiClient` with the documented single-scheme
@@ -88,14 +123,15 @@ const NULL_SUPPLIER = (() => undefined) as unknown as () => string;
  * ```ts
  * import { createClockifyClient } from "clockify-sdk-ts/create-client";
  *
- * // Simplest case — apiKey only; UA + req-id auto-injected.
- * const client = createClockifyClient({
- *   apiKey: process.env.CLOCKIFY_API_KEY!,
- * });
+ * // Simplest case — env-var driven. Reads CLOCKIFY_API_KEY
+ * // (preferred) or CLOCKIFY_ADDON_TOKEN from the environment.
+ * const client = createClockifyClient();
+ *
+ * // Explicit apiKey:
+ * const explicit = createClockifyClient({ apiKey: "..." });
  *
  * // With observability hooks + custom retry policy:
  * const observed = createClockifyClient({
- *   apiKey: process.env.CLOCKIFY_API_KEY!,
  *   hooks: {
  *     beforeRequest: ({ method, url, requestId }) =>
  *       console.log(`→ ${method} ${url} [${requestId}]`),
@@ -106,22 +142,18 @@ const NULL_SUPPLIER = (() => undefined) as unknown as () => string;
  * });
  * ```
  *
- * @throws TypeError if neither `apiKey` nor `addonToken` is provided,
- *   or if both are provided. Both conditions are also rejected at
- *   the TS type level via the discriminated-union options shape.
+ * @throws TypeError if both `apiKey` AND `addonToken` are passed
+ *   explicitly (the TS type also rejects this), or if neither is
+ *   passed AND neither `CLOCKIFY_API_KEY` nor `CLOCKIFY_ADDON_TOKEN`
+ *   is set in the environment.
  */
-export function createClockifyClient(options: CreateClockifyClientOptions): ClockifyApiClient {
-    const hasApiKey = "apiKey" in options && options.apiKey != null;
-    const hasAddonToken = "addonToken" in options && options.addonToken != null;
+export function createClockifyClient(options: CreateClockifyClientOptions = {}): ClockifyApiClient {
+    const hasExplicitApiKey = "apiKey" in options && options.apiKey != null;
+    const hasExplicitAddonToken = "addonToken" in options && options.addonToken != null;
 
-    if (hasApiKey && hasAddonToken) {
+    if (hasExplicitApiKey && hasExplicitAddonToken) {
         throw new TypeError(
             "createClockifyClient: pass only one of `apiKey` or `addonToken`, not both.",
-        );
-    }
-    if (!hasApiKey && !hasAddonToken) {
-        throw new TypeError(
-            "createClockifyClient: must provide exactly one of `apiKey` or `addonToken`.",
         );
     }
 
@@ -132,12 +164,45 @@ export function createClockifyClient(options: CreateClockifyClientOptions): Cloc
         hooks,
         retryPolicy,
         maxRetries,
-        ...auth
+        // Pull auth fields off the rest spread so `passthrough` only
+        // carries the non-auth BaseClientOptions fields (environment,
+        // headers, etc.) — we re-add the resolved auth below.
+        apiKey: _explicitApiKey,
+        addonToken: _explicitAddonToken,
+        ...passthrough
     } = options as ClockifyClientEnhancements &
         WithoutAuthOrEnhancements & {
             apiKey?: BaseClientOptions["apiKey"];
             addonToken?: BaseClientOptions["addonToken"];
         };
+
+    // Resolve effective auth. Explicit options always win over env
+    // vars; among env vars, CLOCKIFY_API_KEY is preferred over
+    // CLOCKIFY_ADDON_TOKEN (matches Clockify's own docs which lead
+    // with personal-API-key auth). The Stripe / OpenAI / Anthropic
+    // SDK convention is the same shape: implicit env-var fallback
+    // with explicit options taking precedence.
+    let effectiveApiKey: BaseClientOptions["apiKey"] | undefined;
+    let effectiveAddonToken: BaseClientOptions["addonToken"] | undefined;
+    if (hasExplicitApiKey) {
+        effectiveApiKey = _explicitApiKey;
+    } else if (hasExplicitAddonToken) {
+        effectiveAddonToken = _explicitAddonToken;
+    } else {
+        const envApiKey = readEnv(ENV_APIKEY);
+        const envAddonToken = readEnv(ENV_ADDON_TOKEN);
+        if (envApiKey != null) {
+            effectiveApiKey = envApiKey;
+        } else if (envAddonToken != null) {
+            effectiveAddonToken = envAddonToken;
+        }
+    }
+
+    if (effectiveApiKey == null && effectiveAddonToken == null) {
+        throw new TypeError(
+            `createClockifyClient: must provide exactly one of \`apiKey\` or \`addonToken\` (or set ${ENV_APIKEY} / ${ENV_ADDON_TOKEN} in the environment).`,
+        );
+    }
 
     const wrappedFetch = composedFetch({
         fetch: rawFetch,
@@ -154,22 +219,22 @@ export function createClockifyClient(options: CreateClockifyClientOptions): Cloc
     const effectiveMaxRetries = retryPolicy !== undefined ? 0 : maxRetries;
 
     const base = {
-        ...auth,
+        ...passthrough,
         fetch: wrappedFetch,
         ...(effectiveMaxRetries !== undefined ? { maxRetries: effectiveMaxRetries } : {}),
     };
 
-    if (hasApiKey) {
+    if (effectiveApiKey != null) {
         return new ClockifyApiClient({
             ...base,
-            apiKey: (auth as { apiKey: BaseClientOptions["apiKey"] }).apiKey,
+            apiKey: effectiveApiKey,
             addonToken: NULL_SUPPLIER,
         });
     }
 
     return new ClockifyApiClient({
         ...base,
-        addonToken: (auth as { addonToken: BaseClientOptions["addonToken"] }).addonToken,
+        addonToken: effectiveAddonToken!,
         apiKey: NULL_SUPPLIER,
     });
 }

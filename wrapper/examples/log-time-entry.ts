@@ -25,7 +25,7 @@ const start = new Date(Date.now() - 60_000).toISOString();
 const end = new Date().toISOString();
 
 try {
-    const created = await client.timeEntries.postWorkspacesWorkspaceIdTimeEntries({
+    const created = await client.timeEntries.create({
         workspaceId,
         start,
         end,
@@ -37,7 +37,7 @@ try {
         throw new Error("server didn't return an id; cannot clean up");
     }
 
-    await client.timeEntries.deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.delete({
         workspaceId,
         timeEntryId: created.id,
     });

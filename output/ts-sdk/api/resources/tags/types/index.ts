@@ -1,2 +1,2 @@
-export * from "./GetWorkspacesWorkspaceIdTagsRequestSortColumn.js";
-export * from "./GetWorkspacesWorkspaceIdTagsRequestSortOrder.js";
+export * from "./ListTagsRequestSortColumn.js";
+export * from "./ListTagsRequestSortOrder.js";

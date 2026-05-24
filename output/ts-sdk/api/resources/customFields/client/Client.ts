@@ -25,25 +25,25 @@ export class CustomFieldsClient {
     /**
      * Returns custom fields on a workspace, optionally filtered by name, status, and entity type.
      *
-     * @param {ClockifyApi.ListWorkspaceCustomFieldsRequest} request
+     * @param {ClockifyApi.ListForWorkspaceCustomFieldsRequest} request
      * @param {CustomFieldsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.UnauthorizedError}
      *
      * @example
-     *     await client.customFields.listWorkspaceCustomFields({
+     *     await client.customFields.listForWorkspace({
      *         workspaceId: "64a687e29ae1f428e7ebe303"
      *     })
      */
-    public listWorkspaceCustomFields(
-        request: ClockifyApi.ListWorkspaceCustomFieldsRequest,
+    public listForWorkspace(
+        request: ClockifyApi.ListForWorkspaceCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField[]> {
-        return core.HttpResponsePromise.fromPromise(this.__listWorkspaceCustomFields(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listForWorkspace(request, requestOptions));
     }
 
-    private async __listWorkspaceCustomFields(
-        request: ClockifyApi.ListWorkspaceCustomFieldsRequest,
+    private async __listForWorkspace(
+        request: ClockifyApi.ListForWorkspaceCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField[]>> {
         const { workspaceId, page, "page-size": pageSize } = request;
@@ -112,7 +112,7 @@ export class CustomFieldsClient {
      * @throws {@link ClockifyApi.UnauthorizedError}
      *
      * @example
-     *     await client.customFields.createWorkspaceCustomField({
+     *     await client.customFields.createForWorkspace({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         allowedValues: ["New York", "London", "Manila", "Sydney", "Belgrade"],
      *         description: "This field contains a location.",
@@ -125,14 +125,14 @@ export class CustomFieldsClient {
      *         workspaceDefaultValue: ["Manila"]
      *     })
      */
-    public createWorkspaceCustomField(
+    public createForWorkspace(
         request: ClockifyApi.CreateCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField> {
-        return core.HttpResponsePromise.fromPromise(this.__createWorkspaceCustomField(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__createForWorkspace(request, requestOptions));
     }
 
-    private async __createWorkspaceCustomField(
+    private async __createForWorkspace(
         request: ClockifyApi.CreateCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField>> {
@@ -198,7 +198,7 @@ export class CustomFieldsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.customFields.updateWorkspaceCustomField({
+     *     await client.customFields.updateForWorkspace({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         customFieldId: "customFieldId",
      *         allowedValues: ["New York", "London", "Manila", "Sydney", "Belgrade"],
@@ -212,14 +212,14 @@ export class CustomFieldsClient {
      *         workspaceDefaultValue: ["Manila"]
      *     })
      */
-    public updateWorkspaceCustomField(
+    public updateForWorkspace(
         request: ClockifyApi.UpdateCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField> {
-        return core.HttpResponsePromise.fromPromise(this.__updateWorkspaceCustomField(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateForWorkspace(request, requestOptions));
     }
 
-    private async __updateWorkspaceCustomField(
+    private async __updateForWorkspace(
         request: ClockifyApi.UpdateCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField>> {
@@ -280,27 +280,27 @@ export class CustomFieldsClient {
     /**
      * Deletes a custom field from a workspace.
      *
-     * @param {ClockifyApi.DeleteWorkspaceCustomFieldRequest} request
+     * @param {ClockifyApi.DeleteForWorkspaceCustomFieldsRequest} request
      * @param {CustomFieldsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.UnauthorizedError}
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.customFields.deleteWorkspaceCustomField({
+     *     await client.customFields.deleteForWorkspace({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         customFieldId: "customFieldId"
      *     })
      */
-    public deleteWorkspaceCustomField(
-        request: ClockifyApi.DeleteWorkspaceCustomFieldRequest,
+    public deleteForWorkspace(
+        request: ClockifyApi.DeleteForWorkspaceCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteWorkspaceCustomField(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__deleteForWorkspace(request, requestOptions));
     }
 
-    private async __deleteWorkspaceCustomField(
-        request: ClockifyApi.DeleteWorkspaceCustomFieldRequest,
+    private async __deleteForWorkspace(
+        request: ClockifyApi.DeleteForWorkspaceCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, customFieldId } = request;
@@ -357,27 +357,27 @@ export class CustomFieldsClient {
     /**
      * Returns custom fields on a project, optionally filtered by status and entity type.
      *
-     * @param {ClockifyApi.ListProjectCustomFieldsRequest} request
+     * @param {ClockifyApi.ListForProjectCustomFieldsRequest} request
      * @param {CustomFieldsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.UnauthorizedError}
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.customFields.listProjectCustomFields({
+     *     await client.customFields.listForProject({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "projectId"
      *     })
      */
-    public listProjectCustomFields(
-        request: ClockifyApi.ListProjectCustomFieldsRequest,
+    public listForProject(
+        request: ClockifyApi.ListForProjectCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField[]> {
-        return core.HttpResponsePromise.fromPromise(this.__listProjectCustomFields(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listForProject(request, requestOptions));
     }
 
-    private async __listProjectCustomFields(
-        request: ClockifyApi.ListProjectCustomFieldsRequest,
+    private async __listForProject(
+        request: ClockifyApi.ListForProjectCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField[]>> {
         const { workspaceId, projectId, page, "page-size": pageSize } = request;
@@ -442,28 +442,28 @@ export class CustomFieldsClient {
     /**
      * Removes a custom field from a project and returns the custom field.
      *
-     * @param {ClockifyApi.RemoveProjectCustomFieldRequest} request
+     * @param {ClockifyApi.RemoveFromProjectCustomFieldsRequest} request
      * @param {CustomFieldsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.UnauthorizedError}
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.customFields.removeProjectCustomField({
+     *     await client.customFields.removeFromProject({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "projectId",
      *         customFieldId: "customFieldId"
      *     })
      */
-    public removeProjectCustomField(
-        request: ClockifyApi.RemoveProjectCustomFieldRequest,
+    public removeFromProject(
+        request: ClockifyApi.RemoveFromProjectCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField> {
-        return core.HttpResponsePromise.fromPromise(this.__removeProjectCustomField(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__removeFromProject(request, requestOptions));
     }
 
-    private async __removeProjectCustomField(
-        request: ClockifyApi.RemoveProjectCustomFieldRequest,
+    private async __removeFromProject(
+        request: ClockifyApi.RemoveFromProjectCustomFieldsRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField>> {
         const { workspaceId, projectId, customFieldId } = request;
@@ -527,7 +527,7 @@ export class CustomFieldsClient {
      * @throws {@link ClockifyApi.NotFoundError}
      *
      * @example
-     *     await client.customFields.updateProjectCustomField({
+     *     await client.customFields.updateForProject({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "projectId",
      *         customFieldId: "customFieldId",
@@ -535,14 +535,14 @@ export class CustomFieldsClient {
      *         status: "VISIBLE"
      *     })
      */
-    public updateProjectCustomField(
+    public updateForProject(
         request: ClockifyApi.UpdateProjectCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.CustomField> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectCustomField(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateForProject(request, requestOptions));
     }
 
-    private async __updateProjectCustomField(
+    private async __updateForProject(
         request: ClockifyApi.UpdateProjectCustomFieldRequest,
         requestOptions?: CustomFieldsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.CustomField>> {

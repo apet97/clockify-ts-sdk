@@ -1,2 +1,2 @@
-export * from "./GetTimeOffPoliciesRequestSortOrder.js";
-export * from "./GetTimeOffPoliciesRequestStatus.js";
+export * from "./ListTimeOffPoliciesRequestSortOrder.js";
+export * from "./ListTimeOffPoliciesRequestStatus.js";

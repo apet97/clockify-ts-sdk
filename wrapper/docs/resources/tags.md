@@ -6,32 +6,32 @@
 
 ## Methods
 
-### `getWorkspacesWorkspaceIdTags`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.tags.getWorkspacesWorkspaceIdTags({
+    await client.tags.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTagsRequest`):
+**Request fields** (`ListTagsRequest`):
 
 - `workspaceId` (`string`, required)
 - `name` (`string`, optional)
 - `archived` (`boolean`, optional)
-- `sort-column` (`ClockifyApi.GetWorkspacesWorkspaceIdTagsRequestSortColumn`, optional)
-- `sort-order` (`ClockifyApi.GetWorkspacesWorkspaceIdTagsRequestSortOrder`, optional)
+- `sort-column` (`ClockifyApi.ListTagsRequestSortColumn`, optional)
+- `sort-order` (`ClockifyApi.ListTagsRequestSortOrder`, optional)
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `postWorkspacesWorkspaceIdTags`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.tags.postWorkspacesWorkspaceIdTags({
+    await client.tags.create({
         workspaceId: "workspaceId",
         name: "name"
     })
@@ -42,52 +42,52 @@
 - `workspaceId` (`string`, required)
 - `name` (`string`, required)
 
-### `getWorkspacesWorkspaceIdTagsTagId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+    await client.tags.get({
         workspaceId: "workspaceId",
         tagId: "tagId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTagsTagIdRequest`):
+**Request fields** (`GetTagsRequest`):
 
 - `workspaceId` (`string`, required)
 - `tagId` (`string`, required)
 
-### `putWorkspacesWorkspaceIdTagsTagId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.tags.putWorkspacesWorkspaceIdTagsTagId({
+    await client.tags.update({
         workspaceId: "workspaceId",
         tagId: "tagId"
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdTagsTagIdRequest`):
+**Request fields** (`UpdateTagsRequest`):
 
 - `workspaceId` (`string`, required)
 - `tagId` (`string`, required)
 - `archived` (`boolean`, optional)
 - `name` (`string`, optional)
 
-### `deleteWorkspacesWorkspaceIdTagsTagId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.tags.deleteWorkspacesWorkspaceIdTagsTagId({
+    await client.tags.delete({
         workspaceId: "workspaceId",
         tagId: "tagId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdTagsTagIdRequest`):
+**Request fields** (`DeleteTagsRequest`):
 
 - `workspaceId` (`string`, required)
 - `tagId` (`string`, required)
