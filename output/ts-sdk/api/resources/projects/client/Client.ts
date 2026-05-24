@@ -846,7 +846,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.assignOrRemoveProjectUsers({
+     *     await client.projects.setMembers({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         remove: false,
@@ -858,14 +858,14 @@ export class ProjectsClient {
      *         userIds: ["45b687e29ae1f428e7ebe123", "67s687e29ae1f428e7ebe678"]
      *     })
      */
-    public assignOrRemoveProjectUsers(
+    public setMembers(
         request: ClockifyApi.AssignRemoveUsersRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__assignOrRemoveProjectUsers(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__setMembers(request, requestOptions));
     }
 
-    private async __assignOrRemoveProjectUsers(
+    private async __setMembers(
         request: ClockifyApi.AssignRemoveUsersRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {

@@ -98,19 +98,19 @@
 - `policyId` (`string`, required)
 - `body` (`ClockifyApi.CreateTimeOffRequest`, required)
 
-### `deleteTimeOffRequest`
+### `withdraw`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.deleteTimeOffRequest({
+    await client.timeOff.withdraw({
         workspaceId: "workspaceId",
         policyId: "policyId",
         requestId: "requestId"
     })
 ```
 
-**Request fields** (`DeleteTimeOffRequestRequest`):
+**Request fields** (`WithdrawTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)

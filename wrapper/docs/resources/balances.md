@@ -82,18 +82,18 @@
 
 - `workspaceId` (`string`, required)
 
-### `getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances`
+### `listForUser`
 
 **Example:**
 
 ```typescript
-    await client.balances.getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances({
+    await client.balances.listForUser({
         workspaceId: "workspaceId",
         userId: "userId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesRequest`):
+**Request fields** (`ListForUserBalancesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)

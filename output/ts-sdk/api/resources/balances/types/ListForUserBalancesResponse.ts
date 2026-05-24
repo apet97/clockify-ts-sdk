@@ -2,7 +2,7 @@
 
 import type * as ClockifyApi from "../../../index.js";
 
-export interface GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesResponse {
+export interface ListForUserBalancesResponse {
     balances?: ClockifyApi.BalanceBalance[] | undefined;
     count?: number | undefined;
 }

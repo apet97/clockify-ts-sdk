@@ -4,12 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         policyId: "policyId",
- *         requestId: "requestId"
+ *         userId: "userId"
  *     }
  */
-export interface DeleteTimeOffRequestRequest {
+export interface ListForUserBalancesRequest {
     workspaceId: string;
-    policyId: string;
-    requestId: string;
+    userId: string;
 }

@@ -304,12 +304,12 @@
 - `since` (`string`, optional)
 - `sinceAsInstant` (`string`, optional)
 
-### `assignOrRemoveProjectUsers`
+### `setMembers`
 
 **Example:**
 
 ```typescript
-    await client.projects.assignOrRemoveProjectUsers({
+    await client.projects.setMembers({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         remove: false,

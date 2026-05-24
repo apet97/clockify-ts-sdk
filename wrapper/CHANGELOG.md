@@ -57,9 +57,10 @@ once v1.0.0 ships.
 - **Idiomatic method names on 27 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
   upstream spec, Fern now generates 27 of the 31 resource modules
-  with idiomatic names. **167 ops mapped in total** (87% of the
+  with idiomatic names. **170 ops mapped in total** (89% of the
   191-op API surface): 110 in the first G.1 cut + 39 action-verb
-  cleanups + 18 small / read-only module fills:
+  cleanups + 18 small/read-only module fills + 3 domain edge-case
+  fills:
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).
@@ -183,6 +184,19 @@ once v1.0.0 ships.
   removeUserManagerRole}`, `expenseReport.generateDetailedReportV1`,
   the per-user `workspaces.updateUser*` family — each name is
   already a clean verb-noun and a rename would not improve clarity.
+
+  **Final domain edge-case fills (+3 ops, step 8):**
+  - `projects.setMembers` (POST `/projects/{projectId}/memberships`
+    replaces the membership list — paired with the sibling PATCH
+    `updateMemberships` for partial updates). Naming mirrors the
+    `userGroups.{listMembers,addMembers,removeMember}` family.
+  - `timeOff.withdraw` (DELETE on the policy-scoped request path
+    is the user-side withdraw flow — paired with the admin
+    workspace-level `delete` already stamped).
+  - `balances.listForUser` (GET on the per-user
+    `/users/{uid}/time-off/balances` plural route returns a list
+    of balances across policies; the sibling singular `getForUser`
+    returns a single balance object). 170/191 ops = 89% coverage.
   Root-cause analysis (method-name alone hoists ops to the root
   client) + the explicit-allowlist technique are documented in
   `spec/evidence/discrepancies.md` →

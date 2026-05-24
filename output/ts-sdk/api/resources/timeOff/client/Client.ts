@@ -353,25 +353,25 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteTimeOffRequestRequest} request
+     * @param {ClockifyApi.WithdrawTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.deleteTimeOffRequest({
+     *     await client.timeOff.withdraw({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         requestId: "requestId"
      *     })
      */
-    public deleteTimeOffRequest(
-        request: ClockifyApi.DeleteTimeOffRequestRequest,
+    public withdraw(
+        request: ClockifyApi.WithdrawTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestDto> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteTimeOffRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__withdraw(request, requestOptions));
     }
 
-    private async __deleteTimeOffRequest(
-        request: ClockifyApi.DeleteTimeOffRequestRequest,
+    private async __withdraw(
+        request: ClockifyApi.WithdrawTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestDto>> {
         const { workspaceId, policyId, requestId } = request;

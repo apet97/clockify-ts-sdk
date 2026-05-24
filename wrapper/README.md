@@ -170,7 +170,7 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **Idiomatic method names on 27 of the 31 modules (167 ops, ~87% of
+- **Idiomatic method names on 27 of the 31 modules (170 ops, ~89% of
   the API surface).** Each stamped op pairs `x-fern-sdk-group-name`
   + `x-fern-sdk-method-name` so the method lands at
   `client.<resource>.<verb>()`:

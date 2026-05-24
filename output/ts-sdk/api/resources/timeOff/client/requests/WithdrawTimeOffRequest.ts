@@ -4,10 +4,12 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         userId: "userId"
+ *         policyId: "policyId",
+ *         requestId: "requestId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdUsersUserIdTimeOffBalancesRequest {
+export interface WithdrawTimeOffRequest {
     workspaceId: string;
-    userId: string;
+    policyId: string;
+    requestId: string;
 }

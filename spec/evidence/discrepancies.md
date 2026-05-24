@@ -710,9 +710,9 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (27-module subset, 167 ops):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` maps 167 pairs to
-  `{group, name}` entries. The session expanded in seven steps:
+- **What shipped (27-module subset, 170 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 170 pairs to
+  `{group, name}` entries. The session expanded in eight steps:
   - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
     archive = 11 ops.
   - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
@@ -754,6 +754,14 @@ Each of these needs:
     `roles.{give,remove}UserManagerRole`, `expenseReport.
     generateDetailedReportV1`, per-user workspaces verbs — each
     is already verb-noun shaped.
+  - Step 8 (final domain edge-case fills, 3 ops):
+    projects × 1 (`setMembers` for POST /memberships, paired with
+    sibling PATCH `updateMemberships`), timeOff × 1 (`withdraw`
+    for DELETE on the policy-scoped request path, paired with
+    admin workspace-level `delete`), balances × 1 (`listForUser`
+    for GET on the plural `/users/{uid}/time-off/balances` route,
+    paired with sibling singular `getForUser`). 170/191 = 89%
+    coverage.
 
   After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
   + `fern check --warnings --from-openapi` + `fern generate --group ts
@@ -797,24 +805,37 @@ Each of these needs:
      it's the required complement.
   3-4. Closed by (1).
 
-- **Status (updated):** `resolved-modulo-handful-of-domain-edge-cases`.
-  The proven technique ships in `SDK_METHOD_NAMES` covering 167 ops
-  across 27 of 31 modules. Coverage by op count: **167/191 = 87% of
-  total operations carry idiomatic stamps**. The remaining ~24 ops
-  are split between already-clean operationId names that don't need
-  a rename (`files.uploadImage`, `roles.giveUserManagerRole`, etc.)
-  and per-module domain edge cases needing investigation (e.g.
-  `assignOrRemoveProjectUsers` vs `updateMemberships`; the timeOff
-  legacy `/policies/...` duplicate paths; the two `Balances`-tagged
-  time-off read routes). Module count stays at 31 + index.ts across
-  all seven expansion steps. The technique covers every naming
-  pattern in Clockify's surface: pure CRUDL, CRUDL+action,
-  partial CRUDL, scoped naming, workflow verbs, family-name verbs,
-  ~10 distinct action-verb patterns (`mark*`, `start/stopTimer`,
-  `rotateToken`, `replaceRecurring`, `listFor*`, `update*Rate`,
-  `listCreated/Updated/Deleted` for the entity-change feed, etc.).
-  Each of the seven expansion steps preserved the invariant "31
-  modules + index.ts, 0 root hoists".
+- **Status (updated):** `resolved-coverage-89pct-residue-is-deliberate`.
+  The proven technique ships in `SDK_METHOD_NAMES` covering 170 ops
+  across 27 of 31 modules. Coverage by op count: **170/191 = 89% of
+  total operations carry idiomatic stamps**. The remaining ~21 ops
+  split into:
+  - **Already-clean operationId names (don't need a rename)** —
+    `files.uploadImage`, `roles.giveUserManagerRole`,
+    `roles.removeUserManagerRole`,
+    `expenseReport.generateDetailedReportV1` (the `V1` suffix is
+    load-bearing), the per-user `workspaces.updateUser*` family,
+    `timeEntries.deleteMany`, `scheduling.changeRecurringPeriod`.
+  - **Per-module domain edge cases that need additional research
+    before a rename** — the timeOff legacy `/policies/{pid}/
+    requests` duplicate trio (POST/DELETE/PATCH that mirror the
+    `/time-off/policies/...` family on a deprecated path), the
+    timeOff `postWorkspacesWorkspaceIdTimeOffRequestsUsersUserId`
+    workspace-scoped admin-creates-for-user variant, the timeOff
+    `changeTimeOffRequestStatus` policy-scoped status PATCH, and
+    the balances `getWorkspacesWorkspaceIdTimeOffRequests` cross-
+    reference (a `Balances`-tagged route living at `/time-off/
+    requests`).
+
+  Module count stays at 31 + index.ts across all eight expansion
+  steps. The technique covers every naming pattern in Clockify's
+  surface: pure CRUDL, CRUDL+action, partial CRUDL, scoped naming,
+  workflow verbs, family-name verbs, and ~12 distinct action-verb
+  patterns (`mark*`, `start/stopTimer`, `rotateToken`,
+  `replaceRecurring`, `listFor*`, `update*Rate`, `listCreated/
+  Updated/Deleted`, `setMembers`, `withdraw`, etc.). Each of the
+  eight expansion steps preserved the invariant "31 modules +
+  index.ts, 0 root hoists".
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 
