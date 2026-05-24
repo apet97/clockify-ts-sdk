@@ -1,9 +1,6 @@
 export { ChangeTimeOffRequestStatusRequest } from "./ChangeTimeOffRequestStatusRequest.js";
 export type { DeleteTimeOffRequest } from "./DeleteTimeOffRequest.js";
-export type { DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest } from "./DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest.js";
 export type { GetTimeOffRequest } from "./GetTimeOffRequest.js";
-export { PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest } from "./PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest.js";
-export { PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest } from "./PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest.js";
 export type { SubmitForUserTimeOffRequest } from "./SubmitForUserTimeOffRequest.js";
 export type { SubmitTimeOffRequest } from "./SubmitTimeOffRequest.js";
 export type { TimeOffRequestCreate } from "./TimeOffRequestCreate.js";

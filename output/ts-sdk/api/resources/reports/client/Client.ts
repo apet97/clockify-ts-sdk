@@ -150,7 +150,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -293,7 +296,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -427,7 +433,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:
@@ -560,7 +569,10 @@ export class ReportsClient {
         if (_response.error.reason === "status-code") {
             switch (_response.error.statusCode) {
                 case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
+                    throw new ClockifyApi.BadRequestError(
+                        _response.error.body as ClockifyApi.ErrorResponse,
+                        _response.rawResponse,
+                    );
                 case 401:
                     throw new ClockifyApi.UnauthorizedError(_response.error.body as unknown, _response.rawResponse);
                 case 403:

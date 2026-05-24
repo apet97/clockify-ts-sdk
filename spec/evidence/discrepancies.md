@@ -805,10 +805,14 @@ Each of these needs:
      it's the required complement.
   3-4. Closed by (1).
 
-- **Status (updated):** `resolved-coverage-89pct-residue-is-deliberate`.
+- **Status (updated):** `resolved-coverage-90pct-residue-is-deliberate`.
   The proven technique ships in `SDK_METHOD_NAMES` covering 170 ops
-  across 27 of 31 modules. Coverage by op count: **170/191 = 89% of
-  total operations carry idiomatic stamps**. The remaining ~21 ops
+  across 27 of 31 modules. Coverage by op count: **170/188 = 90.4%
+  of total live operations carry idiomatic stamps** (denominator
+  shrank from 191 → 188 after the three legacy `time-off-request`
+  paths were quarantined as phantom — see
+  `timeoff.legacy-policies-requests.phantom-path-quarantined`
+  below). The remaining ~21 ops
   split into:
   - **Already-clean operationId names (don't need a rename)** —
     `files.uploadImage`, `roles.giveUserManagerRole`,
@@ -1388,6 +1392,72 @@ on the bare route (the granular variants — already in
      the four combinations (header true/false × page full/short)
      plus the case-insensitive parse + the no-`withRawResponse`
      fallback path.
+
+## Time-off request duplicate paths — investigation
+
+### `timeoff.legacy-policies-requests.phantom-path-quarantined` — RESOLVED 2026-05-25
+
+- **Official claim:** the upstream
+  `clockify-api-probe-lab/openapi-fragments/time-off-b.yaml` source
+  declares three time-off-request action operations at the legacy
+  unscoped path `/workspaces/{workspaceId}/policies/{policyId}/
+  requests` (POST + DELETE + PATCH). The same source ALSO declares
+  the scoped variants at `/workspaces/{workspaceId}/time-off/
+  policies/{policyId}/requests/*`. Both sets land in the canonical
+  YAML under the `Time Off` tag.
+
+- **Actual behaviour (live probe, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** the three legacy routes all return
+  `HTTP 404 + {"message":"No static resource v1/workspaces/{ws}/
+  policies/{pid}/requests[/{rid}].","code":3000}`. Probed with
+  policyId `696fd7f25dd6c5510bafa772`, fake requestId
+  `aaaaaaaaaaaaaaaaaaaaaaaa`:
+  - POST `/workspaces/{wsId}/policies/{pid}/requests` with `{}` →
+    HTTP 404 "No static resource".
+  - DELETE `/workspaces/{wsId}/policies/{pid}/requests/{rid}` →
+    HTTP 404 "No static resource".
+  - PATCH `/workspaces/{wsId}/policies/{pid}/requests/{rid}` with
+    `{}` → HTTP 404 "No static resource".
+
+  The control probe (POST on the scoped path `/workspaces/{wsId}/
+  time-off/policies/{pid}/requests` with `{}`) returned `HTTP 400
+  {"message":"must not be null","code":501}` — same handler accepts
+  POST but rejects an empty body — confirming the scoped routes ARE
+  live.
+
+- **Live evidence:**
+  - `spec/evidence/probes/20260525-timeoff-legacy-post.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-legacy-delete.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-legacy-patch.{json,hdr}`
+  - `spec/evidence/probes/20260525-timeoff-current-post.{json,hdr}`
+    (control showing the scoped path is live)
+
+  All gitignored per AGENTS.md §5.4.
+
+- **MCP tools affected:** none — `internal/tools/` consumes the
+  canonical spec, and the MCP tool layer always routes time-off
+  requests through the scoped `/time-off/policies/...` paths
+  (the operationId-derived tool names are
+  `clockify_time_off_request*` and friends, all generated against
+  the scoped operations).
+
+- **Open questions:** none. The probe is definitive: the legacy
+  paths do not exist on the live API. They are spec ghosts from an
+  older source-bundle revision.
+
+- **Status:** `phantom-path-quarantined`. Added three entries to
+  `PHANTOM_PATHS` in `../GOCLMCP/scripts/gen-clockify-openapi`:
+  `["post", ".../policies/{policyId}/requests"]`,
+  `["delete", ".../policies/{policyId}/requests/{requestId}"]`,
+  `["patch", ".../policies/{policyId}/requests/{requestId}"]`. After
+  regen the canonical OpenAPI carries **188 operations (was 191)**;
+  raw-allowlist drops from 134 to 131 routes. All 4 drift gates
+  pass; `go test ./internal/tools/...` passes; `fern check` clean;
+  `fern generate` clean; `tsc --noEmit` clean; 126/126 vitest.
+  The timeOff resource module in the wrapper now exposes 9 methods
+  (was 12 — the 3 legacy ops are gone). G.1 coverage metric updates
+  from 170/191 = 89% to **170/188 = 90.4%** because the denominator
+  shrank with the quarantine.
 
 ## Idempotency-Key header — investigation (G.4)
 

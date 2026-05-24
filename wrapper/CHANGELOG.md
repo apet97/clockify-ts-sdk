@@ -7,6 +7,23 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Removed
+
+- **Three phantom `time-off-request` legacy paths quarantined.**
+  Live-probed the three operations the canonical spec declared at
+  `/workspaces/{wsId}/policies/{policyId}/requests` (POST + DELETE +
+  PATCH); all returned `HTTP 404 + {"message":"No static resource
+  ...","code":3000}` — the routes do not exist on the live API.
+  Added to `PHANTOM_PATHS` in `../GOCLMCP/scripts/gen-clockify-openapi`;
+  the merger quarantines them on every regen. Canonical operation
+  count drops from 191 → 188; raw-allowlist drops 134 → 131; the
+  wrapper's `timeOff` module exposes 9 methods (was 12). The live
+  time-off request flow is exclusively under the scoped
+  `/workspaces/{wsId}/time-off/policies/{policyId}/requests/*`
+  paths (already stamped as `submit` / `withdraw` / etc.). See
+  `spec/evidence/discrepancies.md` →
+  `timeoff.legacy-policies-requests.phantom-path-quarantined`.
+
 ### Added
 
 - **`createClockifyClient()` reads `CLOCKIFY_API_KEY` /
@@ -57,10 +74,11 @@ once v1.0.0 ships.
 - **Idiomatic method names on 27 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
   upstream spec, Fern now generates 27 of the 31 resource modules
-  with idiomatic names. **170 ops mapped in total** (89% of the
-  191-op API surface): 110 in the first G.1 cut + 39 action-verb
-  cleanups + 18 small/read-only module fills + 3 domain edge-case
-  fills:
+  with idiomatic names. **170 ops mapped in total** (90.4% of the
+  188-op live API surface; see "Removed" below for the 3 phantom
+  ops dropped from 191 → 188): 110 in the first G.1 cut + 39
+  action-verb cleanups + 18 small/read-only module fills + 3
+  domain edge-case fills:
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).

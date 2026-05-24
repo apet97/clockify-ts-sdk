@@ -62,7 +62,6 @@ export class ClockifyApiClient {
     protected _invoicePayments: InvoicePaymentsClient | undefined;
     protected _memberProfiles: MemberProfilesClient | undefined;
     protected _policies: PoliciesClient | undefined;
-    protected _timeOff: TimeOffClient | undefined;
     protected _projects: ProjectsClient | undefined;
     protected _tasks: TasksClient | undefined;
     protected _reports: ReportsClient | undefined;
@@ -72,6 +71,7 @@ export class ClockifyApiClient {
     protected _timeEntries: TimeEntriesClient | undefined;
     protected _balances: BalancesClient | undefined;
     protected _timeOffPolicies: TimeOffPoliciesClient | undefined;
+    protected _timeOff: TimeOffClient | undefined;
     protected _userGroups: UserGroupsClient | undefined;
     protected _roles: RolesClient | undefined;
 
@@ -155,10 +155,6 @@ export class ClockifyApiClient {
         return (this._policies ??= new PoliciesClient(this._options));
     }
 
-    public get timeOff(): TimeOffClient {
-        return (this._timeOff ??= new TimeOffClient(this._options));
-    }
-
     public get projects(): ProjectsClient {
         return (this._projects ??= new ProjectsClient(this._options));
     }
@@ -193,6 +189,10 @@ export class ClockifyApiClient {
 
     public get timeOffPolicies(): TimeOffPoliciesClient {
         return (this._timeOffPolicies ??= new TimeOffPoliciesClient(this._options));
+    }
+
+    public get timeOff(): TimeOffClient {
+        return (this._timeOff ??= new TimeOffClient(this._options));
     }
 
     public get userGroups(): UserGroupsClient {

@@ -170,10 +170,10 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **Idiomatic method names on 27 of the 31 modules (170 ops, ~89% of
-  the API surface).** Each stamped op pairs `x-fern-sdk-group-name`
-  + `x-fern-sdk-method-name` so the method lands at
-  `client.<resource>.<verb>()`:
+- **Idiomatic method names on 27 of the 31 modules (170 ops, ~90% of
+  the 188-op live API surface).** Each stamped op pairs
+  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
+  lands at `client.<resource>.<verb>()`:
   - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
     `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
     `webhooks`, `expenses`, `expenseCategories`, `policies` — each

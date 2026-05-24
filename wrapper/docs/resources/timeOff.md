@@ -1,73 +1,10 @@
 # timeOff
 
-12 methods on `client.timeOff`.
+9 methods on `client.timeOff`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
 
 ## Methods
-
-### `postWorkspacesWorkspaceIdPoliciesPolicyIdRequests`
-
-**Example:**
-
-```typescript
-    await client.timeOff.postWorkspacesWorkspaceIdPoliciesPolicyIdRequests({
-        workspaceId: "workspaceId",
-        policyId: "policyId",
-        timeOffPeriod: {
-            period: {
-                end: "2026-07-13T10:00:00Z",
-                start: "2026-07-13T09:00:00Z"
-            }
-        }
-    })
-```
-
-**Request fields** (`PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest`):
-
-- `workspaceId` (`string`, required)
-- `policyId` (`string`, required)
-- `note` (`string`, optional)
-- `timeOffPeriod` (`PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest.TimeOffPeriod`, required)
-
-### `deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId`
-
-**Example:**
-
-```typescript
-    await client.timeOff.deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId({
-        workspaceId: "workspaceId",
-        policyId: "policyId",
-        requestId: "requestId"
-    })
-```
-
-**Request fields** (`DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest`):
-
-- `workspaceId` (`string`, required)
-- `policyId` (`string`, required)
-- `requestId` (`string`, required)
-
-### `patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId`
-
-**Example:**
-
-```typescript
-    await client.timeOff.patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId({
-        workspaceId: "workspaceId",
-        policyId: "policyId",
-        requestId: "requestId",
-        statusType: "APPROVED"
-    })
-```
-
-**Request fields** (`PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest`):
-
-- `workspaceId` (`string`, required)
-- `policyId` (`string`, required)
-- `requestId` (`string`, required)
-- `note` (`string`, optional)
-- `statusType` (`PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest.StatusType`, required)
 
 ### `submit`
 
