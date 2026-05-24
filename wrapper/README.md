@@ -48,7 +48,7 @@ The `apiKey` is sent as `X-Api-Key` on every request. Get one from the [Clockify
 
 The client exposes one sub-client per OpenAPI tag (32 modules at the time of writing):
 
-`approvals`, `auditLogReport`, `balances`, `clients`, `customFields`, `entityChangesExperimental`, `expenseCategories`, `expenseReport`, `expenses`, `files`, `holidays`, `invoiceItems`, `invoicePayments`, `invoiceSettings`, `invoices`, `memberProfiles`, `policies`, `projects`, `reports`, `roles`, `scheduling`, `sharedReport`, `tags`, `tasks`, `timeEntries`, `timeOff`, `timeOffPolicies`, `userGroups`, `users`, `webhooks`, `workspaces`
+`approvals`, `auditLogReport`, `balances`, `clients`, `customFields`, `entityChangesExperimental`, `expenseCategories`, `expenseReport`, `expenses`, `files`, `holidays`, `invoiceItems`, `invoicePayments`, `invoiceSettings`, `invoices`, `memberProfiles`, `policies`, `projects`, `reports`, `roles`, `scheduling`, `sharedReports`, `tags`, `tasks`, `timeEntries`, `timeOff`, `timeOffPolicies`, `userGroups`, `users`, `webhooks`, `workspaces`
 
 Each sub-client exposes one method per operation, with the operationId-derived name from the OpenAPI spec.
 

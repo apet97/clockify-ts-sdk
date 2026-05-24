@@ -21,7 +21,7 @@ import { ProjectsClient } from "./api/resources/projects/client/Client.js";
 import { ReportsClient } from "./api/resources/reports/client/Client.js";
 import { RolesClient } from "./api/resources/roles/client/Client.js";
 import { SchedulingClient } from "./api/resources/scheduling/client/Client.js";
-import { SharedReportClient } from "./api/resources/sharedReport/client/Client.js";
+import { SharedReportsClient } from "./api/resources/sharedReports/client/Client.js";
 import { TagsClient } from "./api/resources/tags/client/Client.js";
 import { TasksClient } from "./api/resources/tasks/client/Client.js";
 import { TimeEntriesClient } from "./api/resources/timeEntries/client/Client.js";
@@ -44,7 +44,7 @@ export declare namespace ClockifyApiClient {
 export class ClockifyApiClient {
     protected readonly _options: NormalizedClientOptionsWithAuth<ClockifyApiClient.Options>;
     protected _files: FilesClient | undefined;
-    protected _sharedReport: SharedReportClient | undefined;
+    protected _sharedReports: SharedReportsClient | undefined;
     protected _users: UsersClient | undefined;
     protected _workspaces: WorkspacesClient | undefined;
     protected _webhooks: WebhooksClient | undefined;
@@ -83,8 +83,8 @@ export class ClockifyApiClient {
         return (this._files ??= new FilesClient(this._options));
     }
 
-    public get sharedReport(): SharedReportClient {
-        return (this._sharedReport ??= new SharedReportClient(this._options));
+    public get sharedReports(): SharedReportsClient {
+        return (this._sharedReports ??= new SharedReportsClient(this._options));
     }
 
     public get users(): UsersClient {

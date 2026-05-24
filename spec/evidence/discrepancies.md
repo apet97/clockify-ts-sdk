@@ -640,11 +640,13 @@ Each of these needs:
 - **MCP tools affected:** none — `internal/tools/` doesn't depend
   on tag spelling.
 - **Open questions:**
-  1. `SharedReport` (already PascalCase one-word) becomes module
+  1. ~~`SharedReport` (already PascalCase one-word) becomes module
      `sharedReport`. Should it be `sharedReports` for collection
-     consistency? Probably yes, but the tag value would need a
-     space (`Shared Report`) or another rename target to drive
-     Fern's casing. Deferred — low-impact, optional polish.
+     consistency?~~ **RESOLVED 2026-05-24 (session 2).** Added
+     `"SharedReport" => "Shared Reports"` to `TAG_RENAMES`; the
+     two-word string drives Fern's casing to `sharedReports`. Five
+     ops covered: public bare GET, list, create, update, delete.
+     SDK module now `client.sharedReports.*`.
   2. `Scheduling` is an action category, not a collection. Leaving
      as-is.
 - **Status:** `fixed-in-generator-script`. `TAG_RENAMES` in
