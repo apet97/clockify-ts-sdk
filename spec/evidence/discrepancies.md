@@ -1224,4 +1224,71 @@ on the bare route (the granular variants — already in
   helpers update accordingly. Until then, the documented scheme is
   the authoritative source.
 
+## Idempotency-Key header — investigation (G.4)
+
+### `clockify.api.idempotency-key.unsupported-noop` — DOCUMENTED 2026-05-25
+
+- **Official claim:** Clockify's public API documentation (probed via
+  `https://docs.clockify.me/`) contains **no mention** of an
+  `Idempotency-Key` request header, request-deduplication semantics,
+  Stripe-style retry safety, or any equivalent feature. None of the
+  upstream source bundles (`docs/openapi/sources/{realOPENAPI,AIII,
+  clockify-api-probe-lab}` in GOCLMCP) reference idempotency-key
+  either; the two `grep -i idempoten` hits in those bundles describe
+  endpoint *behaviour* ("DELETE is idempotent-ish: second delete
+  returns 400", "add-user-to-group returns 200 with unchanged body
+  when user is already a member"), not header support.
+
+- **Actual behaviour (live probe, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** sent two `POST /workspaces/{wsId}/tags`
+  requests with the SAME `Idempotency-Key` header value (a freshly
+  minted UUID `3DBEBD67…`) and DIFFERENT bodies
+  (`{"name":"sdk-idemp-test-1779660515-a"}` and
+  `{"name":"sdk-idemp-test-1779660515-b"}`). Result:
+  - Request #1 → `HTTP 201` + tag id `6a1376e4ab8f70cd39f2fd6d`
+    (name `sdk-idemp-test-1779660515-a`).
+  - Request #2 → `HTTP 201` + tag id `6a1376efab8f70cd39f2fe44`
+    (name `sdk-idemp-test-1779660515-b`).
+  Two distinct tags created. **Clockify silently ignored the
+  `Idempotency-Key` header.** Neither the response status, body,
+  nor headers acknowledged the key (no echo-back field, no
+  `Idempotency-Key` in response headers, no `X-Idempotency-Replay`
+  marker, no dedup-related field anywhere). Both test tags were
+  immediately deleted (HTTP 200 on both DELETEs).
+
+- **Live evidence:**
+  - `spec/evidence/probes/20260525-idempotency-post1.{json,hdr}` —
+    request #1 raw response body + headers.
+  - `spec/evidence/probes/20260525-idempotency-post2.{json,hdr}` —
+    request #2 raw response body + headers.
+  Both pairs gitignored per AGENTS.md §5.4. Reproducible — see
+  the curl invocation in the commit message that introduced this
+  entry; the only inputs are a fresh UUID and any two distinct
+  string names with a shared timestamp slug.
+
+- **MCP tools affected:** none. The Go MCP layer in GOCLMCP doesn't
+  emit `Idempotency-Key`; the wrapper's `composedFetch` also doesn't.
+  Neither should start, per this finding.
+
+- **Open questions:** none. The probe is definitive: Clockify
+  treats `Idempotency-Key` as an unknown header (not 400, not 4xx,
+  not echoed) and processes each request independently.
+
+- **Status:** `clockify-feature-absent-skip`. Per the original
+  G-track plan: "If no, skip (don't fake idempotency headers;
+  they're meaningless without server-side dedup)." Neither
+  `x-clockify-idempotency-supported` annotations nor wrapper-side
+  `Idempotency-Key` injection should be added. The wrapper's
+  `composedFetch` continues to inject only `User-Agent` +
+  `X-Request-Id` (the latter is opaque correlation, not dedup).
+
+- **Reopen condition:** if Clockify ships an API changelog
+  entry mentioning Idempotency-Key support (or if a future probe
+  shows different behaviour — e.g. server echoes the key, or
+  request #2 returns the same body as request #1 instead of a new
+  tag), re-probe with a longer-lived key (same key over a 24h
+  window to test for retention) and a wider op surface (timeEntries
+  POST, expenses POST, invoices POST). If still unsupported, this
+  entry stays closed.
+
 
