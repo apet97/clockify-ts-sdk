@@ -155,6 +155,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json`'s `include` even though they're not in any test/build output — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
+| `wrapper/typedoc.json`                              | `npm run docs` (regenerates `docs/api/`; failures here block the Phase 3.3 docs workflow). |
 
 After any spec or generator change, the FULL chain in §3 must run
 end-to-end and end green before push. Drift gates are non-negotiable.
@@ -257,6 +258,12 @@ wrapper/
 │                                live-API ones gate on CLOCKIFY_API_KEY.
 │                                NOT included in the npm tarball; discoverable
 │                                via the repo URL.
+├── typedoc.json              ← TypeDoc config — entry points are index.ts
+│                                + src/api/resources (expand strategy) so
+│                                every sub-client + type gets a dedicated
+│                                page. Output → ../docs/api/ at repo root
+│                                (gitignored; published to gh-pages by
+│                                .github/workflows/docs.yml on tag push).
 ├── tests/
 │   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
 │   │                           (mocked fetchPage callback; no live API)

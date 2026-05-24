@@ -9,6 +9,14 @@ once v1.0.0 ships.
 
 ### Added
 
+- **TypeDoc reference site.** `npm run docs` builds an HTML
+  reference for every exported name into `docs/api/` (gitignored
+  at the repo root; the new `.github/workflows/docs.yml` builds
+  and publishes it to GitHub Pages on every `v*.*.*` tag push).
+  Entry points = `index.ts` + every resource client under
+  `src/api/resources/`, so all 32 sub-clients + every type
+  generate dedicated pages (~1610 HTML files). typedoc added
+  as a devDep (`^0.28.19`).
 - **`wrapper/examples/` directory** with 9 runnable starter scripts:
   `auth.ts`, `paginate-all.ts`, `log-time-entry.ts`,
   `create-project.ts`, `generate-report.ts`, `upload-image.ts`,

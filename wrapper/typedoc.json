@@ -1,0 +1,21 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": ["index.ts", "src/api/resources"],
+    "entryPointStrategy": "expand",
+    "out": "../docs/api",
+    "name": "clockify-sdk-ts",
+    "includeVersion": true,
+    "readme": "./README.md",
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeInternal": true,
+    "excludeExternals": true,
+    "githubPages": true,
+    "skipErrorChecking": true,
+    "hideGenerator": false,
+    "navigationLinks": {
+        "GitHub": "https://github.com/apet97/clockify-ts-sdk",
+        "npm": "https://www.npmjs.com/package/clockify-sdk-ts"
+    },
+    "sort": ["source-order"]
+}
