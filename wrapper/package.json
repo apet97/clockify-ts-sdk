@@ -4,13 +4,13 @@
   "description": "TypeScript SDK for the Clockify API — generated from the canonical OpenAPI by Fern, wrapped with a publishable package layout.",
   "license": "MIT",
   "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
-  "homepage": "https://github.com/apet97/clockify-sdk-ts",
+  "homepage": "https://github.com/apet97/clockify-ts-sdk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/apet97/clockify-sdk-ts.git"
+    "url": "https://github.com/apet97/clockify-ts-sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/apet97/clockify-sdk-ts/issues"
+    "url": "https://github.com/apet97/clockify-ts-sdk/issues"
   },
   "keywords": [
     "clockify",
