@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/apet97/clockify-ts-sdk/security/advisories/new
+    about: Open a private GitHub Security Advisory. Do NOT file a public issue for security bugs — see SECURITY.md.
+  - name: Clockify API behaviour
+    url: https://clockify.me/support
+    about: Issues with the live Clockify API itself (rate limits, missing fields, server bugs) belong with Clockify support, not this tracker.
+  - name: Spec / generator issue
+    url: https://github.com/apet97/go-clockify/issues
+    about: The synced SDK under wrapper/src/** is regenerated from the OpenAPI spec maintained at apet97/go-clockify. Method renames, missing endpoints, or wrong types belong there.

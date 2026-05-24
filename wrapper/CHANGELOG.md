@@ -9,6 +9,29 @@ once v1.0.0 ships.
 
 ### Added
 
+- **Governance (Phase 6).** Six new files at the repo root /
+  `.github/`:
+  - `SECURITY.md` — disclosure channels (GitHub private
+    advisories preferred, email fallback), 72-hour acknowledgment
+    SLA, 14-day fix target for critical, scope clarification
+    (wrapper layer in / synced SDK out → upstream Fern or
+    GOCLMCP), coordinated-disclosure policy.
+  - `CONTRIBUTING.md` — human onboarding pointing at
+    `AGENTS.md` for the contract. Covers local dev setup, the
+    sync + test loop, sandbox-API testing safety, conventional-
+    commits, code style, and the "add a new hand-written module"
+    recipe.
+  - `.github/ISSUE_TEMPLATE/bug_report.yml` + `feature_request.yml`
+    — form schemas that prompt for SDK version, Node version,
+    module system, runtime, minimal repro, etc. — no more chasing
+    those down in follow-ups.
+  - `.github/ISSUE_TEMPLATE/config.yml` — disables blank issues +
+    routes off-topic reports (security, Clockify API behaviour,
+    upstream spec/generator issues) to the right channel.
+  - `.github/pull_request_template.md` — checklist mirroring
+    AGENTS.md §4 verify-gates per surface area (wrapper, tests,
+    build, examples, docs, CI, governance, discrepancies). Spot-
+    checks the rules most often violated.
 - **CI hardening (Phase 5.1-5.4).** Extended `.github/workflows/ci.yml`
   with four new gates:
   - **Drift check** — asserts `wrapper/src/` TS file count stays

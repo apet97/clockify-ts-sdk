@@ -1,0 +1,110 @@
+name: Bug report
+description: Report something that broke (in the wrapper layer, not the upstream Clockify API)
+title: "[bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Before you submit:
+
+        - **Security issue?** Follow [SECURITY.md](https://github.com/apet97/clockify-ts-sdk/blob/main/SECURITY.md) — do NOT open a public issue.
+        - **Upstream Clockify API behaviour?** That's a Clockify support ticket. This tracker is for the wrapper surface in `wrapper/` (the hand-written modules + the dual build + the publish pipeline).
+        - **Synced SDK quirk under `wrapper/src/**`?** Raise it upstream in [Fern](https://github.com/fern-api/fern) or [apet97/go-clockify](https://github.com/apet97/go-clockify); the synced tree is regenerated and not editable here.
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: Output of `npm ls clockify-sdk-ts` or `cat node_modules/clockify-sdk-ts/package.json | grep version`.
+      placeholder: "e.g. 0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      description: Output of `node --version`.
+      placeholder: "e.g. v22.10.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime
+    attributes:
+      label: Runtime
+      multiple: false
+      options:
+        - Node.js
+        - Bun
+        - Deno
+        - Browser
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module-system
+    attributes:
+      label: Module system in your project
+      multiple: false
+      options:
+        - ESM (import / "type": "module")
+        - CommonJS (require)
+        - TypeScript with NodeNext resolution
+        - TypeScript with classic resolution
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the bug.
+      placeholder: "e.g. createClockifyClient throws TypeError when ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducer
+      description: A self-contained code snippet (no real API keys / workspace IDs). The shorter, the faster the fix.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: stack-trace
+    attributes:
+      label: Stack trace (if any)
+      description: Full stack trace, with `getRequestIdFromError(err)` output if it's a `ClockifyApiError`.
+      render: text
+
+  - type: textarea
+    id: workarounds
+    attributes:
+      label: Workarounds tried
+      description: What did you already try? Helps us avoid suggesting the same.
+
+  - type: checkboxes
+    id: agreements
+    attributes:
+      label: Pre-submission checks
+      options:
+        - label: I searched [existing issues](https://github.com/apet97/clockify-ts-sdk/issues?q=is%3Aissue) and didn't find a duplicate.
+          required: true
+        - label: My repro doesn't include real API keys or workspace IDs.
+          required: true
+        - label: This is a bug in the wrapper layer, not the upstream Clockify API or the synced Fern output.
+          required: true
