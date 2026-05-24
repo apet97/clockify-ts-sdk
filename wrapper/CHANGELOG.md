@@ -7,6 +7,14 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-24
+
+First release that exercises the rebuilt CI + release pipeline
+(SBOM generation, post-publish smoke install, GH Pages docs
+deploy). Wraps up the wrapper-side SDK-quality push (Phase 0-8
+of the driving plan); the remaining cross-repo G-track lives in
+`apet97/go-clockify`.
+
 ### Added
 
 - **`withResponse()` ergonomic shim (Phase 1.7).** New
