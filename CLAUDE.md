@@ -7,14 +7,20 @@ not just to humans.
 
 ## Quick orientation for Claude Code specifically
 
-- **Working directory:** `/Users/15x/Downloads/WORKING/addons-me/fern/`.
-  Every `npm` script in `wrapper/` resolves paths relative to
-  `wrapper/`; the sync script reaches one level up to `../output/ts-sdk/`.
-- **Sister repo (separate git tree):**
-  `/Users/15x/Downloads/WORKING/addons-me/GOCLMCP/` is
-  `apet97/go-clockify`. The canonical Clockify OpenAPI generator
-  (`scripts/gen-clockify-openapi`) lives there. Any spec-shape change
-  starts there, not in this workspace.
+- **This is a standalone repo** (`apet97/clockify-ts-sdk`). It has
+  no parent project; `addons-me/` in some absolute paths is just
+  one contributor's local workspace folder where multiple unrelated
+  repos sit side-by-side. Treat the repo root as the contract.
+- **Working directory:** the repo root. Every `npm` script in
+  `wrapper/` resolves paths relative to `wrapper/`; the sync script
+  reaches one level up to `../output/ts-sdk/` (still inside this
+  repo).
+- **Sister repo (separate git tree, separate GitHub project):**
+  `apet97/go-clockify`, conventionally cloned next to this repo as
+  `../GOCLMCP/`. The canonical Clockify OpenAPI generator
+  (`scripts/gen-clockify-openapi`) lives there. Any spec-shape
+  change starts there, not in this repo. If your local layout
+  differs, adjust the `../GOCLMCP/...` paths below to match.
 - **PATH gotcha:** Bash tool calls land in a sandbox where `python3`
   / `node` / `curl` / `bash` / `npm` are reachable only via explicit
   `PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin` or absolute
@@ -63,7 +69,7 @@ not just to humans.
 
 | Goal                                                  | Start at                                                                 |
 |-------------------------------------------------------|--------------------------------------------------------------------------|
-| Add a new annotation / param to a list endpoint       | `addons-me/GOCLMCP/scripts/gen-clockify-openapi` (`PAGINATED_LIST_OPS`, `ensure_pagination!`) |
+| Add a new annotation / param to a list endpoint       | `../GOCLMCP/scripts/gen-clockify-openapi` (sister repo; `PAGINATED_LIST_OPS`, `ensure_pagination!`) |
 | Add a new tag rename                                  | same file, `TAG_RENAMES`                                                 |
 | Add an ObjectId-pattern path param                    | same file, `PATH_PARAM_PATTERNS`                                         |
 | Change the SDK wrapper surface (auth, defaults, exports) | `wrapper/package.json` + `wrapper/scripts/sync-sdk.sh` + maybe a hand-written re-export under `wrapper/` (anything you add survives sync as long as it's outside `src/`) |
@@ -82,9 +88,9 @@ Code specifically:
 
 1. **Do not edit `spec/corrected/clockify.corrected.openapi.yaml`.**
    It is a snapshot. Edits land in
-   `addons-me/GOCLMCP/docs/openapi/sources/**` or in the generator
-   script. The next `make gen-openapi` will overwrite a snapshot
-   edit silently.
+   `../GOCLMCP/docs/openapi/sources/**` (sister repo) or in the
+   generator script. The next `make gen-openapi` will overwrite a
+   snapshot edit silently.
 2. **Do not edit `output/ts-sdk/**` or `wrapper/src/**`.** Both are
    wiped on the next regen / sync.
 3. **Do not push to `apet97/clockify-ts-sdk` `main` without CI

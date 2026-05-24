@@ -43,7 +43,7 @@ script — fix landed at the source. See entry below.
 
 - **Official claim:** N/A — internal generator script behaviour.
 - **Actual behavior (deterministic, reproducible):**
-  `addons-me/GOCLMCP/scripts/gen-clockify-openapi`'s
+  `../GOCLMCP/scripts/gen-clockify-openapi`'s
   `merge_parameters(path_params, op_params)` used
   `path_params.concat(op_params)` to combine path-item-level
   parameters with operation-level parameters. `Array#concat` is
@@ -380,7 +380,7 @@ Each of these needs:
      the generated SDK — wrong tool for this case.
 
 - **Status:** `resolved-via-new-parser` (2026-05-24). The
-  canonical spec generator (`addons-me/GOCLMCP/scripts/gen-clockify-openapi`)
+  canonical spec generator (`../GOCLMCP/scripts/gen-clockify-openapi`)
   already stamps `pattern: "^[0-9a-fA-F]{24}$"` on `expenseId`,
   `invoiceId`, and `assignmentId` path params (function
   `stamp_path_param_patterns!`, line 685; allowlist at line 673-677).
@@ -542,7 +542,7 @@ Each of these needs:
      escape hatch.
   2. Until Fern adds bare-array offset support, the TS SDK ships
      without auto-pagination. The wrapper layer planned for item 4
-     (`addons-me/fern/output/ts-sdk/` → publishable package) can
+     (`./output/ts-sdk/` → publishable package) can
      ship a hand-written iterator helper that consumes
      `page`/`page-size` and stops on `Last-Page: true`.
 - **Status:** `documented-blocking-upstream`. `x-fern-pagination`
@@ -650,7 +650,7 @@ Each of these needs:
   2. `Scheduling` is an action category, not a collection. Leaving
      as-is.
 - **Status:** `fixed-in-generator-script`. `TAG_RENAMES` in
-  `addons-me/GOCLMCP/scripts/gen-clockify-openapi` extended with
+  `../GOCLMCP/scripts/gen-clockify-openapi` extended with
   five new entries:
   `"Approval" => "Approvals"`,
   `"Balance" => "Balances"`,
@@ -724,7 +724,7 @@ on the bare route (the granular variants — already in
      two granular routes?~~ **RESOLVED 2026-05-24 (session 2,
      follow-up).** Added `["get", "/workspaces/{workspaceId}/balance"]`
      and `["patch", "/workspaces/{workspaceId}/balance"]` to
-     `PHANTOM_PATHS` in `addons-me/GOCLMCP/scripts/gen-clockify-openapi`.
+     `PHANTOM_PATHS` in `../GOCLMCP/scripts/gen-clockify-openapi`.
      The merger quarantines both ops on every regen with an audit-trail
      reason. After regen the canonical spec carries **191 operations
      (was 193)** and the raw-write allowlist drops to **134 routes
