@@ -22,27 +22,27 @@
 - `workspaceId` (`string`, required)
 - `addonId` (`string`, required)
 
-### `getWebhooksOnWorkspace`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWebhooksOnWorkspace({
+    await client.webhooks.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWebhooksOnWorkspaceRequest`):
+**Request fields** (`ListWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `type` (`ClockifyApi.WebhookType`, optional) — Represents a webhook type.
 
-### `createWebhook`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.createWebhook({
+    await client.webhooks.create({
         workspaceId: "workspaceId",
         body: {
             name: "Stripe",
@@ -54,33 +54,33 @@
     })
 ```
 
-**Request fields** (`CreateWebhookRequest`):
+**Request fields** (`CreateWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.WebhookRequest`, required)
 
-### `getWebhookById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWebhookById({
+    await client.webhooks.get({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`GetWebhookByIdRequest`):
+**Request fields** (`GetWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 
-### `updateWebhook`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.updateWebhook({
+    await client.webhooks.update({
         workspaceId: "workspaceId",
         webhookId: "webhookId",
         body: {
@@ -93,24 +93,24 @@
     })
 ```
 
-**Request fields** (`UpdateWebhookRequest`):
+**Request fields** (`UpdateWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 - `body` (`ClockifyApi.WebhookRequest`, required)
 
-### `deleteWebhook`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.deleteWebhook({
+    await client.webhooks.delete({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`DeleteWebhookRequest`):
+**Request fields** (`DeleteWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)

@@ -23,23 +23,23 @@ export class UserGroupsClient {
     }
 
     /**
-     * @param {ClockifyApi.FindAllGroupsOnWorkspaceRequest} request
+     * @param {ClockifyApi.ListUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.findAllGroupsOnWorkspace({
+     *     await client.userGroups.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public findAllGroupsOnWorkspace(
-        request: ClockifyApi.FindAllGroupsOnWorkspaceRequest,
+    public list(
+        request: ClockifyApi.ListUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1[]> {
-        return core.HttpResponsePromise.fromPromise(this.__findAllGroupsOnWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __findAllGroupsOnWorkspace(
-        request: ClockifyApi.FindAllGroupsOnWorkspaceRequest,
+    private async __list(
+        request: ClockifyApi.ListUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1[]>> {
         const { workspaceId, page, "page-size": pageSize } = request;
@@ -95,26 +95,26 @@ export class UserGroupsClient {
     }
 
     /**
-     * @param {ClockifyApi.AddNewGroupRequest} request
+     * @param {ClockifyApi.CreateUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.addNewGroup({
+     *     await client.userGroups.create({
      *         workspaceId: "workspaceId",
      *         body: {
      *             name: "development_team"
      *         }
      *     })
      */
-    public addNewGroup(
-        request: ClockifyApi.AddNewGroupRequest,
+    public create(
+        request: ClockifyApi.CreateUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__addNewGroup(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addNewGroup(
-        request: ClockifyApi.AddNewGroupRequest,
+    private async __create(
+        request: ClockifyApi.CreateUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1>> {
         const { workspaceId, body: _body } = request;
@@ -170,28 +170,26 @@ export class UserGroupsClient {
      * for BOTH a valid id and a non-existent id. There is no
      * single-resource GET for user-groups.
      *
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest} request
+     * @param {ClockifyApi.GetUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.MethodNotAllowedError}
      *
      * @example
-     *     await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupId({
+     *     await client.userGroups.get({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId"
      *     })
      */
-    public getWorkspacesWorkspaceIdUserGroupsGroupId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest,
+    public get(
+        request: ClockifyApi.GetUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdUserGroupsGroupId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdUserGroupsGroupId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest,
+    private async __get(
+        request: ClockifyApi.GetUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, groupId } = request;
@@ -244,11 +242,11 @@ export class UserGroupsClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateGroupRequest} request
+     * @param {ClockifyApi.UpdateUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.updateGroup({
+     *     await client.userGroups.update({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId",
      *         body: {
@@ -256,15 +254,15 @@ export class UserGroupsClient {
      *         }
      *     })
      */
-    public updateGroup(
-        request: ClockifyApi.UpdateGroupRequest,
+    public update(
+        request: ClockifyApi.UpdateUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateGroup(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateGroup(
-        request: ClockifyApi.UpdateGroupRequest,
+    private async __update(
+        request: ClockifyApi.UpdateUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1>> {
         const { workspaceId, groupId, body: _body } = request;
@@ -315,24 +313,24 @@ export class UserGroupsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteGroupRequest} request
+     * @param {ClockifyApi.DeleteUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.deleteGroup({
+     *     await client.userGroups.delete({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId"
      *     })
      */
-    public deleteGroup(
-        request: ClockifyApi.DeleteGroupRequest,
+    public delete(
+        request: ClockifyApi.DeleteUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteGroup(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteGroup(
-        request: ClockifyApi.DeleteGroupRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1>> {
         const { workspaceId, groupId } = request;

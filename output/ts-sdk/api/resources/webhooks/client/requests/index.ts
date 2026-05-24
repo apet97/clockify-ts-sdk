@@ -1,10 +1,10 @@
-export type { CreateWebhookRequest } from "./CreateWebhookRequest.js";
-export type { DeleteWebhookRequest } from "./DeleteWebhookRequest.js";
+export type { CreateWebhooksRequest } from "./CreateWebhooksRequest.js";
+export type { DeleteWebhooksRequest } from "./DeleteWebhooksRequest.js";
 export type { GetAddonWebhooksOnWorkspaceRequest } from "./GetAddonWebhooksOnWorkspaceRequest.js";
-export type { GetWebhookByIdRequest } from "./GetWebhookByIdRequest.js";
-export type { GetWebhooksOnWorkspaceRequest } from "./GetWebhooksOnWorkspaceRequest.js";
+export type { GetWebhooksRequest } from "./GetWebhooksRequest.js";
 export type { GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest } from "./GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest.js";
+export type { ListWebhooksRequest } from "./ListWebhooksRequest.js";
 export type { PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest } from "./PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest.js";
 export type { PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest } from "./PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest.js";
-export type { UpdateWebhookRequest } from "./UpdateWebhookRequest.js";
+export type { UpdateWebhooksRequest } from "./UpdateWebhooksRequest.js";
 export { WebhookLogsRequest } from "./WebhookLogsRequest.js";

@@ -13,26 +13,26 @@
 - `sharedReportId` (`string`, required)
 - `exportType` (`ClockifyApi.GetSharedReportsSharedReportIdRequestExportType`, optional)
 
-### `getWorkspacesWorkspaceIdSharedReports`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.sharedReports.getWorkspacesWorkspaceIdSharedReports({
+    await client.sharedReports.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdSharedReportsRequest`):
+**Request fields** (`ListSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
 
-### `postWorkspacesWorkspaceIdSharedReports`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.sharedReports.postWorkspacesWorkspaceIdSharedReports({
+    await client.sharedReports.create({
         workspaceId: "workspaceId",
         body: {
             filter: {
@@ -46,17 +46,17 @@
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdSharedReportsRequest`):
+**Request fields** (`CreateSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.SharedReportCreate`, required)
 
-### `putWorkspacesWorkspaceIdSharedReportsSharedReportId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.sharedReports.putWorkspacesWorkspaceIdSharedReportsSharedReportId({
+    await client.sharedReports.update({
         workspaceId: "workspaceId",
         sharedReportId: "sharedReportId",
         body: {
@@ -71,24 +71,24 @@
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest`):
+**Request fields** (`UpdateSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
 - `sharedReportId` (`string`, required)
 - `body` (`ClockifyApi.SharedReportCreate`, required)
 
-### `deleteWorkspacesWorkspaceIdSharedReportsSharedReportId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.sharedReports.deleteWorkspacesWorkspaceIdSharedReportsSharedReportId({
+    await client.sharedReports.delete({
         workspaceId: "workspaceId",
         sharedReportId: "sharedReportId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest`):
+**Request fields** (`DeleteSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
 - `sharedReportId` (`string`, required)

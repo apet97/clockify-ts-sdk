@@ -1,8 +1,8 @@
-export type { AddNewGroupRequest } from "./AddNewGroupRequest.js";
 export type { AddUserToGroupRequest } from "./AddUserToGroupRequest.js";
-export type { DeleteGroupRequest } from "./DeleteGroupRequest.js";
-export type { FindAllGroupsOnWorkspaceRequest } from "./FindAllGroupsOnWorkspaceRequest.js";
-export type { GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest } from "./GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest.js";
+export type { CreateUserGroupsRequest } from "./CreateUserGroupsRequest.js";
+export type { DeleteUserGroupsRequest } from "./DeleteUserGroupsRequest.js";
+export type { GetUserGroupsRequest } from "./GetUserGroupsRequest.js";
 export type { GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest } from "./GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest.js";
+export type { ListUserGroupsRequest } from "./ListUserGroupsRequest.js";
 export type { RemoveUserFromGroupRequest } from "./RemoveUserFromGroupRequest.js";
-export type { UpdateGroupRequest } from "./UpdateGroupRequest.js";
+export type { UpdateUserGroupsRequest } from "./UpdateUserGroupsRequest.js";

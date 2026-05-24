@@ -151,20 +151,31 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **CRUDL on `tags` + `clients`** — `client.tags.list(...)`,
-  `client.tags.create(...)`, `client.tags.get(...)`,
-  `client.tags.update(...)`, `client.tags.delete(...)`, and the
-  Clockify-specific `client.clients.archive(...)`. These ship with
-  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` stamped on the
-  spec, generated as proper CRUDL methods under their resource module.
-- **OperationId-derived on the other 29 modules** —
-  `client.projects.getWorkspaceProjects(...)`,
-  `client.timeEntries.getWorkspacesWorkspaceIdUserUserIdTimeEntries(...)`,
-  and so on. Long but stable. Tracked under
-  `spec/evidence/discrepancies.md` →
-  `fern.x-fern-sdk-method-name.drops-resource-modules`. Additional
-  modules will move to CRUDL incrementally as each pair is validated
-  end-to-end against `fern generate`.
+- **CRUDL on the 10 most-touched modules.** Each stamped op pairs
+  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
+  lands at `client.<resource>.<verb>()`:
+  - `tags`, `clients`, `projects`, `tasks`, `holidays`,
+    `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks` —
+    `list`, `create`, `get`, `update`, `delete` (the subset each
+    resource genuinely supports; `holidays` + `sharedReports` lack a
+    GET-by-id route on the workspace surface, so they omit `get`).
+  - `timeEntries` — `create`, `get`, `update`, `delete` on the
+    `/time-entries/{teId}` family. Clockify has no top-level
+    workspace LIST; the per-user `/user/{userId}/time-entries` family
+    keeps its operationId-derived names.
+  - `clients.archive` — Clockify-specific action verb on
+    `PUT /workspaces/{wsId}/clients/{cid}/archive`.
+- **OperationId-derived on the remaining ~21 modules** —
+  `client.approvals.getApprovalRequests(...)`,
+  `client.reports.getDetailedReport(...)`, and so on. Long but
+  stable. Specialised action verbs inside the stamped modules also
+  keep their operationId-derived names (e.g.
+  `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive(...)`,
+  `client.timeOffPolicies.changeTimeOffPolicyStatus(...)`).
+  Tracked under `spec/evidence/discrepancies.md` →
+  `fern.x-fern-sdk-method-name.drops-resource-modules`. The
+  remaining modules will move to CRUDL incrementally as each batch
+  is validated end-to-end against `fern generate`.
 
 ## Pagination
 
@@ -179,7 +190,7 @@ levels of abstraction:
 import { createClockifyClient, iterAll } from "clockify-sdk-ts";
 
 const client = createClockifyClient({ apiKey: "..." });
-const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
+const listProjects = client.projects.list.bind(client.projects);
 
 for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
     console.log(project.name);
@@ -192,7 +203,7 @@ accepts `pageSize` (default 50), `maxPages` (default ∞),
 `startPage` (default 1, useful for resume flows).
 
 > **Why `.bind()`?** Passing the method reference directly
-> (`client.projects.getWorkspaceProjects`) loses the implicit `this`
+> (`client.projects.list`) loses the implicit `this`
 > binding to its owning sub-client. Wrapping in an arrow function
 > works at runtime but loses type inference (TypeScript falls back
 > to the helper's generic constraint). `.bind(client.projects)`
@@ -384,7 +395,7 @@ const client = createClockifyClient({
 const ctrl = new AbortController();
 setTimeout(() => ctrl.abort(), 5000);
 
-await client.projects.getWorkspaceProjects(
+await client.projects.list(
     { workspaceId: "..." },
     { timeoutInSeconds: 3, abortSignal: ctrl.signal },
 );

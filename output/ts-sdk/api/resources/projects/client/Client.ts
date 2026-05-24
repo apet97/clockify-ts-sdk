@@ -23,25 +23,25 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceProjectsRequest} request
+     * @param {ClockifyApi.ListProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.getWorkspaceProjects({
+     *     await client.projects.list({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         name: "Software Development",
      *         "expense-date": "2024-12-31"
      *     })
      */
-    public getWorkspaceProjects(
-        request: ClockifyApi.GetWorkspaceProjectsRequest,
+    public list(
+        request: ClockifyApi.ListProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceProjects(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspaceProjects(
-        request: ClockifyApi.GetWorkspaceProjectsRequest,
+    private async __list(
+        request: ClockifyApi.ListProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project[]>> {
         const {
@@ -143,7 +143,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.createProject({
+     *     await client.projects.create({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         billable: false,
      *         clientId: "9t641568b07987035750704",
@@ -182,14 +182,14 @@ export class ProjectsClient {
      *             }]
      *     })
      */
-    public createProject(
+    public create(
         request: ClockifyApi.CreateProjectRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__createProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __createProject(
+    private async __create(
         request: ClockifyApi.CreateProjectRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -313,26 +313,26 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetProjectByIdRequest} request
+     * @param {ClockifyApi.GetProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.getProjectById({
+     *     await client.projects.get({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         "custom-field-entity-type": "TIMEENTRY",
      *         "expense-date": "2024-12-31"
      *     })
      */
-    public getProjectById(
-        request: ClockifyApi.GetProjectByIdRequest,
+    public get(
+        request: ClockifyApi.GetProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__getProjectById(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getProjectById(
-        request: ClockifyApi.GetProjectByIdRequest,
+    private async __get(
+        request: ClockifyApi.GetProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
         const {
@@ -401,7 +401,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProject({
+     *     await client.projects.update({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         archived: false,
@@ -421,14 +421,14 @@ export class ProjectsClient {
      *         note: "This is a sample note for the project."
      *     })
      */
-    public updateProject(
+    public update(
         request: ClockifyApi.UpdateProjectRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateProject(
+    private async __update(
         request: ClockifyApi.UpdateProjectRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -480,24 +480,24 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteProjectRequest} request
+     * @param {ClockifyApi.DeleteProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.deleteProject({
+     *     await client.projects.delete({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e"
      *     })
      */
-    public deleteProject(
-        request: ClockifyApi.DeleteProjectRequest,
+    public delete(
+        request: ClockifyApi.DeleteProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteProject(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteProject(
-        request: ClockifyApi.DeleteProjectRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
         const { workspaceId, projectId } = request;

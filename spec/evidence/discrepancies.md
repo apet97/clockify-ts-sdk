@@ -639,22 +639,43 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (2-module subset):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` now maps 11 pairs to
-  `{group, name}` entries (`tags` × 5 CRUDL; `clients` × 5 CRUDL + 1
-  archive). After regen + all 4 drift gates + `go test ./internal/tools/...`
-  + `fern check --warnings --from-openapi` + `fern generate --group ts
-  --local --force`, the wrapper exposes `client.tags.{list,create,get,update,delete}`
-  and `client.clients.{list,create,get,update,delete,archive}`.
+- **What shipped (10-module subset, 48 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 48 pairs to
+  `{group, name}` entries. The session expanded in two steps:
+  - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
+    archive = 11 ops.
+  - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
+    timeOffPolicies, userGroups, webhooks each × 4-5 CRUDL +
+    timeEntries × 4 core CRUD = 37 more ops.
 
-- **What's NOT shipped:** the other 29 modules still use operationId-
-  derived names. They are expanded by adding entries to `SDK_METHOD_NAMES`
-  one module at a time, regenerating, and confirming the module count
-  stays at 31. The hash is intentionally not a heuristic — each entry is
-  reviewed for naming semantics (e.g. `archive` for `clients` was chosen
-  because `archive` matches the upstream operationId `putWorkspacesWorkspaceIdClientsClientIdArchive`'s
-  semantics; modules with workflow verbs like `approvals.{submit,approve,
-  reject,withdraw,resubmit}` will need bespoke naming, not pure CRUDL).
+  After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
+  + `fern check --warnings --from-openapi` + `fern generate --group ts
+  --local --force` stayed green; the wrapper exposes idiomatic CRUDL
+  on every stamped module and 0 ops are hoisted to the root client.
+
+- **What's NOT shipped:** ~21 modules still use operationId-derived
+  names. The remaining modules split into two cohorts:
+  - **Clean CRUDL candidates (next batch).** `customFields` (has
+    workspace + project scopes; needs `listWorkspace`/`listForProject`
+    style naming, not pure `list`), `invoiceItems`, `invoicePayments`,
+    `expenses`, `expenseCategories`, `policies`, `memberProfiles`,
+    `roles`, `workspaces` (mostly read-only).
+  - **Workflow / action-verb modules (need naming review).**
+    `approvals` (submit/approve/reject/withdraw/resubmit),
+    `timeOff` (request/approve/deny), `scheduling`
+    (assignments + publish), `reports` (multiple report families),
+    `entityChangesExperimental` (created/updated/deleted hooks),
+    `files`, `auditLogReport`, `sharedReport`'s public bare-route,
+    `invoiceSettings` (single-resource get/update),
+    `expenseReport` (read-only), `balances`, `invoices` (CRUDL +
+    duplicate/export/filter/changeStatus).
+
+  Specialised action verbs inside the 10 stamped modules also kept
+  their operationId-derived names (e.g.
+  `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive`,
+  `client.timeOffPolicies.changeTimeOffPolicyStatus`,
+  `client.holidays.getWorkspaceHolidaysInPeriod`). Naming them is a
+  separate per-module call after CRUDL coverage rolls out.
 
 - **Updated open questions:**
   1. ~~Why does Fern silently drop modules instead of warning?~~
@@ -666,13 +687,11 @@ Each of these needs:
   3-4. Closed by (1).
 
 - **Status (updated):** `partially-resolved-incremental-rollout`. The
-  proven technique ships in `SDK_METHOD_NAMES`. Expanding to remaining
-  29 modules is mechanical: add 5-10 ops per cycle, regen, verify
-  module count + per-method emission, ship a wrapper version bump.
-  Pure-CRUDL modules (projects, tasks, timeEntries, customFields,
-  holidays, sharedReports, timeOffPolicies, userGroups, webhooks)
-  are the next batch. Workflow-verb modules (approvals, timeOff,
-  scheduling) need a dedicated naming review before stamping.
+  proven technique ships in `SDK_METHOD_NAMES` covering 48 ops across
+  10 modules. Expanding to remaining ~21 modules is mechanical for
+  the clean-CRUDL cohort listed above; workflow-verb modules need a
+  per-module naming review before stamping. Module count stays at 31
+  + index.ts across all expansions verified to date.
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 

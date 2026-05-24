@@ -20,7 +20,7 @@ const client = createClockifyClient({ apiKey });
 const name = `sdk-example-${Date.now()}`;
 
 try {
-    const created = await client.projects.createProject({
+    const created = await client.projects.create({
         workspaceId,
         name,
         isPublic: false,
@@ -30,14 +30,14 @@ try {
 
     // Archive (most marketplaces use this pattern: archive then delete
     // so the project is recoverable from the trash for a window).
-    await client.projects.updateProject({
+    await client.projects.update({
         workspaceId,
         projectId: created.id,
         archived: true,
     });
     console.log("Archived");
 
-    await client.projects.deleteProject({
+    await client.projects.delete({
         workspaceId,
         projectId: created.id,
     });

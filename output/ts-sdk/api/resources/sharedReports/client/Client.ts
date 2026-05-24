@@ -95,25 +95,23 @@ export class SharedReportsClient {
      * `page-size` is silently ignored. Response envelope is
      * `{reports:[], count}`.
      *
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdSharedReportsRequest} request
+     * @param {ClockifyApi.ListSharedReportsRequest} request
      * @param {SharedReportsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.sharedReports.getWorkspacesWorkspaceIdSharedReports({
+     *     await client.sharedReports.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspacesWorkspaceIdSharedReports(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdSharedReportsRequest,
+    public list(
+        request: ClockifyApi.ListSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SharedReportListEnvelope> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdSharedReports(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdSharedReports(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdSharedReportsRequest,
+    private async __list(
+        request: ClockifyApi.ListSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SharedReportListEnvelope>> {
         const { workspaceId } = request;
@@ -165,11 +163,11 @@ export class SharedReportsClient {
      * not `filters`). Required nested keys:
      * `filter.exportType`, `filter.dateRangeStart`, `filter.dateRangeEnd`.
      *
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdSharedReportsRequest} request
+     * @param {ClockifyApi.CreateSharedReportsRequest} request
      * @param {SharedReportsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.sharedReports.postWorkspacesWorkspaceIdSharedReports({
+     *     await client.sharedReports.create({
      *         workspaceId: "workspaceId",
      *         body: {
      *             filter: {
@@ -182,17 +180,15 @@ export class SharedReportsClient {
      *         }
      *     })
      */
-    public postWorkspacesWorkspaceIdSharedReports(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSharedReportsRequest,
+    public create(
+        request: ClockifyApi.CreateSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SharedReport> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdSharedReports(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdSharedReports(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdSharedReportsRequest,
+    private async __create(
+        request: ClockifyApi.CreateSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SharedReport>> {
         const { workspaceId, body: _body } = request;
@@ -247,11 +243,11 @@ export class SharedReportsClient {
      * Body uses `type` and `filter` (per create). PUT is MERGE — sending
      * `{name}` alone preserves the existing filter.
      *
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest} request
+     * @param {ClockifyApi.UpdateSharedReportsRequest} request
      * @param {SharedReportsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.sharedReports.putWorkspacesWorkspaceIdSharedReportsSharedReportId({
+     *     await client.sharedReports.update({
      *         workspaceId: "workspaceId",
      *         sharedReportId: "sharedReportId",
      *         body: {
@@ -265,17 +261,15 @@ export class SharedReportsClient {
      *         }
      *     })
      */
-    public putWorkspacesWorkspaceIdSharedReportsSharedReportId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest,
+    public update(
+        request: ClockifyApi.UpdateSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.SharedReport> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdSharedReportsSharedReportId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdSharedReportsSharedReportId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.SharedReport>> {
         const { workspaceId, sharedReportId, body: _body } = request;
@@ -326,26 +320,24 @@ export class SharedReportsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest} request
+     * @param {ClockifyApi.DeleteSharedReportsRequest} request
      * @param {SharedReportsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.sharedReports.deleteWorkspacesWorkspaceIdSharedReportsSharedReportId({
+     *     await client.sharedReports.delete({
      *         workspaceId: "workspaceId",
      *         sharedReportId: "sharedReportId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdSharedReportsSharedReportId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdSharedReportsSharedReportId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdSharedReportsSharedReportId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdSharedReportsSharedReportIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, sharedReportId } = request;

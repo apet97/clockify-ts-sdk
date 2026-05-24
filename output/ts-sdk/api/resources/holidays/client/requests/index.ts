@@ -1,5 +1,5 @@
 export type { CreateHolidayRequest } from "./CreateHolidayRequest.js";
-export type { DeleteHolidayRequest } from "./DeleteHolidayRequest.js";
+export type { DeleteHolidaysRequest } from "./DeleteHolidaysRequest.js";
 export type { GetWorkspaceHolidaysInPeriodRequest } from "./GetWorkspaceHolidaysInPeriodRequest.js";
-export type { GetWorkspaceHolidaysRequest } from "./GetWorkspaceHolidaysRequest.js";
+export type { ListHolidaysRequest } from "./ListHolidaysRequest.js";
 export type { UpdateHolidayRequest } from "./UpdateHolidayRequest.js";

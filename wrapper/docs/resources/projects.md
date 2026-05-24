@@ -6,19 +6,19 @@
 
 ## Methods
 
-### `getWorkspaceProjects`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.projects.getWorkspaceProjects({
+    await client.projects.list({
         workspaceId: "64a687e29ae1f428e7ebe303",
         name: "Software Development",
         "expense-date": "2024-12-31"
     })
 ```
 
-**Request fields** (`GetWorkspaceProjectsRequest`):
+**Request fields** (`ListProjectsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `name` (`string`, optional) — If provided, returns projects whose name contains the provided string.
@@ -27,28 +27,28 @@
 - `billable` (`boolean`, optional) — If true, returns only billable projects. If omitted, returns both billable and non-billable projects.
 - `clients` (`string \| string[]`, optional) — If provided, returns projects that contain clients matching any provided ids.
 - `contains-client` (`boolean`, optional) — Controls whether the clients filter includes or excludes matching client ids.
-- `client-status` (`ClockifyApi.GetWorkspaceProjectsRequestClientStatus`, optional) — Filters projects based on client status.
+- `client-status` (`ClockifyApi.ListProjectsRequestClientStatus`, optional) — Filters projects based on client status.
 - `users` (`string \| string[]`, optional) — If provided, returns projects that contain users matching any provided ids.
 - `contains-user` (`boolean`, optional) — Controls whether the users filter includes or excludes matching user ids.
-- `user-status` (`ClockifyApi.GetWorkspaceProjectsRequestUserStatus`, optional) — Filters projects based on user status.
+- `user-status` (`ClockifyApi.ListProjectsRequestUserStatus`, optional) — Filters projects based on user status.
 - `is-template` (`boolean`, optional) — Filters projects based on whether they are used as a template or not.
-- `sort-column` (`ClockifyApi.GetWorkspaceProjectsRequestSortColumn`, optional) — Sorts the results by the given column/field.
-- `sort-order` (`ClockifyApi.GetWorkspaceProjectsRequestSortOrder`, optional) — Sorting mode.
+- `sort-column` (`ClockifyApi.ListProjectsRequestSortColumn`, optional) — Sorts the results by the given column/field.
+- `sort-order` (`ClockifyApi.ListProjectsRequestSortOrder`, optional) — Sorting mode.
 - `hydrated` (`boolean`, optional) — If true, results contain additional information about the project.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
-- `access` (`ClockifyApi.GetWorkspaceProjectsRequestAccess`, optional) — If provided, returns projects that match the provided access.
+- `access` (`ClockifyApi.ListProjectsRequestAccess`, optional) — If provided, returns projects that match the provided access.
 - `expense-limit` (`number`, optional) — Represents the maximum number of expenses to fetch.
 - `expense-date` (`string`, optional) — If provided, returns expenses dated before the provided yyyy-MM-dd date.
 - `userGroups` (`string \| string[]`, optional) — If provided, returns projects that contain groups matching any provided ids.
 - `contains-group` (`boolean`, optional) — Controls whether the userGroups filter includes or excludes matching group ids.
 
-### `createProject`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.projects.createProject({
+    await client.projects.create({
         workspaceId: "64a687e29ae1f428e7ebe303",
         billable: false,
         clientId: "9t641568b07987035750704",
@@ -127,12 +127,12 @@
 - `name` (`string`, required) — Represents a project name.
 - `templateProjectId` (`string`, required) — Represents a project identifier across the system.
 
-### `getProjectById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.projects.getProjectById({
+    await client.projects.get({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         "custom-field-entity-type": "TIMEENTRY",
@@ -140,7 +140,7 @@
     })
 ```
 
-**Request fields** (`GetProjectByIdRequest`):
+**Request fields** (`GetProjectsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
@@ -149,12 +149,12 @@
 - `expense-limit` (`number`, optional) — Represents the maximum number of expenses to fetch.
 - `expense-date` (`string`, optional) — If provided, returns expenses dated before the provided yyyy-MM-dd date.
 
-### `updateProject`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProject({
+    await client.projects.update({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         archived: false,
@@ -189,18 +189,18 @@
 - `name` (`string`, optional) — Represents a project name.
 - `note` (`string`, optional) — Represents project note.
 
-### `deleteProject`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.projects.deleteProject({
+    await client.projects.delete({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e"
     })
 ```
 
-**Request fields** (`DeleteProjectRequest`):
+**Request fields** (`DeleteProjectsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.

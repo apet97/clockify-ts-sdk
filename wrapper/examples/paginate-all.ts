@@ -19,7 +19,7 @@ const client = createClockifyClient({ apiKey });
 // .bind(client.projects) preserves the method's full type signature
 // so TS infers TRequest from the bound method (not from iterAll's
 // contextual PaginatedRequest constraint).
-const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
+const listProjects = client.projects.list.bind(client.projects);
 
 console.log("---- iterAll (items flat) ----");
 let count = 0;

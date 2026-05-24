@@ -88,23 +88,23 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWebhooksOnWorkspaceRequest} request
+     * @param {ClockifyApi.ListWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.getWebhooksOnWorkspace({
+     *     await client.webhooks.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWebhooksOnWorkspace(
-        request: ClockifyApi.GetWebhooksOnWorkspaceRequest,
+    public list(
+        request: ClockifyApi.ListWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookCollectionDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getWebhooksOnWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWebhooksOnWorkspace(
-        request: ClockifyApi.GetWebhooksOnWorkspaceRequest,
+    private async __list(
+        request: ClockifyApi.ListWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookCollectionDtoV1>> {
         const { workspaceId, type: type_ } = request;
@@ -161,11 +161,11 @@ export class WebhooksClient {
     /**
      * Creating a webhook generates a new token which can be used to verify that the webhook being sent was sent by Clockify, as it will always be present in the header.
      *
-     * @param {ClockifyApi.CreateWebhookRequest} request
+     * @param {ClockifyApi.CreateWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.createWebhook({
+     *     await client.webhooks.create({
      *         workspaceId: "workspaceId",
      *         body: {
      *             name: "Stripe",
@@ -176,15 +176,15 @@ export class WebhooksClient {
      *         }
      *     })
      */
-    public createWebhook(
-        request: ClockifyApi.CreateWebhookRequest,
+    public create(
+        request: ClockifyApi.CreateWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__createWebhook(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __createWebhook(
-        request: ClockifyApi.CreateWebhookRequest,
+    private async __create(
+        request: ClockifyApi.CreateWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookDtoV1>> {
         const { workspaceId, body: _body } = request;
@@ -235,24 +235,24 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWebhookByIdRequest} request
+     * @param {ClockifyApi.GetWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.getWebhookById({
+     *     await client.webhooks.get({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId"
      *     })
      */
-    public getWebhookById(
-        request: ClockifyApi.GetWebhookByIdRequest,
+    public get(
+        request: ClockifyApi.GetWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getWebhookById(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWebhookById(
-        request: ClockifyApi.GetWebhookByIdRequest,
+    private async __get(
+        request: ClockifyApi.GetWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookDtoV1>> {
         const { workspaceId, webhookId } = request;
@@ -300,11 +300,11 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateWebhookRequest} request
+     * @param {ClockifyApi.UpdateWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.updateWebhook({
+     *     await client.webhooks.update({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId",
      *         body: {
@@ -316,15 +316,15 @@ export class WebhooksClient {
      *         }
      *     })
      */
-    public updateWebhook(
-        request: ClockifyApi.UpdateWebhookRequest,
+    public update(
+        request: ClockifyApi.UpdateWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateWebhook(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateWebhook(
-        request: ClockifyApi.UpdateWebhookRequest,
+    private async __update(
+        request: ClockifyApi.UpdateWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookDtoV1>> {
         const { workspaceId, webhookId, body: _body } = request;
@@ -375,24 +375,24 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWebhookRequest} request
+     * @param {ClockifyApi.DeleteWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.deleteWebhook({
+     *     await client.webhooks.delete({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId"
      *     })
      */
-    public deleteWebhook(
-        request: ClockifyApi.DeleteWebhookRequest,
+    public delete(
+        request: ClockifyApi.DeleteWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteWebhook(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWebhook(
-        request: ClockifyApi.DeleteWebhookRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, webhookId } = request;

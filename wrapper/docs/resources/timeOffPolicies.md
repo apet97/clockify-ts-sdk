@@ -6,33 +6,33 @@
 
 ## Methods
 
-### `getTimeOffPolicies`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.getTimeOffPolicies({
+    await client.timeOffPolicies.list({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         name: "Holidays"
     })
 ```
 
-**Request fields** (`GetTimeOffPoliciesRequest`):
+**Request fields** (`ListTimeOffPoliciesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `page` (`string`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
 - `name` (`string`, optional) — Filters policies to names that contain the provided string.
-- `status` (`ClockifyApi.GetTimeOffPoliciesRequestStatus`, optional) — Filters policies by status.
+- `status` (`ClockifyApi.ListTimeOffPoliciesRequestStatus`, optional) — Filters policies by status.
 - `sort-column` (`string`, optional) — Column to use for sorting policies.
-- `sort-order` (`ClockifyApi.GetTimeOffPoliciesRequestSortOrder`, optional) — Sort order.
+- `sort-order` (`ClockifyApi.ListTimeOffPoliciesRequestSortOrder`, optional) — Sort order.
 
-### `createTimeOffPolicy`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.createTimeOffPolicy({
+    await client.timeOffPolicies.create({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         allowHalfDay: false,
         allowNegativeBalance: true,
@@ -100,28 +100,28 @@
 - `userGroups` (`ClockifyApi.PoliciesUserGroupIdsSchema`, optional)
 - `users` (`ClockifyApi.PoliciesUserIdsSchema`, optional)
 
-### `getTimeOffPolicy`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.getTimeOffPolicy({
+    await client.timeOffPolicies.get({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`GetTimeOffPolicyRequest`):
+**Request fields** (`GetTimeOffPoliciesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `policyId` (`string`, required)
 
-### `updateTimeOffPolicy`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.updateTimeOffPolicy({
+    await client.timeOffPolicies.update({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         policyId: "policyId",
         allowHalfDay: false,
@@ -189,18 +189,18 @@
 - `userGroups` (`ClockifyApi.PoliciesUserGroupIdsSchema`, required)
 - `users` (`ClockifyApi.PoliciesUserIdsSchema`, required)
 
-### `deleteTimeOffPolicy`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.deleteTimeOffPolicy({
+    await client.timeOffPolicies.delete({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`DeleteTimeOffPolicyRequest`):
+**Request fields** (`DeleteTimeOffPoliciesRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `policyId` (`string`, required)

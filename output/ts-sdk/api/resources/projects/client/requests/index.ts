@@ -1,9 +1,9 @@
 export type { AssignRemoveUsersRequest } from "./AssignRemoveUsersRequest.js";
 export type { CreateProjectFromTemplateRequest } from "./CreateProjectFromTemplateRequest.js";
 export type { CreateProjectRequest } from "./CreateProjectRequest.js";
-export type { DeleteProjectRequest } from "./DeleteProjectRequest.js";
-export type { GetProjectByIdRequest } from "./GetProjectByIdRequest.js";
-export type { GetWorkspaceProjectsRequest } from "./GetWorkspaceProjectsRequest.js";
+export type { DeleteProjectsRequest } from "./DeleteProjectsRequest.js";
+export type { GetProjectsRequest } from "./GetProjectsRequest.js";
+export type { ListProjectsRequest } from "./ListProjectsRequest.js";
 export type { PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest } from "./PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest.js";
 export type { PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest } from "./PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest.js";
 export type { PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest } from "./PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest.js";

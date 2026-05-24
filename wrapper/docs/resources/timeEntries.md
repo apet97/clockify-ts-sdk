@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `postWorkspacesWorkspaceIdTimeEntries`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.postWorkspacesWorkspaceIdTimeEntries({
+    await client.timeEntries.create({
         workspaceId: "workspaceId",
         start: "2024-01-15T09:30:00Z"
     })
@@ -79,30 +79,30 @@
 - `page` (`number`, optional)
 - `page-size` (`number`, optional)
 
-### `getWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.getWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.get({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`GetTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 - `hydrated` (`boolean`, optional)
 - `consider-duration-format` (`boolean`, optional)
 
-### `putWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.putWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.update({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId",
         body: {
@@ -111,24 +111,24 @@
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`UpdateTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)
 - `body` (`ClockifyApi.TimeEntryUpdate`, required)
 
-### `deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.timeEntries.deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId({
+    await client.timeEntries.delete({
         workspaceId: "workspaceId",
         timeEntryId: "timeEntryId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdTimeEntriesTimeEntryIdRequest`):
+**Request fields** (`DeleteTimeEntriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `timeEntryId` (`string`, required)

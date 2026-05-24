@@ -6,30 +6,30 @@
 
 ## Methods
 
-### `getWorkspaceHolidays`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.holidays.getWorkspaceHolidays({
+    await client.holidays.list({
         workspaceId: "workspaceId",
         "assigned-to": "60f924bafdaf031696ec6218"
     })
 ```
 
-**Request fields** (`GetWorkspaceHolidaysRequest`):
+**Request fields** (`ListHolidaysRequest`):
 
 - `workspaceId` (`string`, required)
 - `assigned-to` (`string`, optional) — If provided, returns a filtered list of holidays assigned to the user.
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `createHoliday`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.holidays.createHoliday({
+    await client.holidays.create({
         workspaceId: "workspaceId",
         automaticTimeEntryCreation: {
             defaultEntities: {
@@ -91,12 +91,12 @@
 - `start` (`string`, required) — Filter list of holidays starting from start date. Expected date format yyyy-MM-ddThh:mm:ssZ.
 - `end` (`string`, required) — Filter list of holidays ending by end date. Expected date format yyyy-MM-ddThh:mm:ssZ.
 
-### `updateHoliday`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.holidays.updateHoliday({
+    await client.holidays.update({
         workspaceId: "workspaceId",
         holidayId: "holidayId",
         automaticTimeEntryCreation: {
@@ -140,18 +140,18 @@
 - `userGroups` (`ClockifyApi.ContainsUserGroupFilterRequest`, optional)
 - `users` (`ClockifyApi.ContainsUsersFilterRequestForHoliday`, optional)
 
-### `deleteHoliday`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.holidays.deleteHoliday({
+    await client.holidays.delete({
         workspaceId: "workspaceId",
         holidayId: "holidayId"
     })
 ```
 
-**Request fields** (`DeleteHolidayRequest`):
+**Request fields** (`DeleteHolidaysRequest`):
 
 - `workspaceId` (`string`, required)
 - `holidayId` (`string`, required)

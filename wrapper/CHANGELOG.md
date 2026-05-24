@@ -9,25 +9,47 @@ once v1.0.0 ships.
 
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
-- **CRUDL method names on `tags` + `clients` (G.1 partial).** With both
+- **CRUDL method names on 10 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
-  upstream spec, Fern now generates the two most-touched resource
-  modules with idiomatic names:
-  - `client.tags.{list,create,get,update,delete}` (was
-    `getWorkspacesWorkspaceIdTags` / `postWorkspacesWorkspaceIdTags` /
-    `getWorkspacesWorkspaceIdTagsTagId` /
-    `putWorkspacesWorkspaceIdTagsTagId` /
-    `deleteWorkspacesWorkspaceIdTagsTagId`).
-  - `client.clients.{list,create,get,update,delete,archive}` (was the
-    six `*WorkspacesWorkspaceIdClients*` operationId-derived names).
-  The other 29 resource modules continue to use operationId-derived
-  names while the bisect rolls out one module at a time. Root-cause
-  analysis + the explicit-allowlist technique are documented in
+  upstream spec, Fern now generates the 10 most-touched resource
+  modules with idiomatic names. 48 ops mapped in total:
+  - `client.tags.{list,create,get,update,delete}` (5 ops).
+  - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
+    `archive` is a Clockify-specific action verb).
+  - `client.projects.{list,create,get,update,delete}` (5 ops). The
+    archive/rate/template/membership action verbs keep their
+    operationId-derived names.
+  - `client.tasks.{list,create,get,update,delete}` (5 ops). Cost-rate
+    + billable-rate verbs stay operationId-derived.
+  - `client.timeEntries.{create,get,update,delete}` (4 ops on the
+    `/time-entries/{teId}` family). No top-level workspace LIST
+    exists on Clockify; the per-user `/user/{userId}/time-entries`
+    family keeps its operationId-derived names.
+  - `client.holidays.{list,create,update,delete}` (4 ops). No GET-by-id
+    on the API; the `/holidays/in-period` filter route stays
+    operationId-derived.
+  - `client.sharedReports.{list,create,update,delete}` (4 ops on the
+    workspace-scoped surface). The public `/shared-reports/{srid}`
+    view route stays operationId-derived (no auth on that one).
+  - `client.timeOffPolicies.{list,create,get,update,delete}` (5 ops).
+    `changeTimeOffPolicyStatus` stays operationId-derived.
+  - `client.userGroups.{list,create,get,update,delete}` (5 ops).
+    Group-membership sub-resource ops stay operationId-derived.
+  - `client.webhooks.{list,create,get,update,delete}` (5 ops).
+    Token-rotation / logs / addon-webhooks endpoints stay
+    operationId-derived.
+
+  The other ~21 modules continue to use operationId-derived names.
+  Root-cause analysis (method-name alone hoists ops to the root
+  client) + the explicit-allowlist technique are documented in
   `spec/evidence/discrepancies.md` →
   `fern.x-fern-sdk-method-name.drops-resource-modules` (see "Update
   2026-05-24 (session 3)"). README's resource-modules section now
-  describes the two name shapes side-by-side; sandbox tests, doc
-  comments, and per-resource markdown were regenerated to match.
+  describes the two name shapes side-by-side; sandbox tests,
+  examples (`create-project.ts`, `log-time-entry.ts`,
+  `paginate-all.ts`), `iter.ts`'s `KNOWN_PAGINATED_METHODS` drift
+  union, doc comments, and per-resource markdown were regenerated
+  to match.
 
 ## [0.4.0] — 2026-05-24
 

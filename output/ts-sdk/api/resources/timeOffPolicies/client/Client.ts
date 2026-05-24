@@ -23,24 +23,24 @@ export class TimeOffPoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetTimeOffPoliciesRequest} request
+     * @param {ClockifyApi.ListTimeOffPoliciesRequest} request
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.getTimeOffPolicies({
+     *     await client.timeOffPolicies.list({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         name: "Holidays"
      *     })
      */
-    public getTimeOffPolicies(
-        request: ClockifyApi.GetTimeOffPoliciesRequest,
+    public list(
+        request: ClockifyApi.ListTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Policy[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getTimeOffPolicies(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getTimeOffPolicies(
-        request: ClockifyApi.GetTimeOffPoliciesRequest,
+    private async __list(
+        request: ClockifyApi.ListTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Policy[]>> {
         const {
@@ -112,7 +112,7 @@ export class TimeOffPoliciesClient {
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.createTimeOffPolicy({
+     *     await client.timeOffPolicies.create({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         allowHalfDay: false,
      *         allowNegativeBalance: true,
@@ -160,14 +160,14 @@ export class TimeOffPoliciesClient {
      *         }
      *     })
      */
-    public createTimeOffPolicy(
+    public create(
         request: ClockifyApi.CreateTimeOffPolicyRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Policy> {
-        return core.HttpResponsePromise.fromPromise(this.__createTimeOffPolicy(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __createTimeOffPolicy(
+    private async __create(
         request: ClockifyApi.CreateTimeOffPolicyRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Policy>> {
@@ -219,24 +219,24 @@ export class TimeOffPoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetTimeOffPolicyRequest} request
+     * @param {ClockifyApi.GetTimeOffPoliciesRequest} request
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.getTimeOffPolicy({
+     *     await client.timeOffPolicies.get({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         policyId: "policyId"
      *     })
      */
-    public getTimeOffPolicy(
-        request: ClockifyApi.GetTimeOffPolicyRequest,
+    public get(
+        request: ClockifyApi.GetTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Policy> {
-        return core.HttpResponsePromise.fromPromise(this.__getTimeOffPolicy(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getTimeOffPolicy(
-        request: ClockifyApi.GetTimeOffPolicyRequest,
+    private async __get(
+        request: ClockifyApi.GetTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Policy>> {
         const { workspaceId, policyId } = request;
@@ -290,7 +290,7 @@ export class TimeOffPoliciesClient {
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.updateTimeOffPolicy({
+     *     await client.timeOffPolicies.update({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         policyId: "policyId",
      *         allowHalfDay: false,
@@ -338,14 +338,14 @@ export class TimeOffPoliciesClient {
      *         }
      *     })
      */
-    public updateTimeOffPolicy(
+    public update(
         request: ClockifyApi.UpdateTimeOffPolicyRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Policy> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTimeOffPolicy(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateTimeOffPolicy(
+    private async __update(
         request: ClockifyApi.UpdateTimeOffPolicyRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Policy>> {
@@ -397,24 +397,24 @@ export class TimeOffPoliciesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteTimeOffPolicyRequest} request
+     * @param {ClockifyApi.DeleteTimeOffPoliciesRequest} request
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.deleteTimeOffPolicy({
+     *     await client.timeOffPolicies.delete({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         policyId: "policyId"
      *     })
      */
-    public deleteTimeOffPolicy(
-        request: ClockifyApi.DeleteTimeOffPolicyRequest,
+    public delete(
+        request: ClockifyApi.DeleteTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteTimeOffPolicy(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteTimeOffPolicy(
-        request: ClockifyApi.DeleteTimeOffPolicyRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTimeOffPoliciesRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, policyId } = request;

@@ -80,12 +80,12 @@ export type KnownPaginatedMethod =
     | { readonly resource: "clients"; readonly method: "list" }
     | { readonly resource: "customFields"; readonly method: "listProjectCustomFields" }
     | { readonly resource: "customFields"; readonly method: "listWorkspaceCustomFields" }
-    | { readonly resource: "holidays"; readonly method: "getWorkspaceHolidays" }
+    | { readonly resource: "holidays"; readonly method: "list" }
     | { readonly resource: "invoicePayments"; readonly method: "getInvoicePayments" }
-    | { readonly resource: "projects"; readonly method: "getWorkspaceProjects" }
+    | { readonly resource: "projects"; readonly method: "list" }
     | { readonly resource: "scheduling"; readonly method: "getAllSchedulingAssignments" }
     | { readonly resource: "tags"; readonly method: "list" }
-    | { readonly resource: "tasks"; readonly method: "findTasksOnProject" }
+    | { readonly resource: "tasks"; readonly method: "list" }
     | {
           readonly resource: "timeEntries";
           readonly method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress";
@@ -94,8 +94,8 @@ export type KnownPaginatedMethod =
           readonly resource: "timeEntries";
           readonly method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries";
       }
-    | { readonly resource: "timeOffPolicies"; readonly method: "getTimeOffPolicies" }
-    | { readonly resource: "userGroups"; readonly method: "findAllGroupsOnWorkspace" }
+    | { readonly resource: "timeOffPolicies"; readonly method: "list" }
+    | { readonly resource: "userGroups"; readonly method: "list" }
     | { readonly resource: "users"; readonly method: "findUserTeamManagers" }
     | { readonly resource: "users"; readonly method: "findWorkspaceUsers" };
 
@@ -112,16 +112,16 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "clients", method: "list" },
     { resource: "customFields", method: "listProjectCustomFields" },
     { resource: "customFields", method: "listWorkspaceCustomFields" },
-    { resource: "holidays", method: "getWorkspaceHolidays" },
+    { resource: "holidays", method: "list" },
     { resource: "invoicePayments", method: "getInvoicePayments" },
-    { resource: "projects", method: "getWorkspaceProjects" },
+    { resource: "projects", method: "list" },
     { resource: "scheduling", method: "getAllSchedulingAssignments" },
     { resource: "tags", method: "list" },
-    { resource: "tasks", method: "findTasksOnProject" },
+    { resource: "tasks", method: "list" },
     { resource: "timeEntries", method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress" },
     { resource: "timeEntries", method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries" },
-    { resource: "timeOffPolicies", method: "getTimeOffPolicies" },
-    { resource: "userGroups", method: "findAllGroupsOnWorkspace" },
+    { resource: "timeOffPolicies", method: "list" },
+    { resource: "userGroups", method: "list" },
     { resource: "users", method: "findUserTeamManagers" },
     { resource: "users", method: "findWorkspaceUsers" },
 ] as const;
@@ -143,8 +143,7 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * // `.bind()` preserves the method's full type signature so TS
  * // infers the request shape and item shape correctly. An arrow
  * // wrapper works at runtime but loses inference.
- * const listProjects = client.projects.getWorkspaceProjects
- *   .bind(client.projects);
+ * const listProjects = client.projects.list.bind(client.projects);
  *
  * for await (const project of iterAll(listProjects, {
  *   workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
