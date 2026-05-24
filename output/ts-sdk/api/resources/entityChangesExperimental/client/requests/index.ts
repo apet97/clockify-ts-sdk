@@ -1,3 +1,3 @@
-export type { GetCreatedEntityInfoRequest } from "./GetCreatedEntityInfoRequest.js";
-export type { GetDeletedEntityInfoRequest } from "./GetDeletedEntityInfoRequest.js";
-export type { GetUpdatedEntityInfoRequest } from "./GetUpdatedEntityInfoRequest.js";
+export type { ListCreatedEntityChangesExperimentalRequest } from "./ListCreatedEntityChangesExperimentalRequest.js";
+export type { ListDeletedEntityChangesExperimentalRequest } from "./ListDeletedEntityChangesExperimentalRequest.js";
+export type { ListUpdatedEntityChangesExperimentalRequest } from "./ListUpdatedEntityChangesExperimentalRequest.js";

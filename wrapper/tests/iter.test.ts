@@ -105,6 +105,101 @@ describe("iterPages", () => {
     });
 });
 
+describe("iterPages — Last-Page header consumption", () => {
+    // Build a thenable that mimics Fern's HttpResponsePromise<T>:
+    // resolves to the data on `await`, and exposes `.withRawResponse()`
+    // returning the data + a `rawResponse` carrying the Last-Page
+    // header. The wrapper feature-detects `withRawResponse` and uses
+    // the header as the authoritative end-of-pages signal.
+    function fakeHttpResponsePromise<T>(data: T, lastPageHeader: string | null) {
+        const headersGet = (name: string): string | null =>
+            name.toLowerCase() === "last-page" ? lastPageHeader : null;
+        const promise = Promise.resolve(data);
+        return Object.assign(promise, {
+            withRawResponse: () =>
+                Promise.resolve({
+                    data,
+                    rawResponse: { headers: { get: headersGet } },
+                }),
+        });
+    }
+
+    it("stops on Last-Page: true even when the page is exactly full", async () => {
+        const seen: number[] = [];
+        const fetcher = (req: PaginatedRequest) => {
+            seen.push(req.page!);
+            return fakeHttpResponsePromise([1, 2], "true");
+        };
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([{ items: [1, 2], page: 1, pageSize: 2, hasNextPage: false }]);
+        expect(seen).toEqual([1]);
+    });
+
+    it("continues past a full page when Last-Page: false, stops on next true", async () => {
+        const data: Record<number, [readonly number[], string]> = {
+            1: [[1, 2], "false"],
+            2: [[3, 4], "true"],
+        };
+        const seen: number[] = [];
+        const fetcher = (req: PaginatedRequest) => {
+            seen.push(req.page!);
+            const [items, header] = data[req.page!]!;
+            return fakeHttpResponsePromise(items, header);
+        };
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([
+            { items: [1, 2], page: 1, pageSize: 2, hasNextPage: true },
+            { items: [3, 4], page: 2, pageSize: 2, hasNextPage: false },
+        ]);
+        expect(seen).toEqual([1, 2]);
+    });
+
+    it("parses Last-Page case-insensitively (TRUE, True both stop)", async () => {
+        const fetcher = (_req: PaginatedRequest) => fakeHttpResponsePromise([1, 2, 3], "TRUE");
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 3 }));
+        expect(pages).toHaveLength(1);
+        expect(pages[0]!.hasNextPage).toBe(false);
+    });
+
+    it("falls back to length heuristic when Last-Page is absent (legacy server)", async () => {
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
+        const fetcher = (req: PaginatedRequest) =>
+            fakeHttpResponsePromise(dataset[req.page!] ?? [], null);
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([
+            { items: [1, 2], page: 1, pageSize: 2, hasNextPage: true },
+            { items: [3], page: 2, pageSize: 2, hasNextPage: false },
+        ]);
+    });
+
+    it("stops on short page even when Last-Page: false (server-inconsistency safety)", async () => {
+        // Server claims more pages exist but only returned 1 of 2
+        // expected items — protect against an infinite loop driven by
+        // a lying / buggy server header.
+        const seen: number[] = [];
+        const fetcher = (req: PaginatedRequest) => {
+            seen.push(req.page!);
+            return fakeHttpResponsePromise([1], "false");
+        };
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([{ items: [1], page: 1, pageSize: 2, hasNextPage: false }]);
+        expect(seen).toEqual([1]);
+    });
+
+    it("ignores Last-Page when fetcher returns a plain Promise (no .withRawResponse)", async () => {
+        // A test fetcher (or a non-Fern variant) that returns a bare
+        // array without the .withRawResponse hook should still work via
+        // the legacy heuristic.
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3] };
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([
+            { items: [1, 2], page: 1, pageSize: 2, hasNextPage: true },
+            { items: [3], page: 2, pageSize: 2, hasNextPage: false },
+        ]);
+    });
+});
+
 describe("KNOWN_PAGINATED_METHODS", () => {
     // CI drift assertion: every (resource, method) in the documented
     // list must exist on a freshly-constructed ClockifyApiClient. If a

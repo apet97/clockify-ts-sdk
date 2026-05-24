@@ -6,19 +6,19 @@
 
 ## Methods
 
-### `findTasksOnProject`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.tasks.findTasksOnProject({
+    await client.tasks.list({
         workspaceId: "workspaceId",
         projectId: "projectId",
         name: "Bugfixing"
     })
 ```
 
-**Request fields** (`FindTasksOnProjectRequest`):
+**Request fields** (`ListTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
@@ -28,12 +28,12 @@
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `addTaskOnProject`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.tasks.addTaskOnProject({
+    await client.tasks.create({
         workspaceId: "workspaceId",
         projectId: "projectId",
         assigneeIds: ["45b687e29ae1f428e7ebe123", "67s687e29ae1f428e7ebe678"],
@@ -59,30 +59,30 @@
 - `status` (`ClockifyApi.TaskStatus`, optional)
 - `userGroupIds` (`string[]`, optional) — Represents list of user group ids for the task.
 
-### `getTaskById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.tasks.getTaskById({
+    await client.tasks.get({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId"
     })
 ```
 
-**Request fields** (`GetTaskByIdRequest`):
+**Request fields** (`GetTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
 
-### `updateTaskOnProject`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.tasks.updateTaskOnProject({
+    await client.tasks.update({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId",
@@ -110,30 +110,30 @@
 - `status` (`ClockifyApi.TaskStatus`, optional)
 - `userGroupIds` (`string[]`, optional) — Represents list of user group ids for the task.
 
-### `deleteTaskFromProject`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.tasks.deleteTaskFromProject({
+    await client.tasks.delete({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId"
     })
 ```
 
-**Request fields** (`DeleteTaskFromProjectRequest`):
+**Request fields** (`DeleteTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
 
-### `updateTaskCostRate`
+### `updateCostRate`
 
 **Example:**
 
 ```typescript
-    await client.tasks.updateTaskCostRate({
+    await client.tasks.updateCostRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId",
@@ -144,19 +144,19 @@
     })
 ```
 
-**Request fields** (`UpdateTaskCostRateRequest`):
+**Request fields** (`UpdateCostRateTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
 - `body` (`ClockifyApi.RateUpdateRequest`, required)
 
-### `updateTaskBillableRate`
+### `updateBillableRate`
 
 **Example:**
 
 ```typescript
-    await client.tasks.updateTaskBillableRate({
+    await client.tasks.updateBillableRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId",
@@ -167,7 +167,7 @@
     })
 ```
 
-**Request fields** (`UpdateTaskBillableRateRequest`):
+**Request fields** (`UpdateBillableRateTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)

@@ -1,1 +1,1 @@
-export * from "./GetSharedReportsSharedReportIdRequestExportType.js";
+export * from "./ViewSharedReportsRequestExportType.js";

@@ -1,10 +1,10 @@
 export type { AddUserToWorkspaceRequest } from "./AddUserToWorkspaceRequest.js";
 export type { CreateWorkspaceRequest } from "./CreateWorkspaceRequest.js";
-export type { GetAllMyWorkspacesRequest } from "./GetAllMyWorkspacesRequest.js";
-export type { GetWorkspaceInfoRequest } from "./GetWorkspaceInfoRequest.js";
-export type { PutWorkspacesWorkspaceIdRequest } from "./PutWorkspacesWorkspaceIdRequest.js";
+export type { GetWorkspacesRequest } from "./GetWorkspacesRequest.js";
+export type { ListWorkspacesRequest } from "./ListWorkspacesRequest.js";
+export type { UpdateCostRateWorkspacesRequest } from "./UpdateCostRateWorkspacesRequest.js";
 export type { UpdateUserCostRateRequest } from "./UpdateUserCostRateRequest.js";
 export type { UpdateUserHourlyRateRequest } from "./UpdateUserHourlyRateRequest.js";
 export { UpdateUserStatusRequest } from "./UpdateUserStatusRequest.js";
 export type { UpdateWorkspaceBillableRateRequest } from "./UpdateWorkspaceBillableRateRequest.js";
-export type { UpdateWorkspaceCostRateRequest } from "./UpdateWorkspaceCostRateRequest.js";
+export type { UpdateWorkspacesRequest } from "./UpdateWorkspacesRequest.js";

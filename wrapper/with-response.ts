@@ -65,7 +65,7 @@ export interface ResponseAwarePromise<T> extends PromiseLike<T> {
  * const client = createClockifyClient({ apiKey: "..." });
  *
  * const { data: tags, requestId, status, headers } = await withResponse(
- *   client.tags.getWorkspacesWorkspaceIdTags({ workspaceId: "..." }),
+ *   client.tags.list({ workspaceId: "..." }),
  * );
  *
  * console.log(`request ${requestId} returned ${status} with ${tags.length} tags`);

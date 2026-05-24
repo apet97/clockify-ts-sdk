@@ -7,6 +7,233 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-25
+
+Closes the multi-session G-track sweep against the
+`apet97/go-clockify` sister repo. Spec-side changes regenerated
+the canonical OpenAPI; wrapper-side changes consume them through
+the standard `npm run sync` chain. Major shift in surface
+ergonomics — see "Changed (BREAKING)" below for migration notes.
+
+### Removed
+
+- **Three phantom `time-off-request` legacy paths quarantined.**
+  Live-probed the three operations the canonical spec declared at
+  `/workspaces/{wsId}/policies/{policyId}/requests` (POST + DELETE +
+  PATCH); all returned `HTTP 404 + {"message":"No static resource
+  ...","code":3000}` — the routes do not exist on the live API.
+  Added to `PHANTOM_PATHS` in `../GOCLMCP/scripts/gen-clockify-openapi`;
+  the merger quarantines them on every regen. Canonical operation
+  count drops from 191 → 188; raw-allowlist drops 134 → 131; the
+  wrapper's `timeOff` module exposes 9 methods (was 12). The live
+  time-off request flow is exclusively under the scoped
+  `/workspaces/{wsId}/time-off/policies/{policyId}/requests/*`
+  paths (already stamped as `submit` / `withdraw` / etc.). See
+  `spec/evidence/discrepancies.md` →
+  `timeoff.legacy-policies-requests.phantom-path-quarantined`.
+
+### Added
+
+- **`createClockifyClient()` reads `CLOCKIFY_API_KEY` /
+  `CLOCKIFY_ADDON_TOKEN` from env when auth options are omitted.**
+  Matches the Stripe / OpenAI / Anthropic SDK convention:
+  `createClockifyClient()` with no args now reads the env vars at
+  construction time (`CLOCKIFY_API_KEY` preferred; falls back to
+  `CLOCKIFY_ADDON_TOKEN`). Explicit `apiKey` / `addonToken` options
+  still take precedence; both-explicit still throws; empty-string
+  env-var values are treated as absent. The TS type adds a third
+  union branch (`{ apiKey?: never; addonToken?: never }`) so `{}` is
+  accepted at the type level; the runtime then enforces the env-var
+  invariant. Six new vitest cases cover the env-fallback paths
+  (each-env-alone, both-env-set-precedence, explicit-beats-env both
+  directions, empty-string-treated-as-absent, throws-when-both-absent).
+  Resolves the long-standing open question from
+  `spec/evidence/discrepancies.md` →
+  `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
+  (the "default to env vars" ergonomic), independently of the
+  Fern-side typing fix tracked under G.3.
+- **`iterPages` consumes the `Last-Page` response header (G.5).**
+  When the fetcher returns a Fern-style `HttpResponsePromise<T>`
+  (which exposes `.withRawResponse()`), the wrapper now uses the
+  `Last-Page: true` header — emitted by 15 of the 18 paginated
+  Clockify list endpoints — as the authoritative stop signal.
+  More robust than the legacy `items.length === pageSize`
+  heuristic, which fetched one extra empty page whenever a final
+  page coincidentally filled. The heuristic remains as a fallback
+  for the 3 endpoints that don't emit the header (custom-fields,
+  holidays, project-scoped custom-fields) and for custom fetchers
+  that don't expose `.withRawResponse()`; the wrapper also stops
+  on a short page even when `Last-Page: false` to defend against
+  server-inconsistency loops. Audit + per-endpoint behaviour
+  documented in `spec/evidence/discrepancies.md` →
+  `pagination.last-page-header.live-audit-2026-05-25`. Six new
+  vitest cases cover the four header/length combinations + the
+  case-insensitive parse + the no-`withRawResponse` fallback.
+- **Upstream generator annotation (G.5).** The corrected-spec
+  snapshot now carries `x-clockify-last-page-header: true` on each
+  of the 15 audited-emitting list operations (stamped by GOCLMCP's
+  `LAST_PAGE_HEADER_OPS` set + `stamp_last_page_header!` function).
+  Downstream consumers (other SDK generators, MCP tools, custom
+  client wrappers) can read the annotation to short-circuit their
+  own pagination loops.
+
+### Changed (BREAKING — gated behind v1.0.0 cut)
+
+- **Idiomatic method names on 27 modules (G.1).** With both
+  `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
+  upstream spec, Fern now generates 27 of the 31 resource modules
+  with idiomatic names. **170 ops mapped in total** (90.4% of the
+  188-op live API surface; see "Removed" below for the 3 phantom
+  ops dropped from 191 → 188): 110 in the first G.1 cut + 39
+  action-verb cleanups + 18 small/read-only module fills + 3
+  domain edge-case fills:
+  - `client.tags.{list,create,get,update,delete}` (5 ops).
+  - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
+    `archive` is a Clockify-specific action verb).
+  - `client.projects.{list,create,get,update,delete}` (5 ops). The
+    archive/rate/template/membership action verbs keep their
+    operationId-derived names.
+  - `client.tasks.{list,create,get,update,delete}` (5 ops). Cost-rate
+    + billable-rate verbs stay operationId-derived.
+  - `client.timeEntries.{create,get,update,delete}` (4 ops on the
+    `/time-entries/{teId}` family). No top-level workspace LIST
+    exists on Clockify; the per-user `/user/{userId}/time-entries`
+    family keeps its operationId-derived names.
+  - `client.holidays.{list,create,update,delete}` (4 ops). No GET-by-id
+    on the API; the `/holidays/in-period` filter route stays
+    operationId-derived.
+  - `client.sharedReports.{list,create,update,delete}` (4 ops on the
+    workspace-scoped surface). The public `/shared-reports/{srid}`
+    view route stays operationId-derived (no auth on that one).
+  - `client.timeOffPolicies.{list,create,get,update,delete}` (5 ops).
+    `changeTimeOffPolicyStatus` stays operationId-derived.
+  - `client.userGroups.{list,create,get,update,delete}` (5 ops).
+    Group-membership sub-resource ops stay operationId-derived.
+  - `client.webhooks.{list,create,get,update,delete}` (5 ops).
+    Token-rotation / logs / addon-webhooks endpoints stay
+    operationId-derived.
+  - `client.customFields.{listForWorkspace,createForWorkspace,
+    updateForWorkspace,deleteForWorkspace,listForProject,
+    updateForProject,removeFromProject}` (7 ops). Scoped names
+    because the module covers both workspace + project surfaces;
+    project scope lacks a create op (workspace-level create, then
+    attach), and the project DELETE is `removeFromProject` because
+    it unattaches rather than deletes the field itself.
+  - `client.expenses.{list,create,get,update,delete}` (5 ops).
+    `downloadExpenseReceipt` stays operationId-derived (binary file
+    action).
+  - `client.expenseCategories.{list,create,update,delete,archive}`
+    (5 ops). `archive` is actually `PATCH .../status` on the API but
+    semantically an archive flip.
+  - `client.invoiceItems.{create,import,delete}` (3 ops). Clockify
+    has no LIST or GET-by-id; items live on the parent invoice.
+  - `client.invoicePayments.{list,create,delete}` (3 ops). No
+    GET-by-id, no update on the API.
+  - `client.policies.{list,create,get,update,delete,archive}` (6
+    ops; full CRUDL + archive).
+  - `client.approvals.{list,submit,submitForUser,resubmit,resubmitForUser,updateStatus}`
+    (6 ops). Workflow verbs; `updateStatus` accepts a `status` body to
+    approve / reject / withdraw. The `*ForUser` variants are admin
+    endpoints; the un-suffixed verbs act on the caller's own entries.
+  - `client.timeOff.{list,get,delete,updateStatus,submit}` (5 ops).
+    `list` is the documented POST-as-list quirk (GET returns 405).
+    `submit` is scoped under `/time-off/policies/{policyId}/requests`
+    (user creates a TOR for a given policy). The legacy
+    `/policies/{policyId}/requests` duplicate routes + the
+    admin-creates-for-user variant stay operationId-derived.
+  - `client.scheduling.{create,list,update,delete,publish,copy,createRecurring,updateRecurring,deleteRecurring}`
+    (9 ops). Single-assignment CRUDL + the workflow actions
+    (`publish`, `copy`) + recurring-assignment CRUD. The
+    capacity-totals endpoints, per/on-project breakdowns, and the
+    PUT-replace variants stay operationId-derived (specialised
+    shapes).
+  - `client.invoices.{list,create,filter,get,update,delete,duplicate,export,updateStatus}`
+    (9 ops). CRUDL + the workflow actions. `filter` is the
+    POST-with-body filter route at `/invoices/info` (distinct from
+    the bare `list`). `updateStatus` matches the same PATCH .../status
+    pattern as approvals / timeOff / policies. No `send` is stamped —
+    the API has no such endpoint (the tool layer returns "unsupported").
+  - `client.reports.{attendance,detailed,summary,weekly}` (4 ops).
+    Each report family is a POST-with-body call; the verb is the
+    family name directly, matching how Clockify users describe the
+    reports surface.
+
+  **Action-verb cleanups inside the 21 stamped modules (+39 ops):**
+  - `projects` adds `createFromTemplate`, `archive`, `updateCostRate`,
+    `updateEstimate`, `updateHourlyRate`, `updateMemberships`,
+    `updateTemplate`, `updateUserCostRate`, `updateUserHourlyRate`.
+    `assignOrRemoveProjectUsers` kept operationId-derived (semantic
+    overlap with `updateMemberships`; needs domain disambiguation).
+  - `tasks` adds `updateCostRate`, `updateBillableRate`.
+  - `timeEntries` adds `markInvoiced`, `markInvoicedBulk`,
+    `listInProgress`, `listForUser`, `createForUser`, `startTimer`
+    (PUT on `/user/{userId}/time-entries` — start a running entry),
+    `updateForUser`, `stopTimer`, `duplicate`. `deleteMany` stays as
+    its existing idiomatic name.
+  - `holidays` adds `listInPeriod`.
+  - `sharedReports` adds `view` (the bare unauthenticated
+    `/shared-reports/{srid}` route).
+  - `timeOffPolicies` adds `updateStatus`.
+  - `userGroups` adds `listMembers`, `addMembers`, `removeMember`.
+  - `webhooks` adds `listForAddon`, `rotateToken`, `listLogs`
+    (GET `/logs`), `searchLogs` (POST `/logs` with body),
+    `updateToken`.
+  - `expenses` adds `downloadReceipt`.
+  - `scheduling` adds `listPerProject`, `listOnProject`,
+    `replaceRecurring` (PUT-style replace on recurring assignments,
+    paired with the existing `updateRecurring` PATCH),
+    `getUsersCapacityFiltered`, `calculateUsersTotals`,
+    `getUserCapacity`.
+  - `timeOff` adds `submitForUser`.
+
+  Legacy duplicate paths (e.g. `/policies/{policyId}/requests` mirroring
+  `/time-off/policies/{policyId}/requests`) stay operationId-derived
+  to avoid Fern method-name collisions inside the same module.
+
+  **Small / read-only modules now fully stamped (+18 ops, 6 modules):**
+  - `auditLogReport.search` (the single POST `/audit-log` route).
+  - `balances.{listForPolicy, update, getForUser}` — the per-policy
+    and per-user balance views plus the policy-level adjustment.
+  - `entityChangesExperimental.{listCreated, listUpdated, listDeleted}`
+    — one verb per event type in the change-event feed.
+  - `invoiceSettings.{get, update}` — single-resource shape.
+  - `memberProfiles.{get, update}` — per-user profile read + patch.
+  - `workspaces.{list, create, get, update, updateCostRate,
+    updateBillableRate, addUser}` — CRUDL on the workspace itself
+    plus the two workspace-level rate updates and the addUser action.
+    Per-user verbs (`updateUserStatus`, `updateUserCostRate`,
+    `updateUserHourlyRate`) stay operationId-derived (already
+    verb-noun shaped).
+
+  **Modules intentionally left operationId-derived (~4 modules,
+  ~5 ops):** `files.uploadImage`, `roles.{giveUserManagerRole,
+  removeUserManagerRole}`, `expenseReport.generateDetailedReportV1`,
+  the per-user `workspaces.updateUser*` family — each name is
+  already a clean verb-noun and a rename would not improve clarity.
+
+  **Final domain edge-case fills (+3 ops, step 8):**
+  - `projects.setMembers` (POST `/projects/{projectId}/memberships`
+    replaces the membership list — paired with the sibling PATCH
+    `updateMemberships` for partial updates). Naming mirrors the
+    `userGroups.{listMembers,addMembers,removeMember}` family.
+  - `timeOff.withdraw` (DELETE on the policy-scoped request path
+    is the user-side withdraw flow — paired with the admin
+    workspace-level `delete` already stamped).
+  - `balances.listForUser` (GET on the per-user
+    `/users/{uid}/time-off/balances` plural route returns a list
+    of balances across policies; the sibling singular `getForUser`
+    returns a single balance object). 170/191 ops = 89% coverage.
+  Root-cause analysis (method-name alone hoists ops to the root
+  client) + the explicit-allowlist technique are documented in
+  `spec/evidence/discrepancies.md` →
+  `fern.x-fern-sdk-method-name.drops-resource-modules` (see "Update
+  2026-05-24 (session 3)"). README's resource-modules section now
+  describes the two name shapes side-by-side; sandbox tests,
+  examples (`create-project.ts`, `log-time-entry.ts`,
+  `paginate-all.ts`), `iter.ts`'s `KNOWN_PAGINATED_METHODS` drift
+  union, doc comments, and per-resource markdown were regenerated
+  to match.
+
 ## [0.4.0] — 2026-05-24
 
 First release that exercises the rebuilt CI + release pipeline

@@ -23,23 +23,23 @@ export class ApprovalsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetApprovalRequestsRequest} request
+     * @param {ClockifyApi.ListApprovalsRequest} request
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.getApprovalRequests({
+     *     await client.approvals.list({
      *         workspaceId: "64a687e29ae1f428e7ebe303"
      *     })
      */
-    public getApprovalRequests(
-        request: ClockifyApi.GetApprovalRequestsRequest,
+    public list(
+        request: ClockifyApi.ListApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestListItem[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getApprovalRequests(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getApprovalRequests(
-        request: ClockifyApi.GetApprovalRequestsRequest,
+    private async __list(
+        request: ClockifyApi.ListApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestListItem[]>> {
         const { workspaceId, status, "sort-column": sortColumn, page, "page-size": pageSize } = request;
@@ -100,11 +100,11 @@ export class ApprovalsClient {
     }
 
     /**
-     * @param {ClockifyApi.SubmitApprovalRequestBody} request
+     * @param {ClockifyApi.SubmitApprovalsRequest} request
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.submitApprovalRequest({
+     *     await client.approvals.submit({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         body: {
      *             period: "MONTHLY",
@@ -112,15 +112,15 @@ export class ApprovalsClient {
      *         }
      *     })
      */
-    public submitApprovalRequest(
-        request: ClockifyApi.SubmitApprovalRequestBody,
+    public submit(
+        request: ClockifyApi.SubmitApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__submitApprovalRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submit(request, requestOptions));
     }
 
-    private async __submitApprovalRequest(
-        request: ClockifyApi.SubmitApprovalRequestBody,
+    private async __submit(
+        request: ClockifyApi.SubmitApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestDtoV1>> {
         const { workspaceId, body: _body } = request;
@@ -171,11 +171,11 @@ export class ApprovalsClient {
     }
 
     /**
-     * @param {ClockifyApi.ResubmitEntriesForApprovalRequest} request
+     * @param {ClockifyApi.ResubmitApprovalsRequest} request
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.resubmitEntriesForApproval({
+     *     await client.approvals.resubmit({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         body: {
      *             period: "MONTHLY",
@@ -183,15 +183,15 @@ export class ApprovalsClient {
      *         }
      *     })
      */
-    public resubmitEntriesForApproval(
-        request: ClockifyApi.ResubmitEntriesForApprovalRequest,
+    public resubmit(
+        request: ClockifyApi.ResubmitApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__resubmitEntriesForApproval(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__resubmit(request, requestOptions));
     }
 
-    private async __resubmitEntriesForApproval(
-        request: ClockifyApi.ResubmitEntriesForApprovalRequest,
+    private async __resubmit(
+        request: ClockifyApi.ResubmitApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestDtoV1>> {
         const { workspaceId, body: _body } = request;
@@ -242,11 +242,11 @@ export class ApprovalsClient {
     }
 
     /**
-     * @param {ClockifyApi.SubmitApprovalRequestForUserRequest} request
+     * @param {ClockifyApi.SubmitForUserApprovalsRequest} request
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.submitApprovalRequestForUser({
+     *     await client.approvals.submitForUser({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         userId: "5a0ab5acb07987125438b60f",
      *         body: {
@@ -255,15 +255,15 @@ export class ApprovalsClient {
      *         }
      *     })
      */
-    public submitApprovalRequestForUser(
-        request: ClockifyApi.SubmitApprovalRequestForUserRequest,
+    public submitForUser(
+        request: ClockifyApi.SubmitForUserApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__submitApprovalRequestForUser(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submitForUser(request, requestOptions));
     }
 
-    private async __submitApprovalRequestForUser(
-        request: ClockifyApi.SubmitApprovalRequestForUserRequest,
+    private async __submitForUser(
+        request: ClockifyApi.SubmitForUserApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestDtoV1>> {
         const { workspaceId, userId, body: _body } = request;
@@ -314,11 +314,11 @@ export class ApprovalsClient {
     }
 
     /**
-     * @param {ClockifyApi.ResubmitEntriesForApprovalForUserRequest} request
+     * @param {ClockifyApi.ResubmitForUserApprovalsRequest} request
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.resubmitEntriesForApprovalForUser({
+     *     await client.approvals.resubmitForUser({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         userId: "5a0ab5acb07987125438b60f",
      *         body: {
@@ -327,15 +327,15 @@ export class ApprovalsClient {
      *         }
      *     })
      */
-    public resubmitEntriesForApprovalForUser(
-        request: ClockifyApi.ResubmitEntriesForApprovalForUserRequest,
+    public resubmitForUser(
+        request: ClockifyApi.ResubmitForUserApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__resubmitEntriesForApprovalForUser(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__resubmitForUser(request, requestOptions));
     }
 
-    private async __resubmitEntriesForApprovalForUser(
-        request: ClockifyApi.ResubmitEntriesForApprovalForUserRequest,
+    private async __resubmitForUser(
+        request: ClockifyApi.ResubmitForUserApprovalsRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestDtoV1>> {
         const { workspaceId, userId, body: _body } = request;
@@ -390,21 +390,21 @@ export class ApprovalsClient {
      * @param {ApprovalsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.approvals.updateApprovalRequest({
+     *     await client.approvals.updateStatus({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         approvalRequestId: "940ab5acb07987125438b65y",
      *         note: "Approved after review.",
      *         state: "APPROVED"
      *     })
      */
-    public updateApprovalRequest(
+    public updateStatus(
         request: ClockifyApi.UpdateApprovalRequestRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ApprovalRequestDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateApprovalRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateStatus(request, requestOptions));
     }
 
-    private async __updateApprovalRequest(
+    private async __updateStatus(
         request: ClockifyApi.UpdateApprovalRequestRequest,
         requestOptions?: ApprovalsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ApprovalRequestDtoV1>> {

@@ -23,23 +23,23 @@ export class TagsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTagsRequest} request
+     * @param {ClockifyApi.ListTagsRequest} request
      * @param {TagsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tags.getWorkspacesWorkspaceIdTags({
+     *     await client.tags.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTags(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTagsRequest,
+    public list(
+        request: ClockifyApi.ListTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Tag[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspacesWorkspaceIdTags(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTags(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTagsRequest,
+    private async __list(
+        request: ClockifyApi.ListTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Tag[]>> {
         const {
@@ -111,19 +111,19 @@ export class TagsClient {
      * @param {TagsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tags.postWorkspacesWorkspaceIdTags({
+     *     await client.tags.create({
      *         workspaceId: "workspaceId",
      *         name: "name"
      *     })
      */
-    public postWorkspacesWorkspaceIdTags(
+    public create(
         request: ClockifyApi.TagCreate,
         requestOptions?: TagsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Tag> {
-        return core.HttpResponsePromise.fromPromise(this.__postWorkspacesWorkspaceIdTags(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __postWorkspacesWorkspaceIdTags(
+    private async __create(
         request: ClockifyApi.TagCreate,
         requestOptions?: TagsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Tag>> {
@@ -175,24 +175,24 @@ export class TagsClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTagsTagIdRequest} request
+     * @param {ClockifyApi.GetTagsRequest} request
      * @param {TagsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+     *     await client.tags.get({
      *         workspaceId: "workspaceId",
      *         tagId: "tagId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTagsTagIdRequest,
+    public get(
+        request: ClockifyApi.GetTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Tag> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspacesWorkspaceIdTagsTagId(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTagsTagIdRequest,
+    private async __get(
+        request: ClockifyApi.GetTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Tag>> {
         const { workspaceId, tagId } = request;
@@ -240,24 +240,24 @@ export class TagsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdTagsTagIdRequest} request
+     * @param {ClockifyApi.UpdateTagsRequest} request
      * @param {TagsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tags.putWorkspacesWorkspaceIdTagsTagId({
+     *     await client.tags.update({
      *         workspaceId: "workspaceId",
      *         tagId: "tagId"
      *     })
      */
-    public putWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdTagsTagIdRequest,
+    public update(
+        request: ClockifyApi.UpdateTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Tag> {
-        return core.HttpResponsePromise.fromPromise(this.__putWorkspacesWorkspaceIdTagsTagId(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdTagsTagIdRequest,
+    private async __update(
+        request: ClockifyApi.UpdateTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Tag>> {
         const { workspaceId, tagId, ..._body } = request;
@@ -308,26 +308,24 @@ export class TagsClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdTagsTagIdRequest} request
+     * @param {ClockifyApi.DeleteTagsRequest} request
      * @param {TagsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tags.deleteWorkspacesWorkspaceIdTagsTagId({
+     *     await client.tags.delete({
      *         workspaceId: "workspaceId",
      *         tagId: "tagId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTagsTagIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdTagsTagId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdTagsTagId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTagsTagIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTagsRequest,
         requestOptions?: TagsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, tagId } = request;

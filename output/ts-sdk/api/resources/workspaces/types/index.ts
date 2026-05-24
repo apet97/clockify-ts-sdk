@@ -1,2 +1,2 @@
-export * from "./AddUserToWorkspaceRequestSendEmail.js";
-export * from "./GetAllMyWorkspacesRequestRolesItem.js";
+export * from "./AddUserWorkspacesRequestSendEmail.js";
+export * from "./ListWorkspacesRequestRolesItem.js";

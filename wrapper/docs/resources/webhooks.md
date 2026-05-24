@@ -6,43 +6,43 @@
 
 ## Methods
 
-### `getAddonWebhooksOnWorkspace`
+### `listForAddon`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getAddonWebhooksOnWorkspace({
+    await client.webhooks.listForAddon({
         workspaceId: "workspaceId",
         addonId: "addonId"
     })
 ```
 
-**Request fields** (`GetAddonWebhooksOnWorkspaceRequest`):
+**Request fields** (`ListForAddonWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `addonId` (`string`, required)
 
-### `getWebhooksOnWorkspace`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWebhooksOnWorkspace({
+    await client.webhooks.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWebhooksOnWorkspaceRequest`):
+**Request fields** (`ListWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `type` (`ClockifyApi.WebhookType`, optional) — Represents a webhook type.
 
-### `createWebhook`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.createWebhook({
+    await client.webhooks.create({
         workspaceId: "workspaceId",
         body: {
             name: "Stripe",
@@ -54,33 +54,33 @@
     })
 ```
 
-**Request fields** (`CreateWebhookRequest`):
+**Request fields** (`CreateWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.WebhookRequest`, required)
 
-### `getWebhookById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWebhookById({
+    await client.webhooks.get({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`GetWebhookByIdRequest`):
+**Request fields** (`GetWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 
-### `updateWebhook`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.updateWebhook({
+    await client.webhooks.update({
         workspaceId: "workspaceId",
         webhookId: "webhookId",
         body: {
@@ -93,66 +93,66 @@
     })
 ```
 
-**Request fields** (`UpdateWebhookRequest`):
+**Request fields** (`UpdateWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 - `body` (`ClockifyApi.WebhookRequest`, required)
 
-### `deleteWebhook`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.deleteWebhook({
+    await client.webhooks.delete({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`DeleteWebhookRequest`):
+**Request fields** (`DeleteWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 
-### `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken`
+### `rotateToken`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken({
+    await client.webhooks.rotateToken({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest`):
+**Request fields** (`RotateTokenWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 
-### `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs`
+### `listLogs`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWorkspacesWorkspaceIdWebhooksWebhookIdLogs({
+    await client.webhooks.listLogs({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest`):
+**Request fields** (`ListLogsWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)
 
-### `getWebhookLogs`
+### `searchLogs`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.getWebhookLogs({
+    await client.webhooks.searchLogs({
         workspaceId: "workspaceId",
         webhookId: "webhookId",
         from: "2023-02-01T13:00:46Z",
@@ -173,18 +173,18 @@
 - `status` (`WebhookLogsRequest.Status`, optional) — Filters logs by status.
 - `to` (`string`, optional) — Represents date and time in yyyy-MM-ddThh:mm:ssZ format. If provided, results will include logs which occurred before this value.
 
-### `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken`
+### `updateToken`
 
 **Example:**
 
 ```typescript
-    await client.webhooks.patchWorkspacesWorkspaceIdWebhooksWebhookIdToken({
+    await client.webhooks.updateToken({
         workspaceId: "workspaceId",
         webhookId: "webhookId"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest`):
+**Request fields** (`UpdateTokenWebhooksRequest`):
 
 - `workspaceId` (`string`, required)
 - `webhookId` (`string`, required)

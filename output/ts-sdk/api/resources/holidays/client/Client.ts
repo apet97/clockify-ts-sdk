@@ -23,24 +23,24 @@ export class HolidaysClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceHolidaysRequest} request
+     * @param {ClockifyApi.ListHolidaysRequest} request
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.getWorkspaceHolidays({
+     *     await client.holidays.list({
      *         workspaceId: "workspaceId",
      *         "assigned-to": "60f924bafdaf031696ec6218"
      *     })
      */
-    public getWorkspaceHolidays(
-        request: ClockifyApi.GetWorkspaceHolidaysRequest,
+    public list(
+        request: ClockifyApi.ListHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDto[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceHolidays(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getWorkspaceHolidays(
-        request: ClockifyApi.GetWorkspaceHolidaysRequest,
+    private async __list(
+        request: ClockifyApi.ListHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDto[]>> {
         const { workspaceId, "assigned-to": assignedTo, page, "page-size": pageSize } = request;
@@ -101,7 +101,7 @@ export class HolidaysClient {
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.createHoliday({
+     *     await client.holidays.create({
      *         workspaceId: "workspaceId",
      *         automaticTimeEntryCreation: {
      *             defaultEntities: {
@@ -130,14 +130,14 @@ export class HolidaysClient {
      *         }
      *     })
      */
-    public createHoliday(
+    public create(
         request: ClockifyApi.CreateHolidayRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDto> {
-        return core.HttpResponsePromise.fromPromise(this.__createHoliday(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __createHoliday(
+    private async __create(
         request: ClockifyApi.CreateHolidayRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDto>> {
@@ -189,26 +189,26 @@ export class HolidaysClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceHolidaysInPeriodRequest} request
+     * @param {ClockifyApi.ListInPeriodHolidaysRequest} request
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.getWorkspaceHolidaysInPeriod({
+     *     await client.holidays.listInPeriod({
      *         workspaceId: "workspaceId",
      *         "assigned-to": "60f924bafdaf031696ec6218",
      *         start: "2022-12-03T10:59:59Z",
      *         end: "2022-12-05T23:59:59Z"
      *     })
      */
-    public getWorkspaceHolidaysInPeriod(
-        request: ClockifyApi.GetWorkspaceHolidaysInPeriodRequest,
+    public listInPeriod(
+        request: ClockifyApi.ListInPeriodHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDto[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceHolidaysInPeriod(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listInPeriod(request, requestOptions));
     }
 
-    private async __getWorkspaceHolidaysInPeriod(
-        request: ClockifyApi.GetWorkspaceHolidaysInPeriodRequest,
+    private async __listInPeriod(
+        request: ClockifyApi.ListInPeriodHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDto[]>> {
         const { workspaceId, "assigned-to": assignedTo, start, end } = request;
@@ -269,7 +269,7 @@ export class HolidaysClient {
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.updateHoliday({
+     *     await client.holidays.update({
      *         workspaceId: "workspaceId",
      *         holidayId: "holidayId",
      *         automaticTimeEntryCreation: {
@@ -299,14 +299,14 @@ export class HolidaysClient {
      *         }
      *     })
      */
-    public updateHoliday(
+    public update(
         request: ClockifyApi.UpdateHolidayRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDto> {
-        return core.HttpResponsePromise.fromPromise(this.__updateHoliday(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateHoliday(
+    private async __update(
         request: ClockifyApi.UpdateHolidayRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDto>> {
@@ -358,24 +358,24 @@ export class HolidaysClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteHolidayRequest} request
+     * @param {ClockifyApi.DeleteHolidaysRequest} request
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.deleteHoliday({
+     *     await client.holidays.delete({
      *         workspaceId: "workspaceId",
      *         holidayId: "holidayId"
      *     })
      */
-    public deleteHoliday(
-        request: ClockifyApi.DeleteHolidayRequest,
+    public delete(
+        request: ClockifyApi.DeleteHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDetailsDto> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteHoliday(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteHoliday(
-        request: ClockifyApi.DeleteHolidayRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDetailsDto>> {
         const { workspaceId, holidayId } = request;

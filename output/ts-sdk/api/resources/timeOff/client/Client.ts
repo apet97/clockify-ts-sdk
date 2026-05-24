@@ -7,7 +7,7 @@ import * as core from "../../../../core/index.js";
 import * as environments from "../../../../environments.js";
 import { handleNonStatusCodeError } from "../../../../errors/handleNonStatusCodeError.js";
 import * as errors from "../../../../errors/index.js";
-import * as ClockifyApi from "../../../index.js";
+import type * as ClockifyApi from "../../../index.js";
 
 export declare namespace TimeOffClient {
     export type Options = BaseClientOptions;
@@ -23,261 +23,11 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest} request
-     * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
-     *
-     * @throws {@link ClockifyApi.BadRequestError}
-     * @throws {@link ClockifyApi.ForbiddenError}
-     *
-     * @example
-     *     await client.timeOff.postWorkspacesWorkspaceIdPoliciesPolicyIdRequests({
-     *         workspaceId: "workspaceId",
-     *         policyId: "policyId",
-     *         timeOffPeriod: {
-     *             period: {
-     *                 end: "2026-07-13T10:00:00Z",
-     *                 start: "2026-07-13T09:00:00Z"
-     *             }
-     *         }
-     *     })
-     */
-    public postWorkspacesWorkspaceIdPoliciesPolicyIdRequests(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): core.HttpResponsePromise<ClockifyApi.TimeOffTimeOffRequest> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__postWorkspacesWorkspaceIdPoliciesPolicyIdRequests(request, requestOptions),
-        );
-    }
-
-    private async __postWorkspacesWorkspaceIdPoliciesPolicyIdRequests(
-        request: ClockifyApi.PostWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): Promise<core.WithRawResponse<ClockifyApi.TimeOffTimeOffRequest>> {
-        const { workspaceId, policyId, ..._body } = request;
-        const _authRequest: core.AuthRequest = await this._options.authProvider.getAuthRequest();
-        const _headers: core.Fetcher.Args["headers"] = mergeHeaders(
-            _authRequest.headers,
-            this._options?.headers,
-            mergeOnlyDefinedHeaders({ "X-Addon-Token": requestOptions?.addonToken ?? this._options?.addonToken }),
-            requestOptions?.headers,
-        );
-        const _response = await core.fetcher({
-            url: core.url.join(
-                (await core.Supplier.get(this._options.baseUrl)) ??
-                    (await core.Supplier.get(this._options.environment)) ??
-                    environments.ClockifyApiEnvironment.Default,
-                `workspaces/${core.url.encodePathParam(workspaceId)}/policies/${core.url.encodePathParam(policyId)}/requests`,
-            ),
-            method: "POST",
-            headers: _headers,
-            contentType: "application/json",
-            queryString: core.url.queryBuilder().mergeAdditional(requestOptions?.queryParams).build(),
-            requestType: "json",
-            body: _body,
-            timeoutMs: (requestOptions?.timeoutInSeconds ?? this._options?.timeoutInSeconds ?? 60) * 1000,
-            maxRetries: requestOptions?.maxRetries ?? this._options?.maxRetries,
-            abortSignal: requestOptions?.abortSignal,
-            fetchFn: this._options?.fetch,
-            logging: this._options.logging,
-        });
-        if (_response.ok) {
-            return { data: _response.body as ClockifyApi.TimeOffTimeOffRequest, rawResponse: _response.rawResponse };
-        }
-
-        if (_response.error.reason === "status-code") {
-            switch (_response.error.statusCode) {
-                case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
-                case 403:
-                    throw new ClockifyApi.ForbiddenError(_response.error.body as unknown, _response.rawResponse);
-                default:
-                    throw new errors.ClockifyApiError({
-                        statusCode: _response.error.statusCode,
-                        body: _response.error.body,
-                        rawResponse: _response.rawResponse,
-                    });
-            }
-        }
-
-        return handleNonStatusCodeError(
-            _response.error,
-            _response.rawResponse,
-            "POST",
-            "/workspaces/{workspaceId}/policies/{policyId}/requests",
-        );
-    }
-
-    /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest} request
-     * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
-     *
-     * @throws {@link ClockifyApi.BadRequestError}
-     * @throws {@link ClockifyApi.ForbiddenError}
-     *
-     * @example
-     *     await client.timeOff.deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId({
-     *         workspaceId: "workspaceId",
-     *         policyId: "policyId",
-     *         requestId: "requestId"
-     *     })
-     */
-    public deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(request, requestOptions),
-        );
-    }
-
-    private async __deleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): Promise<core.WithRawResponse<void>> {
-        const { workspaceId, policyId, requestId } = request;
-        const _authRequest: core.AuthRequest = await this._options.authProvider.getAuthRequest();
-        const _headers: core.Fetcher.Args["headers"] = mergeHeaders(
-            _authRequest.headers,
-            this._options?.headers,
-            mergeOnlyDefinedHeaders({ "X-Addon-Token": requestOptions?.addonToken ?? this._options?.addonToken }),
-            requestOptions?.headers,
-        );
-        const _response = await core.fetcher({
-            url: core.url.join(
-                (await core.Supplier.get(this._options.baseUrl)) ??
-                    (await core.Supplier.get(this._options.environment)) ??
-                    environments.ClockifyApiEnvironment.Default,
-                `workspaces/${core.url.encodePathParam(workspaceId)}/policies/${core.url.encodePathParam(policyId)}/requests/${core.url.encodePathParam(requestId)}`,
-            ),
-            method: "DELETE",
-            headers: _headers,
-            queryString: core.url.queryBuilder().mergeAdditional(requestOptions?.queryParams).build(),
-            timeoutMs: (requestOptions?.timeoutInSeconds ?? this._options?.timeoutInSeconds ?? 60) * 1000,
-            maxRetries: requestOptions?.maxRetries ?? this._options?.maxRetries,
-            abortSignal: requestOptions?.abortSignal,
-            fetchFn: this._options?.fetch,
-            logging: this._options.logging,
-        });
-        if (_response.ok) {
-            return { data: undefined, rawResponse: _response.rawResponse };
-        }
-
-        if (_response.error.reason === "status-code") {
-            switch (_response.error.statusCode) {
-                case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
-                case 403:
-                    throw new ClockifyApi.ForbiddenError(_response.error.body as unknown, _response.rawResponse);
-                default:
-                    throw new errors.ClockifyApiError({
-                        statusCode: _response.error.statusCode,
-                        body: _response.error.body,
-                        rawResponse: _response.rawResponse,
-                    });
-            }
-        }
-
-        return handleNonStatusCodeError(
-            _response.error,
-            _response.rawResponse,
-            "DELETE",
-            "/workspaces/{workspaceId}/policies/{policyId}/requests/{requestId}",
-        );
-    }
-
-    /**
-     * This endpoint is NOT a general update. The only accepted payload
-     * is a status change to APPROVED or REJECTED. PENDING is rejected.
-     * There is no general "update fields" endpoint — PUT returns 405.
-     *
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest} request
-     * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
-     *
-     * @throws {@link ClockifyApi.BadRequestError}
-     * @throws {@link ClockifyApi.MethodNotAllowedError}
-     *
-     * @example
-     *     await client.timeOff.patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId({
-     *         workspaceId: "workspaceId",
-     *         policyId: "policyId",
-     *         requestId: "requestId",
-     *         statusType: "APPROVED"
-     *     })
-     */
-    public patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(request, requestOptions),
-        );
-    }
-
-    private async __patchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestId(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest,
-        requestOptions?: TimeOffClient.RequestOptions,
-    ): Promise<core.WithRawResponse<void>> {
-        const { workspaceId, policyId, requestId, ..._body } = request;
-        const _authRequest: core.AuthRequest = await this._options.authProvider.getAuthRequest();
-        const _headers: core.Fetcher.Args["headers"] = mergeHeaders(
-            _authRequest.headers,
-            this._options?.headers,
-            mergeOnlyDefinedHeaders({ "X-Addon-Token": requestOptions?.addonToken ?? this._options?.addonToken }),
-            requestOptions?.headers,
-        );
-        const _response = await core.fetcher({
-            url: core.url.join(
-                (await core.Supplier.get(this._options.baseUrl)) ??
-                    (await core.Supplier.get(this._options.environment)) ??
-                    environments.ClockifyApiEnvironment.Default,
-                `workspaces/${core.url.encodePathParam(workspaceId)}/policies/${core.url.encodePathParam(policyId)}/requests/${core.url.encodePathParam(requestId)}`,
-            ),
-            method: "PATCH",
-            headers: _headers,
-            contentType: "application/json",
-            queryString: core.url.queryBuilder().mergeAdditional(requestOptions?.queryParams).build(),
-            requestType: "json",
-            body: _body,
-            timeoutMs: (requestOptions?.timeoutInSeconds ?? this._options?.timeoutInSeconds ?? 60) * 1000,
-            maxRetries: requestOptions?.maxRetries ?? this._options?.maxRetries,
-            abortSignal: requestOptions?.abortSignal,
-            fetchFn: this._options?.fetch,
-            logging: this._options.logging,
-        });
-        if (_response.ok) {
-            return { data: undefined, rawResponse: _response.rawResponse };
-        }
-
-        if (_response.error.reason === "status-code") {
-            switch (_response.error.statusCode) {
-                case 400:
-                    throw new ClockifyApi.BadRequestError(_response.error.body as unknown, _response.rawResponse);
-                case 405:
-                    throw new ClockifyApi.MethodNotAllowedError(_response.error.body as unknown, _response.rawResponse);
-                default:
-                    throw new errors.ClockifyApiError({
-                        statusCode: _response.error.statusCode,
-                        body: _response.error.body,
-                        rawResponse: _response.rawResponse,
-                    });
-            }
-        }
-
-        return handleNonStatusCodeError(
-            _response.error,
-            _response.rawResponse,
-            "PATCH",
-            "/workspaces/{workspaceId}/policies/{policyId}/requests/{requestId}",
-        );
-    }
-
-    /**
-     * @param {ClockifyApi.CreateTimeOffRequestRequest} request
+     * @param {ClockifyApi.SubmitTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.createTimeOffRequest({
+     *     await client.timeOff.submit({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         body: {
@@ -294,15 +44,15 @@ export class TimeOffClient {
      *         }
      *     })
      */
-    public createTimeOffRequest(
-        request: ClockifyApi.CreateTimeOffRequestRequest,
+    public submit(
+        request: ClockifyApi.SubmitTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestFullV1Dto> {
-        return core.HttpResponsePromise.fromPromise(this.__createTimeOffRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submit(request, requestOptions));
     }
 
-    private async __createTimeOffRequest(
-        request: ClockifyApi.CreateTimeOffRequestRequest,
+    private async __submit(
+        request: ClockifyApi.SubmitTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestFullV1Dto>> {
         const { workspaceId, policyId, body: _body } = request;
@@ -353,25 +103,25 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteTimeOffRequestRequest} request
+     * @param {ClockifyApi.WithdrawTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.deleteTimeOffRequest({
+     *     await client.timeOff.withdraw({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         requestId: "requestId"
      *     })
      */
-    public deleteTimeOffRequest(
-        request: ClockifyApi.DeleteTimeOffRequestRequest,
+    public withdraw(
+        request: ClockifyApi.WithdrawTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestDto> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteTimeOffRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__withdraw(request, requestOptions));
     }
 
-    private async __deleteTimeOffRequest(
-        request: ClockifyApi.DeleteTimeOffRequestRequest,
+    private async __withdraw(
+        request: ClockifyApi.WithdrawTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestDto>> {
         const { workspaceId, policyId, requestId } = request;
@@ -490,11 +240,11 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.CreateTimeOffRequestForUserRequest} request
+     * @param {ClockifyApi.SubmitForUserTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.createTimeOffRequestForUser({
+     *     await client.timeOff.submitForUser({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         userId: "userId",
@@ -512,15 +262,15 @@ export class TimeOffClient {
      *         }
      *     })
      */
-    public createTimeOffRequestForUser(
-        request: ClockifyApi.CreateTimeOffRequestForUserRequest,
+    public submitForUser(
+        request: ClockifyApi.SubmitForUserTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestFullV1Dto> {
-        return core.HttpResponsePromise.fromPromise(this.__createTimeOffRequestForUser(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submitForUser(request, requestOptions));
     }
 
-    private async __createTimeOffRequestForUser(
-        request: ClockifyApi.CreateTimeOffRequestForUserRequest,
+    private async __submitForUser(
+        request: ClockifyApi.SubmitForUserTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestFullV1Dto>> {
         const { workspaceId, policyId, userId, body: _body } = request;
@@ -575,7 +325,7 @@ export class TimeOffClient {
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.getAllTimeOffRequestsOnWorkspace({
+     *     await client.timeOff.list({
      *         workspaceId: "workspaceId",
      *         end: "2022-08-26T23:55:06Z",
      *         page: 1,
@@ -586,14 +336,14 @@ export class TimeOffClient {
      *         users: ["5b715612b079875110791432", "b715612b079875110791234"]
      *     })
      */
-    public getAllTimeOffRequestsOnWorkspace(
+    public list(
         request: ClockifyApi.TimeOffRequestSearchRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestsResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getAllTimeOffRequestsOnWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getAllTimeOffRequestsOnWorkspace(
+    private async __list(
         request: ClockifyApi.TimeOffRequestSearchRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestsResponse>> {
@@ -719,26 +469,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest} request
+     * @param {ClockifyApi.GetTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.getWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+     *     await client.timeOff.get({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    public get(
+        request: ClockifyApi.GetTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequest> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdTimeOffRequestsRequestId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    private async __get(
+        request: ClockifyApi.GetTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequest>> {
         const { workspaceId, requestId } = request;
@@ -786,26 +534,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest} request
+     * @param {ClockifyApi.DeleteTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+     *     await client.timeOff.delete({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, requestId } = request;
@@ -853,26 +599,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest} request
+     * @param {ClockifyApi.UpdateStatusTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus({
+     *     await client.timeOff.updateStatus({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest,
+    public updateStatus(
+        request: ClockifyApi.UpdateStatusTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequest> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateStatus(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest,
+    private async __updateStatus(
+        request: ClockifyApi.UpdateStatusTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequest>> {
         const { workspaceId, requestId, ..._body } = request;

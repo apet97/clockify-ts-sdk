@@ -1,5 +1,5 @@
-export type { DeleteWorkspacesWorkspaceIdTagsTagIdRequest } from "./DeleteWorkspacesWorkspaceIdTagsTagIdRequest.js";
-export type { GetWorkspacesWorkspaceIdTagsRequest } from "./GetWorkspacesWorkspaceIdTagsRequest.js";
-export type { GetWorkspacesWorkspaceIdTagsTagIdRequest } from "./GetWorkspacesWorkspaceIdTagsTagIdRequest.js";
-export type { PutWorkspacesWorkspaceIdTagsTagIdRequest } from "./PutWorkspacesWorkspaceIdTagsTagIdRequest.js";
+export type { DeleteTagsRequest } from "./DeleteTagsRequest.js";
+export type { GetTagsRequest } from "./GetTagsRequest.js";
+export type { ListTagsRequest } from "./ListTagsRequest.js";
 export type { TagCreate } from "./TagCreate.js";
+export type { UpdateTagsRequest } from "./UpdateTagsRequest.js";

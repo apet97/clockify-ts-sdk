@@ -6,27 +6,27 @@
 
 ## Methods
 
-### `getWorkspaceExpenses`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.expenses.getWorkspaceExpenses({
+    await client.expenses.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetWorkspaceExpensesRequest`):
+**Request fields** (`ListExpensesRequest`):
 
 - `workspaceId` (`string`, required)
 
-### `createExpense`
+### `create`
 
 **Example:**
 
 ```typescript
     import { createReadStream } from "fs";
-    await client.expenses.createExpense({
+    await client.expenses.create({
         file: fs.createReadStream("/path/to/your/file"),
         workspaceId: "workspaceId",
         amount: 1.1,
@@ -50,29 +50,29 @@
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `getExpenseById`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.expenses.getExpenseById({
+    await client.expenses.get({
         workspaceId: "workspaceId",
         expenseId: "expenseId"
     })
 ```
 
-**Request fields** (`GetExpenseByIdRequest`):
+**Request fields** (`GetExpensesRequest`):
 
 - `workspaceId` (`string`, required)
 - `expenseId` (`string`, required)
 
-### `updateExpense`
+### `update`
 
 **Example:**
 
 ```typescript
     import { createReadStream } from "fs";
-    await client.expenses.updateExpense({
+    await client.expenses.update({
         file: fs.createReadStream("/path/to/your/file"),
         workspaceId: "workspaceId",
         expenseId: "expenseId",
@@ -99,25 +99,25 @@
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `deleteExpense`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.expenses.deleteExpense({
+    await client.expenses.delete({
         workspaceId: "workspaceId",
         expenseId: "expenseId"
     })
 ```
 
-**Request fields** (`DeleteExpenseRequest`):
+**Request fields** (`DeleteExpensesRequest`):
 
 - `workspaceId` (`string`, required)
 - `expenseId` (`string`, required)
 
-### `downloadExpenseReceipt`
+### `downloadReceipt`
 
-**Request fields** (`DownloadExpenseReceiptRequest`):
+**Request fields** (`DownloadReceiptExpensesRequest`):
 
 - `workspaceId` (`string`, required)
 - `expenseId` (`string`, required)

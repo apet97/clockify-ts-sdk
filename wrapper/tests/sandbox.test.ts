@@ -32,7 +32,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
     });
 
     it("lists tags (page=1, page-size=5)", async () => {
-        const tags = await client.tags.getWorkspacesWorkspaceIdTags({
+        const tags = await client.tags.list({
             workspaceId: workspaceId!,
             page: 1,
             "page-size": 5,
@@ -43,7 +43,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
 
     it("creates, fetches by id, and deletes a tag (round-trip)", async () => {
         const slug = `sdk-test-${Date.now()}`;
-        const created = await client.tags.postWorkspacesWorkspaceIdTags({
+        const created = await client.tags.create({
             workspaceId: workspaceId!,
             name: slug,
         });
@@ -51,21 +51,21 @@ describeLive("clockify-sdk-ts live sandbox", () => {
         expect(typeof created.id).toBe("string");
         const tagId = created.id!;
 
-        const fetched = await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+        const fetched = await client.tags.get({
             workspaceId: workspaceId!,
             tagId,
         });
         expect(fetched.id).toBe(tagId);
         expect(fetched.name).toBe(slug);
 
-        await client.tags.deleteWorkspacesWorkspaceIdTagsTagId({
+        await client.tags.delete({
             workspaceId: workspaceId!,
             tagId,
         });
 
         // Confirm 4xx after deletion (server returns 400 "tag doesn't belong to workspace" — code 501 — once deleted).
         await expect(
-            client.tags.getWorkspacesWorkspaceIdTagsTagId({
+            client.tags.get({
                 workspaceId: workspaceId!,
                 tagId,
             }),
@@ -74,7 +74,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
 
     it("paginates projects across page=1 → page=2 (manual page loop)", async () => {
         const pageSize = 5;
-        const page1 = await client.projects.getWorkspaceProjects({
+        const page1 = await client.projects.list({
             workspaceId: workspaceId!,
             page: 1,
             "page-size": pageSize,
@@ -83,7 +83,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
         expect(page1.length).toBeLessThanOrEqual(pageSize);
 
         if (page1.length === pageSize) {
-            const page2 = await client.projects.getWorkspaceProjects({
+            const page2 = await client.projects.list({
                 workspaceId: workspaceId!,
                 page: 2,
                 "page-size": pageSize,
@@ -109,7 +109,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
         for await (const project of paginate(
             async (page, sz) => {
                 seenPages.push(page);
-                return client.projects.getWorkspaceProjects({
+                return client.projects.list({
                     workspaceId: workspaceId!,
                     page,
                     "page-size": sz,
@@ -133,7 +133,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
 
     it("rejects an invalid {tagId} path param with a structured error", async () => {
         await expect(
-            client.tags.getWorkspacesWorkspaceIdTagsTagId({
+            client.tags.get({
                 workspaceId: workspaceId!,
                 tagId: "ffffffffffffffffffffffff",
             }),
@@ -141,7 +141,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
     });
 
     it("paginates projects via iterAll() across at least one page", async () => {
-        const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
+        const listProjects = client.projects.list.bind(client.projects);
         const seen = new Set<string>();
         let count = 0;
         for await (const project of iterAll(
@@ -158,7 +158,7 @@ describeLive("clockify-sdk-ts live sandbox", () => {
 
     it("withResponse() exposes status + headers + requestId on a list call", async () => {
         const { data, status, headers, requestId } = await withResponse(
-            client.tags.getWorkspacesWorkspaceIdTags({
+            client.tags.list({
                 workspaceId: workspaceId!,
                 page: 1,
                 "page-size": 1,

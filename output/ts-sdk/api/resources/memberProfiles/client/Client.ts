@@ -23,24 +23,24 @@ export class MemberProfilesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetMemberProfileRequest} request
+     * @param {ClockifyApi.GetMemberProfilesRequest} request
      * @param {MemberProfilesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.memberProfiles.getMemberProfile({
+     *     await client.memberProfiles.get({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         userId: "5a0ab5acb07987125438b60f"
      *     })
      */
-    public getMemberProfile(
-        request: ClockifyApi.GetMemberProfileRequest,
+    public get(
+        request: ClockifyApi.GetMemberProfilesRequest,
         requestOptions?: MemberProfilesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.MemberProfileDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getMemberProfile(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getMemberProfile(
-        request: ClockifyApi.GetMemberProfileRequest,
+    private async __get(
+        request: ClockifyApi.GetMemberProfilesRequest,
         requestOptions?: MemberProfilesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.MemberProfileDtoV1>> {
         const { workspaceId, userId } = request;
@@ -92,7 +92,7 @@ export class MemberProfilesClient {
      * @param {MemberProfilesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.memberProfiles.updateMemberProfile({
+     *     await client.memberProfiles.update({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         userId: "5a0ab5acb07987125438b60f",
      *         imageUrl: "https://www.url.com/imageurl-1234567890.jpg",
@@ -105,14 +105,14 @@ export class MemberProfilesClient {
      *         workingDays: ["MONDAY"]
      *     })
      */
-    public updateMemberProfile(
+    public update(
         request: ClockifyApi.MemberProfileUpdateRequest,
         requestOptions?: MemberProfilesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.MemberProfileDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateMemberProfile(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateMemberProfile(
+    private async __update(
         request: ClockifyApi.MemberProfileUpdateRequest,
         requestOptions?: MemberProfilesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.MemberProfileDtoV1>> {

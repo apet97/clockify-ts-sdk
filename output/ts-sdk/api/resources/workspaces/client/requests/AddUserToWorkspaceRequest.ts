@@ -14,7 +14,7 @@ export interface AddUserToWorkspaceRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     /** Indicates whether to send an email when user is added to the workspace. */
-    "send-email": ClockifyApi.AddUserToWorkspaceRequestSendEmail;
+    "send-email": ClockifyApi.AddUserWorkspacesRequestSendEmail;
     /** Represents an email address of the user. */
     email: string;
 }
