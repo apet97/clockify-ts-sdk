@@ -170,9 +170,10 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **Idiomatic method names on 21 of the 31 modules.** Each stamped
-  op pairs `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the
-  method lands at `client.<resource>.<verb>()`:
+- **Idiomatic method names on 27 of the 31 modules (167 ops, ~87% of
+  the API surface).** Each stamped op pairs `x-fern-sdk-group-name`
+  + `x-fern-sdk-method-name` so the method lands at
+  `client.<resource>.<verb>()`:
   - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
     `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
     `webhooks`, `expenses`, `expenseCategories`, `policies` — each
@@ -213,22 +214,22 @@ co-exist:
   - **Family-name verbs:**
     `reports.{attendance,detailed,summary,weekly}` — each report is
     a POST-with-body call; the verb is the family name directly.
-- **OperationId-derived on the remaining ~10 modules** —
-  `client.workspaces.getAllMyWorkspaces(...)`,
-  `client.memberProfiles.getMemberProfile(...)`,
-  `client.auditLogReport.searchAuditLogs(...)`, and so on. Long but
-  stable. Specialised action verbs inside the stamped modules also
-  keep their operationId-derived names (e.g.
-  `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive(...)`,
-  `client.timeOffPolicies.changeTimeOffPolicyStatus(...)`,
-  `client.expenses.downloadExpenseReceipt(...)`,
-  `client.scheduling.getUsersCapacityTotals(...)`).
+- **OperationId-derived on the remaining ~24 ops (intentional).**
+  Each falls in one of two categories:
+  - **Already a clean verb-noun name** — `client.files.uploadImage(...)`,
+    `client.roles.giveUserManagerRole(...)`,
+    `client.expenseReport.generateDetailedReportV1(...)` (the `V1`
+    suffix is load-bearing), `client.workspaces.updateUserStatus(...)`.
+  - **Per-module domain edge case** — `client.projects.assignOrRemoveProjectUsers(...)`
+    (semantic overlap with `updateMemberships`); the timeOff legacy
+    `/policies/{policyId}/requests` family that duplicates
+    `/time-off/policies/{policyId}/requests`; the `Balances`-tagged
+    `getWorkspacesWorkspaceIdTimeOffRequests` /
+    `getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances` reads.
+    Each needs a domain-specific naming review.
+
   Tracked under `spec/evidence/discrepancies.md` →
-  `fern.x-fern-sdk-method-name.drops-resource-modules`. The
-  ~10 untouched modules are all small / read-only / experimental
-  (`memberProfiles`, `roles`, `balances`, `invoiceSettings`,
-  `expenseReport`, `workspaces`, `files`, `auditLogReport`,
-  `entityChangesExperimental`) — the rename buys little.
+  `fern.x-fern-sdk-method-name.drops-resource-modules`.
 
 ## Pagination
 

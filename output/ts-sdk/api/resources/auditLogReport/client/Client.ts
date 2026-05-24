@@ -32,7 +32,7 @@ export class AuditLogReportClient {
      * @param {AuditLogReportClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.auditLogReport.searchAuditLogs({
+     *     await client.auditLogReport.search({
      *         workspaceId: "workspaceId",
      *         actions: ["CREATE_PROJECT", "UPDATE_PROJECT"],
      *         authors: {},
@@ -40,14 +40,14 @@ export class AuditLogReportClient {
      *         start: "2026-05-14T00:00:00Z"
      *     })
      */
-    public searchAuditLogs(
+    public search(
         request: ClockifyApi.AuditLogRequest,
         requestOptions?: AuditLogReportClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.AuditLogResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__searchAuditLogs(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__search(request, requestOptions));
     }
 
-    private async __searchAuditLogs(
+    private async __search(
         request: ClockifyApi.AuditLogRequest,
         requestOptions?: AuditLogReportClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.AuditLogResponse>> {

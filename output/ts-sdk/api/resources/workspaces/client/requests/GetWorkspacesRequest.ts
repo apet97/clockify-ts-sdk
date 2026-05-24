@@ -6,7 +6,7 @@
  *         workspaceId: "64a687e29ae1f428e7ebe303"
  *     }
  */
-export interface GetWorkspaceInfoRequest {
+export interface GetWorkspacesRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
 }

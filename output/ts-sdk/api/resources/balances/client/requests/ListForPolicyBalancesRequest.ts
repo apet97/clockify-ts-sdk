@@ -6,18 +6,18 @@ import type * as ClockifyApi from "../../../../index.js";
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         userId: "userId"
+ *         policyId: "policyId"
  *     }
  */
-export interface GetBalanceForUserRequest {
+export interface ListForPolicyBalancesRequest {
     workspaceId: string;
-    userId: string;
+    policyId: string;
     /** Page number. */
     page?: number;
     /** Page size. */
     "page-size"?: number;
-    /** Sort result based on given criteria. */
+    /** If provided, the result is sorted by this column. */
     sort?: ClockifyApi.BalanceSortColumn;
-    /** Sort result by providing sort order. */
+    /** Sort results in ascending or descending order. */
     "sort-order"?: ClockifyApi.BalanceSortOrder;
 }

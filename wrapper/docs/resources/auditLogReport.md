@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `searchAuditLogs`
+### `search`
 
 **Example:**
 
 ```typescript
-    await client.auditLogReport.searchAuditLogs({
+    await client.auditLogReport.search({
         workspaceId: "workspaceId",
         actions: ["CREATE_PROJECT", "UPDATE_PROJECT"],
         authors: {},

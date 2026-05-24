@@ -54,11 +54,12 @@ once v1.0.0 ships.
 
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
-- **Idiomatic method names on 21 modules + action-verb cleanups (G.1).**
-  With both `x-fern-sdk-group-name` and `x-fern-sdk-method-name`
-  stamped on the upstream spec, Fern now generates 21 of the 31
-  resource modules with idiomatic names. **149 ops mapped in total**
-  (was 110 in the first G.1 cut; +39 specialised action verbs):
+- **Idiomatic method names on 27 modules (G.1).** With both
+  `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
+  upstream spec, Fern now generates 27 of the 31 resource modules
+  with idiomatic names. **167 ops mapped in total** (87% of the
+  191-op API surface): 110 in the first G.1 cut + 39 action-verb
+  cleanups + 18 small / read-only module fills:
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).
@@ -162,12 +163,26 @@ once v1.0.0 ships.
   `/time-off/policies/{policyId}/requests`) stay operationId-derived
   to avoid Fern method-name collisions inside the same module.
 
-  The other ~10 modules continue to use operationId-derived names —
-  all of them either small / read-only (`memberProfiles`, `roles`,
-  `balances`, `invoiceSettings`, `expenseReport`, `workspaces`,
-  `files`, `auditLogReport`, `entityChangesExperimental`) or
-  already-renamed action verbs scattered inside the stamped
-  modules.
+  **Small / read-only modules now fully stamped (+18 ops, 6 modules):**
+  - `auditLogReport.search` (the single POST `/audit-log` route).
+  - `balances.{listForPolicy, update, getForUser}` — the per-policy
+    and per-user balance views plus the policy-level adjustment.
+  - `entityChangesExperimental.{listCreated, listUpdated, listDeleted}`
+    — one verb per event type in the change-event feed.
+  - `invoiceSettings.{get, update}` — single-resource shape.
+  - `memberProfiles.{get, update}` — per-user profile read + patch.
+  - `workspaces.{list, create, get, update, updateCostRate,
+    updateBillableRate, addUser}` — CRUDL on the workspace itself
+    plus the two workspace-level rate updates and the addUser action.
+    Per-user verbs (`updateUserStatus`, `updateUserCostRate`,
+    `updateUserHourlyRate`) stay operationId-derived (already
+    verb-noun shaped).
+
+  **Modules intentionally left operationId-derived (~4 modules,
+  ~5 ops):** `files.uploadImage`, `roles.{giveUserManagerRole,
+  removeUserManagerRole}`, `expenseReport.generateDetailedReportV1`,
+  the per-user `workspaces.updateUser*` family — each name is
+  already a clean verb-noun and a rename would not improve clarity.
   Root-cause analysis (method-name alone hoists ops to the root
   client) + the explicit-allowlist technique are documented in
   `spec/evidence/discrepancies.md` →

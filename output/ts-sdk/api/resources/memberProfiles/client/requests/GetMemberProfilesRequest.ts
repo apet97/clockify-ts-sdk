@@ -7,7 +7,7 @@
  *         userId: "5a0ab5acb07987125438b60f"
  *     }
  */
-export interface GetMemberProfileRequest {
+export interface GetMemberProfilesRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     /** Represents a user identifier across the system. */

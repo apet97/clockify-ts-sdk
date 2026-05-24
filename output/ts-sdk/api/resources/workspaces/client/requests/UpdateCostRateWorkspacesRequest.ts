@@ -12,7 +12,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface UpdateWorkspaceCostRateRequest {
+export interface UpdateCostRateWorkspacesRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     body: ClockifyApi.UpdateCostRateRequest;

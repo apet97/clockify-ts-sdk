@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `getInvoiceSettings`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.invoiceSettings.getInvoiceSettings({
+    await client.invoiceSettings.get({
         workspaceId: "workspaceId"
     })
 ```
@@ -20,12 +20,12 @@
 
 - `workspaceId` (`string`, required)
 
-### `updateInvoiceSettings`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.invoiceSettings.updateInvoiceSettings({
+    await client.invoiceSettings.update({
         workspaceId: "workspaceId",
         defaults: {
             notes: "notes",

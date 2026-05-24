@@ -9,8 +9,8 @@
  *         end: "2024-11-28T10:00:00Z"
  *     }
  */
-export interface GetUpdatedEntityInfoRequest {
-    /** Represents workspace identifier across the system. */
+export interface ListDeletedEntityChangesExperimentalRequest {
+    /** Represents workspace identifier across the system (Experimental) */
     workspaceId: string;
     /** Specifies the type of document to be retrieved. Expected values are CLIENTS, PROJECTS, TAGS, TASKS, SCHEDULED_ASSIGNMENT, TIME_ENTRY, TIME_ENTRY_RATE, TIME_ENTRY_CUSTOM_FIELD_VALUE.This parameter can accept multiple values, and at least one option must be provided. Based on the input, the application will return results corresponding to the selected document types. */
     type?: string | string[];

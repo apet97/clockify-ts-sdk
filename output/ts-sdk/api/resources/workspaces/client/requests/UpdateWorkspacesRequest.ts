@@ -6,6 +6,6 @@
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface PutWorkspacesWorkspaceIdRequest {
+export interface UpdateWorkspacesRequest {
     workspaceId: string;
 }

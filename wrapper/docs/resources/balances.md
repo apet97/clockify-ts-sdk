@@ -6,18 +6,18 @@
 
 ## Methods
 
-### `getBalancesForPolicy`
+### `listForPolicy`
 
 **Example:**
 
 ```typescript
-    await client.balances.getBalancesForPolicy({
+    await client.balances.listForPolicy({
         workspaceId: "workspaceId",
         policyId: "policyId"
     })
 ```
 
-**Request fields** (`GetBalancesForPolicyRequest`):
+**Request fields** (`ListForPolicyBalancesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
@@ -26,12 +26,12 @@
 - `sort` (`ClockifyApi.BalanceSortColumn`, optional) — If provided, the result is sorted by this column.
 - `sort-order` (`ClockifyApi.BalanceSortOrder`, optional) — Sort results in ascending or descending order.
 
-### `updateBalance`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.balances.updateBalance({
+    await client.balances.update({
         workspaceId: "workspaceId",
         policyId: "policyId",
         note: "Bonus days added.",
@@ -48,18 +48,18 @@
 - `userIds` (`string[]`, required) — Represents the list of users' identifiers whose balance is to be updated.
 - `value` (`number`, required) — Represents a new balance value.
 
-### `getBalanceForUser`
+### `getForUser`
 
 **Example:**
 
 ```typescript
-    await client.balances.getBalanceForUser({
+    await client.balances.getForUser({
         workspaceId: "workspaceId",
         userId: "userId"
     })
 ```
 
-**Request fields** (`GetBalanceForUserRequest`):
+**Request fields** (`GetForUserBalancesRequest`):
 
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)

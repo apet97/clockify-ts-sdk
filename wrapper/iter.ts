@@ -74,9 +74,9 @@ export interface PageEnvelope<TItem> {
  */
 export type KnownPaginatedMethod =
     | { readonly resource: "approvals"; readonly method: "list" }
-    | { readonly resource: "auditLogReport"; readonly method: "searchAuditLogs" }
-    | { readonly resource: "balances"; readonly method: "getBalanceForUser" }
-    | { readonly resource: "balances"; readonly method: "getBalancesForPolicy" }
+    | { readonly resource: "auditLogReport"; readonly method: "search" }
+    | { readonly resource: "balances"; readonly method: "getForUser" }
+    | { readonly resource: "balances"; readonly method: "listForPolicy" }
     | { readonly resource: "clients"; readonly method: "list" }
     | { readonly resource: "customFields"; readonly method: "listForProject" }
     | { readonly resource: "customFields"; readonly method: "listForWorkspace" }
@@ -100,9 +100,9 @@ export type KnownPaginatedMethod =
  */
 export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "approvals", method: "list" },
-    { resource: "auditLogReport", method: "searchAuditLogs" },
-    { resource: "balances", method: "getBalanceForUser" },
-    { resource: "balances", method: "getBalancesForPolicy" },
+    { resource: "auditLogReport", method: "search" },
+    { resource: "balances", method: "getForUser" },
+    { resource: "balances", method: "listForPolicy" },
     { resource: "clients", method: "list" },
     { resource: "customFields", method: "listForProject" },
     { resource: "customFields", method: "listForWorkspace" },

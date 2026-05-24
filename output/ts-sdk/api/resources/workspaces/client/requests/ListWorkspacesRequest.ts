@@ -6,7 +6,7 @@ import type * as ClockifyApi from "../../../../index.js";
  * @example
  *     {}
  */
-export interface GetAllMyWorkspacesRequest {
+export interface ListWorkspacesRequest {
     /** If provided, returns workspaces where the user has any of the specified roles. Owners are not counted as admins when filtering. */
-    roles?: ClockifyApi.GetAllMyWorkspacesRequestRolesItem | ClockifyApi.GetAllMyWorkspacesRequestRolesItem[];
+    roles?: ClockifyApi.ListWorkspacesRequestRolesItem | ClockifyApi.ListWorkspacesRequestRolesItem[];
 }

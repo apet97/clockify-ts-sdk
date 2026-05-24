@@ -710,9 +710,9 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (21-module subset, 149 ops):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` maps 149 pairs to
-  `{group, name}` entries. The session expanded in six steps:
+- **What shipped (27-module subset, 167 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 167 pairs to
+  `{group, name}` entries. The session expanded in seven steps:
   - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
     archive = 11 ops.
   - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
@@ -744,35 +744,42 @@ Each of these needs:
     listOnProject, replaceRecurring, getUsersCapacityFiltered,
     calculateUsersTotals, getUserCapacity), timeOff × 1
     (submitForUser) = 39 more ops.
+  - Step 7 (small / read-only module fills): auditLogReport × 1
+    (search), balances × 3 (listForPolicy, update, getForUser),
+    entityChangesExperimental × 3 (listCreated, listUpdated,
+    listDeleted), invoiceSettings × 2 (get, update),
+    memberProfiles × 2 (get, update), workspaces × 7
+    (list, create, get, update, updateCostRate, updateBillableRate,
+    addUser) = 18 more ops. Skipped: `files.uploadImage`,
+    `roles.{give,remove}UserManagerRole`, `expenseReport.
+    generateDetailedReportV1`, per-user workspaces verbs — each
+    is already verb-noun shaped.
 
   After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
   + `fern check --warnings --from-openapi` + `fern generate --group ts
   --local --force` stayed green; the wrapper exposes idiomatic CRUDL
   on every stamped module and 0 ops are hoisted to the root client.
 
-- **What's NOT shipped:** ~10 modules still use operationId-derived
-  names. All of them are small / read-only / single-resource modules
-  where the rename buys little:
-  - `memberProfiles` (2 ops: get / update).
-  - `roles` (read-only).
-  - `balances` (read-only).
-  - `invoiceSettings` (single-resource get / update).
-  - `expenseReport` (read-only).
-  - `workspaces` (mostly action verbs like `updateWorkspaceCostRate`;
-    no DELETE; "list" semantics awkward since it's a user's
-    own-workspace enumeration).
-  - `files` (binary upload/download surface).
-  - `auditLogReport` (search-only).
-  - `entityChangesExperimental` (experimental change-event reader;
-    upstream may still change shape).
-
-  Specialised action verbs inside the 21 stamped modules also kept
-  their operationId-derived names (e.g.
-  `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive`,
-  `client.timeOffPolicies.changeTimeOffPolicyStatus`,
-  `client.scheduling.getUsersCapacityTotals`,
-  `client.holidays.getWorkspaceHolidaysInPeriod`). Naming these is a
-  per-module-followup, not blocking the current G.1 milestone.
+- **What's NOT shipped (~4 modules + a handful of ops):** the remaining
+  ~24 unstamped ops live in:
+  - `files.uploadImage` — already a clean verb-noun name.
+  - `roles.{giveUserManagerRole, removeUserManagerRole}` — verbs
+    `give` / `remove` are already domain-clear for a 2-op module;
+    renaming to `grant`/`revoke` would not improve clarity.
+  - `expenseReport.generateDetailedReportV1` — the explicit `V1`
+    suffix is load-bearing and a rename would lose that signal.
+  - `workspaces.{updateUserStatus, updateUserCostRate,
+    updateUserHourlyRate}` — already verb-noun shaped.
+  - `balances.{getWorkspacesWorkspaceIdTimeOffRequests,
+    getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances}` — the
+    `Balances`-tagged "time-off-requests" / "time-off-balances"
+    read paths; semantic overlap with timeOff / balances; needs
+    domain investigation before a rename.
+  - Specialised action verbs inside stamped modules that need
+    naming review (e.g. `assignOrRemoveProjectUsers` next to
+    `updateMemberships`; the timeOff legacy `/policies/...`
+    duplicates; `scheduling.changeRecurringPeriod`). Each is a
+    per-module-followup, not blocking the current G.1 milestone.
 
   Specialised action verbs inside the 10 stamped modules also kept
   their operationId-derived names (e.g.
@@ -790,23 +797,24 @@ Each of these needs:
      it's the required complement.
   3-4. Closed by (1).
 
-- **Status (updated):** `mostly-resolved-action-verb-cleanups-shipped`.
-  The proven technique ships in `SDK_METHOD_NAMES` covering 149 ops
-  across 21 of 31 modules. Coverage by op count: 149/191 = 78% of
-  total operations carry idiomatic stamps; the remainder are in the
-  ~10 untouched modules (small / read-only / experimental) plus ~32
-  intentionally-unstamped ops inside stamped modules (legacy
-  duplicate paths, action verbs with semantic ambiguity like
-  `assignOrRemoveProjectUsers`, and already-idiomatic operationId
-  names like `deleteMany`). Module count stays at 31 + index.ts
-  across all six expansion steps verified to date. The technique
-  extends cleanly across naming patterns: pure CRUDL on 12 modules,
-  CRUDL + action on 3, partial CRUDL on 3, scoped naming on 1
-  (customFields), workflow verbs on 3, family-name verbs on 1
-  (reports), and now ~10 distinct action-verb patterns
-  (`mark*`, `start/stopTimer`, `rotateToken`, `replaceRecurring`,
-  `listFor*`, `update*Rate`, etc.). The six expansion steps each
-  preserved the invariant "31 modules + index.ts, 0 root hoists".
+- **Status (updated):** `resolved-modulo-handful-of-domain-edge-cases`.
+  The proven technique ships in `SDK_METHOD_NAMES` covering 167 ops
+  across 27 of 31 modules. Coverage by op count: **167/191 = 87% of
+  total operations carry idiomatic stamps**. The remaining ~24 ops
+  are split between already-clean operationId names that don't need
+  a rename (`files.uploadImage`, `roles.giveUserManagerRole`, etc.)
+  and per-module domain edge cases needing investigation (e.g.
+  `assignOrRemoveProjectUsers` vs `updateMemberships`; the timeOff
+  legacy `/policies/...` duplicate paths; the two `Balances`-tagged
+  time-off read routes). Module count stays at 31 + index.ts across
+  all seven expansion steps. The technique covers every naming
+  pattern in Clockify's surface: pure CRUDL, CRUDL+action,
+  partial CRUDL, scoped naming, workflow verbs, family-name verbs,
+  ~10 distinct action-verb patterns (`mark*`, `start/stopTimer`,
+  `rotateToken`, `replaceRecurring`, `listFor*`, `update*Rate`,
+  `listCreated/Updated/Deleted` for the entity-change feed, etc.).
+  Each of the seven expansion steps preserved the invariant "31
+  modules + index.ts, 0 root hoists".
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 
