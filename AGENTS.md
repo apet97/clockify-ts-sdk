@@ -104,20 +104,21 @@ output/ts-sdk/**  (Fern emits ~720 TS files; --force WIPES the tree)
         ▼
 wrapper/src/**  (gitignored; populated by sync)
         │
-        │  npm run type-check               (tsc --noEmit; covers src/**,
-        │                                     pagination.ts, tests/**)
+        │  npm run type-check               (tsc --noEmit; covers src/**, index.ts,
+        │                                     create-client.ts, pagination.ts, tests/**)
         │  npm test                          (vitest; 8 pagination unit tests +
-        │                                     5 live sandbox flows; live tests
-        │                                     skip without CLOCKIFY_API_KEY +
-        │                                     CLOCKIFY_WORKSPACE_ID)
-        │  npm run build                     (tsc -p tsconfig.build.json → dist/,
-        │                                     then tsc -p tsconfig.pagination.json
-        │                                     → dist/pagination.{js,d.ts,...})
+        │                                     8 createClient unit tests + 5 live
+        │                                     sandbox flows; live tests skip without
+        │                                     CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
+        │  npm run build                     (single `tsc -p tsconfig.build.json`;
+        │                                     emits dist/index.js (re-export root),
+        │                                     dist/create-client.js, dist/pagination.js,
+        │                                     and the synced SDK under dist/src/**)
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
-        │  npm pack --dry-run                (verify the tarball; 2899 files,
-        │                                     331.8 kB as of v0.1.0)
+        │  npm pack --dry-run                (verify the tarball; 2895 files,
+        │                                     334.1 kB as of v0.1.0 [Unreleased])
         ▼
 clockify-sdk-ts@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
 ```
@@ -137,7 +138,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
-| `wrapper/{pagination.ts, tsconfig.pagination.json}` | `npm run type-check` + `npm test` (pagination unit cases live in `tests/pagination.test.ts`) + `npm run build` + `npm pack --dry-run` |
+| `wrapper/{index.ts, create-client.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
@@ -188,18 +189,23 @@ end-to-end and end green before push. Drift gates are non-negotiable.
 ```
 wrapper/
 ├── package.json              ← clockify-sdk-ts manifest (npm-bound)
-├── tsconfig.json             ← type-check (noEmit; covers src/**,
-│                                pagination.ts, tests/**)
-├── tsconfig.build.json       ← emit dist/ with declarations + sourcemaps
-│                                from src/ (the synced SDK)
-├── tsconfig.pagination.json  ← emit dist/pagination.* from the hand-written
-│                                pagination.ts at the wrapper root
+├── tsconfig.json             ← type-check (noEmit; covers src/**, index.ts,
+│                                create-client.ts, pagination.ts, tests/**)
+├── tsconfig.build.json       ← unified emit: dist/ with declarations + sourcemaps
+│                                from src/ + the hand-written modules at root
+│                                (rootDir `.`; src/ lands under dist/src/)
 ├── vitest.config.ts          ← test runner config (testTimeout 30s)
 ├── README.md                 ← the README users see on npm
 ├── CHANGELOG.md              ← Keep-a-Changelog formatted release notes;
 │                                NOT in package.json "files" — discoverable
 │                                via the repo URL, not the tarball
 ├── LICENSE                   ← MIT
+├── index.ts                  ← package root entry — re-exports the synced SDK
+│                                + hand-written helpers so one import covers
+│                                ClockifyApiClient, createClockifyClient, paginate
+├── create-client.ts          ← hand-written factory hiding the addonToken
+│                                workaround behind a discriminated-union options
+│                                type; exported as `clockify-sdk-ts/create-client`
 ├── pagination.ts             ← hand-written AsyncGenerator-based offset
 │                                iterator (`paginate<T>`); survives sync;
 │                                exported as `clockify-sdk-ts/pagination`
@@ -209,11 +215,15 @@ wrapper/
 ├── tests/
 │   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
 │   │                           (mocked fetchPage callback; no live API)
+│   ├── create-client.test.ts ← 8 vitest unit cases for createClockifyClient()
+│   │                           (instance + runtime + TS-type-level checks)
 │   └── sandbox.test.ts       ← 5 live-against-Clockify smoke tests
 │                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
 └── dist/                     ← gitignored; populated by `npm run build`
-                                (two tsc invocations — one per tsconfig)
+                                (single tsc invocation; hand-written modules
+                                 emit flat at dist/<name>.js, synced SDK lands
+                                 under dist/src/**)
 ```
 
 `"files": ["dist", "README.md", "LICENSE"]` in `package.json`
@@ -221,17 +231,27 @@ whitelists what `npm publish` ships. Do not add to that list without
 a publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-The package exposes two subpaths via `package.json` `exports`:
-- `clockify-sdk-ts` → `./dist/index.js` (the synced SDK surface).
+The package exposes three subpaths via `package.json` `exports`:
+- `clockify-sdk-ts` → `./dist/index.js` (package root —
+  re-exports the synced SDK surface + `createClockifyClient` +
+  `paginate`).
+- `clockify-sdk-ts/create-client` → `./dist/create-client.js`
+  (the `createClockifyClient()` factory in isolation, for
+  intent-revealing imports or tree-shake-sensitive consumers).
 - `clockify-sdk-ts/pagination` → `./dist/pagination.js` (the
   hand-written `paginate<T>` helper).
 
 The `addonToken: (() => undefined) as unknown as () => string`
-cast in `README.md` quick-start + `tests/sandbox.test.ts` is a
-known workaround for a Fern typing limitation (see
+cast is a known workaround for a Fern typing limitation (see
 `spec/evidence/discrepancies.md` →
 `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`).
-Remove it only after the upstream type is fixed.
+The wrapper's `createClockifyClient()` factory (at
+`clockify-sdk-ts/create-client`) hides this cast behind a typed
+discriminated-union API so end users don't see it. The raw cast
+still lives inside the factory and inside `tests/sandbox.test.ts`
+(which exercises the raw `ClockifyApiClient` constructor directly).
+Remove the cast everywhere only after the upstream Fern type is
+fixed.
 
 ## 7. Live tests (env-gated; sandbox-only)
 

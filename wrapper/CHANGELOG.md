@@ -7,6 +7,38 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- `createClockifyClient()` factory at the new
+  `clockify-sdk-ts/create-client` subpath — hides the documented
+  `addonToken: (() => undefined) as unknown as () => string`
+  workaround behind a discriminated-union options type that enforces
+  "exactly one of `apiKey` or `addonToken`" at both compile and
+  runtime. Raw `ClockifyApiClient` constructor still exported for
+  advanced flows (custom `AuthProvider`, `auth: false`, etc.).
+  Ledger entry:
+  `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
+- Package-root entry now re-exports both the synced SDK surface and
+  the hand-written helpers (`createClockifyClient`, `paginate`),
+  enabling `import { createClockifyClient, ClockifyApiClient,
+  paginate } from "clockify-sdk-ts"` in one statement. Per-subpath
+  imports (`clockify-sdk-ts/create-client`,
+  `clockify-sdk-ts/pagination`) remain for intent-revealing
+  imports.
+
+### Changed
+
+- Unified the wrapper-side TypeScript build into a single
+  `tsconfig.build.json` (rootDir `.`). Removed
+  `tsconfig.pagination.json` (superseded; pagination joins the
+  unified config). The `build` script is now a single
+  `tsc -p tsconfig.build.json` invocation. Tarball shape: the synced
+  Fern code now lives under `dist/src/` (was: flat under `dist/`);
+  hand-written modules continue to emit flat at `dist/<name>.js`.
+  Public exports (`clockify-sdk-ts`,
+  `clockify-sdk-ts/pagination`, `clockify-sdk-ts/create-client`)
+  resolve identically to before — only internal package paths moved.
+
 ## [0.1.0] — TBD (initial publish)
 
 Initial publish. TypeScript SDK for the Clockify API, generated
