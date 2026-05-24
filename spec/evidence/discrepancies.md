@@ -484,10 +484,13 @@ Each of these needs:
   endpoints return Last-Page header`). The newly stamped params
   make MCP tool descriptors slightly more accurate.
 - **Open questions:**
-  1. The 3 deferred endpoints (`/workspaces`, `balance`,
+  1. ~~The 3 deferred endpoints (`/workspaces`, `balance`,
      `holidays/in-period`) need follow-up — should they paginate in
      the spec, and if so what query shape do they accept on the live
-     API?
+     API?~~ **RESOLVED 2026-05-24 (re-probe).** All three confirmed
+     **NOT paginated**. Full evidence captured under
+     `deferred-list-endpoints.not-paginated-or-not-live` below.
+     None added to `PAGINATED_LIST_OPS`.
 - **Status:** `fixed-in-generator-script`. `scripts/gen-clockify-openapi`
   now carries a `PAGINATED_LIST_OPS` set + `PAGE_PARAM_DEFAULT` /
   `PAGE_SIZE_PARAM_DEFAULT` parameter templates + an
@@ -658,6 +661,77 @@ Each of these needs:
   `go test ./internal/tools/... → ok`, `fern check --warnings
   --from-openapi → All checks passed`, `fern generate --group ts
   --local --force → success`, `tsc --noEmit → EXIT 0`.
+
+### `deferred-list-endpoints.not-paginated-or-not-live` — RESOLVED 2026-05-24 (re-probe)
+
+Re-probed the three list endpoints that the initial 2026-05-24 pass
+deferred from `PAGINATED_LIST_OPS` (see
+`gen-clockify-openapi.pagination-params-stamped` open question 1).
+Conclusion: **none of the three paginate**; none added to
+`PAGINATED_LIST_OPS`. Two ignore pagination params; one returns 404
+on the bare route (the granular variants — already in
+`PAGINATED_LIST_OPS` — are the live equivalents).
+
+| Path                                             | HTTP | Items | `page` honored | `page-size` honored | Decision                            |
+| ------------------------------------------------ | ---- | ----- | -------------- | ------------------- | ----------------------------------- |
+| `GET /workspaces`                                | 200  | 28    | no             | no (tried all 5)    | not paginated                       |
+| `GET /workspaces/{wsId}/balance?policyId=…`      | 404  | n/a   | n/a            | n/a                 | route absent live (use granular)    |
+| `GET /workspaces/{wsId}/holidays/in-period`      | 200  | 5     | no             | no                  | not paginated                       |
+
+- **Official claim:** the canonical spec
+  (`spec/corrected/clockify.corrected.openapi.yaml`) lists all three
+  as first-class `200 OK → array<T>` operations.
+- **Actual behavior (live, 2026-05-24, sandbox workspace
+  `65b382b606de527a7ee2b60e`):**
+  1. `GET /workspaces?page=1&page-size=1` returned **all 28** records
+     (200 102 bytes). Also tried `?per_page=1`, `?size=1`, `?limit=1`,
+     `?pageSize=1` — every variant returned the full 28-record list
+     unchanged. The endpoint is a collection enumerator with no
+     server-side paging.
+  2. `GET /workspaces/{wsId}/balance?policyId=<real>` returned
+     `HTTP 404 {"message":"No static resource v1/workspaces/{wsId}/balance.","code":3000}`.
+     The bare `/balance` route does not exist on the live API. The
+     granular routes `/workspaces/{wsId}/time-off/balance/policy/{policyId}`
+     and `/workspaces/{wsId}/time-off/balance/user/{userId}` are the
+     live equivalents and are **already stamped** in
+     `PAGINATED_LIST_OPS`.
+  3. `GET /workspaces/{wsId}/holidays/in-period?assigned-to=<user>&start=<iso8601>&end=<iso8601>`
+     returned 5 records (HTTP 200). Re-probed with
+     `&page=1&page-size=2` → still 5 records. Re-probed
+     `&page=2&page-size=2` → same 5 records with the same IDs.
+     Pagination params are silently accepted and ignored.
+
+- **Live evidence (all `2026-05-24`, ignored by `.gitignore`):**
+  - `probes/20260524-deferred-workspaces-paged.{json,hdr}`
+  - `probes/20260524-deferred-balance-policy.{json,hdr}`
+  - `probes/20260524-deferred-holidays-in-period.{json,hdr}`
+  - `probes/20260524-deferred-holidays-paged.{json,hdr}`
+  - `probes/20260524-deferred-holidays-p2.{json,hdr}`
+
+- **MCP tools affected:** none.
+  `clockify_workspaces_*` lists the user's workspaces without
+  pagination today; `clockify_time_off_balance_*` already routes to
+  the granular endpoints; `clockify_holidays_in_period_*` (if any)
+  works in single-shot mode.
+
+- **Open questions:**
+  1. The bare `/workspaces/{wsId}/balance` operation exists in the
+     canonical spec but returns 404 live. Should it be marked
+     `x-clockify-live-status: live-404` and demoted to
+     `probe-documented-only`, or removed entirely in favour of the
+     two granular routes? Out of scope this session; flag for
+     follow-up in the GOCLMCP repo (it owns the canonical spec).
+  2. Why does `/workspaces` top-level return the full collection
+     unconditionally? It's a self-referential enumeration ("my
+     workspaces") so the user typically has ≤ 100; the server may
+     have decided pagination is unnecessary. No fix needed in this
+     SDK.
+
+- **Status:** `documented-not-paginated`. No change to
+  `PAGINATED_LIST_OPS` in
+  `addons-me/GOCLMCP/scripts/gen-clockify-openapi`. The `wrapper/`
+  package consumes these three operations via their single-shot
+  signatures unchanged.
 
 ### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — DOCUMENTED 2026-05-24
 
