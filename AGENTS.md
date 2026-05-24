@@ -105,17 +105,20 @@ output/ts-sdk/**  (Fern emits ~720 TS files; --force WIPES the tree)
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check               (tsc --noEmit; covers src/**, index.ts,
-        │                                     create-client.ts, iter.ts, webhooks.ts,
-        │                                     pagination.ts, tests/**)
+        │                                     create-client.ts, composed-fetch.ts,
+        │                                     iter.ts, webhooks.ts, pagination.ts,
+        │                                     tests/**)
         │  npm test                          (vitest; 8 pagination + 8 createClient
-        │                                     + 30 iter + 16 webhooks unit tests +
-        │                                     5 live sandbox flows; live tests skip
-        │                                     without CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
+        │                                     + 30 iter + 16 webhooks + 26 composed-fetch
+        │                                     unit tests + 5 live sandbox flows; live
+        │                                     tests skip without CLOCKIFY_API_KEY +
+        │                                     CLOCKIFY_WORKSPACE_ID)
         │  npm run build                     (single `tsc -p tsconfig.build.json`;
         │                                     emits dist/index.js (re-export root),
-        │                                     dist/create-client.js, dist/iter.js,
-        │                                     dist/webhooks.js, dist/pagination.js,
-        │                                     and the synced SDK under dist/src/**)
+        │                                     dist/create-client.js, dist/composed-fetch.js,
+        │                                     dist/iter.js, dist/webhooks.js,
+        │                                     dist/pagination.js, and the synced SDK
+        │                                     under dist/src/**)
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
@@ -140,7 +143,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
-| `wrapper/{index.ts, create-client.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
+| `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
@@ -207,7 +210,17 @@ wrapper/
 │                                ClockifyApiClient, createClockifyClient, paginate
 ├── create-client.ts          ← hand-written factory hiding the addonToken
 │                                workaround behind a discriminated-union options
-│                                type; exported as `clockify-sdk-ts/create-client`
+│                                type; auto-wraps fetch with composedFetch so every
+│                                client gets UA + X-Request-Id by default; exposes
+│                                hooks/retryPolicy passthrough; exported as
+│                                `clockify-sdk-ts/create-client`
+├── composed-fetch.ts         ← hand-written fetch wrapper bundling User-Agent
+│                                injection, X-Request-Id injection, lifecycle
+│                                hooks, and a configurable retry policy
+│                                (Retry-After / X-RateLimit-Reset aware); when
+│                                retryPolicy is set the factory disables Fern's
+│                                internal retry to avoid nesting; exported as
+│                                `clockify-sdk-ts/composed-fetch`
 ├── iter.ts                   ← hand-written `iterAll` + `iterPages` per-resource
 │                                pagination helpers; ships the `KnownPaginatedMethod`
 │                                union of the 19 known paginated pairs + a CI
@@ -236,6 +249,11 @@ wrapper/
 │   ├── webhooks.test.ts      ← 16 vitest cases for the webhook verifier
 │   │                           (6 header-shape lookups + 4 verify booleans
 │   │                           + 5 constructEvent flows + 1 header constant)
+│   ├── composed-fetch.test.ts ← 26 vitest cases (2 defaultUserAgent +
+│   │                            2 generateRequestId + 7 header injection +
+│   │                            3 lifecycle hooks no-retry + 7 retry policy +
+│   │                            3 getRequestIdFromError + 1 fetch-missing guard;
+│   │                            sleeps inside the retry tests are clamped to 1ms)
 │   └── sandbox.test.ts       ← 5 live-against-Clockify smoke tests
 │                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
@@ -250,14 +268,20 @@ whitelists what `npm publish` ships. Do not add to that list without
 a publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-The package exposes five subpaths via `package.json` `exports`:
+The package exposes six subpaths via `package.json` `exports`:
 - `clockify-sdk-ts` → `./dist/index.js` (package root —
   re-exports the synced SDK surface + `createClockifyClient` +
   `iterAll` / `iterPages` / `KNOWN_PAGINATED_METHODS` + `paginate` +
-  `verifyClockifyWebhook` / `constructEvent` / `WebhookSignatureMismatchError`).
+  `verifyClockifyWebhook` / `constructEvent` / `WebhookSignatureMismatchError` +
+  `composedFetch` / `defaultUserAgent` / `generateRequestId` /
+  `getRequestIdFromError` and all related types).
 - `clockify-sdk-ts/create-client` → `./dist/create-client.js`
   (the `createClockifyClient()` factory in isolation, for
   intent-revealing imports or tree-shake-sensitive consumers).
+- `clockify-sdk-ts/composed-fetch` → `./dist/composed-fetch.js`
+  (the standalone fetch wrapper — User-Agent + X-Request-Id
+  injection, lifecycle hooks, configurable retry policy; usable
+  outside Clockify too via the `composedFetch` factory).
 - `clockify-sdk-ts/iter` → `./dist/iter.js` (the per-resource
   pagination helpers + the `KnownPaginatedMethod` documentary
   union of the 19 known paginated method pairs).

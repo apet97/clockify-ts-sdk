@@ -9,7 +9,26 @@
  * site for the common case.
  */
 export * from "./src/index.js";
-export { createClockifyClient, type CreateClockifyClientOptions } from "./create-client.js";
+export {
+    createClockifyClient,
+    type ClockifyClientEnhancements,
+    type CreateClockifyClientOptions,
+} from "./create-client.js";
+export {
+    composedFetch,
+    defaultUserAgent,
+    generateRequestId,
+    getRequestIdFromError,
+    REQUEST_ID_HEADER,
+    USER_AGENT_HEADER,
+    type ComposedFetchHooks,
+    type ComposedFetchOptions,
+    type ErrorContext,
+    type RequestContext,
+    type ResponseContext,
+    type RetryContext,
+    type RetryPolicy,
+} from "./composed-fetch.js";
 export {
     iterAll,
     iterPages,

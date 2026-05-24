@@ -8,6 +8,6 @@
         "outDir": "./dist",
         "rootDir": "."
     },
-    "include": ["src/**/*.ts", "index.ts", "create-client.ts", "iter.ts", "pagination.ts", "webhooks.ts"],
+    "include": ["src/**/*.ts", "index.ts", "create-client.ts", "composed-fetch.ts", "iter.ts", "pagination.ts", "webhooks.ts"],
     "exclude": ["node_modules", "dist", "tests"]
 }

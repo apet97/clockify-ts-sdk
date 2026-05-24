@@ -9,6 +9,31 @@ once v1.0.0 ships.
 
 ### Added
 
+- `composedFetch()` at the new `clockify-sdk-ts/composed-fetch`
+  subpath — a `fetch`-compatible wrapper bundling four orthogonal
+  concerns: `User-Agent` injection (default
+  `clockify-sdk-ts/<ver> (Node.js <ver>; <platform> <arch>)`),
+  `X-Request-Id` injection (default UUID v4 per request),
+  lifecycle hooks (`beforeRequest`, `afterResponse`, `onError`,
+  `onRetry`), and a configurable retry policy with all knobs
+  exposed (`maxRetries`, `initialDelayMs`, `maxDelayMs`, `jitter`,
+  `retryableStatusCodes`, `retryableMethods`, `computeDelay`).
+  Honors `Retry-After` and `X-RateLimit-Reset` headers when
+  computing the next delay. Each concern is independently
+  opt-out / overridable.
+- `createClockifyClient()` now **unconditionally wraps the
+  underlying fetch with `composedFetch`** so every constructed
+  client gets `User-Agent` + `X-Request-Id` headers by default.
+  New options on `CreateClockifyClientOptions`: `userAgent`,
+  `requestId`, `hooks`, `retryPolicy`. When `retryPolicy` is
+  supplied, the factory automatically passes `maxRetries: 0`
+  to Fern so the two retry layers don't nest. Backwards-compatible
+  for existing callers — only behavior change is the addition of
+  the two default headers, which Clockify already tolerates.
+- `getRequestIdFromError()` helper exported from
+  `clockify-sdk-ts/composed-fetch` and the root entry. Extracts
+  the `X-Request-Id` from a thrown `ClockifyApiError`'s
+  `rawResponse.headers` for log correlation.
 - Webhook signature verification at the new
   `clockify-sdk-ts/webhooks` subpath. `verifyClockifyWebhook({ headers,
   expectedToken })` returns boolean for explicit handling;
