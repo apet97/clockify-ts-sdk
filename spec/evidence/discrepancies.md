@@ -1085,12 +1085,19 @@ on the bare route (the granular variants — already in
      schemes should yield two MUTUALLY EXCLUSIVE optional fields?~~
      **Routed to upstream as a drafted issue.** No further local
      action until Fern responds.
-  2. Should the SDK's `BaseClientOptions.apiKey` field default to
+  2. ~~Should the SDK's `BaseClientOptions.apiKey` field default to
      `process.env.CLOCKIFY_API_KEY` and `addonToken` default to
-     `process.env.CLOCKIFY_ADDON_TOKEN`? Still useful ergonomic
-     default; not yet wired. Independent of (1) — the factory could
-     read env vars whether or not Fern's typing changes. Deferred to
-     a separate change.
+     `process.env.CLOCKIFY_ADDON_TOKEN`?~~ **DONE (session 4,
+     2026-05-25).** `createClockifyClient()` (no args) now reads
+     `CLOCKIFY_API_KEY` (preferred) or `CLOCKIFY_ADDON_TOKEN` from
+     the environment at construction time. Explicit options always
+     win over env vars; empty-string env values are treated as
+     absent; both-explicit still throws (the Clockify-runtime
+     constraint is enforced unchanged). The TS type adds a third
+     `{ apiKey?: never; addonToken?: never }` union branch so `{}`
+     is type-valid. Six new vitest cases cover the env-fallback
+     matrix. Independent of question (1) — the wrapper-side ergonomic
+     ships now without waiting for Fern's upstream typing change.
 
 - **Status (updated):** `awaiting-upstream-fix-issue-drafted`. The
   cast-removal path is gated on a Fern release that changes

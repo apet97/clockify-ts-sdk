@@ -9,6 +9,24 @@ once v1.0.0 ships.
 
 ### Added
 
+- **`createClockifyClient()` reads `CLOCKIFY_API_KEY` /
+  `CLOCKIFY_ADDON_TOKEN` from env when auth options are omitted.**
+  Matches the Stripe / OpenAI / Anthropic SDK convention:
+  `createClockifyClient()` with no args now reads the env vars at
+  construction time (`CLOCKIFY_API_KEY` preferred; falls back to
+  `CLOCKIFY_ADDON_TOKEN`). Explicit `apiKey` / `addonToken` options
+  still take precedence; both-explicit still throws; empty-string
+  env-var values are treated as absent. The TS type adds a third
+  union branch (`{ apiKey?: never; addonToken?: never }`) so `{}` is
+  accepted at the type level; the runtime then enforces the env-var
+  invariant. Six new vitest cases cover the env-fallback paths
+  (each-env-alone, both-env-set-precedence, explicit-beats-env both
+  directions, empty-string-treated-as-absent, throws-when-both-absent).
+  Resolves the long-standing open question from
+  `spec/evidence/discrepancies.md` →
+  `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
+  (the "default to env vars" ergonomic), independently of the
+  Fern-side typing fix tracked under G.3.
 - **`iterPages` consumes the `Last-Page` response header (G.5).**
   When the fetcher returns a Fern-style `HttpResponsePromise<T>`
   (which exposes `.withRawResponse()`), the wrapper now uses the

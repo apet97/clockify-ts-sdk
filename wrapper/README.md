@@ -104,13 +104,32 @@ const addon = createClockifyClient({ addonToken: "..." });
 const broken = createClockifyClient({ apiKey: "a", addonToken: "t" });
 ```
 
+### Env-var fallback (Stripe / OpenAI / Anthropic convention)
+
+If you omit both `apiKey` and `addonToken`, the factory reads
+from the environment:
+
+| Env var                  | Used as       | Precedence |
+| ------------------------ | ------------- | ---------- |
+| `CLOCKIFY_API_KEY`       | `apiKey`      | 1 (highest) |
+| `CLOCKIFY_ADDON_TOKEN`   | `addonToken`  | 2          |
+
+Explicit options always win over env vars. Empty-string env-var
+values are treated as absent. The factory throws if both env
+vars are also unset.
+
+```typescript
+// Reads CLOCKIFY_API_KEY (or CLOCKIFY_ADDON_TOKEN) at construction:
+const client = createClockifyClient();
+```
+
 `apiKey` and `addonToken` accept any `Supplier<string>` — a
 string, a `Promise<string>`, or a sync/async function returning
-one. Use a function for tokens that get rotated:
+one. Use a function for tokens that get rotated at runtime:
 
 ```typescript
 const client = createClockifyClient({
-    apiKey: () => process.env.CLOCKIFY_API_KEY!,
+    apiKey: () => fetchTokenFromVault(),
 });
 ```
 
