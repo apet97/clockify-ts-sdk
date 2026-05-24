@@ -22,32 +22,69 @@
     "openapi"
   ],
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
     },
     "./create-client": {
-      "import": "./dist/create-client.js",
-      "types": "./dist/create-client.d.ts"
+      "import": {
+        "types": "./dist/esm/create-client.d.ts",
+        "default": "./dist/esm/create-client.js"
+      },
+      "require": {
+        "types": "./dist/cjs/create-client.d.ts",
+        "default": "./dist/cjs/create-client.js"
+      }
     },
     "./composed-fetch": {
-      "import": "./dist/composed-fetch.js",
-      "types": "./dist/composed-fetch.d.ts"
+      "import": {
+        "types": "./dist/esm/composed-fetch.d.ts",
+        "default": "./dist/esm/composed-fetch.js"
+      },
+      "require": {
+        "types": "./dist/cjs/composed-fetch.d.ts",
+        "default": "./dist/cjs/composed-fetch.js"
+      }
     },
     "./iter": {
-      "import": "./dist/iter.js",
-      "types": "./dist/iter.d.ts"
+      "import": {
+        "types": "./dist/esm/iter.d.ts",
+        "default": "./dist/esm/iter.js"
+      },
+      "require": {
+        "types": "./dist/cjs/iter.d.ts",
+        "default": "./dist/cjs/iter.js"
+      }
     },
     "./webhooks": {
-      "import": "./dist/webhooks.js",
-      "types": "./dist/webhooks.d.ts"
+      "import": {
+        "types": "./dist/esm/webhooks.d.ts",
+        "default": "./dist/esm/webhooks.js"
+      },
+      "require": {
+        "types": "./dist/cjs/webhooks.d.ts",
+        "default": "./dist/cjs/webhooks.js"
+      }
     },
     "./pagination": {
-      "import": "./dist/pagination.js",
-      "types": "./dist/pagination.d.ts"
+      "import": {
+        "types": "./dist/esm/pagination.d.ts",
+        "default": "./dist/esm/pagination.js"
+      },
+      "require": {
+        "types": "./dist/cjs/pagination.d.ts",
+        "default": "./dist/cjs/pagination.js"
+      }
     }
   },
   "files": [
@@ -58,14 +95,19 @@
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "sync": "bash scripts/sync-sdk.sh",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
+    "build:smoke": "bash scripts/verify-dual-build.sh",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build"
+    "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build && npm run build:smoke"
   },
   "devDependencies": {
     "@types/node": "^22",

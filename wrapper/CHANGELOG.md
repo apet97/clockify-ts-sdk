@@ -9,6 +9,31 @@ once v1.0.0 ships.
 
 ### Added
 
+- **Dual ESM + CJS build.** The package now ships both module
+  systems from `dist/esm/` and `dist/cjs/`. CommonJS consumers can
+  `require("clockify-sdk-ts")` and get the same surface ESM
+  consumers get via `import`. Every subpath
+  (`clockify-sdk-ts/{create-client, composed-fetch, iter, webhooks,
+  pagination}`) is published in both module systems. Each `exports`
+  entry uses the modern `{ import: { types, default }, require: {
+  types, default } }` triple-tier shape so TypeScript resolves
+  ESM types vs CJS types correctly per consumer's `moduleResolution`.
+  Build chain is twin `tsc` passes (no bundler dep added):
+  `tsconfig.esm.json` → `dist/esm/` and `tsconfig.cjs.json` →
+  `dist/cjs/`, then `scripts/finalize-cjs.sh` writes
+  `dist/cjs/package.json` with `"type": "commonjs"` so Node treats
+  the subtree as CJS regardless of the parent's
+  `"type": "module"`. Verification via
+  `scripts/verify-dual-build.sh` (now also wired into
+  `prepublishOnly`) — asserts 12 expected names resolve through
+  both module systems and all 5 subpaths resolve under CJS.
+- `publishConfig: { "access": "public", "provenance": true }` in
+  `package.json`. The release workflow's `--access public
+  --provenance` CLI flags become redundant (kept for defense-in-depth
+  but no longer load-bearing). `npm publish` from any environment
+  now publishes publicly with sigstore provenance by default.
+- `npm run build:smoke` script that re-runs the dual-build
+  verification standalone (useful in CI matrix legs).
 - `composedFetch()` at the new `clockify-sdk-ts/composed-fetch`
   subpath — a `fetch`-compatible wrapper bundling four orthogonal
   concerns: `User-Agent` injection (default

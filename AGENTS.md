@@ -113,17 +113,25 @@ wrapper/src/**  (gitignored; populated by sync)
         │                                     unit tests + 5 live sandbox flows; live
         │                                     tests skip without CLOCKIFY_API_KEY +
         │                                     CLOCKIFY_WORKSPACE_ID)
-        │  npm run build                     (single `tsc -p tsconfig.build.json`;
-        │                                     emits dist/index.js (re-export root),
-        │                                     dist/create-client.js, dist/composed-fetch.js,
-        │                                     dist/iter.js, dist/webhooks.js,
-        │                                     dist/pagination.js, and the synced SDK
-        │                                     under dist/src/**)
+        │  npm run build                     (twin tsc passes:
+        │                                     `tsc -p tsconfig.esm.json` → dist/esm/**,
+        │                                     `tsc -p tsconfig.cjs.json` → dist/cjs/**,
+        │                                     then `scripts/finalize-cjs.sh` writes
+        │                                     dist/cjs/package.json { type: commonjs }.
+        │                                     Hand-written modules emit flat at
+        │                                     dist/{esm,cjs}/<name>.js; synced SDK at
+        │                                     dist/{esm,cjs}/src/**.)
+        │  npm run build:smoke                (verifies ESM + CJS both expose the 12
+        │                                     expected names and all 5 CJS subpaths
+        │                                     resolve; wired into prepublishOnly.)
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
-        │  npm pack --dry-run                (verify the tarball; 2899 files,
-        │                                     339.2 kB as of v0.1.0 [Unreleased])
+        │  npm pack --dry-run                (verify the tarball; 5812 files,
+        │                                     525.4 kB as of v0.1.0 [Unreleased].
+        │                                     Roughly doubled vs ESM-only baseline
+        │                                     because every file emits twice — once
+        │                                     ESM, once CJS — plus per-format .d.ts.)
         ▼
 clockify-sdk-ts@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
 ```
@@ -143,7 +151,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
-| `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
+| `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.esm.json` `include`, `tsconfig.cjs.json` `include`, a subpath entry in `package.json` `exports` (both `import` and `require` conditions), and the expected-names array in `scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
@@ -195,10 +203,16 @@ end-to-end and end green before push. Drift gates are non-negotiable.
 wrapper/
 ├── package.json              ← clockify-sdk-ts manifest (npm-bound)
 ├── tsconfig.json             ← type-check (noEmit; covers src/**, index.ts,
-│                                create-client.ts, pagination.ts, tests/**)
-├── tsconfig.build.json       ← unified emit: dist/ with declarations + sourcemaps
-│                                from src/ + the hand-written modules at root
-│                                (rootDir `.`; src/ lands under dist/src/)
+│                                create-client.ts, composed-fetch.ts, iter.ts,
+│                                webhooks.ts, pagination.ts, tests/**)
+├── tsconfig.esm.json         ← ESM emit (module: NodeNext) → dist/esm/ with
+│                                rootDir `.`; src/ lands under dist/esm/src/
+├── tsconfig.cjs.json         ← CJS emit (module: CommonJS) → dist/cjs/ with
+│                                rootDir `.`; src/ lands under dist/cjs/src/.
+│                                Paired with scripts/finalize-cjs.sh which writes
+│                                dist/cjs/package.json { type: commonjs } so Node
+│                                treats the subtree as CJS regardless of the
+│                                parent's type: module.
 ├── vitest.config.ts          ← test runner config (testTimeout 30s)
 ├── README.md                 ← the README users see on npm
 ├── CHANGELOG.md              ← Keep-a-Changelog formatted release notes;
@@ -235,7 +249,9 @@ wrapper/
 │                                `clockify-sdk-ts/pagination`
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
 ├── scripts/
-│   └── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/
+│   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/
+│   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
+│   └── verify-dual-build.sh  ← smoke-tests both ESM and CJS imports against dist/
 ├── tests/
 │   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
 │   │                           (mocked fetchPage callback; no live API)
@@ -258,9 +274,10 @@ wrapper/
 │                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
 └── dist/                     ← gitignored; populated by `npm run build`
-                                (single tsc invocation; hand-written modules
-                                 emit flat at dist/<name>.js, synced SDK lands
-                                 under dist/src/**)
+                                (two tsc passes: dist/esm/** and dist/cjs/**.
+                                 dist/cjs/package.json forces type: commonjs
+                                 for the subtree; package.json `exports` map
+                                 routes consumers via import/require triples.)
 ```
 
 `"files": ["dist", "README.md", "LICENSE"]` in `package.json`
@@ -268,27 +285,32 @@ whitelists what `npm publish` ships. Do not add to that list without
 a publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-The package exposes six subpaths via `package.json` `exports`:
-- `clockify-sdk-ts` → `./dist/index.js` (package root —
+The package exposes six subpaths via `package.json` `exports`,
+each with `import` + `require` conditions (modern dual-tier shape:
+`{ types, default }` per condition so TS resolves ESM vs CJS types
+correctly):
+- `clockify-sdk-ts` → `./dist/{esm,cjs}/index.js` (package root —
   re-exports the synced SDK surface + `createClockifyClient` +
   `iterAll` / `iterPages` / `KNOWN_PAGINATED_METHODS` + `paginate` +
   `verifyClockifyWebhook` / `constructEvent` / `WebhookSignatureMismatchError` +
   `composedFetch` / `defaultUserAgent` / `generateRequestId` /
   `getRequestIdFromError` and all related types).
-- `clockify-sdk-ts/create-client` → `./dist/create-client.js`
-  (the `createClockifyClient()` factory in isolation, for
-  intent-revealing imports or tree-shake-sensitive consumers).
-- `clockify-sdk-ts/composed-fetch` → `./dist/composed-fetch.js`
-  (the standalone fetch wrapper — User-Agent + X-Request-Id
-  injection, lifecycle hooks, configurable retry policy; usable
-  outside Clockify too via the `composedFetch` factory).
-- `clockify-sdk-ts/iter` → `./dist/iter.js` (the per-resource
-  pagination helpers + the `KnownPaginatedMethod` documentary
-  union of the 19 known paginated method pairs).
-- `clockify-sdk-ts/webhooks` → `./dist/webhooks.js` (Clockify
+- `clockify-sdk-ts/create-client` → `./dist/{esm,cjs}/create-client.js`
+  (the `createClockifyClient()` factory in isolation).
+- `clockify-sdk-ts/composed-fetch` → `./dist/{esm,cjs}/composed-fetch.js`
+  (the standalone fetch wrapper — UA / req-id / hooks / retry policy).
+- `clockify-sdk-ts/iter` → `./dist/{esm,cjs}/iter.js` (per-resource
+  pagination helpers + `KnownPaginatedMethod` documentary union).
+- `clockify-sdk-ts/webhooks` → `./dist/{esm,cjs}/webhooks.js` (Clockify
   webhook signature verifier + JSON-payload parser).
-- `clockify-sdk-ts/pagination` → `./dist/pagination.js` (the
-  low-level callback-style `paginate<T>` helper).
+- `clockify-sdk-ts/pagination` → `./dist/{esm,cjs}/pagination.js`
+  (low-level callback-style `paginate<T>` helper).
+
+`package.json` also carries `publishConfig: { access: public,
+provenance: true }` — `npm publish` from any environment publishes
+publicly with sigstore provenance by default. The
+`release.yml` `--access public --provenance` CLI flags are now
+redundant; kept for defense-in-depth but no longer load-bearing.
 
 The `addonToken: (() => undefined) as unknown as () => string`
 cast is a known workaround for a Fern typing limitation (see
