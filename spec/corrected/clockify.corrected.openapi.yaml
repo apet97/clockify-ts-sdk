@@ -10120,6 +10120,9 @@ paths:
         required: false
         schema:
           default: ASCENDING
+          enum:
+          - ASCENDING
+          - DESCENDING
           type: string
       responses:
         '200':
@@ -23794,7 +23797,7 @@ x-clockify-generation:
   generator: scripts/gen-clockify-openapi
   sourceManifest:
     path: manifest.json
-    sha256: c6dde25fbf0f73d2b11c61a13156eb405e5d1d2581f9df4e802bdba56a518971
+    sha256: 7afaa391781abc38fd821400ca100dc952618bb3ba5f72d0d1844772564860dd
     files: 86
   sourcePrecedence:
   - live/probe findings metadata

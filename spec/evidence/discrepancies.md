@@ -733,6 +733,82 @@ on the bare route (the granular variants — already in
   package consumes these three operations via their single-shot
   signatures unchanged.
 
+### `getTimeOffPolicies.sort-order.enum-tightened` — RESOLVED 2026-05-24
+
+- **Official claim:** Clockify's public docs page for `Time Off
+  Policies → Get policies on a workspace` declares the `sort-order`
+  query parameter as `string` with `default: ASCENDING` — but the
+  rendered field carries only two valid values (`ASCENDING`,
+  `DESCENDING`), matching the enum on every other `sort-order` param
+  in the API. The canonical generator already exposes
+  `BalanceSortOrder` with that enum (lines 15079-15084 of
+  `docs/openapi/clockify-openapi.yaml`).
+- **Actual behavior:** the source-bundle declaration in
+  `docs/openapi/sources/realOPENAPI/POLICIESOPENAPI.YAML:74-80`
+  modelled `sort-order` as a plain `type: string` with a default, no
+  enum. The canonical preserved the looser shape. The Fern-generated
+  TS SDK therefore typed
+  `GetTimeOffPoliciesRequest['sort-order']` as `string`, losing the
+  enum surface that the official docs imply.
+- **Live evidence:** verified directly against Clockify's official
+  API reference (visible at the policies endpoint section);
+  cross-checked against the `BalanceSortOrder` enum reused by the
+  balance routes.
+- **MCP tools affected:** none — the Go MCP layer doesn't read
+  `sort-order` for policies today.
+- **Open questions:** none. `BalanceSortOrder` was not reused
+  verbatim because its name implies a balance-only scope; an inline
+  enum at the param level lets the Fern generator emit a
+  semantically-scoped `GetTimeOffPoliciesRequestSortOrder` type next
+  to the request. If a future cycle consolidates every
+  `sort-order` field, rename `BalanceSortOrder` → `SortOrder` and
+  ref both call sites.
+- **Status:** `fixed-at-source`. Added the enum + restated default
+  in `docs/openapi/sources/realOPENAPI/POLICIESOPENAPI.YAML`,
+  refreshed source manifest (28915 → 28976 bytes; sha256
+  `1228ecd0ffa99882bbc284b4df517eb05703ce046fc1f5b7eccf96491029f881`).
+  `make gen-openapi` clean; all four drift gates pass;
+  `go test ./internal/tools/...` passes (10.3s);
+  `fern check --warnings --from-openapi` reports "All checks passed"
+  modulo the 2 unrelated example-pairing notes;
+  `fern generate --group ts --local --force` succeeds; the regenerated
+  TS SDK exposes
+  `GetTimeOffPoliciesRequestSortOrder = { Ascending: "ASCENDING",
+  Descending: "DESCENDING" }` at
+  `src/api/resources/timeOffPolicies/types/GetTimeOffPoliciesRequestSortOrder.ts`;
+  `tsc --noEmit` clean; `npm pack --dry-run` yields 2899 files /
+  331.8 kB (was 2895 / 331.6 kB before — added the enum + its
+  declaration + sourcemap + index re-export).
+
+### `getBalanceForUser.page-types.docs-claim-string` — DOCUMENTED 2026-05-24
+
+- **Official claim:** Clockify's public docs render `page` and
+  `page-size` on `getBalanceForUser` (`GET
+  /workspaces/{wsId}/time-off/balance/user/{userId}`) as
+  `string <= 1000` and `string [1..200]`. The same docs page renders
+  `page` and `page-size` on the sibling `getBalancesForPolicy`
+  endpoint as `integer <int32>`.
+- **Actual behavior:** both balance endpoints' source-bundle
+  declarations in
+  `docs/openapi/sources/realOPENAPI/BALANCEOPEANI.yaml` normalize
+  these params to `type: integer, format: int32` with consistent
+  min/max constraints (consistent with the broader API where every
+  other `page` / `page-size` is int32). The live API accepts integer
+  values on both routes.
+- **Live evidence:** the source bundle is the local-curated truth;
+  the Clockify docs are inconsistent across the two sibling
+  endpoints (string for one, integer for the other) which is almost
+  certainly a docs-generation artefact rather than a real API
+  contract.
+- **MCP tools affected:** none.
+- **Open questions:** the docs inconsistency is not worth chasing
+  upstream — the integer shape ships in both source bundle and
+  canonical YAML, and live API calls work fine.
+- **Status:** `documented-prefer-source-bundle`. No spec change.
+  This entry exists so a future reviewer who reads the official
+  docs paste and notices the string-vs-int divergence sees the
+  decision already taken.
+
 ### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — DOCUMENTED 2026-05-24
 
 - **Official claim:** Clockify's OpenAPI declares two security schemes

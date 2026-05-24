@@ -58,7 +58,7 @@ export class TimeOffPoliciesClient {
             name,
             status: status != null ? status : undefined,
             "sort-column": sortColumn,
-            "sort-order": sortOrder,
+            "sort-order": sortOrder != null ? sortOrder : undefined,
         };
         const _authRequest: core.AuthRequest = await this._options.authProvider.getAuthRequest();
         const _headers: core.Fetcher.Args["headers"] = mergeHeaders(

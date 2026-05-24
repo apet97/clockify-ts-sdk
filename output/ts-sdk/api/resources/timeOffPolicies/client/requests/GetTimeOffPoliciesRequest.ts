@@ -23,5 +23,5 @@ export interface GetTimeOffPoliciesRequest {
     /** Column to use for sorting policies. */
     "sort-column"?: string;
     /** Sort order. */
-    "sort-order"?: string;
+    "sort-order"?: ClockifyApi.GetTimeOffPoliciesRequestSortOrder;
 }
