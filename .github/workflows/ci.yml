@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [main]
 
+# Opt in to the Node.js 24 runner for actions still pinned to Node 20
+# major versions. GitHub announced (2026-05) that Node.js 20 actions
+# will be force-promoted on 2026-06-02; setting this flag locks in
+# that behaviour today so the workflow's runtime doesn't change
+# silently mid-flight. Once we bump checkout / setup-node to majors
+# whose default runtime is already Node 24, this flag can be removed.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build-and-test:
     name: Build, type-check, test

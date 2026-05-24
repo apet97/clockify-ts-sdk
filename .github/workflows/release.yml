@@ -5,6 +5,13 @@ on:
     tags:
       - "v*.*.*"
 
+# Opt in to the Node.js 24 runner for actions still pinned to Node 20
+# major versions. See ci.yml for the rationale; both workflows must
+# carry the flag so a release-time runtime change can't sneak in
+# while the CI workflow keeps the new default.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   publish:
     name: Publish clockify-sdk-ts
