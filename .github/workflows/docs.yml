@@ -58,6 +58,12 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable GitHub Pages if it's not already on for the
+          # repo (avoids the 404 "Pages not found" failure on the
+          # first tag push to a fresh repo). Requires the
+          # `pages: write` permission already declared above.
+          enablement: true
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

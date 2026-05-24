@@ -1,8 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
 import { createClockifyClient } from "../create-client.js";
 import { iterAll } from "../iter.js";
 import { paginate } from "../pagination.js";
 import { withResponse } from "../with-response.js";
+
+type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
@@ -18,11 +20,16 @@ if (!liveSandboxAvailable) {
 }
 
 describeLive("clockify-sdk-ts live sandbox", () => {
-    // createClockifyClient hides the addonToken workaround behind a
-    // discriminated-union options type — the raw cast lives inside
-    // the factory now (see spec/evidence/discrepancies.md ->
-    // fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive).
-    const client = createClockifyClient({ apiKey: apiKey! });
+    // createClockifyClient enforces "exactly one of apiKey / addonToken"
+    // at construction time, so we can't build the client at the top
+    // level of the describe block (vitest evaluates that even under
+    // describe.skip to collect tests). beforeAll only fires when the
+    // describe is NOT skipped, so the construction is gated on the
+    // live env vars being present.
+    let client: ClockifyClient;
+    beforeAll(() => {
+        client = createClockifyClient({ apiKey: apiKey! });
+    });
 
     it("lists tags (page=1, page-size=5)", async () => {
         const tags = await client.tags.getWorkspacesWorkspaceIdTags({
