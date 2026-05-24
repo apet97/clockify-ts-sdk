@@ -9,6 +9,16 @@
  * site for the common case.
  */
 export * from "./src/index.js";
+// Re-export per-status error classes flat so consumers can do
+// `import { NotFoundError } from "clockify-sdk-ts"` instead of
+// `ClockifyApi.NotFoundError`. The namespace import still works.
+export {
+    BadRequestError,
+    ForbiddenError,
+    MethodNotAllowedError,
+    NotFoundError,
+    UnauthorizedError,
+} from "./src/api/errors/index.js";
 export {
     createClockifyClient,
     type ClockifyClientEnhancements,

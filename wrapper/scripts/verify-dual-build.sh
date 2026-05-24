@@ -17,7 +17,7 @@ fi
 echo "==> ESM import smoke"
 node --input-type=module -e "
 import('./dist/esm/index.js').then(m => {
-  const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError'];
+  const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError','BadRequestError','UnauthorizedError','ForbiddenError','NotFoundError','MethodNotAllowedError'];
   const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
   if (missing.length) {
     console.error('ESM missing exports:', missing);
@@ -30,7 +30,7 @@ import('./dist/esm/index.js').then(m => {
 echo "==> CJS require smoke"
 node -e "
 const m = require('./dist/cjs/index.js');
-const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError'];
+const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError','BadRequestError','UnauthorizedError','ForbiddenError','NotFoundError','MethodNotAllowedError'];
 const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
 if (missing.length) {
   console.error('CJS missing exports:', missing);
