@@ -1,0 +1,27 @@
+{
+    "comment": "Synthesized fixture (not a live probe) representing the shape Clockify sends for TIMER_STOPPED. Same envelope as NEW_TIME_ENTRY but the trigger is the timer being stopped explicitly.",
+    "expectedToken": "fixture-token-cccccccccccccccccc",
+    "headers": {
+        "Clockify-Signature-Token": "fixture-token-cccccccccccccccccc",
+        "Content-Type": "application/json"
+    },
+    "payload": {
+        "webhookEvent": "TIMER_STOPPED",
+        "payloadType": "TIME_ENTRY",
+        "payload": {
+            "id": "65f7c3a4b8e8a31234567892",
+            "description": "Pair programming session",
+            "userId": "65a3a1c8e8a31234567890ab",
+            "billable": true,
+            "projectId": "65f7c3a4b8e8a31234567890",
+            "taskId": null,
+            "tagIds": [],
+            "timeInterval": {
+                "start": "2026-05-24T13:30:00Z",
+                "end": "2026-05-24T15:15:00Z",
+                "duration": "PT1H45M"
+            },
+            "workspaceId": "65b382b606de527a7ee2b60e"
+        }
+    }
+}

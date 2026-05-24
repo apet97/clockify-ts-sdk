@@ -1,0 +1,24 @@
+{
+    "comment": "Synthesized fixture (not a live probe) representing the shape Clockify sends for NEW_PROJECT. See WEBHOOKDOC.md PayloadType enum.",
+    "expectedToken": "fixture-token-aaaaaaaaaaaaaaaaaa",
+    "headers": {
+        "Clockify-Signature-Token": "fixture-token-aaaaaaaaaaaaaaaaaa",
+        "Content-Type": "application/json"
+    },
+    "payload": {
+        "webhookEvent": "NEW_PROJECT",
+        "payloadType": "PROJECT",
+        "payload": {
+            "id": "65f7c3a4b8e8a31234567890",
+            "name": "Migration: Q3 timesheet review",
+            "workspaceId": "65b382b606de527a7ee2b60e",
+            "clientId": null,
+            "color": "#3498DB",
+            "billable": false,
+            "estimate": null,
+            "duration": null,
+            "archived": false,
+            "memberships": []
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "comment": "Synthesized fixture (not a live probe) representing the shape Clockify sends for NEW_TIME_ENTRY. The 'time-entry' payload includes the timeInterval envelope plus billable / project / user references.",
+    "expectedToken": "fixture-token-bbbbbbbbbbbbbbbbbb",
+    "headers": {
+        "Clockify-Signature-Token": "fixture-token-bbbbbbbbbbbbbbbbbb",
+        "Content-Type": "application/json"
+    },
+    "payload": {
+        "webhookEvent": "NEW_TIME_ENTRY",
+        "payloadType": "TIME_ENTRY",
+        "payload": {
+            "id": "65f7c3a4b8e8a31234567891",
+            "description": "Working on customer feature spec",
+            "userId": "65a3a1c8e8a31234567890ab",
+            "billable": true,
+            "projectId": "65f7c3a4b8e8a31234567890",
+            "taskId": null,
+            "tagIds": ["65b382b606de527a7ee2b610"],
+            "timeInterval": {
+                "start": "2026-05-24T10:00:00Z",
+                "end": "2026-05-24T11:00:00Z",
+                "duration": "PT1H"
+            },
+            "workspaceId": "65b382b606de527a7ee2b60e"
+        }
+    }
+}

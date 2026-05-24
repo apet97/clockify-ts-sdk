@@ -1,0 +1,27 @@
+{
+    "comment": "Synthesized fixture (not a live probe) representing the shape Clockify sends for APPROVAL_REQUEST_STATUS_UPDATED. The status.state field is the load-bearing piece for downstream consumers ('APPROVED' / 'REJECTED' / 'WITHDRAWN' / 'PENDING').",
+    "expectedToken": "fixture-token-dddddddddddddddddd",
+    "headers": {
+        "Clockify-Signature-Token": "fixture-token-dddddddddddddddddd",
+        "Content-Type": "application/json"
+    },
+    "payload": {
+        "webhookEvent": "APPROVAL_REQUEST_STATUS_UPDATED",
+        "payloadType": "APPROVAL_REQUEST",
+        "payload": {
+            "id": "65f7c3a4b8e8a31234567893",
+            "ownerId": "65a3a1c8e8a31234567890ab",
+            "workspaceId": "65b382b606de527a7ee2b60e",
+            "status": {
+                "state": "APPROVED",
+                "updatedBy": "65a3a1c8e8a31234567890cd",
+                "updatedAt": "2026-05-24T16:00:00Z",
+                "note": "lgtm"
+            },
+            "dateRange": {
+                "start": "2026-05-19T00:00:00Z",
+                "end": "2026-05-25T23:59:59Z"
+            }
+        }
+    }
+}

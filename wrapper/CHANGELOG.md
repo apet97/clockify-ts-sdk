@@ -9,6 +9,28 @@ once v1.0.0 ships.
 
 ### Added
 
+- **Webhook golden fixtures + fixture-driven tests (Phase 4.2).**
+  Four synthesized payloads under
+  `wrapper/tests/fixtures/webhook-events/` covering NEW_PROJECT,
+  NEW_TIME_ENTRY, TIMER_STOPPED, and
+  APPROVAL_REQUEST_STATUS_UPDATED. New
+  `tests/webhook-fixtures.test.ts` exercises each fixture in 3
+  ways: parses with the matching token, rejects with a wrong
+  token, rejects with the header stripped. Fixtures are
+  synthesized (not live-probed) — discrepancies entry
+  `webhook.signature-scheme.shared-secret-not-hmac-doc-only`
+  tracks the open question of swapping for real captures once a
+  live probe is captured.
+- **Dual-build vitest assertion (Phase 4.4).** New
+  `tests/dual-build.test.ts` mirrors the existing shell smoke
+  (`scripts/verify-dual-build.sh`) but runs as part of
+  `npm test` — devs catch drift between ESM/CJS surfaces during
+  the inner dev loop, not just on the `build:smoke` invocation.
+  Uses `createRequire` to load the CJS bundle (Vitest's
+  CJS-to-ESM interop spreads exports across top-level + default
+  keys depending on the emit shape; `createRequire` gives the
+  raw `module.exports`). Skipped automatically when dist/ is
+  absent (no build → no test).
 - **Governance (Phase 6).** Six new files at the repo root /
   `.github/`:
   - `SECURITY.md` — disclosure channels (GitHub private
