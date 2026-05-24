@@ -1,3 +1,3 @@
 export type { AddInvoicePaymentRequest } from "./AddInvoicePaymentRequest.js";
-export type { DeleteInvoicePaymentRequest } from "./DeleteInvoicePaymentRequest.js";
-export type { GetInvoicePaymentsRequest } from "./GetInvoicePaymentsRequest.js";
+export type { DeleteInvoicePaymentsRequest } from "./DeleteInvoicePaymentsRequest.js";
+export type { ListInvoicePaymentsRequest } from "./ListInvoicePaymentsRequest.js";

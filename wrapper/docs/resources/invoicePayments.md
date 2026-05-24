@@ -6,30 +6,30 @@
 
 ## Methods
 
-### `getInvoicePayments`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.invoicePayments.getInvoicePayments({
+    await client.invoicePayments.list({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId"
     })
 ```
 
-**Request fields** (`GetInvoicePaymentsRequest`):
+**Request fields** (`ListInvoicePaymentsRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `addInvoicePayment`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.invoicePayments.addInvoicePayment({
+    await client.invoicePayments.create({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         amount: 100,
@@ -46,19 +46,19 @@
 - `note` (`string`, optional) — Represents an invoice payment note.
 - `paymentDate` (`string`, optional) — Represents an invoice payment date in yyyy-MM-ddThh:mm:ssZ format.
 
-### `deleteInvoicePayment`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.invoicePayments.deleteInvoicePayment({
+    await client.invoicePayments.delete({
         workspaceId: "workspaceId",
         invoiceId: "invoiceId",
         paymentId: "paymentId"
     })
 ```
 
-**Request fields** (`DeleteInvoicePaymentRequest`):
+**Request fields** (`DeleteInvoicePaymentsRequest`):
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)

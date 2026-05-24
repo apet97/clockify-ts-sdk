@@ -8,7 +8,7 @@
  *         order: "order"
  *     }
  */
-export interface DeleteInvoiceItemRequest {
+export interface DeleteInvoiceItemsRequest {
     workspaceId: string;
     invoiceId: string;
     order: string;

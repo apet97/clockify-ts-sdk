@@ -8,7 +8,7 @@
  *         customFieldId: "customFieldId"
  *     }
  */
-export interface RemoveProjectCustomFieldRequest {
+export interface RemoveFromProjectCustomFieldsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     projectId: string;

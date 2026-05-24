@@ -6,6 +6,6 @@
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface GetExpenseCategoriesRequest {
+export interface ListExpensesRequest {
     workspaceId: string;
 }

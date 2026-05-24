@@ -6,26 +6,26 @@
 
 ## Methods
 
-### `getExpenseCategories`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.expenseCategories.getExpenseCategories({
+    await client.expenseCategories.list({
         workspaceId: "workspaceId"
     })
 ```
 
-**Request fields** (`GetExpenseCategoriesRequest`):
+**Request fields** (`ListExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 
-### `addExpenseCategory`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.expenseCategories.addExpenseCategory({
+    await client.expenseCategories.create({
         workspaceId: "workspaceId",
         body: {
             hasUnitPrice: false,
@@ -36,17 +36,17 @@
     })
 ```
 
-**Request fields** (`AddExpenseCategoryRequest`):
+**Request fields** (`CreateExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `body` (`ClockifyApi.ExpenseCategoryRequest`, required)
 
-### `updateExpenseCategory`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.expenseCategories.updateExpenseCategory({
+    await client.expenseCategories.update({
         workspaceId: "workspaceId",
         categoryId: "categoryId",
         body: {
@@ -58,34 +58,34 @@
     })
 ```
 
-**Request fields** (`UpdateExpenseCategoryRequest`):
+**Request fields** (`UpdateExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `categoryId` (`string`, required)
 - `body` (`ClockifyApi.ExpenseCategoryRequest`, required)
 
-### `deleteExpenseCategory`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.expenseCategories.deleteExpenseCategory({
+    await client.expenseCategories.delete({
         workspaceId: "workspaceId",
         categoryId: "categoryId"
     })
 ```
 
-**Request fields** (`DeleteExpenseCategoryRequest`):
+**Request fields** (`DeleteExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `categoryId` (`string`, required)
 
-### `archiveExpenseCategory`
+### `archive`
 
 **Example:**
 
 ```typescript
-    await client.expenseCategories.archiveExpenseCategory({
+    await client.expenseCategories.archive({
         workspaceId: "workspaceId",
         categoryId: "categoryId",
         archived: false

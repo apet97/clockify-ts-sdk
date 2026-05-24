@@ -6,6 +6,7 @@ import type * as ClockifyApi from "../../../../index.js";
  * @example
  *     {
  *         workspaceId: "workspaceId",
+ *         categoryId: "categoryId",
  *         body: {
  *             hasUnitPrice: false,
  *             name: "Procurement",
@@ -14,7 +15,8 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface AddExpenseCategoryRequest {
+export interface UpdateExpenseCategoriesRequest {
     workspaceId: string;
+    categoryId: string;
     body: ClockifyApi.ExpenseCategoryRequest;
 }

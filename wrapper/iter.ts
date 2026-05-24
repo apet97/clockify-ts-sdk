@@ -78,10 +78,10 @@ export type KnownPaginatedMethod =
     | { readonly resource: "balances"; readonly method: "getBalanceForUser" }
     | { readonly resource: "balances"; readonly method: "getBalancesForPolicy" }
     | { readonly resource: "clients"; readonly method: "list" }
-    | { readonly resource: "customFields"; readonly method: "listProjectCustomFields" }
-    | { readonly resource: "customFields"; readonly method: "listWorkspaceCustomFields" }
+    | { readonly resource: "customFields"; readonly method: "listForProject" }
+    | { readonly resource: "customFields"; readonly method: "listForWorkspace" }
     | { readonly resource: "holidays"; readonly method: "list" }
-    | { readonly resource: "invoicePayments"; readonly method: "getInvoicePayments" }
+    | { readonly resource: "invoicePayments"; readonly method: "list" }
     | { readonly resource: "projects"; readonly method: "list" }
     | { readonly resource: "scheduling"; readonly method: "getAllSchedulingAssignments" }
     | { readonly resource: "tags"; readonly method: "list" }
@@ -110,10 +110,10 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "balances", method: "getBalanceForUser" },
     { resource: "balances", method: "getBalancesForPolicy" },
     { resource: "clients", method: "list" },
-    { resource: "customFields", method: "listProjectCustomFields" },
-    { resource: "customFields", method: "listWorkspaceCustomFields" },
+    { resource: "customFields", method: "listForProject" },
+    { resource: "customFields", method: "listForWorkspace" },
     { resource: "holidays", method: "list" },
-    { resource: "invoicePayments", method: "getInvoicePayments" },
+    { resource: "invoicePayments", method: "list" },
     { resource: "projects", method: "list" },
     { resource: "scheduling", method: "getAllSchedulingAssignments" },
     { resource: "tags", method: "list" },

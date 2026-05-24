@@ -4,12 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         invoiceId: "invoiceId",
- *         paymentId: "paymentId"
+ *         categoryId: "categoryId"
  *     }
  */
-export interface DeleteInvoicePaymentRequest {
+export interface DeleteExpenseCategoriesRequest {
     workspaceId: string;
-    invoiceId: string;
-    paymentId: string;
+    categoryId: string;
 }

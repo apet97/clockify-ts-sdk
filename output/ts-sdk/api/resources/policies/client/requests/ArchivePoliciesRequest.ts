@@ -7,7 +7,8 @@
  *         policyId: "policyId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdPoliciesPolicyIdRequest {
+export interface ArchivePoliciesRequest {
     workspaceId: string;
     policyId: string;
+    archived?: boolean;
 }

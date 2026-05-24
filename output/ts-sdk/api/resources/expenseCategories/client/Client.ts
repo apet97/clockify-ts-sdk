@@ -23,23 +23,23 @@ export class ExpenseCategoriesClient {
     }
 
     /**
-     * @param {ClockifyApi.GetExpenseCategoriesRequest} request
+     * @param {ClockifyApi.ListExpenseCategoriesRequest} request
      * @param {ExpenseCategoriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenseCategories.getExpenseCategories({
+     *     await client.expenseCategories.list({
      *         workspaceId: "workspaceId"
      *     })
      */
-    public getExpenseCategories(
-        request: ClockifyApi.GetExpenseCategoriesRequest,
+    public list(
+        request: ClockifyApi.ListExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseCategoriesDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getExpenseCategories(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getExpenseCategories(
-        request: ClockifyApi.GetExpenseCategoriesRequest,
+    private async __list(
+        request: ClockifyApi.ListExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseCategoriesDtoV1>> {
         const { workspaceId } = request;
@@ -87,11 +87,11 @@ export class ExpenseCategoriesClient {
     }
 
     /**
-     * @param {ClockifyApi.AddExpenseCategoryRequest} request
+     * @param {ClockifyApi.CreateExpenseCategoriesRequest} request
      * @param {ExpenseCategoriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenseCategories.addExpenseCategory({
+     *     await client.expenseCategories.create({
      *         workspaceId: "workspaceId",
      *         body: {
      *             hasUnitPrice: false,
@@ -101,15 +101,15 @@ export class ExpenseCategoriesClient {
      *         }
      *     })
      */
-    public addExpenseCategory(
-        request: ClockifyApi.AddExpenseCategoryRequest,
+    public create(
+        request: ClockifyApi.CreateExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseCategoryDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__addExpenseCategory(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__create(request, requestOptions));
     }
 
-    private async __addExpenseCategory(
-        request: ClockifyApi.AddExpenseCategoryRequest,
+    private async __create(
+        request: ClockifyApi.CreateExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseCategoryDtoV1>> {
         const { workspaceId, body: _body } = request;
@@ -160,11 +160,11 @@ export class ExpenseCategoriesClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateExpenseCategoryRequest} request
+     * @param {ClockifyApi.UpdateExpenseCategoriesRequest} request
      * @param {ExpenseCategoriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenseCategories.updateExpenseCategory({
+     *     await client.expenseCategories.update({
      *         workspaceId: "workspaceId",
      *         categoryId: "categoryId",
      *         body: {
@@ -175,15 +175,15 @@ export class ExpenseCategoriesClient {
      *         }
      *     })
      */
-    public updateExpenseCategory(
-        request: ClockifyApi.UpdateExpenseCategoryRequest,
+    public update(
+        request: ClockifyApi.UpdateExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseCategoryDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__updateExpenseCategory(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__update(request, requestOptions));
     }
 
-    private async __updateExpenseCategory(
-        request: ClockifyApi.UpdateExpenseCategoryRequest,
+    private async __update(
+        request: ClockifyApi.UpdateExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseCategoryDtoV1>> {
         const { workspaceId, categoryId, body: _body } = request;
@@ -234,24 +234,24 @@ export class ExpenseCategoriesClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteExpenseCategoryRequest} request
+     * @param {ClockifyApi.DeleteExpenseCategoriesRequest} request
      * @param {ExpenseCategoriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenseCategories.deleteExpenseCategory({
+     *     await client.expenseCategories.delete({
      *         workspaceId: "workspaceId",
      *         categoryId: "categoryId"
      *     })
      */
-    public deleteExpenseCategory(
-        request: ClockifyApi.DeleteExpenseCategoryRequest,
+    public delete(
+        request: ClockifyApi.DeleteExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(this.__deleteExpenseCategory(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteExpenseCategory(
-        request: ClockifyApi.DeleteExpenseCategoryRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteExpenseCategoriesRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, categoryId } = request;
@@ -303,20 +303,20 @@ export class ExpenseCategoriesClient {
      * @param {ExpenseCategoriesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.expenseCategories.archiveExpenseCategory({
+     *     await client.expenseCategories.archive({
      *         workspaceId: "workspaceId",
      *         categoryId: "categoryId",
      *         archived: false
      *     })
      */
-    public archiveExpenseCategory(
+    public archive(
         request: ClockifyApi.ExpenseCategoryStatusRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.ExpenseCategoryDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__archiveExpenseCategory(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__archive(request, requestOptions));
     }
 
-    private async __archiveExpenseCategory(
+    private async __archive(
         request: ClockifyApi.ExpenseCategoryStatusRequest,
         requestOptions?: ExpenseCategoriesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.ExpenseCategoryDtoV1>> {

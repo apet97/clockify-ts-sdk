@@ -151,31 +151,44 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **CRUDL on the 10 most-touched modules.** Each stamped op pairs
+- **CRUDL on 16 of the 31 modules.** Each stamped op pairs
   `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
   lands at `client.<resource>.<verb>()`:
-  - `tags`, `clients`, `projects`, `tasks`, `holidays`,
-    `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks` —
-    `list`, `create`, `get`, `update`, `delete` (the subset each
-    resource genuinely supports; `holidays` + `sharedReports` lack a
-    GET-by-id route on the workspace surface, so they omit `get`).
-  - `timeEntries` — `create`, `get`, `update`, `delete` on the
-    `/time-entries/{teId}` family. Clockify has no top-level
+  - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
+    `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
+    `webhooks`, `expenses`, `expenseCategories`, `policies` — each
+    exposes the subset of `list`, `create`, `get`, `update`, `delete`
+    that the API genuinely supports.
+  - **CRUDL + action verb:** `clients.archive`,
+    `expenseCategories.archive`, `policies.archive`.
+  - **Partial CRUDL:** `timeEntries.{create,get,update,delete}` on
+    the `/time-entries/{teId}` family (Clockify has no top-level
     workspace LIST; the per-user `/user/{userId}/time-entries` family
-    keeps its operationId-derived names.
-  - `clients.archive` — Clockify-specific action verb on
-    `PUT /workspaces/{wsId}/clients/{cid}/archive`.
-- **OperationId-derived on the remaining ~21 modules** —
+    keeps its operationId-derived names).
+    `invoiceItems.{create,import,delete}` (no LIST or GET-by-id on
+    the API).
+    `invoicePayments.{list,create,delete}` (no GET-by-id, no update
+    on the API).
+  - **Scoped naming:**
+    `customFields.{listForWorkspace,createForWorkspace,
+    updateForWorkspace,deleteForWorkspace,listForProject,
+    updateForProject,removeFromProject}` — the module covers two
+    surfaces (workspace + project); explicit suffixes disambiguate.
+- **OperationId-derived on the remaining ~15 modules** —
   `client.approvals.getApprovalRequests(...)`,
-  `client.reports.getDetailedReport(...)`, and so on. Long but
+  `client.reports.getDetailedReport(...)`,
+  `client.invoices.getWorkspaceInvoices(...)`, and so on. Long but
   stable. Specialised action verbs inside the stamped modules also
   keep their operationId-derived names (e.g.
   `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive(...)`,
-  `client.timeOffPolicies.changeTimeOffPolicyStatus(...)`).
+  `client.timeOffPolicies.changeTimeOffPolicyStatus(...)`,
+  `client.expenses.downloadExpenseReceipt(...)`).
   Tracked under `spec/evidence/discrepancies.md` →
   `fern.x-fern-sdk-method-name.drops-resource-modules`. The
-  remaining modules will move to CRUDL incrementally as each batch
-  is validated end-to-end against `fern generate`.
+  remaining modules either need a per-module workflow-verb naming
+  review (`approvals`, `timeOff`, `scheduling`, `reports`,
+  `invoices`) or have so few ops the rename buys little
+  (`memberProfiles`, `roles`, `balances`, etc.).
 
 ## Pagination
 

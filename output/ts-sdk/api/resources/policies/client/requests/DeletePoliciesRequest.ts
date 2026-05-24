@@ -4,10 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         expenseId: "expenseId"
+ *         policyId: "policyId"
  *     }
  */
-export interface DeleteExpenseRequest {
+export interface DeletePoliciesRequest {
     workspaceId: string;
-    expenseId: string;
+    policyId: string;
 }

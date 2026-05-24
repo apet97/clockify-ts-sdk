@@ -6,7 +6,7 @@
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdPoliciesRequest {
+export interface ListPoliciesRequest {
     workspaceId: string;
     archived?: boolean;
 }

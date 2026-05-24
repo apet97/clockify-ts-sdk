@@ -9,7 +9,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         body: {}
  *     }
  */
-export interface PostWorkspacesWorkspaceIdPoliciesRequest {
+export interface CreatePoliciesRequest {
     workspaceId: string;
     body: ClockifyApi.TimeOffPolicy;
 }

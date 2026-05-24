@@ -3,14 +3,12 @@
 /**
  * @example
  *     {
- *         workspaceId: "64a687e29ae1f428e7ebe303",
- *         projectId: "projectId"
+ *         workspaceId: "64a687e29ae1f428e7ebe303"
  *     }
  */
-export interface ListProjectCustomFieldsRequest {
+export interface ListForWorkspaceCustomFieldsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
-    projectId: string;
     /** 1-based page index. Default 1. */
     page?: number;
     /** Page size (number of items per page). Default 50; maximum 200. */

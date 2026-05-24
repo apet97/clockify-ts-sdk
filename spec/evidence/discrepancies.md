@@ -639,35 +639,37 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (10-module subset, 48 ops):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` maps 48 pairs to
-  `{group, name}` entries. The session expanded in two steps:
+- **What shipped (16-module subset, 77 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 77 pairs to
+  `{group, name}` entries. The session expanded in three steps:
   - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
     archive = 11 ops.
   - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
     timeOffPolicies, userGroups, webhooks each × 4-5 CRUDL +
     timeEntries × 4 core CRUD = 37 more ops.
+  - Step 3 (next-batch cohort): customFields × 7 scoped, expenses × 5,
+    expenseCategories × 5 + archive, invoiceItems × 3, invoicePayments
+    × 3, policies × 5 + archive = 29 more ops.
 
   After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
   + `fern check --warnings --from-openapi` + `fern generate --group ts
   --local --force` stayed green; the wrapper exposes idiomatic CRUDL
   on every stamped module and 0 ops are hoisted to the root client.
 
-- **What's NOT shipped:** ~21 modules still use operationId-derived
+- **What's NOT shipped:** ~15 modules still use operationId-derived
   names. The remaining modules split into two cohorts:
-  - **Clean CRUDL candidates (next batch).** `customFields` (has
-    workspace + project scopes; needs `listWorkspace`/`listForProject`
-    style naming, not pure `list`), `invoiceItems`, `invoicePayments`,
-    `expenses`, `expenseCategories`, `policies`, `memberProfiles`,
-    `roles`, `workspaces` (mostly read-only).
+  - **Small or mostly-read-only modules.** `memberProfiles` (2 ops:
+    get/update — low leverage), `roles` (read-only), `balances`
+    (read-only), `invoiceSettings` (single-resource get/update),
+    `expenseReport` (read-only), `workspaces` (mostly action verbs
+    like updateWorkspaceCostRate; no DELETE; "list" semantics
+    awkward since it's a user's own-workspace enumeration), `files`,
+    `auditLogReport`, `entityChangesExperimental`.
   - **Workflow / action-verb modules (need naming review).**
     `approvals` (submit/approve/reject/withdraw/resubmit),
     `timeOff` (request/approve/deny), `scheduling`
-    (assignments + publish), `reports` (multiple report families),
-    `entityChangesExperimental` (created/updated/deleted hooks),
-    `files`, `auditLogReport`, `sharedReport`'s public bare-route,
-    `invoiceSettings` (single-resource get/update),
-    `expenseReport` (read-only), `balances`, `invoices` (CRUDL +
+    (assignments + publish), `reports` (multiple report families:
+    summary/detailed/weekly/etc.), `invoices` (CRUDL +
     duplicate/export/filter/changeStatus).
 
   Specialised action verbs inside the 10 stamped modules also kept
@@ -687,11 +689,11 @@ Each of these needs:
   3-4. Closed by (1).
 
 - **Status (updated):** `partially-resolved-incremental-rollout`. The
-  proven technique ships in `SDK_METHOD_NAMES` covering 48 ops across
-  10 modules. Expanding to remaining ~21 modules is mechanical for
-  the clean-CRUDL cohort listed above; workflow-verb modules need a
-  per-module naming review before stamping. Module count stays at 31
-  + index.ts across all expansions verified to date.
+  proven technique ships in `SDK_METHOD_NAMES` covering 77 ops across
+  16 modules. The remaining ~15 modules split into "small / read-only
+  modules where the rename buys little" and "workflow-verb modules
+  that need a per-module naming review before stamping". Module count
+  stays at 31 + index.ts across all expansions verified to date.
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 

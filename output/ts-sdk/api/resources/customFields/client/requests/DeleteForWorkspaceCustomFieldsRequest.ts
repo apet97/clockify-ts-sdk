@@ -7,7 +7,7 @@
  *         customFieldId: "customFieldId"
  *     }
  */
-export interface DeleteWorkspaceCustomFieldRequest {
+export interface DeleteForWorkspaceCustomFieldsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     customFieldId: string;

@@ -3,13 +3,14 @@
 /**
  * @example
  *     {
- *         workspaceId: "workspaceId",
- *         invoiceId: "invoiceId"
+ *         workspaceId: "64a687e29ae1f428e7ebe303",
+ *         projectId: "projectId"
  *     }
  */
-export interface GetInvoicePaymentsRequest {
+export interface ListForProjectCustomFieldsRequest {
+    /** Represents a workspace identifier across the system. */
     workspaceId: string;
-    invoiceId: string;
+    projectId: string;
     /** 1-based page index. Default 1. */
     page?: number;
     /** Page size (number of items per page). Default 50; maximum 200. */
