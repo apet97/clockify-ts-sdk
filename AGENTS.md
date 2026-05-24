@@ -105,17 +105,17 @@ output/ts-sdk/**  (Fern emits ~720 TS files; --force WIPES the tree)
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check               (tsc --noEmit; covers src/**, index.ts,
-        │                                     create-client.ts, iter.ts,
+        │                                     create-client.ts, iter.ts, webhooks.ts,
         │                                     pagination.ts, tests/**)
         │  npm test                          (vitest; 8 pagination + 8 createClient
-        │                                     + 30 iter unit tests + 5 live sandbox
-        │                                     flows; live tests skip without
-        │                                     CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
+        │                                     + 30 iter + 16 webhooks unit tests +
+        │                                     5 live sandbox flows; live tests skip
+        │                                     without CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build                     (single `tsc -p tsconfig.build.json`;
         │                                     emits dist/index.js (re-export root),
         │                                     dist/create-client.js, dist/iter.js,
-        │                                     dist/pagination.js, and the synced SDK
-        │                                     under dist/src/**)
+        │                                     dist/webhooks.js, dist/pagination.js,
+        │                                     and the synced SDK under dist/src/**)
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
@@ -140,7 +140,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
-| `wrapper/{index.ts, create-client.ts, iter.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
+| `wrapper/{index.ts, create-client.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
@@ -212,6 +212,10 @@ wrapper/
 │                                pagination helpers; ships the `KnownPaginatedMethod`
 │                                union of the 19 known paginated pairs + a CI
 │                                drift assertion; exported as `clockify-sdk-ts/iter`
+├── webhooks.ts               ← hand-written `verifyClockifyWebhook` +
+│                                `constructEvent` for the `Clockify-Signature-Token`
+│                                header (simple shared-secret scheme, not HMAC);
+│                                exported as `clockify-sdk-ts/webhooks`
 ├── pagination.ts             ← hand-written low-level callback iterator
 │                                (`paginate<T>`); `iterAll` is the recommended
 │                                higher-level API; exported as
@@ -229,6 +233,9 @@ wrapper/
 │   │                           1 entry-count); KNOWN_PAGINATED_METHODS
 │   │                           drift assertion fails the build if a
 │   │                           paginated method is renamed upstream
+│   ├── webhooks.test.ts      ← 16 vitest cases for the webhook verifier
+│   │                           (6 header-shape lookups + 4 verify booleans
+│   │                           + 5 constructEvent flows + 1 header constant)
 │   └── sandbox.test.ts       ← 5 live-against-Clockify smoke tests
 │                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
@@ -243,16 +250,19 @@ whitelists what `npm publish` ships. Do not add to that list without
 a publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-The package exposes four subpaths via `package.json` `exports`:
+The package exposes five subpaths via `package.json` `exports`:
 - `clockify-sdk-ts` → `./dist/index.js` (package root —
   re-exports the synced SDK surface + `createClockifyClient` +
-  `iterAll` / `iterPages` / `KNOWN_PAGINATED_METHODS` + `paginate`).
+  `iterAll` / `iterPages` / `KNOWN_PAGINATED_METHODS` + `paginate` +
+  `verifyClockifyWebhook` / `constructEvent` / `WebhookSignatureMismatchError`).
 - `clockify-sdk-ts/create-client` → `./dist/create-client.js`
   (the `createClockifyClient()` factory in isolation, for
   intent-revealing imports or tree-shake-sensitive consumers).
 - `clockify-sdk-ts/iter` → `./dist/iter.js` (the per-resource
   pagination helpers + the `KnownPaginatedMethod` documentary
   union of the 19 known paginated method pairs).
+- `clockify-sdk-ts/webhooks` → `./dist/webhooks.js` (Clockify
+  webhook signature verifier + JSON-payload parser).
 - `clockify-sdk-ts/pagination` → `./dist/pagination.js` (the
   low-level callback-style `paginate<T>` helper).
 

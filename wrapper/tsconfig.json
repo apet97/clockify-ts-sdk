@@ -10,6 +10,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "index.ts", "create-client.ts", "iter.ts", "pagination.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts", "index.ts", "create-client.ts", "iter.ts", "pagination.ts", "webhooks.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

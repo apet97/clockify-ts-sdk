@@ -37,6 +37,10 @@
       "import": "./dist/iter.js",
       "types": "./dist/iter.d.ts"
     },
+    "./webhooks": {
+      "import": "./dist/webhooks.js",
+      "types": "./dist/webhooks.d.ts"
+    },
     "./pagination": {
       "import": "./dist/pagination.js",
       "types": "./dist/pagination.d.ts"

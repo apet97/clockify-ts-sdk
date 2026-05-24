@@ -9,6 +9,21 @@ once v1.0.0 ships.
 
 ### Added
 
+- Webhook signature verification at the new
+  `clockify-sdk-ts/webhooks` subpath. `verifyClockifyWebhook({ headers,
+  expectedToken })` returns boolean for explicit handling;
+  `constructEvent({ headers, payload, expectedToken })` verifies AND
+  parses the JSON payload, throwing `WebhookSignatureMismatchError`
+  on mismatch / missing header or `SyntaxError` on invalid JSON.
+  Constant-time string compare via `node:crypto`. Accepts headers
+  as `Headers`, `Map`, plain `Record`, or `Array<[name, value]>` —
+  case-insensitive lookup. Header name exposed as
+  `CLOCKIFY_SIGNATURE_HEADER` constant. Scheme: simple shared-secret
+  token (32 chars, rotatable via webhook `/token` endpoint, sent as
+  `Clockify-Signature-Token`) — NOT HMAC over payload. Source:
+  GOCLMCP probe-lab `openapi-fragments/webhooks-a.yaml`; ledger
+  entry `webhook.signature-scheme.shared-secret-not-hmac-doc-only`
+  captures the doc-vs-live uncertainty (no live probe yet).
 - `iterAll()` and `iterPages()` per-resource pagination helpers at
   the new `clockify-sdk-ts/iter` subpath. `iterAll` yields items
   flat across page boundaries; `iterPages` yields per-page

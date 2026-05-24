@@ -933,4 +933,62 @@ on the bare route (the granular variants — already in
   Generator decision revisited only if one of the three open
   questions above flips.
 
+## Webhook delivery — signature scheme
+
+### `webhook.signature-scheme.shared-secret-not-hmac-doc-only` — DOCUMENTED 2026-05-24
+
+- **Official claim:** Clockify webhook delivery uses a per-webhook
+  `authToken` (32-char shared secret) sent in the
+  `Clockify-Signature-Token` HTTP header on every delivery.
+  Verification is a constant-time string compare against the stored
+  token. Two source citations:
+  1. `../../../GOCLMCP/docs/openapi/sources/clockify-api-probe-lab/openapi-fragments/webhooks-a.yaml`:
+     `authToken: {type: string, description: "Header value Clockify
+     sends as Clockify-Signature-Token; rotate via /token endpoint."}`
+  2. `../../../GOCLMCP/docs/openapi/sources/clockify-api-probe-lab/WEBHOOKDOC.md`
+     line 340: `Creating a webhook generates a new token which can
+     be used to verify that the webhook being sent was sent by
+     Clockify, as it will always be present in the header.`
+- **Actual behavior:** NOT live-probed yet. The wrapper's
+  `verifyClockifyWebhook` and `constructEvent` helpers ship to
+  v0.x assuming the documented scheme is accurate. They do
+  case-insensitive header lookup, constant-time `Buffer` compare
+  via `node:crypto.timingSafeEqual`, and pad-to-equal-length to
+  avoid throwing on length mismatch.
+- **Live evidence:** none yet. To probe: register a Clockify
+  webhook against a test endpoint that logs all incoming headers +
+  body; trigger one event; capture the request; confirm the header
+  name is exactly `Clockify-Signature-Token` (or a case variant)
+  and the value is the unhashed `authToken` (NOT an HMAC over the
+  payload). The synced `Webhook.authToken` field docstring says
+  "HMAC secret" which conflicts with the probe-lab doc's
+  shared-secret-comparison model — one of the two is wrong.
+- **MCP tools affected:** none — the Go MCP layer in GOCLMCP does
+  not currently expose webhook verification. The wrapper's new
+  `clockify-sdk-ts/webhooks` subpath is the first SDK surface that
+  enforces this scheme.
+- **Open questions:**
+  1. Header name: exactly `Clockify-Signature-Token`? Any
+     case variation (e.g. `clockify-signature-token` per HTTP
+     normalization in Node)? Helpers do case-insensitive lookup so
+     this is robust either way, but the canonical form should be
+     confirmed.
+  2. Value form: bare 32-char token (matches `authToken`) or
+     prefixed (`Token <value>`, `Bearer <value>`)? Helpers assume
+     bare; a prefix would make them fail-closed.
+  3. HMAC-vs-shared-secret: the `Webhook.authToken` docstring
+     ("HMAC secret. Treat as a credential; never log.") conflicts
+     with the probe-lab doc's plain-token-comparison model.
+     Resolve via a live probe; if HMAC, the verifier needs a
+     full rewrite (compute HMAC-SHA256 over the canonical payload
+     + compare to header).
+  4. Replay protection: any timestamp header for tolerance-based
+     replay rejection (Stripe-style)? Doc doesn't mention one.
+- **Status:** `verifier-shipped-on-doc; live-probe-pending`. The
+  wrapper's verifier ships against the documented scheme. If a
+  live probe (next time someone configures a Clockify webhook
+  end-to-end) shows a different scheme, this entry reopens and the
+  helpers update accordingly. Until then, the documented scheme is
+  the authoritative source.
+
 

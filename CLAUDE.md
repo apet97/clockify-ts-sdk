@@ -55,21 +55,25 @@ not just to humans.
 - **`npm run build` runs `tsc` once** against `tsconfig.build.json`
   (rootDir `.`; emits both synced SDK and hand-written modules).
   Hand-written entrypoints (`index.ts`, `create-client.ts`,
-  `iter.ts`, `pagination.ts`) emit flat at `dist/<name>.js`; the
-  synced SDK lands under `dist/src/**`. Subpath resolution at the
-  package layer: `clockify-sdk-ts` → `dist/index.js`,
-  `clockify-sdk-ts/create-client` → `dist/create-client.js`,
-  `clockify-sdk-ts/iter` → `dist/iter.js`,
-  `clockify-sdk-ts/pagination` → `dist/pagination.js`.
-- **Four test files now:** `tests/pagination.test.ts` (8 unit
+  `iter.ts`, `webhooks.ts`, `pagination.ts`) emit flat at
+  `dist/<name>.js`; the synced SDK lands under `dist/src/**`.
+  Subpath resolution at the package layer: `clockify-sdk-ts` →
+  `dist/index.js`, `clockify-sdk-ts/create-client` →
+  `dist/create-client.js`, `clockify-sdk-ts/iter` →
+  `dist/iter.js`, `clockify-sdk-ts/webhooks` →
+  `dist/webhooks.js`, `clockify-sdk-ts/pagination` →
+  `dist/pagination.js`.
+- **Five test files now:** `tests/pagination.test.ts` (8 unit
   cases, no live API — mocks `fetchPage`),
   `tests/create-client.test.ts` (8 unit cases — factory
   instantiation + runtime guards + TS-type-level checks via
   `@ts-expect-error`), `tests/iter.test.ts` (30 cases — 9 iterAll
   + 2 iterPages + 19 drift assertions for KNOWN_PAGINATED_METHODS
-  + 1 entry-count), and `tests/sandbox.test.ts` (5 live flows,
-  skip when `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` absent).
-  Don't collapse them; the unit cases run in CI without creds.
+  + 1 entry-count), `tests/webhooks.test.ts` (16 cases for the
+  Clockify-Signature-Token verifier across all header shapes), and
+  `tests/sandbox.test.ts` (5 live flows, skip when
+  `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` absent). Don't
+  collapse them; the unit cases run in CI without creds.
 
 ## Where to look first
 
