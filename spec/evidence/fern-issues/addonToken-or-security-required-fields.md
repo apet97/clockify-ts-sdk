@@ -1,11 +1,16 @@
 # Drafted upstream issue: `BaseClientOptions` marks OR-related security-scheme fields as required
 
-This is a drafted issue body for `github.com/fern-api/fern`. Not yet
-filed. The user (`apet97`) should file it when ready and add the
-issue number / URL to
-`addons-me/fern/spec/evidence/discrepancies.md > fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
+**Status: drafted, internal evidence only — NOT FILED upstream.**
 
-The body below is ready to paste verbatim.
+Maintainer call (apet97 2026-05-25): the workaround in the
+wrapper's `createClockifyClient()` factory is stable; user opted
+not to file this issue at github.com/fern-api/fern. The body
+below is kept as evidence of the analysis and as a ready-to-file
+starting point if the decision is revisited.
+
+If you later decide to file, paste the body verbatim, then record
+the issue number under
+`addons-me/fern/spec/evidence/discrepancies.md > fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
 
 ---
 

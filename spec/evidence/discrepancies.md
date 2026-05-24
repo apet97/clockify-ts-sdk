@@ -609,10 +609,19 @@ Each of these needs:
      without auto-pagination — **already true and stable**; the
      wrapper's `iterAll` family is the supported entry point.
 
-- **Status (updated):** `awaiting-upstream-fix-issue-drafted`. The
-  hand-written `paginate` / `iterAll` helpers stay; the
+- **Filing decision 2026-05-25:** the drafted issue body at
+  `spec/evidence/fern-issues/bare-array-pagination-results-path.md`
+  is **internal evidence only — not filed upstream**. Maintainer
+  call (apet97 2026-05-25): the wrapper-side `paginate` / `iterAll`
+  helpers are the supported pagination surface and shipping a
+  user-facing upstream tracking discussion isn't a current priority.
+  Re-open this status if Fern independently lands bare-array
+  support or someone else files the issue and we need to track it.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted-internal-only`.
+  The hand-written `paginate` / `iterAll` helpers stay; the
   `KNOWN_PAGINATED_METHODS` drift assertion catches regressions.
-  When the upstream issue's fix ships:
+  When the upstream fix ships (via any channel):
   1. Re-test stamping `x-fern-pagination` on a single op (tags) and
      confirm successful TS generation with an `AsyncIterable<Tag>`
      method.
@@ -1151,10 +1160,19 @@ on the bare route (the granular variants — already in
      matrix. Independent of question (1) — the wrapper-side ergonomic
      ships now without waiting for Fern's upstream typing change.
 
-- **Status (updated):** `awaiting-upstream-fix-issue-drafted`. The
-  cast-removal path is gated on a Fern release that changes
+- **Filing decision 2026-05-25:** the drafted issue body at
+  `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`
+  is **internal evidence only — not filed upstream**. Maintainer call
+  (apet97 2026-05-25): the workaround in the wrapper's
+  `createClockifyClient()` factory is stable and the upstream
+  discussion isn't a current priority. Re-open this status if the
+  Fern team independently lands a fix or someone else files the
+  issue and we need to track it.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted-internal-only`.
+  The cast-removal path is gated on a Fern release that changes
   `BaseClientOptions` typing; nothing to remove now. When the
-  upstream issue's fix ships:
+  upstream fix ships (via any channel):
   1. Bump `spec/fern/fern.config.json` `version` and
      `spec/fern/generators.yml`'s container tag (AGENTS.md §12 #3
      requires explicit approval for these bumps).

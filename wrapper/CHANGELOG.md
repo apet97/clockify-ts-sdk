@@ -7,6 +7,14 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-25
+
+Closes the multi-session G-track sweep against the
+`apet97/go-clockify` sister repo. Spec-side changes regenerated
+the canonical OpenAPI; wrapper-side changes consume them through
+the standard `npm run sync` chain. Major shift in surface
+ergonomics — see "Changed (BREAKING)" below for migration notes.
+
 ### Removed
 
 - **Three phantom `time-off-request` legacy paths quarantined.**

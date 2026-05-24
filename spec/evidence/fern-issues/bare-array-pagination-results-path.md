@@ -1,11 +1,17 @@
 # Drafted upstream issue: `x-fern-pagination` rejects bare-array `results` paths
 
-This is a drafted issue body for `github.com/fern-api/fern`. Not
-yet filed. The user (`apet97`) should file it when ready and add
-the issue number / URL to
-`addons-me/fern/spec/evidence/discrepancies.md > fern.x-fern-pagination.bare-array-unsupported`.
+**Status: drafted, internal evidence only — NOT FILED upstream.**
 
-The body below is ready to paste verbatim.
+Maintainer call (apet97 2026-05-25): the wrapper-side `paginate`
+/ `iterAll` helpers are the supported pagination surface and the
+user opted not to file an upstream tracking issue at
+github.com/fern-api/fern. The body below is kept as evidence of
+the analysis and as a ready-to-file starting point if the decision
+is revisited.
+
+If you later decide to file, paste the body verbatim, then record
+the issue number under
+`addons-me/fern/spec/evidence/discrepancies.md > fern.x-fern-pagination.bare-array-unsupported`.
 
 ---
 
