@@ -506,7 +506,7 @@ Each of these needs:
   generate --group ts --local --force` succeeds, `tsc --noEmit`
   against `output/ts-sdk/` exits 0.
 
-### `fern.x-fern-pagination.bare-array-unsupported` — DOCUMENTED 2026-05-24
+### `fern.x-fern-pagination.bare-array-unsupported` — UPSTREAM-TRACKING 2026-05-25
 
 - **Official claim (Fern docs):** the `x-fern-pagination` OpenAPI
   extension instructs Fern's SDK generators to emit auto-pagination
@@ -545,7 +545,7 @@ Each of these needs:
      (`./output/ts-sdk/` → publishable package) can
      ship a hand-written iterator helper that consumes
      `page`/`page-size` and stops on `Last-Page: true`.
-- **Status:** `documented-blocking-upstream`. `x-fern-pagination`
+- **Status (initial):** `documented-blocking-upstream`. `x-fern-pagination`
   is **not** stamped on any Clockify operation. The `page` and
   `page-size` query params are stamped — that's still a real spec
   improvement consumed by callers, MCP tools, and any downstream
@@ -553,6 +553,77 @@ Each of these needs:
   strict envelope requirement. Re-evaluate when Fern publishes a
   release that documents bare-array pagination support or when an
   overrides-side workaround is discovered.
+
+#### Update 2026-05-25 (session 4) — re-verification + upstream issue drafted
+
+- **Fern CLI version check:** still pinned at `5.37.9`; latest on
+  npm is also `5.37.9` (see G.3 update above for the version probe).
+- **Docs re-check:** the buildwithfern.com pagination docs page now
+  enumerates four pagination schemes (offset / cursor / URI / path);
+  all examples show `results` pointing to a property inside a response
+  object (`$response.results`, `$response.data`, etc.). Bare-array
+  responses are still NOT documented as supported. The page also
+  notes auto-pagination is "available only for the Pro and
+  Enterprise plans" — a separate concern for OSS consumers, but
+  doesn't change the bare-array verdict.
+- **Re-reproduction (2026-05-25):** stamped `x-fern-pagination`
+  with `offset: $request.page, results: $response` on a single op
+  (tags GET) on top of the current G.1 snapshot, ran
+  `fern generate --group ts --local --force`. Fern emitted:
+  ```
+  [error] Pagination configuration for endpoint list must define
+          a dot-delimited 'results' property starting with
+          $response (e.g. $response.results).
+  ```
+  Same error with `results: $response[*]`. Test mutation reverted.
+- **Fern repo issue search:** searched `github.com/fern-api/fern`
+  for issues matching `bare array pagination`, `x-fern-pagination
+  results response`, `pagination top-level array`, `auto pagination
+  openapi`, `pagination results` — zero hits. No existing upstream
+  tracking issue.
+- **Action:** drafted a complete issue body at
+  `spec/evidence/fern-issues/bare-array-pagination-results-path.md`,
+  ready to paste verbatim at `https://github.com/fern-api/fern/issues/new`.
+  The body ships a minimal repro spec, lists the three rejected
+  `results` variants, explains why the limitation matters (bare-array
+  APIs in production like Clockify), points at the
+  wrapper-side `paginate<T>` + `iterAll` helpers as the current
+  workaround, and proposes either `results: $response` or a sentinel
+  syntax as the desired fix.
+- **Workaround status:** unchanged. The hand-written
+  `paginate<T>` (`wrapper/pagination.ts`), `iterAll` /
+  `iterPages` (`wrapper/iter.ts`) + `KNOWN_PAGINATED_METHODS`
+  drift assertion remain the supported pagination surface. The
+  v1.0.0 cut still ships them.
+- **Bump posture:** identical to G.3 — we're already on the latest
+  CLI + container. Re-check on every Fern release; the filed issue
+  is the discovery channel.
+
+- **Updated open questions:**
+  1. ~~Is there a Fern overrides syntax that can wrap a bare-array
+     response in a synthetic envelope at SDK-generation time?~~
+     **Confirmed no.** Doc-fetch on the current pagination docs
+     page shows envelope-only examples. Routed to upstream as a
+     drafted issue.
+  2. Until Fern adds bare-array offset support, the TS SDK ships
+     without auto-pagination — **already true and stable**; the
+     wrapper's `iterAll` family is the supported entry point.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted`. The
+  hand-written `paginate` / `iterAll` helpers stay; the
+  `KNOWN_PAGINATED_METHODS` drift assertion catches regressions.
+  When the upstream issue's fix ships:
+  1. Re-test stamping `x-fern-pagination` on a single op (tags) and
+     confirm successful TS generation with an `AsyncIterable<Tag>`
+     method.
+  2. Expand stamping to all 18 ops in `PAGINATED_LIST_OPS` (mirror
+     of the G.1 bisect cadence: one at a time, regen + gates +
+     fern generate, count modules).
+  3. Bump `wrapper/CHANGELOG.md` `[Unreleased]` to flag the
+     hand-written `paginate` + `iterAll` as deprecated; document
+     a removal target (v2.0).
+  4. Land as v2.0 with the deprecation removed; `iter.ts` +
+     `pagination.ts` deleted; subpath exports removed.
 
 ### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24 (session 3)
 
