@@ -189,26 +189,26 @@ export class HolidaysClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspaceHolidaysInPeriodRequest} request
+     * @param {ClockifyApi.ListInPeriodHolidaysRequest} request
      * @param {HolidaysClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.holidays.getWorkspaceHolidaysInPeriod({
+     *     await client.holidays.listInPeriod({
      *         workspaceId: "workspaceId",
      *         "assigned-to": "60f924bafdaf031696ec6218",
      *         start: "2022-12-03T10:59:59Z",
      *         end: "2022-12-05T23:59:59Z"
      *     })
      */
-    public getWorkspaceHolidaysInPeriod(
-        request: ClockifyApi.GetWorkspaceHolidaysInPeriodRequest,
+    public listInPeriod(
+        request: ClockifyApi.ListInPeriodHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.HolidayDto[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWorkspaceHolidaysInPeriod(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listInPeriod(request, requestOptions));
     }
 
-    private async __getWorkspaceHolidaysInPeriod(
-        request: ClockifyApi.GetWorkspaceHolidaysInPeriodRequest,
+    private async __listInPeriod(
+        request: ClockifyApi.ListInPeriodHolidaysRequest,
         requestOptions?: HolidaysClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.HolidayDto[]>> {
         const { workspaceId, "assigned-to": assignedTo, start, end } = request;

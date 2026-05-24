@@ -710,9 +710,9 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (21-module subset, 110 ops):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` maps 110 pairs to
-  `{group, name}` entries. The session expanded in five steps:
+- **What shipped (21-module subset, 149 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 149 pairs to
+  `{group, name}` entries. The session expanded in six steps:
   - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
     archive = 11 ops.
   - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
@@ -729,6 +729,21 @@ Each of these needs:
     (CRUDL + filter + duplicate + export + updateStatus), reports × 4
     (one entry per family: attendance / detailed / summary / weekly)
     = 13 more ops.
+  - Step 6 (action-verb cleanups inside stamped modules):
+    projects × 9 (createFromTemplate, archive, updateCostRate,
+    updateEstimate, updateHourlyRate, updateMemberships,
+    updateTemplate, updateUserCostRate, updateUserHourlyRate),
+    tasks × 2 (updateCostRate, updateBillableRate),
+    timeEntries × 9 (markInvoiced, markInvoicedBulk, listInProgress,
+    listForUser, createForUser, startTimer, updateForUser, stopTimer,
+    duplicate), holidays × 1 (listInPeriod), sharedReports × 1
+    (view), timeOffPolicies × 1 (updateStatus), userGroups × 3
+    (listMembers, addMembers, removeMember), webhooks × 5
+    (listForAddon, rotateToken, listLogs, searchLogs, updateToken),
+    expenses × 1 (downloadReceipt), scheduling × 6 (listPerProject,
+    listOnProject, replaceRecurring, getUsersCapacityFiltered,
+    calculateUsersTotals, getUserCapacity), timeOff × 1
+    (submitForUser) = 39 more ops.
 
   After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
   + `fern check --warnings --from-openapi` + `fern generate --group ts
@@ -775,18 +790,22 @@ Each of these needs:
      it's the required complement.
   3-4. Closed by (1).
 
-- **Status (updated):** `mostly-resolved-coverage-ceiling-reached`.
-  The proven technique ships in `SDK_METHOD_NAMES` covering 110 ops
-  across 21 of 31 modules. Coverage by op count: 110/191 = 58% of
-  total operations carry idiomatic stamps; the remainder are either
-  in the ~10 untouched modules (small / read-only / experimental) or
-  are action verbs inside stamped modules that need per-module
-  follow-up. Module count stays at 31 + index.ts across all
-  expansions verified to date. The technique extends cleanly beyond
-  simple CRUDL: pure CRUDL on 12 modules, CRUDL + action on 3,
-  partial CRUDL on 3, scoped naming on 1 (customFields),
-  workflow verbs on 3 (approvals, timeOff, scheduling), and one
-  family-name-as-verb (reports). The five expansion steps each
+- **Status (updated):** `mostly-resolved-action-verb-cleanups-shipped`.
+  The proven technique ships in `SDK_METHOD_NAMES` covering 149 ops
+  across 21 of 31 modules. Coverage by op count: 149/191 = 78% of
+  total operations carry idiomatic stamps; the remainder are in the
+  ~10 untouched modules (small / read-only / experimental) plus ~32
+  intentionally-unstamped ops inside stamped modules (legacy
+  duplicate paths, action verbs with semantic ambiguity like
+  `assignOrRemoveProjectUsers`, and already-idiomatic operationId
+  names like `deleteMany`). Module count stays at 31 + index.ts
+  across all six expansion steps verified to date. The technique
+  extends cleanly across naming patterns: pure CRUDL on 12 modules,
+  CRUDL + action on 3, partial CRUDL on 3, scoped naming on 1
+  (customFields), workflow verbs on 3, family-name verbs on 1
+  (reports), and now ~10 distinct action-verb patterns
+  (`mark*`, `start/stopTimer`, `rotateToken`, `replaceRecurring`,
+  `listFor*`, `update*Rate`, etc.). The six expansion steps each
   preserved the invariant "31 modules + index.ts, 0 root hoists".
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24

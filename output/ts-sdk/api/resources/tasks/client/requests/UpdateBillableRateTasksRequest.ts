@@ -14,7 +14,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface UpdateTaskCostRateRequest {
+export interface UpdateBillableRateTasksRequest {
     workspaceId: string;
     projectId: string;
     taskId: string;

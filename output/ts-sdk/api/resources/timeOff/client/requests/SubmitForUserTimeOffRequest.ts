@@ -22,7 +22,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface CreateTimeOffRequestForUserRequest {
+export interface SubmitForUserTimeOffRequest {
     workspaceId: string;
     policyId: string;
     userId: string;

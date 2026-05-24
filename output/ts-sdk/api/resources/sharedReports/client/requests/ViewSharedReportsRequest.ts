@@ -2,7 +2,7 @@
 
 import type * as ClockifyApi from "../../../../index.js";
 
-export interface GetSharedReportsSharedReportIdRequest {
+export interface ViewSharedReportsRequest {
     sharedReportId: string;
-    exportType?: ClockifyApi.GetSharedReportsSharedReportIdRequestExportType;
+    exportType?: ClockifyApi.ViewSharedReportsRequestExportType;
 }

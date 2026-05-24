@@ -8,7 +8,7 @@
  *         userId: "userId"
  *     }
  */
-export interface RemoveUserFromGroupRequest {
+export interface RemoveMemberUserGroupsRequest {
     workspaceId: string;
     groupId: string;
     userId: string;

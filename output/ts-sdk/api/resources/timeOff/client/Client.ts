@@ -490,11 +490,11 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.CreateTimeOffRequestForUserRequest} request
+     * @param {ClockifyApi.SubmitForUserTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.createTimeOffRequestForUser({
+     *     await client.timeOff.submitForUser({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         userId: "userId",
@@ -512,15 +512,15 @@ export class TimeOffClient {
      *         }
      *     })
      */
-    public createTimeOffRequestForUser(
-        request: ClockifyApi.CreateTimeOffRequestForUserRequest,
+    public submitForUser(
+        request: ClockifyApi.SubmitForUserTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestFullV1Dto> {
-        return core.HttpResponsePromise.fromPromise(this.__createTimeOffRequestForUser(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submitForUser(request, requestOptions));
     }
 
-    private async __createTimeOffRequestForUser(
-        request: ClockifyApi.CreateTimeOffRequestForUserRequest,
+    private async __submitForUser(
+        request: ClockifyApi.SubmitForUserTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestFullV1Dto>> {
         const { workspaceId, policyId, userId, body: _body } = request;

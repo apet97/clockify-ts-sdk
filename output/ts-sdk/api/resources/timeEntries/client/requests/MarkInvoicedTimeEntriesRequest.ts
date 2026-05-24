@@ -8,7 +8,7 @@
  *         timeEntryIds: ["timeEntryIds"]
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdTimeEntriesInvoicedRequest {
+export interface MarkInvoicedTimeEntriesRequest {
     workspaceId: string;
     invoiced: boolean;
     timeEntryIds: string[];

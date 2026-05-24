@@ -14,7 +14,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface UpdateProjectUserHourlyRateRequest {
+export interface UpdateUserHourlyRateProjectsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     /** Represents a project identifier across the system. */

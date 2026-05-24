@@ -128,12 +128,12 @@
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
 
-### `updateTaskCostRate`
+### `updateCostRate`
 
 **Example:**
 
 ```typescript
-    await client.tasks.updateTaskCostRate({
+    await client.tasks.updateCostRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId",
@@ -144,19 +144,19 @@
     })
 ```
 
-**Request fields** (`UpdateTaskCostRateRequest`):
+**Request fields** (`UpdateCostRateTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
 - `body` (`ClockifyApi.RateUpdateRequest`, required)
 
-### `updateTaskBillableRate`
+### `updateBillableRate`
 
 **Example:**
 
 ```typescript
-    await client.tasks.updateTaskBillableRate({
+    await client.tasks.updateBillableRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         taskId: "taskId",
@@ -167,7 +167,7 @@
     })
 ```
 
-**Request fields** (`UpdateTaskBillableRateRequest`):
+**Request fields** (`UpdateBillableRateTasksRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)

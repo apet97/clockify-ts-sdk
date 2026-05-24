@@ -383,28 +383,26 @@ export class UserGroupsClient {
      * `GET /workspaces/{workspaceId}/users?user-groups={groupId}`
      * (verified 200, returns full User objects).
      *
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest} request
+     * @param {ClockifyApi.ListMembersUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.MethodNotAllowedError}
      *
      * @example
-     *     await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupIdUsers({
+     *     await client.userGroups.listMembers({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId"
      *     })
      */
-    public getWorkspacesWorkspaceIdUserGroupsGroupIdUsers(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest,
+    public listMembers(
+        request: ClockifyApi.ListMembersUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdUserGroupsGroupIdUsers(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__listMembers(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdUserGroupsGroupIdUsers(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest,
+    private async __listMembers(
+        request: ClockifyApi.ListMembersUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, groupId } = request;
@@ -461,20 +459,20 @@ export class UserGroupsClient {
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.addUsersToGroup({
+     *     await client.userGroups.addMembers({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId",
      *         userId: "5a0ab5acb07987125438b60f"
      *     })
      */
-    public addUsersToGroup(
+    public addMembers(
         request: ClockifyApi.AddUserToGroupRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__addUsersToGroup(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__addMembers(request, requestOptions));
     }
 
-    private async __addUsersToGroup(
+    private async __addMembers(
         request: ClockifyApi.AddUserToGroupRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1>> {
@@ -526,25 +524,25 @@ export class UserGroupsClient {
     }
 
     /**
-     * @param {ClockifyApi.RemoveUserFromGroupRequest} request
+     * @param {ClockifyApi.RemoveMemberUserGroupsRequest} request
      * @param {UserGroupsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.userGroups.removeUserFromGroup({
+     *     await client.userGroups.removeMember({
      *         workspaceId: "workspaceId",
      *         groupId: "groupId",
      *         userId: "userId"
      *     })
      */
-    public removeUserFromGroup(
-        request: ClockifyApi.RemoveUserFromGroupRequest,
+    public removeMember(
+        request: ClockifyApi.RemoveMemberUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.UserGroupDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__removeUserFromGroup(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__removeMember(request, requestOptions));
     }
 
-    private async __removeUserFromGroup(
-        request: ClockifyApi.RemoveUserFromGroupRequest,
+    private async __removeMember(
+        request: ClockifyApi.RemoveMemberUserGroupsRequest,
         requestOptions?: UserGroupsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.UserGroupDtoV1>> {
         const { workspaceId, groupId, userId } = request;

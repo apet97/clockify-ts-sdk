@@ -6,8 +6,8 @@
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdTimeEntriesStatusInProgressRequest {
+export interface MarkInvoicedBulkTimeEntriesRequest {
     workspaceId: string;
-    page?: number;
-    "page-size"?: number;
+    ids?: string[];
+    invoiced?: boolean;
 }

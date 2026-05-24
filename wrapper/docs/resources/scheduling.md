@@ -56,12 +56,12 @@
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `getScheduledAssignmentsPerProject`
+### `listPerProject`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.getScheduledAssignmentsPerProject({
+    await client.scheduling.listPerProject({
         workspaceId: "64a687e29ae1f428e7ebe303",
         end: "2021-01-01T00:00:00Z",
         page: 1,
@@ -82,18 +82,18 @@
 - `start` (`string`, required) — Represents a start date in the yyyy-MM-ddThh:mm:ssZ format.
 - `statusFilter` (`ClockifyApi.StatusFilter`, optional)
 
-### `getScheduledAssignmentsOnProject`
+### `listOnProject`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.getScheduledAssignmentsOnProject({
+    await client.scheduling.listOnProject({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "56b687e29ae1f428e7ebe504"
     })
 ```
 
-**Request fields** (`GetScheduledAssignmentsOnProjectRequest`):
+**Request fields** (`ListOnProjectSchedulingRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
@@ -163,12 +163,12 @@
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId`
+### `replaceRecurring`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId({
+    await client.scheduling.replaceRecurring({
         workspaceId: "workspaceId",
         assignmentId: "assignmentId",
         body: {
@@ -177,7 +177,7 @@
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest`):
+**Request fields** (`ReplaceRecurringSchedulingRequest`):
 
 - `workspaceId` (`string`, required)
 - `assignmentId` (`string`, required)
@@ -253,12 +253,12 @@
 - `repeat` (`boolean`, required) — Indicates whether assignment is recurring or not.
 - `weeks` (`number`, required) — Indicates number of weeks for assignment.
 
-### `getUsersCapacityTotals`
+### `getUsersCapacityFiltered`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.getUsersCapacityTotals({
+    await client.scheduling.getUsersCapacityFiltered({
         workspaceId: "64a687e29ae1f428e7ebe303",
         end: "2021-01-01T00:00:00Z",
         page: 1,
@@ -281,36 +281,36 @@
 - `userFilter` (`ClockifyApi.ContainsUsersFilterRequestV1`, optional)
 - `userGroupFilter` (`ClockifyApi.ContainsUserGroupFilterRequestV1`, optional)
 
-### `postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals`
+### `calculateUsersTotals`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals({
+    await client.scheduling.calculateUsersTotals({
         workspaceId: "workspaceId",
         end: "2024-01-15T09:30:00Z",
         start: "2024-01-15T09:30:00Z"
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest`):
+**Request fields** (`CalculateUsersTotalsSchedulingRequest`):
 
 - `workspaceId` (`string`, required)
 - `end` (`string`, required)
 - `start` (`string`, required)
 
-### `getUserCapacityTotal`
+### `getUserCapacity`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.getUserCapacityTotal({
+    await client.scheduling.getUserCapacity({
         workspaceId: "64a687e29ae1f428e7ebe303",
         userId: "5a0ab5acb07987125438b60f"
     })
 ```
 
-**Request fields** (`GetUserCapacityTotalRequest`):
+**Request fields** (`GetUserCapacitySchedulingRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.

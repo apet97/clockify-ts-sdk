@@ -7,7 +7,7 @@
  *         webhookId: "webhookId"
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest {
+export interface UpdateTokenWebhooksRequest {
     workspaceId: string;
     webhookId: string;
 }

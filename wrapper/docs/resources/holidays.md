@@ -71,12 +71,12 @@
 - `userGroups` (`ClockifyApi.UserGroupIdsSchema`, optional)
 - `users` (`ClockifyApi.UserIdsSchema`, optional)
 
-### `getWorkspaceHolidaysInPeriod`
+### `listInPeriod`
 
 **Example:**
 
 ```typescript
-    await client.holidays.getWorkspaceHolidaysInPeriod({
+    await client.holidays.listInPeriod({
         workspaceId: "workspaceId",
         "assigned-to": "60f924bafdaf031696ec6218",
         start: "2022-12-03T10:59:59Z",
@@ -84,7 +84,7 @@
     })
 ```
 
-**Request fields** (`GetWorkspaceHolidaysInPeriodRequest`):
+**Request fields** (`ListInPeriodHolidaysRequest`):
 
 - `workspaceId` (`string`, required)
 - `assigned-to` (`string`, required)

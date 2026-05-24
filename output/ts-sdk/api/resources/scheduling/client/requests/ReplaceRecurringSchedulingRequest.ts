@@ -10,7 +10,7 @@
  *         }
  *     }
  */
-export interface PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest {
+export interface ReplaceRecurringSchedulingRequest {
     workspaceId: string;
     assignmentId: string;
     body: Record<string, unknown>;

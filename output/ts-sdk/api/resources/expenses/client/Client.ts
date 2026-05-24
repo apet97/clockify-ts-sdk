@@ -419,15 +419,15 @@ export class ExpensesClient {
     /**
      * Download an expense receipt file. The uploaded Markdown includes this operation's parameters and response but omits the method/path line; this path is completed from the official Clockify documentation.
      */
-    public downloadExpenseReceipt(
-        request: ClockifyApi.DownloadExpenseReceiptRequest,
+    public downloadReceipt(
+        request: ClockifyApi.DownloadReceiptExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): core.HttpResponsePromise<core.BinaryResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__downloadExpenseReceipt(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__downloadReceipt(request, requestOptions));
     }
 
-    private async __downloadExpenseReceipt(
-        request: ClockifyApi.DownloadExpenseReceiptRequest,
+    private async __downloadReceipt(
+        request: ClockifyApi.DownloadReceiptExpensesRequest,
         requestOptions?: ExpensesClient.RequestOptions,
     ): Promise<core.WithRawResponse<core.BinaryResponse>> {
         const { workspaceId, expenseId, fileId } = request;

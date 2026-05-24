@@ -393,11 +393,11 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateTaskCostRateRequest} request
+     * @param {ClockifyApi.UpdateCostRateTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.updateTaskCostRate({
+     *     await client.tasks.updateCostRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId",
@@ -407,15 +407,15 @@ export class TasksClient {
      *         }
      *     })
      */
-    public updateTaskCostRate(
-        request: ClockifyApi.UpdateTaskCostRateRequest,
+    public updateCostRate(
+        request: ClockifyApi.UpdateCostRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTaskCostRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateCostRate(request, requestOptions));
     }
 
-    private async __updateTaskCostRate(
-        request: ClockifyApi.UpdateTaskCostRateRequest,
+    private async __updateCostRate(
+        request: ClockifyApi.UpdateCostRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId, body: _body } = request;
@@ -466,11 +466,11 @@ export class TasksClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateTaskBillableRateRequest} request
+     * @param {ClockifyApi.UpdateBillableRateTasksRequest} request
      * @param {TasksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.tasks.updateTaskBillableRate({
+     *     await client.tasks.updateBillableRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         taskId: "taskId",
@@ -480,15 +480,15 @@ export class TasksClient {
      *         }
      *     })
      */
-    public updateTaskBillableRate(
-        request: ClockifyApi.UpdateTaskBillableRateRequest,
+    public updateBillableRate(
+        request: ClockifyApi.UpdateBillableRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Task> {
-        return core.HttpResponsePromise.fromPromise(this.__updateTaskBillableRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateBillableRate(request, requestOptions));
     }
 
-    private async __updateTaskBillableRate(
-        request: ClockifyApi.UpdateTaskBillableRateRequest,
+    private async __updateBillableRate(
+        request: ClockifyApi.UpdateBillableRateTasksRequest,
         requestOptions?: TasksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Task>> {
         const { workspaceId, projectId, taskId, body: _body } = request;

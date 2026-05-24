@@ -23,24 +23,24 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.GetAddonWebhooksOnWorkspaceRequest} request
+     * @param {ClockifyApi.ListForAddonWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.getAddonWebhooksOnWorkspace({
+     *     await client.webhooks.listForAddon({
      *         workspaceId: "workspaceId",
      *         addonId: "addonId"
      *     })
      */
-    public getAddonWebhooksOnWorkspace(
-        request: ClockifyApi.GetAddonWebhooksOnWorkspaceRequest,
+    public listForAddon(
+        request: ClockifyApi.ListForAddonWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookCollectionDtoV1> {
-        return core.HttpResponsePromise.fromPromise(this.__getAddonWebhooksOnWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__listForAddon(request, requestOptions));
     }
 
-    private async __getAddonWebhooksOnWorkspace(
-        request: ClockifyApi.GetAddonWebhooksOnWorkspaceRequest,
+    private async __listForAddon(
+        request: ClockifyApi.ListForAddonWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookCollectionDtoV1>> {
         const { workspaceId, addonId } = request;
@@ -440,26 +440,24 @@ export class WebhooksClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest} request
+     * @param {ClockifyApi.RotateTokenWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken({
+     *     await client.webhooks.rotateToken({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest,
+    public rotateToken(
+        request: ClockifyApi.RotateTokenWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Webhook> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__rotateToken(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewTokenRequest,
+    private async __rotateToken(
+        request: ClockifyApi.RotateTokenWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Webhook>> {
         const { workspaceId, webhookId } = request;
@@ -520,28 +518,26 @@ export class WebhooksClient {
      * retired. go-clockify should NOT model this as a working GET
      * and any handler that calls it will fail in prod.
      *
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest} request
+     * @param {ClockifyApi.ListLogsWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.MethodNotAllowedError}
      *
      * @example
-     *     await client.webhooks.getWorkspacesWorkspaceIdWebhooksWebhookIdLogs({
+     *     await client.webhooks.listLogs({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId"
      *     })
      */
-    public getWorkspacesWorkspaceIdWebhooksWebhookIdLogs(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest,
+    public listLogs(
+        request: ClockifyApi.ListLogsWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdWebhooksWebhookIdLogs(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__listLogs(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdWebhooksWebhookIdLogs(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest,
+    private async __listLogs(
+        request: ClockifyApi.ListLogsWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, webhookId } = request;
@@ -598,7 +594,7 @@ export class WebhooksClient {
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.webhooks.getWebhookLogs({
+     *     await client.webhooks.searchLogs({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId",
      *         from: "2023-02-01T13:00:46Z",
@@ -607,14 +603,14 @@ export class WebhooksClient {
      *         to: "2023-02-05T13:00:46Z"
      *     })
      */
-    public getWebhookLogs(
+    public searchLogs(
         request: ClockifyApi.WebhookLogsRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhookLogDtoV1[]> {
-        return core.HttpResponsePromise.fromPromise(this.__getWebhookLogs(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__searchLogs(request, requestOptions));
     }
 
-    private async __getWebhookLogs(
+    private async __searchLogs(
         request: ClockifyApi.WebhookLogsRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhookLogDtoV1[]>> {
@@ -679,28 +675,26 @@ export class WebhooksClient {
      * Request body is empty. Response is the full webhook with a
      * rotated `authToken`; the previous token is invalidated.
      *
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest} request
+     * @param {ClockifyApi.UpdateTokenWebhooksRequest} request
      * @param {WebhooksClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @throws {@link ClockifyApi.MethodNotAllowedError}
      *
      * @example
-     *     await client.webhooks.patchWorkspacesWorkspaceIdWebhooksWebhookIdToken({
+     *     await client.webhooks.updateToken({
      *         workspaceId: "workspaceId",
      *         webhookId: "webhookId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdWebhooksWebhookIdToken(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest,
+    public updateToken(
+        request: ClockifyApi.UpdateTokenWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.WebhooksWebhook2> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdWebhooksWebhookIdToken(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateToken(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdWebhooksWebhookIdToken(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest,
+    private async __updateToken(
+        request: ClockifyApi.UpdateTokenWebhooksRequest,
         requestOptions?: WebhooksClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.WebhooksWebhook2>> {
         const { workspaceId, webhookId } = request;

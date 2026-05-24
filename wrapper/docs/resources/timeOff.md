@@ -138,12 +138,12 @@
 - `note` (`string`, required) — Provide the note you would like to use for changing the time off request.
 - `status` (`ChangeTimeOffRequestStatusRequest.Status`, required) — Provide the status you would like to use for changing the time off request.
 
-### `createTimeOffRequestForUser`
+### `submitForUser`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.createTimeOffRequestForUser({
+    await client.timeOff.submitForUser({
         workspaceId: "workspaceId",
         policyId: "policyId",
         userId: "userId",
@@ -162,7 +162,7 @@
     })
 ```
 
-**Request fields** (`CreateTimeOffRequestForUserRequest`):
+**Request fields** (`SubmitForUserTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)

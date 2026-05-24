@@ -92,28 +92,28 @@
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 
-### `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers`
+### `listMembers`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupIdUsers({
+    await client.userGroups.listMembers({
         workspaceId: "workspaceId",
         groupId: "groupId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest`):
+**Request fields** (`ListMembersUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 
-### `addUsersToGroup`
+### `addMembers`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.addUsersToGroup({
+    await client.userGroups.addMembers({
         workspaceId: "workspaceId",
         groupId: "groupId",
         userId: "5a0ab5acb07987125438b60f"
@@ -126,19 +126,19 @@
 - `groupId` (`string`, required)
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `removeUserFromGroup`
+### `removeMember`
 
 **Example:**
 
 ```typescript
-    await client.userGroups.removeUserFromGroup({
+    await client.userGroups.removeMember({
         workspaceId: "workspaceId",
         groupId: "groupId",
         userId: "userId"
     })
 ```
 
-**Request fields** (`RemoveUserFromGroupRequest`):
+**Request fields** (`RemoveMemberUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)

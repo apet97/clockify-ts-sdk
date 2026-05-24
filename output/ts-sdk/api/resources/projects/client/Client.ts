@@ -245,7 +245,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.createProjectFromTemplate({
+     *     await client.projects.createFromTemplate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         clientId: "9t641568b07987035750704",
      *         color: "#000000",
@@ -254,14 +254,14 @@ export class ProjectsClient {
      *         templateProjectId: "5b641568b07987035750505e"
      *     })
      */
-    public createProjectFromTemplate(
+    public createFromTemplate(
         request: ClockifyApi.CreateProjectFromTemplateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__createProjectFromTemplate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__createFromTemplate(request, requestOptions));
     }
 
-    private async __createProjectFromTemplate(
+    private async __createFromTemplate(
         request: ClockifyApi.CreateProjectFromTemplateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -545,26 +545,24 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest} request
+     * @param {ClockifyApi.ArchiveProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive({
+     *     await client.projects.archive({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId"
      *     })
      */
-    public putWorkspacesWorkspaceIdProjectsProjectIdArchive(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest,
+    public archive(
+        request: ClockifyApi.ArchiveProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdProjectsProjectIdArchive(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__archive(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdProjectsProjectIdArchive(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest,
+    private async __archive(
+        request: ClockifyApi.ArchiveProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, projectId, ..._body } = request;
@@ -615,27 +613,25 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest} request
+     * @param {ClockifyApi.UpdateCostRateProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdCostRate({
+     *     await client.projects.updateCostRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         amount: 1
      *     })
      */
-    public putWorkspacesWorkspaceIdProjectsProjectIdCostRate(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest,
+    public updateCostRate(
+        request: ClockifyApi.UpdateCostRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdProjectsProjectIdCostRate(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateCostRate(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdProjectsProjectIdCostRate(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest,
+    private async __updateCostRate(
+        request: ClockifyApi.UpdateCostRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, projectId, ..._body } = request;
@@ -690,7 +686,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProjectEstimate({
+     *     await client.projects.updateEstimate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         budgetEstimate: {
@@ -718,14 +714,14 @@ export class ProjectsClient {
      *         }
      *     })
      */
-    public updateProjectEstimate(
+    public updateEstimate(
         request: ClockifyApi.UpdateProjectEstimateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectEstimate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateEstimate(request, requestOptions));
     }
 
-    private async __updateProjectEstimate(
+    private async __updateEstimate(
         request: ClockifyApi.UpdateProjectEstimateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -777,27 +773,25 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest} request
+     * @param {ClockifyApi.UpdateHourlyRateProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate({
+     *     await client.projects.updateHourlyRate({
      *         workspaceId: "workspaceId",
      *         projectId: "projectId",
      *         amount: 1
      *     })
      */
-    public putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest,
+    public updateHourlyRate(
+        request: ClockifyApi.UpdateHourlyRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateHourlyRate(request, requestOptions));
     }
 
-    private async __putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate(
-        request: ClockifyApi.PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest,
+    private async __updateHourlyRate(
+        request: ClockifyApi.UpdateHourlyRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, projectId, ..._body } = request;
@@ -927,7 +921,7 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProjectMemberships({
+     *     await client.projects.updateMemberships({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         memberships: [{
@@ -948,14 +942,14 @@ export class ProjectsClient {
      *         }
      *     })
      */
-    public updateProjectMemberships(
+    public updateMemberships(
         request: ClockifyApi.UpdateProjectMembershipsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectMemberships(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateMemberships(request, requestOptions));
     }
 
-    private async __updateProjectMemberships(
+    private async __updateMemberships(
         request: ClockifyApi.UpdateProjectMembershipsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -1011,20 +1005,20 @@ export class ProjectsClient {
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProjectTemplate({
+     *     await client.projects.updateTemplate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         isTemplate: false
      *     })
      */
-    public updateProjectTemplate(
+    public updateTemplate(
         request: ClockifyApi.UpdateProjectTemplateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectTemplate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateTemplate(request, requestOptions));
     }
 
-    private async __updateProjectTemplate(
+    private async __updateTemplate(
         request: ClockifyApi.UpdateProjectTemplateRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
@@ -1076,11 +1070,11 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateProjectUserCostRateRequest} request
+     * @param {ClockifyApi.UpdateUserCostRateProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProjectUserCostRate({
+     *     await client.projects.updateUserCostRate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         userId: "4a0ab5acb07987125438b60f",
@@ -1090,15 +1084,15 @@ export class ProjectsClient {
      *         }
      *     })
      */
-    public updateProjectUserCostRate(
-        request: ClockifyApi.UpdateProjectUserCostRateRequest,
+    public updateUserCostRate(
+        request: ClockifyApi.UpdateUserCostRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectUserCostRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateUserCostRate(request, requestOptions));
     }
 
-    private async __updateProjectUserCostRate(
-        request: ClockifyApi.UpdateProjectUserCostRateRequest,
+    private async __updateUserCostRate(
+        request: ClockifyApi.UpdateUserCostRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
         const { workspaceId, projectId, userId, body: _body } = request;
@@ -1149,11 +1143,11 @@ export class ProjectsClient {
     }
 
     /**
-     * @param {ClockifyApi.UpdateProjectUserHourlyRateRequest} request
+     * @param {ClockifyApi.UpdateUserHourlyRateProjectsRequest} request
      * @param {ProjectsClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.projects.updateProjectUserHourlyRate({
+     *     await client.projects.updateUserHourlyRate({
      *         workspaceId: "64a687e29ae1f428e7ebe303",
      *         projectId: "5b641568b07987035750505e",
      *         userId: "4a0ab5acb07987125438b60f",
@@ -1163,15 +1157,15 @@ export class ProjectsClient {
      *         }
      *     })
      */
-    public updateProjectUserHourlyRate(
-        request: ClockifyApi.UpdateProjectUserHourlyRateRequest,
+    public updateUserHourlyRate(
+        request: ClockifyApi.UpdateUserHourlyRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Project> {
-        return core.HttpResponsePromise.fromPromise(this.__updateProjectUserHourlyRate(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateUserHourlyRate(request, requestOptions));
     }
 
-    private async __updateProjectUserHourlyRate(
-        request: ClockifyApi.UpdateProjectUserHourlyRateRequest,
+    private async __updateUserHourlyRate(
+        request: ClockifyApi.UpdateUserHourlyRateProjectsRequest,
         requestOptions?: ProjectsClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Project>> {
         const { workspaceId, projectId, userId, body: _body } = request;

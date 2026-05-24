@@ -7,7 +7,7 @@
  *         userId: "userId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest {
+export interface ListForUserTimeEntriesRequest {
     workspaceId: string;
     userId: string;
     description?: string;

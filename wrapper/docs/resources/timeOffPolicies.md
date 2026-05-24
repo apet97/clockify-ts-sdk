@@ -205,12 +205,12 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `policyId` (`string`, required)
 
-### `changeTimeOffPolicyStatus`
+### `updateStatus`
 
 **Example:**
 
 ```typescript
-    await client.timeOffPolicies.changeTimeOffPolicyStatus({
+    await client.timeOffPolicies.updateStatus({
         workspaceId: "60f91b3ffdaf031696ec61a8",
         policyId: "policyId",
         status: "ACTIVE"

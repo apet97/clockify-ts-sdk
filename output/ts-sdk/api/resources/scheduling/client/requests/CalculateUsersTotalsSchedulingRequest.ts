@@ -8,7 +8,7 @@
  *         start: "2024-01-15T09:30:00Z"
  *     }
  */
-export interface PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest {
+export interface CalculateUsersTotalsSchedulingRequest {
     workspaceId: string;
     end: string;
     start: string;

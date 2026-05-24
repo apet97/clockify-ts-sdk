@@ -12,7 +12,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface PostWorkspacesWorkspaceIdUserUserIdTimeEntriesRequest {
+export interface CreateForUserTimeEntriesRequest {
     workspaceId: string;
     userId: string;
     body: ClockifyApi.TimeEntryCreate;

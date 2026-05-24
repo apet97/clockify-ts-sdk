@@ -115,9 +115,9 @@
 - `workspaceId` (`string`, required)
 - `expenseId` (`string`, required)
 
-### `downloadExpenseReceipt`
+### `downloadReceipt`
 
-**Request fields** (`DownloadExpenseReceiptRequest`):
+**Request fields** (`DownloadReceiptExpensesRequest`):
 
 - `workspaceId` (`string`, required)
 - `expenseId` (`string`, required)

@@ -6,8 +6,8 @@
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdTimeEntriesInvoicedBulkRequest {
+export interface ListInProgressTimeEntriesRequest {
     workspaceId: string;
-    ids?: string[];
-    invoiced?: boolean;
+    page?: number;
+    "page-size"?: number;
 }

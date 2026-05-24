@@ -4,10 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         webhookId: "webhookId"
+ *         groupId: "groupId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdWebhooksWebhookIdLogsRequest {
+export interface ListMembersUserGroupsRequest {
     workspaceId: string;
-    webhookId: string;
+    groupId: string;
 }

@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `getSharedReportsSharedReportId`
+### `view`
 
-**Request fields** (`GetSharedReportsSharedReportIdRequest`):
+**Request fields** (`ViewSharedReportsRequest`):
 
 - `sharedReportId` (`string`, required)
-- `exportType` (`ClockifyApi.GetSharedReportsSharedReportIdRequestExportType`, optional)
+- `exportType` (`ClockifyApi.ViewSharedReportsRequestExportType`, optional)
 
 ### `list`
 

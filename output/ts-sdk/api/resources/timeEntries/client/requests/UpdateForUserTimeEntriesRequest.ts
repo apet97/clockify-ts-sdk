@@ -8,7 +8,7 @@
  *         end: "2024-01-15T09:30:00Z"
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdUserUserIdTimeEntriesStopRequest {
+export interface UpdateForUserTimeEntriesRequest {
     workspaceId: string;
     userId: string;
     end: string;

@@ -54,10 +54,11 @@ once v1.0.0 ships.
 
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
-- **Idiomatic method names on 21 modules (G.1).** With both
-  `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
-  upstream spec, Fern now generates 21 of the 31 resource modules
-  with idiomatic names. 110 ops mapped in total:
+- **Idiomatic method names on 21 modules + action-verb cleanups (G.1).**
+  With both `x-fern-sdk-group-name` and `x-fern-sdk-method-name`
+  stamped on the upstream spec, Fern now generates 21 of the 31
+  resource modules with idiomatic names. **149 ops mapped in total**
+  (was 110 in the first G.1 cut; +39 specialised action verbs):
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).
@@ -128,6 +129,38 @@ once v1.0.0 ships.
     Each report family is a POST-with-body call; the verb is the
     family name directly, matching how Clockify users describe the
     reports surface.
+
+  **Action-verb cleanups inside the 21 stamped modules (+39 ops):**
+  - `projects` adds `createFromTemplate`, `archive`, `updateCostRate`,
+    `updateEstimate`, `updateHourlyRate`, `updateMemberships`,
+    `updateTemplate`, `updateUserCostRate`, `updateUserHourlyRate`.
+    `assignOrRemoveProjectUsers` kept operationId-derived (semantic
+    overlap with `updateMemberships`; needs domain disambiguation).
+  - `tasks` adds `updateCostRate`, `updateBillableRate`.
+  - `timeEntries` adds `markInvoiced`, `markInvoicedBulk`,
+    `listInProgress`, `listForUser`, `createForUser`, `startTimer`
+    (PUT on `/user/{userId}/time-entries` — start a running entry),
+    `updateForUser`, `stopTimer`, `duplicate`. `deleteMany` stays as
+    its existing idiomatic name.
+  - `holidays` adds `listInPeriod`.
+  - `sharedReports` adds `view` (the bare unauthenticated
+    `/shared-reports/{srid}` route).
+  - `timeOffPolicies` adds `updateStatus`.
+  - `userGroups` adds `listMembers`, `addMembers`, `removeMember`.
+  - `webhooks` adds `listForAddon`, `rotateToken`, `listLogs`
+    (GET `/logs`), `searchLogs` (POST `/logs` with body),
+    `updateToken`.
+  - `expenses` adds `downloadReceipt`.
+  - `scheduling` adds `listPerProject`, `listOnProject`,
+    `replaceRecurring` (PUT-style replace on recurring assignments,
+    paired with the existing `updateRecurring` PATCH),
+    `getUsersCapacityFiltered`, `calculateUsersTotals`,
+    `getUserCapacity`.
+  - `timeOff` adds `submitForUser`.
+
+  Legacy duplicate paths (e.g. `/policies/{policyId}/requests` mirroring
+  `/time-off/policies/{policyId}/requests`) stay operationId-derived
+  to avoid Fern method-name collisions inside the same module.
 
   The other ~10 modules continue to use operationId-derived names —
   all of them either small / read-only (`memberProfiles`, `roles`,

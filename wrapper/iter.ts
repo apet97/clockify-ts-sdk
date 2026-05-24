@@ -86,14 +86,8 @@ export type KnownPaginatedMethod =
     | { readonly resource: "scheduling"; readonly method: "list" }
     | { readonly resource: "tags"; readonly method: "list" }
     | { readonly resource: "tasks"; readonly method: "list" }
-    | {
-          readonly resource: "timeEntries";
-          readonly method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress";
-      }
-    | {
-          readonly resource: "timeEntries";
-          readonly method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries";
-      }
+    | { readonly resource: "timeEntries"; readonly method: "listInProgress" }
+    | { readonly resource: "timeEntries"; readonly method: "listForUser" }
     | { readonly resource: "timeOffPolicies"; readonly method: "list" }
     | { readonly resource: "userGroups"; readonly method: "list" }
     | { readonly resource: "users"; readonly method: "findUserTeamManagers" }
@@ -118,8 +112,8 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "scheduling", method: "list" },
     { resource: "tags", method: "list" },
     { resource: "tasks", method: "list" },
-    { resource: "timeEntries", method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress" },
-    { resource: "timeEntries", method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries" },
+    { resource: "timeEntries", method: "listInProgress" },
+    { resource: "timeEntries", method: "listForUser" },
     { resource: "timeOffPolicies", method: "list" },
     { resource: "userGroups", method: "list" },
     { resource: "users", method: "findUserTeamManagers" },

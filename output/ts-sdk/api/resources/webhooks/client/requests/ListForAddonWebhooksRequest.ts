@@ -4,10 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         webhookId: "webhookId"
+ *         addonId: "addonId"
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdWebhooksWebhookIdTokenRequest {
+export interface ListForAddonWebhooksRequest {
     workspaceId: string;
-    webhookId: string;
+    addonId: string;
 }

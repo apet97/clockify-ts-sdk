@@ -9,7 +9,7 @@
  *         end: "2022-12-05T23:59:59Z"
  *     }
  */
-export interface GetWorkspaceHolidaysInPeriodRequest {
+export interface ListInPeriodHolidaysRequest {
     workspaceId: string;
     /**
      * Filter list of holidays assigned to user.

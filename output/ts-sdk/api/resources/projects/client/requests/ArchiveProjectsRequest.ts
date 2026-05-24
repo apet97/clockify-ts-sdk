@@ -4,10 +4,11 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         groupId: "groupId"
+ *         projectId: "projectId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest {
+export interface ArchiveProjectsRequest {
     workspaceId: string;
-    groupId: string;
+    projectId: string;
+    archived?: boolean;
 }

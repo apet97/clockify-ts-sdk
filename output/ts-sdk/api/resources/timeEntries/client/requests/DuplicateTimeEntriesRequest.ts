@@ -8,7 +8,7 @@
  *         timeEntryId: "timeEntryId"
  *     }
  */
-export interface PostWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicateRequest {
+export interface DuplicateTimeEntriesRequest {
     workspaceId: string;
     userId: string;
     timeEntryId: string;

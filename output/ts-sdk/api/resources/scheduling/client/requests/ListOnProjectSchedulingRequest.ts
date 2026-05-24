@@ -7,7 +7,7 @@
  *         projectId: "56b687e29ae1f428e7ebe504"
  *     }
  */
-export interface GetScheduledAssignmentsOnProjectRequest {
+export interface ListOnProjectSchedulingRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     /** Represents a project identifier across the system. */

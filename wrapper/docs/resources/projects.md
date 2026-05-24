@@ -103,12 +103,12 @@
 - `note` (`string`, optional) — Represents project note.
 - `tasks` (`ClockifyApi.TaskRequest[]`, optional) — Represents a list of task request objects.
 
-### `createProjectFromTemplate`
+### `createFromTemplate`
 
 **Example:**
 
 ```typescript
-    await client.projects.createProjectFromTemplate({
+    await client.projects.createFromTemplate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         clientId: "9t641568b07987035750704",
         color: "#000000",
@@ -205,36 +205,36 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
 
-### `putWorkspacesWorkspaceIdProjectsProjectIdArchive`
+### `archive`
 
 **Example:**
 
 ```typescript
-    await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive({
+    await client.projects.archive({
         workspaceId: "workspaceId",
         projectId: "projectId"
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest`):
+**Request fields** (`ArchiveProjectsRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `archived` (`boolean`, optional)
 
-### `putWorkspacesWorkspaceIdProjectsProjectIdCostRate`
+### `updateCostRate`
 
 **Example:**
 
 ```typescript
-    await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdCostRate({
+    await client.projects.updateCostRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         amount: 1
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdProjectsProjectIdCostRateRequest`):
+**Request fields** (`UpdateCostRateProjectsRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
@@ -242,12 +242,12 @@
 - `since` (`string`, optional)
 - `sinceAsInstant` (`string`, optional)
 
-### `updateProjectEstimate`
+### `updateEstimate`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProjectEstimate({
+    await client.projects.updateEstimate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         budgetEstimate: {
@@ -284,19 +284,19 @@
 - `estimateReset` (`ClockifyApi.EstimateResetRequest`, optional)
 - `timeEstimate` (`ClockifyApi.TimeEstimateRequest`, optional)
 
-### `putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate`
+### `updateHourlyRate`
 
 **Example:**
 
 ```typescript
-    await client.projects.putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate({
+    await client.projects.updateHourlyRate({
         workspaceId: "workspaceId",
         projectId: "projectId",
         amount: 1
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest`):
+**Request fields** (`UpdateHourlyRateProjectsRequest`):
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
@@ -330,12 +330,12 @@
 - `userGroups` (`ClockifyApi.ProjectsUserGroupIdsSchema`, optional)
 - `userIds` (`string[]`, optional) — Represents array of user ids which should be added/removed.
 
-### `updateProjectMemberships`
+### `updateMemberships`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProjectMemberships({
+    await client.projects.updateMemberships({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         memberships: [{
@@ -364,12 +364,12 @@
 - `memberships` (`ClockifyApi.UserIdWithRatesRequest[]`, required) — Represents a list of users with id and rates request objects.
 - `userGroups` (`ClockifyApi.ProjectsUserGroupIdsSchema`, optional)
 
-### `updateProjectTemplate`
+### `updateTemplate`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProjectTemplate({
+    await client.projects.updateTemplate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         isTemplate: false
@@ -382,12 +382,12 @@
 - `projectId` (`string`, required) — Represents a project identifier across the system.
 - `isTemplate` (`boolean`, required) — Indicates whether project is a template or not.
 
-### `updateProjectUserCostRate`
+### `updateUserCostRate`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProjectUserCostRate({
+    await client.projects.updateUserCostRate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         userId: "4a0ab5acb07987125438b60f",
@@ -398,19 +398,19 @@
     })
 ```
 
-**Request fields** (`UpdateProjectUserCostRateRequest`):
+**Request fields** (`UpdateUserCostRateProjectsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 - `body` (`ClockifyApi.RateRequest`, required)
 
-### `updateProjectUserHourlyRate`
+### `updateUserHourlyRate`
 
 **Example:**
 
 ```typescript
-    await client.projects.updateProjectUserHourlyRate({
+    await client.projects.updateUserHourlyRate({
         workspaceId: "64a687e29ae1f428e7ebe303",
         projectId: "5b641568b07987035750505e",
         userId: "4a0ab5acb07987125438b60f",
@@ -421,7 +421,7 @@
     })
 ```
 
-**Request fields** (`UpdateProjectUserHourlyRateRequest`):
+**Request fields** (`UpdateUserHourlyRateProjectsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.

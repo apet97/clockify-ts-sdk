@@ -27,15 +27,15 @@ export class SharedReportsClient {
      * to receive a binary export with `Content-Disposition` filename. Without
      * `exportType`, returns the shared-report JSON envelope.
      */
-    public getSharedReportsSharedReportId(
-        request: ClockifyApi.GetSharedReportsSharedReportIdRequest,
+    public view(
+        request: ClockifyApi.ViewSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): core.HttpResponsePromise<core.BinaryResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getSharedReportsSharedReportId(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__view(request, requestOptions));
     }
 
-    private async __getSharedReportsSharedReportId(
-        request: ClockifyApi.GetSharedReportsSharedReportIdRequest,
+    private async __view(
+        request: ClockifyApi.ViewSharedReportsRequest,
         requestOptions?: SharedReportsClient.RequestOptions,
     ): Promise<core.WithRawResponse<core.BinaryResponse>> {
         const { sharedReportId, exportType } = request;

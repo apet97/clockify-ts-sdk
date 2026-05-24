@@ -8,7 +8,7 @@
  *         amount: 1
  *     }
  */
-export interface PutWorkspacesWorkspaceIdProjectsProjectIdHourlyRateRequest {
+export interface UpdateHourlyRateProjectsRequest {
     workspaceId: string;
     projectId: string;
     amount: number;

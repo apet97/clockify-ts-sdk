@@ -4,11 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         projectId: "projectId"
+ *         webhookId: "webhookId"
  *     }
  */
-export interface PutWorkspacesWorkspaceIdProjectsProjectIdArchiveRequest {
+export interface RotateTokenWebhooksRequest {
     workspaceId: string;
-    projectId: string;
-    archived?: boolean;
+    webhookId: string;
 }

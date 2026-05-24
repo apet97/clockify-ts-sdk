@@ -466,20 +466,20 @@ export class TimeOffPoliciesClient {
      * @param {TimeOffPoliciesClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOffPolicies.changeTimeOffPolicyStatus({
+     *     await client.timeOffPolicies.updateStatus({
      *         workspaceId: "60f91b3ffdaf031696ec61a8",
      *         policyId: "policyId",
      *         status: "ACTIVE"
      *     })
      */
-    public changeTimeOffPolicyStatus(
+    public updateStatus(
         request: ClockifyApi.PolicyStatusChangeRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.Policy> {
-        return core.HttpResponsePromise.fromPromise(this.__changeTimeOffPolicyStatus(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__updateStatus(request, requestOptions));
     }
 
-    private async __changeTimeOffPolicyStatus(
+    private async __updateStatus(
         request: ClockifyApi.PolicyStatusChangeRequest,
         requestOptions?: TimeOffPoliciesClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.Policy>> {
