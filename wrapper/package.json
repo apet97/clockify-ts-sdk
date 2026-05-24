@@ -85,6 +85,16 @@
                 "types": "./dist/cjs/pagination.d.ts",
                 "default": "./dist/cjs/pagination.js"
             }
+        },
+        "./with-response": {
+            "import": {
+                "types": "./dist/esm/with-response.d.ts",
+                "default": "./dist/esm/with-response.js"
+            },
+            "require": {
+                "types": "./dist/cjs/with-response.d.ts",
+                "default": "./dist/cjs/with-response.js"
+            }
         }
     },
     "files": [

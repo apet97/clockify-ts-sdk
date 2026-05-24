@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { ClockifyApiClient } from "../src/index.js";
+import { createClockifyClient } from "../create-client.js";
+import { iterAll } from "../iter.js";
 import { paginate } from "../pagination.js";
+import { withResponse } from "../with-response.js";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
@@ -16,16 +18,11 @@ if (!liveSandboxAvailable) {
 }
 
 describeLive("clockify-sdk-ts live sandbox", () => {
-    // X-Api-Key and X-Addon-Token are two distinct auth schemes; only one
-    // should be on a given request. Fern's generated BaseClientOptions
-    // types BOTH as required, so we silence the addonToken field with a
-    // supplier that yields undefined (resulting header is dropped at merge
-    // time). Tracked as a Fern type-shape limitation in
-    // addons-me/fern/spec/evidence/discrepancies.md.
-    const client = new ClockifyApiClient({
-        apiKey: apiKey!,
-        addonToken: (() => undefined) as unknown as () => string,
-    });
+    // createClockifyClient hides the addonToken workaround behind a
+    // discriminated-union options type — the raw cast lives inside
+    // the factory now (see spec/evidence/discrepancies.md ->
+    // fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive).
+    const client = createClockifyClient({ apiKey: apiKey! });
 
     it("lists tags (page=1, page-size=5)", async () => {
         const tags = await client.tags.getWorkspacesWorkspaceIdTags({
@@ -134,5 +131,41 @@ describeLive("clockify-sdk-ts live sandbox", () => {
                 tagId: "ffffffffffffffffffffffff",
             }),
         ).rejects.toBeInstanceOf(Error);
+    });
+
+    it("paginates projects via iterAll() across at least one page", async () => {
+        const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
+        const seen = new Set<string>();
+        let count = 0;
+        for await (const project of iterAll(
+            listProjects,
+            { workspaceId: workspaceId! },
+            { pageSize: 5, maxPages: 3 },
+        )) {
+            count++;
+            if (project.id != null) seen.add(project.id);
+        }
+        // At least one project came back; no duplicate IDs across pages.
+        expect(seen.size).toBe(count);
+    });
+
+    it("withResponse() exposes status + headers + requestId on a list call", async () => {
+        const { data, status, headers, requestId } = await withResponse(
+            client.tags.getWorkspacesWorkspaceIdTags({
+                workspaceId: workspaceId!,
+                page: 1,
+                "page-size": 1,
+            }),
+        );
+        expect(status).toBeGreaterThanOrEqual(200);
+        expect(status).toBeLessThan(300);
+        expect(Array.isArray(data)).toBe(true);
+        // Our composedFetch injects X-Request-Id; the server typically
+        // echoes it (or strips it). Either way the field exists on the
+        // result; if the server stripped it, requestId is undefined.
+        expect(typeof headers.get).toBe("function");
+        if (requestId != null) {
+            expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
+        }
     });
 });

@@ -2905,6 +2905,10 @@ dist/cjs/webhooks.d.ts
 dist/cjs/webhooks.d.ts.map
 dist/cjs/webhooks.js
 dist/cjs/webhooks.js.map
+dist/cjs/with-response.d.ts
+dist/cjs/with-response.d.ts.map
+dist/cjs/with-response.js
+dist/cjs/with-response.js.map
 dist/esm/composed-fetch.d.ts
 dist/esm/composed-fetch.d.ts.map
 dist/esm/composed-fetch.js
@@ -5809,4 +5813,8 @@ dist/esm/webhooks.d.ts
 dist/esm/webhooks.d.ts.map
 dist/esm/webhooks.js
 dist/esm/webhooks.js.map
+dist/esm/with-response.d.ts
+dist/esm/with-response.d.ts.map
+dist/esm/with-response.js
+dist/esm/with-response.js.map
 package.json

@@ -9,6 +9,24 @@ once v1.0.0 ships.
 
 ### Added
 
+- **`withResponse()` ergonomic shim (Phase 1.7).** New
+  `clockify-sdk-ts/with-response` subpath exposes
+  `withResponse(promise) -> { data, response, headers, requestId,
+  status }`. Thin wrapper over the synced
+  `HttpResponsePromise.withRawResponse()` that lifts the
+  X-Request-Id (injected by composedFetch) + status to top-level
+  fields for log correlation. Re-exported from the package root.
+  Updates: dual-build now asserts 18 names + 6 CJS subpaths;
+  baseline `.packsnapshot` regenerated to match the new
+  `dist/{esm,cjs}/with-response.{js,d.ts,...}` entries.
+- **Sandbox live test refactor (Phase 4.3).** `tests/sandbox.test.ts`
+  now constructs the client via `createClockifyClient({ apiKey })`
+  instead of the raw `new ClockifyApiClient({ ..., addonToken: cast })`
+  pattern — the wrapper-side factory is the documented entry point;
+  the live suite should exercise it. Added two new live flows:
+  iterAll across projects (asserting no duplicate IDs across pages)
+  and withResponse against the tags list (asserting status,
+  headers, and request-id propagation).
 - **Prettier (Phase 8).** `wrapper/.prettierrc` and
   `wrapper/.prettierignore` enforce consistent formatting on the
   hand-written surface (`wrapper/*.ts`, `tests/`, `scripts/`,

@@ -50,6 +50,11 @@ export {
 } from "./iter.js";
 export { paginate, type PaginateOptions } from "./pagination.js";
 export {
+    withResponse,
+    type ResponseAwarePromise,
+    type WithResponseResult,
+} from "./with-response.js";
+export {
     CLOCKIFY_SIGNATURE_HEADER,
     constructEvent,
     getClockifySignatureToken,

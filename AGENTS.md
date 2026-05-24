@@ -249,6 +249,13 @@ wrapper/
 │                                (`paginate<T>`); `iterAll` is the recommended
 │                                higher-level API; exported as
 │                                `clockify-sdk-ts/pagination`
+├── with-response.ts          ← hand-written shim that lifts the
+│                                `HttpResponsePromise.withRawResponse()`
+│                                result into a flatter `{ data, response,
+│                                headers, requestId, status }` shape; exposes
+│                                the composedFetch-injected X-Request-Id at
+│                                the top level for log correlation; exported
+│                                as `clockify-sdk-ts/with-response`
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/ + chains

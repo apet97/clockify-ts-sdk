@@ -38,6 +38,7 @@ import {
     USER_AGENT_HEADER,
     CLOCKIFY_SIGNATURE_HEADER,
     KNOWN_PAGINATED_METHODS,
+    withResponse,
 } from "../dist/esm/index.js";
 
 const checks: Array<[string, unknown, "function" | "object" | "string"]> = [
@@ -64,6 +65,7 @@ const checks: Array<[string, unknown, "function" | "object" | "string"]> = [
     ["USER_AGENT_HEADER", USER_AGENT_HEADER, "string"],
     ["CLOCKIFY_SIGNATURE_HEADER", CLOCKIFY_SIGNATURE_HEADER, "string"],
     ["KNOWN_PAGINATED_METHODS", KNOWN_PAGINATED_METHODS, "object"],
+    ["withResponse", withResponse, "function"],
 ];
 
 const missing: string[] = [];

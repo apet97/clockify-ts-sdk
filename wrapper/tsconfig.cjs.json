@@ -18,7 +18,8 @@
         "composed-fetch.ts",
         "iter.ts",
         "pagination.ts",
-        "webhooks.ts"
+        "webhooks.ts",
+        "with-response.ts"
     ],
     "exclude": ["node_modules", "dist", "tests"]
 }

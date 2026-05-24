@@ -38,6 +38,7 @@ const EXPECTED_EXPORTS = [
     "verifyClockifyWebhook",
     "constructEvent",
     "getRequestIdFromError",
+    "withResponse",
 ] as const;
 
 // Run only when both built artifacts exist. dev-loop without
