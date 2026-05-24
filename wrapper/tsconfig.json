@@ -8,8 +8,17 @@
     "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["node"],
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "clockify-sdk-ts": ["./index.ts"],
+      "clockify-sdk-ts/create-client": ["./create-client.ts"],
+      "clockify-sdk-ts/composed-fetch": ["./composed-fetch.ts"],
+      "clockify-sdk-ts/iter": ["./iter.ts"],
+      "clockify-sdk-ts/webhooks": ["./webhooks.ts"],
+      "clockify-sdk-ts/pagination": ["./pagination.ts"]
+    }
   },
   "include": ["src/**/*.ts", "index.ts", "create-client.ts", "composed-fetch.ts", "iter.ts", "pagination.ts", "webhooks.ts", "tests/**/*.ts", "examples/**/*.ts", "scripts/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "scripts/deno-smoke.ts"]
 }

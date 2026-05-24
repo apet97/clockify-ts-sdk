@@ -44,11 +44,23 @@ jobs:
       - name: Sync SDK from generator output
         run: npm run sync
 
+      - name: Drift check (sync output sanity)
+        run: |
+          file_count=$(find src -name '*.ts' | wc -l | tr -d ' ')
+          if [ "$file_count" -lt 700 ] || [ "$file_count" -gt 800 ]; then
+            echo "::error::wrapper/src/ TS file count $file_count outside expected range [700,800]. Possible drift in the synced SDK; investigate before merging."
+            exit 1
+          fi
+          echo "Sync OK: $file_count TS files in wrapper/src/"
+
       - name: Type-check
         run: npm run type-check
 
-      - name: Build (emit dist/)
+      - name: Build (dist/esm/ + dist/cjs/)
         run: npm run build
+
+      - name: Verify dual build (ESM + CJS surface)
+        run: npm run build:smoke
 
       - name: Run tests
         run: npm test
@@ -56,5 +68,112 @@ jobs:
         # when CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent.
         # GitHub-hosted CI deliberately does not get production creds.
 
-      - name: Pack dry-run
-        run: npm pack --dry-run
+      - name: Pack snapshot verification
+        run: |
+          npm pack --dry-run --json \
+            | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{console.log(JSON.parse(s)[0].files.map(f=>f.path).sort().join('\n'));})" \
+            > .packsnapshot.actual
+          if ! diff -u .packsnapshot .packsnapshot.actual; then
+            echo "::error::Tarball contents drifted from .packsnapshot baseline. If intentional, regenerate the baseline locally and commit."
+            exit 1
+          fi
+          echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
+
+  spec-check:
+    name: Spec check (corrected snapshot stays clean)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
+        run: npm install -g fern-api@5.37.9
+
+      - name: fern check --warnings --from-openapi
+        working-directory: spec/fern
+        run: fern check --warnings --from-openapi
+
+  bun-smoke:
+    name: Bun smoke (vitest under Bun)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js 22 (for npm + tsx)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies via npm (lockfile-pinned)
+        run: npm ci
+
+      - name: Sync SDK from generator output
+        run: npm run sync
+
+      - name: Run unit tests under Bun (no live API)
+        run: bun run vitest run tests/pagination.test.ts tests/create-client.test.ts tests/iter.test.ts tests/webhooks.test.ts tests/composed-fetch.test.ts
+        env:
+          CLOCKIFY_API_KEY: ""
+          CLOCKIFY_WORKSPACE_ID: ""
+
+  deno-smoke:
+    name: Deno smoke (import surface)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Setup Node.js 22 (for npm-driven build)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies + build dist/esm
+        run: |
+          npm ci
+          npm run sync
+          npm run build
+
+      - name: Run Deno smoke (import + name resolution)
+        run: deno run --allow-env --allow-read --allow-write --node-modules-dir=auto scripts/deno-smoke.ts

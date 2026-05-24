@@ -3,3 +3,7 @@ dist/
 src/
 *.tsbuildinfo
 .DS_Store
+
+# Pack-snapshot CI artifact (the baseline `.packsnapshot` IS
+# committed; only the per-run `.actual` diff target is transient).
+.packsnapshot.actual

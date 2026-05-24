@@ -9,6 +9,40 @@ once v1.0.0 ships.
 
 ### Added
 
+- **CI hardening (Phase 5.1-5.4).** Extended `.github/workflows/ci.yml`
+  with four new gates:
+  - **Drift check** — asserts `wrapper/src/` TS file count stays
+    in `[700, 800]` after `npm run sync`; catches generator output
+    drift early.
+  - **Dual-build verification** — runs `npm run build:smoke` after
+    every `npm run build`; ensures both ESM and CJS expose all
+    17 expected names + all 5 CJS subpaths resolve.
+  - **Pack snapshot** — diffs `npm pack --dry-run` output against
+    a committed `wrapper/.packsnapshot` baseline (5812 file paths,
+    one per line). Catches accidental tarball additions
+    (e.g. leaked `.env`, oversized fixture). Baseline regenerated
+    via the same pipeline + committed when changes are intentional.
+  - **Spec check** (new job) — runs `fern check --warnings
+    --from-openapi` against `spec/corrected/`; gates snapshot
+    rot independently of the build pipeline.
+  - **Bun smoke** (new job) — runs the unit test suite under Bun
+    via `oven-sh/setup-bun@v2`. Catches accidental Node-only
+    API usage that Vitest under Node masks.
+  - **Deno smoke** (new job) — `denoland/setup-deno@v2` runs
+    `wrapper/scripts/deno-smoke.ts` against the built ESM output;
+    asserts 23 expected names + types resolve under Deno's
+    `--node-modules-dir=auto`.
+- **Release hardening (Phase 5.7-5.8).** Extended
+  `.github/workflows/release.yml` with:
+  - **SBOM** — `npm sbom --sbom-format spdx --sbom-type library`
+    emits `sbom-vX.Y.Z.spdx.json`, attached to the GitHub Release
+    via `gh release upload`. Every tagged version now has an
+    SPDX-format SBOM alongside the tarball.
+  - **Post-publish smoke install** — pulls the just-published
+    version from npm into a clean Docker `node:22-alpine`
+    container and verifies 8 names resolve via both `import()`
+    and `require()`. Catches "looks fine locally; broken in the
+    tarball" gaps that aren't visible until after npm publish.
 - **CodeQL security scanning.** New
   `.github/workflows/codeql.yml` runs GitHub's `security-and-quality`
   query suite on push + PR + weekly cron. Scoped to the hand-written

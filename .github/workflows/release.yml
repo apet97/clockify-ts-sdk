@@ -16,10 +16,10 @@ jobs:
   publish:
     name: Publish clockify-sdk-ts
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
-      contents: read
-      id-token: write
+      contents: write # needed to attach SBOM to the GH release
+      id-token: write # required for npm provenance via OIDC
     defaults:
       run:
         working-directory: wrapper
@@ -40,11 +40,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync, type-check, build
+      - name: Sync, type-check, build (ESM + CJS), verify dual build
         run: |
           npm run sync
           npm run type-check
           npm run build
+          npm run build:smoke
 
       - name: Verify tag matches package version
         env:
@@ -57,7 +58,63 @@ jobs:
             exit 1
           fi
 
-      - name: Publish to npm (with provenance)
+      - name: Publish to npm (with provenance from publishConfig)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance
+        run: npm publish
+
+      - name: Generate SBOM (SPDX JSON)
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          npm sbom --sbom-format spdx --sbom-type library \
+            > "../sbom-${GITHUB_REF_NAME}.spdx.json"
+          echo "SBOM size: $(wc -c < ../sbom-${GITHUB_REF_NAME}.spdx.json) bytes"
+
+      - name: Attach SBOM to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
+        working-directory: .
+        run: |
+          # Create the release if the workflow ran from a raw tag push.
+          # gh release view exits non-zero when the release doesn't
+          # exist; create + upload pattern is idempotent on rerun.
+          if ! gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" \
+              --title "$GITHUB_REF_NAME" \
+              --notes "See [wrapper/CHANGELOG.md](https://github.com/${REPOSITORY}/blob/${GITHUB_REF_NAME}/wrapper/CHANGELOG.md) for the full diff."
+          fi
+          gh release upload "$GITHUB_REF_NAME" \
+            "sbom-${GITHUB_REF_NAME}.spdx.json" \
+            --clobber
+
+      - name: Post-publish smoke install (Docker, clean Node 22 environment)
+        env:
+          PKG_VERSION: ${{ github.ref_name }}
+        run: |
+          # Strip the leading 'v' for npm install.
+          VERSION="${PKG_VERSION#v}"
+          export VERSION
+          docker run --rm -e VERSION="$VERSION" node:22-alpine sh -c '
+            set -euo pipefail
+            mkdir -p /tmp/smoke && cd /tmp/smoke
+            npm init -y --silent > /dev/null
+            npm install --silent "clockify-sdk-ts@${VERSION}" > /dev/null
+            node --input-type=module -e "
+              import(\"clockify-sdk-ts\").then(m => {
+                const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
+                const missing = names.filter(n => typeof m[n] !== \"function\");
+                if (missing.length) { console.error(\"Post-publish smoke FAILED (ESM):\", missing); process.exit(1); }
+                console.log(\"Post-publish smoke OK (ESM): exposes\", names.length, \"names\");
+              });
+            "
+            node -e "
+              const m = require(\"clockify-sdk-ts\");
+              const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
+              const missing = names.filter(n => typeof m[n] !== \"function\");
+              if (missing.length) { console.error(\"Post-publish smoke FAILED (CJS):\", missing); process.exit(1); }
+              console.log(\"Post-publish smoke OK (CJS): exposes\", names.length, \"names\");
+            "
+          '
