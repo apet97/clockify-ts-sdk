@@ -1224,6 +1224,116 @@ on the bare route (the granular variants — already in
   helpers update accordingly. Until then, the documented scheme is
   the authoritative source.
 
+## Last-Page header — live audit (G.5)
+
+### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
+
+- **Official claim:** the seed-list entry near the top of this file
+  (`pagination: most list endpoints return Last-Page header, not a
+  total`) had not been quantified per-endpoint. G.5's brief: probe
+  each of the 18 ops in `GOCLMCP/scripts/gen-clockify-openapi`'s
+  `PAGINATED_LIST_OPS` and split them into "emits Last-Page
+  consistently" vs "does not".
+
+- **Actual behaviour (live, 2026-05-25, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** each endpoint was probed with
+  `?page=1&page-size=2` (results-available) and the paginated
+  endpoints additionally with `?page=999&page-size=2` (results-
+  exhausted). Result:
+
+  **15 endpoints emit `Last-Page` consistently** (probe captures
+  `last-page: false` on page 1 with full results AND `last-page:
+  true` on page 999 with 0 items):
+  - `GET /workspaces/{wsId}/approval-requests`
+  - `GET /workspaces/{wsId}/clients`
+  - `GET /workspaces/{wsId}/invoices/{invoiceId}/payments`
+  - `GET /workspaces/{wsId}/projects`
+  - `GET /workspaces/{wsId}/projects/{projectId}/tasks`
+  - `GET /workspaces/{wsId}/scheduling/assignments/all` (requires
+    `start` + `end` query params; probe used a 1-year window)
+  - `GET /workspaces/{wsId}/tags`
+  - `GET /workspaces/{wsId}/time-entries/status/in-progress`
+  - `GET /workspaces/{wsId}/time-off/balance/policy/{policyId}`
+  - `GET /workspaces/{wsId}/time-off/balance/user/{userId}`
+  - `GET /workspaces/{wsId}/time-off/policies`
+  - `GET /workspaces/{wsId}/user-groups`
+  - `GET /workspaces/{wsId}/user/{userId}/time-entries`
+  - `GET /workspaces/{wsId}/users`
+  - `GET /workspaces/{wsId}/users/{userId}/managers`
+
+  **3 endpoints do NOT emit `Last-Page`** (and additionally ignore
+  `page-size` on the live server, returning the full collection
+  regardless of the paging query params):
+  - `GET /workspaces/{wsId}/custom-fields` — page-size=2 returned
+    25 top-level items.
+  - `GET /workspaces/{wsId}/holidays` — page-size=2 returned 31
+    top-level items.
+  - `GET /workspaces/{wsId}/projects/{projectId}/custom-fields` —
+    page-size=2 returned 1 item (small dataset; no Last-Page
+    header in response).
+
+  The 3 non-emitting endpoints suggest those routes pre-date
+  Clockify's pagination convention or are intentionally
+  unpaginated. They remain in `PAGINATED_LIST_OPS` (the params
+  are accepted, just ignored) but are NOT in `LAST_PAGE_HEADER_OPS`
+  so they don't carry the wrapper-side stop signal.
+
+- **Live evidence:** 22 probe files saved at
+  `spec/evidence/probes/20260525-lastpage-*.{json,hdr}` — each
+  endpoint has at least one `-p1.{json,hdr}` pair; the 8 confirmed-
+  paginated workspace-scoped ones additionally have `-p999.{json,hdr}`
+  pairs. All 22 are gitignored per AGENTS.md §5.4. Reproducible
+  via the curl invocation in the commit message that introduced
+  this entry.
+
+- **MCP tools affected:** none directly today. The Go MCP layer in
+  GOCLMCP synthesises a `total_min` lower-bound rather than using
+  the header (see seed-list `pagination` entry near the top of this
+  file). A future cleanup could route the same `LAST_PAGE_HEADER_OPS`
+  set through `internal/tools` and short-circuit the lower-bound
+  synthesis when the header is present — out of scope for this
+  session.
+
+- **Open questions:**
+  1. Should the 3 non-emitting endpoints (`custom-fields`,
+     `holidays`, `projects/{projectId}/custom-fields`) be removed
+     from `PAGINATED_LIST_OPS` since the server ignores `page-size`?
+     **Not now** — the page+page-size param declarations are still
+     a real documentation improvement consumed by downstream
+     SDK generators and tooling that doesn't probe live API
+     behaviour. The wrapper just doesn't get a useful stop signal
+     from them. Re-evaluate if a future Clockify API change adds
+     server-side paging to these endpoints.
+  2. Does the header ever appear case-shifted (`LAST-PAGE`,
+     `Last-page`)? Probe used `grep -i ^last-page:` so any casing
+     would have matched; observed casing in raw `.hdr` files is
+     consistently `last-page:` (HTTP/2 lowercased the field name).
+     The wrapper's `Headers#get("Last-Page")` API is
+     case-insensitive per the WHATWG spec, so the consumer is safe
+     regardless.
+
+- **Status:** `audited-and-shipped`. Two changes ship in this
+  session:
+  1. **Generator (GOCLMCP):** new `LAST_PAGE_HEADER_OPS` set (15
+     entries) + `stamp_last_page_header!` function called in the
+     per-op finalization loop. The canonical YAML now carries
+     `x-clockify-last-page-header: true` on each of the 15
+     audited-emitting operations.
+  2. **Wrapper (this repo):** `iterPages` now feature-detects
+     `.withRawResponse()` on the fetcher's return, reads the
+     `Last-Page` response header via the case-insensitive Headers
+     API, and uses `Last-Page: true` as the authoritative stop
+     signal — more robust than the legacy
+     `items.length === pageSize` heuristic (which fails when a
+     final page coincidentally fills). The heuristic remains as a
+     fallback for non-emitting endpoints + custom (non-Fern)
+     fetchers; the wrapper also stops on a short page even when
+     `Last-Page: false` to defend against server-inconsistency
+     loops. Six new vitest cases in `tests/iter.test.ts` cover
+     the four combinations (header true/false × page full/short)
+     plus the case-insensitive parse + the no-`withRawResponse`
+     fallback path.
+
 ## Idempotency-Key header — investigation (G.4)
 
 ### `clockify.api.idempotency-key.unsupported-noop` — DOCUMENTED 2026-05-25

@@ -7,6 +7,33 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- **`iterPages` consumes the `Last-Page` response header (G.5).**
+  When the fetcher returns a Fern-style `HttpResponsePromise<T>`
+  (which exposes `.withRawResponse()`), the wrapper now uses the
+  `Last-Page: true` header — emitted by 15 of the 18 paginated
+  Clockify list endpoints — as the authoritative stop signal.
+  More robust than the legacy `items.length === pageSize`
+  heuristic, which fetched one extra empty page whenever a final
+  page coincidentally filled. The heuristic remains as a fallback
+  for the 3 endpoints that don't emit the header (custom-fields,
+  holidays, project-scoped custom-fields) and for custom fetchers
+  that don't expose `.withRawResponse()`; the wrapper also stops
+  on a short page even when `Last-Page: false` to defend against
+  server-inconsistency loops. Audit + per-endpoint behaviour
+  documented in `spec/evidence/discrepancies.md` →
+  `pagination.last-page-header.live-audit-2026-05-25`. Six new
+  vitest cases cover the four header/length combinations + the
+  case-insensitive parse + the no-`withRawResponse` fallback.
+- **Upstream generator annotation (G.5).** The corrected-spec
+  snapshot now carries `x-clockify-last-page-header: true` on each
+  of the 15 audited-emitting list operations (stamped by GOCLMCP's
+  `LAST_PAGE_HEADER_OPS` set + `stamp_last_page_header!` function).
+  Downstream consumers (other SDK generators, MCP tools, custom
+  client wrappers) can read the annotation to short-circuit their
+  own pagination loops.
+
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
 - **Idiomatic method names on 21 modules (G.1).** With both

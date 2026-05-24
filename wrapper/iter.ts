@@ -180,6 +180,37 @@ export async function* iterAll<TRequest, TItem>(
  * }
  * ```
  */
+/** Internal: minimum shape we need to extract Last-Page from a
+ *  Fern-generated method's return value. Matches `HttpResponsePromise<T>`
+ *  produced by every method on the synced SDK; structural type so the
+ *  helper works with any compatible thenable. */
+interface RawResponseAware<T> extends PromiseLike<T> {
+    withRawResponse(): Promise<{
+        readonly data: T;
+        readonly rawResponse: { readonly headers: { get(name: string): string | null } };
+    }>;
+}
+
+function hasWithRawResponse<T>(value: PromiseLike<T>): value is RawResponseAware<T> {
+    return (
+        value != null &&
+        typeof (value as { withRawResponse?: unknown }).withRawResponse === "function"
+    );
+}
+
+/** Parse the `Last-Page` response header (case-insensitive lookup
+ *  via the Headers API; value comparison case-insensitive too).
+ *  Returns `true` if the server marked this as the final page,
+ *  `false` if more pages are available, `undefined` if the header
+ *  was absent or unparsable. */
+function parseLastPageHeader(value: string | null | undefined): boolean | undefined {
+    if (value == null) return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return undefined;
+}
+
 export async function* iterPages<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
@@ -206,8 +237,37 @@ export async function* iterPages<TRequest, TItem>(
             page,
             "page-size": pageSize,
         } as TRequest;
-        const items = (await fetcher(request)) as readonly TItem[];
-        const hasNextPage = items.length === pageSize;
+
+        // Audited 2026-05-25: 15 of the 18 paginated Clockify list
+        // endpoints emit a `Last-Page: true|false` response header
+        // (see addons-me/fern/spec/evidence/discrepancies.md →
+        // `pagination.last-page-header.live-audit-2026-05-25`). When
+        // present, the header is the authoritative end-of-pages
+        // signal — more robust than the legacy
+        // `items.length === pageSize` heuristic, which fails when a
+        // final page coincidentally fills. We feature-detect
+        // `withRawResponse` on the fetcher return; the Fern-generated
+        // SDK methods always have it, but a custom fetcher passed by
+        // a test or a Speakeasy/Stainless variant might not.
+        const result = fetcher(request);
+        let items: readonly TItem[];
+        let lastPageFromHeader: boolean | undefined;
+        if (hasWithRawResponse(result)) {
+            const wrapped = await result.withRawResponse();
+            items = wrapped.data as readonly TItem[];
+            lastPageFromHeader = parseLastPageHeader(wrapped.rawResponse.headers.get("Last-Page"));
+        } else {
+            items = (await result) as readonly TItem[];
+        }
+
+        // Combine signals: header `true` is authoritative stop;
+        // otherwise fall back to "did we receive a full page?"
+        // (the legacy heuristic). The two combine safely — header
+        // `false` means the server expects more, but if we also got
+        // a short page we still stop (server inconsistency edge
+        // case where Last-Page lies; safer to stop than to loop).
+        const hasNextPage =
+            lastPageFromHeader === true ? false : items.length === pageSize;
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }
