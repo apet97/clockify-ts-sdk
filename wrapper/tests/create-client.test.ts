@@ -30,9 +30,9 @@ describe("createClockifyClient", () => {
     });
 
     it("throws when neither apiKey nor addonToken is provided", () => {
-        expect(() =>
-            createClockifyClient({} as unknown as CreateClockifyClientOptions),
-        ).toThrow(/must provide exactly one/);
+        expect(() => createClockifyClient({} as unknown as CreateClockifyClientOptions)).toThrow(
+            /must provide exactly one/,
+        );
     });
 
     it("throws when both apiKey and addonToken are provided at runtime", () => {

@@ -192,14 +192,17 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
     const userAgentValue = resolveUserAgent(options.userAgent);
     const requestIdFn = resolveRequestIdFn(options.requestId);
     const hooks = options.hooks;
-    const retryPolicy = options.retryPolicy
-        ? mergeRetryPolicy(options.retryPolicy)
-        : undefined;
+    const retryPolicy = options.retryPolicy ? mergeRetryPolicy(options.retryPolicy) : undefined;
 
     return async function composedFetchImpl(input, init) {
-        const initHeaders = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
-        const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-        const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+        const initHeaders = new Headers(
+            init?.headers ?? (input instanceof Request ? input.headers : undefined),
+        );
+        const url =
+            typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+        const method = (
+            init?.method ?? (input instanceof Request ? input.method : "GET")
+        ).toUpperCase();
 
         // Inject User-Agent if not already set.
         if (userAgentValue != null && !initHeaders.has(USER_AGENT_HEADER)) {
@@ -219,7 +222,13 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
 
         if (retryPolicy == null) {
             // No wrapper-side retry — single shot.
-            const ctx: RequestContext = { url, method, headers: initHeaders, attempt: 0, requestId };
+            const ctx: RequestContext = {
+                url,
+                method,
+                headers: initHeaders,
+                attempt: 0,
+                requestId,
+            };
             return await runSingleAttempt(baseFetch, input, finalInit, ctx, hooks);
         }
 
@@ -249,7 +258,8 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
  */
 export function getRequestIdFromError(err: unknown): string | undefined {
     if (err == null || typeof err !== "object") return undefined;
-    const raw = (err as { rawResponse?: { headers?: Headers | Record<string, string> } }).rawResponse;
+    const raw = (err as { rawResponse?: { headers?: Headers | Record<string, string> } })
+        .rawResponse;
     const headers = raw?.headers;
     if (headers == null) return undefined;
     if (typeof Headers !== "undefined" && headers instanceof Headers) {
@@ -286,9 +296,10 @@ function mergeRetryPolicy(
         initialDelayMs: user.initialDelayMs ?? DEFAULT_RETRY_POLICY.initialDelayMs,
         maxDelayMs: user.maxDelayMs ?? DEFAULT_RETRY_POLICY.maxDelayMs,
         jitter: user.jitter ?? DEFAULT_RETRY_POLICY.jitter,
-        retryableStatusCodes: user.retryableStatusCodes ?? DEFAULT_RETRY_POLICY.retryableStatusCodes,
-        retryableMethods: (user.retryableMethods ?? DEFAULT_RETRY_POLICY.retryableMethods).map((m) =>
-            m.toUpperCase(),
+        retryableStatusCodes:
+            user.retryableStatusCodes ?? DEFAULT_RETRY_POLICY.retryableStatusCodes,
+        retryableMethods: (user.retryableMethods ?? DEFAULT_RETRY_POLICY.retryableMethods).map(
+            (m) => m.toUpperCase(),
         ),
         computeDelay: user.computeDelay,
     };
@@ -343,10 +354,7 @@ async function runWithRetries(
         if (error != null) {
             await safeHook(hooks?.onError, { ...ctx, error, durationMs });
             lastError = error;
-            if (
-                attempt >= policy.maxRetries ||
-                !policy.retryableMethods.includes(base.method)
-            ) {
+            if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
                 throw error;
             }
             const delayMs = computeRetryDelay(attempt, undefined, policy);
@@ -432,7 +440,10 @@ function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function safeHook<T>(hook: ((arg: T) => void | Promise<void>) | undefined, arg: T): Promise<void> {
+async function safeHook<T>(
+    hook: ((arg: T) => void | Promise<void>) | undefined,
+    arg: T,
+): Promise<void> {
     if (hook == null) return;
     try {
         await hook(arg);

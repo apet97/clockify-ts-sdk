@@ -15,14 +15,7 @@
  * Chained into `npm run sync` so a stale sync surfaces as docs
  * changes in the same PR.
  */
-import {
-    existsSync,
-    mkdirSync,
-    readFileSync,
-    readdirSync,
-    statSync,
-    writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,9 +38,7 @@ interface FieldEntry {
 }
 
 if (!existsSync(RESOURCES_DIR)) {
-    console.error(
-        `error: ${RESOURCES_DIR} not found. Did you forget to run 'npm run sync'?`,
-    );
+    console.error(`error: ${RESOURCES_DIR} not found. Did you forget to run 'npm run sync'?`);
     process.exit(1);
 }
 
@@ -95,12 +86,7 @@ for (const resource of resources) {
         if (example) md.push("**Example:**", "", "```typescript", example, "```", "");
 
         if (m.requestType != null) {
-            const reqFile = join(
-                RESOURCES_DIR,
-                resource,
-                "client/requests",
-                `${m.requestType}.ts`,
-            );
+            const reqFile = join(RESOURCES_DIR, resource, "client/requests", `${m.requestType}.ts`);
             if (existsSync(reqFile)) {
                 const fields = parseFields(readFileSync(reqFile, "utf8"));
                 if (fields.length > 0) {
@@ -117,9 +103,7 @@ for (const resource of resources) {
     }
 
     writeFileSync(join(OUT_DIR, `${resource}.md`), md.join("\n") + "\n");
-    indexLines.push(
-        `| ${resource} | ${methods.length} | [\`${resource}.md\`](./${resource}.md) |`,
-    );
+    indexLines.push(`| ${resource} | ${methods.length} | [\`${resource}.md\`](./${resource}.md) |`);
 }
 
 writeFileSync(join(OUT_DIR, "README.md"), indexLines.join("\n") + "\n");

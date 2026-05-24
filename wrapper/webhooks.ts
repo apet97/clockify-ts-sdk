@@ -189,7 +189,9 @@ export function constructEvent<TPayload = unknown>(input: ConstructEventInput): 
         );
     }
     const text =
-        typeof input.payload === "string" ? input.payload : Buffer.from(input.payload).toString("utf8");
+        typeof input.payload === "string"
+            ? input.payload
+            : Buffer.from(input.payload).toString("utf8");
     return JSON.parse(text) as TPayload;
 }
 

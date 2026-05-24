@@ -10,12 +10,12 @@
  */
 
 export interface PaginateOptions {
-  /** Page size to request. Default `50`. */
-  pageSize?: number;
-  /** Maximum number of pages to walk. Default unbounded. */
-  maxPages?: number;
-  /** 1-based page to start at. Default `1`. */
-  startPage?: number;
+    /** Page size to request. Default `50`. */
+    pageSize?: number;
+    /** Maximum number of pages to walk. Default unbounded. */
+    maxPages?: number;
+    /** 1-based page to start at. Default `1`. */
+    startPage?: number;
 }
 
 /**
@@ -35,27 +35,27 @@ export interface PaginateOptions {
  * ```
  */
 export async function* paginate<T>(
-  fetchPage: (page: number, pageSize: number) => Promise<readonly T[]>,
-  options: PaginateOptions = {},
+    fetchPage: (page: number, pageSize: number) => Promise<readonly T[]>,
+    options: PaginateOptions = {},
 ): AsyncGenerator<T, void, void> {
-  const pageSize = options.pageSize ?? 50;
-  const maxPages = options.maxPages ?? Number.POSITIVE_INFINITY;
-  const startPage = options.startPage ?? 1;
+    const pageSize = options.pageSize ?? 50;
+    const maxPages = options.maxPages ?? Number.POSITIVE_INFINITY;
+    const startPage = options.startPage ?? 1;
 
-  if (pageSize <= 0) {
-    throw new RangeError(`paginate: pageSize must be > 0 (got ${pageSize})`);
-  }
-  if (maxPages <= 0) {
-    throw new RangeError(`paginate: maxPages must be > 0 (got ${maxPages})`);
-  }
-  if (startPage <= 0) {
-    throw new RangeError(`paginate: startPage must be > 0 (got ${startPage})`);
-  }
+    if (pageSize <= 0) {
+        throw new RangeError(`paginate: pageSize must be > 0 (got ${pageSize})`);
+    }
+    if (maxPages <= 0) {
+        throw new RangeError(`paginate: maxPages must be > 0 (got ${maxPages})`);
+    }
+    if (startPage <= 0) {
+        throw new RangeError(`paginate: startPage must be > 0 (got ${startPage})`);
+    }
 
-  const endPage = startPage + maxPages - 1;
-  for (let page = startPage; page <= endPage; page++) {
-    const items = await fetchPage(page, pageSize);
-    for (const item of items) yield item;
-    if (items.length < pageSize) return;
-  }
+    const endPage = startPage + maxPages - 1;
+    for (let page = startPage; page <= endPage; page++) {
+        const items = await fetchPage(page, pageSize);
+        for (const item of items) yield item;
+        if (items.length < pageSize) return;
+    }
 }

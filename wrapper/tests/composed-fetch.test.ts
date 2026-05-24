@@ -13,11 +13,10 @@ import {
 /** Build a mock fetch that responds with the given status + body and
  *  records every call. */
 function mockFetch(
-    behavior: (call: { input: RequestInfo | URL; init?: RequestInit }) =>
-        | Response
-        | Promise<Response>
-        | Error
-        | Promise<Error>,
+    behavior: (call: {
+        input: RequestInfo | URL;
+        init?: RequestInit;
+    }) => Response | Promise<Response> | Error | Promise<Error>,
 ): { fn: typeof fetch; calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> } {
     const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
     const fn = (async (input, init) => {
@@ -43,7 +42,9 @@ describe("defaultUserAgent", () => {
 
 describe("generateRequestId", () => {
     it("returns a UUID-like string", () => {
-        expect(generateRequestId()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+        expect(generateRequestId()).toMatch(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+        );
     });
 
     it("returns a unique value per call", () => {
@@ -159,7 +160,11 @@ describe("composedFetch — lifecycle hooks (no retry)", () => {
         const { fn } = mockFetch(() => new Response("ok"));
         const f = composedFetch({
             fetch: fn,
-            hooks: { beforeRequest: () => { throw new Error("hook boom"); } },
+            hooks: {
+                beforeRequest: () => {
+                    throw new Error("hook boom");
+                },
+            },
         });
         const res = await f("https://example.test/x");
         expect(res.status).toBe(200);

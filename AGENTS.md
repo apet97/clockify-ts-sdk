@@ -275,6 +275,13 @@ wrapper/
 │                                page. Output → ../docs/api/ at repo root
 │                                (gitignored; published to gh-pages by
 │                                .github/workflows/docs.yml on tag push).
+├── .prettierrc + .prettierignore ← Prettier config (4-space indent, double
+│                                quotes, trailing commas, 100-char width).
+│                                Ignore covers src/ + dist/ + docs/ +
+│                                package-lock.json so formatting only
+│                                touches hand-written + test + script +
+│                                example files. `npm run format` /
+│                                `npm run format:check`.
 ├── tests/
 │   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
 │   │                           (mocked fetchPage callback; no live API)

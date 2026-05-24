@@ -1,0 +1,17 @@
+# Generated + regenerated trees. NEVER reformat — wiped on each
+# sync / build, and any reformatting here would create churn that
+# doesn't ship anywhere.
+src/
+dist/
+docs/
+node_modules/
+package-lock.json
+
+# Pack snapshot artifact (CI-generated transient).
+.packsnapshot
+.packsnapshot.actual
+
+# CHANGELOG.md is human-edited with nested bullets that Prettier's
+# markdown formatter mangles (it conflates sub-list indentation and
+# treats `+` in inline code as list markers). Keep the file as-is.
+CHANGELOG.md

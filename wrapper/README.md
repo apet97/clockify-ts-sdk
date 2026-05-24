@@ -61,15 +61,15 @@ Or with your package manager of choice (`pnpm add`, `yarn add`,
 import { createClockifyClient } from "clockify-sdk-ts";
 
 const client = createClockifyClient({
-  apiKey: process.env.CLOCKIFY_API_KEY!,
+    apiKey: process.env.CLOCKIFY_API_KEY!,
 });
 
 const tags = await client.tags.getWorkspacesWorkspaceIdTags({
-  workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
+    workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
 });
 
 for (const tag of tags) {
-  console.log(tag.id, tag.name);
+    console.log(tag.id, tag.name);
 }
 ```
 
@@ -84,10 +84,10 @@ two-scheme model.
 
 Clockify exposes two mutually-exclusive auth schemes:
 
-| Scheme | Header | When to use |
-|---|---|---|
-| Personal API key | `X-Api-Key` | Server-side scripts you own; CI; agents acting as your user. Get one from [Clockify profile settings](https://app.clockify.me/user/settings). |
-| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify marketplace addon you authored. Token comes from the addon installation JWT. |
+| Scheme                  | Header          | When to use                                                                                                                                   |
+| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Personal API key        | `X-Api-Key`     | Server-side scripts you own; CI; agents acting as your user. Get one from [Clockify profile settings](https://app.clockify.me/user/settings). |
+| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify marketplace addon you authored. Token comes from the addon installation JWT.                                   |
 
 `createClockifyClient` enforces exactly-one-of at both compile
 time and runtime — the discriminated-union type rejects passing
@@ -110,7 +110,7 @@ one. Use a function for tokens that get rotated:
 
 ```typescript
 const client = createClockifyClient({
-  apiKey: () => process.env.CLOCKIFY_API_KEY!,
+    apiKey: () => process.env.CLOCKIFY_API_KEY!,
 });
 ```
 
@@ -124,9 +124,9 @@ and construct `ClockifyApiClient` directly:
 import { ClockifyApiClient } from "clockify-sdk-ts";
 
 const client = new ClockifyApiClient({
-  apiKey: "...",
-  addonToken: (() => undefined) as unknown as () => string,
-  auth: false, // or a custom AuthProvider / function
+    apiKey: "...",
+    addonToken: (() => undefined) as unknown as () => string,
+    auth: false, // or a custom AuthProvider / function
 });
 ```
 
@@ -174,7 +174,7 @@ const client = createClockifyClient({ apiKey: "..." });
 const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
 
 for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
-  console.log(project.name);
+    console.log(project.name);
 }
 ```
 
@@ -199,12 +199,12 @@ import { iterPages } from "clockify-sdk-ts";
 const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
 
 for await (const { items, page, hasNextPage } of iterPages(
-  listTags,
-  { workspaceId: "..." },
-  { pageSize: 100 },
+    listTags,
+    { workspaceId: "..." },
+    { pageSize: 100 },
 )) {
-  console.log(`page ${page}: ${items.length} tags (more: ${hasNextPage})`);
-  if (!hasNextPage) break;
+    console.log(`page ${page}: ${items.length} tags (more: ${hasNextPage})`);
+    if (!hasNextPage) break;
 }
 ```
 
@@ -214,15 +214,15 @@ for await (const { items, page, hasNextPage } of iterPages(
 import { paginate } from "clockify-sdk-ts";
 
 for await (const client_ of paginate(
-  (page, pageSize) =>
-    client.clients.getWorkspacesWorkspaceIdClients({
-      workspaceId: "...",
-      page,
-      "page-size": pageSize,
-    }),
-  { pageSize: 50 },
+    (page, pageSize) =>
+        client.clients.getWorkspacesWorkspaceIdClients({
+            workspaceId: "...",
+            page,
+            "page-size": pageSize,
+        }),
+    { pageSize: 50 },
 )) {
-  console.log(client_.name);
+    console.log(client_.name);
 }
 ```
 
@@ -234,14 +234,14 @@ arbitrary stop conditions.
 
 ```typescript
 for (let page = 1; ; page++) {
-  const records = await client.users.findWorkspaceUsers({
-    workspaceId: "...",
-    page,
-    "page-size": 50,
-  });
-  if (records.length === 0) break;
-  for (const u of records) handle(u);
-  if (records.length < 50) break;
+    const records = await client.users.findWorkspaceUsers({
+        workspaceId: "...",
+        page,
+        "page-size": 50,
+    });
+    if (records.length === 0) break;
+    for (const u of records) handle(u);
+    if (records.length < 50) break;
 }
 ```
 
@@ -256,44 +256,44 @@ so drift in the synced SDK is caught at build time.
 
 Every non-2xx response throws a typed error. The full hierarchy:
 
-| Class | Status | When |
-|---|---|---|
-| `ClockifyApiError` | (any) | Base class. Always carries `statusCode`, `body`, `rawResponse`, and `cause` (if a downstream error caused it). |
-| `BadRequestError` | 400 | Malformed request body or query params. |
-| `UnauthorizedError` | 401 | Missing/invalid `X-Api-Key` / `X-Addon-Token`. |
-| `ForbiddenError` | 403 | Authenticated but not permitted for this workspace/resource. |
-| `NotFoundError` | 404 | Resource doesn't exist or doesn't belong to this workspace. |
-| `MethodNotAllowedError` | 405 | Wrong verb (rare). |
-| `ClockifyApiTimeoutError` | — | The request's `timeoutInSeconds` elapsed before a response. |
+| Class                     | Status | When                                                                                                           |
+| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `ClockifyApiError`        | (any)  | Base class. Always carries `statusCode`, `body`, `rawResponse`, and `cause` (if a downstream error caused it). |
+| `BadRequestError`         | 400    | Malformed request body or query params.                                                                        |
+| `UnauthorizedError`       | 401    | Missing/invalid `X-Api-Key` / `X-Addon-Token`.                                                                 |
+| `ForbiddenError`          | 403    | Authenticated but not permitted for this workspace/resource.                                                   |
+| `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace.                                                    |
+| `MethodNotAllowedError`   | 405    | Wrong verb (rare).                                                                                             |
+| `ClockifyApiTimeoutError` | —      | The request's `timeoutInSeconds` elapsed before a response.                                                    |
 
 `instanceof` checks work as expected (the SDK calls
 `Object.setPrototypeOf` in each constructor):
 
 ```typescript
 import {
-  ClockifyApiError,
-  UnauthorizedError,
-  NotFoundError,
-  getRequestIdFromError,
+    ClockifyApiError,
+    UnauthorizedError,
+    NotFoundError,
+    getRequestIdFromError,
 } from "clockify-sdk-ts";
 
 try {
-  await client.tags.getWorkspacesWorkspaceIdTagsTagId({
-    workspaceId: "...",
-    tagId: "deleted-tag-id",
-  });
+    await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+        workspaceId: "...",
+        tagId: "deleted-tag-id",
+    });
 } catch (err) {
-  if (err instanceof NotFoundError) {
-    console.log("tag is gone");
-  } else if (err instanceof UnauthorizedError) {
-    console.error("auth failed:", err.body);
-  } else if (err instanceof ClockifyApiError) {
-    console.error(
-      `request ${getRequestIdFromError(err)} failed with ${err.statusCode}:`,
-      err.body,
-    );
-    throw err;
-  }
+    if (err instanceof NotFoundError) {
+        console.log("tag is gone");
+    } else if (err instanceof UnauthorizedError) {
+        console.error("auth failed:", err.body);
+    } else if (err instanceof ClockifyApiError) {
+        console.error(
+            `request ${getRequestIdFromError(err)} failed with ${err.statusCode}:`,
+            err.body,
+        );
+        throw err;
+    }
 }
 ```
 
@@ -316,15 +316,15 @@ NOT retried automatically because they may not be safe to repeat.
 import { createClockifyClient } from "clockify-sdk-ts";
 
 const client = createClockifyClient({
-  apiKey: "...",
-  retryPolicy: {
-    maxRetries: 5,
-    initialDelayMs: 500,
-    maxDelayMs: 30_000,
-    jitter: 0.3,
-    retryableStatusCodes: [500, 502, 503, 504],
-    retryableMethods: ["GET", "HEAD", "OPTIONS"],
-  },
+    apiKey: "...",
+    retryPolicy: {
+        maxRetries: 5,
+        initialDelayMs: 500,
+        maxDelayMs: 30_000,
+        jitter: 0.3,
+        retryableStatusCodes: [500, 502, 503, 504],
+        retryableMethods: ["GET", "HEAD", "OPTIONS"],
+    },
 });
 ```
 
@@ -332,8 +332,8 @@ const client = createClockifyClient({
 
 ```typescript
 const client = createClockifyClient({
-  apiKey: "...",
-  retryPolicy: false,
+    apiKey: "...",
+    retryPolicy: false,
 });
 ```
 
@@ -341,14 +341,14 @@ const client = createClockifyClient({
 
 ```typescript
 const client = createClockifyClient({
-  apiKey: "...",
-  retryPolicy: {
-    computeDelay: (attempt, response) => {
-      const ra = response?.headers.get("Retry-After");
-      if (ra) return Number(ra) * 1000;
-      return Math.min(1000 * 2 ** attempt, 30_000);
+    apiKey: "...",
+    retryPolicy: {
+        computeDelay: (attempt, response) => {
+            const ra = response?.headers.get("Retry-After");
+            if (ra) return Number(ra) * 1000;
+            return Math.min(1000 * 2 ** attempt, 30_000);
+        },
     },
-  },
 });
 ```
 
@@ -359,8 +359,8 @@ Every method's second argument accepts `requestOptions` with
 
 ```typescript
 await client.tags.getWorkspacesWorkspaceIdTags(
-  { workspaceId: "..." },
-  { maxRetries: 0 }, // this call only
+    { workspaceId: "..." },
+    { maxRetries: 0 }, // this call only
 );
 ```
 
@@ -368,8 +368,8 @@ await client.tags.getWorkspacesWorkspaceIdTags(
 
 ```typescript
 const client = createClockifyClient({
-  apiKey: "...",
-  timeoutInSeconds: 10, // applied to every request
+    apiKey: "...",
+    timeoutInSeconds: 10, // applied to every request
 });
 
 // Per-request override + cooperative cancellation:
@@ -377,8 +377,8 @@ const ctrl = new AbortController();
 setTimeout(() => ctrl.abort(), 5000);
 
 await client.projects.getWorkspaceProjects(
-  { workspaceId: "..." },
-  { timeoutInSeconds: 3, abortSignal: ctrl.signal },
+    { workspaceId: "..." },
+    { timeoutInSeconds: 3, abortSignal: ctrl.signal },
 );
 ```
 
@@ -392,11 +392,11 @@ message; check `err.cause` for the underlying `AbortError`.
 import { createClockifyClient } from "clockify-sdk-ts";
 
 const client = createClockifyClient({
-  apiKey: "...",
-  logging: {
-    level: "debug",
-    logger: (level, msg, meta) => console.log(level, msg, meta),
-  },
+    apiKey: "...",
+    logging: {
+        level: "debug",
+        logger: (level, msg, meta) => console.log(level, msg, meta),
+    },
 });
 ```
 
@@ -417,8 +417,8 @@ import { ProxyAgent, fetch as undiciFetch } from "undici";
 
 const dispatcher = new ProxyAgent("http://proxy.local:8080");
 const client = createClockifyClient({
-  apiKey: "...",
-  fetch: (url, init) => undiciFetch(url, { ...init, dispatcher }),
+    apiKey: "...",
+    fetch: (url, init) => undiciFetch(url, { ...init, dispatcher }),
 });
 ```
 
@@ -435,28 +435,25 @@ Verify it with constant-time compare:
 
 ```typescript
 import express from "express";
-import {
-  constructEvent,
-  WebhookSignatureMismatchError,
-} from "clockify-sdk-ts";
+import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts";
 
 const app = express();
 
 app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
-  try {
-    const event = constructEvent({
-      headers: req.headers,
-      payload: req.body,
-      expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN!,
-    });
-    handleEvent(event);
-    res.status(200).end();
-  } catch (err) {
-    if (err instanceof WebhookSignatureMismatchError) {
-      return res.status(401).send("invalid signature");
+    try {
+        const event = constructEvent({
+            headers: req.headers,
+            payload: req.body,
+            expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN!,
+        });
+        handleEvent(event);
+        res.status(200).end();
+    } catch (err) {
+        if (err instanceof WebhookSignatureMismatchError) {
+            return res.status(401).send("invalid signature");
+        }
+        return res.status(400).send("invalid payload");
     }
-    return res.status(400).send("invalid payload");
-  }
 });
 ```
 
@@ -465,11 +462,13 @@ Or use `verifyClockifyWebhook` for the boolean variant:
 ```typescript
 import { verifyClockifyWebhook } from "clockify-sdk-ts";
 
-if (!verifyClockifyWebhook({
-  headers: req.headers,
-  expectedToken: secret,
-})) {
-  return res.status(401).send("invalid");
+if (
+    !verifyClockifyWebhook({
+        headers: req.headers,
+        expectedToken: secret,
+    })
+) {
+    return res.status(401).send("invalid");
 }
 ```
 
@@ -488,20 +487,20 @@ piping (Datadog, Honeycomb, structured logs, retry telemetry):
 
 ```typescript
 const client = createClockifyClient({
-  apiKey: "...",
-  hooks: {
-    beforeRequest: ({ method, url, requestId }) =>
-      logger.info({ method, url, requestId }, "→ request"),
-    afterResponse: ({ response, durationMs, requestId }) =>
-      metrics.histogram("clockify.duration", durationMs, {
-        status: response.status,
-        requestId,
-      }),
-    onError: ({ error, durationMs, requestId }) =>
-      logger.error({ error, durationMs, requestId }, "× request failed"),
-    onRetry: ({ nextAttempt, delayMs, requestId }) =>
-      logger.warn({ nextAttempt, delayMs, requestId }, "↻ retrying"),
-  },
+    apiKey: "...",
+    hooks: {
+        beforeRequest: ({ method, url, requestId }) =>
+            logger.info({ method, url, requestId }, "→ request"),
+        afterResponse: ({ response, durationMs, requestId }) =>
+            metrics.histogram("clockify.duration", durationMs, {
+                status: response.status,
+                requestId,
+            }),
+        onError: ({ error, durationMs, requestId }) =>
+            logger.error({ error, durationMs, requestId }, "× request failed"),
+        onRetry: ({ nextAttempt, delayMs, requestId }) =>
+            logger.warn({ nextAttempt, delayMs, requestId }, "↻ retrying"),
+    },
 });
 ```
 
@@ -543,13 +542,13 @@ work in both module systems too.
 
 ## Supported Node and TypeScript versions
 
-| | Minimum | Tested |
-|---|---|---|
-| Node.js | **20.0.0** (required for global `fetch`, stable `AbortSignal.timeout`, `node:crypto.randomUUID`) | 22 (CI primary), 20 |
-| TypeScript | **5.0** (required for the satisfies operator + const type parameters used in `iter.ts`) | 5.6 (dev), 5.x |
-| Bun | works | not yet in CI (Phase 5) |
-| Deno | works with the `npm:` specifier | not yet in CI (Phase 5) |
-| Browsers | works for read-only flows; **do NOT ship your `apiKey` to a browser** | not in CI |
+|            | Minimum                                                                                          | Tested                  |
+| ---------- | ------------------------------------------------------------------------------------------------ | ----------------------- |
+| Node.js    | **20.0.0** (required for global `fetch`, stable `AbortSignal.timeout`, `node:crypto.randomUUID`) | 22 (CI primary), 20     |
+| TypeScript | **5.0** (required for the satisfies operator + const type parameters used in `iter.ts`)          | 5.6 (dev), 5.x          |
+| Bun        | works                                                                                            | not yet in CI (Phase 5) |
+| Deno       | works with the `npm:` specifier                                                                  | not yet in CI (Phase 5) |
+| Browsers   | works for read-only flows; **do NOT ship your `apiKey` to a browser**                            | not in CI               |
 
 ## Migration and contributing
 
@@ -564,16 +563,23 @@ work in both module systems too.
 
 The wrapper ships without ESLint. The hand-written surface
 (`create-client.ts`, `composed-fetch.ts`, `iter.ts`,
-`webhooks.ts`, `pagination.ts`, `index.ts`, plus `tests/`) is
-small, and the rest of `src/` is wiped + rewritten by `npm run
-sync` on every regen, so a linter would either lint generated
-code that gets discarded next sync, or carry an `eslintignore`
-that mostly excludes the tree it's pointed at. `tsc --strict`
-catches the issues a default ESLint config would flag on this
-surface (unused imports, implicit `any`, missing returns, etc.),
-and `vitest` catches real behavioral regressions. Prettier (for
-formatting consistency on hand-written files only) is on the
-roadmap for Phase 8.
+`webhooks.ts`, `pagination.ts`, `index.ts`, plus `tests/`,
+`scripts/`, and `examples/`) is small, and the rest of `src/`
+is wiped + rewritten by `npm run sync` on every regen, so a
+linter would either lint generated code that gets discarded
+next sync, or carry an `eslintignore` that mostly excludes the
+tree it's pointed at. `tsc --strict` catches the issues a
+default ESLint config would flag on this surface (unused
+imports, implicit `any`, missing returns, etc.), and `vitest`
+catches real behavioral regressions.
+
+**Formatting**: Prettier is wired for the hand-written surface
+via `wrapper/.prettierrc` + `wrapper/.prettierignore` (the
+ignore file excludes `src/`, `dist/`, `docs/`, and
+`package-lock.json`). Run `npm run format` to apply,
+`npm run format:check` to verify. The `.prettierignore` keeps
+the generated tree alone — reformatting `src/` would create
+sync-time churn for no shipping value.
 
 ## License
 

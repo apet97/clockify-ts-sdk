@@ -9,6 +9,19 @@ once v1.0.0 ships.
 
 ### Added
 
+- **Prettier (Phase 8).** `wrapper/.prettierrc` and
+  `wrapper/.prettierignore` enforce consistent formatting on the
+  hand-written surface (`wrapper/*.ts`, `tests/`, `scripts/`,
+  `examples/`, plus `*.{json,md}` not in the ignore list). The
+  synced SDK under `wrapper/src/`, the build output `dist/`, the
+  TypeDoc + per-resource `docs/`, the lockfile, and this CHANGELOG
+  itself are explicitly ignored. New `npm run format` (apply) and
+  `npm run format:check` (verify). prettier `^3.8.3` added as
+  devDep. README "Why no linter" section updated to note Prettier
+  is now wired alongside `tsc --strict` and `vitest` (Prettier is
+  a formatter, not a linter, so the section's claim about ESLint
+  still stands). All existing hand-written files reformatted in
+  this commit; future PRs are expected to land Prettier-clean.
 - **Webhook golden fixtures + fixture-driven tests (Phase 4.2).**
   Four synthesized payloads under
   `wrapper/tests/fixtures/webhook-events/` covering NEW_PROJECT,

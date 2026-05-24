@@ -19,13 +19,12 @@
  */
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
-import {
-    composedFetch,
-    type ComposedFetchHooks,
-    type RetryPolicy,
-} from "./composed-fetch.js";
+import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
 
-type WithoutAuthOrEnhancements = Omit<BaseClientOptions, "apiKey" | "addonToken" | "fetch" | "maxRetries">;
+type WithoutAuthOrEnhancements = Omit<
+    BaseClientOptions,
+    "apiKey" | "addonToken" | "fetch" | "maxRetries"
+>;
 
 /** Extra knobs the factory understands beyond raw `BaseClientOptions`.
  *  Every field is optional; defaults are documented per-field below. */
@@ -64,16 +63,18 @@ export interface ClockifyClientEnhancements {
  * `logging`, `auth`) flow through unchanged.
  */
 export type CreateClockifyClientOptions =
-    | (WithoutAuthOrEnhancements & ClockifyClientEnhancements & {
-          /** Personal-token auth header (`X-Api-Key`). */
-          apiKey: BaseClientOptions["apiKey"];
-          addonToken?: never;
-      })
-    | (WithoutAuthOrEnhancements & ClockifyClientEnhancements & {
-          /** Marketplace-addon auth header (`X-Addon-Token`). */
-          addonToken: BaseClientOptions["addonToken"];
-          apiKey?: never;
-      });
+    | (WithoutAuthOrEnhancements &
+          ClockifyClientEnhancements & {
+              /** Personal-token auth header (`X-Api-Key`). */
+              apiKey: BaseClientOptions["apiKey"];
+              addonToken?: never;
+          })
+    | (WithoutAuthOrEnhancements &
+          ClockifyClientEnhancements & {
+              /** Marketplace-addon auth header (`X-Addon-Token`). */
+              addonToken: BaseClientOptions["addonToken"];
+              apiKey?: never;
+          });
 
 const NULL_SUPPLIER = (() => undefined) as unknown as () => string;
 
@@ -124,8 +125,16 @@ export function createClockifyClient(options: CreateClockifyClientOptions): Cloc
         );
     }
 
-    const { fetch: rawFetch, userAgent, requestId, hooks, retryPolicy, maxRetries, ...auth } =
-        options as ClockifyClientEnhancements & WithoutAuthOrEnhancements & {
+    const {
+        fetch: rawFetch,
+        userAgent,
+        requestId,
+        hooks,
+        retryPolicy,
+        maxRetries,
+        ...auth
+    } = options as ClockifyClientEnhancements &
+        WithoutAuthOrEnhancements & {
             apiKey?: BaseClientOptions["apiKey"];
             addonToken?: BaseClientOptions["addonToken"];
         };
@@ -142,8 +151,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions): Cloc
     // the retry layer — disable Fern's internal retry to avoid
     // nested loops. Otherwise honor whatever maxRetries the user
     // passed (or Fern's default of 2).
-    const effectiveMaxRetries =
-        retryPolicy !== undefined ? 0 : maxRetries;
+    const effectiveMaxRetries = retryPolicy !== undefined ? 0 : maxRetries;
 
     const base = {
         ...auth,

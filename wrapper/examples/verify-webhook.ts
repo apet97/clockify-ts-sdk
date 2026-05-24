@@ -16,10 +16,10 @@ import {
 } from "clockify-sdk-ts";
 
 // --- Pattern 1: boolean check ---
-function explicitlyMappedHandler(req: {
-    headers: Record<string, string>;
+function explicitlyMappedHandler(req: { headers: Record<string, string>; body: string }): {
+    status: number;
     body: string;
-}): { status: number; body: string } {
+} {
     const ok = verifyClockifyWebhook({
         headers: req.headers,
         expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN!,
@@ -31,10 +31,10 @@ function explicitlyMappedHandler(req: {
 }
 
 // --- Pattern 2: throw + map ---
-function throwBasedHandler(req: {
-    headers: Record<string, string>;
+function throwBasedHandler(req: { headers: Record<string, string>; body: string }): {
+    status: number;
     body: string;
-}): { status: number; body: string } {
+} {
     try {
         const event = constructEvent<{ webhookEvent: string }>({
             headers: req.headers,
@@ -70,7 +70,4 @@ console.log(
         body: goodBody,
     }),
 );
-console.log(
-    "throw 401:",
-    throwBasedHandler({ headers: {}, body: goodBody }),
-);
+console.log("throw 401:", throwBasedHandler({ headers: {}, body: goodBody }));

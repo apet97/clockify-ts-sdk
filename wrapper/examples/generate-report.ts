@@ -26,7 +26,12 @@ try {
         detailedFilter: { page: 1, pageSize: 10 },
     });
 
-    const entries = (report as { timeentries?: Array<{ description?: string; timeInterval?: { duration?: string } }> }).timeentries ?? [];
+    const entries =
+        (
+            report as {
+                timeentries?: Array<{ description?: string; timeInterval?: { duration?: string } }>;
+            }
+        ).timeentries ?? [];
     console.log(`Last 7 days: ${entries.length} entries (printing first 10):\n`);
     for (const entry of entries.slice(0, 10)) {
         const dur = entry.timeInterval?.duration ?? "?";
