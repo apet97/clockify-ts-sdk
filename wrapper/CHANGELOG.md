@@ -9,6 +9,20 @@ once v1.0.0 ships.
 
 ### Added
 
+- **CodeQL security scanning.** New
+  `.github/workflows/codeql.yml` runs GitHub's `security-and-quality`
+  query suite on push + PR + weekly cron. Scoped to the hand-written
+  wrapper surface (`wrapper/*.ts`, `wrapper/tests/**`,
+  `wrapper/scripts/**`, `wrapper/examples/**`, `.github/workflows/**`)
+  — the synced SDK under `wrapper/src/**` is excluded because any
+  finding there belongs upstream in GOCLMCP, not this repo's
+  tracker.
+- **Dependabot.** New `.github/dependabot.yml` watches
+  `wrapper/`'s npm devDependencies and the repo's GitHub Actions
+  versions on weekly cadence. Commit-message prefixes
+  (`chore(deps)`, `chore(dev-deps)`, `chore(ci)`) align with the
+  repo's conventional-commits scheme. Open-PR limits prevent
+  dependabot from flooding the queue (5 npm, 3 actions).
 - **Per-resource markdown reference** under `wrapper/docs/resources/`
   (31 files, one per resource, plus `README.md` index covering all
   190 methods). Each file has method list + JSDoc snippet +
