@@ -151,9 +151,9 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **CRUDL on 16 of the 31 modules.** Each stamped op pairs
-  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
-  lands at `client.<resource>.<verb>()`:
+- **Idiomatic method names on 19 of the 31 modules.** Each stamped
+  op pairs `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the
+  method lands at `client.<resource>.<verb>()`:
   - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
     `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
     `webhooks`, `expenses`, `expenseCategories`, `policies` — each
@@ -174,21 +174,33 @@ co-exist:
     updateForWorkspace,deleteForWorkspace,listForProject,
     updateForProject,removeFromProject}` — the module covers two
     surfaces (workspace + project); explicit suffixes disambiguate.
-- **OperationId-derived on the remaining ~15 modules** —
-  `client.approvals.getApprovalRequests(...)`,
+  - **Workflow verbs (not pure CRUDL):**
+    `approvals.{list,submit,submitForUser,resubmit,resubmitForUser,updateStatus}`,
+    `timeOff.{list,get,delete,updateStatus,submit}`,
+    `scheduling.{create,list,update,delete,publish,copy,createRecurring,updateRecurring,deleteRecurring}`.
+    These modules expose state-machine and workflow operations rather
+    than CRUDL; the verbs match the upstream semantics
+    (`submit` / `approve` / `withdraw` for approvals;
+    `submit` + admin `updateStatus` for time-off requests;
+    `publish` for assignment workflows).
+- **OperationId-derived on the remaining ~12 modules** —
   `client.reports.getDetailedReport(...)`,
-  `client.invoices.getWorkspaceInvoices(...)`, and so on. Long but
+  `client.invoices.getWorkspaceInvoices(...)`,
+  `client.workspaces.getAllMyWorkspaces(...)`, and so on. Long but
   stable. Specialised action verbs inside the stamped modules also
   keep their operationId-derived names (e.g.
   `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive(...)`,
   `client.timeOffPolicies.changeTimeOffPolicyStatus(...)`,
-  `client.expenses.downloadExpenseReceipt(...)`).
+  `client.expenses.downloadExpenseReceipt(...)`,
+  `client.scheduling.getUsersCapacityTotals(...)`).
   Tracked under `spec/evidence/discrepancies.md` →
   `fern.x-fern-sdk-method-name.drops-resource-modules`. The
-  remaining modules either need a per-module workflow-verb naming
-  review (`approvals`, `timeOff`, `scheduling`, `reports`,
-  `invoices`) or have so few ops the rename buys little
-  (`memberProfiles`, `roles`, `balances`, etc.).
+  remaining modules either need a per-family naming design pass
+  (`reports` has summary / detailed / weekly / etc.; `invoices`
+  has CRUDL + duplicate/export/filter/changeStatus) or have so few
+  ops the rename buys little (`memberProfiles`, `roles`,
+  `balances`, `invoiceSettings`, `expenseReport`, `workspaces`,
+  `files`, `auditLogReport`, `entityChangesExperimental`).
 
 ## Pagination
 

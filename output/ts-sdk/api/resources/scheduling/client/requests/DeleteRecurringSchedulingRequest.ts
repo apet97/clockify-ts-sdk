@@ -7,7 +7,7 @@
  *         assignmentId: "5b641568b07987035750505e"
  *     }
  */
-export interface DeleteRecurringAssignmentRequest {
+export interface DeleteRecurringSchedulingRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     /** Represents an assignment identifier across the system. */

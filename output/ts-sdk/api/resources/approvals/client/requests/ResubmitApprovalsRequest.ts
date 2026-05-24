@@ -12,7 +12,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface SubmitApprovalRequestBody {
+export interface ResubmitApprovalsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
     body: ClockifyApi.SubmitApprovalRequestRequest;

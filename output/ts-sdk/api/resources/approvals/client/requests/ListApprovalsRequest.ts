@@ -5,19 +5,16 @@ import type * as ClockifyApi from "../../../../index.js";
 /**
  * @example
  *     {
- *         workspaceId: "64a687e29ae1f428e7ebe303",
- *         name: "Bugfixing"
+ *         workspaceId: "64a687e29ae1f428e7ebe303"
  *     }
  */
-export interface GetAllSchedulingAssignmentsRequest {
+export interface ListApprovalsRequest {
     /** Represents a workspace identifier across the system. */
     workspaceId: string;
-    /** If provided, assignments will be filtered by name. */
-    name?: string;
-    /** Represents the column as the sorting criteria. */
-    "sort-column"?: ClockifyApi.AssignmentSortColumn;
-    /** Represents the sorting mode. */
-    "sort-order"?: ClockifyApi.SortOrder;
+    /** Filters results based on the provided approval state. */
+    status?: ClockifyApi.ApprovalRequestFilterState;
+    /** Column name to use as sorting criteria. */
+    "sort-column"?: ClockifyApi.ApprovalRequestSortColumn;
     /** 1-based page index. Default 1. */
     page?: number;
     /** Page size (number of items per page). Default 50; maximum 200. */

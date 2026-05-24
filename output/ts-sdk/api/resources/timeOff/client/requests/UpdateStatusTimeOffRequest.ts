@@ -7,14 +7,14 @@
  *         requestId: "requestId"
  *     }
  */
-export interface PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest {
+export interface UpdateStatusTimeOffRequest {
     workspaceId: string;
     requestId: string;
     note?: string;
-    statusType?: PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest.StatusType;
+    statusType?: UpdateStatusTimeOffRequest.StatusType;
 }
 
-export namespace PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest {
+export namespace UpdateStatusTimeOffRequest {
     export const StatusType = {
         Approved: "APPROVED",
         Rejected: "REJECTED",

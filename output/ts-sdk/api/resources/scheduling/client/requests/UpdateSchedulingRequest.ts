@@ -10,7 +10,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         body: {}
  *     }
  */
-export interface PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest {
+export interface UpdateSchedulingRequest {
     workspaceId: string;
     assignmentId: string;
     body: ClockifyApi.OpenapiSchedulingAssignment;

@@ -639,9 +639,9 @@ Each of these needs:
   31 resource modules + `index.ts` (matches baseline) and zero hoisted
   methods on the root client.
 
-- **What shipped (16-module subset, 77 ops):** `SDK_METHOD_NAMES` in
-  `../GOCLMCP/scripts/gen-clockify-openapi` maps 77 pairs to
-  `{group, name}` entries. The session expanded in three steps:
+- **What shipped (19-module subset, 97 ops):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` maps 97 pairs to
+  `{group, name}` entries. The session expanded in four steps:
   - Step 1 (proof-of-concept): tags × 5 CRUDL; clients × 5 CRUDL + 1
     archive = 11 ops.
   - Step 2 (scale-up): projects, tasks, holidays, sharedReports,
@@ -650,13 +650,17 @@ Each of these needs:
   - Step 3 (next-batch cohort): customFields × 7 scoped, expenses × 5,
     expenseCategories × 5 + archive, invoiceItems × 3, invoicePayments
     × 3, policies × 5 + archive = 29 more ops.
+  - Step 4 (workflow-verb cohort): approvals × 6 workflow verbs
+    (list/submit/submitForUser/resubmit/resubmitForUser/updateStatus),
+    timeOff × 5 (list/get/delete/updateStatus/submit), scheduling × 9
+    (CRUDL + publish + copy + recurring CRUD) = 20 more ops.
 
   After each step, regen + all 4 drift gates + `go test ./internal/tools/...`
   + `fern check --warnings --from-openapi` + `fern generate --group ts
   --local --force` stayed green; the wrapper exposes idiomatic CRUDL
   on every stamped module and 0 ops are hoisted to the root client.
 
-- **What's NOT shipped:** ~15 modules still use operationId-derived
+- **What's NOT shipped:** ~12 modules still use operationId-derived
   names. The remaining modules split into two cohorts:
   - **Small or mostly-read-only modules.** `memberProfiles` (2 ops:
     get/update — low leverage), `roles` (read-only), `balances`
@@ -665,12 +669,11 @@ Each of these needs:
     like updateWorkspaceCostRate; no DELETE; "list" semantics
     awkward since it's a user's own-workspace enumeration), `files`,
     `auditLogReport`, `entityChangesExperimental`.
-  - **Workflow / action-verb modules (need naming review).**
-    `approvals` (submit/approve/reject/withdraw/resubmit),
-    `timeOff` (request/approve/deny), `scheduling`
-    (assignments + publish), `reports` (multiple report families:
-    summary/detailed/weekly/etc.), `invoices` (CRUDL +
-    duplicate/export/filter/changeStatus).
+  - **Remaining action-verb modules.** `reports` (multiple report
+    families: summary/detailed/weekly/etc.; needs a per-family naming
+    design pass), `invoices` (CRUDL + duplicate/export/filter/
+    changeStatus + send-which-doesn't-exist; needs the send-quirk
+    documented before stamping).
 
   Specialised action verbs inside the 10 stamped modules also kept
   their operationId-derived names (e.g.
@@ -688,12 +691,16 @@ Each of these needs:
      it's the required complement.
   3-4. Closed by (1).
 
-- **Status (updated):** `partially-resolved-incremental-rollout`. The
-  proven technique ships in `SDK_METHOD_NAMES` covering 77 ops across
-  16 modules. The remaining ~15 modules split into "small / read-only
-  modules where the rename buys little" and "workflow-verb modules
-  that need a per-module naming review before stamping". Module count
-  stays at 31 + index.ts across all expansions verified to date.
+- **Status (updated):** `mostly-resolved-incremental-rollout`. The
+  proven technique ships in `SDK_METHOD_NAMES` covering 97 ops across
+  19 modules. The remaining ~12 modules split into "small / read-only
+  modules where the rename buys little" and "specialised modules
+  (reports, invoices) that need a per-family naming design pass".
+  Module count stays at 31 + index.ts across all expansions verified
+  to date. The workflow-verb cohort (approvals, timeOff, scheduling)
+  landed in step 4 using semantic verbs (submit, updateStatus,
+  publish, copy) rather than forcing CRUDL; the technique extends
+  cleanly beyond simple CRUDL when the domain calls for it.
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 

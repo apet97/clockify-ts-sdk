@@ -7,7 +7,7 @@
  *         requestId: "requestId"
  *     }
  */
-export interface DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest {
+export interface DeleteTimeOffRequest {
     workspaceId: string;
     requestId: string;
 }

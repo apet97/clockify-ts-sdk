@@ -12,7 +12,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         userId: "userId"
  *     }
  */
-export interface PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest {
+export interface CreateSchedulingRequest {
     workspaceId: string;
     billable?: boolean;
     excludeDays?: Record<string, unknown>[];

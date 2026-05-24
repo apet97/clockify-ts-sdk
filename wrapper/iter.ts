@@ -73,7 +73,7 @@ export interface PageEnvelope<TItem> {
  *   file if a method is renamed or removed upstream.
  */
 export type KnownPaginatedMethod =
-    | { readonly resource: "approvals"; readonly method: "getApprovalRequests" }
+    | { readonly resource: "approvals"; readonly method: "list" }
     | { readonly resource: "auditLogReport"; readonly method: "searchAuditLogs" }
     | { readonly resource: "balances"; readonly method: "getBalanceForUser" }
     | { readonly resource: "balances"; readonly method: "getBalancesForPolicy" }
@@ -83,7 +83,7 @@ export type KnownPaginatedMethod =
     | { readonly resource: "holidays"; readonly method: "list" }
     | { readonly resource: "invoicePayments"; readonly method: "list" }
     | { readonly resource: "projects"; readonly method: "list" }
-    | { readonly resource: "scheduling"; readonly method: "getAllSchedulingAssignments" }
+    | { readonly resource: "scheduling"; readonly method: "list" }
     | { readonly resource: "tags"; readonly method: "list" }
     | { readonly resource: "tasks"; readonly method: "list" }
     | {
@@ -105,7 +105,7 @@ export type KnownPaginatedMethod =
  * for tests, codegen, and CI drift assertions.
  */
 export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
-    { resource: "approvals", method: "getApprovalRequests" },
+    { resource: "approvals", method: "list" },
     { resource: "auditLogReport", method: "searchAuditLogs" },
     { resource: "balances", method: "getBalanceForUser" },
     { resource: "balances", method: "getBalancesForPolicy" },
@@ -115,7 +115,7 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "holidays", method: "list" },
     { resource: "invoicePayments", method: "list" },
     { resource: "projects", method: "list" },
-    { resource: "scheduling", method: "getAllSchedulingAssignments" },
+    { resource: "scheduling", method: "list" },
     { resource: "tags", method: "list" },
     { resource: "tasks", method: "list" },
     { resource: "timeEntries", method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress" },

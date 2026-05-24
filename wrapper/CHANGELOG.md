@@ -9,10 +9,11 @@ once v1.0.0 ships.
 
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
-- **CRUDL method names on 16 modules (G.1).** With both
+- **Idiomatic method names on 19 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
-  upstream spec, Fern now generates 16 of the 31 resource modules
-  with idiomatic names. 77 ops mapped in total:
+  upstream spec, Fern now generates 19 of the 31 resource modules
+  with idiomatic names. 97 ops mapped in total (16 modules on pure
+  CRUDL + 3 workflow-verb modules):
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).
@@ -57,8 +58,24 @@ once v1.0.0 ships.
     GET-by-id, no update on the API.
   - `client.policies.{list,create,get,update,delete,archive}` (6
     ops; full CRUDL + archive).
+  - `client.approvals.{list,submit,submitForUser,resubmit,resubmitForUser,updateStatus}`
+    (6 ops). Workflow verbs; `updateStatus` accepts a `status` body to
+    approve / reject / withdraw. The `*ForUser` variants are admin
+    endpoints; the un-suffixed verbs act on the caller's own entries.
+  - `client.timeOff.{list,get,delete,updateStatus,submit}` (5 ops).
+    `list` is the documented POST-as-list quirk (GET returns 405).
+    `submit` is scoped under `/time-off/policies/{policyId}/requests`
+    (user creates a TOR for a given policy). The legacy
+    `/policies/{policyId}/requests` duplicate routes + the
+    admin-creates-for-user variant stay operationId-derived.
+  - `client.scheduling.{create,list,update,delete,publish,copy,createRecurring,updateRecurring,deleteRecurring}`
+    (9 ops). Single-assignment CRUDL + the workflow actions
+    (`publish`, `copy`) + recurring-assignment CRUD. The
+    capacity-totals endpoints, per/on-project breakdowns, and the
+    PUT-replace variants stay operationId-derived (specialised
+    shapes).
 
-  The other ~15 modules continue to use operationId-derived names.
+  The other ~12 modules continue to use operationId-derived names.
   Root-cause analysis (method-name alone hoists ops to the root
   client) + the explicit-allowlist technique are documented in
   `spec/evidence/discrepancies.md` →

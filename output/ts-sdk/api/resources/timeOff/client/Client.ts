@@ -273,11 +273,11 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.CreateTimeOffRequestRequest} request
+     * @param {ClockifyApi.SubmitTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.createTimeOffRequest({
+     *     await client.timeOff.submit({
      *         workspaceId: "workspaceId",
      *         policyId: "policyId",
      *         body: {
@@ -294,15 +294,15 @@ export class TimeOffClient {
      *         }
      *     })
      */
-    public createTimeOffRequest(
-        request: ClockifyApi.CreateTimeOffRequestRequest,
+    public submit(
+        request: ClockifyApi.SubmitTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestFullV1Dto> {
-        return core.HttpResponsePromise.fromPromise(this.__createTimeOffRequest(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__submit(request, requestOptions));
     }
 
-    private async __createTimeOffRequest(
-        request: ClockifyApi.CreateTimeOffRequestRequest,
+    private async __submit(
+        request: ClockifyApi.SubmitTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestFullV1Dto>> {
         const { workspaceId, policyId, body: _body } = request;
@@ -575,7 +575,7 @@ export class TimeOffClient {
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.getAllTimeOffRequestsOnWorkspace({
+     *     await client.timeOff.list({
      *         workspaceId: "workspaceId",
      *         end: "2022-08-26T23:55:06Z",
      *         page: 1,
@@ -586,14 +586,14 @@ export class TimeOffClient {
      *         users: ["5b715612b079875110791432", "b715612b079875110791234"]
      *     })
      */
-    public getAllTimeOffRequestsOnWorkspace(
+    public list(
         request: ClockifyApi.TimeOffRequestSearchRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequestsResponse> {
-        return core.HttpResponsePromise.fromPromise(this.__getAllTimeOffRequestsOnWorkspace(request, requestOptions));
+        return core.HttpResponsePromise.fromPromise(this.__list(request, requestOptions));
     }
 
-    private async __getAllTimeOffRequestsOnWorkspace(
+    private async __list(
         request: ClockifyApi.TimeOffRequestSearchRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequestsResponse>> {
@@ -719,26 +719,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest} request
+     * @param {ClockifyApi.GetTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.getWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+     *     await client.timeOff.get({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public getWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    public get(
+        request: ClockifyApi.GetTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequest> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__getWorkspacesWorkspaceIdTimeOffRequestsRequestId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__get(request, requestOptions));
     }
 
-    private async __getWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    private async __get(
+        request: ClockifyApi.GetTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequest>> {
         const { workspaceId, requestId } = request;
@@ -786,26 +784,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest} request
+     * @param {ClockifyApi.DeleteTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+     *     await client.timeOff.delete({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    public delete(
+        request: ClockifyApi.DeleteTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<void> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__delete(request, requestOptions));
     }
 
-    private async __deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId(
-        request: ClockifyApi.DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest,
+    private async __delete(
+        request: ClockifyApi.DeleteTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<void>> {
         const { workspaceId, requestId } = request;
@@ -853,26 +849,24 @@ export class TimeOffClient {
     }
 
     /**
-     * @param {ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest} request
+     * @param {ClockifyApi.UpdateStatusTimeOffRequest} request
      * @param {TimeOffClient.RequestOptions} requestOptions - Request-specific configuration.
      *
      * @example
-     *     await client.timeOff.patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus({
+     *     await client.timeOff.updateStatus({
      *         workspaceId: "workspaceId",
      *         requestId: "requestId"
      *     })
      */
-    public patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest,
+    public updateStatus(
+        request: ClockifyApi.UpdateStatusTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): core.HttpResponsePromise<ClockifyApi.TimeOffRequest> {
-        return core.HttpResponsePromise.fromPromise(
-            this.__patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(request, requestOptions),
-        );
+        return core.HttpResponsePromise.fromPromise(this.__updateStatus(request, requestOptions));
     }
 
-    private async __patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus(
-        request: ClockifyApi.PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest,
+    private async __updateStatus(
+        request: ClockifyApi.UpdateStatusTimeOffRequest,
         requestOptions?: TimeOffClient.RequestOptions,
     ): Promise<core.WithRawResponse<ClockifyApi.TimeOffRequest>> {
         const { workspaceId, requestId, ..._body } = request;

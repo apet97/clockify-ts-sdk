@@ -6,17 +6,17 @@
 
 ## Methods
 
-### `getApprovalRequests`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.approvals.getApprovalRequests({
+    await client.approvals.list({
         workspaceId: "64a687e29ae1f428e7ebe303"
     })
 ```
 
-**Request fields** (`GetApprovalRequestsRequest`):
+**Request fields** (`ListApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `status` (`ClockifyApi.ApprovalRequestFilterState`, optional) — Filters results based on the provided approval state.
@@ -24,12 +24,12 @@
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
-### `submitApprovalRequest`
+### `submit`
 
 **Example:**
 
 ```typescript
-    await client.approvals.submitApprovalRequest({
+    await client.approvals.submit({
         workspaceId: "64a687e29ae1f428e7ebe303",
         body: {
             period: "MONTHLY",
@@ -38,17 +38,17 @@
     })
 ```
 
-**Request fields** (`SubmitApprovalRequestBody`):
+**Request fields** (`SubmitApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
 
-### `resubmitEntriesForApproval`
+### `resubmit`
 
 **Example:**
 
 ```typescript
-    await client.approvals.resubmitEntriesForApproval({
+    await client.approvals.resubmit({
         workspaceId: "64a687e29ae1f428e7ebe303",
         body: {
             period: "MONTHLY",
@@ -57,38 +57,17 @@
     })
 ```
 
-**Request fields** (`ResubmitEntriesForApprovalRequest`):
+**Request fields** (`ResubmitApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
 
-### `submitApprovalRequestForUser`
+### `submitForUser`
 
 **Example:**
 
 ```typescript
-    await client.approvals.submitApprovalRequestForUser({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        userId: "5a0ab5acb07987125438b60f",
-        body: {
-            period: "MONTHLY",
-            periodStart: "2020-01-01T00:00:00.000Z"
-        }
-    })
-```
-
-**Request fields** (`SubmitApprovalRequestForUserRequest`):
-
-- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `userId` (`string`, required) — Represents a user identifier across the system.
-- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
-
-### `resubmitEntriesForApprovalForUser`
-
-**Example:**
-
-```typescript
-    await client.approvals.resubmitEntriesForApprovalForUser({
+    await client.approvals.submitForUser({
         workspaceId: "64a687e29ae1f428e7ebe303",
         userId: "5a0ab5acb07987125438b60f",
         body: {
@@ -98,18 +77,39 @@
     })
 ```
 
-**Request fields** (`ResubmitEntriesForApprovalForUserRequest`):
+**Request fields** (`SubmitForUserApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 - `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
 
-### `updateApprovalRequest`
+### `resubmitForUser`
 
 **Example:**
 
 ```typescript
-    await client.approvals.updateApprovalRequest({
+    await client.approvals.resubmitForUser({
+        workspaceId: "64a687e29ae1f428e7ebe303",
+        userId: "5a0ab5acb07987125438b60f",
+        body: {
+            period: "MONTHLY",
+            periodStart: "2020-01-01T00:00:00.000Z"
+        }
+    })
+```
+
+**Request fields** (`ResubmitForUserApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
+
+### `updateStatus`
+
+**Example:**
+
+```typescript
+    await client.approvals.updateStatus({
         workspaceId: "64a687e29ae1f428e7ebe303",
         approvalRequestId: "940ab5acb07987125438b65y",
         note: "Approved after review.",

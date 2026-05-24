@@ -6,12 +6,12 @@
 
 ## Methods
 
-### `postWorkspacesWorkspaceIdSchedulingAssignments`
+### `create`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.postWorkspacesWorkspaceIdSchedulingAssignments({
+    await client.scheduling.create({
         workspaceId: "workspaceId",
         hoursPerDay: 1.1,
         period: {},
@@ -20,7 +20,7 @@
     })
 ```
 
-**Request fields** (`PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest`):
+**Request fields** (`CreateSchedulingRequest`):
 
 - `workspaceId` (`string`, required)
 - `billable` (`boolean`, optional)
@@ -36,18 +36,18 @@
 - `userId` (`string`, required)
 - `weeks` (`number`, optional)
 
-### `getAllSchedulingAssignments`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.getAllSchedulingAssignments({
+    await client.scheduling.list({
         workspaceId: "64a687e29ae1f428e7ebe303",
         name: "Bugfixing"
     })
 ```
 
-**Request fields** (`GetAllSchedulingAssignmentsRequest`):
+**Request fields** (`ListSchedulingRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `name` (`string`, optional) — If provided, assignments will be filtered by name.
@@ -98,12 +98,12 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
 
-### `publishAssignments`
+### `publish`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.publishAssignments({
+    await client.scheduling.publish({
         workspaceId: "64a687e29ae1f428e7ebe303",
         end: "2021-01-01T00:00:00Z",
         notifyUsers: false,
@@ -124,12 +124,12 @@
 - `userGroupFilter` (`ClockifyApi.ContainsUserGroupFilterRequestV1`, optional)
 - `viewType` (`ClockifyApi.SchedulingViewType`, optional)
 
-### `createRecurringAssignment`
+### `createRecurring`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.createRecurringAssignment({
+    await client.scheduling.createRecurring({
         workspaceId: "64a687e29ae1f428e7ebe303",
         billable: false,
         end: "2021-01-01T00:00:00Z",
@@ -183,28 +183,28 @@
 - `assignmentId` (`string`, required)
 - `body` (`Record<string, unknown>`, required)
 
-### `deleteRecurringAssignment`
+### `deleteRecurring`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.deleteRecurringAssignment({
+    await client.scheduling.deleteRecurring({
         workspaceId: "64a687e29ae1f428e7ebe303",
         assignmentId: "5b641568b07987035750505e"
     })
 ```
 
-**Request fields** (`DeleteRecurringAssignmentRequest`):
+**Request fields** (`DeleteRecurringSchedulingRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `assignmentId` (`string`, required) — Represents an assignment identifier across the system.
 
-### `updateRecurringAssignment`
+### `updateRecurring`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.updateRecurringAssignment({
+    await client.scheduling.updateRecurring({
         workspaceId: "64a687e29ae1f428e7ebe303",
         assignmentId: "5b641568b07987035750505e",
         billable: false,
@@ -315,46 +315,46 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId`
+### `update`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId({
+    await client.scheduling.update({
         workspaceId: "workspaceId",
         assignmentId: "assignmentId",
         body: {}
     })
 ```
 
-**Request fields** (`PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest`):
+**Request fields** (`UpdateSchedulingRequest`):
 
 - `workspaceId` (`string`, required)
 - `assignmentId` (`string`, required)
 - `body` (`ClockifyApi.OpenapiSchedulingAssignment`, required)
 
-### `deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId({
+    await client.scheduling.delete({
         workspaceId: "workspaceId",
         assignmentId: "assignmentId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest`):
+**Request fields** (`DeleteSchedulingRequest`):
 
 - `workspaceId` (`string`, required)
 - `assignmentId` (`string`, required)
 
-### `copyScheduledAssignment`
+### `copy`
 
 **Example:**
 
 ```typescript
-    await client.scheduling.copyScheduledAssignment({
+    await client.scheduling.copy({
         workspaceId: "64a687e29ae1f428e7ebe303",
         assignmentId: "5b641568b07987035750505e",
         seriesUpdateOption: "THIS_ONE",

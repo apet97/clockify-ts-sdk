@@ -69,12 +69,12 @@
 - `note` (`string`, optional)
 - `statusType` (`PatchWorkspacesWorkspaceIdPoliciesPolicyIdRequestsRequestIdRequest.StatusType`, required)
 
-### `createTimeOffRequest`
+### `submit`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.createTimeOffRequest({
+    await client.timeOff.submit({
         workspaceId: "workspaceId",
         policyId: "policyId",
         body: {
@@ -92,7 +92,7 @@
     })
 ```
 
-**Request fields** (`CreateTimeOffRequestRequest`):
+**Request fields** (`SubmitTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
@@ -169,12 +169,12 @@
 - `userId` (`string`, required)
 - `body` (`ClockifyApi.CreateTimeOffRequest`, required)
 
-### `getAllTimeOffRequestsOnWorkspace`
+### `list`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.getAllTimeOffRequestsOnWorkspace({
+    await client.timeOff.list({
         workspaceId: "workspaceId",
         end: "2022-08-26T23:55:06Z",
         page: 1,
@@ -220,53 +220,53 @@
 - `policyId` (`string`, required)
 - `timeOffPeriod` (`TimeOffRequestCreate.TimeOffPeriod`, required)
 
-### `getWorkspacesWorkspaceIdTimeOffRequestsRequestId`
+### `get`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.getWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+    await client.timeOff.get({
         workspaceId: "workspaceId",
         requestId: "requestId"
     })
 ```
 
-**Request fields** (`GetWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest`):
+**Request fields** (`GetTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `requestId` (`string`, required)
 
-### `deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId`
+### `delete`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId({
+    await client.timeOff.delete({
         workspaceId: "workspaceId",
         requestId: "requestId"
     })
 ```
 
-**Request fields** (`DeleteWorkspacesWorkspaceIdTimeOffRequestsRequestIdRequest`):
+**Request fields** (`DeleteTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `requestId` (`string`, required)
 
-### `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus`
+### `updateStatus`
 
 **Example:**
 
 ```typescript
-    await client.timeOff.patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus({
+    await client.timeOff.updateStatus({
         workspaceId: "workspaceId",
         requestId: "requestId"
     })
 ```
 
-**Request fields** (`PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest`):
+**Request fields** (`UpdateStatusTimeOffRequest`):
 
 - `workspaceId` (`string`, required)
 - `requestId` (`string`, required)
 - `note` (`string`, optional)
-- `statusType` (`PatchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatusRequest.StatusType`, optional)
+- `statusType` (`UpdateStatusTimeOffRequest.StatusType`, optional)
 

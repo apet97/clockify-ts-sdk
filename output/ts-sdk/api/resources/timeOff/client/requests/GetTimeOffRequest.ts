@@ -4,10 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         assignmentId: "assignmentId"
+ *         requestId: "requestId"
  *     }
  */
-export interface DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest {
+export interface GetTimeOffRequest {
     workspaceId: string;
-    assignmentId: string;
+    requestId: string;
 }

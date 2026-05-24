@@ -21,7 +21,7 @@ import type * as ClockifyApi from "../../../../index.js";
  *         }
  *     }
  */
-export interface CreateTimeOffRequestRequest {
+export interface SubmitTimeOffRequest {
     workspaceId: string;
     policyId: string;
     body: ClockifyApi.CreateTimeOffRequest;
