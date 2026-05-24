@@ -46,6 +46,18 @@ not just to humans.
   Quick reference and full evidence live in
   `spec/evidence/discrepancies.md` →
   `fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings`.
+- **`npm run build` runs `tsc` twice:** once against
+  `tsconfig.build.json` (the synced SDK in `src/` → `dist/`) and
+  once against `tsconfig.pagination.json` (the hand-written
+  `pagination.ts` at the wrapper root → `dist/pagination.{js,d.ts,
+  ...}`). The two outputs co-exist in `dist/` under different
+  filenames; the npm subpath `clockify-sdk-ts/pagination` resolves
+  to the second one.
+- **Two test files now:** `tests/pagination.test.ts` (8 unit cases,
+  no live API needed — mocks the `fetchPage` callback) and
+  `tests/sandbox.test.ts` (5 live flows, skip when
+  `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` absent). Don't
+  collapse them; the unit cases run in CI without creds.
 
 ## Where to look first
 
@@ -55,8 +67,11 @@ not just to humans.
 | Add a new tag rename                                  | same file, `TAG_RENAMES`                                                 |
 | Add an ObjectId-pattern path param                    | same file, `PATH_PARAM_PATTERNS`                                         |
 | Change the SDK wrapper surface (auth, defaults, exports) | `wrapper/package.json` + `wrapper/scripts/sync-sdk.sh` + maybe a hand-written re-export under `wrapper/` (anything you add survives sync as long as it's outside `src/`) |
+| Adjust the hand-written `paginate<T>` helper           | `wrapper/pagination.ts` (canonical source) + `wrapper/tests/pagination.test.ts` (8 unit cases) + `wrapper/tests/sandbox.test.ts` (live cross-page walk) |
+| Add a new hand-written module to the npm surface       | drop the `.ts` at `wrapper/` root (outside `src/`); add a per-file `tsconfig.<name>.json` mirroring `tsconfig.pagination.json`; chain its `tsc -p` into the `build` script; add a subpath entry under `package.json` `exports`; include it in `tsconfig.json`'s `include` for type-check |
+| Update the user-facing changelog                      | `wrapper/CHANGELOG.md` — append under `[Unreleased]` for in-flight work; rename `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD` on tag day |
 | Add a test                                            | `wrapper/tests/sandbox.test.ts` (live) or a new `tests/*.test.ts` (env-gated)                                  |
-| Change CI                                             | `.github/workflows/{ci,release}.yml` — heads up on the workflow hook above |
+| Change CI                                             | `.github/workflows/{ci,release}.yml` — heads up on the workflow hook above; both workflows already opt in to `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` |
 | Document a Clockify-vs-spec divergence                | `spec/evidence/discrepancies.md` — use the five-question format already in the file |
 | Refresh the corrected snapshot                        | `(cd ../GOCLMCP && make gen-openapi) && cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml spec/corrected/clockify.corrected.openapi.yaml` |
 

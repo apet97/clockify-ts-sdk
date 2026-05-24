@@ -93,15 +93,20 @@ output/ts-sdk/**  (Fern emits ~720 TS files; --force WIPES the tree)
         ▼
 wrapper/src/**  (gitignored; populated by sync)
         │
-        │  npm run type-check               (tsc --noEmit)
-        │  npm test                          (vitest; live tests skip without
-        │                                     CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
-        │  npm run build                     (tsc -p tsconfig.build.json → dist/)
+        │  npm run type-check               (tsc --noEmit; covers src/**,
+        │                                     pagination.ts, tests/**)
+        │  npm test                          (vitest; 8 pagination unit tests +
+        │                                     5 live sandbox flows; live tests
+        │                                     skip without CLOCKIFY_API_KEY +
+        │                                     CLOCKIFY_WORKSPACE_ID)
+        │  npm run build                     (tsc -p tsconfig.build.json → dist/,
+        │                                     then tsc -p tsconfig.pagination.json
+        │                                     → dist/pagination.{js,d.ts,...})
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
-        │  npm pack --dry-run                (verify the tarball; 2891 files,
-        │                                     328.7 kB as of v0.1.0)
+        │  npm pack --dry-run                (verify the tarball; 2899 files,
+        │                                     331.8 kB as of v0.1.0)
         ▼
 clockify-sdk-ts@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
 ```
@@ -120,7 +125,9 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/corrected/` snapshot only                    | should never happen — see §5                       |
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
-| `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently ~722) |
+| `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
+| `wrapper/{pagination.ts, tsconfig.pagination.json}` | `npm run type-check` + `npm test` (pagination unit cases live in `tests/pagination.test.ts`) + `npm run build` + `npm pack --dry-run` |
+| `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
 
@@ -170,23 +177,43 @@ end-to-end and end green before push. Drift gates are non-negotiable.
 ```
 wrapper/
 ├── package.json              ← clockify-sdk-ts manifest (npm-bound)
-├── tsconfig.json             ← type-check (noEmit)
+├── tsconfig.json             ← type-check (noEmit; covers src/**,
+│                                pagination.ts, tests/**)
 ├── tsconfig.build.json       ← emit dist/ with declarations + sourcemaps
-├── vitest.config.ts          ← test runner config
+│                                from src/ (the synced SDK)
+├── tsconfig.pagination.json  ← emit dist/pagination.* from the hand-written
+│                                pagination.ts at the wrapper root
+├── vitest.config.ts          ← test runner config (testTimeout 30s)
 ├── README.md                 ← the README users see on npm
+├── CHANGELOG.md              ← Keep-a-Changelog formatted release notes;
+│                                NOT in package.json "files" — discoverable
+│                                via the repo URL, not the tarball
 ├── LICENSE                   ← MIT
+├── pagination.ts             ← hand-written AsyncGenerator-based offset
+│                                iterator (`paginate<T>`); survives sync;
+│                                exported as `clockify-sdk-ts/pagination`
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
 ├── scripts/
 │   └── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/
 ├── tests/
-│   └── sandbox.test.ts       ← live-against-Clockify smoke tests
+│   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
+│   │                           (mocked fetchPage callback; no live API)
+│   └── sandbox.test.ts       ← 5 live-against-Clockify smoke tests
+│                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
-└── dist/                     ← gitignored; populated by tsc -p tsconfig.build.json
+└── dist/                     ← gitignored; populated by `npm run build`
+                                (two tsc invocations — one per tsconfig)
 ```
 
 `"files": ["dist", "README.md", "LICENSE"]` in `package.json`
 whitelists what `npm publish` ships. Do not add to that list without
-a publish-readiness review.
+a publish-readiness review. `CHANGELOG.md` is intentionally omitted
+to keep the tarball lean.
+
+The package exposes two subpaths via `package.json` `exports`:
+- `clockify-sdk-ts` → `./dist/index.js` (the synced SDK surface).
+- `clockify-sdk-ts/pagination` → `./dist/pagination.js` (the
+  hand-written `paginate<T>` helper).
 
 The `addonToken: (() => undefined) as unknown as () => string`
 cast in `README.md` quick-start + `tests/sandbox.test.ts` is a
@@ -221,9 +248,12 @@ Tracked in `spec/evidence/discrepancies.md` with full repro evidence:
 
 1. `fern.x-fern-pagination.bare-array-unsupported` — Fern CLI 5.37.9
    rejects `results: $response` for bare-array responses; Clockify
-   has no envelope. **The SDK does not auto-paginate.** Users page
-   manually with `page` + `page-size`. The `wrapper/README.md`
-   pagination section shows the canonical loop.
+   has no envelope. **The SDK does not auto-paginate via Fern.**
+   The wrapper ships a hand-written `paginate<T>` helper (see §6) as
+   the supported workaround: `import { paginate } from
+   "clockify-sdk-ts/pagination"`. Manual `page` / `page-size` loops
+   also work (`wrapper/README.md` shows both forms). Re-evaluate
+   Fern's bare-array support on each upstream CLI bump.
 2. `fern.x-fern-sdk-method-name.drops-resource-modules` — a CRUDL
    heuristic on `x-fern-sdk-method-name` caused Fern to silently drop
    12 of 31 resource modules from TS output. Heuristic parked as a
@@ -232,14 +262,20 @@ Tracked in `spec/evidence/discrepancies.md` with full repro evidence:
 3. `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
    — Fern types both `apiKey` and `addonToken` as required; Clockify
    accepts exactly one. Workaround documented; needs upstream fix.
-4. Three list endpoints deferred from item 2 of the publish-readiness
-   brief (`/workspaces`, `/workspaces/{wsId}/balance`,
-   `/workspaces/{wsId}/holidays/in-period`) — probed but didn't fit
-   the pagination shape. Re-probe with the correct query params
-   before adding to `PAGINATED_LIST_OPS`.
 
-Re-attempt only after the upstream gating concern is resolved (Fern
-issue filed and acknowledged, or a workaround is discovered).
+**Recently resolved (kept here as a pointer):**
+- `deferred-list-endpoints.not-paginated-or-not-live` (2026-05-24,
+  session 2 re-probe). The three deferred list endpoints
+  (`/workspaces` top-level, `/workspaces/{wsId}/balance`,
+  `/workspaces/{wsId}/holidays/in-period`) were confirmed
+  **not paginated** (or, for bare `/balance`, not live at all).
+  None added to `PAGINATED_LIST_OPS`. The granular
+  `time-off/balance/policy/{policyId}` and
+  `.../user/{userId}` routes — already in `PAGINATED_LIST_OPS` —
+  are the live equivalents.
+
+Re-attempt items 1-3 only after the upstream gating concern is
+resolved (Fern issue acknowledged or a workaround discovered).
 
 ## 9. Secret hygiene
 
@@ -285,9 +321,15 @@ issue filed and acknowledged, or a workaround is discovered).
   changed pagination shape, deprecation. Do not duplicate internal
   build-chain detail there; that lives in this `AGENTS.md` and the
   workspace `README.md`.
-- `CHANGELOG.md` does not exist yet. Add one to `wrapper/` before
-  v0.2.0 ships. Each version entry should reference the relevant
-  `discrepancies.md` anchors.
+- `wrapper/CHANGELOG.md` exists (added 2026-05-24, session 2) in
+  Keep-a-Changelog format with an `[Unreleased]` heading on top.
+  Every user-visible change between releases lands under
+  `[Unreleased]`; on tag day, that section is renamed to the new
+  version + ISO date. Each version entry references the relevant
+  `discrepancies.md` anchors for any limitation it inherits, ships,
+  or closes. `CHANGELOG.md` is intentionally not in
+  `package.json` `files`, so the npm tarball stays lean; readers
+  follow the repo URL from the manifest.
 
 ## 12. Out of scope (FLAG and stop)
 

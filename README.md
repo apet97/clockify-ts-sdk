@@ -120,33 +120,54 @@ to `- openapi: ../official/clockify.official.openapi.yaml`. Compare
 the two runs' diagnostics — that delta is the rough size of the
 spec corrections the MCP layer has absorbed so far.
 
-## First run results (2026-05-24)
+## Current state (2026-05-24, session 2)
 
-Recorded against `clockify-mcp` v0.1.1 / GOCLMCP `main` 830cc12.
+Tracked against GOCLMCP `main` `26bc586` (`feat(gen): collapse
+SharedReport tag to plural Shared Reports`).
 
 | Surface | Errors | Warnings | Outcome |
 | --- | --- | --- | --- |
-| `fern check` — corrected spec | 9 → 0 after patch | 8 | green |
-| `fern generate ts --local` | — | — | 753 files, 3.6 MB written to `output/ts-sdk/` |
+| `fern check --warnings --from-openapi` (corrected spec) | 0 | 0 (modulo 2 unrelated example-pairing notes on `POST /workspaces/`) | green |
+| `fern generate ts --local --force` | 0 | — | 723 files synced into `wrapper/src/`; 32 resource modules across 193 operations |
+| `tsc -p tsconfig.json --noEmit` (wrapper) | 0 | — | green |
+| `vitest run` (wrapper) | — | — | 13/13 (8 pagination unit + 5 live sandbox) |
+| `npm pack --dry-run` (wrapper) | — | — | 2899 files, 331.8 kB packaged as `clockify-sdk-ts@0.1.0` |
 
-Details in `spec/evidence/discrepancies.md`. Headline findings:
+The wrapper ships as the npm package `clockify-sdk-ts` from the
+`wrapper/dist/` build output. See `wrapper/README.md` for the npm
+surface and `wrapper/CHANGELOG.md` for release-cut notes; the
+generator chain that produces the canonical spec lives in
+`apet97/go-clockify` (`GOCLMCP/`).
 
-1. **`TimeOffRequest.status` schema collision** — the spec defined
-   the same object twice with incompatible fields (inline
-   `changedBy / createdBy / createdAt` vs named
-   `TimeOffRequestStatus { changedByUserId, changedByUserName, ... }`).
-   Patched in the workspace copy; needs a live probe to decide which
-   shape is real before promoting the fix into the canonical generator.
-2. **8 route conflicts** — literal sub-paths colliding with sibling
-   `{id}` routes (`expenses/categories` vs `{expenseId}`,
-   `invoices/settings` vs `{invoiceId}`,
-   `scheduling/assignments/publish` vs `{assignmentId}`). Real ambiguity
-   in the spec; runtime routing isn't broken but the spec lies about it.
-3. **TS SDK resource duplication** — singular + plural resource
-   groups (`tag` + `tags`, `webhook` + `webhooks`, `user` + `users`,
-   `project` + `projects`, `timeEntry` + `timeEntries`,
-   `expenses` + `expenseReport`). Means OpenAPI tags or path
-   inferences disagree across operations for the same entity.
+### Resolved during the publish-readiness pass
+
+Full evidence in `spec/evidence/discrepancies.md`. Quick summary:
+
+1. **`TimeOffRequest.status` schema collision** — named schema wins;
+   inline `createdBy / createdAt` block replaced with `$ref`.
+2. **3 route conflicts** (literal-vs-{id} siblings) — disambiguated
+   via 24-hex-ObjectID `pattern` constraints on `expenseId` /
+   `invoiceId` / `assignmentId`. Fern's legacy parser still warns;
+   use `--from-openapi` for the new parser (0 warnings).
+3. **TS SDK resource duplication** — 6 singular tags collapsed into
+   5 plural canonicals via `TAG_RENAMES` in the generator
+   (`Project→Projects`, `User→Users`, `Webhook→Webhooks`,
+   `Approval→Approvals`, `Balance→Balances`, `Client→Clients`,
+   `Policy→Policies`, `Tag→Tags`, `SharedReport→Shared Reports`).
+4. **Bare-array pagination** — Fern's offset mode rejects
+   Clockify's bare-array responses; the wrapper ships a hand-written
+   `paginate<T>` helper (`clockify-sdk-ts/pagination` subpath
+   export) as the supported workaround.
+5. **`addonToken` typed as required** — Fern's OR-security inference
+   bug means callers pass
+   `addonToken: (() => undefined) as unknown as () => string`
+   in `BaseClientOptions`; documented in `wrapper/README.md`.
+6. **18 list endpoints stamped with `page` + `page-size`** — adds
+   pagination params on every operation the live API supports them
+   on; 3 deferred endpoints re-probed and confirmed NOT paginated
+   (or not-live).
+7. **Policy `sort-order` tightened to enum** — `ASCENDING` /
+   `DESCENDING` exposed as a typed const in the TS SDK.
 
 ## What to look at after a run
 
