@@ -875,4 +875,62 @@ on the bare route (the granular variants — already in
   as a Fern issue with the OR-vs-AND security-scheme inference
   question.
 
+## Generator choice — Phase 0 spike for the Stainless/Speakeasy-quality push
+
+### `generator.choice.fern-vs-stainless-vs-speakeasy` — DECIDED 2026-05-24
+
+- **Official claim:** N/A — internal toolchain decision driven by
+  the Phase 0 spike of the SDK quality push.
+- **Actual behavior:** Three SDK generators were considered for
+  emitting the Clockify TypeScript SDK from
+  `spec/corrected/clockify.corrected.openapi.yaml`:
+  1. **Fern 5.37.9** (current production) — generated 723 TS files,
+     0 errors, 0 hints with `fern check --from-openapi`. Synced into
+     `wrapper/src/`, type-checked, built, tested.
+  2. **Speakeasy 1.763.6** — `speakeasy generate sdk --lang
+     typescript --schema spec/corrected/... --out
+     experiments/speakeasy --auto-yes` halted with a
+     `generator-duplicate-properties` validation error on the `rtl`
+     (line 18970) vs `RTL` (line 18963) fields of
+     `components.schemas.OpenapiInvoiceExportFields`. Both are real
+     Clockify API fields (distinct semantics: `RTL` is `writeOnly`,
+     `rtl` is read-write), and the spec is internally conformant —
+     Speakeasy's identifier-normalization refuses to emit a TS type
+     with two fields of the same identifier. 199 additional spec
+     hints (mostly `generator-missing-error-response`,
+     `generator-duplicate-inline-schemas`, `generator-pagination`,
+     `generator-retries`), 4 style warnings, 4 unused-component
+     warnings. No TS files were emitted. Full transcript:
+     `experiments/speakeasy.log`.
+  3. **Stainless** — not evaluated. SaaS-only (no CLI); evaluating
+     requires registering at stainless.com, uploading the spec via
+     portal, and downloading the generated ZIP. Deferred per scope
+     decision after Speakeasy's hard failure. See
+     `generator-comparison.md` "What this comparison does NOT
+     answer" for the conditions under which it should be reopened.
+- **Live evidence:**
+  - `experiments/speakeasy.log` — full Speakeasy transcript.
+  - `experiments/speakeasy/.speakeasy/gen.yaml` — Speakeasy's
+    scaffolded TypeScript config (78 lines).
+  - `generator-comparison.md` (alongside this file) — full rubric
+    with per-cell evidence.
+- **MCP tools affected:** none directly. The Go MCP layer
+  (`internal/tools/...` in GOCLMCP) consumes the canonical spec at
+  `../GOCLMCP/docs/openapi/clockify-openapi.yaml`, not the
+  Fern-generated TS SDK. Speakeasy's `enableMCPServer` config could
+  in principle displace the hand-written Go MCP layer — a separate
+  strategic call NOT made by this entry.
+- **Open questions:**
+  1. Will Clockify upstream the `rtl` vs `RTL` collision (rename
+     one of the fields)? If yes, the Speakeasy verdict reopens.
+  2. Will Speakeasy ship a `disable-rule` flag for
+     `generator-duplicate-properties`? If yes, reopen.
+  3. Should we ever evaluate Stainless? Likely same `rtl/RTL`
+     collision since Stainless also normalizes identifiers. Only
+     worth re-running Phase 0 if a future reviewer disagrees.
+- **Status:** `decided-stay-on-fern`. The wrapper-side quality
+  plan (Phases 1-8) executes against Fern's existing output.
+  Generator decision revisited only if one of the three open
+  questions above flips.
+
 

@@ -1,0 +1,208 @@
+Generating SDK for typescript...
+                                
+INFO    Found config file	{"path":"experiments/speakeasy/.speakeasy/gen.yaml"}
+validation hint: [line 1:1] generator-retries - retries should be configured - consider adding x-speakeasy-retries[0m extension globally or per-operation
+validation hint: [line 75:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 131:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "JSON_V1, JSON, CSV... 2[0m more" at lines [131,19872]
+validation hint: [line 144:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 200:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 276:13] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "WORKSPACE_ADMIN, OWNER, TEAM_MANAGER... 1[0m more" at lines [276,22258]
+validation hint: [line 285:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 451:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 577:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 596:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 639:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 852:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 981:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1047:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1118:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1149:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 1213:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1301:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1349:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1391:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1441:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1479:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1550:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 1810:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 1900:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 1929:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 2022:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2050:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 2142:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2185:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2272:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2375:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2472:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2521:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2569:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2617:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2672:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2701:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 2742:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2848:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 2951:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3061:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3136:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3233:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3318:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3445:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3486:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3549:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3592:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3666:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3710:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3808:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3868:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3941:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 3989:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4012:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 4051:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4157:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4208:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4258:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4328:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4377:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4440:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4514:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4555:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4589:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4632:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 4673:23] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "FIRST_HALF, SECOND_HALF, NOT_DEFINED" at lines [4673,21459]
+validation hint: [line 4851:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 4931:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "ACTIVE, ARCHIVED, ALL" at lines [4931,10023]
+validation hint: [line 4966:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "PENDING, ACTIVE, DECLINED... 2[0m more" at lines [4966,12119,18758]
+validation hint: [line 5086:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5343:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5483:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5610:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5717:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5832:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5867:15] generator-duplicate-inline-schemas - 2[0m duplicates of object[0m "amount[0m: integer[0m, since[0m: string[0m, sinceAsInstant[0m: string[0m" at lines [5867,6290]
+validation hint: [line 5881:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 5896:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 6183:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6304:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6358:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6483:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6568:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 6632:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6757:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6833:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6886:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 6954:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 7021:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 7086:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 7210:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 7336:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 7719:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8075:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 8126:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8197:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8260:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8327:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8450:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8496:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8553:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8622:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8690:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8763:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8787:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8854:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8919:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 8988:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9100:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9162:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 9216:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9306:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9360:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9403:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9495:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9539:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9552:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 9576:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9626:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9673:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9733:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 9788:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9885:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 9938:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 9977:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 10046:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10278:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10418:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10516:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10607:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10664:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10728:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10785:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10849:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10895:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 10943:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11043:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11078:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11125:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11142:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 11175:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11364:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11430:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11541:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11613:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11661:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 11748:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11846:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11899:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 11959:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12022:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12084:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 12146:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "ID, EMAIL, NAME... 4[0m more" at lines [12146,12865]
+validation hint: [line 12207:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12299:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12408:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12494:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12593:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12768:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 12837:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 12904:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13107:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13152:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13249:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13305:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13344:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13384:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 13449:7] generator-pagination - pagination might be supported by this operation - consider adding x-speakeasy-pagination[0m extension
+validation hint: [line 13498:9] generator-missing-error-response - an error response should be defined for all operations
+validation hint: [line 14508:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "EARNED, COST, PROFIT... 2[0m more" at lines [14508,16249,19992,23086]
+validation hint: [line 14522:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "APPROVED, UNAPPROVED, ALL" at lines [14522,16263,20006,23100]
+validation hint: [line 14562:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "ABSOLUTE, TODAY, YESTERDAY... 7[0m more" at lines [14562,16301,20044,23138]
+validation hint: [line 14579:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "JSON, JSON_V1, PDF... 3[0m more" at lines [14579,16320,20061,23155]
+validation hint: [line 14589:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "INVOICED, UNINVOICED, ALL" at lines [14589,16330,20071,23165]
+validation hint: [line 14601:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "ASCENDING, DESCENDING" at lines [14601,16342,20083,23177]
+validation hint: [line 14627:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "MONDAY, TUESDAY, WEDNESDAY... 4[0m more" at lines [14627,16373,20116,23208]
+validation hint: [line 14641:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "WEEK, MONTH, YEAR" at lines [14641,16387,20130,23224]
+validation hint: [line 14816:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "MONDAY, TUESDAY, WEDNESDAY... 4[0m more" at lines [14816,14831,16564]
+validation hint: [line 15164:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "CONTAINS, DOES_NOT_CONTAIN, CONTAINS_ONLY" at lines [15164,15254,15279,15376]
+validation hint: [line 15177:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "ACTIVE, ARCHIVED, ALL" at lines [15177,15267,15292]
+validation hint: [line 15202:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "CONTAINS, DOES_NOT_CONTAIN, CONTAINS_ONLY" at lines [15202,15303,15454]
+validation hint: [line 15221:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "ACTIVE, ARCHIVED, ALL" at lines [15221,15322]
+validation hint: [line 15334:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "CONTAINS, DOES_NOT_CONTAIN, CONTAINS_ONLY" at lines [15334,15402]
+validation hint: [line 15722:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "REGULAR, BREAK" at lines [15722,20654]
+validation hint: [line 15763:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "UMBRELLA, SNOWFLAKE, FAMILY... 7[0m more" at lines [15763,21906]
+validation hint: [line 16530:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "WEEKLY, MONTHLY, YEARLY" at lines [16530,20900,20927]
+validation hint: [line 16621:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "WEEKLY, MONTHLY, YEARLY" at lines [16581,16621,16652]
+validation hint: [line 16628:11] generator-duplicate-inline-schemas - 4[0m duplicates of enum[0m "AUTO, MANUAL" at lines [16489,16503,16628,16659]
+validation hint: [line 18660:13] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "MONDAY, TUESDAY, WEDNESDAY... 4[0m more" at lines [18660,18709]
+validation hint: [line 18893:11] generator-duplicate-inline-schemas - 6[0m duplicates of enum[0m "ASCENDING, DESCENDING" at lines [1184,5002,9187,12161,12880,18893]
+validation hint: [line 20906:11] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "AUTO, MANUAL" at lines [20906,20933]
+validation hint: [line 21020:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "DAYS, HOURS" at lines [21020,21090,21475]
+validation hint: [line 22341:11] generator-duplicate-inline-schemas - 5[0m duplicates of enum[0m "CONTAINS, DOES_NOT_CONTAIN" at lines [19201,19223,19509,22341,22391]
+validation hint: [line 22352:11] generator-duplicate-inline-schemas - 5[0m duplicates of enum[0m "ALL, ACTIVE, INACTIVE" at lines [19212,19234,19520,22352,22402]
+validation hint: [line 22554:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "PENDING, ACTIVE, DECLINED... 2[0m more" at lines [18729,22554,23650]
+validation hint: [line 22563:11] generator-duplicate-inline-schemas - 3[0m duplicates of enum[0m "WORKSPACE, PROJECT, USERGROUP" at lines [18738,22563,23659]
+validation hint: [line 23514:13] generator-duplicate-inline-schemas - 2[0m duplicates of enum[0m "MONDAY, TUESDAY, WEDNESDAY... 4[0m more" at lines [16517,23514]
+validation warn: [line 537:7] style-operation-success-response - operation putWorkspacesWorkspaceId[0m must define at least a single 2xx[0m or 3xx[0m response
+validation warn: [line 11317:7] style-operation-success-response - operation getWorkspacesWorkspaceIdUserGroupsGroupId[0m must define at least a single 2xx[0m or 3xx[0m response
+validation warn: [line 11501:7] style-operation-success-response - operation getWorkspacesWorkspaceIdUserGroupsGroupIdUsers[0m must define at least a single 2xx[0m or 3xx[0m response
+validation warn: [line 13432:7] style-operation-success-response - operation getWorkspacesWorkspaceIdWebhooksWebhookIdLogs[0m must define at least a single 2xx[0m or 3xx[0m response
+validation error: [line 18970:9] generator-duplicate-properties - rtl[0m (Rtl[0m) will collide with RTL[0m (Rtl[0m) [line 18963[0m] when converted to field name.
+generation failed for "typescript" during step "Load and Validate Document"
