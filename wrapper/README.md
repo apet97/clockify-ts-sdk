@@ -133,6 +133,10 @@ This SDK is generated from `addons-me/GOCLMCP/docs/openapi/clockify-openapi.yaml
 
 For the spec-evidence ledger documenting deltas between the published Clockify spec and the live API behavior, see `addons-me/fern/spec/evidence/discrepancies.md`.
 
+## Why no linter
+
+The wrapper intentionally ships without ESLint. The hand-written surface is small (`pagination.ts`, `tests/pagination.test.ts`, `tests/sandbox.test.ts`) and the rest of `src/` is wiped + rewritten by `npm run sync` on every regen, so a linter would either lint generated code that gets discarded next sync, or carry an `eslintignore` that mostly excludes the tree it's pointed at. `tsc --strict` already catches the issues a default ESLint config would flag on this surface (unused imports, implicit `any`, missing returns, etc.), and `vitest` catches real behavioral regressions. If a future contributor adds non-trivial hand-written modules outside `src/`, revisit this decision and wire a flat-config ESLint that explicitly scopes to those new paths only.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
