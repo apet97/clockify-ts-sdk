@@ -1,9 +1,9 @@
-export type { DeleteInvoiceRequest } from "./DeleteInvoiceRequest.js";
-export type { DuplicateInvoiceRequest } from "./DuplicateInvoiceRequest.js";
-export type { ExportInvoiceRequest } from "./ExportInvoiceRequest.js";
-export type { GetInvoiceByIdRequest } from "./GetInvoiceByIdRequest.js";
-export type { GetWorkspaceInvoicesRequest } from "./GetWorkspaceInvoicesRequest.js";
+export type { DeleteInvoicesRequest } from "./DeleteInvoicesRequest.js";
+export type { DuplicateInvoicesRequest } from "./DuplicateInvoicesRequest.js";
+export type { ExportInvoicesRequest } from "./ExportInvoicesRequest.js";
+export type { GetInvoicesRequest } from "./GetInvoicesRequest.js";
 export type { InvoiceCreateRequest } from "./InvoiceCreateRequest.js";
 export type { InvoiceFilterRequest } from "./InvoiceFilterRequest.js";
 export type { InvoiceStatusRequest } from "./InvoiceStatusRequest.js";
+export type { ListInvoicesRequest } from "./ListInvoicesRequest.js";
 export type { UpdateInvoiceRequest } from "./UpdateInvoiceRequest.js";

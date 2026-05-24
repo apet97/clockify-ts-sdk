@@ -7,7 +7,7 @@
  *         invoiceId: "invoiceId"
  *     }
  */
-export interface GetInvoiceByIdRequest {
+export interface GetInvoicesRequest {
     workspaceId: string;
     invoiceId: string;
 }

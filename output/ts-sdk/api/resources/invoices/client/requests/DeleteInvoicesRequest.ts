@@ -7,7 +7,7 @@
  *         invoiceId: "invoiceId"
  *     }
  */
-export interface DeleteInvoiceRequest {
+export interface DeleteInvoicesRequest {
     workspaceId: string;
     invoiceId: string;
 }

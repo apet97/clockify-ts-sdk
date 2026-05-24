@@ -19,7 +19,7 @@ const now = new Date();
 const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
 try {
-    const report = await client.reports.generateDetailedReport({
+    const report = await client.reports.detailed({
         workspaceId,
         dateRangeStart: sevenDaysAgo.toISOString(),
         dateRangeEnd: now.toISOString(),

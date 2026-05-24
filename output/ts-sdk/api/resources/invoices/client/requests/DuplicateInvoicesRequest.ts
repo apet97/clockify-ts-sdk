@@ -7,7 +7,7 @@
  *         invoiceId: "invoiceId"
  *     }
  */
-export interface DuplicateInvoiceRequest {
+export interface DuplicateInvoicesRequest {
     workspaceId: string;
     invoiceId: string;
 }

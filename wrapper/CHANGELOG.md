@@ -9,11 +9,10 @@ once v1.0.0 ships.
 
 ### Changed (BREAKING — gated behind v1.0.0 cut)
 
-- **Idiomatic method names on 19 modules (G.1).** With both
+- **Idiomatic method names on 21 modules (G.1).** With both
   `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
-  upstream spec, Fern now generates 19 of the 31 resource modules
-  with idiomatic names. 97 ops mapped in total (16 modules on pure
-  CRUDL + 3 workflow-verb modules):
+  upstream spec, Fern now generates 21 of the 31 resource modules
+  with idiomatic names. 110 ops mapped in total:
   - `client.tags.{list,create,get,update,delete}` (5 ops).
   - `client.clients.{list,create,get,update,delete,archive}` (6 ops;
     `archive` is a Clockify-specific action verb).
@@ -74,8 +73,23 @@ once v1.0.0 ships.
     capacity-totals endpoints, per/on-project breakdowns, and the
     PUT-replace variants stay operationId-derived (specialised
     shapes).
+  - `client.invoices.{list,create,filter,get,update,delete,duplicate,export,updateStatus}`
+    (9 ops). CRUDL + the workflow actions. `filter` is the
+    POST-with-body filter route at `/invoices/info` (distinct from
+    the bare `list`). `updateStatus` matches the same PATCH .../status
+    pattern as approvals / timeOff / policies. No `send` is stamped —
+    the API has no such endpoint (the tool layer returns "unsupported").
+  - `client.reports.{attendance,detailed,summary,weekly}` (4 ops).
+    Each report family is a POST-with-body call; the verb is the
+    family name directly, matching how Clockify users describe the
+    reports surface.
 
-  The other ~12 modules continue to use operationId-derived names.
+  The other ~10 modules continue to use operationId-derived names —
+  all of them either small / read-only (`memberProfiles`, `roles`,
+  `balances`, `invoiceSettings`, `expenseReport`, `workspaces`,
+  `files`, `auditLogReport`, `entityChangesExperimental`) or
+  already-renamed action verbs scattered inside the stamped
+  modules.
   Root-cause analysis (method-name alone hoists ops to the root
   client) + the explicit-allowlist technique are documented in
   `spec/evidence/discrepancies.md` →

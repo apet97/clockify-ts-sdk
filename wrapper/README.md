@@ -151,7 +151,7 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 Each sub-client exposes one method per operation. Two name shapes
 co-exist:
 
-- **Idiomatic method names on 19 of the 31 modules.** Each stamped
+- **Idiomatic method names on 21 of the 31 modules.** Each stamped
   op pairs `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the
   method lands at `client.<resource>.<verb>()`:
   - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
@@ -183,10 +183,21 @@ co-exist:
     (`submit` / `approve` / `withdraw` for approvals;
     `submit` + admin `updateStatus` for time-off requests;
     `publish` for assignment workflows).
-- **OperationId-derived on the remaining ~12 modules** —
-  `client.reports.getDetailedReport(...)`,
-  `client.invoices.getWorkspaceInvoices(...)`,
-  `client.workspaces.getAllMyWorkspaces(...)`, and so on. Long but
+  - **CRUDL + workflow actions:**
+    `invoices.{list,create,filter,get,update,delete,duplicate,export,updateStatus}`
+    — CRUDL plus `filter` (POST-with-body at `/invoices/info`,
+    distinct from the bare `list`), `duplicate`, `export`, and
+    `updateStatus` (PATCH .../status — same pattern as approvals /
+    timeOff / policies). The Clockify API has no `send` endpoint;
+    use a Clockify-internal "send" workflow via the UI or a follow-up
+    tool.
+  - **Family-name verbs:**
+    `reports.{attendance,detailed,summary,weekly}` — each report is
+    a POST-with-body call; the verb is the family name directly.
+- **OperationId-derived on the remaining ~10 modules** —
+  `client.workspaces.getAllMyWorkspaces(...)`,
+  `client.memberProfiles.getMemberProfile(...)`,
+  `client.auditLogReport.searchAuditLogs(...)`, and so on. Long but
   stable. Specialised action verbs inside the stamped modules also
   keep their operationId-derived names (e.g.
   `client.projects.putWorkspacesWorkspaceIdProjectsProjectIdArchive(...)`,
@@ -195,12 +206,10 @@ co-exist:
   `client.scheduling.getUsersCapacityTotals(...)`).
   Tracked under `spec/evidence/discrepancies.md` →
   `fern.x-fern-sdk-method-name.drops-resource-modules`. The
-  remaining modules either need a per-family naming design pass
-  (`reports` has summary / detailed / weekly / etc.; `invoices`
-  has CRUDL + duplicate/export/filter/changeStatus) or have so few
-  ops the rename buys little (`memberProfiles`, `roles`,
-  `balances`, `invoiceSettings`, `expenseReport`, `workspaces`,
-  `files`, `auditLogReport`, `entityChangesExperimental`).
+  ~10 untouched modules are all small / read-only / experimental
+  (`memberProfiles`, `roles`, `balances`, `invoiceSettings`,
+  `expenseReport`, `workspaces`, `files`, `auditLogReport`,
+  `entityChangesExperimental`) — the rename buys little.
 
 ## Pagination
 
