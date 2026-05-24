@@ -920,7 +920,7 @@ on the bare route (the granular variants — already in
   docs paste and notices the string-vs-int divergence sees the
   decision already taken.
 
-### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — DOCUMENTED 2026-05-24
+### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — UPSTREAM-TRACKING 2026-05-25
 
 - **Official claim:** Clockify's OpenAPI declares two security schemes
   `ApiKeyAuth` (header `X-Api-Key`) and `AddonTokenAuth` (header
@@ -967,13 +967,75 @@ on the bare route (the granular variants — already in
      `process.env.CLOCKIFY_API_KEY` and `addonToken` default to
      `process.env.CLOCKIFY_ADDON_TOKEN`? Useful ergonomic default;
      not yet wired.
-- **Status:** `workaround-applied`. The wrapper's published SDK
-  shape ships with the required-typed `addonToken` field; the
+- **Status (initial):** `workaround-applied`. The wrapper's published
+  SDK shape ships with the required-typed `addonToken` field; the
   README's quick-start example reflects the actual usage pattern
   (apiKey-only) but should also document the addonToken-undefined
   cast until Fern fixes the upstream type. Recommend filing this
   as a Fern issue with the OR-vs-AND security-scheme inference
   question.
+
+#### Update 2026-05-25 (session 4) — upstream investigation
+
+- **Fern CLI version check:** `npm info fern-api version` returns
+  `5.37.9` (latest); confirmed against the full version list — no
+  newer release exists since the issue was first documented.
+- **TS-SDK generator container check:** Docker Hub's
+  `fernapi/fern-typescript-node-sdk` `latest` tag points at
+  `3.71.2`, the same version pinned in `spec/fern/generators.yml`.
+- **Fern repo issue search:** searched `github.com/fern-api/fern`
+  for issues matching `security scheme`, `addonToken`, `multiple auth`,
+  `security alternative`, `either security`, `BaseClientOptions required`.
+  The single hit (#5707, "Support Multiple Required Headers — OpenAPI
+  Security Scheme") is about Fern Docs and the AND-case (both headers
+  required); does not cover our OR-case.
+- **Action:** drafted a complete issue body at
+  `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`,
+  ready to paste verbatim. The body cites OAS 3.0.3 §4.8.30.3, ships
+  a minimal repro spec, names the affected generator container +
+  version, shows the workaround in use, and proposes a discriminated-
+  union typing as the desired fix. The user needs to file it via
+  `https://github.com/fern-api/fern/issues/new` and capture the
+  resulting issue number back here.
+- **Workaround status:** unchanged. The `createClockifyClient()`
+  factory at `wrapper/create-client.ts` continues to hide the
+  `NULL_SUPPLIER` cast behind a discriminated-union options shape;
+  this is the documented public API and stays as-is until the
+  upstream fix lands.
+- **Bump posture:** because the latest container is already on
+  `3.71.2` (matching our pin) and the latest CLI is already
+  `5.37.9` (matching our pin), there is no version we could bump to
+  in order to pick up a fix — we are at the upstream's current
+  shipped surface. Re-check on every Fern release; an upstream PR
+  comment will arrive on the filed issue once a fix lands.
+
+- **Updated open questions:**
+  1. ~~Can Fern's OpenAPI parser be taught that OR-related security
+     schemes should yield two MUTUALLY EXCLUSIVE optional fields?~~
+     **Routed to upstream as a drafted issue.** No further local
+     action until Fern responds.
+  2. Should the SDK's `BaseClientOptions.apiKey` field default to
+     `process.env.CLOCKIFY_API_KEY` and `addonToken` default to
+     `process.env.CLOCKIFY_ADDON_TOKEN`? Still useful ergonomic
+     default; not yet wired. Independent of (1) — the factory could
+     read env vars whether or not Fern's typing changes. Deferred to
+     a separate change.
+
+- **Status (updated):** `awaiting-upstream-fix-issue-drafted`. The
+  cast-removal path is gated on a Fern release that changes
+  `BaseClientOptions` typing; nothing to remove now. When the
+  upstream issue's fix ships:
+  1. Bump `spec/fern/fern.config.json` `version` and
+     `spec/fern/generators.yml`'s container tag (AGENTS.md §12 #3
+     requires explicit approval for these bumps).
+  2. Regenerate; verify the new `BaseClientOptions` shape.
+  3. Remove `NULL_SUPPLIER` from `wrapper/create-client.ts`.
+  4. Remove the `addonToken: (() => undefined) as unknown as () => string`
+     cast from `wrapper/tests/sandbox.test.ts`.
+  5. Update `wrapper/README.md` Authentication section to drop the
+     cast caveat.
+  6. Land as the v1.0.0 cut — typed-correct auth surface is a
+     v1.0.0 acceptance-criterion bullet.
 
 ## Generator choice — Phase 0 spike for the Stainless/Speakeasy-quality push
 
