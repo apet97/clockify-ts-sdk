@@ -1,0 +1,51 @@
+# Fern generators for the corrected Clockify OpenAPI spec.
+#
+# This is a local smoke-test only. We are NOT publishing a Clockify SDK
+# from this workspace — the question Fern answers is: "does the corrected
+# spec model the API cleanly enough that a real SDK generator can chew
+# through it without choking?"
+#
+# Two API entries are declared (corrected + official); switch the
+# active spec by editing the `path:` inside `api:` (Fern's `api` block
+# accepts a single OpenAPI source at a time — we keep the official
+# path commented for quick swap).
+
+api:
+  specs:
+    - openapi: ../corrected/clockify.corrected.openapi.yaml
+    # To smoke-test the upstream/official spec instead, comment the
+    # line above and uncomment this:
+    # - openapi: ../official/clockify.official.openapi.yaml
+
+default-group: ts
+
+groups:
+  # Primary smoke-test target: Typescript Node SDK. Surfaces the most
+  # schema / enum / oneOf / discriminator pain fastest.
+  ts:
+    generators:
+      - name: fernapi/fern-typescript-node-sdk
+        version: 3.71.2
+        output:
+          location: local-file-system
+          path: ../../output/ts-sdk
+
+  # Python SDK — different generator quirks; flushes out pagination
+  # and datetime-format issues TypeScript hides.
+  py:
+    generators:
+      - name: fernapi/fern-python-sdk
+        version: 5.14.3
+        output:
+          location: local-file-system
+          path: ../../output/py-sdk
+
+  # Postman collection — useful for visually scanning every endpoint
+  # group as the user / tag splits Fern infers.
+  postman:
+    generators:
+      - name: fernapi/fern-postman
+        version: 0.6.1
+        output:
+          location: local-file-system
+          path: ../../output/postman

@@ -1,0 +1,55 @@
+{
+  "name": "clockify-sdk-ts",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Clockify API — generated from the canonical OpenAPI by Fern, wrapped with a publishable package layout.",
+  "license": "MIT",
+  "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
+  "homepage": "https://github.com/apet97/clockify-sdk-ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apet97/clockify-sdk-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/apet97/clockify-sdk-ts/issues"
+  },
+  "keywords": [
+    "clockify",
+    "sdk",
+    "typescript",
+    "api-client",
+    "time-tracking",
+    "fern",
+    "openapi"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sync": "bash scripts/sync-sdk.sh",
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.4"
+  }
+}

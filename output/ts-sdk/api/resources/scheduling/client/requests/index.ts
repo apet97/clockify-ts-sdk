@@ -1,0 +1,16 @@
+export type { ChangeRecurringPeriodRequest } from "./ChangeRecurringPeriodRequest.js";
+export type { CopyAssignmentRequest } from "./CopyAssignmentRequest.js";
+export type { CreateRecurringAssignmentRequest } from "./CreateRecurringAssignmentRequest.js";
+export type { DeleteRecurringAssignmentRequest } from "./DeleteRecurringAssignmentRequest.js";
+export type { DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest } from "./DeleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest.js";
+export type { GetAllSchedulingAssignmentsRequest } from "./GetAllSchedulingAssignmentsRequest.js";
+export type { GetScheduledAssignmentsOnProjectRequest } from "./GetScheduledAssignmentsOnProjectRequest.js";
+export type { GetUserCapacityTotalRequest } from "./GetUserCapacityTotalRequest.js";
+export type { PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest } from "./PostWorkspacesWorkspaceIdSchedulingAssignmentsRequest.js";
+export type { PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest } from "./PostWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotalsRequest.js";
+export type { ProjectTotalsRequest } from "./ProjectTotalsRequest.js";
+export type { PublishAssignmentsRequest } from "./PublishAssignmentsRequest.js";
+export type { PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest } from "./PutWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentIdRequest.js";
+export type { PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest } from "./PutWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentIdRequest.js";
+export type { UpdateRecurringAssignmentRequest } from "./UpdateRecurringAssignmentRequest.js";
+export type { UserCapacityTotalsRequest } from "./UserCapacityTotalsRequest.js";

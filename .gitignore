@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Java SDK reference is a separate clone of clockify/addon-java-sdk
+# kept locally for cross-checking only; not part of this repo.
+java-sdk-reference/
+
+# Live API probe captures — local evidence only. Promote anything
+# canonical into spec/evidence/discrepancies.md and reference the
+# probe by relative path; the raw bodies don't ship.
+spec/evidence/probes/*.json
+spec/evidence/probes/*.hdr
+!spec/evidence/probes/README.md
+
+# Build artifacts inside wrapper/ are managed by wrapper/.gitignore;
+# this rule pins node_modules at any nesting level just in case.
+**/node_modules/
+**/*.tsbuildinfo
+
+# IDE / editor noise
+.idea/
+.vscode/
+*.swp
