@@ -7,7 +7,7 @@
  *         tagId: "tagId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdTagsTagIdRequest {
+export interface DeleteTagsRequest {
     workspaceId: string;
     tagId: string;
 }

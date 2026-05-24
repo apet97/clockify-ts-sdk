@@ -4,10 +4,10 @@
  * @example
  *     {
  *         workspaceId: "workspaceId",
- *         tagId: "tagId"
+ *         clientId: "clientId"
  *     }
  */
-export interface DeleteWorkspacesWorkspaceIdTagsTagIdRequest {
+export interface GetClientsRequest {
     workspaceId: string;
-    tagId: string;
+    clientId: string;
 }

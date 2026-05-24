@@ -7,6 +7,28 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed (BREAKING — gated behind v1.0.0 cut)
+
+- **CRUDL method names on `tags` + `clients` (G.1 partial).** With both
+  `x-fern-sdk-group-name` and `x-fern-sdk-method-name` stamped on the
+  upstream spec, Fern now generates the two most-touched resource
+  modules with idiomatic names:
+  - `client.tags.{list,create,get,update,delete}` (was
+    `getWorkspacesWorkspaceIdTags` / `postWorkspacesWorkspaceIdTags` /
+    `getWorkspacesWorkspaceIdTagsTagId` /
+    `putWorkspacesWorkspaceIdTagsTagId` /
+    `deleteWorkspacesWorkspaceIdTagsTagId`).
+  - `client.clients.{list,create,get,update,delete,archive}` (was the
+    six `*WorkspacesWorkspaceIdClients*` operationId-derived names).
+  The other 29 resource modules continue to use operationId-derived
+  names while the bisect rolls out one module at a time. Root-cause
+  analysis + the explicit-allowlist technique are documented in
+  `spec/evidence/discrepancies.md` →
+  `fern.x-fern-sdk-method-name.drops-resource-modules` (see "Update
+  2026-05-24 (session 3)"). README's resource-modules section now
+  describes the two name shapes side-by-side; sandbox tests, doc
+  comments, and per-resource markdown were regenerated to match.
+
 ## [0.4.0] — 2026-05-24
 
 First release that exercises the rebuilt CI + release pipeline

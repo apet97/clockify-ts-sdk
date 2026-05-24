@@ -6,12 +6,14 @@ import type * as ClockifyApi from "../../../../index.js";
  * @example
  *     {
  *         workspaceId: "workspaceId",
+ *         clientId: "clientId",
  *         body: {
  *             name: "name"
  *         }
  *     }
  */
-export interface PostWorkspacesWorkspaceIdClientsRequest {
+export interface UpdateClientsRequest {
     workspaceId: string;
-    body: ClockifyApi.ClientCreate;
+    clientId: string;
+    body: ClockifyApi.ClientUpdate;
 }

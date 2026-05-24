@@ -554,7 +554,7 @@ Each of these needs:
   release that documents bare-array pagination support or when an
   overrides-side workaround is discovered.
 
-### `fern.x-fern-sdk-method-name.drops-resource-modules` — DEFERRED 2026-05-24
+### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24 (session 3)
 
 - **Official claim:** Fern's `x-fern-sdk-method-name` OpenAPI extension
   overrides the operationId-derived SDK method name. Applied per-op,
@@ -607,7 +607,7 @@ Each of these needs:
      bisect showed the cascade affected Tags (5 ops, all distinct
      methods, no internal collision) too, so collision-avoidance
      alone is unlikely to be the full fix.
-- **Status:** `deferred-needs-upstream-investigation`. The
+- **Status (initial):** `deferred-needs-upstream-investigation`. The
   `stamp_sdk_method_name!` call has been removed from the
   generator's per-op finalization loop and the `derive_sdk_method_name`
   + `stamp_sdk_method_name!` function bodies replaced with a NOTE
@@ -617,6 +617,62 @@ Each of these needs:
   then, SDK callers consume the upstream operationId-derived method
   names (e.g. `tags.getWorkspacesWorkspaceIdTags()`) — long but
   stable, and all 32 resource modules are emitted.
+
+#### Update 2026-05-24 (session 3) — root cause + partial fix shipped
+
+- **Root cause identified:** stamping `x-fern-sdk-method-name` **alone**
+  hoists the operation to the **root client** (`client.list()` instead
+  of `client.tags.list()`) and removes it from the resource module. The
+  previous 135-op heuristic stamped every CRUDL op with method-name
+  only; each stamped op got hoisted to the root, and the 12 affected
+  modules' op-sets emptied out enough that Fern's TS generator skipped
+  module emission entirely. There is no IR-level name mangling and no
+  type collision — the dropped-modules behaviour is downstream of the
+  hoist behaviour, not a separate bug.
+
+- **Fix:** pair `x-fern-sdk-group-name: <resource>` with
+  `x-fern-sdk-method-name: <verb>` on every stamped op. With both keys
+  present, Fern (a) keeps the method under `client.<resource>.<verb>()`
+  and (b) emits all resource modules unchanged. Verified with single-op
+  bisect (tags GET → `list`) then full CRUDL on tags (5 ops) then full
+  CRUDL + `archive` on clients (6 ops). All three iterations produced
+  31 resource modules + `index.ts` (matches baseline) and zero hoisted
+  methods on the root client.
+
+- **What shipped (2-module subset):** `SDK_METHOD_NAMES` in
+  `../GOCLMCP/scripts/gen-clockify-openapi` now maps 11 pairs to
+  `{group, name}` entries (`tags` × 5 CRUDL; `clients` × 5 CRUDL + 1
+  archive). After regen + all 4 drift gates + `go test ./internal/tools/...`
+  + `fern check --warnings --from-openapi` + `fern generate --group ts
+  --local --force`, the wrapper exposes `client.tags.{list,create,get,update,delete}`
+  and `client.clients.{list,create,get,update,delete,archive}`.
+
+- **What's NOT shipped:** the other 29 modules still use operationId-
+  derived names. They are expanded by adding entries to `SDK_METHOD_NAMES`
+  one module at a time, regenerating, and confirming the module count
+  stays at 31. The hash is intentionally not a heuristic — each entry is
+  reviewed for naming semantics (e.g. `archive` for `clients` was chosen
+  because `archive` matches the upstream operationId `putWorkspacesWorkspaceIdClientsClientIdArchive`'s
+  semantics; modules with workflow verbs like `approvals.{submit,approve,
+  reject,withdraw,resubmit}` will need bespoke naming, not pure CRUDL).
+
+- **Updated open questions:**
+  1. ~~Why does Fern silently drop modules instead of warning?~~
+     **RESOLVED.** Modules aren't being dropped — they're being emptied
+     by the hoist. Fern just doesn't emit empty modules.
+  2. ~~Does an `x-fern-sdk-group-name` annotation alongside
+     `x-fern-sdk-method-name` change behavior?~~ **RESOLVED.** Yes,
+     it's the required complement.
+  3-4. Closed by (1).
+
+- **Status (updated):** `partially-resolved-incremental-rollout`. The
+  proven technique ships in `SDK_METHOD_NAMES`. Expanding to remaining
+  29 modules is mechanical: add 5-10 ops per cycle, regen, verify
+  module count + per-method emission, ship a wrapper version bump.
+  Pure-CRUDL modules (projects, tasks, timeEntries, customFields,
+  holidays, sharedReports, timeOffPolicies, userGroups, webhooks)
+  are the next batch. Workflow-verb modules (approvals, timeOff,
+  scheduling) need a dedicated naming review before stamping.
 
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 

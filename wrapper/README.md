@@ -64,7 +64,7 @@ const client = createClockifyClient({
     apiKey: process.env.CLOCKIFY_API_KEY!,
 });
 
-const tags = await client.tags.getWorkspacesWorkspaceIdTags({
+const tags = await client.tags.list({
     workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
 });
 
@@ -148,15 +148,23 @@ The client exposes one sub-client per OpenAPI tag (32 modules):
 `timeOff`, `timeOffPolicies`, `userGroups`, `users`, `webhooks`,
 `workspaces`.
 
-Each sub-client exposes one method per operation. Method names
-are operationId-derived from the spec
-(e.g. `client.tags.getWorkspacesWorkspaceIdTags(...)`) rather than
-CRUDL (`client.tags.list(...)`). This is a known limitation —
-the CRUDL stamping bumped a Fern-side bug that dropped 12 of 31
-resource modules from the TS output. Tracked in
-`spec/evidence/discrepancies.md` →
-`fern.x-fern-sdk-method-name.drops-resource-modules`. We
-re-evaluate on every Fern CLI bump.
+Each sub-client exposes one method per operation. Two name shapes
+co-exist:
+
+- **CRUDL on `tags` + `clients`** — `client.tags.list(...)`,
+  `client.tags.create(...)`, `client.tags.get(...)`,
+  `client.tags.update(...)`, `client.tags.delete(...)`, and the
+  Clockify-specific `client.clients.archive(...)`. These ship with
+  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` stamped on the
+  spec, generated as proper CRUDL methods under their resource module.
+- **OperationId-derived on the other 29 modules** —
+  `client.projects.getWorkspaceProjects(...)`,
+  `client.timeEntries.getWorkspacesWorkspaceIdUserUserIdTimeEntries(...)`,
+  and so on. Long but stable. Tracked under
+  `spec/evidence/discrepancies.md` →
+  `fern.x-fern-sdk-method-name.drops-resource-modules`. Additional
+  modules will move to CRUDL incrementally as each pair is validated
+  end-to-end against `fern generate`.
 
 ## Pagination
 
@@ -196,7 +204,7 @@ accepts `pageSize` (default 50), `maxPages` (default ∞),
 ```typescript
 import { iterPages } from "clockify-sdk-ts";
 
-const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
+const listTags = client.tags.list.bind(client.tags);
 
 for await (const { items, page, hasNextPage } of iterPages(
     listTags,
@@ -215,7 +223,7 @@ import { paginate } from "clockify-sdk-ts";
 
 for await (const client_ of paginate(
     (page, pageSize) =>
-        client.clients.getWorkspacesWorkspaceIdClients({
+        client.clients.list({
             workspaceId: "...",
             page,
             "page-size": pageSize,
@@ -278,7 +286,7 @@ import {
 } from "clockify-sdk-ts";
 
 try {
-    await client.tags.getWorkspacesWorkspaceIdTagsTagId({
+    await client.tags.get({
         workspaceId: "...",
         tagId: "deleted-tag-id",
     });
@@ -358,7 +366,7 @@ Every method's second argument accepts `requestOptions` with
 `maxRetries`:
 
 ```typescript
-await client.tags.getWorkspacesWorkspaceIdTags(
+await client.tags.list(
     { workspaceId: "..." },
     { maxRetries: 0 }, // this call only
 );

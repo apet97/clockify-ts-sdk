@@ -8,12 +8,14 @@ import type * as ClockifyApi from "../../../../index.js";
  *         workspaceId: "workspaceId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdTagsRequest {
+export interface ListClientsRequest {
     workspaceId: string;
     name?: string;
     archived?: boolean;
-    "sort-column"?: ClockifyApi.GetWorkspacesWorkspaceIdTagsRequestSortColumn;
-    "sort-order"?: ClockifyApi.GetWorkspacesWorkspaceIdTagsRequestSortOrder;
+    address?: string;
+    note?: string;
+    "sort-column"?: ClockifyApi.ListClientsRequestSortColumn;
+    "sort-order"?: ClockifyApi.ListClientsRequestSortOrder;
     /** 1-based page index. Default 1. */
     page?: number;
     /** Page size (number of items per page). Default 50; maximum 200. */

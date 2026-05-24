@@ -77,14 +77,14 @@ export type KnownPaginatedMethod =
     | { readonly resource: "auditLogReport"; readonly method: "searchAuditLogs" }
     | { readonly resource: "balances"; readonly method: "getBalanceForUser" }
     | { readonly resource: "balances"; readonly method: "getBalancesForPolicy" }
-    | { readonly resource: "clients"; readonly method: "getWorkspacesWorkspaceIdClients" }
+    | { readonly resource: "clients"; readonly method: "list" }
     | { readonly resource: "customFields"; readonly method: "listProjectCustomFields" }
     | { readonly resource: "customFields"; readonly method: "listWorkspaceCustomFields" }
     | { readonly resource: "holidays"; readonly method: "getWorkspaceHolidays" }
     | { readonly resource: "invoicePayments"; readonly method: "getInvoicePayments" }
     | { readonly resource: "projects"; readonly method: "getWorkspaceProjects" }
     | { readonly resource: "scheduling"; readonly method: "getAllSchedulingAssignments" }
-    | { readonly resource: "tags"; readonly method: "getWorkspacesWorkspaceIdTags" }
+    | { readonly resource: "tags"; readonly method: "list" }
     | { readonly resource: "tasks"; readonly method: "findTasksOnProject" }
     | {
           readonly resource: "timeEntries";
@@ -109,14 +109,14 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "auditLogReport", method: "searchAuditLogs" },
     { resource: "balances", method: "getBalanceForUser" },
     { resource: "balances", method: "getBalancesForPolicy" },
-    { resource: "clients", method: "getWorkspacesWorkspaceIdClients" },
+    { resource: "clients", method: "list" },
     { resource: "customFields", method: "listProjectCustomFields" },
     { resource: "customFields", method: "listWorkspaceCustomFields" },
     { resource: "holidays", method: "getWorkspaceHolidays" },
     { resource: "invoicePayments", method: "getInvoicePayments" },
     { resource: "projects", method: "getWorkspaceProjects" },
     { resource: "scheduling", method: "getAllSchedulingAssignments" },
-    { resource: "tags", method: "getWorkspacesWorkspaceIdTags" },
+    { resource: "tags", method: "list" },
     { resource: "tasks", method: "findTasksOnProject" },
     { resource: "timeEntries", method: "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress" },
     { resource: "timeEntries", method: "getWorkspacesWorkspaceIdUserUserIdTimeEntries" },
@@ -170,7 +170,7 @@ export async function* iterAll<TRequest, TItem>(
  *
  * @example
  * ```ts
- * const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
+ * const listTags = client.tags.list.bind(client.tags);
  * for await (const { items, page, hasNextPage } of iterPages(
  *   listTags,
  *   { workspaceId },

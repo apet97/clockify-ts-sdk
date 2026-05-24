@@ -7,7 +7,8 @@
  *         clientId: "clientId"
  *     }
  */
-export interface GetWorkspacesWorkspaceIdClientsClientIdRequest {
+export interface ArchiveClientsRequest {
     workspaceId: string;
     clientId: string;
+    archived?: boolean;
 }
