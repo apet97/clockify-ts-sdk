@@ -9,6 +9,20 @@ once v1.0.0 ships.
 
 ### Added
 
+- `iterAll()` and `iterPages()` per-resource pagination helpers at
+  the new `clockify-sdk-ts/iter` subpath. `iterAll` yields items
+  flat across page boundaries; `iterPages` yields per-page
+  envelopes (`{ items, page, pageSize, hasNextPage }`) for
+  resumable pagination and progress UI. Both wrap any
+  `(req) => fetcher(req)` callback whose request matches
+  `PaginatedRequest` (`page?: number; "page-size"?: number`).
+  Ships with a documentary `KnownPaginatedMethod` union +
+  `KNOWN_PAGINATED_METHODS` constant covering the 19 currently-known
+  paginated `(resource, method)` pairs as of v0.1.0; a CI drift
+  assertion (in `tests/iter.test.ts`) verifies each pair still
+  exists on a freshly-constructed client. The lower-level
+  callback-style `paginate<T>` remains exported from
+  `clockify-sdk-ts/pagination` for advanced use.
 - `createClockifyClient()` factory at the new
   `clockify-sdk-ts/create-client` subpath — hides the documented
   `addonToken: (() => undefined) as unknown as () => string`

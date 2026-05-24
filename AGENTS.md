@@ -105,20 +105,22 @@ output/ts-sdk/**  (Fern emits ~720 TS files; --force WIPES the tree)
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check               (tsc --noEmit; covers src/**, index.ts,
-        │                                     create-client.ts, pagination.ts, tests/**)
-        │  npm test                          (vitest; 8 pagination unit tests +
-        │                                     8 createClient unit tests + 5 live
-        │                                     sandbox flows; live tests skip without
+        │                                     create-client.ts, iter.ts,
+        │                                     pagination.ts, tests/**)
+        │  npm test                          (vitest; 8 pagination + 8 createClient
+        │                                     + 30 iter unit tests + 5 live sandbox
+        │                                     flows; live tests skip without
         │                                     CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build                     (single `tsc -p tsconfig.build.json`;
         │                                     emits dist/index.js (re-export root),
-        │                                     dist/create-client.js, dist/pagination.js,
-        │                                     and the synced SDK under dist/src/**)
+        │                                     dist/create-client.js, dist/iter.js,
+        │                                     dist/pagination.js, and the synced SDK
+        │                                     under dist/src/**)
         ▼
 wrapper/dist/**  (the publishable artefact)
         │
-        │  npm pack --dry-run                (verify the tarball; 2895 files,
-        │                                     334.1 kB as of v0.1.0 [Unreleased])
+        │  npm pack --dry-run                (verify the tarball; 2899 files,
+        │                                     339.2 kB as of v0.1.0 [Unreleased])
         ▼
 clockify-sdk-ts@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
 ```
@@ -138,7 +140,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `spec/fern/generators.yml` / `fern.config.json`    | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**`                                   | not allowed — wiped by `npm run sync`              |
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
-| `wrapper/{index.ts, create-client.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
+| `wrapper/{index.ts, create-client.ts, iter.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.build.json` `include`, and add a subpath entry to `package.json` `exports`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
@@ -206,9 +208,14 @@ wrapper/
 ├── create-client.ts          ← hand-written factory hiding the addonToken
 │                                workaround behind a discriminated-union options
 │                                type; exported as `clockify-sdk-ts/create-client`
-├── pagination.ts             ← hand-written AsyncGenerator-based offset
-│                                iterator (`paginate<T>`); survives sync;
-│                                exported as `clockify-sdk-ts/pagination`
+├── iter.ts                   ← hand-written `iterAll` + `iterPages` per-resource
+│                                pagination helpers; ships the `KnownPaginatedMethod`
+│                                union of the 19 known paginated pairs + a CI
+│                                drift assertion; exported as `clockify-sdk-ts/iter`
+├── pagination.ts             ← hand-written low-level callback iterator
+│                                (`paginate<T>`); `iterAll` is the recommended
+│                                higher-level API; exported as
+│                                `clockify-sdk-ts/pagination`
 ├── .gitignore                ← drops node_modules/, dist/, src/, *.tsbuildinfo
 ├── scripts/
 │   └── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/
@@ -217,6 +224,11 @@ wrapper/
 │   │                           (mocked fetchPage callback; no live API)
 │   ├── create-client.test.ts ← 8 vitest unit cases for createClockifyClient()
 │   │                           (instance + runtime + TS-type-level checks)
+│   ├── iter.test.ts          ← 30 vitest cases for iterAll/iterPages
+│   │                           (9 iterAll + 2 iterPages + 19 drift +
+│   │                           1 entry-count); KNOWN_PAGINATED_METHODS
+│   │                           drift assertion fails the build if a
+│   │                           paginated method is renamed upstream
 │   └── sandbox.test.ts       ← 5 live-against-Clockify smoke tests
 │                                (incl. cross-page paginate() walk)
 ├── src/                      ← gitignored; populated by sync-sdk.sh
@@ -231,15 +243,18 @@ whitelists what `npm publish` ships. Do not add to that list without
 a publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-The package exposes three subpaths via `package.json` `exports`:
+The package exposes four subpaths via `package.json` `exports`:
 - `clockify-sdk-ts` → `./dist/index.js` (package root —
   re-exports the synced SDK surface + `createClockifyClient` +
-  `paginate`).
+  `iterAll` / `iterPages` / `KNOWN_PAGINATED_METHODS` + `paginate`).
 - `clockify-sdk-ts/create-client` → `./dist/create-client.js`
   (the `createClockifyClient()` factory in isolation, for
   intent-revealing imports or tree-shake-sensitive consumers).
+- `clockify-sdk-ts/iter` → `./dist/iter.js` (the per-resource
+  pagination helpers + the `KnownPaginatedMethod` documentary
+  union of the 19 known paginated method pairs).
 - `clockify-sdk-ts/pagination` → `./dist/pagination.js` (the
-  hand-written `paginate<T>` helper).
+  low-level callback-style `paginate<T>` helper).
 
 The `addonToken: (() => undefined) as unknown as () => string`
 cast is a known workaround for a Fern typing limitation (see

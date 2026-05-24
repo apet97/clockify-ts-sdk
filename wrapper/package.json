@@ -33,6 +33,10 @@
       "import": "./dist/create-client.js",
       "types": "./dist/create-client.d.ts"
     },
+    "./iter": {
+      "import": "./dist/iter.js",
+      "types": "./dist/iter.d.ts"
+    },
     "./pagination": {
       "import": "./dist/pagination.js",
       "types": "./dist/pagination.d.ts"

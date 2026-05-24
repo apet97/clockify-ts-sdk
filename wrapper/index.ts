@@ -10,4 +10,13 @@
  */
 export * from "./src/index.js";
 export { createClockifyClient, type CreateClockifyClientOptions } from "./create-client.js";
+export {
+    iterAll,
+    iterPages,
+    KNOWN_PAGINATED_METHODS,
+    type IterOptions,
+    type KnownPaginatedMethod,
+    type PageEnvelope,
+    type PaginatedRequest,
+} from "./iter.js";
 export { paginate, type PaginateOptions } from "./pagination.js";
