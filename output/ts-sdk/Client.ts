@@ -50,7 +50,6 @@ export class ClockifyApiClient {
     protected _webhooks: WebhooksClient | undefined;
     protected _approvals: ApprovalsClient | undefined;
     protected _auditLogReport: AuditLogReportClient | undefined;
-    protected _balances: BalancesClient | undefined;
     protected _clients: ClientsClient | undefined;
     protected _customFields: CustomFieldsClient | undefined;
     protected _entityChangesExperimental: EntityChangesExperimentalClient | undefined;
@@ -71,6 +70,7 @@ export class ClockifyApiClient {
     protected _scheduling: SchedulingClient | undefined;
     protected _tags: TagsClient | undefined;
     protected _timeEntries: TimeEntriesClient | undefined;
+    protected _balances: BalancesClient | undefined;
     protected _timeOffPolicies: TimeOffPoliciesClient | undefined;
     protected _userGroups: UserGroupsClient | undefined;
     protected _roles: RolesClient | undefined;
@@ -105,10 +105,6 @@ export class ClockifyApiClient {
 
     public get auditLogReport(): AuditLogReportClient {
         return (this._auditLogReport ??= new AuditLogReportClient(this._options));
-    }
-
-    public get balances(): BalancesClient {
-        return (this._balances ??= new BalancesClient(this._options));
     }
 
     public get clients(): ClientsClient {
@@ -189,6 +185,10 @@ export class ClockifyApiClient {
 
     public get timeEntries(): TimeEntriesClient {
         return (this._timeEntries ??= new TimeEntriesClient(this._options));
+    }
+
+    public get balances(): BalancesClient {
+        return (this._balances ??= new BalancesClient(this._options));
     }
 
     public get timeOffPolicies(): TimeOffPoliciesClient {

@@ -717,23 +717,32 @@ on the bare route (the granular variants — already in
   works in single-shot mode.
 
 - **Open questions:**
-  1. The bare `/workspaces/{wsId}/balance` operation exists in the
+  1. ~~The bare `/workspaces/{wsId}/balance` operation exists in the
      canonical spec but returns 404 live. Should it be marked
      `x-clockify-live-status: live-404` and demoted to
      `probe-documented-only`, or removed entirely in favour of the
-     two granular routes? Out of scope this session; flag for
-     follow-up in the GOCLMCP repo (it owns the canonical spec).
+     two granular routes?~~ **RESOLVED 2026-05-24 (session 2,
+     follow-up).** Added `["get", "/workspaces/{workspaceId}/balance"]`
+     and `["patch", "/workspaces/{workspaceId}/balance"]` to
+     `PHANTOM_PATHS` in `addons-me/GOCLMCP/scripts/gen-clockify-openapi`.
+     The merger quarantines both ops on every regen with an audit-trail
+     reason. After regen the canonical spec carries **191 operations
+     (was 193)** and the raw-write allowlist drops to **134 routes
+     (was 136)**. The granular `/time-off/balance/policy/{policyId}`
+     and `/time-off/balance/user/{userId}` routes remain the live API
+     surface; both are in `PAGINATED_LIST_OPS` and unchanged.
   2. Why does `/workspaces` top-level return the full collection
      unconditionally? It's a self-referential enumeration ("my
      workspaces") so the user typically has ≤ 100; the server may
      have decided pagination is unnecessary. No fix needed in this
      SDK.
 
-- **Status:** `documented-not-paginated`. No change to
-  `PAGINATED_LIST_OPS` in
-  `addons-me/GOCLMCP/scripts/gen-clockify-openapi`. The `wrapper/`
-  package consumes these three operations via their single-shot
-  signatures unchanged.
+- **Status:** `documented-not-paginated` (the holidays + workspaces
+  top-level bits) **and** `phantom-path-quarantined` (bare `/balance`,
+  GET + PATCH). No change to `PAGINATED_LIST_OPS`. The `wrapper/`
+  package's `balances` module now exposes only the granular
+  `getBalanceForUser` / `getBalancesForPolicy` / `updateBalance`
+  operations.
 
 ### `getTimeOffPolicies.sort-order.enum-tightened` — RESOLVED 2026-05-24
 

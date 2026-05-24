@@ -25,7 +25,6 @@ export * from "./AutomaticAccrualRequest.js";
 export * from "./AutomaticLockDtoV1.js";
 export * from "./AutomaticTimeEntryCreationDto.js";
 export * from "./AutomaticTimeEntryCreationRequest.js";
-export * from "./Balance.js";
 export * from "./BalanceBalance.js";
 export * from "./BalanceDtoV1.js";
 export * from "./BalanceListResponse.js";
