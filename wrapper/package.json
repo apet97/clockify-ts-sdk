@@ -105,6 +105,7 @@
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
     "build:smoke": "bash scripts/verify-dual-build.sh",
     "docs": "typedoc",
+    "docs:resources": "tsx scripts/gen-resource-docs.ts",
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -112,6 +113,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "tsx": "^4.22.3",
     "typedoc": "^0.28.19",
     "typescript": "^5.6.0",
     "vitest": "^4.1.4"

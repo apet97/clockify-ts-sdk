@@ -42,3 +42,9 @@ rsync -a \
 
 ts_count=$(find "$WRAPPER_ROOT/src" -name '*.ts' | wc -l | tr -d ' ')
 echo "Synced ${ts_count} TypeScript files from ${FERN_OUT} → ${WRAPPER_ROOT}/src/"
+
+# Regenerate per-resource markdown reference so PR diffs surface any
+# shape drift in the synced SDK. Idempotent; output committed under
+# wrapper/docs/resources/.
+echo "Regenerating per-resource docs..."
+(cd "$WRAPPER_ROOT" && npx tsx scripts/gen-resource-docs.ts)

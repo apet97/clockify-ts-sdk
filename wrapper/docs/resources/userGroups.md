@@ -1,0 +1,146 @@
+# userGroups
+
+8 methods on `client.userGroups`.
+
+> Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
+
+## Methods
+
+### `findAllGroupsOnWorkspace`
+
+**Example:**
+
+```typescript
+    await client.userGroups.findAllGroupsOnWorkspace({
+        workspaceId: "workspaceId"
+    })
+```
+
+**Request fields** (`FindAllGroupsOnWorkspaceRequest`):
+
+- `workspaceId` (`string`, required)
+- `page` (`number`, optional) — 1-based page index. Default 1.
+- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+
+### `addNewGroup`
+
+**Example:**
+
+```typescript
+    await client.userGroups.addNewGroup({
+        workspaceId: "workspaceId",
+        body: {
+            name: "development_team"
+        }
+    })
+```
+
+**Request fields** (`AddNewGroupRequest`):
+
+- `workspaceId` (`string`, required)
+- `body` (`ClockifyApi.UserGroupRequest`, required)
+
+### `getWorkspacesWorkspaceIdUserGroupsGroupId`
+
+**Example:**
+
+```typescript
+    await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupId({
+        workspaceId: "workspaceId",
+        groupId: "groupId"
+    })
+```
+
+**Request fields** (`GetWorkspacesWorkspaceIdUserGroupsGroupIdRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+
+### `updateGroup`
+
+**Example:**
+
+```typescript
+    await client.userGroups.updateGroup({
+        workspaceId: "workspaceId",
+        groupId: "groupId",
+        body: {
+            name: "development_team"
+        }
+    })
+```
+
+**Request fields** (`UpdateGroupRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+- `body` (`ClockifyApi.UserGroupRequest`, required)
+
+### `deleteGroup`
+
+**Example:**
+
+```typescript
+    await client.userGroups.deleteGroup({
+        workspaceId: "workspaceId",
+        groupId: "groupId"
+    })
+```
+
+**Request fields** (`DeleteGroupRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+
+### `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers`
+
+**Example:**
+
+```typescript
+    await client.userGroups.getWorkspacesWorkspaceIdUserGroupsGroupIdUsers({
+        workspaceId: "workspaceId",
+        groupId: "groupId"
+    })
+```
+
+**Request fields** (`GetWorkspacesWorkspaceIdUserGroupsGroupIdUsersRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+
+### `addUsersToGroup`
+
+**Example:**
+
+```typescript
+    await client.userGroups.addUsersToGroup({
+        workspaceId: "workspaceId",
+        groupId: "groupId",
+        userId: "5a0ab5acb07987125438b60f"
+    })
+```
+
+**Request fields** (`AddUserToGroupRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+- `userId` (`string`, required) — Represents a user identifier across the system.
+
+### `removeUserFromGroup`
+
+**Example:**
+
+```typescript
+    await client.userGroups.removeUserFromGroup({
+        workspaceId: "workspaceId",
+        groupId: "groupId",
+        userId: "userId"
+    })
+```
+
+**Request fields** (`RemoveUserFromGroupRequest`):
+
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+- `userId` (`string`, required)
+
