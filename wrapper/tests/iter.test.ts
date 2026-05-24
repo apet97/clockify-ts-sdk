@@ -66,7 +66,7 @@ describe("iterAll", () => {
             observed.push({ workspaceId: req.workspaceId, page: req.page! });
             return req.page === 1 ? [10, 20] : [];
         };
-        await collect(iterAll<Req, number>(fetcher, { workspaceId: "ws-1" }, { pageSize: 2 }));
+        await collect(iterAll(fetcher, { workspaceId: "ws-1" }, { pageSize: 2 }));
         expect(observed).toEqual([
             { workspaceId: "ws-1", page: 1 },
             { workspaceId: "ws-1", page: 2 },

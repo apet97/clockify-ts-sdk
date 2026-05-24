@@ -171,11 +171,9 @@ levels of abstraction:
 import { createClockifyClient, iterAll } from "clockify-sdk-ts";
 
 const client = createClockifyClient({ apiKey: "..." });
+const listProjects = client.projects.getWorkspaceProjects.bind(client.projects);
 
-for await (const project of iterAll(
-  (req) => client.projects.getWorkspaceProjects(req),
-  { workspaceId: "..." },
-)) {
+for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
   console.log(project.name);
 }
 ```
@@ -185,13 +183,23 @@ non-full page comes back (or `maxPages` is reached). `options`
 accepts `pageSize` (default 50), `maxPages` (default ∞),
 `startPage` (default 1, useful for resume flows).
 
+> **Why `.bind()`?** Passing the method reference directly
+> (`client.projects.getWorkspaceProjects`) loses the implicit `this`
+> binding to its owning sub-client. Wrapping in an arrow function
+> works at runtime but loses type inference (TypeScript falls back
+> to the helper's generic constraint). `.bind(client.projects)`
+> keeps the method's full type signature so TS infers both the
+> request shape and the item shape correctly.
+
 ### `iterPages` — when you need page metadata
 
 ```typescript
 import { iterPages } from "clockify-sdk-ts";
 
+const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
+
 for await (const { items, page, hasNextPage } of iterPages(
-  (req) => client.tags.getWorkspacesWorkspaceIdTags(req),
+  listTags,
   { workspaceId: "..." },
   { pageSize: 100 },
 )) {

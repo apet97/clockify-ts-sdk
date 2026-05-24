@@ -9,6 +9,42 @@ once v1.0.0 ships.
 
 ### Added
 
+- **`wrapper/examples/` directory** with 9 runnable starter scripts:
+  `auth.ts`, `paginate-all.ts`, `log-time-entry.ts`,
+  `create-project.ts`, `generate-report.ts`, `upload-image.ts`,
+  `verify-webhook.ts`, `middleware-datadog.ts`, `retry-custom.ts`.
+  Each imports from `clockify-sdk-ts` (package self-reference)
+  so copy-pasting into a real project requires no path changes.
+  Live-API examples skip cleanly if `CLOCKIFY_API_KEY` is missing
+  and use timestamp slugs for safety. The conceptual examples
+  (webhooks, middleware, retry) are pure illustrative wiring —
+  no API calls.
+- **Full README rewrite** with 14 sections (install, quick start,
+  auth, resource modules, pagination — three primitives, error
+  handling with the full hierarchy table, retries with policy
+  override, timeouts + abort, logging, custom fetch + proxy,
+  webhooks, middleware/hooks, ESM+CJS, Node+TS versions). Top:
+  4-badge row (npm, CI, license, install size). Every code
+  example uses the names that landed in Phases 1-2.
+- **Per-status error classes re-exported flat** from the package
+  root: `BadRequestError`, `UnauthorizedError`, `ForbiddenError`,
+  `NotFoundError`, `MethodNotAllowedError`. Consumers can now do
+  `import { NotFoundError } from "clockify-sdk-ts"` instead of
+  the namespaced `ClockifyApi.NotFoundError`. Both forms work.
+  `scripts/verify-dual-build.sh` checks 17 expected names per
+  module system (was 12).
+
+### Changed
+
+- `iterAll` and `iterPages` no longer constrain `TRequest extends
+  PaginatedRequest` — the constraint defeated TypeScript's
+  bidirectional inference when callers passed an arrow-function
+  wrapper. Pure type relaxation (no runtime behavior change);
+  existing code that explicitly typed the fetcher still works.
+  Recommended call pattern is now
+  `client.foo.bar.bind(client.foo)` which preserves the method's
+  full type signature so TS infers both request and item types.
+  Documented in the JSDoc + README's pagination section.
 - **Dual ESM + CJS build.** The package now ships both module
   systems from `dist/esm/` and `dist/cjs/`. CommonJS consumers can
   `require("clockify-sdk-ts")` and get the same surface ESM

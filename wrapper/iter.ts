@@ -140,15 +140,20 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  *   apiKey: process.env.CLOCKIFY_API_KEY!,
  * });
  *
- * for await (const project of iterAll(
- *   (req) => client.projects.getWorkspaceProjects(req),
- *   { workspaceId: process.env.CLOCKIFY_WORKSPACE_ID! },
- * )) {
+ * // `.bind()` preserves the method's full type signature so TS
+ * // infers the request shape and item shape correctly. An arrow
+ * // wrapper works at runtime but loses inference.
+ * const listProjects = client.projects.getWorkspaceProjects
+ *   .bind(client.projects);
+ *
+ * for await (const project of iterAll(listProjects, {
+ *   workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
+ * })) {
  *   console.log(project.name);
  * }
  * ```
  */
-export async function* iterAll<TRequest extends PaginatedRequest, TItem>(
+export async function* iterAll<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
     options: IterOptions = {},
@@ -165,8 +170,9 @@ export async function* iterAll<TRequest extends PaginatedRequest, TItem>(
  *
  * @example
  * ```ts
+ * const listTags = client.tags.getWorkspacesWorkspaceIdTags.bind(client.tags);
  * for await (const { items, page, hasNextPage } of iterPages(
- *   (req) => client.tags.getWorkspacesWorkspaceIdTags(req),
+ *   listTags,
  *   { workspaceId },
  *   { pageSize: 100 },
  * )) {
@@ -175,7 +181,7 @@ export async function* iterAll<TRequest extends PaginatedRequest, TItem>(
  * }
  * ```
  */
-export async function* iterPages<TRequest extends PaginatedRequest, TItem>(
+export async function* iterPages<TRequest, TItem>(
     fetcher: (request: TRequest) => PromiseLike<readonly TItem[]>,
     baseRequest: Omit<TRequest, "page" | "page-size">,
     options: IterOptions = {},

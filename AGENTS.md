@@ -153,7 +153,7 @@ spec sources, the generator, wrapper code, workflows, package.json)
 | `wrapper/scripts/sync-sdk.sh`                      | run `npm run sync` and verify file count is sensible (currently 723) |
 | `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts}` (hand-written modules) | `npm run type-check` + `npm test` (unit cases live in `tests/<module>.test.ts`) + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module, also add it to `tsconfig.json` `include`, `tsconfig.esm.json` `include`, `tsconfig.cjs.json` `include`, a subpath entry in `package.json` `exports` (both `import` and `require` conditions), and the expected-names array in `scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md`                              | edit-only, no gates — runs alongside the package metadata changes that prompted the entry |
-| `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run` |
+| `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json`'s `include` even though they're not in any test/build output — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `.github/workflows/**`                             | the security-guidance hook may block the first Write per session; retry once; lint with `gh workflow view <name>` |
 
 After any spec or generator change, the FULL chain in §3 must run
@@ -252,6 +252,11 @@ wrapper/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ into src/
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
 │   └── verify-dual-build.sh  ← smoke-tests both ESM and CJS imports against dist/
+├── examples/                 ← 9 runnable starter scripts; each imports from
+│                                `clockify-sdk-ts` (package self-reference);
+│                                live-API ones gate on CLOCKIFY_API_KEY.
+│                                NOT included in the npm tarball; discoverable
+│                                via the repo URL.
 ├── tests/
 │   ├── pagination.test.ts    ← 8 vitest unit cases for paginate()
 │   │                           (mocked fetchPage callback; no live API)
