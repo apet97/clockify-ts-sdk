@@ -136,6 +136,16 @@
                 "types": "./dist/cjs/deprecation.d.ts",
                 "default": "./dist/cjs/deprecation.js"
             }
+        },
+        "./scoped-client": {
+            "import": {
+                "types": "./dist/esm/scoped-client.d.ts",
+                "default": "./dist/esm/scoped-client.js"
+            },
+            "require": {
+                "types": "./dist/cjs/scoped-client.d.ts",
+                "default": "./dist/cjs/scoped-client.js"
+            }
         }
     },
     "files": [

@@ -14,7 +14,7 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce,Workspace,wrapResource"
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" node --input-type=module -e "
@@ -66,7 +66,10 @@ if (typeof dp.warnOnce !== 'function') { console.error('CJS subpath deprecation.
 const we = require('./dist/cjs/webhook-events.js');
 if (!Array.isArray(we.CLOCKIFY_WEBHOOK_EVENT_NAMES)) { console.error('CJS subpath webhook-events.CLOCKIFY_WEBHOOK_EVENT_NAMES missing'); process.exit(1); }
 if (we.CLOCKIFY_WEBHOOK_EVENT_NAMES.length !== 50) { console.error('CJS subpath webhook-events: expected 50 events, got', we.CLOCKIFY_WEBHOOK_EVENT_NAMES.length); process.exit(1); }
-console.log('OK: All 10 CJS subpaths resolve');
+const sc = require('./dist/cjs/scoped-client.js');
+if (typeof sc.Workspace !== 'function') { console.error('CJS subpath scoped-client.Workspace broken'); process.exit(1); }
+if (typeof sc.wrapResource !== 'function') { console.error('CJS subpath scoped-client.wrapResource broken'); process.exit(1); }
+console.log('OK: All 11 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"

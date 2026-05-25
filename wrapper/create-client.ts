@@ -18,6 +18,7 @@
  * the same options object — see {@link CreateClockifyClientOptions}.
  */
 import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
+import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
 
@@ -147,7 +148,19 @@ function readEnv(name: string): string | undefined {
  *   passed AND neither `CLOCKIFY_API_KEY` nor `CLOCKIFY_ADDON_TOKEN`
  *   is set in the environment.
  */
-export function createClockifyClient(options: CreateClockifyClientOptions = {}): ClockifyApiClient {
+/** The type returned by {@link createClockifyClient}: a standard
+ *  `ClockifyApiClient` extended with the `.workspace(id)` factory. */
+export type ClockifyClient = ClockifyApiClient & { workspace(id: string): Workspace };
+
+/** Attach `.workspace(id)` factory to a constructed `ClockifyApiClient`. */
+function attachWorkspace(client: ClockifyApiClient): ClockifyClient {
+    (client as ClockifyClient).workspace = function (id: string): Workspace {
+        return new Workspace(client, id);
+    };
+    return client as ClockifyClient;
+}
+
+export function createClockifyClient(options: CreateClockifyClientOptions = {}): ClockifyClient {
     const hasExplicitApiKey = "apiKey" in options && options.apiKey != null;
     const hasExplicitAddonToken = "addonToken" in options && options.addonToken != null;
 
@@ -225,16 +238,20 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     };
 
     if (effectiveApiKey != null) {
-        return new ClockifyApiClient({
-            ...base,
-            apiKey: effectiveApiKey,
-            addonToken: NULL_SUPPLIER,
-        });
+        return attachWorkspace(
+            new ClockifyApiClient({
+                ...base,
+                apiKey: effectiveApiKey,
+                addonToken: NULL_SUPPLIER,
+            }),
+        );
     }
 
-    return new ClockifyApiClient({
-        ...base,
-        addonToken: effectiveAddonToken!,
-        apiKey: NULL_SUPPLIER,
-    });
+    return attachWorkspace(
+        new ClockifyApiClient({
+            ...base,
+            addonToken: effectiveAddonToken!,
+            apiKey: NULL_SUPPLIER,
+        }),
+    );
 }
