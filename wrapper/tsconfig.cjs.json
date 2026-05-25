@@ -23,7 +23,8 @@
         "with-response.ts",
         "scoped-client.ts",
         "otel-hooks.ts",
-        "health.ts"
+        "health.ts",
+        "rate-limit.ts"
     ],
     "exclude": ["node_modules", "dist", "tests"]
 }

@@ -166,6 +166,16 @@
                 "types": "./dist/cjs/health.d.ts",
                 "default": "./dist/cjs/health.js"
             }
+        },
+        "./rate-limit": {
+            "import": {
+                "types": "./dist/esm/rate-limit.d.ts",
+                "default": "./dist/esm/rate-limit.js"
+            },
+            "require": {
+                "types": "./dist/cjs/rate-limit.d.ts",
+                "default": "./dist/cjs/rate-limit.js"
+            }
         }
     },
     "files": [
