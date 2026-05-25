@@ -18,9 +18,9 @@ surface), dual ESM + CJS, npm provenance via sigstore.
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
   user-visible workaround casts
 - Pagination — per-resource `iterAll` + page-envelope `iterPages`
-  + low-level `paginate` callback iterator;
-  `iterPages` consumes the `Last-Page` response header where the
-  server emits it (15 of the 18 paginated endpoints)
+    - low-level `paginate` callback iterator;
+      `iterPages` consumes the `Last-Page` response header where the
+      server emits it (15 of the 18 paginated endpoints)
 - Webhook signature verification
   (`Clockify-Signature-Token` header)
 - Observability — `User-Agent` + `X-Request-Id` auto-injection,
@@ -86,30 +86,30 @@ hooks / retry policy.
 
 Clockify exposes two mutually-exclusive auth schemes:
 
-| Scheme                  | Header          | When to use |
-| ----------------------- | --------------- | ----------- |
+| Scheme                  | Header          | When to use                                                                                                            |
+| ----------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Personal API key        | `X-Api-Key`     | Server scripts, CI, agents acting as you. Token at [Clockify profile settings](https://app.clockify.me/user/settings). |
-| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify addon you authored. Token from the install JWT. |
+| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify addon you authored. Token from the install JWT.                                         |
 
 `createClockifyClient` enforces exactly-one at compile time and
 runtime — the discriminated-union type rejects passing both:
 
 ```typescript
 const personal = createClockifyClient({ apiKey: "..." });
-const addon    = createClockifyClient({ addonToken: "..." });
+const addon = createClockifyClient({ addonToken: "..." });
 
 // ❌ Compile error: both fields can't be set together.
-const broken   = createClockifyClient({ apiKey: "a", addonToken: "t" });
+const broken = createClockifyClient({ apiKey: "a", addonToken: "t" });
 ```
 
 ### Env-var fallback
 
 If you omit both, the factory reads from the environment:
 
-| Env var                | Used as      | Precedence |
-| ---------------------- | ------------ | ---------- |
+| Env var                | Used as      | Precedence  |
+| ---------------------- | ------------ | ----------- |
 | `CLOCKIFY_API_KEY`     | `apiKey`     | 1 (highest) |
-| `CLOCKIFY_ADDON_TOKEN` | `addonToken` | 2          |
+| `CLOCKIFY_ADDON_TOKEN` | `addonToken` | 2           |
 
 Explicit options always win. Empty-string env values are treated
 as absent. Throws if both env vars are also unset.
@@ -154,15 +154,15 @@ limitation — see
 One sub-client per OpenAPI tag (31 modules). Two name shapes
 co-exist; the table summarises which is which.
 
-| Cohort | Modules | Verbs |
-| --- | --- | --- |
-| Pure CRUDL | `tags`, `clients`, `projects`, `tasks`, `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks`, `expenses`, `expenseCategories`, `policies` | `list`, `create`, `get`, `update`, `delete` (only the verbs the API supports) |
-| CRUDL + action | `clients.archive`, `expenseCategories.archive`, `policies.archive` | + an action verb |
-| Partial CRUDL | `timeEntries`, `invoiceItems`, `invoicePayments` | Limited to what the API actually exposes (e.g. no top-level workspace LIST for timeEntries) |
-| Workflow verbs | `approvals` (`submit` / `resubmit` / `updateStatus`), `timeOff` (`submit` / `withdraw` / `updateStatus`), `scheduling` (`publish` / `copy` / recurring family) | State-machine verbs that match upstream semantics |
-| Mixed | `invoices` (CRUDL + `filter` / `duplicate` / `export` / `updateStatus`), `reports` (`attendance` / `detailed` / `summary` / `weekly`) | CRUDL plus workflow actions; reports use family-name verbs |
-| Scoped naming | `customFields` (`listForWorkspace` / `listForProject` / etc.) | The module covers two surfaces; suffix disambiguates |
-| OperationId-derived | `files.uploadImage`, `roles.{give,remove}UserManagerRole`, `expenseReport.generateDetailedReportV1`, per-user `workspaces.updateUser*`, plus a handful of action verbs inside the stamped modules (`projects.assignOrRemoveProjectUsers`, scheduling capacity totals, etc.) | Already verb-noun; rename buys nothing |
+| Cohort              | Modules                                                                                                                                                                                                                                                                     | Verbs                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Pure CRUDL          | `tags`, `clients`, `projects`, `tasks`, `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks`, `expenses`, `expenseCategories`, `policies`                                                                                                               | `list`, `create`, `get`, `update`, `delete` (only the verbs the API supports)               |
+| CRUDL + action      | `clients.archive`, `expenseCategories.archive`, `policies.archive`                                                                                                                                                                                                          | + an action verb                                                                            |
+| Partial CRUDL       | `timeEntries`, `invoiceItems`, `invoicePayments`                                                                                                                                                                                                                            | Limited to what the API actually exposes (e.g. no top-level workspace LIST for timeEntries) |
+| Workflow verbs      | `approvals` (`submit` / `resubmit` / `updateStatus`), `timeOff` (`submit` / `withdraw` / `updateStatus`), `scheduling` (`publish` / `copy` / recurring family)                                                                                                              | State-machine verbs that match upstream semantics                                           |
+| Mixed               | `invoices` (CRUDL + `filter` / `duplicate` / `export` / `updateStatus`), `reports` (`attendance` / `detailed` / `summary` / `weekly`)                                                                                                                                       | CRUDL plus workflow actions; reports use family-name verbs                                  |
+| Scoped naming       | `customFields` (`listForWorkspace` / `listForProject` / etc.)                                                                                                                                                                                                               | The module covers two surfaces; suffix disambiguates                                        |
+| OperationId-derived | `files.uploadImage`, `roles.{give,remove}UserManagerRole`, `expenseReport.generateDetailedReportV1`, per-user `workspaces.updateUser*`, plus a handful of action verbs inside the stamped modules (`projects.assignOrRemoveProjectUsers`, scheduling capacity totals, etc.) | Already verb-noun; rename buys nothing                                                      |
 
 Coverage: 169 ops mapped (91.4% of the 185-op live API surface)
 across 27 of 31 modules. Full per-method index in
@@ -209,7 +209,9 @@ import { iterPages } from "clockify-sdk-ts";
 const listTags = client.tags.list.bind(client.tags);
 
 for await (const { items, page, hasNextPage } of iterPages(
-    listTags, { workspaceId: "..." }, { pageSize: 100 },
+    listTags,
+    { workspaceId: "..." },
+    { pageSize: 100 },
 )) {
     console.log(`page ${page}: ${items.length} tags (more: ${hasNextPage})`);
     if (!hasNextPage) break;
@@ -222,8 +224,7 @@ for await (const { items, page, hasNextPage } of iterPages(
 import { paginate } from "clockify-sdk-ts";
 
 for await (const c of paginate(
-    (page, pageSize) =>
-        client.clients.list({ workspaceId: "...", page, "page-size": pageSize }),
+    (page, pageSize) => client.clients.list({ workspaceId: "...", page, "page-size": pageSize }),
     { pageSize: 50 },
 )) {
     console.log(c.name);
@@ -238,7 +239,9 @@ arithmetic, or custom stop conditions.
 ```typescript
 for (let page = 1; ; page++) {
     const records = await client.users.findWorkspaceUsers({
-        workspaceId: "...", page, "page-size": 50,
+        workspaceId: "...",
+        page,
+        "page-size": 50,
     });
     if (records.length === 0) break;
     for (const u of records) handle(u);
@@ -258,27 +261,30 @@ catching upstream renames at build time.
 
 Every non-2xx throws a typed error:
 
-| Class                     | Status | When |
-| ------------------------- | ------ | ---- |
-| `ClockifyApiError`        | (any)  | Base. Carries `statusCode`, `body`, `rawResponse`, `cause`. |
-| `BadRequestError`         | 400    | Malformed request body / query. |
-| `UnauthorizedError`       | 401    | Missing or invalid `X-Api-Key` / `X-Addon-Token`. |
-| `ForbiddenError`          | 403    | Authenticated but not permitted. |
-| `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace. |
-| `MethodNotAllowedError`   | 405    | Wrong verb (rare). |
-| `ConflictError`           | 409    | Idempotency / uniqueness conflict (e.g. duplicate tag). |
+| Class                     | Status | When                                                              |
+| ------------------------- | ------ | ----------------------------------------------------------------- |
+| `ClockifyApiError`        | (any)  | Base. Carries `statusCode`, `body`, `rawResponse`, `cause`.       |
+| `BadRequestError`         | 400    | Malformed request body / query.                                   |
+| `UnauthorizedError`       | 401    | Missing or invalid `X-Api-Key` / `X-Addon-Token`.                 |
+| `ForbiddenError`          | 403    | Authenticated but not permitted.                                  |
+| `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace.       |
+| `MethodNotAllowedError`   | 405    | Wrong verb (rare).                                                |
+| `ConflictError`           | 409    | Idempotency / uniqueness conflict (e.g. duplicate tag).           |
 | `RateLimitError`          | 429    | Rate limit exceeded. Carries `retryAfterMs` + `rateLimitResetAt`. |
-| `InternalServerError`     | 500    | Upstream failure. |
-| `ServiceUnavailableError` | 503    | Backend overloaded or maintenance. |
-| `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response. |
+| `InternalServerError`     | 500    | Upstream failure.                                                 |
+| `ServiceUnavailableError` | 503    | Backend overloaded or maintenance.                                |
+| `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response.                     |
 
 `instanceof` checks work (each constructor calls
 `Object.setPrototypeOf`):
 
 ```typescript
 import {
-    ClockifyApiError, NotFoundError, RateLimitError,
-    promoteApiError, getRequestIdFromError,
+    ClockifyApiError,
+    NotFoundError,
+    RateLimitError,
+    promoteApiError,
+    getRequestIdFromError,
 } from "clockify-sdk-ts";
 
 try {
@@ -288,8 +294,8 @@ try {
     // Fern throws the base ClockifyApiError. `promoteApiError` swaps
     // it for the matching subclass when one exists.
     const err = promoteApiError(raw);
-    if (err instanceof NotFoundError)        console.log("tag is gone");
-    else if (err instanceof RateLimitError)  await sleep(err.retryAfterMs ?? 1000);
+    if (err instanceof NotFoundError) console.log("tag is gone");
+    else if (err instanceof RateLimitError) await sleep(err.retryAfterMs ?? 1000);
     else if (err instanceof ClockifyApiError) {
         console.error(
             `request ${getRequestIdFromError(err)} failed with ${err.statusCode}:`,
@@ -365,10 +371,7 @@ const client = createClockifyClient({
 ### Per-request override
 
 ```typescript
-await client.tags.list(
-    { workspaceId: "..." },
-    { maxRetries: 0 },
-);
+await client.tags.list({ workspaceId: "..." }, { maxRetries: 0 });
 ```
 
 ## Timeouts and abort signals
@@ -389,6 +392,32 @@ Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
 `ClockifyApiError`; `err.cause` carries the underlying
 `AbortError`.
 
+### `timeoutMs` shorthand
+
+The axioms doc and most of the JS ecosystem use **milliseconds**
+(`setTimeout(ms)`, `AbortSignal.timeout(ms)`). Fern's per-call
+option is `timeoutInSeconds`. The conversion is straightforward:
+
+```typescript
+import { createClockifyClient } from "clockify-sdk-ts";
+
+const client = createClockifyClient();
+
+// 5-second timeout, expressed two equivalent ways:
+await client.tags.list({ workspaceId }, { timeoutInSeconds: 5 });
+await client.tags.list({ workspaceId }, { timeoutInSeconds: 5_000 / 1_000 });
+
+// Or define a one-line helper at your call site if you prefer ms:
+const ms = (n: number) => ({ timeoutInSeconds: n / 1_000 });
+await client.tags.list({ workspaceId }, ms(5_000));
+```
+
+We don't ship a `timeoutMs` field on `RequestOptions` because
+adding a Fern-overlapping field would create two ways to spell the
+same thing — small ergonomic gain, real risk of "set both,
+which one wins?" footguns. The conversion is a single division
+when you want it.
+
 ## Logging
 
 ```typescript
@@ -399,8 +428,8 @@ const client = createClockifyClient({
         // Pino, bunyan, winston are all shape-compatible.
         logger: {
             debug: (msg, ...args) => console.debug(msg, ...args),
-            info:  (msg, ...args) => console.info(msg, ...args),
-            warn:  (msg, ...args) => console.warn(msg, ...args),
+            info: (msg, ...args) => console.info(msg, ...args),
+            warn: (msg, ...args) => console.warn(msg, ...args),
             error: (msg, ...args) => console.error(msg, ...args),
         },
     },
@@ -488,7 +517,8 @@ const client = createClockifyClient({
             logger.info({ method, url, requestId }, "→ request"),
         afterResponse: ({ response, durationMs, requestId }) =>
             metrics.histogram("clockify.duration", durationMs, {
-                status: response.status, requestId,
+                status: response.status,
+                requestId,
             }),
         onError: ({ error, durationMs, requestId }) =>
             logger.error({ error, durationMs, requestId }, "× request failed"),
@@ -580,32 +610,32 @@ map. TypeScript picks the correct `.d.ts` per consumer's
 
 ## Supported runtimes
 
-| Runtime    | Minimum                                                              | Tested            |
-| ---------- | -------------------------------------------------------------------- | ----------------- |
-| Node.js    | **20.0.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)     | 22 (CI), 20      |
-| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`)  | 5.6 (dev), 5.x   |
-| Bun        | works                                                                | CI smoke         |
-| Deno       | works via `npm:` specifier                                           | CI smoke         |
-| Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**          | not in CI         |
+| Runtime    | Minimum                                                             | Tested         |
+| ---------- | ------------------------------------------------------------------- | -------------- |
+| Node.js    | **20.0.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)    | 22 (CI), 20    |
+| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`) | 5.6 (dev), 5.x |
+| Bun        | works                                                               | CI smoke       |
+| Deno       | works via `npm:` specifier                                          | CI smoke       |
+| Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**         | not in CI      |
 
 ## Quality and tooling
 
 The SDK gates every change through a multi-layer CI matrix that
 matches what Speakeasy / Stainless SDKs ship:
 
-| Layer | Tool | Where |
-| --- | --- | --- |
-| Type safety | `tsc -p tsconfig.json --strict --noUncheckedIndexedAccess` | CI `build-and-test` on Node **20 + 22** |
-| Type contract | `vitest --typecheck.only` against `tests/types/*.test-d.ts` | CI `build-and-test` step |
-| Lint | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job |
-| Format | Prettier 3 (4-space, semi, LF, 100-col) | `npm run format:check` |
-| Bundle ceiling | `size-limit` with 9 entrypoint ceilings (file-size, no bundling) | CI `size` job |
-| Dual build | `tsc` ESM + `tsc` CJS + per-format smoke verifying 29 exports + 8 subpaths | `build:smoke` |
-| Tarball gate | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack` | CI `build-and-test` (Node 22) |
-| Provenance | `npm publish --provenance` via OIDC + SPDX SBOM attached to GitHub release | CI `release.yml` |
-| Cross-runtime | Vitest under **Bun**, name-resolution import under **Deno** | CI `bun-smoke` + `deno-smoke` |
-| Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows | CI `codeql` |
-| Spec health | `fern check --warnings --from-openapi` on the corrected snapshot | CI `spec-check` |
+| Layer           | Tool                                                                                                                                | Where                                   |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Type safety     | `tsc -p tsconfig.json --strict --noUncheckedIndexedAccess`                                                                          | CI `build-and-test` on Node **20 + 22** |
+| Type contract   | `vitest --typecheck.only` against `tests/types/*.test-d.ts`                                                                         | CI `build-and-test` step                |
+| Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
+| Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
+| Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 29 exports + 8 subpaths                                                          | `build:smoke`                           |
+| Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
+| Provenance      | `npm publish --provenance` via OIDC + SPDX SBOM attached to GitHub release                                                          | CI `release.yml`                        |
+| Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |
+| Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |
+| Spec health     | `fern check --warnings --from-openapi` on the corrected snapshot                                                                    | CI `spec-check`                         |
 
 Lint scope is the hand-written wrapper (`*.ts` at root + `tests/**`).
 `wrapper/src/**` is wiped on every `npm run sync`, so linting there
