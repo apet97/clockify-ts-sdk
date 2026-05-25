@@ -260,3 +260,67 @@ describe("ClockifyAbortError", () => {
         expect(isAbortError(null)).toBe(false);
     });
 });
+
+describe("promoteApiError — non-status-code errors", () => {
+    it("promotes network failures to ClockifyConnectionError", () => {
+        const base = new ClockifyApiError({
+            message: "fetch failed",
+            cause: new TypeError("fetch failed"),
+            // statusCode intentionally omitted
+        });
+        const promoted = promoteApiError(base);
+        expect(promoted).toBeInstanceOf(ClockifyConnectionError);
+        expect(promoted).toBeInstanceOf(ClockifyApiError);
+        // preserves the original cause + message
+        const c = promoted as ClockifyConnectionError;
+        expect(c.cause).toBeInstanceOf(TypeError);
+    });
+
+    it("promotes AbortError causes to ClockifyAbortError", () => {
+        const base = new ClockifyApiError({
+            message: "aborted",
+            cause: new DOMException("aborted", "AbortError"),
+        });
+        const promoted = promoteApiError(base);
+        expect(promoted).toBeInstanceOf(ClockifyAbortError);
+        expect(promoted).toBeInstanceOf(ClockifyApiError);
+    });
+
+    it("treats a plain Error with name AbortError as an abort", () => {
+        const cause = new Error("aborted");
+        cause.name = "AbortError";
+        const base = new ClockifyApiError({ message: "aborted", cause });
+        const promoted = promoteApiError(base);
+        expect(promoted).toBeInstanceOf(ClockifyAbortError);
+    });
+
+    it("leaves a status-bearing error alone (existing behaviour)", () => {
+        const base = new ClockifyApiError({
+            statusCode: 404,
+            message: "Not Found",
+        });
+        const promoted = promoteApiError(base);
+        // 404 is handled by Fern's own NotFoundError emission — the
+        // wrapper's promoteApiError only fills 409/429/500/503 +
+        // the new non-status-code branches. 404 with no Ctor entry
+        // returns the original.
+        expect(promoted).toBe(base);
+    });
+
+    it("does not double-promote (idempotent)", () => {
+        const base = new ClockifyApiError({
+            message: "fetch failed",
+            cause: new TypeError("fetch failed"),
+        });
+        const once = promoteApiError(base);
+        const twice = promoteApiError(once);
+        expect(twice).toBe(once);
+    });
+
+    it("leaves non-ClockifyApiError values unchanged", () => {
+        const plain = new Error("not an api error");
+        expect(promoteApiError(plain)).toBe(plain);
+        expect(promoteApiError(null)).toBe(null);
+        expect(promoteApiError(undefined)).toBe(undefined);
+    });
+});
