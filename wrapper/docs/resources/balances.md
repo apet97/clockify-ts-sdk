@@ -1,6 +1,6 @@
 # balances
 
-5 methods on `client.balances`.
+3 methods on `client.balances`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
 
@@ -67,34 +67,4 @@
 - `page-size` (`number`, optional) — Page size.
 - `sort` (`ClockifyApi.BalanceSortColumn`, optional) — Sort result based on given criteria.
 - `sort-order` (`ClockifyApi.BalanceSortOrder`, optional) — Sort result by providing sort order.
-
-### `getWorkspacesWorkspaceIdTimeOffRequests`
-
-**Example:**
-
-```typescript
-    await client.balances.getWorkspacesWorkspaceIdTimeOffRequests({
-        workspaceId: "workspaceId"
-    })
-```
-
-**Request fields** (`GetWorkspacesWorkspaceIdTimeOffRequestsRequest`):
-
-- `workspaceId` (`string`, required)
-
-### `listForUser`
-
-**Example:**
-
-```typescript
-    await client.balances.listForUser({
-        workspaceId: "workspaceId",
-        userId: "userId"
-    })
-```
-
-**Request fields** (`ListForUserBalancesRequest`):
-
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
 

@@ -6,7 +6,7 @@ One markdown file per Clockify API resource (31 resources total). Auto-generated
 |---|---|---|
 | approvals | 6 | [`approvals.md`](./approvals.md) |
 | auditLogReport | 1 | [`auditLogReport.md`](./auditLogReport.md) |
-| balances | 5 | [`balances.md`](./balances.md) |
+| balances | 3 | [`balances.md`](./balances.md) |
 | clients | 6 | [`clients.md`](./clients.md) |
 | customFields | 7 | [`customFields.md`](./customFields.md) |
 | entityChangesExperimental | 3 | [`entityChangesExperimental.md`](./entityChangesExperimental.md) |
@@ -29,7 +29,7 @@ One markdown file per Clockify API resource (31 resources total). Auto-generated
 | tags | 5 | [`tags.md`](./tags.md) |
 | tasks | 7 | [`tasks.md`](./tasks.md) |
 | timeEntries | 14 | [`timeEntries.md`](./timeEntries.md) |
-| timeOff | 9 | [`timeOff.md`](./timeOff.md) |
+| timeOff | 8 | [`timeOff.md`](./timeOff.md) |
 | timeOffPolicies | 6 | [`timeOffPolicies.md`](./timeOffPolicies.md) |
 | userGroups | 8 | [`userGroups.md`](./userGroups.md) |
 | users | 6 | [`users.md`](./users.md) |
