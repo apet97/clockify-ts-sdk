@@ -1,6 +1,6 @@
 # timeOff
 
-9 methods on `client.timeOff`.
+8 methods on `client.timeOff`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
 
@@ -133,29 +133,6 @@
 - `statuses` (`ClockifyApi.RequestStatusType[]`, optional) — Filters time off requests by status.
 - `userGroups` (`string[]`, optional) — Provide the user group ids of time off requests.
 - `users` (`string[]`, optional) — Provide the user ids of time off requests. If empty, will return time off requests of all users (with a maximum of 5000 users).
-
-### `postWorkspacesWorkspaceIdTimeOffRequestsUsersUserId`
-
-**Example:**
-
-```typescript
-    await client.timeOff.postWorkspacesWorkspaceIdTimeOffRequestsUsersUserId({
-        workspaceId: "workspaceId",
-        userId: "userId",
-        policyId: "policyId",
-        timeOffPeriod: {
-            period: {}
-        }
-    })
-```
-
-**Request fields** (`TimeOffRequestCreate`):
-
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `note` (`string`, optional)
-- `policyId` (`string`, required)
-- `timeOffPeriod` (`TimeOffRequestCreate.TimeOffPeriod`, required)
 
 ### `get`
 

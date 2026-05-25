@@ -7,6 +7,40 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Removed
+
+- **Three more phantom routes quarantined (G.1 edge-case follow-up).**
+  Probe re-pass against sandbox 65b382b606de527a7ee2b60e on
+  2026-05-25 confirmed all three "needs investigation" routes from
+  the post-v0.5.0 follow-up are dead on the live API:
+  - `POST /workspaces/{wsId}/time-off/requests/users/{userId}`
+    (HTTP 404 + code 3000). The live admin-creates-TOR-for-user
+    flow is the policy-scoped `submitForUser` already shipped.
+  - `GET /workspaces/{wsId}/time-off/requests` (HTTP 405). The
+    POST on the same path remains (that's the documented
+    POST-as-list `list` op).
+  - `GET /workspaces/{wsId}/users/{userId}/time-off/balances`
+    (HTTP 404). The live per-user balance read is the singular
+    `balances.getForUser` already shipped.
+
+  Added all 3 to GOCLMCP's `PHANTOM_PATHS` (now 9 entries total).
+  Canonical operations drop 188 → 185; wrapper's `timeOff` module
+  drops from 9 to 8 methods; wrapper's `balances` module drops
+  from 5 to 4. Stamp count drops 170 → 169 (removed the now-stale
+  `balances.listForUser` entry from `SDK_METHOD_NAMES` since its
+  path is now phantom). Coverage 169/185 = 91.4%.
+
+  Methods removed from the wrapper surface:
+  - `client.timeOff.postWorkspacesWorkspaceIdTimeOffRequestsUsersUserId`
+  - `client.balances.getWorkspacesWorkspaceIdTimeOffRequests`
+  - `client.balances.listForUser`
+
+  Any consumer of those would have been getting 404/405 errors;
+  the SDK no longer pretends they work. Ledger entry:
+  `spec/evidence/discrepancies.md` →
+  `timeoff.legacy-policies-requests.phantom-path-quarantined` →
+  Update 2026-05-25 (round 2).
+
 ## [0.5.0] — 2026-05-25
 
 Closes the multi-session G-track sweep against the

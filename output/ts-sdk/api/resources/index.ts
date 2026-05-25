@@ -4,7 +4,6 @@ export * from "./auditLogReport/client/requests/index.js";
 export * as auditLogReport from "./auditLogReport/index.js";
 export * from "./balances/client/requests/index.js";
 export * as balances from "./balances/index.js";
-export * from "./balances/types/index.js";
 export * from "./clients/client/requests/index.js";
 export * as clients from "./clients/index.js";
 export * from "./clients/types/index.js";
