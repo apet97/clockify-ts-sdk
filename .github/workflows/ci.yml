@@ -72,6 +72,12 @@ jobs:
         # when CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent.
         # GitHub-hosted CI deliberately does not get production creds.
 
+      - name: Run type tests (vitest --typecheck.only)
+        # Locks the public type surface against regressions when the
+        # generator changes. Skipped by default `npm test`; opt-in via
+        # the dedicated script.
+        run: npm run test:types
+
       - name: Pack snapshot verification
         # Only on node 22 (the release runner). The tarball contents are
         # node-version invariant; duplicating across matrix entries adds

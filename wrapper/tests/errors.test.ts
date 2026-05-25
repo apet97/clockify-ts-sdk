@@ -42,7 +42,11 @@ describe("RateLimitError", () => {
         });
         expect(err.retryAfterMs).toBeGreaterThanOrEqual(40_000);
         expect(err.retryAfterMs).toBeLessThanOrEqual(50_000);
-        expect(err.rateLimitResetAt!.getTime()).toBeCloseTo(future.getTime(), -3);
+        // HTTP-date has seconds resolution, so round both sides to the
+        // nearest second before comparing.
+        const resetSec = Math.floor(err.rateLimitResetAt!.getTime() / 1000);
+        const futureSec = Math.floor(future.getTime() / 1000);
+        expect(resetSec).toBe(futureSec);
     });
 
     it("parses X-RateLimit-Reset epoch seconds when Retry-After absent", () => {

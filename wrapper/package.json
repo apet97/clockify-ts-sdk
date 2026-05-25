@@ -134,6 +134,7 @@
         "clean": "rm -rf dist",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:types": "vitest --typecheck.only --run",
         "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build && npm run build:smoke"
     },
     "devDependencies": {
