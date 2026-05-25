@@ -251,7 +251,7 @@ export async function* iterPages<TRequest, TItem>(
             items = wrapped.data;
             lastPageFromHeader = parseLastPageHeader(wrapped.rawResponse.headers.get("Last-Page"));
         } else {
-            items = (await result);
+            items = await result;
         }
 
         // Combine signals: header `true` is authoritative stop;
