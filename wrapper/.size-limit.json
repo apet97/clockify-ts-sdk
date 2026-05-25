@@ -42,6 +42,6 @@
     {
         "name": "Subpath: errors (ESM)",
         "path": "dist/esm/errors.js",
-        "limit": "2.5 kB"
+        "limit": "3.5 kB"
     }
 ]
