@@ -44,6 +44,7 @@ surface), dual ESM + CJS, npm provenance via sigstore.
 - [Custom fetch and proxies](#custom-fetch-and-proxies)
 - [Webhooks](#webhooks)
 - [Hooks and middleware](#hooks-and-middleware)
+- [Idempotency keys](#idempotency-keys)
 - [Deprecations](#deprecations)
 - [ESM and CommonJS](#esm-and-commonjs)
 - [Supported runtimes](#supported-runtimes)
@@ -512,6 +513,33 @@ const myFetch = composedFetch({
     retryPolicy: { maxRetries: 5 },
 });
 ```
+
+## Idempotency keys
+
+Clockify's server does not currently honor `Idempotency-Key`
+headers (verified 2026-05-24). The SDK still lets you set the
+header on any write — the value passes through unchanged so that:
+
+- Observability layers (CDNs, edge proxies) can use it for
+  client-side dedup.
+- Code is future-ready if/when Clockify adds server-side
+  idempotency support.
+
+```typescript
+import { createClockifyClient } from "clockify-sdk-ts";
+import { randomUUID } from "node:crypto";
+
+const client = createClockifyClient();
+
+const tag = await client.tags.create(
+    { workspaceId, name: "weekly-review" },
+    { headers: { "Idempotency-Key": randomUUID() } },
+);
+```
+
+The header threads through Fern's `RequestOptions.headers` and is
+sent on the wire as `Idempotency-Key: <uuid>`. See
+`examples/pass-idempotency-key.ts` for a runnable script.
 
 ## Deprecations
 

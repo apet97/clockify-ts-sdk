@@ -39,6 +39,7 @@ sandbox workspace — never run them against production data.**
 | [`per-request-overrides.ts`](./per-request-overrides.ts) | `requestOptions` (timeout, maxRetries, abortSignal, headers)        | yes (read+write)   | Tight timeout, retries off for one call, AbortController cancellation, and a one-off header injection (`Idempotency-Key`). |
 | [`idempotency.ts`](./idempotency.ts)                     | `Idempotency-Key` header + `ConflictError`                          | yes (write+delete) | Demonstrates the Idempotency-Key pattern (Clockify doesn't honor it today; example shows the future-proof shape).       |
 | [`bulk-archive.ts`](./bulk-archive.ts)                   | `iterAll` + bounded parallelism + `promoteApiError`                 | yes (read; write with `--apply`) | Real-world job: walks every project, archives the stale ones with concurrency 4 and per-item error isolation. Dry-run by default; pass `--apply` to mutate.    |
+| [`pass-idempotency-key.ts`](./pass-idempotency-key.ts)   | `RequestOptions.headers`                                            | yes (write+delete)               | Set an `Idempotency-Key` header on a single write call via Fern's per-call `headers` option.                                                                   |
 
 ## Discrepancy pointers
 
