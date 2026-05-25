@@ -4,6 +4,7 @@ import {
     ClockifyAbortError,
     ClockifyConnectionError,
     ConflictError,
+    getErrorCode,
     InternalServerError,
     isAbortError,
     isClockifyApiError,
@@ -322,5 +323,46 @@ describe("promoteApiError — non-status-code errors", () => {
         expect(promoteApiError(plain)).toBe(plain);
         expect(promoteApiError(null)).toBe(null);
         expect(promoteApiError(undefined)).toBe(undefined);
+    });
+});
+
+describe("error code extraction", () => {
+    it("getErrorCode reads body.code (string)", () => {
+        const err = new ClockifyApiError({
+            statusCode: 400,
+            body: { code: "tag_already_exists", message: "duplicate" },
+        });
+        expect(getErrorCode(err)).toBe("tag_already_exists");
+    });
+
+    it("getErrorCode reads body.error.code (nested)", () => {
+        const err = new ClockifyApiError({
+            statusCode: 400,
+            body: { error: { code: "validation_error", message: "bad input" } },
+        });
+        expect(getErrorCode(err)).toBe("validation_error");
+    });
+
+    it("getErrorCode returns undefined when no code is present", () => {
+        const err = new ClockifyApiError({
+            statusCode: 500,
+            body: { message: "Internal Server Error" },
+        });
+        expect(getErrorCode(err)).toBeUndefined();
+    });
+
+    it("getErrorCode returns undefined on non-object body", () => {
+        const err = new ClockifyApiError({ statusCode: 500, body: "string body" });
+        expect(getErrorCode(err)).toBeUndefined();
+        expect(getErrorCode(new Error("plain"))).toBeUndefined();
+        expect(getErrorCode(null)).toBeUndefined();
+    });
+
+    it("RateLimitError exposes .code via getErrorCode", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            body: { code: "rate_limited", message: "slow down" },
+        });
+        expect(getErrorCode(err)).toBe("rate_limited");
     });
 });

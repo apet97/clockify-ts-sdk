@@ -23,6 +23,7 @@ export {
     ClockifyAbortError,
     ClockifyConnectionError,
     ConflictError,
+    getErrorCode,
     InternalServerError,
     isAbortError,
     isClockifyApiError,
