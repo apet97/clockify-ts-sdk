@@ -86,9 +86,7 @@ describe("createClockifyClient", () => {
         // a fully-unset env var and proceed to throw.
         vi.stubEnv("CLOCKIFY_API_KEY", "");
         vi.stubEnv("CLOCKIFY_ADDON_TOKEN", "");
-        expect(() => createClockifyClient()).toThrow(
-            /must provide exactly one .*CLOCKIFY_API_KEY/,
-        );
+        expect(() => createClockifyClient()).toThrow(/must provide exactly one .*CLOCKIFY_API_KEY/);
     });
 
     it("throws when neither apiKey/addonToken nor env vars are set", () => {

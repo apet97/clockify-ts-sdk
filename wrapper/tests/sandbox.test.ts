@@ -14,7 +14,6 @@ const liveSandboxAvailable = Boolean(apiKey && workspaceId);
 const describeLive = liveSandboxAvailable ? describe : describe.skip;
 
 if (!liveSandboxAvailable) {
-     
     console.warn(
         "[sandbox.test] CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID not set in env; live tests skipped.",
     );

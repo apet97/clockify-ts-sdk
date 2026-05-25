@@ -3,11 +3,7 @@ import { paginatedList, PaginatedList } from "../paginated-list.js";
 
 describe("PaginatedList", () => {
     it("yields items across multiple pages via for-await", async () => {
-        const pages = [
-            ["a", "b", "c"],
-            ["d", "e", "f"],
-            ["g"],
-        ];
+        const pages = [["a", "b", "c"], ["d", "e", "f"], ["g"]];
         const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {
             const i = (req.page ?? 1) - 1;
             return pages[i] ?? [];
@@ -22,12 +18,7 @@ describe("PaginatedList", () => {
     });
 
     it("toArray({ limit }) stops early and avoids extra fetches", async () => {
-        const pages = [
-            ["a", "b", "c"],
-            ["d", "e", "f"],
-            ["g", "h", "i"],
-            ["j"],
-        ];
+        const pages = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"], ["j"]];
         const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {
             const i = (req.page ?? 1) - 1;
             return pages[i] ?? [];
@@ -40,10 +31,7 @@ describe("PaginatedList", () => {
     });
 
     it("toArray() with no limit walks until the last page", async () => {
-        const pages = [
-            ["a", "b"],
-            ["c"],
-        ];
+        const pages = [["a", "b"], ["c"]];
         const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {
             const i = (req.page ?? 1) - 1;
             return pages[i] ?? [];
@@ -53,10 +41,7 @@ describe("PaginatedList", () => {
     });
 
     it("pages() yields per-page envelopes", async () => {
-        const pages = [
-            ["x", "y"],
-            ["z"],
-        ];
+        const pages = [["x", "y"], ["z"]];
         const fetcher = async (req: { page?: number; "page-size"?: number }) => {
             const i = (req.page ?? 1) - 1;
             return pages[i] ?? [];

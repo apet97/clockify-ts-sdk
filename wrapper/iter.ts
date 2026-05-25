@@ -260,8 +260,7 @@ export async function* iterPages<TRequest, TItem>(
         // `false` means the server expects more, but if we also got
         // a short page we still stop (server inconsistency edge
         // case where Last-Page lies; safer to stop than to loop).
-        const hasNextPage =
-            lastPageFromHeader === true ? false : items.length === pageSize;
+        const hasNextPage = lastPageFromHeader === true ? false : items.length === pageSize;
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }

@@ -38,9 +38,7 @@ async function main(): Promise<void> {
 
     // 3. Or walk page-by-page with metadata
     for await (const page of allProjects.pages()) {
-        console.log(
-            `page ${page.page}: ${page.items.length} items (more: ${page.hasNextPage})`,
-        );
+        console.log(`page ${page.page}: ${page.items.length} items (more: ${page.hasNextPage})`);
         if (!page.hasNextPage) break;
     }
 }

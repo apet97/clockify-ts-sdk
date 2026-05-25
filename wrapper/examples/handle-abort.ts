@@ -11,11 +11,7 @@
  * a stop. Compare to `ClockifyApiTimeoutError`, which IS
  * retryable (request exceeded `timeoutInSeconds`).
  */
-import {
-    createClockifyClient,
-    isAbortError,
-    promoteApiError,
-} from "clockify-sdk-ts";
+import { createClockifyClient, isAbortError, promoteApiError } from "clockify-sdk-ts";
 
 async function main(): Promise<void> {
     const client = createClockifyClient();
@@ -25,10 +21,7 @@ async function main(): Promise<void> {
     setTimeout(() => controller.abort(), 100);
 
     try {
-        const tags = await client.tags.list(
-            { workspaceId },
-            { abortSignal: controller.signal },
-        );
+        const tags = await client.tags.list({ workspaceId }, { abortSignal: controller.signal });
         console.log(`fetched ${tags.length} tags`);
     } catch (raw) {
         const err = promoteApiError(raw);
