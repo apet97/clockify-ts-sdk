@@ -14,7 +14,7 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,getRateLimit,getRateLimitFromError"
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" node --input-type=module -e "
@@ -73,7 +73,10 @@ const oh = require('./dist/cjs/otel-hooks.js');
 if (typeof oh.otelHooks !== 'function') { console.error('CJS subpath otel-hooks.otelHooks broken'); process.exit(1); }
 const hh = require('./dist/cjs/health.js');
 if (typeof hh.clockifyHealth !== 'function') { console.error('CJS subpath health.clockifyHealth broken'); process.exit(1); }
-console.log('OK: All 13 CJS subpaths resolve');
+const rl = require('./dist/cjs/rate-limit.js');
+if (typeof rl.getRateLimit !== 'function') { console.error('CJS subpath rate-limit.getRateLimit broken'); process.exit(1); }
+if (typeof rl.getRateLimitFromError !== 'function') { console.error('CJS subpath rate-limit.getRateLimitFromError broken'); process.exit(1); }
+console.log('OK: All 14 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"
