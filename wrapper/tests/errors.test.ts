@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     ConflictError,
     InternalServerError,
+    isClockifyApiError,
     isConflictError,
     isInternalServerError,
     isRateLimitError,
@@ -139,6 +140,16 @@ describe("promoteApiError", () => {
 });
 
 describe("type guards", () => {
+    it("isClockifyApiError matches any ClockifyApiError or subclass", () => {
+        expect(isClockifyApiError(new ClockifyApiError({ statusCode: 500 }))).toBe(true);
+        expect(isClockifyApiError(new RateLimitError({ statusCode: 429 }))).toBe(true);
+        expect(isClockifyApiError(new ConflictError({ statusCode: 409 }))).toBe(true);
+        expect(isClockifyApiError(new Error("plain"))).toBe(false);
+        expect(isClockifyApiError("string")).toBe(false);
+        expect(isClockifyApiError(null)).toBe(false);
+        expect(isClockifyApiError(undefined)).toBe(false);
+    });
+
     it("isRateLimitError matches statusCode 429 on a base ClockifyApiError", () => {
         expect(isRateLimitError(new ClockifyApiError({ statusCode: 429 }))).toBe(true);
         expect(isRateLimitError(new ClockifyApiError({ statusCode: 500 }))).toBe(false);
