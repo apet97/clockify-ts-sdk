@@ -206,10 +206,7 @@ const STATUS_TO_CTOR = new Map<number, new (o: SubclassOpts) => ClockifyApiError
 export function promoteApiError(err: unknown): unknown {
     if (!(err instanceof ClockifyApiError)) return err;
     // Pre-promoted instances pass through (idempotent).
-    if (
-        err instanceof ClockifyConnectionError ||
-        err instanceof ClockifyAbortError
-    ) {
+    if (err instanceof ClockifyConnectionError || err instanceof ClockifyAbortError) {
         return err;
     }
     // Destructure up front: `err instanceof Ctor` below narrows `err`'s

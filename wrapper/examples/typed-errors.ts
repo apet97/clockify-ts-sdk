@@ -41,9 +41,7 @@ try {
 } catch (raw) {
     if (!isClockifyApiError(raw)) throw raw;
     if (raw instanceof NotFoundError) {
-        console.log(
-            `(1) NotFoundError caught directly — request ${getRequestIdFromError(raw)}`,
-        );
+        console.log(`(1) NotFoundError caught directly — request ${getRequestIdFromError(raw)}`);
     } else {
         throw raw;
     }

@@ -55,10 +55,7 @@ console.log("(2) tags.list ran with retries disabled");
 const ctrl = new AbortController();
 const timer = setTimeout(() => ctrl.abort(), 5_000);
 try {
-    await client.projects.list(
-        { workspaceId },
-        { abortSignal: ctrl.signal },
-    );
+    await client.projects.list({ workspaceId }, { abortSignal: ctrl.signal });
     console.log("(3) projects.list finished before abort fired");
 } finally {
     clearTimeout(timer);

@@ -84,10 +84,7 @@ const client = createClockifyClient({
             );
         },
         onRetry: ({ method, url, requestId, nextAttempt, delayMs }) => {
-            log.warn(
-                { method, url, requestId, nextAttempt, delayMs },
-                "clockify.request.retry",
-            );
+            log.warn({ method, url, requestId, nextAttempt, delayMs }, "clockify.request.retry");
         },
     },
 });

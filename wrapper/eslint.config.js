@@ -41,10 +41,7 @@ export default [
             "import-x": importPlugin,
         },
         rules: {
-            "@typescript-eslint/consistent-type-imports": [
-                "error",
-                { prefer: "type-imports" },
-            ],
+            "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
             "@typescript-eslint/no-unused-vars": [
                 "error",
                 {
@@ -56,14 +53,7 @@ export default [
             "import-x/order": [
                 "error",
                 {
-                    groups: [
-                        "builtin",
-                        "external",
-                        "internal",
-                        "parent",
-                        "sibling",
-                        "index",
-                    ],
+                    groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
                     "newlines-between": "always",
                     alphabetize: { order: "asc", caseInsensitive: true },
                 },
