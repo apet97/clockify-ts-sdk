@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ClockifyApiClient } from "../src/index.js";
+
 import { createClockifyClient, type CreateClockifyClientOptions } from "../create-client.js";
+import { ClockifyApiClient } from "../src/index.js";
 
 describe("createClockifyClient", () => {
     // Stash + restore env vars across all cases — many tests rely on

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { Headers } from "../src/core/fetcher/Headers.js";
 import { withResponse } from "../with-response.js";
 

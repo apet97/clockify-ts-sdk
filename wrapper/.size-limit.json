@@ -1,0 +1,47 @@
+[
+    {
+        "name": "ESM root entry (index.js)",
+        "path": "dist/esm/index.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "CJS root entry (index.js)",
+        "path": "dist/cjs/index.js",
+        "limit": "2.5 kB"
+    },
+    {
+        "name": "Subpath: create-client (ESM)",
+        "path": "dist/esm/create-client.js",
+        "limit": "3 kB"
+    },
+    {
+        "name": "Subpath: composed-fetch (ESM)",
+        "path": "dist/esm/composed-fetch.js",
+        "limit": "5 kB"
+    },
+    {
+        "name": "Subpath: iter (ESM)",
+        "path": "dist/esm/iter.js",
+        "limit": "4 kB"
+    },
+    {
+        "name": "Subpath: webhooks (ESM)",
+        "path": "dist/esm/webhooks.js",
+        "limit": "3 kB"
+    },
+    {
+        "name": "Subpath: pagination (ESM)",
+        "path": "dist/esm/pagination.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "Subpath: with-response (ESM)",
+        "path": "dist/esm/with-response.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "Subpath: errors (ESM)",
+        "path": "dist/esm/errors.js",
+        "limit": "2.5 kB"
+    }
+]

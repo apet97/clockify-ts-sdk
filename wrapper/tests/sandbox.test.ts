@@ -1,4 +1,5 @@
 import { beforeAll, describe, it, expect } from "vitest";
+
 import { createClockifyClient } from "../create-client.js";
 import { iterAll } from "../iter.js";
 import { paginate } from "../pagination.js";
@@ -13,7 +14,7 @@ const liveSandboxAvailable = Boolean(apiKey && workspaceId);
 const describeLive = liveSandboxAvailable ? describe : describe.skip;
 
 if (!liveSandboxAvailable) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
         "[sandbox.test] CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID not set in env; live tests skipped.",
     );
