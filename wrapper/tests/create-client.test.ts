@@ -119,4 +119,112 @@ describe("createClockifyClient", () => {
         void _opts;
         expect(true).toBe(true);
     });
+
+    describe("debug option", () => {
+        it("debug: true wires console.debug logging on requests + responses", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(
+                async () =>
+                    new Response(JSON.stringify([]), {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            // Should have logged a → request line and a ← response line.
+            const allCalls = debugSpy.mock.calls.map((c) => String(c[0]));
+            expect(allCalls.some((msg) => msg.startsWith("[clockify] →"))).toBe(true);
+            expect(allCalls.some((msg) => msg.startsWith("[clockify] ←"))).toBe(true);
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: false (default) does NOT log to console.debug", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(
+                async () =>
+                    new Response(JSON.stringify([]), {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                // no debug field — default is off
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            const sdkCalls = debugSpy.mock.calls.filter(
+                (c) => typeof c[0] === "string" && (c[0] as string).startsWith("[clockify]"),
+            );
+            expect(sdkCalls).toHaveLength(0);
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: true composes with user-provided hooks", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const userBefore = vi.fn();
+            const userAfter = vi.fn();
+            const fetchMock = vi.fn(
+                async () =>
+                    new Response("[]", {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                    }),
+            );
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                hooks: {
+                    beforeRequest: userBefore,
+                    afterResponse: userAfter,
+                },
+            });
+            await client.tags.list({ workspaceId: "ws-1" });
+
+            // User hooks still fire
+            expect(userBefore).toHaveBeenCalledOnce();
+            expect(userAfter).toHaveBeenCalledOnce();
+            // Debug logs still happen
+            const sdkCalls = debugSpy.mock.calls.filter(
+                (c) => typeof c[0] === "string" && (c[0] as string).startsWith("[clockify]"),
+            );
+            expect(sdkCalls.length).toBeGreaterThanOrEqual(2); // → + ←
+
+            debugSpy.mockRestore();
+        });
+
+        it("debug: true logs errors via ✘ prefix on network failures", async () => {
+            const debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+            const fetchMock = vi.fn(async () => {
+                throw new TypeError("fetch failed");
+            });
+
+            const client = createClockifyClient({
+                apiKey: "test",
+                fetch: fetchMock as typeof fetch,
+                debug: true,
+                maxRetries: 0,
+            });
+            await expect(client.tags.list({ workspaceId: "ws-1" })).rejects.toBeDefined();
+
+            const allCalls = debugSpy.mock.calls.map((c) => String(c[0]));
+            expect(allCalls.some((msg) => msg.startsWith("[clockify] →"))).toBe(true);
+            expect(allCalls.some((msg) => msg.startsWith("[clockify] ✘"))).toBe(true);
+
+            debugSpy.mockRestore();
+        });
+    });
 });

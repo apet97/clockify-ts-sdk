@@ -17,11 +17,52 @@
  * header by default. Opt-out + advanced configuration flow through
  * the same options object — see {@link CreateClockifyClientOptions}.
  */
-import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
+import {
+    composedFetch,
+    type ComposedFetchHooks,
+    type ErrorContext,
+    type RequestContext,
+    type ResponseContext,
+    type RetryContext,
+    type RetryPolicy,
+} from "./composed-fetch.js";
 import { clockifyHealth, type HealthCheckResult } from "./health.js";
 import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
+
+/** Mix debug logging into the user's hooks. Debug logs fire FIRST,
+ *  then the user's hooks run — order chosen so the user's hook
+ *  errors (which we already log via console.warn in composedFetch)
+ *  don't suppress the debug line. */
+function mixDebugHooks(userHooks: ComposedFetchHooks | undefined): ComposedFetchHooks {
+    return {
+        beforeRequest: async (ctx: RequestContext) => {
+            console.debug(`[clockify] → ${ctx.method} ${ctx.url} [${ctx.requestId ?? "no-id"}]`);
+            await userHooks?.beforeRequest?.(ctx);
+        },
+        afterResponse: async (ctx: ResponseContext) => {
+            console.debug(
+                `[clockify] ← ${ctx.response.status} (${ctx.durationMs}ms) [${ctx.requestId ?? "no-id"}]`,
+            );
+            await userHooks?.afterResponse?.(ctx);
+        },
+        onError: async (ctx: ErrorContext) => {
+            const errLabel =
+                ctx.error instanceof Error ? ctx.error.constructor.name : String(ctx.error);
+            console.debug(
+                `[clockify] ✘ ${errLabel} (${ctx.durationMs}ms) [${ctx.requestId ?? "no-id"}]`,
+            );
+            await userHooks?.onError?.(ctx);
+        },
+        onRetry: async (ctx: RetryContext) => {
+            console.debug(
+                `[clockify] ↺ retry attempt ${ctx.nextAttempt} (delay ${ctx.delayMs}ms) [${ctx.requestId ?? "no-id"}]`,
+            );
+            await userHooks?.onRetry?.(ctx);
+        },
+    };
+}
 
 type WithoutAuthOrEnhancements = Omit<
     BaseClientOptions,
@@ -56,6 +97,16 @@ export interface ClockifyClientEnhancements {
      *  `retryPolicy` is omitted; ignored otherwise to avoid nested
      *  retry loops). Default `2`. */
     maxRetries?: number;
+    /**
+     * When `true`, the SDK auto-wires `console.debug` logging at
+     * request/response/error/retry boundaries. Useful for local
+     * development; turn off in production to avoid log noise (and
+     * to avoid leaking URLs / request IDs into logs).
+     *
+     * Composes additively with user-provided `hooks` — both fire.
+     * Off by default.
+     */
+    debug?: boolean;
 }
 
 /**
@@ -197,6 +248,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         hooks,
         retryPolicy,
         maxRetries,
+        debug,
         // Pull auth fields off the rest spread so `passthrough` only
         // carries the non-auth BaseClientOptions fields (environment,
         // headers, etc.) — we re-add the resolved auth below.
@@ -237,11 +289,14 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         );
     }
 
+    // Build the effective hooks: debug logs ⊕ user hooks
+    const effectiveHooks = debug ? mixDebugHooks(hooks) : hooks;
+
     const wrappedFetch = composedFetch({
         fetch: rawFetch,
         userAgent,
         requestId,
-        hooks,
+        hooks: effectiveHooks,
         retryPolicy,
     });
 
