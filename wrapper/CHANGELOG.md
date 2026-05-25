@@ -5,6 +5,49 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
+## [Unreleased] — Tier 1 + Tier 3 polish (target 0.9.0)
+
+Closes the Tier-1 and Tier-3 gaps from the "Stainless/Speakeasy
+parity" audit. No breaking changes — all additions are opt-in.
+
+### Added
+
+- **Typed webhook events.** `ClockifyWebhookEvent` discriminated
+  union of all 50 documented Clockify webhook event types.
+  `constructEvent(payload, ...)` now returns `ClockifyWebhookEvent`
+  instead of `unknown`. Callers get exhaustive `switch` checks.
+- **Scoped resource clients.** `client.workspace(id)` returns a
+  sub-client where `workspaceId` is pre-bound on every resource
+  method. `ws.tags.list()` instead of
+  `client.tags.list({ workspaceId })`.
+- **OTel-typed observability hooks.** New `otelHooks(spanProvider)`
+  helper that returns a `ComposedFetchHooks` object emitting
+  OpenTelemetry-semantic-conventions HTTP span attributes. Zero
+  runtime dependency on `@opentelemetry/api`.
+- **`client.health()`** — one-call connectivity + auth check that
+  resolves the current user's profile.
+- **`debug: true` option** on `createClockifyClient()` — auto-wires
+  `console.debug` request/response logging via the existing hooks.
+  Off by default.
+- **`getRateLimit(headers)` / `getRateLimitFromError(err)`** helpers
+  — parse `X-RateLimit-*` headers into a `{ remaining, limit,
+  resetAt }` snapshot.
+
+### Documentation
+
+- **Hosted TypeDoc** at `https://apet97.github.io/clockify-ts-sdk/`.
+  Auto-published on every `main` push via
+  `.github/workflows/docs.yml`.
+- New README sections: "Typed webhook events", "Scoped clients",
+  "Observability".
+
+### Internal
+
+- **release-please automation.** `.github/workflows/release-please.yml`
+  watches conventional-commit messages and opens release PRs that
+  bump `package.json`, prepend the CHANGELOG, and tag the release
+  on merge.
+
 ## [0.8.0] — 2026-05-25
 
 Closes the eight gaps identified against the SDK's user-facing

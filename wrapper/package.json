@@ -1,6 +1,6 @@
 {
     "name": "clockify-sdk-ts",
-    "version": "0.8.0",
+    "version": "0.9.0-dev.0",
     "description": "TypeScript SDK for the Clockify API — generated from the canonical OpenAPI by Fern, wrapped with a publishable package layout.",
     "license": "MIT",
     "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
