@@ -54,10 +54,7 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
     pages(): AsyncGenerator<PageEnvelope<TItem>, void, void> {
         return iterPages<PaginatedRequest & Record<string, unknown>, TItem>(
             this.fetcher,
-            this.baseRequest as Omit<
-                PaginatedRequest & Record<string, unknown>,
-                "page" | "page-size"
-            >,
+            this.baseRequest,
             this.options,
         );
     }
@@ -115,7 +112,7 @@ export function paginatedList<TRequest, TItem>(
         fetcher as unknown as (
             request: PaginatedRequest & Record<string, unknown>,
         ) => PromiseLike<readonly TItem[]>,
-        baseRequest as Record<string, unknown>,
+        baseRequest,
         options,
     );
 }
