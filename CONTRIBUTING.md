@@ -152,6 +152,84 @@ to break, then delete the symbol in the next major.
 4. Remove the symbol entirely in the next major version. The
    matching CHANGELOG entry goes under **Removed**.
 
+### Releasing a new version
+
+Tag-day checklist. Every step matters; CI gates most of it but the
+sequencing is human.
+
+1. **Drain `[Unreleased]`** — every commit since the last tag
+   should have a corresponding CHANGELOG entry. Rename the section
+   to `[X.Y.Z] — YYYY-MM-DD` (today's date) and create a fresh
+   empty `[Unreleased]` above it.
+2. **Bump the version** in `wrapper/package.json`. If the bump
+   adds public API surface but no breaking changes, it's a SemVer
+   minor (`0.6.0 → 0.7.0`). If it changes default behavior or
+   removes any export, it's a major (`0.6.0 → 1.0.0` once we
+   leave the 0.x line).
+3. **Bump `PACKAGE_VERSION`** in `wrapper/composed-fetch.ts` so the
+   `User-Agent` header advertises the right version. This is
+   manual — there's no build-time substitution.
+4. **Run the full chain locally**:
+   ```bash
+   cd wrapper
+   npm run prepublishOnly   # sync + type-check + clean + build + smoke
+   npm test                 # 11 files, 152+ unit cases
+   npm run test:types       # 12 type assertions
+   npm run lint             # eslint clean
+   npm run size             # bundle ceilings green
+   ```
+5. **Open a `chore(release): vX.Y.Z` PR**. Title + body match the
+   CHANGELOG entry. Wait for all CI checks to pass — including the
+   Node 20 + 22 matrix, CodeQL, Bun smoke, Deno smoke, spec check,
+   size, lint, type tests, and the pack snapshot.
+6. **Merge** (squash). Pull `main`.
+7. **Tag + push** the version:
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z"
+   git push origin vX.Y.Z
+   ```
+   The `release.yml` workflow fires on the tag push and publishes
+   to npm with provenance (OIDC), generates an SBOM (SPDX JSON),
+   and attaches it to the GitHub release.
+8. **Verify on npm**:
+   ```bash
+   npm view clockify-sdk-ts version  # should be vX.Y.Z
+   npm view clockify-sdk-ts dist.signatures  # provenance present
+   ```
+9. **TypeDoc → Pages** auto-deploys via `docs.yml` on the same
+   tag push. Wait ~2 minutes, then verify at the project's
+   GitHub Pages URL.
+
+### Debugging tips
+
+- **Live test failures**: `tests/sandbox.test.ts` skips cleanly
+  when `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID` are absent.
+  When debugging a live failure, run only that file:
+  `npx vitest run tests/sandbox.test.ts -t "<test name>"`. The
+  test logs the workspace ID it's hitting; double-check it's a
+  sandbox before re-running.
+- **Correlating a failure with server logs**: every request
+  carries an auto-generated `X-Request-Id`. Catch the error and
+  extract it:
+  ```ts
+  catch (err) {
+      console.error("request id:", getRequestIdFromError(err));
+  }
+  ```
+  Forward that ID to Clockify support for fastest triage.
+- **Reproducing a sync drift**: if a `wrapper/src/**` change broke
+  something, the most reliable repro is to roll the GOCLMCP
+  generator back to the prior commit, regen, and `npm run sync`
+  to see the old shape side-by-side.
+- **Bundle size regression**: `npm run size` shows the current
+  size per entrypoint. If it failed, the offending file path is
+  in the output — usually it's a stray heavy import in a
+  hand-written module.
+- **Tarball drift**: `npm pack --dry-run` shows what would ship.
+  Diff against `.packsnapshot` (the CI gate) to see the delta.
+  Intentional additions: regenerate the snapshot
+  (`npm pack --dry-run --json | node -e ... > .packsnapshot`).
+
 ## Reporting bugs / requesting features
 
 Use the issue templates at
