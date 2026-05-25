@@ -18,6 +18,7 @@
  * the same options object — see {@link CreateClockifyClientOptions}.
  */
 import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
+import { clockifyHealth, type HealthCheckResult } from "./health.js";
 import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
@@ -149,15 +150,34 @@ function readEnv(name: string): string | undefined {
  *   is set in the environment.
  */
 /** The type returned by {@link createClockifyClient}: a standard
- *  `ClockifyApiClient` extended with the `.workspace(id)` factory. */
-export type ClockifyClient = ClockifyApiClient & { workspace(id: string): Workspace };
+ *  `ClockifyApiClient` extended with the `.workspace(id)` factory
+ *  and the `.health()` preflight check. */
+export type ClockifyClient = ClockifyApiClient & {
+    workspace(id: string): Workspace;
+    health(): Promise<HealthCheckResult>;
+};
 
 /** Attach `.workspace(id)` factory to a constructed `ClockifyApiClient`. */
-function attachWorkspace(client: ClockifyApiClient): ClockifyClient {
-    (client as ClockifyClient).workspace = function (id: string): Workspace {
+function attachWorkspace(
+    client: ClockifyApiClient,
+): ClockifyApiClient & { workspace(id: string): Workspace } {
+    (client as ClockifyApiClient & { workspace?: (id: string) => Workspace }).workspace = function (
+        id: string,
+    ): Workspace {
         return new Workspace(client, id);
     };
-    return client as ClockifyClient;
+    return client as ClockifyApiClient & { workspace(id: string): Workspace };
+}
+
+/** Attach `.health()` preflight to a constructed `ClockifyApiClient`. */
+function attachHealth<T extends ClockifyApiClient>(
+    client: T,
+): T & { health(): Promise<HealthCheckResult> } {
+    (client as T & { health?: () => Promise<HealthCheckResult> }).health =
+        function (): Promise<HealthCheckResult> {
+            return clockifyHealth(client);
+        };
+    return client as T & { health(): Promise<HealthCheckResult> };
 }
 
 export function createClockifyClient(options: CreateClockifyClientOptions = {}): ClockifyClient {
@@ -238,20 +258,24 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     };
 
     if (effectiveApiKey != null) {
-        return attachWorkspace(
-            new ClockifyApiClient({
-                ...base,
-                apiKey: effectiveApiKey,
-                addonToken: NULL_SUPPLIER,
-            }),
+        return attachHealth(
+            attachWorkspace(
+                new ClockifyApiClient({
+                    ...base,
+                    apiKey: effectiveApiKey,
+                    addonToken: NULL_SUPPLIER,
+                }),
+            ),
         );
     }
 
-    return attachWorkspace(
-        new ClockifyApiClient({
-            ...base,
-            addonToken: effectiveAddonToken!,
-            apiKey: NULL_SUPPLIER,
-        }),
+    return attachHealth(
+        attachWorkspace(
+            new ClockifyApiClient({
+                ...base,
+                addonToken: effectiveAddonToken!,
+                apiKey: NULL_SUPPLIER,
+            }),
+        ),
     );
 }

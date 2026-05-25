@@ -22,7 +22,8 @@
         "webhook-events.ts",
         "with-response.ts",
         "scoped-client.ts",
-        "otel-hooks.ts"
+        "otel-hooks.ts",
+        "health.ts"
     ],
     "exclude": ["node_modules", "dist", "tests"]
 }
