@@ -23,7 +23,8 @@
             "clockify-sdk-ts/with-response": ["./with-response.ts"],
             "clockify-sdk-ts/errors": ["./errors.ts"],
             "clockify-sdk-ts/deprecation": ["./deprecation.ts"],
-            "clockify-sdk-ts/scoped-client": ["./scoped-client.ts"]
+            "clockify-sdk-ts/scoped-client": ["./scoped-client.ts"],
+            "clockify-sdk-ts/otel-hooks": ["./otel-hooks.ts"]
         }
     },
     "include": [
@@ -40,6 +41,7 @@
         "errors.ts",
         "deprecation.ts",
         "scoped-client.ts",
+        "otel-hooks.ts",
         "tests/**/*.ts",
         "examples/**/*.ts",
         "scripts/**/*.ts"
