@@ -18,9 +18,10 @@ quality bar. No breaking changes — all additions are opt-in.
   and AbortSignal cancellations (cause `name === "AbortError"`) and
   returns the typed subclass. Existing call sites that catch
   `ClockifyApiError` keep working — the new classes inherit from it.
-- `code?: string` field on `ClockifyApiError`. Extracted from the
-  response body at construction time, looking for `body.error.code`
-  or `body.code` (string). Stripe / OpenAI / Anthropic SDK convention.
+- `getErrorCode(err)` helper. Probes a `ClockifyApiError`'s body
+  for `body.code` first, then `body.error.code` (string). Returns
+  `undefined` when no code is present or `err` isn't a
+  `ClockifyApiError`. Stripe / OpenAI / Anthropic SDK convention.
 - `PaginatedList<T>` class (subpath: `clockify-sdk-ts/paginated-list`).
   Async-iterable wrapper around `iterAll`/`iterPages` with
   `.pages()`, `.toArray({ limit? })`, and direct
