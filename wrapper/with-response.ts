@@ -58,6 +58,11 @@ export interface ResponseAwarePromise<T> extends PromiseLike<T> {
  * Unwraps an `HttpResponsePromise<T>` into `{ data, response,
  * headers, requestId, status }`.
  *
+ * Errors thrown by the underlying method (`ClockifyApiError`,
+ * `ClockifyApiTimeoutError`, etc.) propagate unchanged — you can
+ * still `catch` them and inspect `err.rawResponse` directly. The
+ * helper only restructures the *success* path.
+ *
  * @example
  * ```ts
  * import { createClockifyClient, withResponse } from "clockify-sdk-ts";
@@ -71,6 +76,11 @@ export interface ResponseAwarePromise<T> extends PromiseLike<T> {
  * console.log(`request ${requestId} returned ${status} with ${tags.length} tags`);
  * console.log(`server rate-limit: ${headers.get("X-RateLimit-Remaining")}`);
  * ```
+ *
+ * @throws The same errors as the wrapped method (e.g.
+ *   `NotFoundError`, `RateLimitError`, `ClockifyApiTimeoutError`,
+ *   `ClockifyApiError`). Use `getRequestIdFromError(err)` to
+ *   correlate failed requests with server traces.
  */
 export async function withResponse<T>(
     promise: ResponseAwarePromise<T>,

@@ -23,16 +23,23 @@ export interface PaginateOptions {
  * `fetchPage` returns fewer than `pageSize` items (the live API's
  * "last page" signal) or `maxPages` pages have been walked.
  *
+ * For the higher-level API that operates directly on bound SDK
+ * methods (no `(page, pageSize) => ...` wrapper) see {@link iterAll}
+ * and {@link iterPages} in `clockify-sdk-ts/iter`.
+ *
  * @example
  * ```ts
  * for await (const project of paginate(
  *   (page, pageSize) =>
- *     client.projects.getWorkspaceProjects({ workspaceId, page, "page-size": pageSize }),
+ *     client.projects.list({ workspaceId, page, "page-size": pageSize }),
  *   { pageSize: 50 },
  * )) {
  *   console.log(project.name);
  * }
  * ```
+ *
+ * @throws RangeError if `pageSize`, `maxPages`, or `startPage` is
+ *   `<= 0`. Errors thrown by `fetchPage` propagate unchanged.
  */
 export async function* paginate<T>(
     fetchPage: (page: number, pageSize: number) => Promise<readonly T[]>,
