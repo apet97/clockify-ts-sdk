@@ -6,23 +6,25 @@
 [![install size](https://packagephobia.com/badge?p=clockify-sdk-ts)](https://packagephobia.com/result?p=clockify-sdk-ts)
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
+Generated from the canonical Clockify OpenAPI by
+[Fern](https://buildwithfern.com), wrapped with a publishable npm
+layout. 31 resource modules, 185 live operations, idiomatic
+`client.<resource>.<verb>()` naming on 27 modules (91% of the
+surface), dual ESM + CJS, npm provenance via sigstore.
 
-Generated from the canonical Clockify OpenAPI spec by
-[Fern](https://buildwithfern.com) and wrapped with a publishable
-npm package layout. 32 resource modules, 193 operations, hand-
-written ergonomics for pagination, webhooks, observability hooks,
-and configurable retries on top.
-
-- Single-import quick start (`createClockifyClient`) — no
-  workaround casts to remember
-- Dual ESM + CommonJS publish — `import` and `require` both work
-- npm provenance via sigstore (every published version)
-- Per-resource auto-pagination (`iterAll`) and a low-level
-  callback helper (`paginate`)
-- Clockify webhook signature verification
+- `createClockifyClient()` — single-import factory, env-var
+  fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
+  user-visible workaround casts
+- Pagination — per-resource `iterAll` + page-envelope `iterPages`
+  + low-level `paginate` callback iterator;
+  `iterPages` consumes the `Last-Page` response header where the
+  server emits it (15 of the 18 paginated endpoints)
+- Webhook signature verification
   (`Clockify-Signature-Token` header)
-- Observability built in: `User-Agent`, `X-Request-Id`,
-  lifecycle hooks, configurable retry policy
+- Observability — `User-Agent` + `X-Request-Id` auto-injection,
+  lifecycle hooks (`beforeRequest` / `afterResponse` / `onError`
+  / `onRetry`), configurable retry policy (`Retry-After` and
+  `X-RateLimit-Reset` aware)
 
 ---
 
@@ -39,10 +41,11 @@ and configurable retries on top.
 - [Logging](#logging)
 - [Custom fetch and proxies](#custom-fetch-and-proxies)
 - [Webhooks](#webhooks)
-- [Middleware and hooks](#middleware-and-hooks)
+- [Hooks and middleware](#hooks-and-middleware)
 - [ESM and CommonJS](#esm-and-commonjs)
-- [Supported Node and TypeScript versions](#supported-node-and-typescript-versions)
+- [Supported runtimes](#supported-runtimes)
 - [Migration and contributing](#migration-and-contributing)
+- [Why no linter](#why-no-linter)
 
 ---
 
@@ -52,80 +55,68 @@ and configurable retries on top.
 npm install clockify-sdk-ts
 ```
 
-Or with your package manager of choice (`pnpm add`, `yarn add`,
-`bun add`, `deno add npm:clockify-sdk-ts`).
+Or `pnpm add`, `yarn add`, `bun add`, `deno add npm:clockify-sdk-ts`.
 
 ## Quick start
 
 ```typescript
 import { createClockifyClient } from "clockify-sdk-ts";
 
-const client = createClockifyClient({
-    apiKey: process.env.CLOCKIFY_API_KEY!,
-});
+// Reads CLOCKIFY_API_KEY (or CLOCKIFY_ADDON_TOKEN) from env.
+const client = createClockifyClient();
 
 const tags = await client.tags.list({
     workspaceId: process.env.CLOCKIFY_WORKSPACE_ID!,
 });
 
-for (const tag of tags) {
-    console.log(tag.id, tag.name);
-}
+for (const tag of tags) console.log(tag.id, tag.name);
 ```
 
-`createClockifyClient` is the recommended entry point. It accepts
-exactly one of `apiKey` or `addonToken`, silently nulls the other,
-and wraps the underlying `fetch` with `composedFetch` so every
-request carries a `User-Agent` header and an `X-Request-Id` for
-log correlation. See [Authentication](#authentication) for the
-two-scheme model.
+`createClockifyClient` is the recommended entry. It accepts at
+most one of `apiKey` or `addonToken` (or reads from env when both
+are omitted), wraps `fetch` with `composedFetch` for
+`User-Agent` + `X-Request-Id` injection, and routes through your
+hooks / retry policy.
 
 ## Authentication
 
 Clockify exposes two mutually-exclusive auth schemes:
 
-| Scheme                  | Header          | When to use                                                                                                                                   |
-| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Personal API key        | `X-Api-Key`     | Server-side scripts you own; CI; agents acting as your user. Get one from [Clockify profile settings](https://app.clockify.me/user/settings). |
-| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify marketplace addon you authored. Token comes from the addon installation JWT.                                   |
+| Scheme                  | Header          | When to use |
+| ----------------------- | --------------- | ----------- |
+| Personal API key        | `X-Api-Key`     | Server scripts, CI, agents acting as you. Token at [Clockify profile settings](https://app.clockify.me/user/settings). |
+| Marketplace addon token | `X-Addon-Token` | Code running inside a Clockify addon you authored. Token from the install JWT. |
 
-`createClockifyClient` enforces exactly-one-of at both compile
-time and runtime — the discriminated-union type rejects passing
-both:
+`createClockifyClient` enforces exactly-one at compile time and
+runtime — the discriminated-union type rejects passing both:
 
 ```typescript
-// API key client
 const personal = createClockifyClient({ apiKey: "..." });
-
-// Addon-token client
-const addon = createClockifyClient({ addonToken: "..." });
+const addon    = createClockifyClient({ addonToken: "..." });
 
 // ❌ Compile error: both fields can't be set together.
-const broken = createClockifyClient({ apiKey: "a", addonToken: "t" });
+const broken   = createClockifyClient({ apiKey: "a", addonToken: "t" });
 ```
 
-### Env-var fallback (Stripe / OpenAI / Anthropic convention)
+### Env-var fallback
 
-If you omit both `apiKey` and `addonToken`, the factory reads
-from the environment:
+If you omit both, the factory reads from the environment:
 
-| Env var                  | Used as       | Precedence |
-| ------------------------ | ------------- | ---------- |
-| `CLOCKIFY_API_KEY`       | `apiKey`      | 1 (highest) |
-| `CLOCKIFY_ADDON_TOKEN`   | `addonToken`  | 2          |
+| Env var                | Used as      | Precedence |
+| ---------------------- | ------------ | ---------- |
+| `CLOCKIFY_API_KEY`     | `apiKey`     | 1 (highest) |
+| `CLOCKIFY_ADDON_TOKEN` | `addonToken` | 2          |
 
-Explicit options always win over env vars. Empty-string env-var
-values are treated as absent. The factory throws if both env
-vars are also unset.
+Explicit options always win. Empty-string env values are treated
+as absent. Throws if both env vars are also unset.
 
 ```typescript
-// Reads CLOCKIFY_API_KEY (or CLOCKIFY_ADDON_TOKEN) at construction:
-const client = createClockifyClient();
+const client = createClockifyClient(); // reads env
 ```
 
 `apiKey` and `addonToken` accept any `Supplier<string>` — a
-string, a `Promise<string>`, or a sync/async function returning
-one. Use a function for tokens that get rotated at runtime:
+string, `Promise<string>`, or sync/async function. Use a function
+for tokens that get rotated:
 
 ```typescript
 const client = createClockifyClient({
@@ -133,11 +124,10 @@ const client = createClockifyClient({
 });
 ```
 
-### Advanced auth (custom provider, no auth)
+### Advanced (custom auth, no auth)
 
-If you need a non-header auth model (e.g. mock client in tests,
-custom OAuth provider, addon-token-from-JWT), bypass the factory
-and construct `ClockifyApiClient` directly:
+Bypass the factory and construct `ClockifyApiClient` directly for
+non-header auth (mock client, custom OAuth, addon-token-from-JWT):
 
 ```typescript
 import { ClockifyApiClient } from "clockify-sdk-ts";
@@ -149,101 +139,48 @@ const client = new ClockifyApiClient({
 });
 ```
 
-The cast workaround is documented in
+The cast is the documented workaround for a Fern typing
+limitation — see
 `spec/evidence/discrepancies.md` →
 `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
-`createClockifyClient` hides this for the 99% case.
+`createClockifyClient` hides it for the 99% case.
 
 ## Resource modules
 
-The client exposes one sub-client per OpenAPI tag (32 modules):
+One sub-client per OpenAPI tag (31 modules). Two name shapes
+co-exist; the table summarises which is which.
 
-`approvals`, `auditLogReport`, `balances`, `clients`,
-`customFields`, `entityChangesExperimental`, `expenseCategories`,
-`expenseReport`, `expenses`, `files`, `holidays`,
-`invoiceItems`, `invoicePayments`, `invoiceSettings`, `invoices`,
-`memberProfiles`, `policies`, `projects`, `reports`, `roles`,
-`scheduling`, `sharedReports`, `tags`, `tasks`, `timeEntries`,
-`timeOff`, `timeOffPolicies`, `userGroups`, `users`, `webhooks`,
-`workspaces`.
+| Cohort | Modules | Verbs |
+| --- | --- | --- |
+| Pure CRUDL | `tags`, `clients`, `projects`, `tasks`, `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`, `webhooks`, `expenses`, `expenseCategories`, `policies` | `list`, `create`, `get`, `update`, `delete` (only the verbs the API supports) |
+| CRUDL + action | `clients.archive`, `expenseCategories.archive`, `policies.archive` | + an action verb |
+| Partial CRUDL | `timeEntries`, `invoiceItems`, `invoicePayments` | Limited to what the API actually exposes (e.g. no top-level workspace LIST for timeEntries) |
+| Workflow verbs | `approvals` (`submit` / `resubmit` / `updateStatus`), `timeOff` (`submit` / `withdraw` / `updateStatus`), `scheduling` (`publish` / `copy` / recurring family) | State-machine verbs that match upstream semantics |
+| Mixed | `invoices` (CRUDL + `filter` / `duplicate` / `export` / `updateStatus`), `reports` (`attendance` / `detailed` / `summary` / `weekly`) | CRUDL plus workflow actions; reports use family-name verbs |
+| Scoped naming | `customFields` (`listForWorkspace` / `listForProject` / etc.) | The module covers two surfaces; suffix disambiguates |
+| OperationId-derived | `files.uploadImage`, `roles.{give,remove}UserManagerRole`, `expenseReport.generateDetailedReportV1`, per-user `workspaces.updateUser*`, plus a handful of action verbs inside the stamped modules (`projects.assignOrRemoveProjectUsers`, scheduling capacity totals, etc.) | Already verb-noun; rename buys nothing |
 
-Each sub-client exposes one method per operation. Two name shapes
-co-exist:
-
-- **Idiomatic method names on 27 of the 31 modules (170 ops, ~90% of
-  the 188-op live API surface).** Each stamped op pairs
-  `x-fern-sdk-group-name` + `x-fern-sdk-method-name` so the method
-  lands at `client.<resource>.<verb>()`:
-  - **Pure CRUDL:** `tags`, `clients`, `projects`, `tasks`,
-    `holidays`, `sharedReports`, `timeOffPolicies`, `userGroups`,
-    `webhooks`, `expenses`, `expenseCategories`, `policies` — each
-    exposes the subset of `list`, `create`, `get`, `update`, `delete`
-    that the API genuinely supports.
-  - **CRUDL + action verb:** `clients.archive`,
-    `expenseCategories.archive`, `policies.archive`.
-  - **Partial CRUDL:** `timeEntries.{create,get,update,delete}` on
-    the `/time-entries/{teId}` family (Clockify has no top-level
-    workspace LIST; the per-user `/user/{userId}/time-entries` family
-    keeps its operationId-derived names).
-    `invoiceItems.{create,import,delete}` (no LIST or GET-by-id on
-    the API).
-    `invoicePayments.{list,create,delete}` (no GET-by-id, no update
-    on the API).
-  - **Scoped naming:**
-    `customFields.{listForWorkspace,createForWorkspace,
-    updateForWorkspace,deleteForWorkspace,listForProject,
-    updateForProject,removeFromProject}` — the module covers two
-    surfaces (workspace + project); explicit suffixes disambiguate.
-  - **Workflow verbs (not pure CRUDL):**
-    `approvals.{list,submit,submitForUser,resubmit,resubmitForUser,updateStatus}`,
-    `timeOff.{list,get,delete,updateStatus,submit}`,
-    `scheduling.{create,list,update,delete,publish,copy,createRecurring,updateRecurring,deleteRecurring}`.
-    These modules expose state-machine and workflow operations rather
-    than CRUDL; the verbs match the upstream semantics
-    (`submit` / `approve` / `withdraw` for approvals;
-    `submit` + admin `updateStatus` for time-off requests;
-    `publish` for assignment workflows).
-  - **CRUDL + workflow actions:**
-    `invoices.{list,create,filter,get,update,delete,duplicate,export,updateStatus}`
-    — CRUDL plus `filter` (POST-with-body at `/invoices/info`,
-    distinct from the bare `list`), `duplicate`, `export`, and
-    `updateStatus` (PATCH .../status — same pattern as approvals /
-    timeOff / policies). The Clockify API has no `send` endpoint;
-    use a Clockify-internal "send" workflow via the UI or a follow-up
-    tool.
-  - **Family-name verbs:**
-    `reports.{attendance,detailed,summary,weekly}` — each report is
-    a POST-with-body call; the verb is the family name directly.
-- **OperationId-derived on the remaining ~24 ops (intentional).**
-  Each falls in one of two categories:
-  - **Already a clean verb-noun name** — `client.files.uploadImage(...)`,
-    `client.roles.giveUserManagerRole(...)`,
-    `client.expenseReport.generateDetailedReportV1(...)` (the `V1`
-    suffix is load-bearing), `client.workspaces.updateUserStatus(...)`.
-  - **Per-module domain edge case** — `client.projects.assignOrRemoveProjectUsers(...)`
-    (semantic overlap with `updateMemberships`); the timeOff legacy
-    `/policies/{policyId}/requests` family that duplicates
-    `/time-off/policies/{policyId}/requests`; the `Balances`-tagged
-    `getWorkspacesWorkspaceIdTimeOffRequests` /
-    `getWorkspacesWorkspaceIdUsersUserIdTimeOffBalances` reads.
-    Each needs a domain-specific naming review.
-
-  Tracked under `spec/evidence/discrepancies.md` →
-  `fern.x-fern-sdk-method-name.drops-resource-modules`.
+Coverage: 169 ops mapped (91.4% of the 185-op live API surface)
+across 27 of 31 modules. Full per-method index in
+[`docs/resources/`](./docs/resources/) (one markdown file per
+module, regenerated by `scripts/gen-resource-docs.ts` on every
+`npm run sync`). Stamping details:
+`spec/evidence/discrepancies.md` →
+`fern.x-fern-sdk-method-name.drops-resource-modules`.
 
 ## Pagination
 
 Clockify list endpoints accept `page` (1-based, default 1) and
 `page-size` (default 50, max 200). Responses are bare JSON
-arrays. The SDK ships three pagination primitives at different
-levels of abstraction:
+arrays. 15 of the 18 paginated endpoints emit a `Last-Page` header
+the wrapper consumes as an authoritative end-of-pages signal.
 
-### `iterAll` — recommended for "give me every record"
+### `iterAll` — for "give me every record"
 
 ```typescript
 import { createClockifyClient, iterAll } from "clockify-sdk-ts";
 
-const client = createClockifyClient({ apiKey: "..." });
+const client = createClockifyClient();
 const listProjects = client.projects.list.bind(client.projects);
 
 for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
@@ -251,20 +188,16 @@ for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
 }
 ```
 
-`iterAll(fetcher, baseRequest, options?)` walks pages until a
-non-full page comes back (or `maxPages` is reached). `options`
-accepts `pageSize` (default 50), `maxPages` (default ∞),
-`startPage` (default 1, useful for resume flows).
+`iterAll(fetcher, baseRequest, options?)` walks pages until the
+server signals end-of-pages (via `Last-Page: true` if emitted,
+else a non-full page). `options`: `pageSize` (default 50),
+`maxPages` (default ∞), `startPage` (default 1, for resume flows).
 
-> **Why `.bind()`?** Passing the method reference directly
-> (`client.projects.list`) loses the implicit `this`
-> binding to its owning sub-client. Wrapping in an arrow function
-> works at runtime but loses type inference (TypeScript falls back
-> to the helper's generic constraint). `.bind(client.projects)`
-> keeps the method's full type signature so TS infers both the
-> request shape and the item shape correctly.
+> `.bind(client.projects)` preserves the implicit `this` and the
+> method's full type signature. Bare references lose `this`; arrow
+> wrappers lose type inference.
 
-### `iterPages` — when you need page metadata
+### `iterPages` — for per-page envelopes
 
 ```typescript
 import { iterPages } from "clockify-sdk-ts";
@@ -272,9 +205,7 @@ import { iterPages } from "clockify-sdk-ts";
 const listTags = client.tags.list.bind(client.tags);
 
 for await (const { items, page, hasNextPage } of iterPages(
-    listTags,
-    { workspaceId: "..." },
-    { pageSize: 100 },
+    listTags, { workspaceId: "..." }, { pageSize: 100 },
 )) {
     console.log(`page ${page}: ${items.length} tags (more: ${hasNextPage})`);
     if (!hasNextPage) break;
@@ -286,31 +217,24 @@ for await (const { items, page, hasNextPage } of iterPages(
 ```typescript
 import { paginate } from "clockify-sdk-ts";
 
-for await (const client_ of paginate(
+for await (const c of paginate(
     (page, pageSize) =>
-        client.clients.list({
-            workspaceId: "...",
-            page,
-            "page-size": pageSize,
-        }),
+        client.clients.list({ workspaceId: "...", page, "page-size": pageSize }),
     { pageSize: 50 },
 )) {
-    console.log(client_.name);
+    console.log(c.name);
 }
 ```
 
-`paginate` exposes the page number directly to the callback — use
-it when you need per-page logging, manual offset arithmetic, or
-arbitrary stop conditions.
+Use `paginate` when you need per-page logging, manual offset
+arithmetic, or custom stop conditions.
 
-### Manual loop (for full control)
+### Manual loop
 
 ```typescript
 for (let page = 1; ; page++) {
     const records = await client.users.findWorkspaceUsers({
-        workspaceId: "...",
-        page,
-        "page-size": 50,
+        workspaceId: "...", page, "page-size": 50,
     });
     if (records.length === 0) break;
     for (const u of records) handle(u);
@@ -318,49 +242,43 @@ for (let page = 1; ; page++) {
 }
 ```
 
-### The 19 known paginated methods
+### Drift assertion
 
-Documented as the `KnownPaginatedMethod` type union exported from
-`clockify-sdk-ts/iter`. A CI assertion in
+The `KnownPaginatedMethod` type union exported from
+`clockify-sdk-ts/iter` enumerates the 19 known paginated
+`(resource, method)` pairs. A CI assertion in
 `tests/iter.test.ts` verifies each one exists on a fresh client,
-so drift in the synced SDK is caught at build time.
+catching upstream renames at build time.
 
 ## Error handling
 
-Every non-2xx response throws a typed error. The full hierarchy:
+Every non-2xx throws a typed error:
 
-| Class                     | Status | When                                                                                                           |
-| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `ClockifyApiError`        | (any)  | Base class. Always carries `statusCode`, `body`, `rawResponse`, and `cause` (if a downstream error caused it). |
-| `BadRequestError`         | 400    | Malformed request body or query params.                                                                        |
-| `UnauthorizedError`       | 401    | Missing/invalid `X-Api-Key` / `X-Addon-Token`.                                                                 |
-| `ForbiddenError`          | 403    | Authenticated but not permitted for this workspace/resource.                                                   |
-| `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace.                                                    |
-| `MethodNotAllowedError`   | 405    | Wrong verb (rare).                                                                                             |
-| `ClockifyApiTimeoutError` | —      | The request's `timeoutInSeconds` elapsed before a response.                                                    |
+| Class                     | Status | When |
+| ------------------------- | ------ | ---- |
+| `ClockifyApiError`        | (any)  | Base. Carries `statusCode`, `body`, `rawResponse`, `cause`. |
+| `BadRequestError`         | 400    | Malformed request body / query. |
+| `UnauthorizedError`       | 401    | Missing or invalid `X-Api-Key` / `X-Addon-Token`. |
+| `ForbiddenError`          | 403    | Authenticated but not permitted. |
+| `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace. |
+| `MethodNotAllowedError`   | 405    | Wrong verb (rare). |
+| `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response. |
 
-`instanceof` checks work as expected (the SDK calls
-`Object.setPrototypeOf` in each constructor):
+`instanceof` checks work (each constructor calls
+`Object.setPrototypeOf`):
 
 ```typescript
 import {
-    ClockifyApiError,
-    UnauthorizedError,
-    NotFoundError,
+    ClockifyApiError, UnauthorizedError, NotFoundError,
     getRequestIdFromError,
 } from "clockify-sdk-ts";
 
 try {
-    await client.tags.get({
-        workspaceId: "...",
-        tagId: "deleted-tag-id",
-    });
+    await client.tags.get({ workspaceId: "...", tagId: "deleted-tag-id" });
 } catch (err) {
-    if (err instanceof NotFoundError) {
-        console.log("tag is gone");
-    } else if (err instanceof UnauthorizedError) {
-        console.error("auth failed:", err.body);
-    } else if (err instanceof ClockifyApiError) {
+    if (err instanceof NotFoundError)         console.log("tag is gone");
+    else if (err instanceof UnauthorizedError) console.error("auth failed:", err.body);
+    else if (err instanceof ClockifyApiError) {
         console.error(
             `request ${getRequestIdFromError(err)} failed with ${err.statusCode}:`,
             err.body,
@@ -370,26 +288,22 @@ try {
 }
 ```
 
-`getRequestIdFromError` extracts the `X-Request-Id` we injected
-on the outgoing request from the raw response headers — useful
-for correlating client-side log entries with server-side traces.
+`getRequestIdFromError` pulls the `X-Request-Id` the wrapper
+injected on the outgoing request — use it to correlate client logs
+with server traces.
 
 ## Retries
 
-By default, the SDK retries 408 / 429 / 5xx responses up to **2
-times** with exponential backoff (initial 1s, max 60s, ±20%
-jitter), honoring `Retry-After` and `X-RateLimit-Reset` response
-headers. Only idempotent methods (`GET`, `HEAD`, `OPTIONS`,
-`PUT`, `DELETE`) are retried by default — `POST` and `PATCH` are
-NOT retried automatically because they may not be safe to repeat.
+By default the SDK retries 408 / 429 / 5xx up to **2 times** with
+exponential backoff (initial 1s, max 60s, ±20% jitter), honouring
+`Retry-After` and `X-RateLimit-Reset`. Only idempotent methods
+(`GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`) retry by default —
+`POST` and `PATCH` are not, because they may not be safe to repeat.
 
-### Override the retry policy
+### Override
 
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
-
 const client = createClockifyClient({
-    apiKey: "...",
     retryPolicy: {
         maxRetries: 5,
         initialDelayMs: 500,
@@ -401,20 +315,16 @@ const client = createClockifyClient({
 });
 ```
 
-### Disable retries entirely
+### Disable
 
 ```typescript
-const client = createClockifyClient({
-    apiKey: "...",
-    retryPolicy: false,
-});
+const client = createClockifyClient({ retryPolicy: false });
 ```
 
-### Custom delay calculation
+### Custom delay
 
 ```typescript
 const client = createClockifyClient({
-    apiKey: "...",
     retryPolicy: {
         computeDelay: (attempt, response) => {
             const ra = response?.headers.get("Retry-After");
@@ -427,25 +337,18 @@ const client = createClockifyClient({
 
 ### Per-request override
 
-Every method's second argument accepts `requestOptions` with
-`maxRetries`:
-
 ```typescript
 await client.tags.list(
     { workspaceId: "..." },
-    { maxRetries: 0 }, // this call only
+    { maxRetries: 0 },
 );
 ```
 
 ## Timeouts and abort signals
 
 ```typescript
-const client = createClockifyClient({
-    apiKey: "...",
-    timeoutInSeconds: 10, // applied to every request
-});
+const client = createClockifyClient({ timeoutInSeconds: 10 });
 
-// Per-request override + cooperative cancellation:
 const ctrl = new AbortController();
 setTimeout(() => ctrl.abort(), 5000);
 
@@ -455,17 +358,14 @@ await client.projects.list(
 );
 ```
 
-Timed-out requests throw `ClockifyApiTimeoutError`. Aborted
-requests throw a `ClockifyApiError` whose `body` is the abort
-message; check `err.cause` for the underlying `AbortError`.
+Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
+`ClockifyApiError`; `err.cause` carries the underlying
+`AbortError`.
 
 ## Logging
 
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
-
 const client = createClockifyClient({
-    apiKey: "...",
     logging: {
         level: "debug",
         logger: (level, msg, meta) => console.log(level, msg, meta),
@@ -473,45 +373,39 @@ const client = createClockifyClient({
 });
 ```
 
-Levels: `debug` logs every request URL + redacted headers and
-every response status; `error` logs only failures. Sensitive
-headers (`Authorization`, `X-Api-Key`, `X-Addon-Token`, plus 12
-more), sensitive query params, and basic-auth credentials in
-URLs are redacted before they hit your logger.
+`debug` logs every request URL + redacted headers and every
+response status; `error` logs only failures. Sensitive headers
+(`Authorization`, `X-Api-Key`, `X-Addon-Token`, plus 12 more),
+sensitive query params, and basic-auth in URLs are redacted before
+they reach your logger.
 
 ## Custom fetch and proxies
 
-Pass a custom `fetch` implementation when you need a proxy
-agent, a mocked transport in tests, or a metric-recording wrapper:
-
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
 import { ProxyAgent, fetch as undiciFetch } from "undici";
 
 const dispatcher = new ProxyAgent("http://proxy.local:8080");
 const client = createClockifyClient({
-    apiKey: "...",
     fetch: (url, init) => undiciFetch(url, { ...init, dispatcher }),
 });
 ```
 
-`createClockifyClient` will still wrap your `fetch` with
-`composedFetch` to inject the default `User-Agent` and
-`X-Request-Id` headers. Pass `userAgent: false` / `requestId:
-false` if your proxy or upstream already does that.
+`createClockifyClient` still wraps your `fetch` with
+`composedFetch` for `User-Agent` + `X-Request-Id` injection. Pass
+`userAgent: false` or `requestId: false` to opt out if your proxy
+already does that.
 
 ## Webhooks
 
-Clockify webhook delivery includes a per-webhook 32-character
-shared-secret token in the `Clockify-Signature-Token` header.
-Verify it with constant-time compare:
+Clockify delivery includes a per-webhook 32-char shared-secret in
+the `Clockify-Signature-Token` header. Verify with constant-time
+compare:
 
 ```typescript
 import express from "express";
 import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts";
 
 const app = express();
-
 app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
     try {
         const event = constructEvent({
@@ -530,44 +424,36 @@ app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
 });
 ```
 
-Or use `verifyClockifyWebhook` for the boolean variant:
+Boolean variant:
 
 ```typescript
 import { verifyClockifyWebhook } from "clockify-sdk-ts";
 
-if (
-    !verifyClockifyWebhook({
-        headers: req.headers,
-        expectedToken: secret,
-    })
-) {
+if (!verifyClockifyWebhook({ headers: req.headers, expectedToken: secret })) {
     return res.status(401).send("invalid");
 }
 ```
 
-The helpers accept headers as `Headers`, `Map<string,string>`,
-plain `Record<string, string|string[]>`, or `Array<[name, value]>`
-— matches whatever Node/undici/Express/your-framework emits.
+Helpers accept headers as `Headers`, `Map<string,string>`,
+`Record<string, string|string[]>`, or `Array<[name, value]>`.
 
-Note: Clockify's scheme is a **simple shared-secret token
-compare**, not HMAC over the payload. The token rotates via the
-webhook `/token` endpoint; treat it as a credential.
+The scheme is a **shared-secret token compare**, not HMAC over the
+payload. The token rotates via the webhook `/token` endpoint;
+treat it as a credential.
 
-## Middleware and hooks
+## Hooks and middleware
 
 `createClockifyClient` accepts lifecycle hooks for observability
 piping (Datadog, Honeycomb, structured logs, retry telemetry):
 
 ```typescript
 const client = createClockifyClient({
-    apiKey: "...",
     hooks: {
         beforeRequest: ({ method, url, requestId }) =>
             logger.info({ method, url, requestId }, "→ request"),
         afterResponse: ({ response, durationMs, requestId }) =>
             metrics.histogram("clockify.duration", durationMs, {
-                status: response.status,
-                requestId,
+                status: response.status, requestId,
             }),
         onError: ({ error, durationMs, requestId }) =>
             logger.error({ error, durationMs, requestId }, "× request failed"),
@@ -577,27 +463,23 @@ const client = createClockifyClient({
 });
 ```
 
-Hooks are best-effort — a hook that throws is logged via
-`console.warn` but never blocks the request. Hooks may be sync
-or async (returning a Promise).
+Hooks are best-effort: a hook that throws is logged via
+`console.warn` but never blocks the request. Hooks may be sync or
+return a Promise.
 
-For direct access to the underlying composed fetch (e.g. to
-wrap a different SDK with the same observability layer), use the
-subpath:
+To reuse the composed fetch outside the SDK (e.g. wrap another SDK
+with the same observability layer):
 
 ```typescript
 import { composedFetch } from "clockify-sdk-ts/composed-fetch";
 
 const myFetch = composedFetch({
-  hooks: { beforeRequest: ... },
-  retryPolicy: { maxRetries: 5 },
+    hooks: { beforeRequest: /* ... */ },
+    retryPolicy: { maxRetries: 5 },
 });
 ```
 
 ## ESM and CommonJS
-
-The package publishes both module systems via the modern
-triple-tier `exports` map:
 
 ```javascript
 // ESM
@@ -607,52 +489,44 @@ import { createClockifyClient } from "clockify-sdk-ts";
 const { createClockifyClient } = require("clockify-sdk-ts");
 ```
 
-TypeScript resolves the correct `.d.ts` per consumer's
+Both module systems resolve via the modern triple-tier `exports`
+map. TypeScript picks the correct `.d.ts` per consumer's
 `moduleResolution`. Subpaths (`clockify-sdk-ts/iter`,
-`clockify-sdk-ts/webhooks`, `clockify-sdk-ts/composed-fetch`,
-`clockify-sdk-ts/create-client`, `clockify-sdk-ts/pagination`)
-work in both module systems too.
+`/webhooks`, `/composed-fetch`, `/create-client`, `/pagination`,
+`/with-response`) work in both.
 
-## Supported Node and TypeScript versions
+## Supported runtimes
 
-|            | Minimum                                                                                          | Tested                  |
-| ---------- | ------------------------------------------------------------------------------------------------ | ----------------------- |
-| Node.js    | **20.0.0** (required for global `fetch`, stable `AbortSignal.timeout`, `node:crypto.randomUUID`) | 22 (CI primary), 20     |
-| TypeScript | **5.0** (required for the satisfies operator + const type parameters used in `iter.ts`)          | 5.6 (dev), 5.x          |
-| Bun        | works                                                                                            | not yet in CI (Phase 5) |
-| Deno       | works with the `npm:` specifier                                                                  | not yet in CI (Phase 5) |
-| Browsers   | works for read-only flows; **do NOT ship your `apiKey` to a browser**                            | not in CI               |
+| Runtime    | Minimum                                                              | Tested            |
+| ---------- | -------------------------------------------------------------------- | ----------------- |
+| Node.js    | **20.0.0** (global `fetch`, `AbortSignal.timeout`, `randomUUID`)     | 22 (CI), 20      |
+| TypeScript | **5.0** (`satisfies` operator + const type parameters in `iter.ts`)  | 5.6 (dev), 5.x   |
+| Bun        | works                                                                | CI smoke         |
+| Deno       | works via `npm:` specifier                                           | CI smoke         |
+| Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**          | not in CI         |
 
 ## Migration and contributing
 
-- **Changelog:** [`CHANGELOG.md`](./CHANGELOG.md) in the repo
-  (intentionally not in the npm tarball — keeps it lean).
-- **Issues:** [github.com/apet97/clockify-ts-sdk/issues](https://github.com/apet97/clockify-ts-sdk/issues).
-- **Contributing:** see `AGENTS.md` at the repo root for the
-  contributor + agent contract. `CONTRIBUTING.md` (human-facing
-  onboarding) lands in Phase 6 of the SDK quality push.
+- Changelog: [`CHANGELOG.md`](./CHANGELOG.md) (not in the npm tarball; lean by design).
+- Issues: [github.com/apet97/clockify-ts-sdk/issues](https://github.com/apet97/clockify-ts-sdk/issues).
+- Contributor + agent contract: [`AGENTS.md`](../AGENTS.md) at the repo root.
 
 ## Why no linter
 
 The wrapper ships without ESLint. The hand-written surface
-(`create-client.ts`, `composed-fetch.ts`, `iter.ts`,
-`webhooks.ts`, `pagination.ts`, `index.ts`, plus `tests/`,
-`scripts/`, and `examples/`) is small, and the rest of `src/`
-is wiped + rewritten by `npm run sync` on every regen, so a
-linter would either lint generated code that gets discarded
-next sync, or carry an `eslintignore` that mostly excludes the
-tree it's pointed at. `tsc --strict` catches the issues a
-default ESLint config would flag on this surface (unused
-imports, implicit `any`, missing returns, etc.), and `vitest`
-catches real behavioral regressions.
+(`create-client.ts`, `composed-fetch.ts`, `iter.ts`, `webhooks.ts`,
+`pagination.ts`, `with-response.ts`, `index.ts`, `tests/`,
+`scripts/`, `examples/`) is small; the rest of `src/` is wiped +
+rewritten by `npm run sync` on every regen. `tsc --strict` catches
+the issues a default ESLint config would flag (unused imports,
+implicit `any`, missing returns), and `vitest` catches real
+regressions.
 
-**Formatting**: Prettier is wired for the hand-written surface
-via `wrapper/.prettierrc` + `wrapper/.prettierignore` (the
-ignore file excludes `src/`, `dist/`, `docs/`, and
-`package-lock.json`). Run `npm run format` to apply,
-`npm run format:check` to verify. The `.prettierignore` keeps
-the generated tree alone — reformatting `src/` would create
-sync-time churn for no shipping value.
+Prettier is wired for the hand-written surface (`.prettierrc` +
+`.prettierignore`). `npm run format` to apply,
+`npm run format:check` to verify. The ignore file excludes `src/`,
+`dist/`, `docs/`, and `package-lock.json` so formatting only
+touches files that survive sync.
 
 ## License
 
