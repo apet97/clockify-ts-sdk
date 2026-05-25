@@ -38,6 +38,8 @@ surface), dual ESM + CJS, npm provenance via sigstore.
 - [Resource modules](#resource-modules)
 - [Pagination](#pagination)
 - [Error handling](#error-handling)
+    - [Connection failures and aborts](#connection-failures-and-aborts)
+    - [Error codes](#error-codes)
 - [Retries](#retries)
 - [Timeouts and abort signals](#timeouts-and-abort-signals)
 - [Logging](#logging)
@@ -324,6 +326,73 @@ catch (err) {
     logger.error({ status: err.statusCode, requestId: getRequestIdFromError(err) });
 }
 ```
+
+### Connection failures and aborts
+
+Two error classes cover the non-HTTP-status failure modes — both
+inherit from `ClockifyApiError`, so existing `catch` blocks that
+narrow on the base class keep working:
+
+| Class                            | Thrown when                                                                                                | Caller action                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `ClockifyConnectionError`        | The underlying `fetch` failed before getting a response (DNS, TLS, ECONNRESET, `TypeError: fetch failed`). | Retry with backoff; surface as "offline?" UI. |
+| `ClockifyAbortError`             | The caller cancelled via an `AbortSignal` (`controller.abort()`).                                          | Do NOT retry — the user asked for a stop.     |
+| `ClockifyApiTimeoutError` (Fern) | The request exceeded `timeoutInSeconds`.                                                                   | Retry with backoff.                           |
+
+```typescript
+import { createClockifyClient, isAbortError, isConnectionError } from "clockify-sdk-ts";
+
+const client = createClockifyClient();
+const controller = new AbortController();
+
+try {
+    await client.tags.list({ workspaceId }, { abortSignal: controller.signal });
+} catch (err) {
+    if (isAbortError(err)) return; // user cancelled
+    if (isConnectionError(err)) {
+        // backoff and retry, or fail fast
+    }
+    throw err;
+}
+```
+
+These classes are emitted by `promoteApiError(err)` (called
+internally on every catch site in the documented examples).
+Manual call sites that catch raw Fern-emitted errors should pipe
+through `promoteApiError` first:
+
+```typescript
+import { promoteApiError } from "clockify-sdk-ts";
+
+try { await client.tags.list({...}); }
+catch (err) {
+  const e = promoteApiError(err);
+  if (isAbortError(e)) { /* ... */ }
+}
+```
+
+### Error codes
+
+Use `getErrorCode(err)` to read the server-side error code from
+the response body, in a way that survives wording changes in
+`error.message`:
+
+```typescript
+import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts";
+
+try {
+    await client.tags.create({ workspaceId, name });
+} catch (err) {
+    if (isClockifyApiError(err) && getErrorCode(err) === "tag_already_exists") {
+        // graceful dedup
+        return;
+    }
+    throw err;
+}
+```
+
+`getErrorCode` reads `body.code` first, then `body.error.code`;
+returns `undefined` when neither is present.
 
 ## Retries
 
