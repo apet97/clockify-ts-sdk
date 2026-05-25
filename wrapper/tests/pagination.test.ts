@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+
 import { paginate } from "../pagination.js";
 
 async function collect<T>(iter: AsyncIterable<T>): Promise<T[]> {

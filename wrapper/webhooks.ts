@@ -79,7 +79,10 @@ export function getClockifySignatureToken(headers: WebhookHeadersInput): string 
         return undefined;
     }
     if (Array.isArray(headers)) {
-        for (const [key, value] of headers) {
+        // `Array.isArray` widens to `any[]`; the input contract narrows to
+        // tuple-pairs (see `WebhookHeadersInput`), so cast for safe iteration.
+        const tuples = headers as ReadonlyArray<readonly [string, string]>;
+        for (const [key, value] of tuples) {
             if (key.toLowerCase() === target) return value;
         }
         return undefined;

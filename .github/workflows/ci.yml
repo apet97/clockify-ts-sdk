@@ -87,6 +87,40 @@ jobs:
           fi
           echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
 
+  lint:
+    name: Lint (eslint on hand-written surface)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync SDK from generator output
+        # Needed because type-aware lint follows imports into src/.
+        # src/ is gitignored / wiped on every sync; lint config ignores
+        # src/** itself but the parser still needs the files on disk.
+        run: npm run sync
+
+      - name: Lint
+        run: npm run lint
+
   spec-check:
     name: Spec check (corrected snapshot stays clean)
     runs-on: ubuntu-latest

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { createClockifyClient } from "../create-client.js";
 import { iterAll, iterPages, KNOWN_PAGINATED_METHODS, type PaginatedRequest } from "../iter.js";
 

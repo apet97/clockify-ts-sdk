@@ -355,7 +355,7 @@ async function runWithRetries(
             await safeHook(hooks?.onError, { ...ctx, error, durationMs });
             lastError = error;
             if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
-                throw error;
+                throw toError(error);
             }
             const delayMs = computeRetryDelay(attempt, undefined, policy);
             await safeHook(hooks?.onRetry, {
@@ -390,7 +390,13 @@ async function runWithRetries(
     }
 
     if (lastResponse != null) return lastResponse;
-    throw lastError ?? new Error("composedFetch: exhausted retries with no response and no error");
+    throw lastError != null
+        ? toError(lastError)
+        : new Error("composedFetch: exhausted retries with no response and no error");
+}
+
+function toError(value: unknown): Error {
+    return value instanceof Error ? value : new Error(String(value));
 }
 
 function computeRetryDelay(

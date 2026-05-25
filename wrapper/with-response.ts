@@ -22,8 +22,8 @@
  * (you only want the body), `await client.foo.bar(...)` is still
  * the right shape.
  */
-import type { RawResponse } from "./src/core/index.js";
 import { REQUEST_ID_HEADER } from "./composed-fetch.js";
+import type { RawResponse } from "./src/core/index.js";
 
 /** Result of {@link withResponse} — the parsed body plus the
  *  response metadata. */
