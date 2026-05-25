@@ -135,6 +135,50 @@ export class ClockifyConnectionError extends ClockifyApiError {
     }
 }
 
+/**
+ * Thrown / promoted when the underlying `fetch` is aborted by an
+ * `AbortSignal` (caller-initiated cancellation, not server-side
+ * timeout).
+ *
+ * The Fern-generated client wraps these as a base
+ * `ClockifyApiError` with `statusCode == null` and `cause.name`
+ * set to `"AbortError"` (DOMException convention).
+ * `promoteApiError(err)` detects this shape and returns a
+ * `ClockifyAbortError`.
+ *
+ * Distinguishing aborts from timeouts:
+ * - `ClockifyAbortError` — caller called `controller.abort()`.
+ *   Do NOT retry — the user explicitly cancelled.
+ * - `ClockifyApiTimeoutError` — request exceeded `timeoutInSeconds`.
+ *   Retry may be appropriate (with backoff).
+ *
+ * @example
+ * ```ts
+ * import { isAbortError, createClockifyClient } from "clockify-sdk-ts";
+ *
+ * const controller = new AbortController();
+ * setTimeout(() => controller.abort(), 100);
+ *
+ * try {
+ *   await client.tags.list({ workspaceId }, { abortSignal: controller.signal });
+ * } catch (err) {
+ *   if (isAbortError(err)) {
+ *     // user/code cancelled — don't retry
+ *     return;
+ *   }
+ *   throw err;
+ * }
+ * ```
+ */
+export class ClockifyAbortError extends ClockifyApiError {
+    constructor(opts: SubclassOpts) {
+        super({ message: opts.message ?? "ClockifyAbortError", ...opts });
+        Object.setPrototypeOf(this, new.target.prototype);
+        if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
+        this.name = "ClockifyAbortError";
+    }
+}
+
 const STATUS_TO_CTOR = new Map<number, new (o: SubclassOpts) => ClockifyApiError>([
     [409, ConflictError],
     [429, RateLimitError],
@@ -214,6 +258,15 @@ export function isServiceUnavailableError(err: unknown): err is ServiceUnavailab
  */
 export function isConnectionError(err: unknown): err is ClockifyConnectionError {
     return err instanceof ClockifyConnectionError;
+}
+
+/**
+ * Type guard: `true` if `err` is a `ClockifyAbortError` (caller
+ * cancelled via `AbortSignal`). Returns `false` for server-side
+ * timeouts — use `instanceof ClockifyApiTimeoutError` for that.
+ */
+export function isAbortError(err: unknown): err is ClockifyAbortError {
+    return err instanceof ClockifyAbortError;
 }
 
 // ---------- header parsers ----------

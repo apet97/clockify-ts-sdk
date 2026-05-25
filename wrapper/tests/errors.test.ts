@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    ClockifyAbortError,
     ClockifyConnectionError,
     ConflictError,
     InternalServerError,
+    isAbortError,
     isClockifyApiError,
     isConflictError,
     isConnectionError,
@@ -231,5 +233,30 @@ describe("ClockifyConnectionError", () => {
         expect(isConnectionError(err)).toBe(true);
         expect(isConnectionError(new Error("plain"))).toBe(false);
         expect(isConnectionError(null)).toBe(false);
+    });
+});
+
+describe("ClockifyAbortError", () => {
+    it("subclasses ClockifyApiError", () => {
+        const aborted = new DOMException("aborted", "AbortError");
+        const err = new ClockifyAbortError({
+            message: "request aborted",
+            cause: aborted,
+        });
+        expect(err).toBeInstanceOf(ClockifyAbortError);
+        expect(err).toBeInstanceOf(ClockifyApiError);
+        expect(err.name).toBe("ClockifyAbortError");
+        expect(err.cause).toBe(aborted);
+        expect(err.statusCode).toBeUndefined();
+    });
+
+    it("isAbortError narrows the union", () => {
+        const err: unknown = new ClockifyAbortError({
+            message: "user cancelled",
+            cause: new DOMException("aborted", "AbortError"),
+        });
+        expect(isAbortError(err)).toBe(true);
+        expect(isAbortError(new Error("plain"))).toBe(false);
+        expect(isAbortError(null)).toBe(false);
     });
 });
