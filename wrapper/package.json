@@ -107,6 +107,16 @@
                 "default": "./dist/cjs/paginated-list.js"
             }
         },
+        "./otel-hooks": {
+            "import": {
+                "types": "./dist/esm/otel-hooks.d.ts",
+                "default": "./dist/esm/otel-hooks.js"
+            },
+            "require": {
+                "types": "./dist/cjs/otel-hooks.d.ts",
+                "default": "./dist/cjs/otel-hooks.js"
+            }
+        },
         "./with-response": {
             "import": {
                 "types": "./dist/esm/with-response.d.ts",

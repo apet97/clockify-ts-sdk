@@ -96,3 +96,4 @@ export {
     type ClockifyWebhookEvent,
     type WebhookEventName,
 } from "./webhook-events.js";
+export { otelHooks, type OtelHooksOptions, type OtelLikeSpan } from "./otel-hooks.js";
