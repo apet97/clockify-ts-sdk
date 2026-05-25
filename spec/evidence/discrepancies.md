@@ -1413,7 +1413,62 @@ on the bare route (the granular variants — already in
 
 ## Time-off request duplicate paths — investigation
 
-### `timeoff.legacy-policies-requests.phantom-path-quarantined` — RESOLVED 2026-05-25
+### `timeoff.legacy-policies-requests.phantom-path-quarantined` — EXPANDED 2026-05-25 (round 2)
+
+#### Update 2026-05-25 (round 2) — 3 more phantoms quarantined, listForUser stamp removed
+
+Three additional `Time Off` / `Balances`-tagged routes were
+probed during the G.1 domain edge-case sweep that was deferred
+out of v0.5.0. All three returned HTTP 404 or 405 + Clockify
+error code 3000 against sandbox `65b382b606de527a7ee2b60e`:
+
+- `POST /workspaces/{wsId}/time-off/requests/users/{userId}` →
+  HTTP 404 "No static resource". Looked like an admin
+  "create TOR for a specific user via the workspace-level path"
+  but doesn't exist. The live equivalent is the policy-scoped
+  `submitForUser` at `/time-off/policies/{pid}/users/{uid}/requests`
+  (already stamped in v0.5.0).
+- `GET /workspaces/{wsId}/time-off/requests` → HTTP 405
+  "Request method 'GET' is not supported". The path exists for
+  POST (that's the documented POST-as-list `list` op, kept), but
+  GET is not allowed. The canonical's own `x-clockify-notes`
+  block on this op already documented the 405 from a prior
+  probe-supplement; the quarantine just stops us from generating
+  an SDK method that immediately 405s.
+- `GET /workspaces/{wsId}/users/{userId}/time-off/balances` →
+  HTTP 404 "No static resource". Looked like a per-user time-off
+  balances list across all policies, but doesn't exist. The live
+  per-user balance read is the singular
+  `/time-off/balance/user/{userId}` (already stamped as
+  `balances.getForUser` in v0.5.0).
+
+Probe fixtures (gitignored per AGENTS.md §5.4):
+- `spec/evidence/probes/20260525-edge-post-tor-users-userid.{json,hdr}`
+- `spec/evidence/probes/20260525-edge-get-tor.{json,hdr}`
+- `spec/evidence/probes/20260525-edge-get-user-balances.{json,hdr}`
+
+Actions:
+- Added all 3 `[method, path]` tuples to `PHANTOM_PATHS` in
+  GOCLMCP's `scripts/gen-clockify-openapi` (now 9 entries total).
+- Removed the stale `balances.listForUser` entry from
+  `SDK_METHOD_NAMES` (it pointed at the third phantom route; the
+  live equivalent is already stamped as `balances.getForUser` on
+  a different path).
+- Updated `tests/doc_parity_test.go` floors (paths 123 → 121,
+  ops 188 → 185) and removed
+  `GET /users/{userId}/time-off/balances` from the
+  required-operations list since quarantined paths must not
+  appear there.
+
+Coverage shift: 170/188 → 169/185 = **91.4%** (denominator
+shrank by 3 with the quarantine; stamp count dropped by 1 with
+the `listForUser` removal). 27 modules unchanged. Wrapper's
+`timeOff` module exposes 8 methods (was 9; admin-create-for-user
+dropped). Wrapper's `balances` module exposes 4 methods (was 5;
+per-user list dropped). Net effect: the SDK no longer pretends 3
+routes that return 404/405 live exist.
+
+### `timeoff.legacy-policies-requests.phantom-path-quarantined` — RESOLVED 2026-05-25 (round 1)
 
 - **Official claim:** the upstream
   `clockify-api-probe-lab/openapi-fragments/time-off-b.yaml` source
