@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
-## [Unreleased] — Tier 1 + Tier 3 polish (target 0.9.0)
+## [0.9.0] — 2026-05-25
 
 Closes the Tier-1 and Tier-3 gaps from the "Stainless/Speakeasy
 parity" audit. No breaking changes — all additions are opt-in.
