@@ -5,10 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
-## [Unreleased] — Axioms-alignment (target 0.8.0)
+## [0.8.0] — 2026-05-25
 
-Closes the eight gaps identified in
-`/Users/15x/Downloads/sdkxioms.txt` against the SDK's user-facing
+Closes the eight gaps identified against the SDK's user-facing
 quality bar. No breaking changes — all additions are opt-in.
 
 ### Added

@@ -36,7 +36,7 @@ import { platform, arch } from "node:os";
  *  in sync with `package.json` `version` manually — when bumping the
  *  package version, update this constant too. (Phase 2 dual-build
  *  will substitute this at build time.) */
-const PACKAGE_VERSION = "0.8.0-dev.0" as const;
+const PACKAGE_VERSION = "0.8.0" as const;
 const PACKAGE_NAME = "clockify-sdk-ts" as const;
 
 /** Header name carrying the per-request UUID. */
