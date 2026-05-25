@@ -2,8 +2,10 @@
 
 [![npm version](https://img.shields.io/npm/v/clockify-sdk-ts.svg)](https://www.npmjs.com/package/clockify-sdk-ts)
 [![CI](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/ci.yml?branch=main&label=CI)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/ci.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/codeql.yml?branch=main&label=CodeQL)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/codeql.yml)
 [![license](https://img.shields.io/npm/l/clockify-sdk-ts.svg)](./LICENSE)
 [![install size](https://packagephobia.com/badge?p=clockify-sdk-ts)](https://packagephobia.com/result?p=clockify-sdk-ts)
+[![sigstore provenance](https://img.shields.io/badge/sigstore-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by
@@ -42,10 +44,11 @@ surface), dual ESM + CJS, npm provenance via sigstore.
 - [Custom fetch and proxies](#custom-fetch-and-proxies)
 - [Webhooks](#webhooks)
 - [Hooks and middleware](#hooks-and-middleware)
+- [Deprecations](#deprecations)
 - [ESM and CommonJS](#esm-and-commonjs)
 - [Supported runtimes](#supported-runtimes)
+- [Quality and tooling](#quality-and-tooling)
 - [Migration and contributing](#migration-and-contributing)
-- [Why no linter](#why-no-linter)
 
 ---
 
@@ -302,9 +305,18 @@ with server traces.
 
 `promoteApiError(err)` is a no-op on values it doesn't recognise, so
 it's safe to drop into any existing catch. Type-guard predicates
-(`isRateLimitError`, `isConflictError`, `isInternalServerError`,
-`isServiceUnavailableError`) are exported too if you prefer
-narrowing without re-allocating the error.
+(`isClockifyApiError`, `isRateLimitError`, `isConflictError`,
+`isInternalServerError`, `isServiceUnavailableError`) are exported
+too if you prefer narrowing without re-allocating the error:
+
+```typescript
+try { await client.tags.list({...}); }
+catch (err) {
+    if (!isClockifyApiError(err)) throw err; // not from the SDK
+    if (isRateLimitError(err)) await sleep(err.retryAfterMs ?? 1000);
+    logger.error({ status: err.statusCode, requestId: getRequestIdFromError(err) });
+}
+```
 
 ## Retries
 
@@ -382,7 +394,14 @@ Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
 const client = createClockifyClient({
     logging: {
         level: "debug",
-        logger: (level, msg, meta) => console.log(level, msg, meta),
+        // ILogger-shaped object (debug/info/warn/error methods).
+        // Pino, bunyan, winston are all shape-compatible.
+        logger: {
+            debug: (msg, ...args) => console.debug(msg, ...args),
+            info:  (msg, ...args) => console.info(msg, ...args),
+            warn:  (msg, ...args) => console.warn(msg, ...args),
+            error: (msg, ...args) => console.error(msg, ...args),
+        },
     },
 });
 ```
@@ -391,7 +410,8 @@ const client = createClockifyClient({
 response status; `error` logs only failures. Sensitive headers
 (`Authorization`, `X-Api-Key`, `X-Addon-Token`, plus 12 more),
 sensitive query params, and basic-auth in URLs are redacted before
-they reach your logger.
+they reach your logger. For a fully-wired Pino adapter see
+[`examples/structured-logging.ts`](./examples/structured-logging.ts).
 
 ## Custom fetch and proxies
 
@@ -493,6 +513,27 @@ const myFetch = composedFetch({
 });
 ```
 
+## Deprecations
+
+The SDK uses a two-phase soft-removal convention: a symbol gets a
+JSDoc `@deprecated` tag plus a one-time runtime warning in the
+release that intends to break, then is removed entirely in the next
+major.
+
+```typescript
+import { warnOnce } from "clockify-sdk-ts/deprecation";
+
+/** @deprecated since v0.8.0 — use `newApi` instead. */
+export function oldApi() {
+    warnOnce("oldApi", "`oldApi` is deprecated; use `newApi` (since v0.8.0)");
+    return newApi();
+}
+```
+
+`warnOnce(key, message)` dedupes by `key` so a hot path doesn't
+spam the user, and is silent under `NODE_ENV === "test"`. Full
+contract: [`CONTRIBUTING.md` § Deprecating a public symbol](../CONTRIBUTING.md#deprecating-a-public-symbol).
+
 ## ESM and CommonJS
 
 ```javascript
@@ -519,28 +560,35 @@ map. TypeScript picks the correct `.d.ts` per consumer's
 | Deno       | works via `npm:` specifier                                           | CI smoke         |
 | Browsers   | read-only flows work; **do NOT ship `apiKey` to a browser**          | not in CI         |
 
+## Quality and tooling
+
+The SDK gates every change through a multi-layer CI matrix that
+matches what Speakeasy / Stainless SDKs ship:
+
+| Layer | Tool | Where |
+| --- | --- | --- |
+| Type safety | `tsc -p tsconfig.json --strict --noUncheckedIndexedAccess` | CI `build-and-test` on Node **20 + 22** |
+| Type contract | `vitest --typecheck.only` against `tests/types/*.test-d.ts` | CI `build-and-test` step |
+| Lint | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job |
+| Format | Prettier 3 (4-space, semi, LF, 100-col) | `npm run format:check` |
+| Bundle ceiling | `size-limit` with 9 entrypoint ceilings (file-size, no bundling) | CI `size` job |
+| Dual build | `tsc` ESM + `tsc` CJS + per-format smoke verifying 29 exports + 8 subpaths | `build:smoke` |
+| Tarball gate | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack` | CI `build-and-test` (Node 22) |
+| Provenance | `npm publish --provenance` via OIDC + SPDX SBOM attached to GitHub release | CI `release.yml` |
+| Cross-runtime | Vitest under **Bun**, name-resolution import under **Deno** | CI `bun-smoke` + `deno-smoke` |
+| Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows | CI `codeql` |
+| Spec health | `fern check --warnings --from-openapi` on the corrected snapshot | CI `spec-check` |
+
+Lint scope is the hand-written wrapper (`*.ts` at root + `tests/**`).
+`wrapper/src/**` is wiped on every `npm run sync`, so linting there
+would only produce churn; `tsc --strict` covers it instead.
+
 ## Migration and contributing
 
 - Changelog: [`CHANGELOG.md`](./CHANGELOG.md) (not in the npm tarball; lean by design).
 - Issues: [github.com/apet97/clockify-ts-sdk/issues](https://github.com/apet97/clockify-ts-sdk/issues).
 - Contributor + agent contract: [`AGENTS.md`](../AGENTS.md) at the repo root.
-
-## Why no linter
-
-The wrapper ships without ESLint. The hand-written surface
-(`create-client.ts`, `composed-fetch.ts`, `iter.ts`, `webhooks.ts`,
-`pagination.ts`, `with-response.ts`, `index.ts`, `tests/`,
-`scripts/`, `examples/`) is small; the rest of `src/` is wiped +
-rewritten by `npm run sync` on every regen. `tsc --strict` catches
-the issues a default ESLint config would flag (unused imports,
-implicit `any`, missing returns), and `vitest` catches real
-regressions.
-
-Prettier is wired for the hand-written surface (`.prettierrc` +
-`.prettierignore`). `npm run format` to apply,
-`npm run format:check` to verify. The ignore file excludes `src/`,
-`dist/`, `docs/`, and `package-lock.json` so formatting only
-touches files that survive sync.
+- Deprecation convention: [`CONTRIBUTING.md § Deprecating a public symbol`](../CONTRIBUTING.md#deprecating-a-public-symbol).
 
 ## License
 

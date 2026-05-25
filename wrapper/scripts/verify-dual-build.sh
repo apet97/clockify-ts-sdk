@@ -14,7 +14,7 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" node --input-type=module -e "

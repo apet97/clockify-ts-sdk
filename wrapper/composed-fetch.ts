@@ -36,7 +36,7 @@ import { platform, arch } from "node:os";
  *  in sync with `package.json` `version` manually — when bumping the
  *  package version, update this constant too. (Phase 2 dual-build
  *  will substitute this at build time.) */
-const PACKAGE_VERSION = "0.6.0" as const;
+const PACKAGE_VERSION = "0.7.0" as const;
 const PACKAGE_NAME = "clockify-sdk-ts" as const;
 
 /** Header name carrying the per-request UUID. */
@@ -162,9 +162,14 @@ export function generateRequestId(): string {
 
 /**
  * Builds a `fetch`-compatible function that wraps an underlying
- * fetcher with User-Agent injection, X-Request-Id injection,
- * lifecycle hooks, and an optional retry policy. The returned
- * function is shape-compatible with `BaseClientOptions.fetch`.
+ * fetcher with four orthogonal concerns (User-Agent, X-Request-Id,
+ * lifecycle hooks, optional retry policy). The returned function is
+ * shape-compatible with `BaseClientOptions.fetch` — pass it to
+ * `createClockifyClient({ fetch: composedFetch({...}) })` or use it
+ * directly anywhere a `fetch`-typed callable is accepted.
+ *
+ * Pass `{}` to get just the defaults (UA + UUID req-id, no retries,
+ * no hooks).
  *
  * @example
  * ```ts
@@ -179,7 +184,12 @@ export function generateRequestId(): string {
  *   },
  *   retryPolicy: { maxRetries: 5, retryableStatusCodes: [500, 502, 503] },
  * });
+ *
+ * const res = await myFetch("https://api.example.com/health");
  * ```
+ *
+ * @throws TypeError if no `fetch` implementation is available — pass
+ *   `options.fetch` explicitly when running outside Node 18+/browsers.
  */
 export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch {
     const baseFetch = options.fetch ?? globalThis.fetch;
