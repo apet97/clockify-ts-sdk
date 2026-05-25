@@ -14,10 +14,12 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
+
 echo "==> ESM import smoke"
-node --input-type=module -e "
+SURFACE="$SURFACE" node --input-type=module -e "
 import('./dist/esm/index.js').then(m => {
-  const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError','BadRequestError','UnauthorizedError','ForbiddenError','NotFoundError','MethodNotAllowedError','withResponse'];
+  const surface = process.env.SURFACE.split(',');
   const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
   if (missing.length) {
     console.error('ESM missing exports:', missing);
@@ -28,9 +30,9 @@ import('./dist/esm/index.js').then(m => {
 "
 
 echo "==> CJS require smoke"
-node -e "
+SURFACE="$SURFACE" node -e "
 const m = require('./dist/cjs/index.js');
-const surface = ['ClockifyApiClient','createClockifyClient','composedFetch','iterAll','iterPages','paginate','verifyClockifyWebhook','constructEvent','WebhookSignatureMismatchError','ClockifyApiError','ClockifyApiTimeoutError','getRequestIdFromError','BadRequestError','UnauthorizedError','ForbiddenError','NotFoundError','MethodNotAllowedError','withResponse'];
+const surface = process.env.SURFACE.split(',');
 const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
 if (missing.length) {
   console.error('CJS missing exports:', missing);
@@ -47,13 +49,18 @@ const it = require('./dist/cjs/iter.js');
 const wh = require('./dist/cjs/webhooks.js');
 const pg = require('./dist/cjs/pagination.js');
 const wr = require('./dist/cjs/with-response.js');
+const er = require('./dist/cjs/errors.js');
+const dp = require('./dist/cjs/deprecation.js');
 if (typeof cf.composedFetch !== 'function') { console.error('CJS subpath composed-fetch broken'); process.exit(1); }
 if (typeof cc.createClockifyClient !== 'function') { console.error('CJS subpath create-client broken'); process.exit(1); }
 if (typeof it.iterAll !== 'function') { console.error('CJS subpath iter broken'); process.exit(1); }
 if (typeof wh.verifyClockifyWebhook !== 'function') { console.error('CJS subpath webhooks broken'); process.exit(1); }
 if (typeof pg.paginate !== 'function') { console.error('CJS subpath pagination broken'); process.exit(1); }
 if (typeof wr.withResponse !== 'function') { console.error('CJS subpath with-response broken'); process.exit(1); }
-console.log('OK: All 6 CJS subpaths resolve');
+if (typeof er.RateLimitError !== 'function') { console.error('CJS subpath errors broken'); process.exit(1); }
+if (typeof er.promoteApiError !== 'function') { console.error('CJS subpath errors.promoteApiError broken'); process.exit(1); }
+if (typeof dp.warnOnce !== 'function') { console.error('CJS subpath deprecation.warnOnce broken'); process.exit(1); }
+console.log('OK: All 8 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"

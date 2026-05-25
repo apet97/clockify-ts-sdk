@@ -118,6 +118,40 @@ Summary:
 
 The twin `tsc` build picks up the new file automatically.
 
+### Deprecating a public symbol
+
+Two-phase soft removal: add the warning in the version that intends
+to break, then delete the symbol in the next major.
+
+1. Tag the declaration with a JSDoc `@deprecated` note in the form
+   `@deprecated since vX.Y.Z — use <replacement> instead.` Tooling
+   (IDE strikethrough, tsdoc, generated docs) picks this up
+   automatically.
+2. At the runtime entry of the deprecated function, call
+   `warnOnce(key, message)` from `clockify-sdk-ts/deprecation`:
+
+   ```ts
+   import { warnOnce } from "clockify-sdk-ts/deprecation";
+
+   /** @deprecated since v0.7.0 — use `newName` instead. */
+   export function oldName(...args: A): R {
+       warnOnce(
+           "oldName",
+           "`oldName` is deprecated; use `newName` instead (since v0.7.0)",
+       );
+       return newName(...args);
+   }
+   ```
+
+   `key` is an opaque dedup token — typically the deprecated symbol's
+   name. Fires `console.warn` at most once per process per key.
+   Silent under `NODE_ENV === "test"`.
+3. Land the rename in the same commit as the deprecation; the
+   `[Unreleased]` CHANGELOG entry goes under **Deprecated** with a
+   one-liner pointing to the replacement.
+4. Remove the symbol entirely in the next major version. The
+   matching CHANGELOG entry goes under **Removed**.
+
 ## Reporting bugs / requesting features
 
 Use the issue templates at

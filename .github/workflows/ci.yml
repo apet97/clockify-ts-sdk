@@ -17,11 +17,15 @@ env:
 
 jobs:
   build-and-test:
-    name: Build, type-check, test
+    name: Build, type-check, test (node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
     defaults:
       run:
         working-directory: wrapper
@@ -31,10 +35,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: wrapper/package-lock.json
 
@@ -68,7 +72,17 @@ jobs:
         # when CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent.
         # GitHub-hosted CI deliberately does not get production creds.
 
+      - name: Run type tests (vitest --typecheck.only)
+        # Locks the public type surface against regressions when the
+        # generator changes. Skipped by default `npm test`; opt-in via
+        # the dedicated script.
+        run: npm run test:types
+
       - name: Pack snapshot verification
+        # Only on node 22 (the release runner). The tarball contents are
+        # node-version invariant; duplicating across matrix entries adds
+        # only flaky duplicate failure modes.
+        if: matrix.node-version == '22'
         run: |
           npm pack --dry-run --json \
             | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{console.log(JSON.parse(s)[0].files.map(f=>f.path).sort().join('\n'));})" \
@@ -78,6 +92,74 @@ jobs:
             exit 1
           fi
           echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
+
+  size:
+    name: Bundle size ceiling (size-limit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync SDK from generator output
+        run: npm run sync
+
+      - name: Build
+        run: npm run build
+
+      - name: Size check
+        run: npm run size
+
+  lint:
+    name: Lint (eslint on hand-written surface)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync SDK from generator output
+        # Needed because type-aware lint follows imports into src/.
+        # src/ is gitignored / wiped on every sync; lint config ignores
+        # src/** itself but the parser still needs the files on disk.
+        run: npm run sync
+
+      - name: Lint
+        run: npm run lint
 
   spec-check:
     name: Spec check (corrected snapshot stays clean)

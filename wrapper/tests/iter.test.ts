@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { createClockifyClient } from "../create-client.js";
 import { iterAll, iterPages, KNOWN_PAGINATED_METHODS, type PaginatedRequest } from "../iter.js";
 
@@ -213,7 +214,8 @@ describe("KNOWN_PAGINATED_METHODS", () => {
                 resource
             ];
             expect(resourceClient).toBeDefined();
-            expect(typeof resourceClient[method]).toBe("function");
+            // After `toBeDefined`, narrow for `noUncheckedIndexedAccess`.
+            expect(typeof resourceClient?.[method]).toBe("function");
         });
     }
 

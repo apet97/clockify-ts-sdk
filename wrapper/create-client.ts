@@ -17,9 +17,9 @@
  * header by default. Opt-out + advanced configuration flow through
  * the same options object — see {@link CreateClockifyClientOptions}.
  */
+import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
-import { composedFetch, type ComposedFetchHooks, type RetryPolicy } from "./composed-fetch.js";
 
 type WithoutAuthOrEnhancements = Omit<
     BaseClientOptions,

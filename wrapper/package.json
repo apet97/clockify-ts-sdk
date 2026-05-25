@@ -1,6 +1,6 @@
 {
     "name": "clockify-sdk-ts",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "description": "TypeScript SDK for the Clockify API — generated from the canonical OpenAPI by Fern, wrapped with a publishable package layout.",
     "license": "MIT",
     "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
@@ -25,6 +25,7 @@
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
     "types": "./dist/esm/index.d.ts",
+    "sideEffects": false,
     "exports": {
         ".": {
             "import": {
@@ -95,6 +96,26 @@
                 "types": "./dist/cjs/with-response.d.ts",
                 "default": "./dist/cjs/with-response.js"
             }
+        },
+        "./errors": {
+            "import": {
+                "types": "./dist/esm/errors.d.ts",
+                "default": "./dist/esm/errors.js"
+            },
+            "require": {
+                "types": "./dist/cjs/errors.d.ts",
+                "default": "./dist/cjs/errors.js"
+            }
+        },
+        "./deprecation": {
+            "import": {
+                "types": "./dist/esm/deprecation.d.ts",
+                "default": "./dist/esm/deprecation.js"
+            },
+            "require": {
+                "types": "./dist/cjs/deprecation.d.ts",
+                "default": "./dist/cjs/deprecation.js"
+            }
         }
     },
     "files": [
@@ -118,17 +139,26 @@
         "docs:resources": "tsx scripts/gen-resource-docs.ts",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
         "clean": "rm -rf dist",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:types": "vitest --typecheck.only --run",
+        "size": "size-limit",
         "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build && npm run build:smoke"
     },
     "devDependencies": {
+        "@size-limit/file": "^12.1.0",
         "@types/node": "^22",
+        "eslint": "^9.39.4",
+        "eslint-plugin-import-x": "^4.16.2",
         "prettier": "^3.8.3",
+        "size-limit": "^12.1.0",
         "tsx": "^4.22.3",
         "typedoc": "^0.28.19",
         "typescript": "^5.6.0",
+        "typescript-eslint": "^8.59.4",
         "vitest": "^4.1.4"
     }
 }

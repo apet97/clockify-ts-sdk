@@ -20,6 +20,18 @@ export {
     UnauthorizedError,
 } from "./src/api/errors/index.js";
 export {
+    ConflictError,
+    InternalServerError,
+    isConflictError,
+    isInternalServerError,
+    isRateLimitError,
+    isServiceUnavailableError,
+    promoteApiError,
+    RateLimitError,
+    ServiceUnavailableError,
+} from "./errors.js";
+export { warnOnce } from "./deprecation.js";
+export {
     createClockifyClient,
     type ClockifyClientEnhancements,
     type CreateClockifyClientOptions,

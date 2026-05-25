@@ -4,6 +4,7 @@
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
         "strict": true,
+        "noUncheckedIndexedAccess": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "lib": ["ES2023", "DOM", "DOM.Iterable"],
@@ -17,7 +18,9 @@
             "clockify-sdk-ts/iter": ["./iter.ts"],
             "clockify-sdk-ts/webhooks": ["./webhooks.ts"],
             "clockify-sdk-ts/pagination": ["./pagination.ts"],
-            "clockify-sdk-ts/with-response": ["./with-response.ts"]
+            "clockify-sdk-ts/with-response": ["./with-response.ts"],
+            "clockify-sdk-ts/errors": ["./errors.ts"],
+            "clockify-sdk-ts/deprecation": ["./deprecation.ts"]
         }
     },
     "include": [
@@ -29,6 +32,8 @@
         "pagination.ts",
         "webhooks.ts",
         "with-response.ts",
+        "errors.ts",
+        "deprecation.ts",
         "tests/**/*.ts",
         "examples/**/*.ts",
         "scripts/**/*.ts"

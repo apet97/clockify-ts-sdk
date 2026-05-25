@@ -262,6 +262,10 @@ Every non-2xx throws a typed error:
 | `ForbiddenError`          | 403    | Authenticated but not permitted. |
 | `NotFoundError`           | 404    | Resource doesn't exist or doesn't belong to this workspace. |
 | `MethodNotAllowedError`   | 405    | Wrong verb (rare). |
+| `ConflictError`           | 409    | Idempotency / uniqueness conflict (e.g. duplicate tag). |
+| `RateLimitError`          | 429    | Rate limit exceeded. Carries `retryAfterMs` + `rateLimitResetAt`. |
+| `InternalServerError`     | 500    | Upstream failure. |
+| `ServiceUnavailableError` | 503    | Backend overloaded or maintenance. |
 | `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response. |
 
 `instanceof` checks work (each constructor calls
@@ -269,15 +273,19 @@ Every non-2xx throws a typed error:
 
 ```typescript
 import {
-    ClockifyApiError, UnauthorizedError, NotFoundError,
-    getRequestIdFromError,
+    ClockifyApiError, NotFoundError, RateLimitError,
+    promoteApiError, getRequestIdFromError,
 } from "clockify-sdk-ts";
 
 try {
     await client.tags.get({ workspaceId: "...", tagId: "deleted-tag-id" });
-} catch (err) {
-    if (err instanceof NotFoundError)         console.log("tag is gone");
-    else if (err instanceof UnauthorizedError) console.error("auth failed:", err.body);
+} catch (raw) {
+    // 429/409/500/503 are not in the OpenAPI spec per endpoint, so
+    // Fern throws the base ClockifyApiError. `promoteApiError` swaps
+    // it for the matching subclass when one exists.
+    const err = promoteApiError(raw);
+    if (err instanceof NotFoundError)        console.log("tag is gone");
+    else if (err instanceof RateLimitError)  await sleep(err.retryAfterMs ?? 1000);
     else if (err instanceof ClockifyApiError) {
         console.error(
             `request ${getRequestIdFromError(err)} failed with ${err.statusCode}:`,
@@ -291,6 +299,12 @@ try {
 `getRequestIdFromError` pulls the `X-Request-Id` the wrapper
 injected on the outgoing request — use it to correlate client logs
 with server traces.
+
+`promoteApiError(err)` is a no-op on values it doesn't recognise, so
+it's safe to drop into any existing catch. Type-guard predicates
+(`isRateLimitError`, `isConflictError`, `isInternalServerError`,
+`isServiceUnavailableError`) are exported too if you prefer
+narrowing without re-allocating the error.
 
 ## Retries
 

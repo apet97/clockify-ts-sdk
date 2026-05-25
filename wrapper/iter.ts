@@ -248,10 +248,10 @@ export async function* iterPages<TRequest, TItem>(
         let lastPageFromHeader: boolean | undefined;
         if (hasWithRawResponse(result)) {
             const wrapped = await result.withRawResponse();
-            items = wrapped.data as readonly TItem[];
+            items = wrapped.data;
             lastPageFromHeader = parseLastPageHeader(wrapped.rawResponse.headers.get("Last-Page"));
         } else {
-            items = (await result) as readonly TItem[];
+            items = (await result);
         }
 
         // Combine signals: header `true` is authoritative stop;
