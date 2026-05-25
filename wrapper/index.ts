@@ -97,3 +97,4 @@ export {
     type WebhookEventName,
 } from "./webhook-events.js";
 export { otelHooks, type OtelHooksOptions, type OtelLikeSpan } from "./otel-hooks.js";
+export { clockifyHealth, type HealthCheckResult } from "./health.js";

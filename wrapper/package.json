@@ -156,6 +156,16 @@
                 "types": "./dist/cjs/scoped-client.d.ts",
                 "default": "./dist/cjs/scoped-client.js"
             }
+        },
+        "./health": {
+            "import": {
+                "types": "./dist/esm/health.d.ts",
+                "default": "./dist/esm/health.js"
+            },
+            "require": {
+                "types": "./dist/cjs/health.d.ts",
+                "default": "./dist/cjs/health.js"
+            }
         }
     },
     "files": [

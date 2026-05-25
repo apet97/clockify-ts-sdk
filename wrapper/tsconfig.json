@@ -24,7 +24,8 @@
             "clockify-sdk-ts/errors": ["./errors.ts"],
             "clockify-sdk-ts/deprecation": ["./deprecation.ts"],
             "clockify-sdk-ts/scoped-client": ["./scoped-client.ts"],
-            "clockify-sdk-ts/otel-hooks": ["./otel-hooks.ts"]
+            "clockify-sdk-ts/otel-hooks": ["./otel-hooks.ts"],
+            "clockify-sdk-ts/health": ["./health.ts"]
         }
     },
     "include": [
@@ -42,6 +43,7 @@
         "deprecation.ts",
         "scoped-client.ts",
         "otel-hooks.ts",
+        "health.ts",
         "tests/**/*.ts",
         "examples/**/*.ts",
         "scripts/**/*.ts"
