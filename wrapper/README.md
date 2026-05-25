@@ -7,6 +7,8 @@
 [![install size](https://packagephobia.com/badge?p=clockify-sdk-ts)](https://packagephobia.com/result?p=clockify-sdk-ts)
 [![sigstore provenance](https://img.shields.io/badge/sigstore-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
 
+**Reference docs:** <https://apet97.github.io/clockify-ts-sdk/>
+
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by
 [Fern](https://buildwithfern.com), wrapped with a publishable npm
