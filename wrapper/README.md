@@ -394,7 +394,14 @@ Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
 const client = createClockifyClient({
     logging: {
         level: "debug",
-        logger: (level, msg, meta) => console.log(level, msg, meta),
+        // ILogger-shaped object (debug/info/warn/error methods).
+        // Pino, bunyan, winston are all shape-compatible.
+        logger: {
+            debug: (msg, ...args) => console.debug(msg, ...args),
+            info:  (msg, ...args) => console.info(msg, ...args),
+            warn:  (msg, ...args) => console.warn(msg, ...args),
+            error: (msg, ...args) => console.error(msg, ...args),
+        },
     },
 });
 ```
@@ -403,7 +410,8 @@ const client = createClockifyClient({
 response status; `error` logs only failures. Sensitive headers
 (`Authorization`, `X-Api-Key`, `X-Addon-Token`, plus 12 more),
 sensitive query params, and basic-auth in URLs are redacted before
-they reach your logger.
+they reach your logger. For a fully-wired Pino adapter see
+[`examples/structured-logging.ts`](./examples/structured-logging.ts).
 
 ## Custom fetch and proxies
 
