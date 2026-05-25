@@ -17,7 +17,8 @@
             "clockify-sdk-ts/iter": ["./iter.ts"],
             "clockify-sdk-ts/webhooks": ["./webhooks.ts"],
             "clockify-sdk-ts/pagination": ["./pagination.ts"],
-            "clockify-sdk-ts/with-response": ["./with-response.ts"]
+            "clockify-sdk-ts/with-response": ["./with-response.ts"],
+            "clockify-sdk-ts/errors": ["./errors.ts"]
         }
     },
     "include": [
@@ -29,6 +30,7 @@
         "pagination.ts",
         "webhooks.ts",
         "with-response.ts",
+        "errors.ts",
         "tests/**/*.ts",
         "examples/**/*.ts",
         "scripts/**/*.ts"

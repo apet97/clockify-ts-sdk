@@ -7,6 +7,28 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- **Typed status-class errors: `RateLimitError` (429),
+  `ConflictError` (409), `InternalServerError` (500),
+  `ServiceUnavailableError` (503).** All extend `ClockifyApiError`
+  so existing `instanceof ClockifyApiError` catches keep working.
+  Available from the package root and the `clockify-sdk-ts/errors`
+  subpath. `RateLimitError` parses `Retry-After` (seconds or
+  HTTP-date) and `X-RateLimit-Reset` (epoch seconds) into
+  structured `retryAfterMs: number | undefined` and
+  `rateLimitResetAt: Date | undefined` fields — no more digging
+  into raw response headers.
+- **`promoteApiError(err)` helper.** No-op for non-`ClockifyApiError`
+  values; for a base `ClockifyApiError` with status 409/429/500/503,
+  returns the matching subclass instance with all fields preserved.
+  Drop-in for any catch site. The Fern-generated client throws
+  base `ClockifyApiError` for statuses not documented per-endpoint
+  in the OpenAPI spec, so this helper fills that gap.
+- **Type-guard predicates: `isRateLimitError`, `isConflictError`,
+  `isInternalServerError`, `isServiceUnavailableError`.** Match on
+  `statusCode` without re-allocating the error.
+
 ### Removed
 
 - **Three more phantom routes quarantined (G.1 edge-case follow-up).**

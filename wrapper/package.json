@@ -96,6 +96,16 @@
                 "types": "./dist/cjs/with-response.d.ts",
                 "default": "./dist/cjs/with-response.js"
             }
+        },
+        "./errors": {
+            "import": {
+                "types": "./dist/esm/errors.d.ts",
+                "default": "./dist/esm/errors.js"
+            },
+            "require": {
+                "types": "./dist/cjs/errors.d.ts",
+                "default": "./dist/cjs/errors.js"
+            }
         }
     },
     "files": [

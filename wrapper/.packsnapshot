@@ -8,6 +8,10 @@ dist/cjs/create-client.d.ts
 dist/cjs/create-client.d.ts.map
 dist/cjs/create-client.js
 dist/cjs/create-client.js.map
+dist/cjs/errors.d.ts
+dist/cjs/errors.d.ts.map
+dist/cjs/errors.js
+dist/cjs/errors.js.map
 dist/cjs/index.d.ts
 dist/cjs/index.d.ts.map
 dist/cjs/index.js
@@ -2869,6 +2873,10 @@ dist/esm/create-client.d.ts
 dist/esm/create-client.d.ts.map
 dist/esm/create-client.js
 dist/esm/create-client.js.map
+dist/esm/errors.d.ts
+dist/esm/errors.d.ts.map
+dist/esm/errors.js
+dist/esm/errors.js.map
 dist/esm/index.d.ts
 dist/esm/index.d.ts.map
 dist/esm/index.js
