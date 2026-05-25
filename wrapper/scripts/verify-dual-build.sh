@@ -14,7 +14,7 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" node --input-type=module -e "
@@ -63,7 +63,10 @@ if (typeof wr.withResponse !== 'function') { console.error('CJS subpath with-res
 if (typeof er.RateLimitError !== 'function') { console.error('CJS subpath errors broken'); process.exit(1); }
 if (typeof er.promoteApiError !== 'function') { console.error('CJS subpath errors.promoteApiError broken'); process.exit(1); }
 if (typeof dp.warnOnce !== 'function') { console.error('CJS subpath deprecation.warnOnce broken'); process.exit(1); }
-console.log('OK: All 9 CJS subpaths resolve');
+const we = require('./dist/cjs/webhook-events.js');
+if (!Array.isArray(we.CLOCKIFY_WEBHOOK_EVENT_NAMES)) { console.error('CJS subpath webhook-events.CLOCKIFY_WEBHOOK_EVENT_NAMES missing'); process.exit(1); }
+if (we.CLOCKIFY_WEBHOOK_EVENT_NAMES.length !== 50) { console.error('CJS subpath webhook-events: expected 50 events, got', we.CLOCKIFY_WEBHOOK_EVENT_NAMES.length); process.exit(1); }
+console.log('OK: All 10 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"

@@ -77,6 +77,16 @@
                 "default": "./dist/cjs/webhooks.js"
             }
         },
+        "./webhook-events": {
+            "import": {
+                "types": "./dist/esm/webhook-events.d.ts",
+                "default": "./dist/esm/webhook-events.js"
+            },
+            "require": {
+                "types": "./dist/cjs/webhook-events.d.ts",
+                "default": "./dist/cjs/webhook-events.js"
+            }
+        },
         "./pagination": {
             "import": {
                 "types": "./dist/esm/pagination.d.ts",
