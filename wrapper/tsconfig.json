@@ -18,6 +18,7 @@
             "clockify-sdk-ts/iter": ["./iter.ts"],
             "clockify-sdk-ts/webhooks": ["./webhooks.ts"],
             "clockify-sdk-ts/pagination": ["./pagination.ts"],
+            "clockify-sdk-ts/paginated-list": ["./paginated-list.ts"],
             "clockify-sdk-ts/with-response": ["./with-response.ts"],
             "clockify-sdk-ts/errors": ["./errors.ts"],
             "clockify-sdk-ts/deprecation": ["./deprecation.ts"]
@@ -30,6 +31,7 @@
         "composed-fetch.ts",
         "iter.ts",
         "pagination.ts",
+        "paginated-list.ts",
         "webhooks.ts",
         "with-response.ts",
         "errors.ts",

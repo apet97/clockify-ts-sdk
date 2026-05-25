@@ -87,6 +87,16 @@
                 "default": "./dist/cjs/pagination.js"
             }
         },
+        "./paginated-list": {
+            "import": {
+                "types": "./dist/esm/paginated-list.d.ts",
+                "default": "./dist/esm/paginated-list.js"
+            },
+            "require": {
+                "types": "./dist/cjs/paginated-list.d.ts",
+                "default": "./dist/cjs/paginated-list.js"
+            }
+        },
         "./with-response": {
             "import": {
                 "types": "./dist/esm/with-response.d.ts",

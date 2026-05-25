@@ -68,6 +68,11 @@ export {
 } from "./iter.js";
 export { paginate, type PaginateOptions } from "./pagination.js";
 export {
+    paginatedList,
+    PaginatedList,
+    type PaginatedListToArrayOptions,
+} from "./paginated-list.js";
+export {
     withResponse,
     type ResponseAwarePromise,
     type WithResponseResult,

@@ -14,7 +14,7 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce"
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" node --input-type=module -e "
@@ -56,11 +56,14 @@ if (typeof cc.createClockifyClient !== 'function') { console.error('CJS subpath 
 if (typeof it.iterAll !== 'function') { console.error('CJS subpath iter broken'); process.exit(1); }
 if (typeof wh.verifyClockifyWebhook !== 'function') { console.error('CJS subpath webhooks broken'); process.exit(1); }
 if (typeof pg.paginate !== 'function') { console.error('CJS subpath pagination broken'); process.exit(1); }
+const pl = require('./dist/cjs/paginated-list.js');
+if (typeof pl.paginatedList !== 'function') { console.error('CJS subpath paginated-list.paginatedList broken'); process.exit(1); }
+if (typeof pl.PaginatedList !== 'function') { console.error('CJS subpath paginated-list.PaginatedList broken'); process.exit(1); }
 if (typeof wr.withResponse !== 'function') { console.error('CJS subpath with-response broken'); process.exit(1); }
 if (typeof er.RateLimitError !== 'function') { console.error('CJS subpath errors broken'); process.exit(1); }
 if (typeof er.promoteApiError !== 'function') { console.error('CJS subpath errors.promoteApiError broken'); process.exit(1); }
 if (typeof dp.warnOnce !== 'function') { console.error('CJS subpath deprecation.warnOnce broken'); process.exit(1); }
-console.log('OK: All 8 CJS subpaths resolve');
+console.log('OK: All 9 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"
