@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    ClockifyConnectionError,
     ConflictError,
     InternalServerError,
     isClockifyApiError,
     isConflictError,
+    isConnectionError,
     isInternalServerError,
     isRateLimitError,
     isServiceUnavailableError,
@@ -204,5 +206,30 @@ describe("type guards", () => {
         expect(isInternalServerError(new ClockifyApiError({ statusCode: 503 }))).toBe(false);
         expect(isServiceUnavailableError(new ClockifyApiError({ statusCode: 503 }))).toBe(true);
         expect(isServiceUnavailableError(new ClockifyApiError({ statusCode: 502 }))).toBe(false);
+    });
+});
+
+describe("ClockifyConnectionError", () => {
+    it("subclasses ClockifyApiError", () => {
+        const err = new ClockifyConnectionError({
+            message: "fetch failed",
+            cause: new TypeError("fetch failed"),
+        });
+        expect(err).toBeInstanceOf(ClockifyConnectionError);
+        expect(err).toBeInstanceOf(ClockifyApiError);
+        expect(err.name).toBe("ClockifyConnectionError");
+        expect(err.message).toContain("fetch failed");
+        expect(err.cause).toBeInstanceOf(TypeError);
+        expect(err.statusCode).toBeUndefined();
+    });
+
+    it("isConnectionError narrows the union", () => {
+        const err: unknown = new ClockifyConnectionError({
+            message: "ENETUNREACH",
+            cause: new Error("ENETUNREACH"),
+        });
+        expect(isConnectionError(err)).toBe(true);
+        expect(isConnectionError(new Error("plain"))).toBe(false);
+        expect(isConnectionError(null)).toBe(false);
     });
 });
