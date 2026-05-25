@@ -20,10 +20,12 @@ export {
     UnauthorizedError,
 } from "./src/api/errors/index.js";
 export {
+    ClockifyConnectionError,
     ConflictError,
     InternalServerError,
     isClockifyApiError,
     isConflictError,
+    isConnectionError,
     isInternalServerError,
     isRateLimitError,
     isServiceUnavailableError,

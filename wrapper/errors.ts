@@ -29,7 +29,12 @@ import type { RawResponse } from "./src/core/index.js";
 import { ClockifyApiError } from "./src/errors/index.js";
 
 interface SubclassOpts {
-    statusCode: number;
+    /** HTTP status code. Optional for the non-status-code subclasses
+     *  (`ClockifyConnectionError`, `ClockifyAbortError`); required in
+     *  spirit for every other subclass (`RateLimitError`, `ConflictError`,
+     *  etc.) but typed as optional so the non-status branch in
+     *  `promoteApiError` can construct cleanly. */
+    statusCode?: number;
     body?: unknown;
     rawResponse?: RawResponse;
     cause?: unknown;
@@ -92,6 +97,41 @@ export class ServiceUnavailableError extends ClockifyApiError {
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "ServiceUnavailableError";
+    }
+}
+
+/**
+ * Thrown / promoted when the underlying `fetch` reports a network
+ * failure with no HTTP response (e.g. DNS failure, connection
+ * reset, TLS handshake failure, `TypeError: fetch failed` in
+ * Node's built-in fetch).
+ *
+ * The Fern-generated client wraps these as a base
+ * `ClockifyApiError` with `statusCode == null` and `cause` set to
+ * the underlying `TypeError` / `Error`. `promoteApiError(err)`
+ * detects this shape and returns a `ClockifyConnectionError` so
+ * callers can do `if (err instanceof ClockifyConnectionError)`
+ * instead of inspecting `err.cause?.name`.
+ *
+ * @example
+ * ```ts
+ * import { isConnectionError, createClockifyClient } from "clockify-sdk-ts";
+ *
+ * try { await client.tags.list({...}); }
+ * catch (err) {
+ *   if (isConnectionError(err)) {
+ *     // retry with exponential backoff, or fail fast and surface
+ *     // a user-facing "offline?" message
+ *   } else { throw err; }
+ * }
+ * ```
+ */
+export class ClockifyConnectionError extends ClockifyApiError {
+    constructor(opts: SubclassOpts) {
+        super({ message: opts.message ?? "ClockifyConnectionError", ...opts });
+        Object.setPrototypeOf(this, new.target.prototype);
+        if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
+        this.name = "ClockifyConnectionError";
     }
 }
 
@@ -164,6 +204,16 @@ export function isInternalServerError(err: unknown): err is InternalServerError 
 /** Type guard: `true` if `err` is a `ClockifyApiError` with status 503. */
 export function isServiceUnavailableError(err: unknown): err is ServiceUnavailableError {
     return err instanceof ClockifyApiError && err.statusCode === 503;
+}
+
+/**
+ * Type guard: `true` if `err` is a `ClockifyConnectionError`
+ * (network failure with no HTTP response). Use this at catch
+ * sites where you want to differentiate "couldn't reach the
+ * server" from "server returned an error status".
+ */
+export function isConnectionError(err: unknown): err is ClockifyConnectionError {
+    return err instanceof ClockifyConnectionError;
 }
 
 // ---------- header parsers ----------
