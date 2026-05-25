@@ -19,7 +19,8 @@
         "pagination.ts",
         "webhooks.ts",
         "webhook-events.ts",
-        "with-response.ts"
+        "with-response.ts",
+        "scoped-client.ts"
     ],
     "exclude": ["node_modules", "dist", "tests"]
 }

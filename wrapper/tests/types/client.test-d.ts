@@ -1,26 +1,25 @@
 import { expectTypeOf, test } from "vitest";
 
-import { createClockifyClient } from "../../create-client.js";
-import type { ClockifyApiClient } from "../../src/index.js";
+import { createClockifyClient, type ClockifyClient } from "../../create-client.js";
 
-test("createClockifyClient with explicit apiKey returns ClockifyApiClient", () => {
+test("createClockifyClient with explicit apiKey returns ClockifyClient", () => {
     const c = createClockifyClient({ apiKey: "x" });
-    expectTypeOf(c).toEqualTypeOf<ClockifyApiClient>();
+    expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });
 
-test("createClockifyClient with explicit addonToken returns ClockifyApiClient", () => {
+test("createClockifyClient with explicit addonToken returns ClockifyClient", () => {
     const c = createClockifyClient({ addonToken: "x" });
-    expectTypeOf(c).toEqualTypeOf<ClockifyApiClient>();
+    expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });
 
-test("createClockifyClient with no arguments returns ClockifyApiClient (env fallback)", () => {
+test("createClockifyClient with no arguments returns ClockifyClient (env fallback)", () => {
     const c = createClockifyClient();
-    expectTypeOf(c).toEqualTypeOf<ClockifyApiClient>();
+    expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });
 
-test("createClockifyClient with empty options returns ClockifyApiClient (env fallback)", () => {
+test("createClockifyClient with empty options returns ClockifyClient (env fallback)", () => {
     const c = createClockifyClient({});
-    expectTypeOf(c).toEqualTypeOf<ClockifyApiClient>();
+    expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });
 
 test("createClockifyClient rejects apiKey + addonToken simultaneously", () => {
@@ -40,5 +39,5 @@ test("createClockifyClient accepts enhancement options alongside auth", () => {
             },
         },
     });
-    expectTypeOf(c).toEqualTypeOf<ClockifyApiClient>();
+    expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });

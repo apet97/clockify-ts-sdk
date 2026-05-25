@@ -39,9 +39,11 @@ export {
 export { warnOnce } from "./deprecation.js";
 export {
     createClockifyClient,
+    type ClockifyClient,
     type ClockifyClientEnhancements,
     type CreateClockifyClientOptions,
 } from "./create-client.js";
+export { Workspace, wrapResource } from "./scoped-client.js";
 export {
     composedFetch,
     defaultUserAgent,
