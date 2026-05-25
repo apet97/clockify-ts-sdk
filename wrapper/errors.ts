@@ -194,21 +194,56 @@ const STATUS_TO_CTOR = new Map<number, new (o: SubclassOpts) => ClockifyApiError
  * The Fern-generated client already throws typed subclasses for status
  * codes documented in the OpenAPI spec (e.g., 400 BadRequestError,
  * 401 UnauthorizedError). This helper fills the gaps for codes the
- * spec didn't document — currently 409, 429, 500, 503.
+ * spec didn't document — currently 409, 429, 500, 503 — plus the
+ * non-status-code cases:
  *
- * Existing subclass instances pass through unchanged.
+ * - `cause.name === "AbortError"` → promoted to `ClockifyAbortError`
+ * - any other non-null `cause` with no status code → promoted to
+ *   `ClockifyConnectionError` (DNS failure, TCP reset, TLS error, etc.)
+ *
+ * Existing subclass instances pass through unchanged (idempotent).
  */
 export function promoteApiError(err: unknown): unknown {
     if (!(err instanceof ClockifyApiError)) return err;
+    // Pre-promoted instances pass through (idempotent).
+    if (
+        err instanceof ClockifyConnectionError ||
+        err instanceof ClockifyAbortError
+    ) {
+        return err;
+    }
     // Destructure up front: `err instanceof Ctor` below narrows `err`'s
     // type and TS would otherwise widen the trailing field access to
     // `never`. The fields are inherent to `ClockifyApiError`.
     const { statusCode, body, rawResponse, cause, message } = err;
-    if (statusCode == null) return err;
+
+    // Non-status-code branch: inspect `cause` to differentiate
+    // AbortSignal cancellations from generic network failures.
+    // Fern's `handleNonStatusCodeError` wraps the underlying
+    // `TypeError: fetch failed` / `DOMException("…", "AbortError")`
+    // as `ClockifyApiError({ cause, statusCode: undefined })` —
+    // see `src/errors/handleNonStatusCodeError.ts` case "unknown".
+    if (statusCode == null) {
+        if (isAbortCause(cause)) {
+            return new ClockifyAbortError({ statusCode, body, rawResponse, cause, message });
+        }
+        if (cause != null) {
+            return new ClockifyConnectionError({ statusCode, body, rawResponse, cause, message });
+        }
+        return err;
+    }
+
     const Ctor = STATUS_TO_CTOR.get(statusCode);
     if (Ctor == null) return err;
     if (err instanceof Ctor) return err;
     return new Ctor({ statusCode, body, rawResponse, cause, message });
+}
+
+function isAbortCause(cause: unknown): boolean {
+    if (cause == null) return false;
+    if (typeof cause !== "object") return false;
+    const name = (cause as { name?: unknown }).name;
+    return name === "AbortError";
 }
 
 /**
