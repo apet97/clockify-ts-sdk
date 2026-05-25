@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+
 import { paginatedList, PaginatedList } from "../paginated-list.js";
 
 describe("PaginatedList", () => {
