@@ -99,4 +99,28 @@ describe("paginate", () => {
         };
         await expect(collect(paginate(fetchPage))).rejects.toThrow("upstream-403");
     });
+
+    it("rejects pageSize <= 0 with RangeError", async () => {
+        const fetchPage = async (_p: number, _s: number) => [] as number[];
+        await expect(collect(paginate(fetchPage, { pageSize: 0 }))).rejects.toThrow(
+            /pageSize must be > 0/,
+        );
+        await expect(collect(paginate(fetchPage, { pageSize: -5 }))).rejects.toThrow(RangeError);
+    });
+
+    it("rejects maxPages <= 0 with RangeError", async () => {
+        const fetchPage = async (_p: number, _s: number) => [] as number[];
+        await expect(collect(paginate(fetchPage, { maxPages: 0 }))).rejects.toThrow(
+            /maxPages must be > 0/,
+        );
+        await expect(collect(paginate(fetchPage, { maxPages: -1 }))).rejects.toThrow(RangeError);
+    });
+
+    it("rejects startPage <= 0 with RangeError", async () => {
+        const fetchPage = async (_p: number, _s: number) => [] as number[];
+        await expect(collect(paginate(fetchPage, { startPage: 0 }))).rejects.toThrow(
+            /startPage must be > 0/,
+        );
+        await expect(collect(paginate(fetchPage, { startPage: -3 }))).rejects.toThrow(RangeError);
+    });
 });

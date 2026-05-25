@@ -22,6 +22,7 @@ export {
 export {
     ConflictError,
     InternalServerError,
+    isClockifyApiError,
     isConflictError,
     isInternalServerError,
     isRateLimitError,

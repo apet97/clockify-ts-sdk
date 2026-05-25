@@ -7,6 +7,76 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-25
+
+Continued polish on top of v0.6.0. Adds one new public API symbol
+(`isClockifyApiError` catch-all type guard), expands documentation
++ examples to cover every v0.6.0 surface, and fills test-coverage
+gaps in pagination input validation and rate-limit header parsing.
+No breaking changes.
+
+### Added
+
+- **`isClockifyApiError(err)` catch-all type guard.** Symmetric
+  with the per-status guards added in v0.6.0
+  (`isRateLimitError`, `isConflictError`, etc.). Returns `true` for
+  the base `ClockifyApiError` and every subclass — useful at the
+  outer edge of a `catch` to rethrow non-SDK failures.
+- **5 new runnable examples** in `examples/`:
+  - `typed-errors.ts` — three catch-block styles using the v0.6.0+
+    error hierarchy (outer-edge guard, promote-then-narrow,
+    direct type-guard narrowing).
+  - `structured-logging.ts` — Pino-shaped `ILogger` plugged into
+    the SDK's `logging.logger` + per-stage hooks for structured
+    request / response / error / retry events.
+  - `per-request-overrides.ts` — every `requestOptions` override
+    worth knowing (timeout, maxRetries: 0, abortSignal, headers
+    for `Idempotency-Key`).
+  - `idempotency.ts` — `Idempotency-Key` pattern via
+    `requestOptions.headers` with notes on Clockify's current
+    server-side support state.
+  - `bulk-archive.ts` — real-world job pattern: `iterAll` for
+    memory-bounded pagination, bounded parallelism, per-item
+    error isolation via `promoteApiError` + `isClockifyApiError`,
+    dry-run/apply split.
+
+### Changed
+
+- **README**: replaced the now-stale "Why no linter" section with
+  "Quality and tooling" — an 11-row matrix listing every CI gate
+  (type-check, type tests, lint, format, size-limit, dual build,
+  tarball snapshot, provenance, Bun/Deno smoke, CodeQL,
+  spec-check). New "Deprecations" section showing the
+  `warnOnce` convention.
+- **README → Logging section**: fixed a bug — the prior code
+  snippet showed `logger: (level, msg, meta) => ...` which is the
+  wrong shape. Fern's `logging.logger` expects an `ILogger`
+  object with `debug/info/warn/error` methods. Updated snippet
+  + cross-reference to the new `examples/structured-logging.ts`
+  for a fully-wired Pino adapter.
+- **README badges**: added CodeQL workflow badge + sigstore
+  provenance badge.
+- **CONTRIBUTING.md**: added "Releasing a new version" section
+  (9-step tag-day playbook) + "Debugging tips" section (5 recipes:
+  live-test repro, `X-Request-Id` correlation, sync drift,
+  bundle-size regression triage, tarball drift).
+- **JSDoc polish** on `paginate` (added `@throws RangeError` +
+  cross-reference to `iterAll`/`iterPages`), `withResponse`
+  (clarified error propagation behavior), `composedFetch`
+  (rewrote function-level paragraph + added `@throws TypeError`
+  for the missing-fetch path).
+
+### Tests
+
+- `pagination.test.ts` (+3): `pageSize` / `maxPages` / `startPage`
+  <= 0 should throw `RangeError` with a specific message — the
+  validation paths in `pagination.ts:45-53` were untested.
+- `errors.test.ts` (+4): rate-limit header parsing edge cases
+  (past HTTP-date in `Retry-After`, malformed string,
+  past epoch in `X-RateLimit-Reset`, case-insensitive lookup).
+
+152 unit cases now (was 145).
+
 ## [0.6.0] — 2026-05-25
 
 Polish-pass release: typed status-class errors, ESLint, bundle

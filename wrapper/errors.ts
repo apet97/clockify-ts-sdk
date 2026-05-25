@@ -127,6 +127,25 @@ export function promoteApiError(err: unknown): unknown {
     return new Ctor({ statusCode, body, rawResponse, cause, message });
 }
 
+/**
+ * Type guard: `true` if `err` is any `ClockifyApiError` (base or any
+ * subclass — `RateLimitError`, `NotFoundError`, etc.). The widest of
+ * the type-guard family; useful at the outer edge of a `catch` where
+ * you want one check that covers everything the SDK throws.
+ *
+ * @example
+ * ```ts
+ * try { await client.tags.list({...}); }
+ * catch (err) {
+ *     if (!isClockifyApiError(err)) throw err;  // non-API failure
+ *     logger.error({ status: err.statusCode, requestId: getRequestIdFromError(err) });
+ * }
+ * ```
+ */
+export function isClockifyApiError(err: unknown): err is ClockifyApiError {
+    return err instanceof ClockifyApiError;
+}
+
 /** Type guard: `true` if `err` is a `ClockifyApiError` with status 429. */
 export function isRateLimitError(err: unknown): err is RateLimitError {
     return err instanceof ClockifyApiError && err.statusCode === 429;

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     ConflictError,
     InternalServerError,
+    isClockifyApiError,
     isConflictError,
     isInternalServerError,
     isRateLimitError,
@@ -64,6 +65,46 @@ describe("RateLimitError", () => {
         const err = new RateLimitError({ statusCode: 429, rawResponse: H({}) as never });
         expect(err.retryAfterMs).toBeUndefined();
         expect(err.rateLimitResetAt).toBeUndefined();
+    });
+
+    it("returns undefined for Retry-After HTTP-date in the past", () => {
+        const past = new Date(Date.now() - 60_000).toUTCString();
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": past }) as never,
+        });
+        // Past dates produce a non-positive dateMs and fall through.
+        expect(err.retryAfterMs).toBeUndefined();
+    });
+
+    it("returns undefined for malformed Retry-After string", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": "not-a-number-or-date" }) as never,
+        });
+        expect(err.retryAfterMs).toBeUndefined();
+        expect(err.rateLimitResetAt).toBeUndefined();
+    });
+
+    it("returns undefined for X-RateLimit-Reset epoch seconds in the past", () => {
+        const pastSec = Math.floor(Date.now() / 1000) - 60;
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "X-RateLimit-Reset": String(pastSec) }) as never,
+        });
+        // Past resets shouldn't yield a positive retryAfterMs; the
+        // reset Date itself still parses (the field is informational).
+        expect(err.retryAfterMs).toBeUndefined();
+        expect(err.rateLimitResetAt).toBeInstanceOf(Date);
+        expect(err.rateLimitResetAt!.getTime()).toBe(pastSec * 1000);
+    });
+
+    it("is case-insensitive on header lookup", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "retry-after": "15" }) as never,
+        });
+        expect(err.retryAfterMs).toBe(15_000);
     });
 
     it("is an instance of ClockifyApiError (preserves existing catch sites)", () => {
@@ -139,6 +180,16 @@ describe("promoteApiError", () => {
 });
 
 describe("type guards", () => {
+    it("isClockifyApiError matches any ClockifyApiError or subclass", () => {
+        expect(isClockifyApiError(new ClockifyApiError({ statusCode: 500 }))).toBe(true);
+        expect(isClockifyApiError(new RateLimitError({ statusCode: 429 }))).toBe(true);
+        expect(isClockifyApiError(new ConflictError({ statusCode: 409 }))).toBe(true);
+        expect(isClockifyApiError(new Error("plain"))).toBe(false);
+        expect(isClockifyApiError("string")).toBe(false);
+        expect(isClockifyApiError(null)).toBe(false);
+        expect(isClockifyApiError(undefined)).toBe(false);
+    });
+
     it("isRateLimitError matches statusCode 429 on a base ClockifyApiError", () => {
         expect(isRateLimitError(new ClockifyApiError({ statusCode: 429 }))).toBe(true);
         expect(isRateLimitError(new ClockifyApiError({ statusCode: 500 }))).toBe(false);
