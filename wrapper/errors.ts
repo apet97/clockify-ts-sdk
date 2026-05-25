@@ -350,3 +350,50 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
     }
     return undefined;
 }
+
+/**
+ * Extract a stable `code` string from a `ClockifyApiError`'s body
+ * (Stripe / OpenAI / Anthropic SDK convention — server-side error
+ * codes that survive translation regardless of locale).
+ *
+ * Probes the body in this order:
+ *
+ * 1. `body.code` (string) — Clockify's documented top-level shape
+ *    for validation errors.
+ * 2. `body.error.code` (string) — nested-envelope shape used by
+ *    some endpoints.
+ *
+ * Returns `undefined` when:
+ *
+ * - `err` is not a `ClockifyApiError`.
+ * - The body is null / undefined / not an object.
+ * - Neither shape matched (the body has no `code` field).
+ *
+ * Codes are useful for branch-style error handling without
+ * pattern-matching on `error.message` (which is locale-dependent
+ * and may change wording across server versions).
+ *
+ * @example
+ * ```ts
+ * import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts";
+ *
+ * try { await client.tags.create({ workspaceId, name: "" }); }
+ * catch (err) {
+ *   if (isClockifyApiError(err) && getErrorCode(err) === "tag_already_exists") {
+ *     // dedupe — the tag is already there
+ *     return existing;
+ *   }
+ *   throw err;
+ * }
+ * ```
+ */
+export function getErrorCode(err: unknown): string | undefined {
+    if (!(err instanceof ClockifyApiError)) return undefined;
+    const body = err.body;
+    if (body == null || typeof body !== "object") return undefined;
+    const direct = (body as { code?: unknown }).code;
+    if (typeof direct === "string" && direct.length > 0) return direct;
+    const nested = (body as { error?: { code?: unknown } }).error?.code;
+    if (typeof nested === "string" && nested.length > 0) return nested;
+    return undefined;
+}
