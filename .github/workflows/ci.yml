@@ -93,6 +93,40 @@ jobs:
           fi
           echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
 
+  size:
+    name: Bundle size ceiling (size-limit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: wrapper
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: wrapper/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync SDK from generator output
+        run: npm run sync
+
+      - name: Build
+        run: npm run build
+
+      - name: Size check
+        run: npm run size
+
   lint:
     name: Lint (eslint on hand-written surface)
     runs-on: ubuntu-latest

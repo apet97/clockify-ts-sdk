@@ -135,13 +135,16 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:types": "vitest --typecheck.only --run",
+        "size": "size-limit",
         "prepublishOnly": "npm run sync && npm run type-check && npm run clean && npm run build && npm run build:smoke"
     },
     "devDependencies": {
+        "@size-limit/file": "^12.1.0",
         "@types/node": "^22",
         "eslint": "^9.39.4",
         "eslint-plugin-import-x": "^4.16.2",
         "prettier": "^3.8.3",
+        "size-limit": "^12.1.0",
         "tsx": "^4.22.3",
         "typedoc": "^0.28.19",
         "typescript": "^5.6.0",
