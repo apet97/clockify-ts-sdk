@@ -7,6 +7,20 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- **`noUncheckedIndexedAccess: true` enabled in tsconfig.json.**
+  Stainless-default strictness — index/key access now narrows to
+  `T | undefined` so callers can't accidentally treat an absent
+  entry as present. Required a single test-only fix
+  (`tests/iter.test.ts` — added `?.[method]` after the existing
+  `toBeDefined` assertion). The synced SDK (`wrapper/src/**`)
+  compiled clean under the flag on first try.
+  The companion `exactOptionalPropertyTypes` flag is held back —
+  it surfaces ~840 errors in the generated SDK that need an
+  upstream fix in `apet97/go-clockify`'s
+  `scripts/gen-clockify-openapi` first. Tracked as a follow-up.
+
 ### Added
 
 - **Typed status-class errors: `RateLimitError` (429),

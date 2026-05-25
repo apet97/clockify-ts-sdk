@@ -214,7 +214,8 @@ describe("KNOWN_PAGINATED_METHODS", () => {
                 resource
             ];
             expect(resourceClient).toBeDefined();
-            expect(typeof resourceClient[method]).toBe("function");
+            // After `toBeDefined`, narrow for `noUncheckedIndexedAccess`.
+            expect(typeof resourceClient?.[method]).toBe("function");
         });
     }
 
