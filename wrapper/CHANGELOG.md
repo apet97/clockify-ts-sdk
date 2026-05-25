@@ -28,6 +28,12 @@ once v1.0.0 ships.
 - **Type-guard predicates: `isRateLimitError`, `isConflictError`,
   `isInternalServerError`, `isServiceUnavailableError`.** Match on
   `statusCode` without re-allocating the error.
+- **`warnOnce(key, message)` helper for deprecation paths.** Lives
+  at the new `clockify-sdk-ts/deprecation` subpath and is also
+  re-exported from the root. Dedupes by `key`; silent under
+  `NODE_ENV === "test"` so the test suite isn't noisy. Two-phase
+  removal convention documented in CONTRIBUTING.md
+  (§ Deprecating a public symbol).
 
 ### Removed
 

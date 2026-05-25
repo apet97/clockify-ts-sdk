@@ -30,6 +30,7 @@ export {
     RateLimitError,
     ServiceUnavailableError,
 } from "./errors.js";
+export { warnOnce } from "./deprecation.js";
 export {
     createClockifyClient,
     type ClockifyClientEnhancements,

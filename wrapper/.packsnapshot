@@ -8,6 +8,10 @@ dist/cjs/create-client.d.ts
 dist/cjs/create-client.d.ts.map
 dist/cjs/create-client.js
 dist/cjs/create-client.js.map
+dist/cjs/deprecation.d.ts
+dist/cjs/deprecation.d.ts.map
+dist/cjs/deprecation.js
+dist/cjs/deprecation.js.map
 dist/cjs/errors.d.ts
 dist/cjs/errors.d.ts.map
 dist/cjs/errors.js
@@ -2873,6 +2877,10 @@ dist/esm/create-client.d.ts
 dist/esm/create-client.d.ts.map
 dist/esm/create-client.js
 dist/esm/create-client.js.map
+dist/esm/deprecation.d.ts
+dist/esm/deprecation.d.ts.map
+dist/esm/deprecation.js
+dist/esm/deprecation.js.map
 dist/esm/errors.d.ts
 dist/esm/errors.d.ts.map
 dist/esm/errors.js

@@ -106,6 +106,16 @@
                 "types": "./dist/cjs/errors.d.ts",
                 "default": "./dist/cjs/errors.js"
             }
+        },
+        "./deprecation": {
+            "import": {
+                "types": "./dist/esm/deprecation.d.ts",
+                "default": "./dist/esm/deprecation.js"
+            },
+            "require": {
+                "types": "./dist/cjs/deprecation.d.ts",
+                "default": "./dist/cjs/deprecation.js"
+            }
         }
     },
     "files": [
