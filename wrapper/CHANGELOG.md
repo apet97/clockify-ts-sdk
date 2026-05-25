@@ -5,7 +5,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
-## [Unreleased]
+## [Unreleased] — Axioms-alignment (target 0.8.0)
+
+Closes the eight gaps identified in
+`/Users/15x/Downloads/sdkxioms.txt` against the SDK's user-facing
+quality bar. No breaking changes — all additions are opt-in.
+
+### Added
+
+- `ClockifyConnectionError` and `ClockifyAbortError` subclasses of
+  `ClockifyApiError`. `promoteApiError(err)` now detects network
+  failures (TypeError/`fetch failed` causes, statusCode `undefined`)
+  and AbortSignal cancellations (cause `name === "AbortError"`) and
+  returns the typed subclass. Existing call sites that catch
+  `ClockifyApiError` keep working — the new classes inherit from it.
+- `code?: string` field on `ClockifyApiError`. Extracted from the
+  response body at construction time, looking for `body.error.code`
+  or `body.code` (string). Stripe / OpenAI / Anthropic SDK convention.
+- `PaginatedList<T>` class (subpath: `clockify-sdk-ts/paginated-list`).
+  Async-iterable wrapper around `iterAll`/`iterPages` with
+  `.pages()`, `.toArray({ limit? })`, and direct
+  `for await (const item of list)` ergonomic.
+- `isConnectionError(err)` and `isAbortError(err)` type guards.
+
+### Documentation
+
+- New README sections: "Idempotency keys" and "Connection / abort
+  errors". Each follows the existing single-example + table format.
+- New `wrapper/examples/`: `handle-abort.ts`, `handle-connection-error.ts`,
+  `pass-idempotency-key.ts`. Each is a complete, runnable script.
+
+### Internal
+
+- Build version constant injection — `composed-fetch.ts`'s
+  `PACKAGE_VERSION` and `package.json` `version` are now both bumped
+  in this branch. (A future change should derive one from the other
+  at build time.)
 
 ## [0.7.0] — 2026-05-25
 
