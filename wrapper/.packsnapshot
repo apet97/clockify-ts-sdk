@@ -25,6 +25,10 @@ dist/cjs/iter.d.ts.map
 dist/cjs/iter.js
 dist/cjs/iter.js.map
 dist/cjs/package.json
+dist/cjs/paginated-list.d.ts
+dist/cjs/paginated-list.d.ts.map
+dist/cjs/paginated-list.js
+dist/cjs/paginated-list.js.map
 dist/cjs/pagination.d.ts
 dist/cjs/pagination.d.ts.map
 dist/cjs/pagination.js
@@ -2893,6 +2897,10 @@ dist/esm/iter.d.ts
 dist/esm/iter.d.ts.map
 dist/esm/iter.js
 dist/esm/iter.js.map
+dist/esm/paginated-list.d.ts
+dist/esm/paginated-list.d.ts.map
+dist/esm/paginated-list.js
+dist/esm/paginated-list.js.map
 dist/esm/pagination.d.ts
 dist/esm/pagination.d.ts.map
 dist/esm/pagination.js
