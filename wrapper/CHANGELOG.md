@@ -7,6 +7,13 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-25
+
+Polish-pass release: typed status-class errors, ESLint, bundle
+ceiling, type tests, deprecation rails, stricter tsconfig, Node
+20 + 22 CI matrix. No breaking changes — all additions are
+backward-compatible with v0.5.0 catch sites.
+
 ### Changed
 
 - **`noUncheckedIndexedAccess: true` enabled in tsconfig.json.**
@@ -48,6 +55,36 @@ once v1.0.0 ships.
   `NODE_ENV === "test"` so the test suite isn't noisy. Two-phase
   removal convention documented in CONTRIBUTING.md
   (§ Deprecating a public symbol).
+
+### Build / DX
+
+- `"sideEffects": false` in `package.json` so bundlers can
+  dead-code-eliminate unused exports. Safe — hand-written modules
+  are pure exports and the synced SDK has no top-level effects.
+- ESLint 9 flat config on the hand-written surface (`*.ts` at
+  wrapper root + `tests/**`). Stack: `typescript-eslint`
+  (recommended-type-checked) + `eslint-plugin-import-x`
+  (order + no-cycle) + `consistent-type-imports`. Scoped to
+  exclude `src/**` (regenerated on every sync). New `npm run lint`
+  + CI lint job (Node 22).
+- `vitest --typecheck.only` mode with 12 type-assertions covering
+  `createClockifyClient` (apiKey XOR addonToken + env-fallback),
+  `iterAll`/`iterPages` return shapes, and `withResponse`. Runs
+  via `npm run test:types`; added as a CI step in `build-and-test`.
+- Bundle ceilings via `size-limit` (file-size measurement, no
+  bundling — right fit for a Node SDK shipped as-is). 9 ceilings
+  at ~1.5-2× current size to alarm on regressions without
+  flagging routine generator growth. New `npm run size` +
+  dedicated CI job.
+- Node 20 + 22 CI matrix in `build-and-test` (was Node 22 only).
+- `.editorconfig` mirroring `.prettierrc` (4-space, LF,
+  trim-trailing, 100-col) for contributors not on format-on-save.
+- `composed-fetch.ts`: small `toError(unknown): Error` helper
+  introduced to route caught fetch errors through a typed throw
+  site (satisfies `@typescript-eslint/only-throw-error` without
+  losing the original `Error` stack).
+- `composed-fetch.ts`: User-Agent constant `PACKAGE_VERSION`
+  refreshed to match the package version (was stale at `0.4.0`).
 
 ### Removed
 
