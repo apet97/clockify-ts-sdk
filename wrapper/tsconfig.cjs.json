@@ -19,6 +19,7 @@
         "iter.ts",
         "pagination.ts",
         "webhooks.ts",
+        "webhook-events.ts",
         "with-response.ts"
     ],
     "exclude": ["node_modules", "dist", "tests"]

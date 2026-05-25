@@ -87,3 +87,10 @@ export {
     type VerifyClockifyWebhookInput,
     type WebhookHeadersInput,
 } from "./webhooks.js";
+// Typed webhook event union. Individual variant types (e.g. WebhookEventNewProject)
+// are available via the subpath: import type { ... } from "clockify-sdk-ts/webhook-events"
+export {
+    CLOCKIFY_WEBHOOK_EVENT_NAMES,
+    type ClockifyWebhookEvent,
+    type WebhookEventName,
+} from "./webhook-events.js";

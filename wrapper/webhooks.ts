@@ -28,6 +28,8 @@
  */
 import { timingSafeEqual } from "node:crypto";
 
+import type { ClockifyWebhookEvent } from "./webhook-events.js";
+
 /** The HTTP header Clockify sends on every webhook delivery,
  *  containing the per-webhook auth token. Case-insensitive per HTTP
  *  spec; the helpers in this module normalize. */
@@ -178,7 +180,9 @@ export interface ConstructEventInput {
  * });
  * ```
  */
-export function constructEvent<TPayload = unknown>(input: ConstructEventInput): TPayload {
+export function constructEvent<TPayload = ClockifyWebhookEvent>(
+    input: ConstructEventInput,
+): TPayload {
     const received = getClockifySignatureToken(input.headers);
     if (received == null) {
         throw new WebhookSignatureMismatchError(
