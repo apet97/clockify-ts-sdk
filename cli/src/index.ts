@@ -20,6 +20,12 @@ import { registerProjectsCommand } from "./commands/projects.js";
 import { registerClientsCommand } from "./commands/clients.js";
 import { registerTasksCommand } from "./commands/tasks.js";
 import { registerTagsCommand } from "./commands/tags.js";
+import { registerWebhooksCommand } from "./commands/webhooks.js";
+import { registerInvoicesCommand } from "./commands/invoices.js";
+import { registerExpensesCommand } from "./commands/expenses.js";
+import { registerTimeOffCommand } from "./commands/timeoff.js";
+import { registerSchedulingCommand } from "./commands/scheduling.js";
+import { registerAuditLogCommand } from "./commands/auditlog.js";
 
 export interface ResolvedFlags {
     mode: OutputMode;
@@ -56,6 +62,12 @@ export function buildProgram(): Command {
     registerClientsCommand(program, services);
     registerTasksCommand(program, services);
     registerTagsCommand(program, services);
+    registerWebhooksCommand(program, services);
+    registerInvoicesCommand(program, services);
+    registerExpensesCommand(program, services);
+    registerTimeOffCommand(program, services);
+    registerSchedulingCommand(program, services);
+    registerAuditLogCommand(program, services);
 
     return program;
 }
