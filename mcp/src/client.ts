@@ -4,7 +4,7 @@
  * stdio MCP entrypoint can be launched without arguments by an MCP
  * client (Claude Desktop, etc.).
  */
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 

@@ -19,12 +19,12 @@ applies to humans and AI agents equally.
 This repo ships three sibling npm packages, each from its own
 subdirectory:
 
-- **`wrapper/`** → `clockify-sdk-ts` — the core TypeScript SDK,
+- **`wrapper/`** → `clockify-sdk-ts-115` — the core TypeScript SDK,
   Fern-generated + hand-written ergonomics. The original product.
   Publishable artefact: `wrapper/dist/`.
-- **`cli/`** → `@clockify/cli` — `clockify` / `clk` command-line
+- **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
   interface on top of the SDK. Publishable artefact: `cli/dist/`.
-- **`mcp/`** → `@clockify/mcp-server` — TypeScript MCP server,
+- **`mcp/`** → `@clockify115/mcp-server` — TypeScript MCP server,
   sibling to the Go MCP in GOCLMCP. Curated 13-tool everyday surface
   for stdio MCP clients. Publishable artefact: `mcp/dist/`.
 
@@ -136,7 +136,7 @@ wrapper/dist/**  (the publishable artefact)
         │  npm pack --dry-run    (verifies tarball; v0.5.0 ≈ 6860 files,
         │                         baseline in wrapper/.packsnapshot — diff in CI)
         ▼
-clockify-sdk-ts@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
+clockify-sdk-ts-115@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
 ```
 
 `fern generate` runs in Docker (`fernapi/fern-typescript-node-sdk:3.71.2`).
@@ -232,7 +232,7 @@ wrapper/
 │   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (38 names, 14 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
-├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts`
+├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
 │                                (package self-reference); live-API ones gate on CLOCKIFY_API_KEY.
 │                                NOT in the npm tarball.
 ├── docs/
@@ -278,7 +278,7 @@ with `import` + `require` conditions (modern dual-tier shape:
 `{ types, default }` per condition so TS resolves ESM vs CJS
 types correctly):
 
-- `clockify-sdk-ts` → `./dist/{esm,cjs}/index.js` (package root)
+- `clockify-sdk-ts-115` → `./dist/{esm,cjs}/index.js` (package root)
 - `clockify-sdk-ts/create-client` → the factory in isolation
 - `clockify-sdk-ts/composed-fetch` → the standalone fetch wrapper
 - `clockify-sdk-ts/errors` → typed-error helpers + status subclasses
@@ -410,7 +410,7 @@ request and stop:
    `PATH_PARAM_PATTERNS`, `PAGINATED_LIST_OPS`, `TAG_RENAMES`,
    `LAST_PAGE_HEADER_OPS`, `SDK_METHOD_NAMES`, or `PHANTOM_PATHS`
    is fine — those are data-only.
-2. Renaming the npm package (`clockify-sdk-ts`). The repo's git
+2. Renaming the npm package (`clockify-sdk-ts-115`). The repo's git
    name (`clockify-ts-sdk`) and the npm name diverged intentionally.
 3. Changing the Fern CLI version (`spec/fern/fern.config.json`'s
    `version: "5.37.9"`) or generator container version

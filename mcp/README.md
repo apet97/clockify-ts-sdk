@@ -1,7 +1,7 @@
-# @clockify/mcp-server
+# @clockify115/mcp-server
 
 TypeScript Model Context Protocol server for [Clockify](https://clockify.me/),
-built on [`clockify-sdk-ts`](https://www.npmjs.com/package/clockify-sdk-ts).
+built on [`clockify-sdk-ts`](https://www.npmjs.com/package/clockify-sdk-ts-115).
 
 Sibling to the Go MCP server in
 [`apet97/go-clockify`](https://github.com/apet97/go-clockify) — same
@@ -9,7 +9,7 @@ product shape (one user, one pinned workspace, stdio transport).
 The Go server is the drift-gated 156-tool reference with workflow
 orchestration, recovery hints, change sets, and dry-run / confirm
 tokens. This TypeScript sibling ships an **89-tool CRUDL surface**
-across every major domain (`@clockify/mcp-server` on npm), runs in
+across every major domain (`@clockify115/mcp-server` on npm), runs in
 any Node 18.18+ environment without a Go toolchain, and is the right
 choice when you want full domain coverage from a pure-JS install but
 don't need the Go server's workflow tools or drift gates.
@@ -17,13 +17,13 @@ don't need the Go server's workflow tools or drift gates.
 ## Install
 
 ```sh
-npm install -g @clockify/mcp-server
+npm install -g @clockify115/mcp-server
 ```
 
 Or run via `npx` without installing:
 
 ```sh
-npx @clockify/mcp-server
+npx @clockify115/mcp-server
 ```
 
 ## Configure an MCP client
@@ -39,7 +39,7 @@ block.
     "mcpServers": {
         "clockify": {
             "command": "npx",
-            "args": ["@clockify/mcp-server"],
+            "args": ["@clockify115/mcp-server"],
             "env": {
                 "CLOCKIFY_API_KEY": "your_key_here",
                 "CLOCKIFY_WORKSPACE_ID": "your_workspace_id_here"
@@ -55,7 +55,7 @@ block.
 {
     "mcpServers": {
         "clockify": {
-            "command": "clockify-mcp",
+            "command": "clockify115-mcp",
             "env": {
                 "CLOCKIFY_API_KEY": "your_key_here",
                 "CLOCKIFY_WORKSPACE_ID": "your_workspace_id_here"
@@ -127,7 +127,7 @@ Stable error codes: `invalid_request`, `auth_or_permission`,
 
 ## Relationship to go-clockify
 
-| | `@clockify/mcp-server` (this) | `go-clockify` (sibling) |
+| | `@clockify115/mcp-server` (this) | `go-clockify` (sibling) |
 |---|---|---|
 | Language | TypeScript / Node 18.18+ | Go 1.25.10 |
 | Tools | 89 (CRUDL across all major domains) | 156 (CRUDL + 15 workflow + reports + raw API + demo) |
@@ -161,9 +161,9 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
     | CLOCKIFY_API_KEY=... CLOCKIFY_WORKSPACE_ID=... node dist/index.js
 ```
 
-`clockify-sdk-ts` is referenced as a `file:../wrapper` dev dependency
-during local development; the published `@clockify/mcp-server` declares
-it as a peer dependency.
+`clockify-sdk-ts-115` is referenced as a `file:../wrapper` dev dependency
+during local development; if you publish, `@clockify115/mcp-server`
+should declare it as a peer dependency.
 
 ## License
 
