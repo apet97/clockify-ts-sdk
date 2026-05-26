@@ -57,4 +57,83 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_tags_get",
+        {
+            title: "Get a tag",
+            description: "Fetch a single tag by ID.",
+            inputSchema: { tagId: z.string().min(1) },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const tag = await ctx.client.tags.get({
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                });
+                return successResult("clockify_tags_get", tag, {
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                });
+            } catch (err) {
+                return errorResult("clockify_tags_get", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_tags_update",
+        {
+            title: "Update a tag",
+            description: "Update a tag's name or archived state.",
+            inputSchema: {
+                tagId: z.string().min(1),
+                name: z.string().optional(),
+                archived: z.boolean().optional(),
+            },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = {
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                };
+                if (args.name) body.name = args.name;
+                if (args.archived !== undefined) body.archived = args.archived;
+                const updated = await ctx.client.tags.update(body as never);
+                return successResult("clockify_tags_update", updated, {
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                });
+            } catch (err) {
+                return errorResult("clockify_tags_update", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_tags_delete",
+        {
+            title: "Delete a tag",
+            description: "Permanently delete a tag.",
+            inputSchema: { tagId: z.string().min(1) },
+            annotations: { destructiveHint: true },
+        },
+        async (args) => {
+            try {
+                await ctx.client.tags.delete({
+                    workspaceId: ctx.workspaceId,
+                    tagId: args.tagId,
+                });
+                return successResult(
+                    "clockify_tags_delete",
+                    { deleted: true, tagId: args.tagId },
+                    { workspaceId: ctx.workspaceId, tagId: args.tagId },
+                );
+            } catch (err) {
+                return errorResult("clockify_tags_delete", err);
+            }
+        },
+    );
 }

@@ -1,6 +1,6 @@
 {
     "name": "@clockify/mcp-server",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
     "license": "MIT",
     "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",

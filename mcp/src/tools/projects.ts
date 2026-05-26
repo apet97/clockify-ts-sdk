@@ -79,4 +79,93 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_projects_get",
+        {
+            title: "Get a project",
+            description: "Fetch a single project by ID.",
+            inputSchema: { projectId: z.string().min(1) },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const project = await ctx.client.projects.get({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
+                return successResult("clockify_projects_get", project, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
+            } catch (err) {
+                return errorResult("clockify_projects_get", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_projects_update",
+        {
+            title: "Update a project",
+            description: "Update a project's metadata.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                name: z.string().optional(),
+                clientId: z.string().optional(),
+                color: z.string().optional(),
+                billable: z.boolean().optional(),
+                isPublic: z.boolean().optional(),
+                archived: z.boolean().optional(),
+                note: z.string().optional(),
+            },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                };
+                if (args.name) body.name = args.name;
+                if (args.clientId) body.clientId = args.clientId;
+                if (args.color) body.color = args.color;
+                if (args.billable !== undefined) body.billable = args.billable;
+                if (args.isPublic !== undefined) body.isPublic = args.isPublic;
+                if (args.archived !== undefined) body.archived = args.archived;
+                if (args.note !== undefined) body.note = args.note;
+                const updated = await ctx.client.projects.update(body as never);
+                return successResult("clockify_projects_update", updated, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
+            } catch (err) {
+                return errorResult("clockify_projects_update", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_projects_delete",
+        {
+            title: "Delete a project",
+            description: "Permanently delete a project.",
+            inputSchema: { projectId: z.string().min(1) },
+            annotations: { destructiveHint: true },
+        },
+        async (args) => {
+            try {
+                await ctx.client.projects.delete({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
+                return successResult(
+                    "clockify_projects_delete",
+                    { deleted: true, projectId: args.projectId },
+                    { workspaceId: ctx.workspaceId, projectId: args.projectId },
+                );
+            } catch (err) {
+                return errorResult("clockify_projects_delete", err);
+            }
+        },
+    );
 }
