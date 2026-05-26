@@ -208,7 +208,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (18 names, 6 subpaths)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (38 names, 14 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts`
@@ -222,15 +222,25 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; CI diffs on every PR
-├── tests/                    (9 files, 126 unit + 7 live)
-│   ├── pagination.test.ts        ← 8
-│   ├── create-client.test.ts     ← 14 (incl. env-var fallback matrix)
-│   ├── iter.test.ts              ← 36 (iterAll/iterPages + Last-Page header consumption + 19 drift)
-│   ├── webhooks.test.ts          ← 16
-│   ├── webhook-fixtures.test.ts  ← 13
-│   ├── composed-fetch.test.ts    ← 26 (UA/req-id + hooks + retry policy; 1ms-clamped sleeps)
-│   ├── with-response.test.ts     ← 3
-│   ├── dual-build.test.ts        ← 3 (ESM + CJS surface assertion)
+├── tests/                    (18 files, ~214 unit + 7 live @ v0.9.0)
+│   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
+│   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
+│   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
+│   ├── paginated-list.test.ts    ← PaginatedList<T> async-iterable + toArray({limit}) early-stop
+│   ├── webhooks.test.ts          ← Clockify-Signature-Token verification
+│   ├── webhook-fixtures.test.ts  ← canonical webhook payload fixtures
+│   ├── webhook-events.test.ts    ← 50-event ClockifyWebhookEvent discriminated union
+│   ├── composed-fetch.test.ts    ← UA/req-id + hooks + retry policy
+│   ├── with-response.test.ts     ← HttpResponsePromise → flat {data, headers, requestId, status}
+│   ├── errors.test.ts            ← per-status subclasses + promoteApiError + getErrorCode +
+│   │                                ClockifyConnectionError + ClockifyAbortError
+│   ├── scoped-client.test.ts     ← client.workspace(id) Proxy + workspaceId auto-inject
+│   ├── otel-hooks.test.ts        ← OTel semantic-convention span attrs (zero @otel/api dep)
+│   ├── health.test.ts            ← client.health() preflight + latency + serverTime
+│   ├── rate-limit.test.ts        ← X-RateLimit-* header parser + getRateLimitFromError
+│   ├── axioms-checklist.test.ts  ← regression gate: every §16 row of /sdkxioms.txt
+│   ├── deprecation.test.ts       ← warnOnce convention
+│   ├── dual-build.test.ts        ← ESM + CJS surface assertion
 │   └── sandbox.test.ts           ← 7 live (round-trip + paginate + iterAll + withResponse + …);
 │                                    describe.skip without env creds
 ├── src/                      ← gitignored; populated by sync-sdk.sh
@@ -242,17 +252,26 @@ whitelists what `npm publish` ships. Do not add without a
 publish-readiness review. `CHANGELOG.md` is intentionally omitted
 to keep the tarball lean.
 
-Six subpaths in `package.json` `exports`, each with `import` +
-`require` conditions (modern dual-tier shape: `{ types, default }`
-per condition so TS resolves ESM vs CJS types correctly):
+Fourteen subpaths in `package.json` `exports` at v0.9.0, each
+with `import` + `require` conditions (modern dual-tier shape:
+`{ types, default }` per condition so TS resolves ESM vs CJS
+types correctly):
 
 - `clockify-sdk-ts` → `./dist/{esm,cjs}/index.js` (package root)
 - `clockify-sdk-ts/create-client` → the factory in isolation
 - `clockify-sdk-ts/composed-fetch` → the standalone fetch wrapper
+- `clockify-sdk-ts/errors` → typed-error helpers + status subclasses
+- `clockify-sdk-ts/deprecation` → `warnOnce` for slow-deprecation rails
 - `clockify-sdk-ts/iter` → per-resource pagination + drift union
-- `clockify-sdk-ts/webhooks` → signature verifier + JSON parser
 - `clockify-sdk-ts/pagination` → low-level callback `paginate<T>`
+- `clockify-sdk-ts/paginated-list` → `PaginatedList<T>` async-iterable wrapper
+- `clockify-sdk-ts/webhooks` → signature verifier + JSON parser
+- `clockify-sdk-ts/webhook-events` → `ClockifyWebhookEvent` discriminated union (50)
 - `clockify-sdk-ts/with-response` → `HttpResponsePromise` shim
+- `clockify-sdk-ts/scoped-client` → `Workspace` Proxy sub-client
+- `clockify-sdk-ts/otel-hooks` → OTel-typed `ComposedFetchHooks`
+- `clockify-sdk-ts/health` → `clockifyHealth()` preflight
+- `clockify-sdk-ts/rate-limit` → `getRateLimit` / `getRateLimitFromError`
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` — `npm publish` from any environment publishes
