@@ -1,0 +1,87 @@
+name: CI (cli)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "wrapper/**"
+      - ".github/workflows/ci-cli.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cli/**"
+      - "wrapper/**"
+      - ".github/workflows/ci-cli.yml"
+
+# See ci.yml for the rationale; the cli + mcp workflows mirror the
+# wrapper's pin so a Node.js 20 force-promotion doesn't change runtime
+# behaviour silently mid-flight.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build-and-test:
+    name: Build, type-check, test (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          # Two lockfiles share this cache: the wrapper is built first
+          # because cli/ dev-depends on it via file:../wrapper, then the
+          # CLI install runs against its own lockfile.
+          cache-dependency-path: |
+            wrapper/package-lock.json
+            cli/package-lock.json
+
+      # cli/package.json carries `"clockify-sdk-ts": "file:../wrapper"`
+      # as a dev dep, so `npm ci` inside cli/ symlinks the wrapper's
+      # source tree. Without a synced + built wrapper, the CLI's
+      # type-check sees a stale or missing surface and the tests can't
+      # exercise the SDK boundary.
+      - name: Install + sync + build wrapper
+        working-directory: wrapper
+        run: |
+          npm ci
+          npm run sync
+          npm run build
+
+      - name: Install CLI dependencies
+        working-directory: cli
+        run: npm ci
+
+      - name: Type-check
+        working-directory: cli
+        run: npm run type-check
+
+      - name: Run tests
+        working-directory: cli
+        run: npm test
+
+      - name: Build
+        working-directory: cli
+        run: npm run build
+
+      - name: Pack snapshot verification
+        # Only on node 22 (the release runner). Tarball contents are
+        # node-version invariant.
+        if: matrix.node-version == '22'
+        working-directory: cli
+        run: |
+          npm pack --dry-run --json \
+            | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{const files=JSON.parse(s)[0].files.map(f=>f.path).sort();console.log('Tarball contents ('+files.length+' files):');console.log(files.join('\n'));});"
