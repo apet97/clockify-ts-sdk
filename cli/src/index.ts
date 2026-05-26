@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @clockify/cli entrypoint. Wires every command, parses global
+ * @clockify115/cli entrypoint. Wires every command, parses global
  * flags, and routes errors through a single exit handler so the
  * process exit code reflects success or failure consistently.
  */
@@ -39,8 +39,8 @@ export interface ResolvedFlags {
 export function buildProgram(): Command {
     const program = new Command();
     program
-        .name("clockify")
-        .description("Clockify time-tracking command-line interface, built on clockify-sdk-ts.")
+        .name("clockify115")
+        .description("Clockify CLI from @clockify115/cli, built on clockify-sdk-ts-115.")
         .version("0.1.0")
         .option("--api-key <key>", "Clockify personal API key (or CLOCKIFY_API_KEY env var).")
         .option("--workspace <id>", "Clockify workspace ID (or CLOCKIFY_WORKSPACE_ID env var).")
@@ -126,7 +126,7 @@ const invokedDirectly =
     typeof process !== "undefined" &&
     Array.isArray(process.argv) &&
     process.argv[1] !== undefined &&
-    /(?:^|\/)(?:clockify|clk|index\.js)$/.test(process.argv[1]);
+    /(?:^|\/)(?:clockify115|clk115|index\.[jt]s)$/.test(process.argv[1]);
 
 if (invokedDirectly) {
     main(process.argv).then(

@@ -1,5 +1,5 @@
 /**
- * `clk webhooks list` / `clk webhooks create` / `clk webhooks delete <id>`.
+ * `clk115 webhooks list` / `clk115 webhooks create` / `clk115 webhooks delete <id>`.
  */
 import { Command } from "commander";
 

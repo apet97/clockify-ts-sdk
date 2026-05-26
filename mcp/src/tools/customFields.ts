@@ -51,6 +51,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 placeholder: z.string().optional(),
                 description: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -76,7 +77,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         "clockify_custom_fields_update",
         {
             title: "Update a workspace custom field",
-            description: "Update a custom field definition.",
+            description: "Update a workspace custom field definition and its allowed values.",
             inputSchema: {
                 customFieldId: z.string().min(1),
                 name: z.string().optional(),
@@ -86,6 +87,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 description: z.string().optional(),
                 status: z.string().optional().describe("ACTIVE | INACTIVE."),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -179,6 +181,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 defaultValue: z.string().optional(),
                 allowedValues: z.array(z.string()).optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -207,7 +210,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         "clockify_project_custom_fields_remove",
         {
             title: "Remove a custom field from a project",
-            description: "Detach a custom field from a project.",
+            description: "Detach one custom field association from a project by ID.",
             inputSchema: {
                 projectId: z.string().min(1),
                 customFieldId: z.string().min(1),

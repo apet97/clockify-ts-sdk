@@ -1,8 +1,8 @@
 /**
- * `clk timeoff list` / `clk timeoff submit`.
+ * `clk115 timeoff list` / `clk115 timeoff submit`.
  *
  * v0.2 ships list + submit; the more complex policy/balance management
- * tools stay behind the broader `clockify-sdk-ts` surface until enough
+ * tools stay behind the broader `clockify-sdk-ts-115` surface until enough
  * demand surfaces to justify the CLI ergonomics work.
  */
 import { Command } from "commander";

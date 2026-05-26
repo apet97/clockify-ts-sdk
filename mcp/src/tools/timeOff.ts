@@ -17,7 +17,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_requests_list",
         {
             title: "List time-off requests",
-            description: "List time-off requests in the workspace.",
+            description: "List time-off requests in the workspace with filters and pagination.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -54,7 +54,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_requests_get",
         {
             title: "Get a time-off request",
-            description: "Fetch a single time-off request by ID.",
+            description: "Fetch one time-off request by ID from the pinned workspace.",
             inputSchema: { requestId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -88,6 +88,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 isHalfDay: z.boolean().optional(),
                 halfDayPeriod: z.string().optional().describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -126,6 +127,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 statusType: z.enum(REQUEST_STATUSES),
                 note: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -150,7 +152,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_requests_delete",
         {
             title: "Delete a time-off request",
-            description: "Permanently delete a time-off request.",
+            description: "Permanently delete one time-off request by ID.",
             inputSchema: { requestId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },
@@ -177,7 +179,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_list",
         {
             title: "List time-off policies",
-            description: "List time-off policies in the workspace.",
+            description: "List time-off policies in the workspace with bounded pagination.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -205,7 +207,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_get",
         {
             title: "Get a time-off policy",
-            description: "Fetch a time-off policy by ID.",
+            description: "Fetch one time-off policy by ID from the pinned workspace.",
             inputSchema: { policyId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -229,7 +231,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_create",
         {
             title: "Create a time-off policy",
-            description: "Create a new time-off policy.",
+            description: "Create a new time-off policy with optional approval and balance settings.",
             inputSchema: {
                 name: z.string().min(1),
                 timeUnit: z.string().optional().describe("DAYS | HOURS."),
@@ -238,6 +240,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 requiresApproval: z.boolean().optional(),
                 automaticApproval: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -264,7 +267,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_update",
         {
             title: "Update a time-off policy",
-            description: "Update a time-off policy by ID.",
+            description: "Update one time-off policy's yearly balance and approval rules by ID.",
             inputSchema: {
                 policyId: z.string().min(1),
                 name: z.string().optional(),
@@ -273,6 +276,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 requiresApproval: z.boolean().optional(),
                 automaticApproval: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -306,6 +310,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 policyId: z.string().min(1),
                 archived: z.boolean(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

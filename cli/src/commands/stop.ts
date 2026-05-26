@@ -1,5 +1,5 @@
 /**
- * `clk stop` — stop the running timer for the current user.
+ * `clk115 stop` — stop the running timer for the current user.
  */
 import { Command } from "commander";
 

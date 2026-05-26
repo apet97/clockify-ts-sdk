@@ -17,6 +17,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -42,6 +43,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
         {
             title: "Stop the running timer",
             description: "Stop the running timer for the current user. Returns ok with a note if no timer was running.",
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async () => {
             try {

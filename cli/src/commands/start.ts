@@ -1,5 +1,5 @@
 /**
- * `clk start [description]` — start a running timer. Optional
+ * `clk115 start [description]` — start a running timer. Optional
  * --project / --task / --tag flags resolve names to IDs via list
  * queries so the user does not have to keep IDs at hand.
  */

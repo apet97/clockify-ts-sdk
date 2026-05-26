@@ -1599,4 +1599,51 @@ routes that return 404/405 live exist.
   POST, expenses POST, invoices POST). If still unsupported, this
   entry stays closed.
 
+## Client/project archive update shape split — investigation
+
+### `fern.sdk.clients-update-body-vs-projects-update-top-level` — DOCUMENTED 2026-05-26
+
+- **Official claim:** the generated SDK exposes different request
+  shapes for similar-looking update calls:
+  `clients.update({ workspaceId, clientId, body })` and
+  `projects.update({ workspaceId, projectId, ...fields })`.
+
+- **Actual behaviour (live probe, 2026-05-26, sandbox workspace
+  `65b382b606de527a7ee2b60e`):** Clockify accepts client archive
+  updates only with the nested client body shape
+  (`body: { name, archived: true }`). Sending client update fields
+  at the top level returns "Required request body is missing".
+  Project archive updates, by contrast, accept the generated
+  top-level project fields (`{ name, archived: true }`) and do not
+  use a nested `body` wrapper in the generated SDK surface. The
+  `archive` helper routes for both clients and projects returned
+  404 in this live cleanup path, so archive+delete cleanup must use
+  the update methods first.
+
+- **Live evidence:**
+  - `mcp/tests/server.test.ts` pins both generated SDK request
+    shapes: project update fields at the request top level, client
+    update fields inside `body`.
+  - `mcp/tests/sandbox.test.ts` and `mcp/src/tools/workflows.ts`
+    use the split during live cleanup.
+  - 2026-05-26 final sandbox cleanup archived and deleted
+    deterministic `DEMO-` projects with project top-level update,
+    and deterministic `DEMO-` clients with nested client body
+    update, then scanned clients/projects/tags/entries/invoices/
+    webhooks to empty arrays for the deterministic prefixes.
+
+- **MCP tools affected:**
+  - `clockify_clients_update`
+  - `clockify_projects_update`
+  - `clockify_demo_cleanup`
+  - live sandbox cleanup helpers in `mcp/tests/sandbox.test.ts`
+
+- **Open questions:** whether future Fern versions can normalize
+  generated update request shapes without breaking runtime
+  behaviour. Until then, do not hand-normalize these two MCP paths.
+
+- **Status:** accepted local SDK shape split. Keep client update
+  fields nested under `body`; keep project update fields at the
+  request top level. Re-test with live archive+delete cleanup before
+  changing either shape.
 

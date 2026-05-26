@@ -1,5 +1,5 @@
 /**
- * `clk entries list` and `clk entries delete <id>`.
+ * `clk115 entries list` and `clk115 entries delete <id>`.
  */
 import { Command } from "commander";
 

@@ -1,20 +1,17 @@
-# clockify-sdk-ts
+# clockify-sdk-ts-115
 
-[![npm version](https://img.shields.io/npm/v/clockify-sdk-ts-115.svg)](https://www.npmjs.com/package/clockify-sdk-ts-115)
 [![CI](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/ci.yml?branch=main&label=CI)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/codeql.yml?branch=main&label=CodeQL)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/codeql.yml)
-[![license](https://img.shields.io/npm/l/clockify-sdk-ts-115.svg)](./LICENSE)
-[![install size](https://packagephobia.com/badge?p=clockify-sdk-ts-115)](https://packagephobia.com/result?p=clockify-sdk-ts-115)
-[![sigstore provenance](https://img.shields.io/badge/sigstore-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 **Reference docs:** <https://apet97.github.io/clockify-ts-sdk/>
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by
-[Fern](https://buildwithfern.com), wrapped with a publishable npm
+[Fern](https://buildwithfern.com), wrapped with a packable npm
 layout. 31 resource modules, 185 live operations, idiomatic
 `client.<resource>.<verb>()` naming on 27 modules (91% of the
-surface), dual ESM + CJS, npm provenance via sigstore.
+surface), and dual ESM + CJS.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
@@ -60,10 +57,17 @@ surface), dual ESM + CJS, npm provenance via sigstore.
 ## Install
 
 ```bash
-npm install clockify-sdk-ts
+cd wrapper
+npm install
+npm run build
+npm pack --dry-run
+npm pack
+npm install ./clockify-sdk-ts-115-0.9.0.tgz
 ```
 
-Or `pnpm add`, `yarn add`, `bun add`, `deno add npm:clockify-sdk-ts-115`.
+If your environment publishes this package internally, install that
+published tarball by name. This repository's default stance is
+packable/local, not public npm publication.
 
 ## Quick start
 
@@ -701,9 +705,9 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 29 exports + 8 subpaths                                                          | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 38 exports + 14 subpaths                                                         | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
-| Provenance      | `npm publish --provenance` via OIDC + SPDX SBOM attached to GitHub release                                                          | CI `release.yml`                        |
+| Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |
 | Spec health     | `fern check --warnings --from-openapi` on the corrected snapshot                                                                    | CI `spec-check`                         |

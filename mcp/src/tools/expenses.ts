@@ -61,7 +61,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_get",
         {
             title: "Get an expense",
-            description: "Fetch a single expense by ID.",
+            description: "Fetch one expense by ID from the pinned Clockify workspace.",
             inputSchema: { expenseId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -85,7 +85,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_delete",
         {
             title: "Delete an expense",
-            description: "Permanently delete an expense.",
+            description: "Permanently delete one expense by ID from the pinned workspace.",
             inputSchema: { expenseId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },
@@ -110,7 +110,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_categories_list",
         {
             title: "List expense categories",
-            description: "List workspace expense categories.",
+            description: "List workspace expense categories with bounded pagination controls.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -145,6 +145,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 priceInCents: z.number().int().optional(),
                 hasUnitPrice: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -166,7 +167,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_categories_update",
         {
             title: "Update an expense category",
-            description: "Update an expense category by ID.",
+            description: "Update an expense category name, unit pricing, or price behavior by ID.",
             inputSchema: {
                 categoryId: z.string().min(1),
                 name: z.string().optional(),
@@ -174,6 +175,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 priceInCents: z.number().int().optional(),
                 hasUnitPrice: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -230,6 +232,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 categoryId: z.string().min(1),
                 archived: z.boolean(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

@@ -15,7 +15,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_list",
         {
             title: "List scheduling assignments",
-            description: "List scheduling assignments in the workspace.",
+            description: "List scheduling assignments in the workspace with pagination and name filters.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -87,6 +87,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 includeNonWorkingDays: z.boolean().optional(),
                 published: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -119,7 +120,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_update",
         {
             title: "Update a scheduling assignment",
-            description: "Update a scheduling assignment by ID.",
+            description: "Update one scheduling assignment's user, project, dates, hours, or note by ID.",
             inputSchema: {
                 assignmentId: z.string().min(1),
                 userId: z.string().optional(),
@@ -131,6 +132,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 note: z.string().optional(),
                 billable: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

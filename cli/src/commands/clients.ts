@@ -1,5 +1,5 @@
 /**
- * `clk clients list` / `clk clients create <name>`.
+ * `clk115 clients list` / `clk115 clients create <name>`.
  */
 import { Command } from "commander";
 

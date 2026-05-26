@@ -1,5 +1,5 @@
 /**
- * Live sandbox tests for @clockify/mcp-server. Connects to a real
+ * Live sandbox tests for @clockify115/mcp-server. Connects to a real
  * Clockify workspace via the same `loadContext()` + `buildServer()`
  * path that the stdio bin uses, but pipes the MCP transport through
  * `InMemoryTransport.createLinkedPair()` so the assertions can run
@@ -10,9 +10,9 @@
  * and `cli/tests/sandbox.test.ts` so GitHub-hosted CI runners (which
  * intentionally don't get production credentials) keep passing.
  *
- * Coverage is read-only smoke for every list tool plus a single
- * create+delete round-trip on tags (the cheapest mutable resource —
- * no nested objects or downstream cleanup needed).
+ * Coverage includes read-only list/status smoke plus workflow live
+ * paths that create and clean up sandbox clients, projects, tasks,
+ * tags, and time entries in the same test.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -33,11 +33,18 @@ if (!liveSandboxAvailable) {
     );
 }
 
-type EnvelopeOk = { ok: true; action: string; data: unknown; meta?: Record<string, unknown> };
+type EnvelopeOk = {
+    ok: true;
+    action: string;
+    data: unknown;
+    meta?: Record<string, unknown>;
+    ids?: Record<string, string>;
+    changed?: Record<string, unknown>;
+};
 type EnvelopeErr = { ok: false; action: string; error: { message: string; code?: string } };
 type Envelope = EnvelopeOk | EnvelopeErr;
 
-describeLive("@clockify/mcp-server live sandbox", () => {
+describeLive("@clockify115/mcp-server live sandbox", () => {
     let teardown: () => Promise<void> = async () => {};
 
     afterEach(async () => {
@@ -66,6 +73,53 @@ describeLive("@clockify/mcp-server live sandbox", () => {
         const content = (res as { content?: unknown }).content;
         const text = (content as Array<{ type: string; text: string }> | undefined)?.[0]?.text ?? "";
         return JSON.parse(text) as Envelope;
+    }
+
+    async function cleanupPackage(ids: Record<string, string>): Promise<void> {
+        const ctx = loadContext();
+        if (ids.taskId && ids.projectId) {
+            await ctx.client.tasks
+                .delete({ workspaceId: workspaceId!, projectId: ids.projectId, taskId: ids.taskId })
+                .catch(() => {});
+        }
+        if (ids.projectId) {
+            const project = (await ctx.client.projects
+                .get({ workspaceId: workspaceId!, projectId: ids.projectId })
+                .catch(() => null)) as { name?: string } | null;
+            if (project?.name) {
+                await ctx.client.projects
+                    .update({
+                        workspaceId: workspaceId!,
+                        projectId: ids.projectId,
+                        name: project.name,
+                        archived: true,
+                    } as never)
+                    .catch(() => {});
+            }
+            await ctx.client.projects
+                .delete({ workspaceId: workspaceId!, projectId: ids.projectId })
+                .catch(() => {});
+        }
+        if (ids.tagId) {
+            await ctx.client.tags.delete({ workspaceId: workspaceId!, tagId: ids.tagId }).catch(() => {});
+        }
+        if (ids.clientId) {
+            const client = (await ctx.client.clients
+                .get({ workspaceId: workspaceId!, clientId: ids.clientId })
+                .catch(() => null)) as { name?: string } | null;
+            if (client?.name) {
+                await ctx.client.clients
+                    .update({
+                        workspaceId: workspaceId!,
+                        clientId: ids.clientId,
+                        body: { name: client.name, archived: true },
+                    } as never)
+                    .catch(() => {});
+            }
+            await ctx.client.clients
+                .delete({ workspaceId: workspaceId!, clientId: ids.clientId })
+                .catch(() => {});
+        }
     }
 
     it("clockify_status returns the canonical envelope and pinned workspace", async () => {
@@ -162,12 +216,163 @@ describeLive("@clockify/mcp-server live sandbox", () => {
         }
 
         // Mandatory cleanup — pair every create with a delete per the
-        // sandbox-workspace contract. The MCP doesn't expose a tag
-        // delete tool yet (only first-slice CRUD pairs are wired), so
-        // we reach through the context's underlying SDK client. This
-        // keeps the workspace clean even when the upstream MCP surface
-        // doesn't yet have a paired delete.
+        // sandbox-workspace contract. Reaching through the SDK client
+        // keeps this test focused on the cheapest mutable MCP create
+        // while still proving the workspace is clean afterward.
         const ctx = loadContext();
         await ctx.client.tags.delete({ workspaceId: workspaceId!, tagId: tagId! });
     }, 30_000);
+
+    it("clockify_tools_guide returns workflow guidance", async () => {
+        const client = await connect();
+        const res = await client.callTool({ name: "clockify_tools_guide", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env.ok).toBe(true);
+        if (!env.ok) return;
+        const data = env.data as { workflows?: unknown[]; commonTasks?: unknown[] };
+        expect(Array.isArray(data.workflows)).toBe(true);
+        expect(Array.isArray(data.commonTasks)).toBe(true);
+    }, 20_000);
+
+    it("clockify_create_work_package creates a client/project/task/tag bundle and cleans it up", async () => {
+        const client = await connect();
+        const slug = `mcp-workflow-${Date.now()}`;
+        let ids: Record<string, string> = {};
+        try {
+            const res = await client.callTool({
+                name: "clockify_create_work_package",
+                arguments: {
+                    client: `${slug}-client`,
+                    project: `${slug}-project`,
+                    task: `${slug}-task`,
+                    tag: `${slug}-tag`,
+                },
+            });
+            expect(res.isError).toBeFalsy();
+            const env = parse(res);
+            expect(env.ok).toBe(true);
+            if (!env.ok) throw new Error("create_work_package envelope was not ok");
+            ids = env.ids ?? {};
+            expect(ids.clientId).toBeTruthy();
+            expect(ids.projectId).toBeTruthy();
+            expect(ids.taskId).toBeTruthy();
+            expect(ids.tagId).toBeTruthy();
+            expect(env.changed).toHaveProperty("created");
+        } finally {
+            await cleanupPackage(ids);
+        }
+    }, 45_000);
+
+    it("clockify_log_work logs a named package entry and deletes it", async () => {
+        const client = await connect();
+        const slug = `mcp-log-${Date.now()}`;
+        let ids: Record<string, string> = {};
+        let entryId = "";
+        try {
+            const packageRes = await client.callTool({
+                name: "clockify_create_work_package",
+                arguments: { project: `${slug}-project`, task: `${slug}-task`, tag: `${slug}-tag` },
+            });
+            const packageEnv = parse(packageRes);
+            expect(packageEnv.ok).toBe(true);
+            if (!packageEnv.ok) throw new Error("create_work_package envelope was not ok");
+            ids = packageEnv.ids ?? {};
+
+            const start = "2026-05-26T09:00:00.000Z";
+            const end = "2026-05-26T09:15:00.000Z";
+            const logRes = await client.callTool({
+                name: "clockify_log_work",
+                arguments: {
+                    start,
+                    end,
+                    description: `${slug} finished work`,
+                    project_id: ids.projectId,
+                    task_id: ids.taskId,
+                    tag_ids: ids.tagId ? [ids.tagId] : [],
+                    allow_overlap: true,
+                },
+            });
+            expect(logRes.isError).toBeFalsy();
+            const logged = parse(logRes);
+            expect(logged.ok).toBe(true);
+            if (!logged.ok) throw new Error("log_work envelope was not ok");
+            entryId = logged.ids?.entryId ?? "";
+            expect(entryId).toBeTruthy();
+            expect(logged.changed).toHaveProperty("created");
+        } finally {
+            const ctx = loadContext();
+            if (entryId) {
+                await ctx.client.timeEntries
+                    .delete({ workspaceId: workspaceId!, timeEntryId: entryId })
+                    .catch(() => {});
+            }
+            await cleanupPackage(ids);
+        }
+    }, 45_000);
+
+    it("clockify_review_day returns totals and next actions", async () => {
+        const client = await connect();
+        const res = await client.callTool({
+            name: "clockify_review_day",
+            arguments: { date: "2026-05-26", include_entries: true, max_rows: 5 },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env.ok).toBe(true);
+        if (!env.ok) return;
+        const data = env.data as { totals?: unknown; issues?: unknown[] };
+        expect(data).toHaveProperty("totals");
+        expect(Array.isArray(data.issues)).toBe(true);
+    }, 30_000);
+
+    it("clockify_fix_entry updates a logged entry and deletes it", async () => {
+        const client = await connect();
+        const slug = `mcp-fix-${Date.now()}`;
+        let ids: Record<string, string> = {};
+        let entryId = "";
+        try {
+            const packageRes = await client.callTool({
+                name: "clockify_create_work_package",
+                arguments: { project: `${slug}-project` },
+            });
+            const packageEnv = parse(packageRes);
+            expect(packageEnv.ok).toBe(true);
+            if (!packageEnv.ok) throw new Error("create_work_package envelope was not ok");
+            ids = packageEnv.ids ?? {};
+
+            const logRes = await client.callTool({
+                name: "clockify_log_work",
+                arguments: {
+                    start: "2026-05-26T10:00:00.000Z",
+                    end: "2026-05-26T10:10:00.000Z",
+                    description: `${slug} before`,
+                    project_id: ids.projectId,
+                    allow_overlap: true,
+                },
+            });
+            const logged = parse(logRes);
+            expect(logged.ok).toBe(true);
+            if (!logged.ok) throw new Error("log_work envelope was not ok");
+            entryId = logged.ids?.entryId ?? "";
+
+            const fixRes = await client.callTool({
+                name: "clockify_fix_entry",
+                arguments: { entry_id: entryId, new_description: `${slug} after` },
+            });
+            expect(fixRes.isError).toBeFalsy();
+            const fixed = parse(fixRes);
+            expect(fixed.ok).toBe(true);
+            if (!fixed.ok) throw new Error("fix_entry envelope was not ok");
+            expect(fixed.changed).toHaveProperty("updated");
+        } finally {
+            const ctx = loadContext();
+            if (entryId) {
+                await ctx.client.timeEntries
+                    .delete({ workspaceId: workspaceId!, timeEntryId: entryId })
+                    .catch(() => {});
+            }
+            await cleanupPackage(ids);
+        }
+    }, 45_000);
 });

@@ -8,7 +8,7 @@ import { loadConfig, requireApiKey, requireWorkspaceId } from "../src/config.js"
 let home: string;
 
 beforeEach(() => {
-    home = mkdtempSync(join(tmpdir(), "clk-test-"));
+    home = mkdtempSync(join(tmpdir(), "clk115-test-"));
 });
 
 afterEach(() => {

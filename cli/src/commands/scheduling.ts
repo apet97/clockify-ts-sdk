@@ -1,5 +1,5 @@
 /**
- * `clk scheduling list` / `clk scheduling create`.
+ * `clk115 scheduling list` / `clk115 scheduling create`.
  *
  * Live Clockify scheduling has strict role gating (workspace owner +
  * scheduling addon enabled). `create` therefore defaults to draft mode

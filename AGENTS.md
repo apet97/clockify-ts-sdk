@@ -26,10 +26,13 @@ subdirectory:
   interface on top of the SDK. **21 commands** across 15 groups.
   Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **89 tools** across 17
-  resource groups; full CRUDL across every Clockify domain (no
-  workflow tools / reports / raw API / demo — those are the Go MCP's
-  niche). Local build artefact: `mcp/dist/`.
+  server, sibling to the Go MCP in GOCLMCP. **105 tools**: 16
+  workflow tools plus 89 domain tools across 17 resource groups.
+  Workflow tools cover daily time tracking, work-package setup,
+  review/fix, invoices, expenses, time off, scheduling, webhooks,
+  and demo seed/cleanup. Domain tools provide broad CRUDL coverage;
+  reports and raw API fallback remain the Go MCP's niche. Local build
+  artefact: `mcp/dist/`.
 
 The `-115` / `115` suffix is intentional trademark distance from
 Clockify. We do not plan to publish any of these to npm; the
@@ -42,15 +45,15 @@ Each package owns its own `package.json`, `tsconfig.json`, build
 chain, and tests. They are not yet npm workspaces; each is built /
 tested independently with `npm` commands run from its directory.
 
-Ships on npm (from `wrapper/`):
+If packed/published, the `wrapper/` package includes:
 - `wrapper/dist/**` (built from `wrapper/src/**` via twin tsc)
 - `wrapper/README.md`, `wrapper/LICENSE`, `wrapper/package.json`
 
-Ships on npm (from `cli/`):
+If packed/published, the `cli/` package includes:
 - `cli/dist/**` (built from `cli/src/**` via tsc)
 - `cli/README.md`, `cli/LICENSE`, `cli/package.json`
 
-Ships on npm (from `mcp/`):
+If packed/published, the `mcp/` package includes:
 - `mcp/dist/**` (built from `mcp/src/**` via tsc)
 - `mcp/README.md`, `mcp/LICENSE`, `mcp/package.json`
 
@@ -72,14 +75,17 @@ refreshed by `cp` after every regen in GOCLMCP.
 ## 2. First reads (in order)
 
 1. `README.md` (this repo) — workflow overview.
-2. `wrapper/README.md` — the npm-facing README.
-3. `spec/evidence/discrepancies.md` — ledger of every divergence
+2. `wrapper/README.md` — the SDK package README.
+3. `mcp/README.md` — the workflow-first MCP user surface.
+4. `docs/product-north-star.md` — final-state quality bar for this
+   repo as a polished SDK/CLI/MCP product, not just generated code.
+5. `spec/evidence/discrepancies.md` — ledger of every divergence
    between Clockify's published spec, live behaviour, and the shape
    we ship. Five-question format per entry (official claim, actual
    behaviour, live evidence, MCP tools affected, open questions,
    status). Read before adding any new annotation, override, or
    workaround — it almost certainly has prior context.
-4. `../GOCLMCP/scripts/gen-clockify-openapi` — the Ruby generator.
+6. `../GOCLMCP/scripts/gen-clockify-openapi` — the Ruby generator.
    Sections to know:
    - `TAG_RENAMES` — collapses singular/plural tag duplicates
    - `PATH_PARAM_PATTERNS` + `stamp_path_param_patterns!` — stamps
@@ -95,16 +101,46 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `PHANTOM_PATHS` + `phantom_path?` — 9 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
      plus bare `/balance` × 2 and `/scheduling/capacity` × 1)
-5. `spec/fern/{fern.config.json,generators.yml}` — Fern workspace.
+7. `spec/fern/{fern.config.json,generators.yml}` — Fern workspace.
    `organization: clockify` drives the emitted class name
    `ClockifyApiClient`. Generator pinned to
    `fernapi/fern-typescript-node-sdk:3.71.2`; Fern CLI pinned to
    `5.37.9`.
 
+## 2a. Product north star
+
+This repo should feel like a carefully finished SDK company product,
+not a loose generator dump:
+
+- The OpenAPI snapshot is trusted because GOCLMCP generated it from
+  curated sources, live probes, drift gates, and explicit discrepancy
+  records.
+- Generated code is a lower layer. Public ergonomics live in small,
+  durable wrappers with focused tests, stable exports, and clear
+  examples.
+- The SDK, CLI, and MCP speak the same domain language. If a workflow
+  is easy in the MCP, the underlying SDK/CLI path should also be
+  obvious.
+- Agent-facing APIs return structured receipts: ids, `changed`,
+  `next`, warnings, stable error codes, and recovery instructions
+  where useful.
+- Documentation is part of the product. README examples must be
+  runnable, concise, and current; generated API docs must not
+  contradict package READMEs or agent guidance.
+- The final quality bar is "would a user believe this came from a
+  focused SDK vendor?" If not, remove ceremony, tighten names, add
+  proof, or shrink the abstraction until it is obvious.
+
+When coding toward this bar, prefer generator/source fixes first,
+hand-written wrapper seams second, deterministic postgen cleanup only
+as an escape hatch, and live contract proof last. Do not add broad
+frameworks, codegen layers, or AI-helper narration unless they remove
+real maintenance cost.
+
 ## 3. The build chain (top to bottom)
 
 Each arrow is a script invocation that must succeed for the next
-stage to be valid. Never skip a stage; never run the publish step
+stage to be valid. Never skip a stage; never run a pack/publish gate
 without all upstream gates green.
 
 ```text
@@ -134,19 +170,19 @@ output/ts-sdk/**  (Fern emits ~708 TS files; --force WIPES the tree)
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check    (tsc --noEmit; covers src/**, hand-written *.ts, tests/**)
-        │  npm test              (vitest; 126 unit + 7 live sandbox; live skip without
+        │  npm test              (vitest; 214 tests, with live sandbox flows gated by
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 18 names + 6 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 38 names + 14 subpaths;
         │                         wired into prepublishOnly)
         ▼
-wrapper/dist/**  (the publishable artefact)
+wrapper/dist/**  (the packable artefact)
         │
-        │  npm pack --dry-run    (verifies tarball; v0.5.0 ≈ 6860 files,
-        │                         baseline in wrapper/.packsnapshot — diff in CI)
+        │  npm pack --dry-run    (verifies tarball; compare with the
+        │                         current wrapper/.packsnapshot baseline in CI)
         ▼
-clockify-sdk-ts-115@<version>.tgz  →  npm publish via release.yml on v*.*.* tag
+clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default path)
 ```
 
 `fern generate` runs in Docker (`fernapi/fern-typescript-node-sdk:3.71.2`).
@@ -165,6 +201,9 @@ Local Docker daemon required; CI uses the same container.
 | `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts, with-response.ts}` (hand-written) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
+| `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
+| `mcp/**` | `cd mcp && npm run type-check && npm test && npm run build && npm pack --dry-run`. For behavior changes, also run a stdio or in-memory MCP probe that exercises `tools/list`, at least one success envelope, one recovery envelope, and cleanup. |
+| `docs/product-north-star.md` or `docs/superpowers/plans/**` | Markdown-only. Run `git diff --check -- docs AGENTS.md CLAUDE.md README.md` and, when the prompt changes code expectations, skim the referenced package READMEs for drift. |
 | `.github/workflows/**` | the security-guidance hook may block the first `Write` per session; retry once. Lint with `gh workflow view <name>`. |
 | `.github/dependabot.yml` | edit-only, no gates (GitHub validates on next poll). Commits with `chore(deps)` / `chore(dev-deps)` / `chore(ci)` prefixes per the file's `commit-message` config. |
 | `wrapper/typedoc.json` | `npm run docs` (regenerates `docs/api/`; failures block the docs.yml workflow). |
@@ -187,8 +226,9 @@ end-to-end and green before push. Drift gates are non-negotiable.
    Gitignored already. Promote canonical findings into
    `spec/evidence/discrepancies.md` and reference the probe by
    relative path.
-5. **Never run `npm publish` from a developer laptop without
-   `--dry-run` first.** The release workflow exists for a reason.
+5. **Never run `npm publish` from a developer laptop.** Default
+   stance is no npm publication; a future publish decision needs
+   explicit maintainer approval and a dry-run first.
 6. **Never push a tag that doesn't match `package.json` version.**
    The release workflow's tag-vs-version guard fails the job; the
    consequence is a half-burnt git tag that needs cleanup.
@@ -208,14 +248,14 @@ end-to-end and green before push. Drift gates are non-negotiable.
 
 ```
 wrapper/
-├── package.json              ← clockify-sdk-ts manifest (npm-bound)
+├── package.json              ← clockify-sdk-ts-115 manifest (npm-bound)
 ├── tsconfig.json             ← type-check (noEmit; covers src/**, hand-written *.ts, tests/**)
 ├── tsconfig.esm.json         ← ESM emit → dist/esm/ (rootDir `.`; src/ lands under dist/esm/src/)
 ├── tsconfig.cjs.json         ← CJS emit → dist/cjs/. Paired with scripts/finalize-cjs.sh which writes
 │                                dist/cjs/package.json {type: commonjs} so Node treats the subtree as CJS
 │                                regardless of the parent's "type": "module".
 ├── vitest.config.ts          ← test runner (testTimeout 30s)
-├── README.md                 ← npm-facing README
+├── README.md                 ← SDK package README
 ├── CHANGELOG.md              ← Keep-a-Changelog. NOT in package.json "files" — discoverable via repo URL.
 ├── LICENSE                   ← MIT
 ├── index.ts                  ← package root — re-exports synced SDK + hand-written helpers
@@ -253,7 +293,7 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; CI diffs on every PR
-├── tests/                    (18 files, ~214 unit + 7 live @ v0.9.0)
+├── tests/                    (18 files, ~214 tests including env-gated live flows @ v0.9.0)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
 │   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
@@ -279,9 +319,9 @@ wrapper/
 ```
 
 `"files": ["dist", "README.md", "LICENSE"]` in `package.json`
-whitelists what `npm publish` ships. Do not add without a
-publish-readiness review. `CHANGELOG.md` is intentionally omitted
-to keep the tarball lean.
+whitelists what `npm pack` includes. Do not add without a
+pack/readiness review. `CHANGELOG.md` is intentionally omitted to
+keep the tarball lean.
 
 Fourteen subpaths in `package.json` `exports` at v0.9.0, each
 with `import` + `require` conditions (modern dual-tier shape:
@@ -289,24 +329,25 @@ with `import` + `require` conditions (modern dual-tier shape:
 types correctly):
 
 - `clockify-sdk-ts-115` → `./dist/{esm,cjs}/index.js` (package root)
-- `clockify-sdk-ts/create-client` → the factory in isolation
-- `clockify-sdk-ts/composed-fetch` → the standalone fetch wrapper
-- `clockify-sdk-ts/errors` → typed-error helpers + status subclasses
-- `clockify-sdk-ts/deprecation` → `warnOnce` for slow-deprecation rails
-- `clockify-sdk-ts/iter` → per-resource pagination + drift union
-- `clockify-sdk-ts/pagination` → low-level callback `paginate<T>`
-- `clockify-sdk-ts/paginated-list` → `PaginatedList<T>` async-iterable wrapper
-- `clockify-sdk-ts/webhooks` → signature verifier + JSON parser
-- `clockify-sdk-ts/webhook-events` → `ClockifyWebhookEvent` discriminated union (50)
-- `clockify-sdk-ts/with-response` → `HttpResponsePromise` shim
-- `clockify-sdk-ts/scoped-client` → `Workspace` Proxy sub-client
-- `clockify-sdk-ts/otel-hooks` → OTel-typed `ComposedFetchHooks`
-- `clockify-sdk-ts/health` → `clockifyHealth()` preflight
-- `clockify-sdk-ts/rate-limit` → `getRateLimit` / `getRateLimitFromError`
+- `clockify-sdk-ts-115/create-client` → the factory in isolation
+- `clockify-sdk-ts-115/composed-fetch` → the standalone fetch wrapper
+- `clockify-sdk-ts-115/errors` → typed-error helpers + status subclasses
+- `clockify-sdk-ts-115/deprecation` → `warnOnce` for slow-deprecation rails
+- `clockify-sdk-ts-115/iter` → per-resource pagination + drift union
+- `clockify-sdk-ts-115/pagination` → low-level callback `paginate<T>`
+- `clockify-sdk-ts-115/paginated-list` → `PaginatedList<T>` async-iterable wrapper
+- `clockify-sdk-ts-115/webhooks` → signature verifier + JSON parser
+- `clockify-sdk-ts-115/webhook-events` → `ClockifyWebhookEvent` discriminated union (50)
+- `clockify-sdk-ts-115/with-response` → `HttpResponsePromise` shim
+- `clockify-sdk-ts-115/scoped-client` → `Workspace` Proxy sub-client
+- `clockify-sdk-ts-115/otel-hooks` → OTel-typed `ComposedFetchHooks`
+- `clockify-sdk-ts-115/health` → `clockifyHealth()` preflight
+- `clockify-sdk-ts-115/rate-limit` → `getRateLimit` / `getRateLimitFromError`
 
 `package.json` also carries `publishConfig: { access: public,
-provenance: true }` — `npm publish` from any environment publishes
-publicly with sigstore provenance by default.
+provenance: true }` for the legacy release path. Because that would
+publish publicly with sigstore provenance, do not trigger it without
+explicit maintainer approval.
 
 The `addonToken: (() => undefined) as unknown as () => string` cast
 is a known workaround for a Fern typing limitation
@@ -328,15 +369,15 @@ runs without them deliberately):
   `withResponse` headers smoke).
 - `cli/tests/sandbox.test.ts` — 8 CLI flows invoking `main()` in
   `--json` mode and parsing stdout. Covers `status`, `tags list`,
-  `projects list`, `clients list`, plus the four new-in-v0.2 groups
-  (`webhooks list`, `invoices list`, `expenses list`, `audit-log
-  search`). The audit-log test self-skips when the workspace plan
-  gates the endpoint.
-- `mcp/tests/sandbox.test.ts` — 6 MCP flows. Uses real
+  `projects list`, `clients list`, `webhooks list`, `invoices list`,
+  `expenses list`, and `audit-log search`. The audit-log test
+  self-skips when the workspace plan gates the endpoint.
+- `mcp/tests/sandbox.test.ts` — 11 MCP flows. Uses real
   `loadContext()` + `buildServer()` piped through
   `InMemoryTransport.createLinkedPair()`. Covers `clockify_status`,
-  four `*_list` tools, and a `clockify_tags_create` + SDK-delete
-  round-trip (the MCP doesn't expose a paired tag-delete tool yet).
+  list tools, tag create/delete, work-package create/reuse cleanup,
+  derived-start work logging, review-day totals, and fix-entry update
+  cleanup.
 
 **Never run live tests against a customer workspace.** Every CRUD
 round-trip creates and deletes records on the pinned sandbox.
@@ -413,10 +454,17 @@ resolves (Fern issue acknowledged or workaround discovered).
   entry using the five-question format. An entry is not a substitute
   for fixing the issue; it's a trail that lets the next agent
   understand why the code looks the way it does.
-- `wrapper/README.md` is the npm-facing README. Update for any
+- `wrapper/README.md` is the SDK package README. Update for any
   user-visible change: new method, new auth requirement, changed
   pagination shape, deprecation. Don't duplicate build-chain detail
   there; that lives in this `AGENTS.md` and the workspace `README.md`.
+- `mcp/README.md` is the MCP-facing README. Update for any tool
+  addition/removal, envelope field, stable error code, confirmation
+  flow, or workflow example change. Cross-check the workflow table
+  against `tools/list` and GOCLMCP's `docs/tool-catalog.json`.
+- `docs/product-north-star.md` and `docs/superpowers/plans/**` are
+  planning/guidance artifacts. Keep them executable: exact files,
+  exact commands, explicit non-goals, and no placeholder phrases.
 - `wrapper/CHANGELOG.md` follows Keep-a-Changelog. `[Unreleased]`
   on top; user-visible changes go there between releases. On tag day
   rename `[Unreleased]` → `[X.Y.Z] — YYYY-MM-DD` and add a fresh

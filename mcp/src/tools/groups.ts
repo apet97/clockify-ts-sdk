@@ -12,7 +12,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_list",
         {
             title: "List user groups",
-            description: "List user groups in the workspace.",
+            description: "List user groups in the workspace, optionally scoped to one project.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -43,7 +43,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_get",
         {
             title: "Get a user group",
-            description: "Fetch a user group by ID.",
+            description: "Fetch one user group by ID from the pinned Clockify workspace.",
             inputSchema: { groupId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -69,6 +69,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             title: "Create a user group",
             description: "Create a new user group in the workspace.",
             inputSchema: { name: z.string().min(1) },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -89,11 +90,12 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_update",
         {
             title: "Update a user group",
-            description: "Update a user group's name.",
+            description: "Update one user group's display name in the pinned workspace.",
             inputSchema: {
                 groupId: z.string().min(1),
                 name: z.string().min(1),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -116,7 +118,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_delete",
         {
             title: "Delete a user group",
-            description: "Permanently delete a user group.",
+            description: "Permanently delete one user group by ID from the workspace.",
             inputSchema: { groupId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },
@@ -141,7 +143,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_list_members",
         {
             title: "List members of a user group",
-            description: "List users in a group.",
+            description: "List all users who belong to one Clockify user group.",
             inputSchema: { groupId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -165,11 +167,12 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_add_member",
         {
             title: "Add a user to a group",
-            description: "Add a user to a user group.",
+            description: "Add one user to one user group in the pinned workspace.",
             inputSchema: {
                 groupId: z.string().min(1),
                 userId: z.string().min(1),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -193,7 +196,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_remove_member",
         {
             title: "Remove a user from a group",
-            description: "Remove a user from a user group.",
+            description: "Remove one user from one user group in the pinned workspace.",
             inputSchema: {
                 groupId: z.string().min(1),
                 userId: z.string().min(1),

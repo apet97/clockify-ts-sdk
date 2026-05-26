@@ -68,7 +68,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_create",
         {
             title: "Create a holiday",
-            description: "Create a workspace holiday.",
+            description: "Create a workspace holiday with date range, color, and assignment options.",
             inputSchema: {
                 name: z.string().min(1),
                 startDate: z.string().min(1).describe("YYYY-MM-DD."),
@@ -77,6 +77,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 everyoneIncludingNew: z.boolean().optional(),
                 color: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -105,7 +106,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_update",
         {
             title: "Update a holiday",
-            description: "Update a workspace holiday by ID.",
+            description: "Update one workspace holiday's name, dates, annual recurrence, or color by ID.",
             inputSchema: {
                 holidayId: z.string().min(1),
                 name: z.string().optional(),
@@ -114,6 +115,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 occursAnnually: z.boolean().optional(),
                 color: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -143,7 +145,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_delete",
         {
             title: "Delete a holiday",
-            description: "Permanently delete a workspace holiday.",
+            description: "Permanently delete one workspace holiday by ID.",
             inputSchema: { holidayId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },

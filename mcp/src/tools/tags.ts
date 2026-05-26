@@ -45,8 +45,9 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_create",
         {
             title: "Create a tag",
-            description: "Create a tag in the pinned workspace.",
+            description: "Create a tag in the pinned workspace for later time-entry classification.",
             inputSchema: { name: z.string().min(1) },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -62,7 +63,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_get",
         {
             title: "Get a tag",
-            description: "Fetch a single tag by ID.",
+            description: "Fetch one tag by ID from the pinned Clockify workspace.",
             inputSchema: { tagId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -86,12 +87,13 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_update",
         {
             title: "Update a tag",
-            description: "Update a tag's name or archived state.",
+            description: "Update a tag's name or archived state in the pinned workspace.",
             inputSchema: {
                 tagId: z.string().min(1),
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -116,7 +118,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_delete",
         {
             title: "Delete a tag",
-            description: "Permanently delete a tag.",
+            description: "Permanently delete one tag by ID from the pinned workspace.",
             inputSchema: { tagId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },

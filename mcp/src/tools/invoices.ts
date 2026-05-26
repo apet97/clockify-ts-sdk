@@ -24,7 +24,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         "clockify_invoices_list",
         {
             title: "List invoices",
-            description: "List invoices in the workspace.",
+            description: "List invoices in the pinned workspace, optionally filtered by invoice status.",
             inputSchema: {
                 status: z.enum(INVOICE_STATUSES).optional(),
             },
@@ -87,6 +87,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 dueDate: z.string().min(1),
                 timeViewMode: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -124,6 +125,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 note: z.string().optional(),
                 subject: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -180,6 +182,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 invoiceId: z.string().min(1),
                 status: z.enum(INVOICE_STATUSES),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

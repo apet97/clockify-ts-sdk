@@ -1,5 +1,5 @@
 /**
- * `clk status` — show the active workspace, the current user, and
+ * `clk115 status` — show the active workspace, the current user, and
  * any in-progress timer. The first command an operator runs to
  * confirm credentials and orientation.
  */
