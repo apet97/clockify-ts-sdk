@@ -21,12 +21,22 @@ subdirectory:
 
 - **`wrapper/`** → `clockify-sdk-ts-115` — the core TypeScript SDK,
   Fern-generated + hand-written ergonomics. The original product.
-  Publishable artefact: `wrapper/dist/`.
+  Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. Publishable artefact: `cli/dist/`.
-- **`mcp/`** → `@clockify115/mcp-server` — TypeScript MCP server,
-  sibling to the Go MCP in GOCLMCP. Curated 13-tool everyday surface
-  for stdio MCP clients. Publishable artefact: `mcp/dist/`.
+  interface on top of the SDK. **21 commands** across 15 groups.
+  Local build artefact: `cli/dist/`.
+- **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
+  server, sibling to the Go MCP in GOCLMCP. **89 tools** across 17
+  resource groups; full CRUDL across every Clockify domain (no
+  workflow tools / reports / raw API / demo — those are the Go MCP's
+  niche). Local build artefact: `mcp/dist/`.
+
+The `-115` / `115` suffix is intentional trademark distance from
+Clockify. We do not plan to publish any of these to npm; the
+`publishConfig` blocks + `prepublishOnly` scripts remain so anyone
+who decides otherwise inherits the right gates. MCP tool prefixes
+(`clockify_status`, etc.) stay because they mirror the Clockify API
+and are validated by `../GOCLMCP/` drift gates.
 
 Each package owns its own `package.json`, `tsconfig.json`, build
 chain, and tests. They are not yet npm workspaces; each is built /
@@ -309,18 +319,35 @@ the upstream Fern type is fixed.
 
 ## 7. Live tests (env-gated; sandbox-only)
 
-`wrapper/tests/sandbox.test.ts` reads `CLOCKIFY_API_KEY` and
-`CLOCKIFY_WORKSPACE_ID`. Tests skip cleanly if either is absent
-(CI runs without them deliberately).
+Three live sandbox suites read `CLOCKIFY_API_KEY` and
+`CLOCKIFY_WORKSPACE_ID`. All skip cleanly if either is absent (CI
+runs without them deliberately):
 
-**Never run live tests against a customer workspace.** The CRUD
-round-trip creates and deletes records.
+- `wrapper/tests/sandbox.test.ts` — 7 SDK-level flows (CRUD on tags,
+  pagination walks via `paginate` / `iterAll` / `iterPages`,
+  `withResponse` headers smoke).
+- `cli/tests/sandbox.test.ts` — 8 CLI flows invoking `main()` in
+  `--json` mode and parsing stdout. Covers `status`, `tags list`,
+  `projects list`, `clients list`, plus the four new-in-v0.2 groups
+  (`webhooks list`, `invoices list`, `expenses list`, `audit-log
+  search`). The audit-log test self-skips when the workspace plan
+  gates the endpoint.
+- `mcp/tests/sandbox.test.ts` — 6 MCP flows. Uses real
+  `loadContext()` + `buildServer()` piped through
+  `InMemoryTransport.createLinkedPair()`. Covers `clockify_status`,
+  four `*_list` tools, and a `clockify_tags_create` + SDK-delete
+  round-trip (the MCP doesn't expose a paired tag-delete tool yet).
+
+**Never run live tests against a customer workspace.** Every CRUD
+round-trip creates and deletes records on the pinned sandbox.
 
 When adding live flows:
 - Pair create with delete in the same `it` block.
-- Use timestamp-prefixed slugs (`sdk-test-${Date.now()}`) so litter
-  from aborted runs is identifiable.
-- `testTimeout: 30_000` is already in `vitest.config.ts`.
+- Use timestamp-prefixed slugs (`sdk-test-${Date.now()}`,
+  `mcp-sandbox-${Date.now()}`) so litter from aborted runs is
+  identifiable.
+- `testTimeout: 30_000` is already in `vitest.config.ts` (wrapper)
+  and inline on each `it` in cli/mcp suites.
 - Treat any 401 / 5xx as a test bug, not a spec bug, until proven
   otherwise. Run the curl equivalent by hand before changing
   assertions.
