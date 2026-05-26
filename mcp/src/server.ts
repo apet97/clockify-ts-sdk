@@ -13,6 +13,16 @@ import { registerTagsTools } from "./tools/tags.js";
 import { registerTasksTools } from "./tools/tasks.js";
 import { registerEntriesTools } from "./tools/entries.js";
 import { registerTimerTools } from "./tools/timer.js";
+import { registerInvoicesTools } from "./tools/invoices.js";
+import { registerExpensesTools } from "./tools/expenses.js";
+import { registerWebhooksTools } from "./tools/webhooks.js";
+import { registerCustomFieldsTools } from "./tools/customFields.js";
+import { registerTimeOffTools } from "./tools/timeOff.js";
+import { registerSchedulingTools } from "./tools/scheduling.js";
+import { registerGroupsTools } from "./tools/groups.js";
+import { registerHolidaysTools } from "./tools/holidays.js";
+import { registerApprovalsTools } from "./tools/approvals.js";
+import { registerAuditTools } from "./tools/audit.js";
 
 export const SERVER_INSTRUCTIONS =
     "This is a single-user Clockify MCP for one pinned workspace. " +
@@ -25,7 +35,7 @@ export function buildServer(ctx: Context): McpServer {
     const server = new McpServer(
         {
             name: "@clockify/mcp-server",
-            version: "0.1.0",
+            version: "0.2.0",
         },
         {
             instructions: SERVER_INSTRUCTIONS,
@@ -40,6 +50,16 @@ export function buildServer(ctx: Context): McpServer {
     registerTasksTools(server, ctx);
     registerEntriesTools(server, ctx);
     registerTimerTools(server, ctx);
+    registerInvoicesTools(server, ctx);
+    registerExpensesTools(server, ctx);
+    registerWebhooksTools(server, ctx);
+    registerCustomFieldsTools(server, ctx);
+    registerTimeOffTools(server, ctx);
+    registerSchedulingTools(server, ctx);
+    registerGroupsTools(server, ctx);
+    registerHolidaysTools(server, ctx);
+    registerApprovalsTools(server, ctx);
+    registerAuditTools(server, ctx);
 
     return server;
 }

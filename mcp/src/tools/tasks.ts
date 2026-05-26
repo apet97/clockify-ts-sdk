@@ -41,4 +41,140 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_tasks_create",
+        {
+            title: "Create a task",
+            description: "Create a task under a project.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                name: z.string().min(1),
+                billable: z.boolean().optional(),
+                estimate: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
+                assigneeIds: z.array(z.string()).optional(),
+            },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = { name: args.name };
+                if (args.billable !== undefined) body.billable = args.billable;
+                if (args.estimate) body.estimate = args.estimate;
+                if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
+                const task = await ctx.client.tasks.create({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    ...body,
+                } as never);
+                return successResult("clockify_tasks_create", task, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
+            } catch (err) {
+                return errorResult("clockify_tasks_create", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_tasks_get",
+        {
+            title: "Get a task",
+            description: "Fetch a single task by ID.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                taskId: z.string().min(1),
+            },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const task = await ctx.client.tasks.get({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                });
+                return successResult("clockify_tasks_get", task, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                });
+            } catch (err) {
+                return errorResult("clockify_tasks_get", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_tasks_update",
+        {
+            title: "Update a task",
+            description: "Update a task's metadata.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                taskId: z.string().min(1),
+                name: z.string().optional(),
+                billable: z.boolean().optional(),
+                estimate: z.string().optional(),
+                status: z.string().optional().describe("ACTIVE | DONE."),
+                assigneeIds: z.array(z.string()).optional(),
+            },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = {};
+                if (args.name) body.name = args.name;
+                if (args.billable !== undefined) body.billable = args.billable;
+                if (args.estimate) body.estimate = args.estimate;
+                if (args.status) body.status = args.status;
+                if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
+                const updated = await ctx.client.tasks.update({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                    ...body,
+                } as never);
+                return successResult("clockify_tasks_update", updated, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                });
+            } catch (err) {
+                return errorResult("clockify_tasks_update", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_tasks_delete",
+        {
+            title: "Delete a task",
+            description: "Permanently delete a task.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                taskId: z.string().min(1),
+            },
+            annotations: { destructiveHint: true },
+        },
+        async (args) => {
+            try {
+                await ctx.client.tasks.delete({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                });
+                return successResult(
+                    "clockify_tasks_delete",
+                    { deleted: true, projectId: args.projectId, taskId: args.taskId },
+                    {
+                        workspaceId: ctx.workspaceId,
+                        projectId: args.projectId,
+                        taskId: args.taskId,
+                    },
+                );
+            } catch (err) {
+                return errorResult("clockify_tasks_delete", err);
+            }
+        },
+    );
 }

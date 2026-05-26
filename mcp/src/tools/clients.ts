@@ -62,4 +62,87 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_clients_get",
+        {
+            title: "Get a client",
+            description: "Fetch a single client by ID.",
+            inputSchema: { clientId: z.string().min(1) },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const client = await ctx.client.clients.get({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                });
+                return successResult("clockify_clients_get", client, {
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                });
+            } catch (err) {
+                return errorResult("clockify_clients_get", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_clients_update",
+        {
+            title: "Update a client",
+            description: "Update a client's metadata.",
+            inputSchema: {
+                clientId: z.string().min(1),
+                name: z.string().optional(),
+                note: z.string().optional(),
+                address: z.string().optional(),
+                archived: z.boolean().optional(),
+            },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = {
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                };
+                if (args.name) body.name = args.name;
+                if (args.note !== undefined) body.note = args.note;
+                if (args.address !== undefined) body.address = args.address;
+                if (args.archived !== undefined) body.archived = args.archived;
+                const updated = await ctx.client.clients.update(body as never);
+                return successResult("clockify_clients_update", updated, {
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                });
+            } catch (err) {
+                return errorResult("clockify_clients_update", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_clients_delete",
+        {
+            title: "Delete a client",
+            description: "Permanently delete a client.",
+            inputSchema: { clientId: z.string().min(1) },
+            annotations: { destructiveHint: true },
+        },
+        async (args) => {
+            try {
+                await ctx.client.clients.delete({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                });
+                return successResult(
+                    "clockify_clients_delete",
+                    { deleted: true, clientId: args.clientId },
+                    { workspaceId: ctx.workspaceId, clientId: args.clientId },
+                );
+            } catch (err) {
+                return errorResult("clockify_clients_delete", err);
+            }
+        },
+    );
 }
