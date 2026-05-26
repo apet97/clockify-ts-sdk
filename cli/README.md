@@ -64,6 +64,17 @@ when stdout is not a TTY (e.g. piped to a file).
 | `clk tasks list <projectId> [--limit N] [--page N] [--name text]` | List tasks for a project. |
 | `clk tags list [--limit N] [--page N] [--name text] [--archived]` | List tags. |
 | `clk tags create <name>` | Create a tag. |
+| `clk webhooks list [--type type]` | List outbound webhooks. |
+| `clk webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]` | Create a webhook subscription. |
+| `clk webhooks delete <id>` | Delete a webhook subscription. |
+| `clk invoices list` | List invoices in the workspace. |
+| `clk invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]` | Create an invoice draft. |
+| `clk expenses list [--limit N] [--page N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]` | List workspace expenses. |
+| `clk timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
+| `clk timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. |
+| `clk scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
+| `clk scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment (drafts by default; pass `--publish` to publish). |
+| `clk audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
 | `clk help [command]` | Per-command help. |
 | `clk --version` | Print CLI version. |
 
