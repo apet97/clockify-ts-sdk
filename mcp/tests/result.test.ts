@@ -30,6 +30,38 @@ describe("successResult", () => {
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
         expect(parsed).not.toHaveProperty("meta");
     });
+
+    it("can carry workflow IDs, change sets, warnings, and next actions", () => {
+        const out = successResult(
+            "clockify_create_work_package",
+            { project: { id: "p1", name: "Launch" } },
+            { workspaceId: "ws-1" },
+            {
+                entity: "work_package",
+                ids: { projectId: "p1" },
+                changed: { created: [{ type: "project", id: "p1", name: "Launch" }] },
+                warnings: [{ code: "partial", message: "Tag was reused." }],
+                next: [
+                    {
+                        tool: "clockify_log_work",
+                        args: { project_id: "p1" },
+                        reason: "Log finished work against this package.",
+                    },
+                ],
+            },
+        );
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed).toMatchObject({
+            ok: true,
+            action: "clockify_create_work_package",
+            entity: "work_package",
+            ids: { projectId: "p1" },
+            changed: { created: [{ type: "project", id: "p1", name: "Launch" }] },
+            warnings: [{ code: "partial", message: "Tag was reused." }],
+            next: [{ tool: "clockify_log_work", args: { project_id: "p1" } }],
+        });
+        expect(out.structuredContent).toEqual(parsed);
+    });
 });
 
 describe("errorResult", () => {
@@ -57,5 +89,40 @@ describe("errorResult", () => {
         const out = errorResult("x", "string error");
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
         expect(parsed.error).toEqual({ code: "error", message: "string error" });
+    });
+
+    it("maps confirmation-token failures to invalid_request", () => {
+        const out = errorResult("clockify_setup_webhook", new Error("confirmation token does not match this tool call"));
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.error).toEqual({
+            code: "invalid_request",
+            message: "confirmation token does not match this tool call",
+        });
+    });
+
+    it("maps local validation failures to invalid_request", () => {
+        const out = errorResult("clockify_setup_webhook", new Error("webhook URL must use HTTPS"));
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.error).toEqual({
+            code: "invalid_request",
+            message: "webhook URL must use HTTPS",
+        });
+    });
+
+    it("accepts structured recovery guidance", () => {
+        const out = errorResult("clockify_log_work", new Error("project is required"), {
+            hint: "List projects, then retry with project_id.",
+            tool: "clockify_projects_list",
+            args: { pageSize: 20 },
+            retryable: true,
+        });
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.recovery).toEqual({
+            hint: "List projects, then retry with project_id.",
+            tool: "clockify_projects_list",
+            args: { pageSize: 20 },
+            retryable: true,
+        });
+        expect(out.structuredContent).toEqual(parsed);
     });
 });

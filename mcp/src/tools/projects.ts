@@ -84,7 +84,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         "clockify_projects_get",
         {
             title: "Get a project",
-            description: "Fetch a single project by ID.",
+            description: "Fetch one project by ID from the pinned Clockify workspace.",
             inputSchema: { projectId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -108,7 +108,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         "clockify_projects_update",
         {
             title: "Update a project",
-            description: "Update a project's metadata.",
+            description: "Update project metadata such as name, client, visibility, color, or archive state.",
             inputSchema: {
                 projectId: z.string().min(1),
                 name: z.string().optional(),
@@ -119,6 +119,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 archived: z.boolean().optional(),
                 note: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -148,7 +149,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         "clockify_projects_delete",
         {
             title: "Delete a project",
-            description: "Permanently delete a project.",
+            description: "Permanently delete one project by ID from the pinned workspace.",
             inputSchema: { projectId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },

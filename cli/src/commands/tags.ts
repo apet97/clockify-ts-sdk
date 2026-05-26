@@ -1,5 +1,5 @@
 /**
- * `clk tags list` / `clk tags create <name>`.
+ * `clk115 tags list` / `clk115 tags create <name>`.
  */
 import { Command } from "commander";
 

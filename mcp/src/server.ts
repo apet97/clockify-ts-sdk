@@ -6,6 +6,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { Context } from "./client.js";
+import { registerWorkflowTools } from "./tools/workflows.js";
 import { registerStatusTool } from "./tools/status.js";
 import { registerProjectsTools } from "./tools/projects.js";
 import { registerClientsTools } from "./tools/clients.js";
@@ -34,8 +35,8 @@ export const SERVER_INSTRUCTIONS =
 export function buildServer(ctx: Context): McpServer {
     const server = new McpServer(
         {
-            name: "@clockify/mcp-server",
-            version: "0.2.0",
+            name: "@clockify115/mcp-server",
+            version: "0.3.0",
         },
         {
             instructions: SERVER_INSTRUCTIONS,
@@ -43,6 +44,7 @@ export function buildServer(ctx: Context): McpServer {
         },
     );
 
+    registerWorkflowTools(server, ctx);
     registerStatusTool(server, ctx);
     registerProjectsTools(server, ctx);
     registerClientsTools(server, ctx);

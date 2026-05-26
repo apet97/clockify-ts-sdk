@@ -74,6 +74,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 triggerSourceType: z.string().optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -101,7 +102,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         "clockify_webhooks_update",
         {
             title: "Update a webhook subscription",
-            description: "Update a webhook subscription.",
+            description: "Update a webhook subscription's name, URL, event, or trigger source.",
             inputSchema: {
                 webhookId: z.string().min(1),
                 name: z.string().optional(),
@@ -110,6 +111,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 triggerSourceType: z.string().optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

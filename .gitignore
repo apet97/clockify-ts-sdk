@@ -18,10 +18,9 @@ spec/evidence/probes/*.hdr
 **/*.tsbuildinfo
 
 # TypeDoc output for the public API reference (Phase 3.3) lands
-# at the REPO ROOT under docs/api/. Anchored with a leading slash
-# so the more-specific wrapper/docs/resources/ markdown reference
-# (Phase 3.4 — committed) is NOT ignored.
-/docs/
+# at the REPO ROOT under docs/api/. Keep source-authored docs in
+# docs/ trackable.
+/docs/api/
 
 # IDE / editor noise
 .idea/

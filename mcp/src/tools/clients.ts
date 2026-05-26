@@ -45,17 +45,18 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         "clockify_clients_create",
         {
             title: "Create a client",
-            description: "Create a client in the pinned workspace.",
+            description: "Create a client record in the pinned workspace with optional notes.",
             inputSchema: {
                 name: z.string().min(1),
                 note: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
-                const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
+                const body: Record<string, unknown> = { name: args.name };
                 if (args.note) body.note = args.note;
-                const client = await ctx.client.clients.create(body as never);
+                const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
                 return successResult("clockify_clients_create", client);
             } catch (err) {
                 return errorResult("clockify_clients_create", err);
@@ -67,7 +68,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         "clockify_clients_get",
         {
             title: "Get a client",
-            description: "Fetch a single client by ID.",
+            description: "Fetch one client by ID from the pinned Clockify workspace.",
             inputSchema: { clientId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -91,7 +92,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         "clockify_clients_update",
         {
             title: "Update a client",
-            description: "Update a client's metadata.",
+            description: "Update client metadata such as name, note, address, or archived state.",
             inputSchema: {
                 clientId: z.string().min(1),
                 name: z.string().optional(),
@@ -99,18 +100,20 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 address: z.string().optional(),
                 archived: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
-                const body: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                };
+                const body: Record<string, unknown> = {};
                 if (args.name) body.name = args.name;
                 if (args.note !== undefined) body.note = args.note;
                 if (args.address !== undefined) body.address = args.address;
                 if (args.archived !== undefined) body.archived = args.archived;
-                const updated = await ctx.client.clients.update(body as never);
+                const updated = await ctx.client.clients.update({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                    body,
+                } as never);
                 return successResult("clockify_clients_update", updated, {
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,
@@ -125,7 +128,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         "clockify_clients_delete",
         {
             title: "Delete a client",
-            description: "Permanently delete a client.",
+            description: "Permanently delete one client by ID from the pinned workspace.",
             inputSchema: { clientId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },

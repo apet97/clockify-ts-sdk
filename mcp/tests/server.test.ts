@@ -7,7 +7,12 @@ import type { Context } from "../src/client.js";
 
 const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice" };
 
-function fakeContext(overrides?: { listInProgress?: () => Promise<unknown>; projectsList?: (req: unknown) => Promise<unknown[]> }): Context {
+function fakeContext(overrides?: {
+    clientsUpdate?: (req: unknown) => Promise<unknown>;
+    listInProgress?: () => Promise<unknown>;
+    projectsList?: (req: unknown) => Promise<unknown[]>;
+    projectsUpdate?: (req: unknown) => Promise<unknown>;
+}): Context {
     return {
         workspaceId: "ws-1",
         client: {
@@ -22,10 +27,12 @@ function fakeContext(overrides?: { listInProgress?: () => Promise<unknown>; proj
             projects: {
                 list: overrides?.projectsList ?? (async () => [{ id: "p1", name: "Proj" }]),
                 create: async (body: Record<string, unknown>) => ({ id: "p2", ...body }),
+                update: overrides?.projectsUpdate ?? (async (req: unknown) => req),
             },
             clients: {
                 list: async () => [],
                 create: async (body: Record<string, unknown>) => ({ id: "c1", ...body }),
+                update: overrides?.clientsUpdate ?? (async (req: unknown) => req),
             },
             tasks: { list: async () => [] },
             tags: {
@@ -55,7 +62,7 @@ async function connect(ctx: Context): Promise<Client> {
     return client;
 }
 
-describe("@clockify/mcp-server", () => {
+describe("@clockify115/mcp-server", () => {
     it("advertises every tool we registered", async () => {
         const client = await connect(fakeContext());
         const list = await client.listTools();
@@ -64,6 +71,22 @@ describe("@clockify/mcp-server", () => {
             [
                 // Status
                 "clockify_status",
+                "clockify_tools_guide",
+                "clockify_create_work_package",
+                "clockify_log_work",
+                "clockify_start_work",
+                "clockify_stop_work",
+                "clockify_switch_work",
+                "clockify_review_day",
+                "clockify_review_week",
+                "clockify_fix_entry",
+                "clockify_invoice_client_work",
+                "clockify_record_expense",
+                "clockify_request_time_off",
+                "clockify_schedule_work",
+                "clockify_setup_webhook",
+                "clockify_demo_seed",
+                "clockify_demo_cleanup",
                 // Clients
                 "clockify_clients_list",
                 "clockify_clients_get",
@@ -170,6 +193,26 @@ describe("@clockify/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
+        expect(names).toHaveLength(105);
+    });
+
+    it("advertises agent-ready metadata for every tool", async () => {
+        const client = await connect(fakeContext());
+        const tools = (await client.listTools()).tools;
+
+        const weakDescriptions = tools
+            .filter((tool) => !tool.title?.trim() || !tool.description?.trim() || tool.description.length < 40)
+            .map((tool) => ({
+                name: tool.name,
+                title: tool.title ?? "",
+                descriptionLength: tool.description?.length ?? 0,
+            }));
+        const missingAnnotations = tools
+            .filter((tool) => !tool.annotations)
+            .map((tool) => tool.name);
+
+        expect(weakDescriptions).toEqual([]);
+        expect(missingAnnotations).toEqual([]);
     });
 
     it("clockify_status returns the canonical envelope", async () => {
@@ -182,6 +225,11 @@ describe("@clockify/mcp-server", () => {
         expect(parsed.data.workspaceId).toBe("ws-1");
         expect(parsed.data.user.email).toBe("alice@example.com");
         expect(parsed.data.runningEntry).toBeNull();
+        expect(parsed.next).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ tool: "clockify_create_work_package" }),
+            ]),
+        );
     });
 
     it("clockify_projects_list passes pagination args through to the SDK", async () => {
@@ -208,6 +256,58 @@ describe("@clockify/mcp-server", () => {
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
         expect(parsed.meta.count).toBe(1);
         expect(parsed.meta.page).toBe(2);
+    });
+
+    it("clockify_projects_update passes update fields at the SDK request top level", async () => {
+        let captured: unknown = null;
+        const client = await connect(
+            fakeContext({
+                projectsUpdate: async (req) => {
+                    captured = req;
+                    return { id: "p1", name: "Renamed", archived: true };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_projects_update",
+            arguments: { projectId: "p1", name: "Renamed", archived: true },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured).toEqual({
+            workspaceId: "ws-1",
+            projectId: "p1",
+            name: "Renamed",
+            archived: true,
+        });
+    });
+
+    it("clockify_clients_update passes update fields in the generated SDK body", async () => {
+        let captured: unknown = null;
+        const client = await connect(
+            fakeContext({
+                clientsUpdate: async (req) => {
+                    captured = req;
+                    return { id: "c1", name: "Renamed", archived: true };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_clients_update",
+            arguments: { clientId: "c1", name: "Renamed", archived: true },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured).toEqual({
+            workspaceId: "ws-1",
+            clientId: "c1",
+            body: {
+                name: "Renamed",
+                archived: true,
+            },
+        });
     });
 
     it("clockify_entries_log rejects when neither start nor durationSeconds is given", async () => {

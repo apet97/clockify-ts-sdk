@@ -51,6 +51,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 period: z.enum(APPROVAL_PERIODS),
                 periodStart: z.string().min(1).describe("RFC3339 timestamp for the start of the period."),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -77,6 +78,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 state: z.enum(APPROVAL_STATES),
                 note: z.string().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {

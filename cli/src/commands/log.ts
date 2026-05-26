@@ -1,5 +1,5 @@
 /**
- * `clk log <duration> <description>` — record a finished work item
+ * `clk115 log <duration> <description>` — record a finished work item
  * with an explicit duration ending now (or at --end). The most-
  * common after-the-fact entry pattern.
  */
@@ -24,7 +24,7 @@ export const registerLogCommand: Registrar = (program, services) => {
         .description("Log a finished time entry. Duration accepts 1h30m / 90m / PT1H30M.")
         .argument("<duration>", "Duration like '1h30m', '45m', or ISO 8601 'PT1H30M'.")
         .argument("<description>", "What you worked on.")
-        .option("-p, --project <id>", "Project ID (use clk projects list to find one).")
+        .option("-p, --project <id>", "Project ID (use clk115 projects list to find one).")
         .option("-t, --task <id>", "Task ID.")
         .option("--tag <id...>", "Tag ID(s).")
         .option("--billable", "Mark the entry as billable.", false)

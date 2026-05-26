@@ -9,15 +9,15 @@ body:
         Thanks for taking the time to file a bug. Before you submit:
 
         - **Security issue?** Follow [SECURITY.md](https://github.com/apet97/clockify-ts-sdk/blob/main/SECURITY.md) — do NOT open a public issue.
-        - **Upstream Clockify API behaviour?** That's a Clockify support ticket. This tracker is for the wrapper surface in `wrapper/` (the hand-written modules + the dual build + the publish pipeline).
+        - **Upstream Clockify API behaviour?** That's a Clockify support ticket. This tracker is for the wrapper surface in `wrapper/` (the hand-written modules + the dual build + pack gates).
         - **Synced SDK quirk under `wrapper/src/**`?** Raise it upstream in [Fern](https://github.com/fern-api/fern) or [apet97/go-clockify](https://github.com/apet97/go-clockify); the synced tree is regenerated and not editable here.
 
   - type: input
     id: sdk-version
     attributes:
       label: SDK version
-      description: Output of `npm ls clockify-sdk-ts` or `cat node_modules/clockify-sdk-ts/package.json | grep version`.
-      placeholder: "e.g. 0.4.0"
+      description: Output of `npm ls clockify-sdk-ts-115` or `cat node_modules/clockify-sdk-ts-115/package.json | grep version`.
+      placeholder: "e.g. 0.9.0"
     validations:
       required: true
 

@@ -46,7 +46,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_create",
         {
             title: "Create a task",
-            description: "Create a task under a project.",
+            description: "Create a task under one project with optional estimate and assignees.",
             inputSchema: {
                 projectId: z.string().min(1),
                 name: z.string().min(1),
@@ -54,6 +54,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 estimate: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
                 assigneeIds: z.array(z.string()).optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -80,7 +81,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_get",
         {
             title: "Get a task",
-            description: "Fetch a single task by ID.",
+            description: "Fetch one task by project ID and task ID from the pinned workspace.",
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
@@ -109,7 +110,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_update",
         {
             title: "Update a task",
-            description: "Update a task's metadata.",
+            description: "Update task metadata such as name, status, estimate, billing, or assignees.",
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
@@ -119,6 +120,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 status: z.string().optional().describe("ACTIVE | DONE."),
                 assigneeIds: z.array(z.string()).optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -149,7 +151,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_delete",
         {
             title: "Delete a task",
-            description: "Permanently delete a task.",
+            description: "Permanently delete one task by project ID and task ID.",
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),

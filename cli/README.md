@@ -1,7 +1,7 @@
 # @clockify115/cli
 
 Command-line interface for [Clockify](https://clockify.me/), built on
-top of [`clockify-sdk-ts`](https://www.npmjs.com/package/clockify-sdk-ts-115).
+top of `clockify-sdk-ts-115`.
 
 Two binaries, identical behavior:
 
@@ -9,7 +9,10 @@ Two binaries, identical behavior:
 - `clk115` — short alias
 
 ```sh
-npm install -g @clockify115/cli
+cd cli
+npm install
+npm run build
+npm link
 export CLOCKIFY_API_KEY=...      # from Clockify > Profile > API Keys
 export CLOCKIFY_WORKSPACE_ID=... # from a workspace URL
 
@@ -118,14 +121,14 @@ git clone https://github.com/apet97/clockify-ts-sdk
 cd clockify-ts-sdk/cli
 npm install
 npm run dev -- status        # via tsx, no build needed
-npm test                     # 25 unit tests across duration / config / output
+npm test                     # 26 unit tests across duration / config / output / CLI contract
 npm run build                # tsc → dist/
 node dist/index.js status    # smoke test (or invoke installed clk115/clockify115)
 ```
 
-`clockify-sdk-ts-115` is referenced as a `file:../wrapper` dev dependency
-during local development; if you publish, `@clockify115/cli` should
-declare it as a peer dependency.
+`clockify-sdk-ts-115` is referenced as a `file:../wrapper` dev
+dependency during local development and as a peer dependency for any
+future published package.
 
 ## License
 

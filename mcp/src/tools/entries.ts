@@ -73,6 +73,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
@@ -117,7 +118,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_delete",
         {
             title: "Delete a time entry",
-            description: "Permanently delete a time entry by ID.",
+            description: "Permanently delete one time entry by ID from the pinned workspace.",
             inputSchema: { timeEntryId: z.string().min(1) },
             annotations: { destructiveHint: true },
         },
@@ -135,7 +136,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_get",
         {
             title: "Get a time entry",
-            description: "Fetch a single time entry by ID.",
+            description: "Fetch one time entry by ID from the pinned Clockify workspace.",
             inputSchema: { timeEntryId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -170,6 +171,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
+            annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
@@ -183,7 +185,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 const updated = await ctx.client.timeEntries.update({
                     workspaceId: ctx.workspaceId,
                     timeEntryId: args.timeEntryId,
-                    ...body,
+                    body,
                 } as never);
                 return successResult("clockify_entries_update", updated, {
                     workspaceId: ctx.workspaceId,

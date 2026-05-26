@@ -1,5 +1,5 @@
 /**
- * `clk audit-log search` — query the workspace audit log.
+ * `clk115 audit-log search` — query the workspace audit log.
  *
  * Clockify caps the audit window at 31 days and requires both
  * `actions` and `authors` filters; this surface mirrors that contract

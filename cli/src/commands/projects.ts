@@ -1,5 +1,5 @@
 /**
- * `clk projects list` / `clk projects create <name>`.
+ * `clk115 projects list` / `clk115 projects create <name>`.
  */
 import { Command } from "commander";
 

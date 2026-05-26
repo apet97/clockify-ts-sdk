@@ -1,5 +1,5 @@
 /**
- * `clk expenses list`. Create is intentionally omitted in v0.2 because
+ * `clk115 expenses list`. Create is intentionally omitted because
  * the live Clockify create-expense endpoint expects a multipart upload
  * (a receipt file) per the synced SDK's `ExpenseCreateRequest`. A
  * future iteration can add `expenses create` with a `--file` flag once
