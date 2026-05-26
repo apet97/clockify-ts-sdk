@@ -6,12 +6,20 @@ Every rule there applies to Claude Code work.
 
 ## We work on two repos in lockstep
 
-This repo (`apet97/clockify-ts-sdk`) ships the npm SDK.
+This repo (`apet97/clockify-ts-sdk`) ships **three** npm packages
+side by side, all built on the core SDK:
+
+| Folder | Package | Status |
+|---|---|---|
+| `wrapper/` | `clockify-sdk-ts` | v0.9.0 — published |
+| `cli/` | `@clockify/cli` | v0.1.0 — unpublished (needs `@clockify` npm org access) |
+| `mcp/` | `@clockify/mcp-server` | v0.1.0 — unpublished |
+
 `apet97/go-clockify` (GOCLMCP, conventionally cloned at `../GOCLMCP/`)
-ships the MCP server + the canonical OpenAPI generator. Spec-shape
-changes start in GOCLMCP and flow down through the corrected
-snapshot; SDK-shape changes (errors, pagination, ergonomics) live
-here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
+ships the canonical Go MCP server + the canonical OpenAPI generator.
+Spec-shape changes start in GOCLMCP and flow down through the
+corrected snapshot; SDK-shape changes (errors, pagination, ergonomics)
+live here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
 
 ## Tactical gotchas (the things that bite mid-session)
 
@@ -77,6 +85,26 @@ here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
   `ClockifyWebhookEvent` discriminated union (50 events).
   release-please + hosted TypeDoc CI workflows are live; CHANGELOG
   + version bumps happen via release-please merges, not manual.
+- **`cli/` package** (`@clockify/cli`, v0.1.0 unpublished). ESM-only
+  tsc build; two bin names `clockify` + `clk`. Twelve commands:
+  status, start, stop, log, entries {list,delete}, projects
+  {list,create}, clients {list,create}, tasks list, tags
+  {list,create}. Reads `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID`
+  from env, flags, or `~/.clockifyrc.json` (highest precedence
+  first). 25 unit tests (vitest). No CI workflow yet. Lives off
+  `clockify-sdk-ts` as a `file:../wrapper` dev dep + peer dep.
+- **`mcp/` package** (`@clockify/mcp-server`, v0.1.0 unpublished).
+  ESM-only tsc build; one bin `clockify-mcp`. Stdio Model Context
+  Protocol server on top of `@modelcontextprotocol/sdk@1.29.0`.
+  Thirteen tools — `clockify_status`, `clockify_projects_{list,
+  create}`, `clockify_clients_{list,create}`, `clockify_tasks_list`,
+  `clockify_tags_{list,create}`, `clockify_entries_{list,log,
+  delete}`, `clockify_timer_{start,stop}`. Uniform `{ok, action,
+  data, meta?}` envelope on success; `{ok:false, action, error,
+  recovery?}` on error with stable codes (`not_found`,
+  `auth_or_permission`, `rate_limited`, …). 12 tests (envelope +
+  in-memory MCP transport). Sibling to GOCLMCP's 156-tool Go MCP;
+  intentionally narrower scope. Same dep pattern as `cli/`.
 
 ## Tool defaults
 
@@ -98,9 +126,11 @@ here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
 | Change SDK wrapper surface (auth, exports)    | `wrapper/package.json` + `wrapper/scripts/sync-sdk.sh` + a hand-written `.ts` at `wrapper/` root (outside `src/` so it survives sync) |
 | Adjust the `paginate<T>` helper               | `wrapper/pagination.ts` + `wrapper/tests/pagination.test.ts` + `wrapper/tests/sandbox.test.ts` (live walk) |
 | Add a new hand-written module                 | Drop `.ts` at `wrapper/` root; add to `tsconfig.{json,esm.json,cjs.json}` `include`; subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`); re-export from `wrapper/index.ts`; add the symbol to `scripts/verify-dual-build.sh`'s expected-names array |
+| Add a CLI command                              | `cli/src/commands/<name>.ts` exporting `registerXxxCommand: Registrar`; wire it into `cli/src/index.ts` `buildProgram()`; use `resolveContext(this, services)` from `./helpers.js`; tests in `cli/tests/` |
+| Add an MCP tool                                | `mcp/src/tools/<name>.ts` exporting `registerXxxTool(server, ctx)`; call `server.registerTool(name, {title, description, inputSchema, annotations}, async (args) => ...)`; return via `successResult` / `errorResult`; wire into `mcp/src/server.ts` `buildServer()`; update tool-list contract in `mcp/tests/server.test.ts` |
 | User-facing changelog                          | `wrapper/CHANGELOG.md` — `[Unreleased]` for in-flight; rename to `[X.Y.Z] — YYYY-MM-DD` on tag day |
 | Add a test                                    | `wrapper/tests/<module>.test.ts` (env-gated) or extend `wrapper/tests/sandbox.test.ts` (live) |
-| Change CI                                     | `.github/workflows/{ci,release}.yml`. Both opt in to `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` |
+| Change CI                                     | `.github/workflows/{ci,release}.yml`. Both opt in to `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`. `cli/` and `mcp/` have no CI yet — add jobs that run `npm run type-check && npm test && npm run build` against each. |
 | Document a Clockify-vs-spec divergence        | `spec/evidence/discrepancies.md` — five-question format |
 | Refresh the corrected snapshot                | `(cd ../GOCLMCP && make gen-openapi) && cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml spec/corrected/clockify.corrected.openapi.yaml` |
 
@@ -118,8 +148,14 @@ Full list: `AGENTS.md §12`. Top-five for Claude Code:
 4. **Never `npm publish` without `npm pack --dry-run` first**, and
    never without all 4 drift gates green upstream
    (`make {openapi,catalog,selfinspect,raw-allowlist}-drift` in
-   GOCLMCP) and `go test ./internal/tools/...` green.
+   GOCLMCP) and `go test ./internal/tools/...` green. For `cli/` and
+   `mcp/`: also run `npm run type-check && npm test && npm run build`
+   in their directory before pack/publish.
 5. **Never run the live tests against a non-sandbox API key.** The
    CRUD round-trip creates and deletes real records.
+6. **Never publish `@clockify/cli` or `@clockify/mcp-server` while
+   they reference `clockify-sdk-ts` via `file:../wrapper`.** Switch
+   the entry in their `dependencies` (or move to `peerDependencies`
+   only) before tagging.
 
 Everything else is in [`AGENTS.md`](./AGENTS.md).
