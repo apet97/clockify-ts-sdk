@@ -1,10 +1,10 @@
 # clockify-sdk-ts
 
-[![npm version](https://img.shields.io/npm/v/clockify-sdk-ts.svg)](https://www.npmjs.com/package/clockify-sdk-ts)
+[![npm version](https://img.shields.io/npm/v/clockify-sdk-ts-115.svg)](https://www.npmjs.com/package/clockify-sdk-ts-115)
 [![CI](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/ci.yml?branch=main&label=CI)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/ci.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/apet97/clockify-ts-sdk/codeql.yml?branch=main&label=CodeQL)](https://github.com/apet97/clockify-ts-sdk/actions/workflows/codeql.yml)
-[![license](https://img.shields.io/npm/l/clockify-sdk-ts.svg)](./LICENSE)
-[![install size](https://packagephobia.com/badge?p=clockify-sdk-ts)](https://packagephobia.com/result?p=clockify-sdk-ts)
+[![license](https://img.shields.io/npm/l/clockify-sdk-ts-115.svg)](./LICENSE)
+[![install size](https://packagephobia.com/badge?p=clockify-sdk-ts-115)](https://packagephobia.com/result?p=clockify-sdk-ts-115)
 [![sigstore provenance](https://img.shields.io/badge/sigstore-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
 
 **Reference docs:** <https://apet97.github.io/clockify-ts-sdk/>
@@ -63,12 +63,12 @@ surface), dual ESM + CJS, npm provenance via sigstore.
 npm install clockify-sdk-ts
 ```
 
-Or `pnpm add`, `yarn add`, `bun add`, `deno add npm:clockify-sdk-ts`.
+Or `pnpm add`, `yarn add`, `bun add`, `deno add npm:clockify-sdk-ts-115`.
 
 ## Quick start
 
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 // Reads CLOCKIFY_API_KEY (or CLOCKIFY_ADDON_TOKEN) from env.
 const client = createClockifyClient();
@@ -138,7 +138,7 @@ Bypass the factory and construct `ClockifyApiClient` directly for
 non-header auth (mock client, custom OAuth, addon-token-from-JWT):
 
 ```typescript
-import { ClockifyApiClient } from "clockify-sdk-ts";
+import { ClockifyApiClient } from "clockify-sdk-ts-115";
 
 const client = new ClockifyApiClient({
     apiKey: "...",
@@ -186,7 +186,7 @@ the wrapper consumes as an authoritative end-of-pages signal.
 ### `iterAll` — for "give me every record"
 
 ```typescript
-import { createClockifyClient, iterAll } from "clockify-sdk-ts";
+import { createClockifyClient, iterAll } from "clockify-sdk-ts-115";
 
 const client = createClockifyClient();
 const listProjects = client.projects.list.bind(client.projects);
@@ -208,7 +208,7 @@ else a non-full page). `options`: `pageSize` (default 50),
 ### `iterPages` — for per-page envelopes
 
 ```typescript
-import { iterPages } from "clockify-sdk-ts";
+import { iterPages } from "clockify-sdk-ts-115";
 
 const listTags = client.tags.list.bind(client.tags);
 
@@ -225,7 +225,7 @@ for await (const { items, page, hasNextPage } of iterPages(
 ### `paginate` — the low-level callback iterator
 
 ```typescript
-import { paginate } from "clockify-sdk-ts";
+import { paginate } from "clockify-sdk-ts-115";
 
 for await (const c of paginate(
     (page, pageSize) => client.clients.list({ workspaceId: "...", page, "page-size": pageSize }),
@@ -256,7 +256,7 @@ for (let page = 1; ; page++) {
 ### Drift assertion
 
 The `KnownPaginatedMethod` type union exported from
-`clockify-sdk-ts/iter` enumerates the 19 known paginated
+`clockify-sdk-ts-115/iter` enumerates the 19 known paginated
 `(resource, method)` pairs. A CI assertion in
 `tests/iter.test.ts` verifies each one exists on a fresh client,
 catching upstream renames at build time.
@@ -289,7 +289,7 @@ import {
     RateLimitError,
     promoteApiError,
     getRequestIdFromError,
-} from "clockify-sdk-ts";
+} from "clockify-sdk-ts-115";
 
 try {
     await client.tags.get({ workspaceId: "...", tagId: "deleted-tag-id" });
@@ -342,7 +342,7 @@ narrow on the base class keep working:
 | `ClockifyApiTimeoutError` (Fern) | The request exceeded `timeoutInSeconds`.                                                                   | Retry with backoff.                           |
 
 ```typescript
-import { createClockifyClient, isAbortError, isConnectionError } from "clockify-sdk-ts";
+import { createClockifyClient, isAbortError, isConnectionError } from "clockify-sdk-ts-115";
 
 const client = createClockifyClient();
 const controller = new AbortController();
@@ -364,7 +364,7 @@ Manual call sites that catch raw Fern-emitted errors should pipe
 through `promoteApiError` first:
 
 ```typescript
-import { promoteApiError } from "clockify-sdk-ts";
+import { promoteApiError } from "clockify-sdk-ts-115";
 
 try { await client.tags.list({...}); }
 catch (err) {
@@ -380,7 +380,7 @@ the response body, in a way that survives wording changes in
 `error.message`:
 
 ```typescript
-import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts";
+import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts-115";
 
 try {
     await client.tags.create({ workspaceId, name });
@@ -470,7 +470,7 @@ The axioms doc and most of the JS ecosystem use **milliseconds**
 option is `timeoutInSeconds`. The conversion is straightforward:
 
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 const client = createClockifyClient();
 
@@ -538,7 +538,7 @@ compare:
 
 ```typescript
 import express from "express";
-import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts";
+import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts-115";
 
 const app = express();
 app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
@@ -562,7 +562,7 @@ app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
 Boolean variant:
 
 ```typescript
-import { verifyClockifyWebhook } from "clockify-sdk-ts";
+import { verifyClockifyWebhook } from "clockify-sdk-ts-115";
 
 if (!verifyClockifyWebhook({ headers: req.headers, expectedToken: secret })) {
     return res.status(401).send("invalid");
@@ -607,7 +607,7 @@ To reuse the composed fetch outside the SDK (e.g. wrap another SDK
 with the same observability layer):
 
 ```typescript
-import { composedFetch } from "clockify-sdk-ts/composed-fetch";
+import { composedFetch } from "clockify-sdk-ts-115/composed-fetch";
 
 const myFetch = composedFetch({
     hooks: { beforeRequest: /* ... */ },
@@ -627,7 +627,7 @@ header on any write — the value passes through unchanged so that:
   idempotency support.
 
 ```typescript
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 import { randomUUID } from "node:crypto";
 
 const client = createClockifyClient();
@@ -650,7 +650,7 @@ release that intends to break, then is removed entirely in the next
 major.
 
 ```typescript
-import { warnOnce } from "clockify-sdk-ts/deprecation";
+import { warnOnce } from "clockify-sdk-ts-115/deprecation";
 
 /** @deprecated since v0.8.0 — use `newApi` instead. */
 export function oldApi() {
@@ -667,15 +667,15 @@ contract: [`CONTRIBUTING.md` § Deprecating a public symbol](../CONTRIBUTING.md#
 
 ```javascript
 // ESM
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 // CommonJS
-const { createClockifyClient } = require("clockify-sdk-ts");
+const { createClockifyClient } = require("clockify-sdk-ts-115");
 ```
 
 Both module systems resolve via the modern triple-tier `exports`
 map. TypeScript picks the correct `.d.ts` per consumer's
-`moduleResolution`. Subpaths (`clockify-sdk-ts/iter`,
+`moduleResolution`. Subpaths (`clockify-sdk-ts-115/iter`,
 `/webhooks`, `/composed-fetch`, `/create-client`, `/pagination`,
 `/with-response`) work in both.
 

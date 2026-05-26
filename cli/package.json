@@ -1,5 +1,5 @@
 {
-    "name": "@clockify/cli",
+    "name": "@clockify115/cli",
     "version": "0.1.0",
     "description": "Command-line interface for Clockify, built on clockify-sdk-ts.",
     "license": "MIT",
@@ -24,8 +24,8 @@
         "node": ">=18.18"
     },
     "bin": {
-        "clockify": "./dist/index.js",
-        "clk": "./dist/index.js"
+        "clockify115": "./dist/index.js",
+        "clk115": "./dist/index.js"
     },
     "files": [
         "dist",
@@ -46,11 +46,11 @@
         "picocolors": "^1.1.1"
     },
     "peerDependencies": {
-        "clockify-sdk-ts": ">=0.9.0"
+        "clockify-sdk-ts-115": ">=0.9.0"
     },
     "devDependencies": {
         "@types/node": "^22.10.0",
-        "clockify-sdk-ts": "file:../wrapper",
+        "clockify-sdk-ts-115": "file:../wrapper",
         "tsx": "^4.19.2",
         "typescript": "^5.7.0",
         "vitest": "^2.1.0"

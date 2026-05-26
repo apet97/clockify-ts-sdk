@@ -11,9 +11,9 @@ side by side, all built on the core SDK:
 
 | Folder | Package | Status |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts` | v0.9.0 — published |
-| `cli/` | `@clockify/cli` | v0.1.0 — unpublished (needs `@clockify` npm org access) |
-| `mcp/` | `@clockify/mcp-server` | v0.1.0 — unpublished |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 — published |
+| `cli/` | `@clockify115/cli` | v0.1.0 — unpublished (needs `@clockify` npm org access) |
+| `mcp/` | `@clockify115/mcp-server` | v0.1.0 — unpublished |
 
 `apet97/go-clockify` (GOCLMCP, conventionally cloned at `../GOCLMCP/`)
 ships the canonical Go MCP server + the canonical OpenAPI generator.
@@ -85,16 +85,16 @@ live here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
   `ClockifyWebhookEvent` discriminated union (50 events).
   release-please + hosted TypeDoc CI workflows are live; CHANGELOG
   + version bumps happen via release-please merges, not manual.
-- **`cli/` package** (`@clockify/cli`, v0.1.0 unpublished). ESM-only
-  tsc build; two bin names `clockify` + `clk`. Twelve commands:
+- **`cli/` package** (`@clockify115/cli`, v0.1.0 unpublished). ESM-only
+  tsc build; two bin names `clockify115` + `clk115`. Twelve commands:
   status, start, stop, log, entries {list,delete}, projects
   {list,create}, clients {list,create}, tasks list, tags
   {list,create}. Reads `CLOCKIFY_API_KEY` / `CLOCKIFY_WORKSPACE_ID`
   from env, flags, or `~/.clockifyrc.json` (highest precedence
   first). 25 unit tests (vitest). No CI workflow yet. Lives off
-  `clockify-sdk-ts` as a `file:../wrapper` dev dep + peer dep.
-- **`mcp/` package** (`@clockify/mcp-server`, v0.1.0 unpublished).
-  ESM-only tsc build; one bin `clockify-mcp`. Stdio Model Context
+  `clockify-sdk-ts-115` as a `file:../wrapper` dev dep + peer dep.
+- **`mcp/` package** (`@clockify115/mcp-server`, v0.1.0 unpublished).
+  ESM-only tsc build; one bin `clockify115-mcp`. Stdio Model Context
   Protocol server on top of `@modelcontextprotocol/sdk@1.29.0`.
   Thirteen tools — `clockify_status`, `clockify_projects_{list,
   create}`, `clockify_clients_{list,create}`, `clockify_tasks_list`,
@@ -153,8 +153,8 @@ Full list: `AGENTS.md §12`. Top-five for Claude Code:
    in their directory before pack/publish.
 5. **Never run the live tests against a non-sandbox API key.** The
    CRUD round-trip creates and deletes real records.
-6. **Never publish `@clockify/cli` or `@clockify/mcp-server` while
-   they reference `clockify-sdk-ts` via `file:../wrapper`.** Switch
+6. **Never publish `@clockify115/cli` or `@clockify115/mcp-server` while
+   they reference `clockify-sdk-ts-115` via `file:../wrapper`.** Switch
    the entry in their `dependencies` (or move to `peerDependencies`
    only) before tagging.
 
