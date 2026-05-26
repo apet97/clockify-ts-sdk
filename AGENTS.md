@@ -24,9 +24,9 @@ subdirectory:
   Publishable artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify/cli` — `clockify` / `clk` command-line
   interface on top of the SDK. Publishable artefact: `cli/dist/`.
-- **`mcp/`** → `@clockify/mcp-server` (planned) — TypeScript MCP
-  server sibling to the Go MCP in GOCLMCP. Publishable artefact:
-  `mcp/dist/`.
+- **`mcp/`** → `@clockify/mcp-server` — TypeScript MCP server,
+  sibling to the Go MCP in GOCLMCP. Curated 13-tool everyday surface
+  for stdio MCP clients. Publishable artefact: `mcp/dist/`.
 
 Each package owns its own `package.json`, `tsconfig.json`, build
 chain, and tests. They are not yet npm workspaces; each is built /
@@ -40,11 +40,16 @@ Ships on npm (from `cli/`):
 - `cli/dist/**` (built from `cli/src/**` via tsc)
 - `cli/README.md`, `cli/LICENSE`, `cli/package.json`
 
+Ships on npm (from `mcp/`):
+- `mcp/dist/**` (built from `mcp/src/**` via tsc)
+- `mcp/README.md`, `mcp/LICENSE`, `mcp/package.json`
+
 Doesn't ship on npm (but lives here for reproducibility):
 - `spec/` — Fern config + corrected OpenAPI snapshot + evidence ledger
 - `output/ts-sdk/` — raw Fern generator output (regenerable from `spec/`)
 - `wrapper/{src,dist,node_modules}/` — gitignored; recreated by the build chain
 - `cli/{dist,node_modules}/` — gitignored
+- `mcp/{dist,node_modules}/` — gitignored
 - `.github/workflows/` — CI + release pipelines
 - `spec/evidence/probes/*.{json,hdr}` — gitignored live API captures
 
