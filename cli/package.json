@@ -1,0 +1,62 @@
+{
+    "name": "@clockify/cli",
+    "version": "0.1.0",
+    "description": "Command-line interface for Clockify, built on clockify-sdk-ts.",
+    "license": "MIT",
+    "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
+    "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/cli",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apet97/clockify-ts-sdk.git",
+        "directory": "cli"
+    },
+    "bugs": {
+        "url": "https://github.com/apet97/clockify-ts-sdk/issues"
+    },
+    "keywords": [
+        "clockify",
+        "cli",
+        "time-tracking",
+        "timer"
+    ],
+    "type": "module",
+    "engines": {
+        "node": ">=18.18"
+    },
+    "bin": {
+        "clockify": "./dist/index.js",
+        "clk": "./dist/index.js"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "dev": "tsx src/index.ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "type-check": "tsc --noEmit",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "cli-table3": "^0.6.5",
+        "commander": "^12.1.0",
+        "picocolors": "^1.1.1"
+    },
+    "peerDependencies": {
+        "clockify-sdk-ts": ">=0.9.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.0",
+        "clockify-sdk-ts": "file:../wrapper",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.0",
+        "vitest": "^2.1.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    }
+}
