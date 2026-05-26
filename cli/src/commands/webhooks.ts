@@ -18,7 +18,13 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             const { client, workspaceId, output } = resolveContext(this, services);
             const req: Record<string, unknown> = { workspaceId };
             if (opts.type) req.type = opts.type;
-            const items = (await client.webhooks.list(req as never)) as unknown[];
+            // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
+            // the typed SDK return is wider than the runtime shape, so we
+            // normalise here rather than upstream.
+            const response = (await client.webhooks.list(req as never)) as
+                | unknown[]
+                | { webhooks?: unknown[] };
+            const items = Array.isArray(response) ? response : response.webhooks ?? [];
             const rows = items.map((raw) => {
                 const w = raw as {
                     id?: string;
