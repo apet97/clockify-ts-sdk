@@ -4,6 +4,15 @@ Pointer for Claude Code. The canonical 12-section contributor +
 agent contract is [`AGENTS.md`](./AGENTS.md) — read it first.
 Every rule there applies to Claude Code work.
 
+## We work on two repos in lockstep
+
+This repo (`apet97/clockify-ts-sdk`) ships the npm SDK.
+`apet97/go-clockify` (GOCLMCP, conventionally cloned at `../GOCLMCP/`)
+ships the MCP server + the canonical OpenAPI generator. Spec-shape
+changes start in GOCLMCP and flow down through the corrected
+snapshot; SDK-shape changes (errors, pagination, ergonomics) live
+here. Audits + cross-repo plans land in `../GOCLMCP/docs/audits/`.
+
 ## Tactical gotchas (the things that bite mid-session)
 
 - **Standalone repo.** `apet97/clockify-ts-sdk`. The `addons-me/`
@@ -39,20 +48,35 @@ Every rule there applies to Claude Code work.
 - **`npm run build` is twin `tsc`.** ESM (`tsconfig.esm.json` →
   `dist/esm/`) + CJS (`tsconfig.cjs.json` → `dist/cjs/`), then
   `scripts/finalize-cjs.sh` writes `dist/cjs/package.json`
-  `{ "type": "commonjs" }`. Hand-written entrypoints
-  (`index.ts`, `create-client.ts`, `composed-fetch.ts`, `iter.ts`,
-  `webhooks.ts`, `pagination.ts`, `with-response.ts`) emit flat
-  at `dist/{esm,cjs}/<name>.js`; the synced SDK at
+  `{ "type": "commonjs" }`. Hand-written entrypoints at v0.9.0:
+  `index.ts`, `create-client.ts`, `composed-fetch.ts`,
+  `errors.ts`, `deprecation.ts`, `iter.ts`, `pagination.ts`,
+  `paginated-list.ts`, `webhooks.ts`, `webhook-events.ts`,
+  `with-response.ts`, `scoped-client.ts`, `otel-hooks.ts`,
+  `health.ts`, `rate-limit.ts`. Emit flat at
+  `dist/{esm,cjs}/<name>.js`; the synced SDK at
   `dist/{esm,cjs}/src/**`. `npm run build:smoke` (wired into
-  `prepublishOnly`) verifies both formats resolve the public
-  surface from `dist/`.
-- **Test files (9 total, 126 unit + 7 live sandbox):**
-  `pagination` (8) · `create-client` (14, incl. env-var
-  fallback) · `iter` (36, incl. 6 `Last-Page` header cases + 19
-  drift assertions) · `webhooks` (16) · `webhook-fixtures` (13) ·
-  `composed-fetch` (26) · `with-response` (3) · `dual-build` (3) ·
-  `sandbox` (7 live; skip without `CLOCKIFY_API_KEY` /
+  `prepublishOnly`) verifies both formats resolve 38 public
+  names + 14 subpaths from `dist/`.
+- **Test files (18, ~214 unit + 7 live sandbox):**
+  `pagination` · `create-client` (incl. env-var fallback + debug
+  mode) · `iter` (incl. 6 `Last-Page` header cases + 19 drift
+  assertions) · `paginated-list` · `webhooks` · `webhook-fixtures`
+  · `webhook-events` (50-event union) · `composed-fetch` ·
+  `with-response` · `errors` (Connection/Abort/code-extract) ·
+  `scoped-client` (Workspace Proxy) · `otel-hooks` · `health` ·
+  `rate-limit` · `axioms-checklist` (regression gate) ·
+  `deprecation` · `dual-build` (ESM+CJS surface) · `sandbox` (7
+  live; skip without `CLOCKIFY_API_KEY` /
   `CLOCKIFY_WORKSPACE_ID`). Don't collapse files.
+- **v0.8.0 → v0.9.0 additions** (released; both branches merged
+  to main): `ClockifyConnectionError`, `ClockifyAbortError`,
+  `getErrorCode`, `PaginatedList<T>`, `client.workspace(id)` scoped
+  sub-client, `otelHooks()`, `client.health()`, `debug: true`
+  factory option, `getRateLimit` / `getRateLimitFromError`,
+  `ClockifyWebhookEvent` discriminated union (50 events).
+  release-please + hosted TypeDoc CI workflows are live; CHANGELOG
+  + version bumps happen via release-please merges, not manual.
 
 ## Tool defaults
 
