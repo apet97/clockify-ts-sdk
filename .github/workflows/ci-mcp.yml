@@ -1,0 +1,80 @@
+name: CI (mcp)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp/**"
+      - "wrapper/**"
+      - ".github/workflows/ci-mcp.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "mcp/**"
+      - "wrapper/**"
+      - ".github/workflows/ci-mcp.yml"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  build-and-test:
+    name: Build, type-check, test (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: |
+            wrapper/package-lock.json
+            mcp/package-lock.json
+
+      # mcp/package.json carries `"clockify-sdk-ts": "file:../wrapper"`
+      # as a dev dep. Same rationale as ci-cli.yml: sync + build the
+      # wrapper first or the MCP server's type-check sees an empty
+      # surface.
+      - name: Install + sync + build wrapper
+        working-directory: wrapper
+        run: |
+          npm ci
+          npm run sync
+          npm run build
+
+      - name: Install MCP dependencies
+        working-directory: mcp
+        run: npm ci
+
+      - name: Type-check
+        working-directory: mcp
+        run: npm run type-check
+
+      - name: Run tests
+        working-directory: mcp
+        run: npm test
+
+      - name: Build
+        working-directory: mcp
+        run: npm run build
+
+      - name: Pack snapshot verification
+        # Only on node 22 (the release runner). Tarball contents are
+        # node-version invariant.
+        if: matrix.node-version == '22'
+        working-directory: mcp
+        run: |
+          npm pack --dry-run --json \
+            | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{const files=JSON.parse(s)[0].files.map(f=>f.path).sort();console.log('Tarball contents ('+files.length+' files):');console.log(files.join('\n'));});"
