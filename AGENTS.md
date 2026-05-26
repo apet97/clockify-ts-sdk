@@ -16,19 +16,35 @@ applies to humans and AI agents equally.
 
 ## 1. Identity & boundary
 
-This repo **wraps** the Fern-generated TypeScript SDK for the
-Clockify REST API and ships it as the npm package
-**`clockify-sdk-ts`**. The publishable artefact is `wrapper/dist/`.
-Everything else is the toolchain that produces it.
+This repo ships three sibling npm packages, each from its own
+subdirectory:
 
-Ships on npm:
+- **`wrapper/`** → `clockify-sdk-ts` — the core TypeScript SDK,
+  Fern-generated + hand-written ergonomics. The original product.
+  Publishable artefact: `wrapper/dist/`.
+- **`cli/`** → `@clockify/cli` — `clockify` / `clk` command-line
+  interface on top of the SDK. Publishable artefact: `cli/dist/`.
+- **`mcp/`** → `@clockify/mcp-server` (planned) — TypeScript MCP
+  server sibling to the Go MCP in GOCLMCP. Publishable artefact:
+  `mcp/dist/`.
+
+Each package owns its own `package.json`, `tsconfig.json`, build
+chain, and tests. They are not yet npm workspaces; each is built /
+tested independently with `npm` commands run from its directory.
+
+Ships on npm (from `wrapper/`):
 - `wrapper/dist/**` (built from `wrapper/src/**` via twin tsc)
 - `wrapper/README.md`, `wrapper/LICENSE`, `wrapper/package.json`
+
+Ships on npm (from `cli/`):
+- `cli/dist/**` (built from `cli/src/**` via tsc)
+- `cli/README.md`, `cli/LICENSE`, `cli/package.json`
 
 Doesn't ship on npm (but lives here for reproducibility):
 - `spec/` — Fern config + corrected OpenAPI snapshot + evidence ledger
 - `output/ts-sdk/` — raw Fern generator output (regenerable from `spec/`)
 - `wrapper/{src,dist,node_modules}/` — gitignored; recreated by the build chain
+- `cli/{dist,node_modules}/` — gitignored
 - `.github/workflows/` — CI + release pipelines
 - `spec/evidence/probes/*.{json,hdr}` — gitignored live API captures
 
