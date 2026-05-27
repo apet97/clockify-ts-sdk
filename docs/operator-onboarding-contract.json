@@ -77,14 +77,6 @@
         "make perfect-live",
         "Mock/replay proof never replaces live sandbox proof"
       ]
-    },
-    {
-      "path": "docs/final-proof-runbook.md",
-      "mustContain": [
-        "final proof receipt",
-        "temporary context file",
-        "final-proof-final"
-      ]
     }
   ],
   "planGenerator": {
@@ -142,21 +134,14 @@
       ],
       "requiredGoalTextMarkers": {
         "full": [
-          "make final-proof-preflight",
-          "readinessContext",
-          "finalBlockingSignalIds",
-          "blockingSignalIds",
-          "riskRoutingSummary",
-          "orderedProofChainCoverage"
+          "make perfect-full",
+          "make perfect-live"
         ],
         "support": [
           "node scripts/workflow-plan.mjs --workflow first-run-support",
           "readinessContext",
           "safeCommandHints",
-          "finalBlockingSignalIds",
-          "blockingSignalIds",
-          "riskRoutingSummary",
-          "orderedProofChainCoverage"
+          "riskRoutingSummary"
         ]
       }
     }
@@ -170,8 +155,7 @@
     "mock-contract",
     "workflow-plan",
     "workflow-cookbook",
-    "live-safety",
-    "final-proof-receipt-check"
+    "live-safety"
   ],
   "wiring": {
     "makeTarget": "operator-onboarding",

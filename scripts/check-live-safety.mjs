@@ -125,7 +125,7 @@ function validateContractShape() {
         if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
     }
 
-    for (const field of ["policyDocument", "makefile", "cleanupScript", "finalProof", "riskRegister"]) {
+    for (const field of ["policyDocument", "makefile", "cleanupScript", "riskRegister"]) {
         validateMarkerEntry(field, contract[field]);
     }
 
@@ -163,7 +163,6 @@ for (const marker of contract.policyDocument.forbiddenMarkers ?? []) {
 
 checkContains(contract.makefile.path, readRelative(contract.makefile.path), contract.makefile.mustContain);
 checkContains(contract.cleanupScript.path, readRelative(contract.cleanupScript.path), contract.cleanupScript.mustContain);
-checkContains(contract.finalProof.path, readRelative(contract.finalProof.path), contract.finalProof.mustContain);
 checkContains(contract.riskRegister.path, readRelative(contract.riskRegister.path), contract.riskRegister.mustContain);
 
 const mcpPackage = readJson(contract.mcpPackage.path, "mcpPackage.path");

@@ -13,52 +13,23 @@
       "No command in this toolbox runs Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
       "node scripts/repo-doctor.mjs",
       "node scripts/onboarding-plan.mjs --goal all",
-      "Shape-checked Markdown or JSON onboarding plan",
-      "node scripts/enterprise-goal-status.mjs",
-      "node scripts/enterprise-goal-status.mjs --format json",
-      "make enterprise-goal-status",
-      "make final-proof-preflight",
-      "make enterprise-audit",
-      "make perfect-fast",
-      "make performance-receipt",
-      "make perfect-full",
-      "make perfect-live",
-      "final-proof evidence sequence",
-      "final-proof-draft",
-      "final-proof-receipt-check",
       "node scripts/workflow-plan.mjs --workflow first-run-support",
-      "Shape-checked no-network SDK, CLI, MCP diagnostics path",
       "safeCommandHints",
       "node scripts/workflow-plan.mjs --workflow all",
-      "Shape-checked SDK, CLI, MCP paths",
       "node scripts/acceptance-plan.mjs --scenario all",
-      "Shape-checked scenario proof plan",
       "node scripts/examples-plan.mjs --example all",
-      "Shape-checked SDK, CLI, MCP examples",
       "node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md",
-      "Shape-checked change scopes",
       "node scripts/maintenance-plan.mjs --cadence all",
-      "Shape-checked weekly, monthly, dependency, generator, drift, release, and rollback plans",
       "node scripts/contract-inventory-report.mjs",
-      "generated report/helper ownership",
-      "Every helper in this toolbox has an owner in `docs/contract-inventory.json`",
       "node scripts/risk-status-report.mjs --status all",
-      "generated risk-status report shape",
-      "node scripts/release-readiness-report.mjs",
       "node scripts/release-decision-plan.mjs --decision all",
-      "generated approval-boundary checks",
       "node scripts/performance-calibration-plan.mjs",
-      "Budget-policy-backed calibration path",
       "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
       "make axioms-contract",
-      "make final-proof-final",
-      "Inventory shape status",
-      "structural invariants",
-      "safe repo-relative paths",
-      "finalBlockingSignalIds",
-      "finalBlockingRiskIds",
-      "blockingSignalIds",
-      "blockingRiskIds"
+      "make enterprise-audit",
+      "make perfect-fast",
+      "make perfect-full",
+      "make perfect-live"
     ],
     "forbiddenMarkers": [
       "TODO",
@@ -68,7 +39,6 @@
   "helperScripts": [
     "scripts/repo-doctor.mjs",
     "scripts/onboarding-plan.mjs",
-    "scripts/enterprise-goal-status.mjs",
     "scripts/workflow-plan.mjs",
     "scripts/acceptance-plan.mjs",
     "scripts/examples-plan.mjs",
@@ -76,7 +46,6 @@
     "scripts/maintenance-plan.mjs",
     "scripts/contract-inventory-report.mjs",
     "scripts/risk-status-report.mjs",
-    "scripts/release-readiness-report.mjs",
     "scripts/release-decision-plan.mjs",
     "scripts/performance-calibration-plan.mjs",
     "scripts/create-support-bundle.mjs"
@@ -101,10 +70,6 @@
     {
       "script": "scripts/onboarding-plan.mjs",
       "documentedCommand": "node scripts/onboarding-plan.mjs --goal all"
-    },
-    {
-      "script": "scripts/enterprise-goal-status.mjs",
-      "documentedCommand": "node scripts/enterprise-goal-status.mjs --format json"
     },
     {
       "script": "scripts/workflow-plan.mjs",
@@ -135,10 +100,6 @@
       "documentedCommand": "node scripts/risk-status-report.mjs --status all"
     },
     {
-      "script": "scripts/release-readiness-report.mjs",
-      "documentedCommand": "node scripts/release-readiness-report.mjs"
-    },
-    {
       "script": "scripts/release-decision-plan.mjs",
       "documentedCommand": "node scripts/release-decision-plan.mjs --decision all"
     },
@@ -164,7 +125,6 @@
     "requiredOwnedScripts": [
       "scripts/repo-doctor.mjs",
       "scripts/onboarding-plan.mjs",
-      "scripts/enterprise-goal-status.mjs",
       "scripts/workflow-plan.mjs",
       "scripts/acceptance-plan.mjs",
       "scripts/examples-plan.mjs",
@@ -172,7 +132,6 @@
       "scripts/maintenance-plan.mjs",
       "scripts/contract-inventory-report.mjs",
       "scripts/risk-status-report.mjs",
-      "scripts/release-readiness-report.mjs",
       "scripts/release-decision-plan.mjs",
       "scripts/performance-calibration-plan.mjs",
       "scripts/create-support-bundle.mjs"
@@ -182,8 +141,6 @@
     "operator-toolbox",
     "repo-doctor",
     "onboarding-plan",
-    "enterprise-goal-status",
-    "final-proof-preflight",
     "workflow-plan",
     "acceptance-plan",
     "examples-plan",
@@ -191,7 +148,6 @@
     "maintenance-plan",
     "contract-inventory-report",
     "risk-status-report",
-    "release-readiness-report",
     "release-decision-plan",
     "performance-calibration-plan",
     "support-bundle"
@@ -202,7 +158,6 @@
   ],
   "supportingDocs": [
     "docs/quality-gates.md",
-    "docs/final-proof-runbook.md",
     "docs/support-runbook.md",
     "docs/operator-onboarding.md"
   ],

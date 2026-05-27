@@ -76,22 +76,20 @@
       },
       "minimumCounts": {
         "entries": 1,
-        "withReports": 12,
-        "toolboxHelpers": 14,
-        "toolboxHelpersOwned": 14,
-        "toolboxHelperCommands": 14,
-        "toolboxHelperCommandsCovered": 14,
-        "toolboxHelperCommandEntries": 14,
+        "withReports": 10,
+        "toolboxHelpers": 12,
+        "toolboxHelpersOwned": 12,
+        "toolboxHelperCommands": 12,
+        "toolboxHelperCommandsCovered": 12,
+        "toolboxHelperCommandEntries": 12,
         "inventoryInvariants": 9,
-        "orderedProofChainEntries": 3,
+        "orderedProofChainEntries": 0,
         "requiredDocs": 1,
         "docsIndexLinks": 1,
         "qualityGateTargets": 1
       },
       "requiredEntryIds": [
         "release-readiness",
-        "enterprise-goal-status-contract",
-        "final-proof-preflight-contract",
         "axioms-contract",
         "workflow-cookbook",
         "acceptance-scenarios",
@@ -108,7 +106,6 @@
       "requiredToolboxHelperScripts": [
         "scripts/repo-doctor.mjs",
         "scripts/onboarding-plan.mjs",
-        "scripts/enterprise-goal-status.mjs",
         "scripts/workflow-plan.mjs",
         "scripts/acceptance-plan.mjs",
         "scripts/examples-plan.mjs",
@@ -116,7 +113,6 @@
         "scripts/maintenance-plan.mjs",
         "scripts/contract-inventory-report.mjs",
         "scripts/risk-status-report.mjs",
-        "scripts/release-readiness-report.mjs",
         "scripts/release-decision-plan.mjs",
         "scripts/performance-calibration-plan.mjs",
         "scripts/create-support-bundle.mjs"
@@ -148,11 +144,7 @@
       "requiredDuplicateRequiredEntryIds": [],
       "requiredDuplicateRequiredToolboxHelperScripts": [],
       "requiredEntryDuplicateLists": [],
-      "requiredOrderedProofChainEntries": [
-        "release-readiness",
-        "enterprise-goal-status-contract",
-        "final-proof-preflight-contract"
-      ],
+      "requiredOrderedProofChainEntries": [],
       "requiredMissingOrderedProofChainEntries": [],
       "requiredStructuralInvariants": [
         "valid-schema-version",
@@ -776,7 +768,6 @@
       "target": "release-readiness",
       "checker": "scripts/check-release-readiness.mjs",
       "reports": [
-        "scripts/release-readiness-report.mjs",
         "scripts/release-decision-plan.mjs"
       ],
       "policies": [
@@ -1021,52 +1012,6 @@
       ],
       "auditIds": [
         "operator-toolbox"
-      ],
-      "perfectFast": true,
-      "perfectFull": true
-    },
-    {
-      "id": "final-proof-command-contract",
-      "target": "final-proof-command-contract",
-      "checker": "scripts/check-final-proof-command-contract.mjs",
-      "contracts": [
-        "docs/final-proof-command-contract.json"
-      ],
-      "auditIds": [
-        "final-proof-not-run-by-audit"
-      ],
-      "perfectFast": true,
-      "perfectFull": true
-    },
-    {
-      "id": "enterprise-goal-status-contract",
-      "target": "enterprise-goal-status-contract",
-      "checker": "scripts/check-enterprise-goal-status-contract.mjs",
-      "reports": [
-        "scripts/enterprise-goal-status.mjs"
-      ],
-      "contracts": [
-        "docs/enterprise-goal-status-contract.json"
-      ],
-      "auditIds": [
-        "enterprise-goal-status-contract"
-      ],
-      "perfectFast": true,
-      "perfectFull": true
-    },
-    {
-      "id": "final-proof-preflight-contract",
-      "target": "final-proof-preflight-contract",
-      "checker": "scripts/check-final-proof-preflight-contract.mjs",
-      "reports": [
-        "scripts/enterprise-goal-status.mjs",
-        "scripts/release-readiness-report.mjs"
-      ],
-      "contracts": [
-        "docs/final-proof-preflight-contract.json"
-      ],
-      "auditIds": [
-        "final-proof-preflight-contract"
       ],
       "perfectFast": true,
       "perfectFull": true

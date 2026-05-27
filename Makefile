@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live wrapper-gates cli-gates mcp-gates goclmcp-drift fern-check fern-generate product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness release-readiness-report release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit enterprise-audit-final enterprise-goal-status enterprise-goal-status-contract final-proof-preflight final-proof-preflight-contract final-proof-command-contract final-proof final-proof-draft final-proof-final final-proof-receipt-check performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke mock-clockify
+.PHONY: help perfect perfect-fast perfect-full perfect-live wrapper-gates cli-gates mcp-gates goclmcp-drift fern-check fern-generate product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke mock-clockify
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -61,7 +61,6 @@ help:
 	@printf '%s\n' '  make issue-intake      Check bug, feature, PR, support, and security intake templates collect safe reproducible evidence.'
 	@printf '%s\n' '  make release-support-contract Check release/support/security docs against package policy.'
 	@printf '%s\n' '  make release-readiness Check release/handoff readiness evidence checklist.'
-	@printf '%s\n' '  make release-readiness-report Print a no-network final-readiness preflight report.'
 	@printf '%s\n' '  make release-decision-plan Print a no-network release workflow decision packet.'
 	@printf '%s\n' '  make ci-contract        Check GitHub workflow posture and release-safety documentation.'
 	@printf '%s\n' '  make live-safety        Check sandbox-only live proof and cleanup contract.'
@@ -90,17 +89,7 @@ help:
 	@printf '%s\n' '  make mutation-safety    Check SDK retry, CLI write, MCP confirmation, receipt, and ambiguous-failure rules.'
 	@printf '%s\n' '  make readme-tables       Regenerate CLI/MCP README tables from metadata.'
 	@printf '%s\n' '  make changelog-drift     Check touched package scopes have changelog entries.'
-	@printf '%s\n' '  make enterprise-audit    Check hardening objective artifacts and proof map.'
-	@printf '%s\n' '  make enterprise-audit-final Check proof map after temporary context removal.'
-	@printf '%s\n' '  make enterprise-goal-status Print a no-network status report for the active hardening goal.'
-	@printf '%s\n' '  make enterprise-goal-status-contract Check the no-network active-goal status report contract.'
-	@printf '%s\n' '  make final-proof-preflight Print active-goal and release-readiness no-network preflight reports.'
-	@printf '%s\n' '  make final-proof-preflight-contract Check final proof preflight stays no-network and proof-free.'
-	@printf '%s\n' '  make final-proof-command-contract Check final proof command split and receipt invariants.'
-	@printf '%s\n' '  make final-proof-draft   Run proof sequence and write a draft docs/final-proof-receipt.md.'
-	@printf '%s\n' '  make final-proof         Alias for final-proof-draft.'
-	@printf '%s\n' '  make final-proof-final   Run final receipt check and final artifact audit.'
-	@printf '%s\n' '  make final-proof-receipt-check Check final proof receipt is filled, not copied empty.'
+	@printf '%s\n' '  make enterprise-audit    Check framework artifacts and audit map.'
 	@printf '%s\n' '  make performance-budgets Check built package size/startup budgets.'
 	@printf '%s\n' '  make performance-receipt Write latest size/startup measurements for budget calibration.'
 	@printf '%s\n' '  make performance-calibration-plan Print the no-network budget calibration plan.'
@@ -109,9 +98,9 @@ help:
 
 perfect: perfect-fast
 
-perfect-fast: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook mutation-safety enterprise-goal-status-contract final-proof-preflight-contract final-proof-command-contract product-surface-drift error-docs-drift troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets schema-quality
+perfect-fast: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook mutation-safety product-surface-drift error-docs-drift troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets schema-quality
 
-perfect-full: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence goclmcp-drift fern-check fern-generate generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract mutation-safety maintenance-playbook enterprise-goal-status-contract final-proof-preflight-contract final-proof-command-contract product-surface-drift error-docs-drift troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke
+perfect-full: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence goclmcp-drift fern-check fern-generate generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract mutation-safety maintenance-playbook product-surface-drift error-docs-drift troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke
 
 perfect-live:
 	@if [ -z "$${CLOCKIFY_API_KEY:-}" ] || [ -z "$${CLOCKIFY_WORKSPACE_ID:-}" ]; then \
@@ -317,9 +306,6 @@ release-support-contract:
 release-readiness:
 	node scripts/check-release-readiness.mjs
 
-release-readiness-report:
-	node scripts/release-readiness-report.mjs
-
 release-decision-plan:
 	node scripts/release-decision-plan.mjs --decision all
 
@@ -412,48 +398,6 @@ docs-index-drift:
 
 enterprise-audit:
 	node scripts/check-enterprise-hardening.mjs
-
-enterprise-audit-final:
-	node scripts/check-enterprise-hardening.mjs --final
-
-enterprise-goal-status:
-	node scripts/enterprise-goal-status.mjs
-
-enterprise-goal-status-contract:
-	node scripts/check-enterprise-goal-status-contract.mjs
-
-final-proof-preflight:
-	node scripts/enterprise-goal-status.mjs
-	node scripts/release-readiness-report.mjs
-
-final-proof-preflight-contract:
-	node scripts/check-final-proof-preflight-contract.mjs
-
-final-proof-command-contract:
-	node scripts/check-final-proof-command-contract.mjs
-
-final-proof: final-proof-draft
-
-final-proof-draft:
-	@performance_args=""; \
-	if [ -n "$${PERFORMANCE_RUNS:-}" ]; then \
-		performance_args="--performance-runs=$${PERFORMANCE_RUNS}"; \
-	fi; \
-	if [ "$${LIVE:-}" = "1" ]; then \
-		node scripts/run-final-proof.mjs --live $$performance_args; \
-	elif [ -n "$${DEFER_LIVE_REASON:-}" ]; then \
-		node scripts/run-final-proof.mjs --defer-live="$${DEFER_LIVE_REASON}" $$performance_args; \
-	else \
-		echo 'Usage: LIVE=1 make final-proof-draft' >&2; \
-		echo '   or: DEFER_LIVE_REASON="No sacrificial sandbox credentials are available." make final-proof-draft' >&2; \
-		echo 'Optional: PERFORMANCE_RUNS=<count>; omitted uses docs/performance-budgets.json requiredSuccessfulRuns.' >&2; \
-		exit 2; \
-	fi
-
-final-proof-final: final-proof-receipt-check enterprise-audit-final
-
-final-proof-receipt-check:
-	node scripts/check-final-proof-receipt.mjs
 
 performance-budgets:
 	node scripts/check-performance-budgets.mjs

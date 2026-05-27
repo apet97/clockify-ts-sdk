@@ -89,8 +89,6 @@
       "path": "scripts/create-support-bundle.mjs",
       "contains": [
         "readinessContext",
-        "finalBlockingSignalIds",
-        "blockingSignalIds",
         "riskRoutingSummary",
         "orderedProofChainCoverage"
       ]
@@ -99,8 +97,6 @@
   "readinessContext": {
     "requiredFields": [
       "readinessContext",
-      "finalBlockingSignalIds",
-      "blockingSignalIds",
       "riskRoutingSummary",
       "orderedProofChainCoverage"
     ],

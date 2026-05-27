@@ -45,12 +45,8 @@
       "rawProbeCapturesCaptured: false",
       "readinessContext",
       "reportsCaptured",
-      "enterpriseGoalStatus",
-      "releaseReadiness",
       "riskStatus",
       "contractInventory",
-      "finalBlockingSignalIds",
-      "requiredFinalProofCommandOrder",
       "riskRoutingSummary",
       "orderedProofChainCoverage",
       "prepublishOnly",
@@ -122,14 +118,10 @@
       "network",
       "commandsExecuted",
       "reportsCaptured",
-      "enterpriseGoalStatus",
-      "releaseReadiness",
       "riskStatus",
       "contractInventory"
     ],
     "requiredReadinessReports": [
-      "enterprise-goal-status",
-      "release-readiness",
       "risk-status",
       "contract-inventory"
     ],

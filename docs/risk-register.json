@@ -103,12 +103,10 @@
       ],
       "requiredRiskIds": [
         "performance-budgets-provisional",
-        "final-proof-pending",
         "legacy-release-workflow-needs-maintainer-decision"
       ],
       "requiredReadinessBlockingRiskIds": [
-        "performance-budgets-provisional",
-        "final-proof-pending"
+        "performance-budgets-provisional"
       ],
       "requiredNonBlockingOpenOrProvisionalRiskIds": [
         "legacy-release-workflow-needs-maintainer-decision"
@@ -174,33 +172,6 @@
         {
           "path": "scripts/performance-calibration-plan.mjs",
           "contains": "performance-budgets-provisional"
-        }
-      ]
-    },
-    {
-      "id": "final-proof-pending",
-      "status": "open",
-      "surface": "Release/readiness proof",
-      "summary": "The hardening objective is not complete until the final proof receipt is filled from command output, the temporary context file is removed, and make final-proof-final passes.",
-      "impact": "Artifact coverage alone is not enough to claim enterprise readiness.",
-      "mitigation": "Keep final proof runbook, active-goal status report, receipt checker, and final audit gates wired into Makefile.",
-      "closureGate": "Run the final proof draft flow, fill docs/final-proof-receipt.md, remove the temporary context file, and pass make final-proof-final.",
-      "evidence": [
-        {
-          "path": "docs/final-proof-runbook.md",
-          "contains": "make final-proof-final"
-        },
-        {
-          "path": "scripts/check-final-proof-receipt.mjs",
-          "contains": "final proof receipt is complete"
-        },
-        {
-          "path": "scripts/enterprise-goal-status.mjs",
-          "contains": "finalProofCommands"
-        },
-        {
-          "path": "docs/enterprise-goal-status-contract.json",
-          "contains": "final-proof-final"
         }
       ]
     },

@@ -11,13 +11,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`axioms-contract.json`](./axioms-contract.json) | Machine-checkable contract tying each axiom to concrete evidence. |
 | [`product-north-star.md`](./product-north-star.md) | Final-state quality bar for the repo. |
 | [`naming-taxonomy-policy.md`](./naming-taxonomy-policy.md) | One Clockify vocabulary across SDK, CLI, MCP, docs, examples, and OpenAPI parity. |
-| [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from the hardening objective to artifact evidence. |
-| [`final-proof-runbook.md`](./final-proof-runbook.md) | Exact proof sequence for evidence capture, temporary-context removal, and final acceptance. |
-| [`final-proof-receipt.template.md`](./final-proof-receipt.template.md) | Template for the final command-output receipt. |
-| [`final-proof-receipt-manifest.json`](./final-proof-receipt-manifest.json) | Machine-readable final proof receipt requirements enforced by `make final-proof-receipt-check`. |
-| [`final-proof-command-contract.json`](./final-proof-command-contract.json) | Contract that keeps final proof draft/final command guidance and final receipt acceptance invariants aligned. |
-| [`final-proof-preflight-contract.json`](./final-proof-preflight-contract.json) | Contract that keeps the combined final proof preflight target and generated reports no-network and proof-free. |
-| [`TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md`](./TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md) | Temporary continuation state for this hardening goal; remove after receipt completion and before final acceptance. |
+| [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from validation gates to artifact evidence. |
 | [`install-personas.md`](./install-personas.md) | Separate install paths for SDK, CLI, and MCP users. |
 | [`operator-onboarding.md`](./operator-onboarding.md) | Non-coder maintainer bootstrap path: first reads, generated onboarding-plan shape, persona choice, mock/live safety, stop conditions, and readiness boundaries. |
 | [`operator-toolbox.md`](./operator-toolbox.md) | No-network helper command catalogue for orientation, workflow, maintenance, release, performance, risk, and support planning. |
@@ -32,7 +26,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`acceptance-scenarios.md`](./acceptance-scenarios.md) | End-to-end SDK/CLI/MCP user journey acceptance matrix with generated plan shape, mock/live, receipt, cleanup, and OpenAPI proof expectations. |
 | [`examples-matrix.md`](./examples-matrix.md) | Cross-surface SDK/CLI/MCP examples matrix and generated examples-plan shape with mock/live boundaries and receipt expectations. |
 | [`snippet-safety-policy.md`](./snippet-safety-policy.md) | Copy-paste snippet safety rules for SDK, CLI, MCP, README, and cookbook examples. |
-| [`decision-records-policy.md`](./decision-records-policy.md) | Rules for durable decision records that preserve source-of-truth, release, live proof, and final-proof rationale. |
+| [`decision-records-policy.md`](./decision-records-policy.md) | Rules for durable decision records that preserve source-of-truth, release, and live proof rationale. |
 | [`contract-inventory-policy.md`](./contract-inventory-policy.md) | Rules for keeping policy docs, contract JSON, checker scripts, Make targets, helper ownership, helper command coverage, and audit evidence wired together. |
 | [`change-impact-policy.md`](./change-impact-policy.md) | Change-scope to required-gate mapping and generated change-impact plan shape for SDK, CLI, MCP, OpenAPI, docs, release, live proof, and final proof changes. |
 | [`security-threat-model.md`](./security-threat-model.md) | Practical SDK/CLI/MCP/OpenAPI threat model with mitigations and proof gates. |
@@ -124,7 +118,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`release-readiness-contract.json`](./release-readiness-contract.json) | edit intentionally | Release and handoff readiness evidence contract. |
 | [`ci-contract.json`](./ci-contract.json) | edit intentionally | GitHub workflow posture and release-safety contract. |
 | [`live-safety-contract.json`](./live-safety-contract.json) | edit intentionally | Sandbox-only live-test safety and cleanup contract. |
-| [`test-data-lifecycle-contract.json`](./test-data-lifecycle-contract.json) | edit intentionally | Live sandbox test-data prefix, cleanup, leftover scan, and final-proof receipt contract. |
+| [`test-data-lifecycle-contract.json`](./test-data-lifecycle-contract.json) | edit intentionally | Live sandbox test-data prefix, cleanup, leftover scan, and receipt contract. |
 | [`risk-register.json`](./risk-register.json) | edit intentionally | Evidence-backed risk and limitation register. |
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
 | [`docs-quality-contract.json`](./docs-quality-contract.json) | edit intentionally | Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, and operator docs. |
@@ -132,7 +126,6 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/Fern environment contract and repo-doctor generated report shape. |
 | [`operator-onboarding-contract.json`](./operator-onboarding-contract.json) | edit intentionally | Non-coder bootstrap, persona-choice, mock/live, stop-condition, and readiness-boundary contract. |
 | [`operator-toolbox-contract.json`](./operator-toolbox-contract.json) | edit intentionally | No-network operator helper command catalogue and inventory-ownership contract. |
-| [`enterprise-goal-status-contract.json`](./enterprise-goal-status-contract.json) | edit intentionally | No-network active-goal status report output contract for final-proof blockers and command split. |
 | [`api-docs-contract.json`](./api-docs-contract.json) | edit intentionally | TypeDoc and generated SDK resource documentation contract. |
 | [`mcp-contract.json`](./mcp-contract.json) | edit intentionally | TS MCP tools/resources/prompts/output-schema discoverability contract. |
 | [`mcp-agent-ux-contract.json`](./mcp-agent-ux-contract.json) | edit intentionally | MCP server instructions, workflow-first guidance, resources, prompts, output schema, receipt, and README UX contract. |
@@ -198,20 +191,13 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | Release readiness report | `make release-readiness-report` | Print no-network final-readiness preflight signals without claiming proof. |
 | Release decision plan | `make release-decision-plan` | Print no-network release workflow decision options without granting publish permission. |
 | CI contract | `make ci-contract` | Check GitHub workflow posture, package workflow gates, docs/release workflow safety rails, and release decision boundary. |
-| Live safety | `make live-safety` | Check sandbox-only live-test docs, env gates, cleanup prefixes, final-proof deferral, and mock alternative. |
+| Live safety | `make live-safety` | Check sandbox-only live-test docs, env gates, cleanup prefixes, and mock alternative. |
 | Test data lifecycle | `make test-data-lifecycle` | Check live sandbox prefixes, create/delete pairing, cleanup script coverage, leftover scans, and sanitized cleanup receipts. |
 | Risk register | `make risk-register` | Check known risks, accepted constraints, evidence paths, and closure gates. |
-| Risk status report | `make risk-status-report` | Print no-network open/provisional risk and final-proof file-state signals. |
-| Enterprise goal status | `make enterprise-goal-status` | Print no-network active-goal status, including final-proof draft, receipt-check, and final-acceptance commands. |
-| Enterprise goal status contract | `make enterprise-goal-status-contract` | Check the active-goal status report output stays no-network, proof-disclaiming, and command-split aware. |
-| Final proof preflight | `make final-proof-preflight` | Print active-goal and release-readiness no-network preflight reports before proof gates. |
-| Final proof preflight contract | `make final-proof-preflight-contract` | Check the combined preflight target and generated reports stay report-only, no-network, and proof-free. |
+| Risk status report | `make risk-status-report` | Print no-network open/provisional risk and file-state signals. |
 | Performance budgets | `make performance-budgets` | Check built SDK/CLI/MCP artifact size/startup ceilings and generated calibration-plan policy alignment. |
 | Performance receipt | `make performance-receipt` | Write measured package size/startup receipt for budget calibration. |
 | Performance calibration plan | `make performance-calibration-plan` | Print no-network budget-policy-backed calibration and tightening plan. |
-| Final proof command split and receipt invariants | `make final-proof-command-contract` | Check that final proof draft/final guidance and receipt acceptance requirements stay unambiguous. |
-| Final proof draft | `LIVE=1 make final-proof-draft` | Write a draft final proof receipt from command output; this is not the final acceptance gate. |
-| Final proof acceptance | `make final-proof-final` | Run final receipt validation and final artifact audit after manual receipt completion. |
 | User docs | `make user-docs` | Check root, SDK, CLI, MCP, install, migration, and troubleshooting docs cover required onboarding content. |
 | Documentation quality | `make docs-quality` | Check evidence-first claims, exact package names, generated truth surfaces, safe snippets, and unsupported marketing-claim blacklist. |
 | Axioms contract | `make axioms-contract` | Check SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |

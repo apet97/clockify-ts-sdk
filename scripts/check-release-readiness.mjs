@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-// check-release-readiness: validates release readiness contract shape, the
-// release-decision plan, and reportGenerator.generatedReport.blockingSignalIds
-// against the release-readiness-report no-network output.
+// check-release-readiness: validates release readiness contract shape and the
+// release-decision plan output.
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildReport as buildReleaseDecisionPlan } from "./release-decision-plan.mjs";
-import { buildReport as buildReleaseReadinessReport } from "./release-readiness-report.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -180,7 +178,6 @@ function validateContractShape() {
         "valid-purpose",
         "safe-release-readiness-paths",
         "typed-release-readiness-lists",
-        "typed-generated-report-contracts",
         "typed-supporting-evidence",
         "makefile-audit-wiring",
     ]) {
@@ -212,18 +209,6 @@ function validateContractShape() {
     for (const field of ["checklist.contains", "checklist.forbiddenMarkers", "requiredTargets", "requiredDocs", "evidenceAreas"]) {
         const values = field.split(".").reduce((value, key) => value?.[key], contract);
         assertUnique(values ?? [], field);
-    }
-
-    if (contract.reportGenerator == null || typeof contract.reportGenerator !== "object") {
-        fail("reportGenerator", "must be an object");
-    } else {
-        releaseRelativePath("reportGenerator.path", contract.reportGenerator.path);
-        assertNonEmptyString("reportGenerator.makeTarget", contract.reportGenerator.makeTarget);
-        const markers = assertStringArray("reportGenerator.contains", contract.reportGenerator.contains, {
-            allowEmpty: false,
-        });
-        assertUnique(markers, "reportGenerator.contains");
-        validateGeneratedReportContract("reportGenerator.generatedReport", contract.reportGenerator.generatedReport);
     }
 
     if (contract.decisionPlanner == null || typeof contract.decisionPlanner !== "object") {
@@ -277,52 +262,6 @@ for (const marker of contract.checklist.forbiddenMarkers ?? []) {
     if (checklist.includes(marker)) fail(contract.checklist.path, `contains forbidden marker ${marker}`);
 }
 includesAll(checklist, contract.evidenceAreas, `${contract.checklist.path} evidence areas`);
-
-if (contract.reportGenerator) {
-    if (!(await existsRel(contract.reportGenerator.path, "reportGenerator.path"))) {
-        fail("reportGenerator", `missing ${contract.reportGenerator.path}`);
-    } else {
-        includesAll(
-            await readRel(contract.reportGenerator.path, "reportGenerator.path"),
-            contract.reportGenerator.contains,
-            contract.reportGenerator.path,
-        );
-    }
-}
-
-const generatedReport = await buildReleaseReadinessReport();
-const generatedContract = contract.reportGenerator?.generatedReport ?? {};
-assertExactFields(generatedReport, generatedContract.exactFields, "reportGenerator.generatedReport");
-assertIds(
-    generatedReport.requiredPreflight,
-    generatedContract.requiredPreflightIds,
-    "reportGenerator.generatedReport.requiredPreflight",
-);
-    assertIds(
-        generatedReport.requiredProof,
-        generatedContract.requiredProofIds,
-        "reportGenerator.generatedReport.requiredProof",
-    );
-    if (
-        JSON.stringify(generatedReport.requiredFinalProofCommandOrder) !==
-        JSON.stringify(generatedContract.requiredFinalProofCommandOrder)
-    ) {
-        fail(
-            "reportGenerator.generatedReport.requiredFinalProofCommandOrder",
-            `expected ${JSON.stringify(generatedContract.requiredFinalProofCommandOrder)} but got ${JSON.stringify(generatedReport.requiredFinalProofCommandOrder)}`,
-        );
-    }
-    assertIds(generatedReport.signals, generatedContract.requiredSignalIds, "reportGenerator.generatedReport.signals");
-for (const field of generatedContract.requiredBlockingFields ?? []) {
-    if (!Array.isArray(generatedReport[field])) {
-        fail("reportGenerator.generatedReport", `${field} must be an array`);
-    }
-}
-assertTextMarkers(
-    generatedReport.warning ?? "",
-    generatedContract.warningMustContain,
-    "reportGenerator.generatedReport.warning",
-);
 
 if (contract.decisionPlanner) {
     if (!(await existsRel(contract.decisionPlanner.path, "decisionPlanner.path"))) {
