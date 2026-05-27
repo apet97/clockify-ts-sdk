@@ -93,8 +93,7 @@
       "evidence": [
         "developer-environment",
         "operator-onboarding",
-        "first-run-support-workflow",
-        "final-proof-command-contract"
+        "first-run-support-workflow"
       ]
     }
   ],
@@ -247,11 +246,6 @@
         "node scripts/workflow-plan.mjs --workflow first-run-support",
         "safeCommandHints"
       ]
-    },
-    {
-      "id": "final-proof-command-contract",
-      "path": "docs/final-proof-command-contract.json",
-      "contains": ["make perfect-fast", "make perfect-full", "make perfect-live"]
     }
   ],
   "wiring": {

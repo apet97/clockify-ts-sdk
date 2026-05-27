@@ -4,8 +4,6 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildReport as buildContractInventoryReport } from "./contract-inventory-report.mjs";
-import { buildReport as buildEnterpriseGoalStatusReport } from "./enterprise-goal-status.mjs";
-import { buildReport as buildReleaseReadinessReport } from "./release-readiness-report.mjs";
 import { buildReport as buildRiskStatusReport } from "./risk-status-report.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
@@ -211,8 +209,6 @@ export async function buildBundle() {
         contract,
         envContract,
         errorCodes,
-        enterpriseGoalStatus,
-        releaseReadiness,
         riskStatus,
         contractInventory,
     ] =
@@ -227,8 +223,6 @@ export async function buildBundle() {
             readJson("docs/support-bundle-contract.json"),
             readJson("docs/env-contract.json"),
             readJson("docs/error-codes.json"),
-            buildEnterpriseGoalStatusReport(),
-            buildReleaseReadinessReport(),
             buildRiskStatusReport({ status: "all" }),
             buildContractInventoryReport(),
         ]);
@@ -263,23 +257,9 @@ export async function buildBundle() {
             network: "none",
             commandsExecuted: [],
             reportsCaptured: [
-                "enterprise-goal-status",
-                "release-readiness",
                 "risk-status",
                 "contract-inventory",
             ],
-            enterpriseGoalStatus: {
-                goalComplete: enterpriseGoalStatus.goalComplete,
-                finalBlockingSignalIds: enterpriseGoalStatus.finalBlockingSignalIds,
-                finalBlockingRiskIds: enterpriseGoalStatus.finalBlockingRiskIds,
-                finalProofCommandOrder: enterpriseGoalStatus.finalProofCommandOrder,
-            },
-            releaseReadiness: {
-                releaseReady: releaseReadiness.releaseReady,
-                blockingSignalIds: releaseReadiness.blockingSignalIds,
-                blockingRiskIds: releaseReadiness.blockingRiskIds,
-                requiredFinalProofCommandOrder: releaseReadiness.requiredFinalProofCommandOrder,
-            },
             riskStatus: {
                 riskRoutingSummary: riskStatus.riskRoutingSummary,
                 readinessBlockingRiskIds: riskStatus.readinessBlockingRiskIds,

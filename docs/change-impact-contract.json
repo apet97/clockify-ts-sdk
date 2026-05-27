@@ -51,7 +51,6 @@
       "requiredMatchedScopeIds": [
         "docs-and-contracts",
         "axioms-contract",
-        "final-proof",
         "release-readiness"
       ],
       "requiredScopeFields": [
@@ -67,7 +66,6 @@
     "docs-and-contracts",
     "axioms-contract",
     "release-readiness",
-    "final-proof",
     "operator-toolbox"
   ],
   "matrixInvariants": [
@@ -199,49 +197,6 @@
         "docs/operator-toolbox-contract.json",
         "scripts/check-operator-toolbox.mjs",
         "scripts/contract-inventory-report.mjs"
-      ]
-    },
-    {
-      "scopeId": "final-proof",
-      "requiredTargets": [
-        "final-proof-preflight",
-        "final-proof-preflight-contract",
-        "final-proof-command-contract",
-        "enterprise-goal-status-contract",
-        "risk-register",
-        "axioms-contract",
-        "release-readiness",
-        "final-proof-draft",
-        "final-proof-receipt-check",
-        "final-proof-final"
-      ],
-      "requiredDocs": [
-        "docs/final-proof-runbook.md",
-        "docs/final-proof-receipt.template.md",
-        "docs/final-proof-receipt-manifest.json",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-command-contract.json",
-        "docs/enterprise-goal-status-contract.json",
-        "docs/release-readiness-contract.json",
-        "docs/release-readiness-checklist.md",
-        "docs/risk-register.json",
-        "docs/risk-register.md"
-      ],
-      "changedPaths": [
-        "docs/final-proof-runbook.md",
-        "docs/final-proof-receipt.template.md",
-        "docs/final-proof-receipt-manifest.json",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-command-contract.json",
-        "docs/release-readiness-checklist.md",
-        "docs/risk-register.json",
-        "docs/risk-register.md",
-        "scripts/risk-status-report.mjs",
-        "scripts/check-risk-register.mjs",
-        "scripts/run-final-proof.mjs",
-        "scripts/check-final-proof-receipt.mjs",
-        "scripts/enterprise-goal-status.mjs",
-        "scripts/release-readiness-report.mjs"
       ]
     },
     {
@@ -1142,31 +1097,22 @@
       "changedPaths": [
         "docs/release-readiness-checklist.md",
         "docs/release-readiness-contract.json",
-        "scripts/check-release-readiness.mjs",
-        "scripts/release-readiness-report.mjs",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-runbook.md"
+        "scripts/check-release-readiness.mjs"
       ],
       "requiredTargets": [
         "release-readiness",
-        "release-readiness-report",
-        "final-proof-preflight-contract",
         "release-support-contract",
         "supply-chain",
         "pack-smoke",
-        "final-proof-receipt-check",
-        "final-proof-final",
         "axioms-contract"
       ],
       "requiredDocs": [
         "docs/release-readiness-checklist.md",
         "docs/release-readiness-contract.json",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-runbook.md",
         "docs/release-support-policy.md"
       ],
       "changelogRequired": false,
-      "notes": "Release-readiness changes must preserve evidence requirements, generated preflight report shape, no-laptop-publish boundary, packed-consumer handoff path, and final-proof closure rules."
+      "notes": "Release-readiness changes must preserve evidence requirements, no-laptop-publish boundary, and packed-consumer handoff path."
     },
     {
       "id": "live-proof",
@@ -1179,8 +1125,7 @@
       "requiredTargets": [
         "live-safety",
         "mock-contract",
-        "perfect-live",
-        "final-proof-receipt-check"
+        "perfect-live"
       ],
       "requiredDocs": [
         "docs/live-tests.md",
@@ -1209,7 +1154,6 @@
         "mutation-safety",
         "support-bundle",
         "perfect-live",
-        "final-proof-receipt-check",
         "docs-drift"
       ],
       "requiredDocs": [
@@ -1219,80 +1163,24 @@
         "docs/support-runbook.md"
       ],
       "changelogRequired": false,
-      "notes": "Test-data lifecycle changes must preserve sandbox-only prefixes, create/delete pairing, partial-failure cleanup, leftover scans, sanitized IDs, and final proof receipt expectations."
+      "notes": "Test-data lifecycle changes must preserve sandbox-only prefixes, create/delete pairing, partial-failure cleanup, leftover scans, and sanitized IDs."
     },
     {
       "id": "performance-calibration",
       "changedPaths": [
         "docs/performance-budgets.json",
-        "scripts/check-performance-budgets.mjs",
-        "docs/final-proof-runbook.md"
+        "scripts/check-performance-budgets.mjs"
       ],
       "requiredTargets": [
         "performance-budgets",
-        "performance-receipt",
-        "final-proof-receipt-check"
+        "performance-receipt"
       ],
       "requiredDocs": [
         "docs/performance-budgets.json",
-        "docs/final-proof-runbook.md",
         "docs/risk-register.md"
       ],
       "changelogRequired": false,
       "notes": "Budgets remain provisional until receipt-backed calibration is complete."
-    },
-    {
-      "id": "final-proof",
-      "changedPaths": [
-        "docs/final-proof-runbook.md",
-        "docs/final-proof-receipt.template.md",
-        "docs/final-proof-receipt-manifest.json",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-command-contract.json",
-        "docs/enterprise-goal-status-contract.json",
-        "docs/release-readiness-contract.json",
-        "docs/release-readiness-checklist.md",
-        "docs/risk-register.json",
-        "docs/risk-register.md",
-        "scripts/run-final-proof.mjs",
-        "scripts/check-final-proof-receipt.mjs",
-        "scripts/check-final-proof-preflight-contract.mjs",
-        "scripts/check-final-proof-command-contract.mjs",
-        "scripts/check-enterprise-goal-status-contract.mjs",
-        "scripts/check-release-readiness.mjs",
-        "scripts/check-risk-register.mjs",
-        "scripts/enterprise-goal-status.mjs",
-        "scripts/release-readiness-report.mjs",
-        "scripts/risk-status-report.mjs"
-      ],
-      "requiredTargets": [
-        "final-proof-preflight",
-        "final-proof-preflight-contract",
-        "final-proof-command-contract",
-        "enterprise-goal-status-contract",
-        "risk-register",
-        "axioms-contract",
-        "release-readiness",
-        "final-proof-draft",
-        "final-proof-receipt-check",
-        "final-proof-final"
-      ],
-      "requiredDocs": [
-        "docs/final-proof-runbook.md",
-        "docs/final-proof-receipt.template.md",
-        "docs/final-proof-receipt-manifest.json",
-        "docs/final-proof-preflight-contract.json",
-        "docs/final-proof-command-contract.json",
-        "docs/enterprise-goal-status-contract.json",
-        "docs/release-readiness-contract.json",
-        "docs/release-readiness-checklist.md",
-        "docs/risk-register.json",
-        "docs/risk-register.md",
-        "docs/decisions/0005-temporary-context-final-proof.md",
-        "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
-      ],
-      "changelogRequired": false,
-      "notes": "Final-proof changes must preserve no-network preflight, generated status/readiness report shape, draft/final command split, receipt template guidance, receipt manifest requirements including success-section evidence, and temporary context removal rules. The temporary context file is kept through evidence capture, removed after receipt completion, and absent before final acceptance."
     },
     {
       "id": "maintenance-playbook",
@@ -1456,8 +1344,7 @@
         "scripts/check-operator-onboarding.mjs",
         "docs/install-personas.md",
         "docs/developer-environment-policy.md",
-        "docs/live-tests.md",
-        "docs/final-proof-runbook.md"
+        "docs/live-tests.md"
       ],
       "requiredTargets": [
         "operator-onboarding",

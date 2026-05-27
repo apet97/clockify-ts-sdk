@@ -159,16 +159,7 @@
       "path": "docs/quality-gates.md",
       "mustContain": [
         "make docs-quality",
-        "make docs-drift",
-        "make final-proof-receipt-check"
-      ]
-    },
-    {
-      "path": "docs/final-proof-runbook.md",
-      "mustContain": [
-        "real receipt",
-        "provisional budgets are not a completed state",
-        "residual risk"
+        "make docs-drift"
       ]
     }
   ],

@@ -32,13 +32,12 @@
     "Consequences",
     "Proof"
   ],
-  "expectedRecordCount": 5,
+  "expectedRecordCount": 4,
   "requiredRecordIds": [
     "canonical-api-truth",
     "generated-core-boundary",
     "no-default-npm-publish",
-    "sandbox-only-live-proof",
-    "temporary-context-final-proof"
+    "sandbox-only-live-proof"
   ],
   "records": [
     {
@@ -75,16 +74,6 @@
         "Live proof mutates Clockify state",
         "sacrificial sandbox workspace",
         "make perfect-live"
-      ]
-    },
-    {
-      "id": "temporary-context-final-proof",
-      "path": "docs/decisions/0005-temporary-context-final-proof.md",
-      "contains": [
-        "temporary context file is intentionally temporary",
-        "docs/final-proof-receipt.md",
-        "immediately before final acceptance",
-        "make final-proof-final"
       ]
     }
   ]

@@ -58,8 +58,7 @@
     "package-contract",
     "version-policy",
     "changelog-drift",
-    "pack-smoke",
-    "final-proof-receipt-check"
+    "pack-smoke"
   ],
   "docsIndex": [
     "release-support-policy.md",

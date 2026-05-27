@@ -72,7 +72,7 @@ const goals = {
     live: {
         title: "Live sandbox proof",
         useWhen: "You need to prove real Clockify behavior in a sacrificial sandbox.",
-        firstReads: ["docs/live-tests.md", "docs/test-data-lifecycle-policy.md", "docs/final-proof-runbook.md"],
+        firstReads: ["docs/live-tests.md", "docs/test-data-lifecycle-policy.md"],
         safeStart: [
             "Confirm CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID point to a sacrificial sandbox.",
             "Run mock proof first when possible.",
@@ -87,16 +87,13 @@ const goals = {
     },
     full: {
         title: "Full product readiness",
-        useWhen: "You need final SDK/CLI/MCP/OpenAPI readiness evidence.",
+        useWhen: "You need full SDK/CLI/MCP/OpenAPI readiness evidence.",
         firstReads: [
-            "docs/final-proof-runbook.md",
-            "docs/final-proof-receipt.template.md",
             "docs/quality-gates.md",
             "docs/risk-register.md",
         ],
         safeStart: [
             "node scripts/repo-doctor.mjs",
-            "make final-proof-preflight",
             "make enterprise-audit",
             "make perfect-fast",
             "make perfect-full",
@@ -104,14 +101,10 @@ const goals = {
         ],
         proofWhenAllowed: [
             "make performance-receipt",
-            "LIVE=1 make final-proof-draft",
-            "DEFER_LIVE_REASON=\"...\" make final-proof-draft",
-            "make final-proof-receipt-check",
-            "make final-proof-final",
-            "make final-proof-final after temporary context removal and manual receipt completion",
+            "make perfect-live",
         ],
         stopIf: [
-            "The support bundle readinessContext drops finalBlockingSignalIds, blockingSignalIds, riskRoutingSummary, or orderedProofChainCoverage.",
+            "The support bundle readinessContext drops riskRoutingSummary.",
             "Performance budgets are still provisional.",
             "Live proof is deferred; deferral is draft-only and must be replaced before final-proof-final.",
             "Any final receipt success section lacks Exit status: 0 and Result: passed evidence.",

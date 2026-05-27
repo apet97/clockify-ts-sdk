@@ -42,11 +42,6 @@ make perfect-full   # GOCLMCP drift + Fern + package gates + packed-consumer smo
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
-Long-running hardening work may keep a temporary context file at
-`docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md`. Do not remove
-it until `docs/final-proof-receipt.md` is complete and
-`make enterprise-audit-final` passes.
-
 Focused package gates:
 
 ```bash

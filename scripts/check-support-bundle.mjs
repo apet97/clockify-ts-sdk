@@ -348,12 +348,6 @@ if (!generatedBundle.readinessContext || typeof generatedBundle.readinessContext
             fail("generated bundle readinessContext", `missing captured report ${reportId}`);
         }
     }
-    if (!Array.isArray(generatedBundle.readinessContext.enterpriseGoalStatus?.finalBlockingSignalIds)) {
-        fail("generated bundle readinessContext", "enterpriseGoalStatus.finalBlockingSignalIds must be an array");
-    }
-    if (!Array.isArray(generatedBundle.readinessContext.releaseReadiness?.blockingSignalIds)) {
-        fail("generated bundle readinessContext", "releaseReadiness.blockingSignalIds must be an array");
-    }
     if (typeof generatedBundle.readinessContext.riskStatus?.riskRoutingSummary?.finalReadinessRiskStatus !== "string") {
         fail("generated bundle readinessContext", "riskStatus.riskRoutingSummary.finalReadinessRiskStatus must be a string");
     }

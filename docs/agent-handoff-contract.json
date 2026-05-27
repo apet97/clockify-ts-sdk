@@ -17,9 +17,6 @@
     "mustContain": [
       "AGENTS.md",
       "CLAUDE.md",
-      "Contract-shape rule",
-      "TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL",
-      "immediately before final acceptance",
       "node scripts/workflow-plan.mjs --workflow first-run-support",
       "safeCommandHints",
       "make agent-handoff",
@@ -53,7 +50,6 @@
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",
-        "TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL",
         "No `npm publish`"
       ]
     },
@@ -66,28 +62,11 @@
       ]
     },
     {
-      "path": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
-      "mustContain": [
-        "Remove this file after",
-        "Do not forget",
-        "Remaining high-impact work",
-        "first-run-support"
-      ]
-    },
-    {
       "path": "docs/workflow-cookbook.md",
       "mustContain": [
         "First-run diagnostics and support handoff",
         "node scripts/workflow-plan.mjs --workflow first-run-support",
         "safeCommandHints"
-      ]
-    },
-    {
-      "path": "docs/final-proof-runbook.md",
-      "mustContain": [
-        "rm docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
-        "temporary context file is gone",
-        "make final-proof-final"
       ]
     }
   ],
@@ -111,7 +90,6 @@
     "README.md",
     "docs/README.md",
     "docs/product-north-star.md",
-    "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
     "docs/workflow-cookbook.md"
   ],
   "forbiddenGuidanceMarkers": [

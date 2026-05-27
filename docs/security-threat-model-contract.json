@@ -262,13 +262,11 @@
       "attackPath": "A live gate mutates customer data or leaves sandbox objects behind.",
       "mitigations": [
         "live-safety",
-        "perfect-live",
-        "final-proof-receipt-check"
+        "perfect-live"
       ],
       "proofTargets": [
         "live-safety",
-        "perfect-live",
-        "final-proof-receipt-check"
+        "perfect-live"
       ]
     },
     {

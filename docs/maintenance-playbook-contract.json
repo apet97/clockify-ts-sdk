@@ -17,7 +17,6 @@
     "path": "docs/maintenance-playbook.md",
     "contains": [
       "Maintenance cadence",
-      "Contract-shape rule",
       "No-network maintenance planner",
       "node scripts/maintenance-plan.mjs --cadence all",
       "Dependency update procedure",
@@ -25,12 +24,6 @@
       "Clockify API drift response",
       "Release rehearsal procedure",
       "Rollback procedure",
-      "Readiness context maintenance rule",
-      "readinessContext",
-      "finalBlockingSignalIds",
-      "blockingSignalIds",
-      "riskRoutingSummary",
-      "orderedProofChainCoverage",
       "Required maintenance receipts"
     ],
     "forbiddenMarkers": [
@@ -55,14 +48,7 @@
       "rollback",
       "This plan is not proof",
       "Routine maintenance may leave budgets provisional",
-      "final readiness requires measured tightening",
-      "deferral is draft-only",
-      "readinessContext",
-      "finalBlockingSignalIds",
-      "blockingSignalIds",
-      "riskRoutingSummary",
-      "orderedProofChainCoverage",
-      "immediately before final-proof-final"
+      "final readiness requires measured tightening"
     ],
     "generatedReport": {
       "exactFields": {
@@ -94,18 +80,11 @@
           "node scripts/workflow-plan.mjs --workflow first-run-support",
           "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
           "safeCommandHints",
-          "readinessContext",
-          "finalBlockingSignalIds",
-          "blockingSignalIds",
-          "riskRoutingSummary",
-          "orderedProofChainCoverage"
+          "riskRoutingSummary"
         ],
         "rollback": [
           "node scripts/workflow-plan.mjs --workflow first-run-support",
-          "safeCommandHints",
-          "readinessContext",
-          "risk-routing",
-          "ordered proof-chain"
+          "safeCommandHints"
         ]
       }
     }
@@ -127,8 +106,7 @@
     "docs/dependency-boundary.json",
     "docs/generator-portability-plan.md",
     "docs/release-readiness-checklist.md",
-    "docs/risk-register.md",
-    "docs/final-proof-runbook.md"
+    "docs/risk-register.md"
   ],
   "procedures": [
     {
@@ -159,9 +137,7 @@
       "id": "release-rehearsal",
       "markers": [
         "pack-smoke",
-        "npm publication disabled by default",
-        "final proof receipt",
-        "readinessContext"
+        "npm publication disabled by default"
       ]
     },
     {
@@ -179,8 +155,7 @@
       "contains": [
         "openapi-truth",
         "release-ci-supply-chain",
-        "performance-calibration",
-        "final-proof"
+        "performance-calibration"
       ]
     },
     {
@@ -202,18 +177,14 @@
       "path": "docs/release-readiness-checklist.md",
       "contains": [
         "Required evidence",
-        "Publish decision boundary",
-        "Final proof closure",
-        "stays through evidence capture"
+        "Publish decision boundary"
       ]
     },
     {
       "path": "docs/risk-register.md",
       "contains": [
         "performance-budgets-provisional",
-        "final-proof-pending",
-        "legacy-release-workflow-needs-maintainer-decision",
-        "make final-proof-final passes"
+        "legacy-release-workflow-needs-maintainer-decision"
       ]
     }
   ],

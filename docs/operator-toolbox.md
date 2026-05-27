@@ -12,7 +12,6 @@ Clockify API calls. If a helper ever needs one of those operations, move it out
 of this toolbox and document the proof boundary in `docs/quality-gates.md`.
 
 Every helper in this toolbox has an owner in `docs/contract-inventory.json`.
-That keeps orientation scripts from becoming stray, unreviewed mini-products.
 
 ## Orientation commands
 
@@ -20,26 +19,6 @@ That keeps orientation scripts from becoming stray, unreviewed mini-products.
 |---|---|---|
 | Check repo shape before setup | `node scripts/repo-doctor.mjs` | JSON repo-shape report for Node floor, package-local manifests, lockfiles, Fern pins, generated directories, and `../GOCLMCP` presence. |
 | Choose SDK, CLI, MCP, mock, live, full, or support path | `node scripts/onboarding-plan.mjs --goal all` | Shape-checked Markdown or JSON onboarding plan with first reads, safe-start commands, proof gates, and stop conditions. |
-| Run final proof preflight | `make final-proof-preflight` | Prints active-goal status and release-readiness reports without running proof gates. |
-| See remaining final-proof blockers and command split | `make enterprise-goal-status` | Markdown final-goal status from local file-state signals, including draft receipt, receipt check, and final acceptance commands. |
-
-For automation, the raw script is `node scripts/enterprise-goal-status.mjs --format json`.
-Its final-proof evidence sequence is:
-
-- Preflight: `make final-proof-preflight`
-- Artifact audit: `make enterprise-audit`
-- Fast gate: `make perfect-fast`
-- Performance receipt: `make performance-receipt`
-- Full gate: `make perfect-full`
-- Live sandbox gate: `make perfect-live`
-- Draft receipt: `LIVE=1 make final-proof-draft` or `DEFER_LIVE_REASON="..." make final-proof-draft`
-- Receipt check: `make final-proof-receipt-check`
-- Final acceptance: `make final-proof-final`
-
-The JSON report also exposes `finalBlockingSignalIds` and
-`finalBlockingRiskIds`, so a future operator can see which final-proof file
-state or risk-register item is still blocking without reverse-engineering every
-signal line.
 
 ## Product path commands
 
@@ -57,8 +36,7 @@ signal line.
 | Map a changed path to required gates | `node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md` | Shape-checked change scopes with required targets, docs, and changelog posture. |
 | Choose a maintenance path | `node scripts/maintenance-plan.mjs --cadence all` | Shape-checked weekly, monthly, dependency, generator, drift, release, and rollback plans with proof targets and stop conditions. |
 | Inspect contract ownership | `node scripts/contract-inventory-report.mjs` | Contract entries, checker ownership, generated report/helper ownership, toolbox helper ownership, structural invariants, Inventory shape status for safe repo-relative paths and typed lists, perfect-gate coverage, audit IDs, and missing-file signals. |
-| Inspect risk status | `node scripts/risk-status-report.mjs --status all` | Open/provisional risks, closure gates, generated risk-status report shape, and final-proof file-state signals. |
-| Inspect release-readiness state | `node scripts/release-readiness-report.mjs` | Required final proof commands, current readiness file-state signals, `blockingSignalIds`, and `blockingRiskIds`. |
+| Inspect risk status | `node scripts/risk-status-report.mjs --status all` | Open/provisional risks, closure gates, generated risk-status report shape, and file-state signals. |
 | Choose a release workflow decision | `node scripts/release-decision-plan.mjs --decision all` | Local tarball, tag-only, npm-via-CI, and legacy-workflow retirement options with generated approval-boundary checks. |
 | Plan performance calibration | `node scripts/performance-calibration-plan.mjs` | Budget-policy-backed calibration path with generated no-network plan shape, tightening rules, proof markers, and stop conditions. |
 
@@ -71,15 +49,14 @@ signal line.
 ## Proof boundary
 
 No command in this toolbox runs Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
-These commands are intentionally preflight-only. After using them, run the
-actual gates named by their output. Examples:
+After using these helpers, run the actual gates:
 
+- `make axioms-contract`
 - `make workflow-cookbook`
 - `make acceptance-scenarios`
 - `make examples-matrix`
 - `make change-impact`
 - `make maintenance-playbook`
-- `make axioms-contract`
 - `make contract-inventory`
 - `make risk-register`
 - `make release-readiness`
@@ -89,10 +66,3 @@ actual gates named by their output. Examples:
 - `make performance-receipt`
 - `make perfect-full`
 - `make perfect-live`
-- `LIVE=1 make final-proof-draft`
-- `make final-proof-receipt-check`
-- `make final-proof-final`
-
-The hardening goal is complete only after the final proof runbook succeeds,
-`docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` is removed, and
-`make final-proof-final` passes.
