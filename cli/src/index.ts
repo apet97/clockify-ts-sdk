@@ -3,15 +3,19 @@
  * @clockify115/cli entrypoint. Wires every command, parses global
  * flags, and routes errors through a single exit handler so the
  * process exit code reflects success or failure consistently.
+ * Unknown commands (commander.unknownCommand) and unknown options
+ * return exit code 2 to match the documented usage-error contract.
  */
 import { Command } from "commander";
 
 import { buildClient } from "./client.js";
+import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
 import { printError, type OutputMode } from "./output.js";
 
 import { registerStatusCommand } from "./commands/status.js";
+import { registerDoctorCommand } from "./commands/doctor.js";
 import { registerStartCommand } from "./commands/start.js";
 import { registerStopCommand } from "./commands/stop.js";
 import { registerLogCommand } from "./commands/log.js";
@@ -44,6 +48,7 @@ export function buildProgram(): Command {
         .version("0.1.0")
         .option("--api-key <key>", "Clockify personal API key (or CLOCKIFY_API_KEY env var).")
         .option("--workspace <id>", "Clockify workspace ID (or CLOCKIFY_WORKSPACE_ID env var).")
+        .option("--base-url <url>", "Override Clockify API base URL (or CLOCKIFY_BASE_URL env var).")
         .option("--json", "Emit machine-readable JSON instead of human-friendly tables.", false)
         .option("--no-color", "Disable ANSI color output.")
         .showHelpAfterError(true);
@@ -54,6 +59,7 @@ export function buildProgram(): Command {
     };
 
     registerStatusCommand(program, services);
+    registerDoctorCommand(program, services);
     registerStartCommand(program, services);
     registerStopCommand(program, services);
     registerLogCommand(program, services);
@@ -68,6 +74,14 @@ export function buildProgram(): Command {
     registerTimeOffCommand(program, services);
     registerSchedulingCommand(program, services);
     registerAuditLogCommand(program, services);
+
+    program
+        .command("completion")
+        .argument("[shell]", "Shell to generate completion for: zsh, bash, or fish.", "zsh")
+        .description("Print shell completion script for zsh, bash, or fish.")
+        .action((shell: string) => {
+            console.log(renderCompletion(parseCompletionShell(shell)));
+        });
 
     return program;
 }
@@ -85,10 +99,11 @@ export function resolveFlags(program: Command): ResolvedFlags {
 }
 
 export function globalFlags(program: Command): GlobalFlags {
-    const opts = program.opts<{ apiKey?: string; workspace?: string }>();
+    const opts = program.opts<{ apiKey?: string; workspace?: string; baseUrl?: string }>();
     const out: GlobalFlags = {};
     if (opts.apiKey) out.apiKey = opts.apiKey;
     if (opts.workspace) out.workspace = opts.workspace;
+    if (opts.baseUrl) out.baseUrl = opts.baseUrl;
     return out;
 }
 
@@ -105,7 +120,7 @@ export async function main(argv: string[]): Promise<number> {
         const message = err instanceof Error ? err.message : String(err);
         const flags = resolveFlags(program);
         printError(message, { mode: flags.mode, color: flags.color });
-        return 1;
+        return isCommanderUsageError(err) ? 2 : 1;
     }
 }
 
@@ -118,6 +133,16 @@ function isCommanderHelpError(err: unknown): err is { exitCode?: number; code?: 
         ((err as { code: string }).code === "commander.helpDisplayed" ||
             (err as { code: string }).code === "commander.help" ||
             (err as { code: string }).code === "commander.version")
+    );
+}
+
+function isCommanderUsageError(err: unknown): err is { code?: string } {
+    return (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        typeof (err as { code?: unknown }).code === "string" &&
+        (err as { code: string }).code.startsWith("commander.")
     );
 }
 

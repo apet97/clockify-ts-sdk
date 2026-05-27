@@ -1,0 +1,104 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+
+const GUIDE_RESOURCES = [
+    {
+        name: "clockify-axioms",
+        uri: "clockify://guide/axioms",
+        title: "Clockify SDK/MCP Axioms",
+        description: "Rules for safe SDK, CLI, and MCP use.",
+        text: `# Clockify Axioms
+
+- Start with clockify_status so the user, workspace, and running timer state are known.
+- Use workflow tools before low-level domain tools.
+- Use IDs returned by previous calls instead of re-resolving names.
+- Treat writes as receipts: inspect ids, changed, warnings, and next.
+- Preserve stable error codes and recovery hints when a call fails.
+- For risky business/admin writes, run dry_run first and reuse the returned confirm_token.
+- Do not use live/customer workspaces for tests, demos, or destructive probes.
+`,
+    },
+    {
+        name: "clockify-workflows",
+        uri: "clockify://guide/workflows",
+        title: "Clockify Workflow Cookbook",
+        description: "Recommended first tools for common Clockify tasks.",
+        text: `# Clockify Workflow Cookbook
+
+1. Call clockify_status to confirm user, workspace, and running timer state.
+2. Use clockify_create_work_package before logging work that needs client, project, task, or tag objects.
+3. Use clockify_log_work for finished work and clockify_start_work / clockify_stop_work for timers.
+4. Use clockify_switch_work when a user wants to stop the current timer and begin another.
+5. Use clockify_review_day and clockify_review_week before fixing timesheets.
+6. Use clockify_fix_entry only after reviewing the entry you intend to change.
+7. Use domain tools only when a workflow tool does not cover the task.
+
+Common paths:
+
+- "Set up work then log it": clockify_status -> clockify_create_work_package -> clockify_log_work.
+- "Start focus work": clockify_status -> clockify_create_work_package -> clockify_start_work.
+- "Clean up a timesheet": clockify_status -> clockify_review_day -> clockify_fix_entry.
+- "Prepare admin writes": clockify_status -> workflow tool with dry_run:true -> repeat with confirm_token.
+`,
+    },
+    {
+        name: "clockify-safety",
+        uri: "clockify://guide/safety",
+        title: "Clockify MCP Safety Notes",
+        description: "Safety and recovery rules for agentic Clockify operations.",
+        text: `# Clockify MCP Safety Notes
+
+- Confirm the workspace before writing.
+- Prefer dry_run for invoices, expenses, time off, scheduling, and webhooks.
+- Reuse confirm_token only for the preview it came from.
+- Preserve request IDs and stable error codes when reporting failures.
+- If a feature is plan-gated, return the recovery hint instead of retrying blindly.
+- Do not infer missing IDs from partial names when an exact ID was already returned.
+- After demos or tests, run cleanup by deterministic prefix.
+- If cleanup cannot be proven, report the leftover object names and IDs.
+`,
+    },
+    {
+        name: "clockify-mcp-doctor",
+        uri: "clockify://mcp/doctor",
+        title: "Clockify MCP Doctor",
+        description: "No-network diagnostics checklist for local MCP setup and safe next steps.",
+        text: `# Clockify MCP Doctor
+
+This resource is a no-network diagnostics checklist. It does not contact Clockify and does not prove credentials by itself.
+
+Local setup checks:
+
+- Confirm the MCP process has CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID set.
+- Confirm CLOCKIFY_BASE_URL is unset for live Clockify work, or intentionally points at a mock/replay server.
+- Confirm logs, receipts, and support bundles redact secrets, tokens, and full workspace identifiers.
+- Confirm package runtime is Node.js 20 or newer.
+
+Safe next steps:
+
+1. Read clockify://guide/axioms and clockify://guide/safety.
+2. Call clockify_status as the first live probe.
+3. Use workflow tools before low-level domain tools.
+4. For invoices, expenses, time off, scheduling, and webhooks, run dry_run first and reuse the matching confirm_token.
+5. Preserve ids, changed, warnings, next, stable error codes, and recovery hints in the final answer.
+
+If clockify_status fails, report the stable error code, recovery hint, and whether any Clockify records were changed.
+`,
+    },
+] as const;
+
+export function registerClockifyResources(server: McpServer): void {
+    for (const resource of GUIDE_RESOURCES) {
+        server.registerResource(
+            resource.name,
+            resource.uri,
+            {
+                title: resource.title,
+                description: resource.description,
+                mimeType: "text/markdown",
+            },
+            async (uri) => ({
+                contents: [{ uri: uri.href, mimeType: "text/markdown", text: resource.text }],
+            }),
+        );
+    }
+}

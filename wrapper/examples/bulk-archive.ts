@@ -22,7 +22,7 @@ import {
     isClockifyApiError,
     iterAll,
     promoteApiError,
-} from "clockify-sdk-ts";
+} from "clockify-sdk-ts-115";
 
 const apiKeyEnv = process.env.CLOCKIFY_API_KEY;
 const workspaceIdEnv = process.env.CLOCKIFY_WORKSPACE_ID;

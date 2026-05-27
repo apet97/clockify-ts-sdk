@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cross-surface diagnostics contract for SDK clockifyDiagnostics, CLI doctor, MCP doctor resource, redaction, no-network behavior, and product-surface discoverability.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-diagnostics-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-surface-contracts",
+    "typed-diagnostic-surface-files",
+    "typed-no-network-diagnostics-evidence",
+    "typed-forbidden-secret-patterns",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/diagnostics-policy.md",
+    "contains": [
+      "Diagnostics are no-network by default",
+      "Diagnostics are redacted",
+      "Diagnostics return receipts",
+      "local readiness from live proof",
+      "No-network proof",
+      "Contract-shape rule",
+      "make diagnostics",
+      "source attribution"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "surfaces": [
+    {
+      "id": "sdk-diagnostics",
+      "files": [
+        {
+          "path": "wrapper/diagnostics.ts",
+          "contains": [
+            "clockifyDiagnostics",
+            "ready_for_health",
+            "configuration_conflict",
+            "CLOCKIFY_API_KEY",
+            "CLOCKIFY_ADDON_TOKEN",
+            "CLOCKIFY_WORKSPACE_ID",
+            "configured (redacted)",
+            "maskId",
+            "workspaceSource",
+            "baseUrlSource",
+            "explicit",
+            "env",
+            "default",
+            "unavailable"
+          ]
+        },
+        {
+          "path": "wrapper/tests/diagnostics.test.ts",
+          "contains": [
+            "without contacting Clockify",
+            "not.toContain",
+            "configuration_conflict",
+            "Node.js 20",
+            "tracks explicit workspace and base URL sources",
+            "source: \"explicit\"",
+            "source: \"env\"",
+            "source: \"default\""
+          ]
+        },
+        {
+          "path": "wrapper/package.json",
+          "contains": [
+            "./diagnostics",
+            "dist/esm/diagnostics.js",
+            "dist/cjs/diagnostics.js"
+          ]
+        },
+        {
+          "path": "docs/sdk-public-api.json",
+          "contains": [
+            "clockifyDiagnostics",
+            "clockify-sdk-ts-115/diagnostics"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cli-doctor",
+      "files": [
+        {
+          "path": "cli/src/commands/doctor.ts",
+          "contains": [
+            "doctor",
+            "without contacting Clockify",
+            "configured (redacted)",
+            "CLOCKIFY_API_KEY",
+            "CLOCKIFY_WORKSPACE_ID",
+            "CLOCKIFY_BASE_URL"
+          ]
+        },
+        {
+          "path": "cli/tests/doctor.test.ts",
+          "contains": [
+            "without contacting Clockify",
+            "not.toContain",
+            "ready_for_status",
+            "configuration_incomplete"
+          ]
+        },
+        {
+          "path": "docs/cli-commands.json",
+          "contains": [
+            "clk115 doctor",
+            "without contacting Clockify"
+          ]
+        },
+        {
+          "path": "cli/README.md",
+          "contains": [
+            "clk115 doctor",
+            "without contacting Clockify"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp-doctor-resource",
+      "files": [
+        {
+          "path": "mcp/src/resources.ts",
+          "contains": [
+            "clockify://mcp/doctor",
+            "no-network diagnostics checklist",
+            "CLOCKIFY_API_KEY",
+            "CLOCKIFY_WORKSPACE_ID",
+            "clockify_status"
+          ]
+        },
+        {
+          "path": "mcp/tests/server.test.ts",
+          "contains": [
+            "clockify://mcp/doctor",
+            "no-network diagnostics checklist",
+            "CLOCKIFY_API_KEY"
+          ]
+        },
+        {
+          "path": "mcp/README.md",
+          "contains": [
+            "clockify://mcp/doctor",
+            "No-network diagnostics checklist"
+          ]
+        },
+        {
+          "path": "docs/mcp-contract.json",
+          "contains": [
+            "clockify://mcp/doctor"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "product-surface",
+      "files": [
+        {
+          "path": "docs/product-surface.json",
+          "contains": [
+            "clockifyDiagnostics",
+            "clk115 doctor",
+            "clockify://mcp/doctor"
+          ]
+        },
+        {
+          "path": "docs/product-surface.md",
+          "contains": [
+            "clockifyDiagnostics",
+            "clk115 doctor",
+            "clockify://mcp/doctor"
+          ]
+        }
+      ]
+    }
+  ],
+  "noNetworkEvidence": [
+    {
+      "path": "wrapper/diagnostics.ts",
+      "contains": [
+        "without contacting Clockify",
+        "readProcessEnv",
+        "readNodeVersion"
+      ],
+      "forbiddenContains": [
+        "fetch(",
+        "new ClockifyApiClient",
+        "ClockifyApiClient(",
+        "await client.health",
+        "node:https",
+        "node:http"
+      ]
+    },
+    {
+      "path": "cli/src/commands/doctor.ts",
+      "contains": [
+        "without contacting Clockify",
+        "buildDoctorReceipt",
+        "services.loadConfig"
+      ],
+      "forbiddenContains": [
+        "fetch(",
+        "ClockifyApiClient",
+        "createClockifyClient",
+        "await services",
+        "node:https",
+        "node:http"
+      ]
+    },
+    {
+      "path": "mcp/src/resources.ts",
+      "contains": [
+        "no-network diagnostics checklist",
+        "It does not contact Clockify",
+        "clockify_status as the first live probe"
+      ],
+      "forbiddenContains": [
+        "fetch(",
+        "ClockifyApiClient",
+        "createClockifyClient",
+        "buildServer(",
+        "loadContext(",
+        "node:https",
+        "node:http"
+      ]
+    }
+  ],
+  "forbiddenSecretPatterns": [
+    "CLOCKIFY_API_KEY=real",
+    "CLOCKIFY_ADDON_TOKEN=real",
+    "CLOCKIFY_WORKSPACE_ID=real",
+    "PASTE TOKEN"
+  ],
+  "wiring": {
+    "makeTarget": "diagnostics",
+    "checker": "scripts/check-diagnostics-contract.mjs",
+    "docsIndexPolicy": "diagnostics-policy.md",
+    "docsIndexContract": "diagnostics-contract.json",
+    "qualityGate": "make diagnostics",
+    "auditId": "diagnostics-contract"
+  }
+}

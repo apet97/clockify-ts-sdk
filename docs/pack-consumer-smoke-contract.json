@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Packed-consumer smoke contract for SDK, CLI, and MCP tarballs. Keeps the package proof limited to local npm pack/install/import/run checks in temporary consumer projects.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-package-directories",
+    "required-package-ids",
+    "typed-consumer-contracts",
+    "typed-script-markers",
+    "typed-keep-temp-env",
+    "makefile-audit-wiring"
+  ],
+  "packages": [
+    {
+      "id": "wrapper",
+      "packageDir": "wrapper",
+      "npmName": "clockify-sdk-ts-115"
+    },
+    {
+      "id": "cli",
+      "packageDir": "cli",
+      "npmName": "@clockify115/cli"
+    },
+    {
+      "id": "mcp",
+      "packageDir": "mcp",
+      "npmName": "@clockify115/mcp-server"
+    }
+  ],
+  "consumers": [
+    {
+      "id": "sdk",
+      "tempPrefix": "clockify-sdk-consumer-",
+      "installPackageIds": [
+        "wrapper"
+      ]
+    },
+    {
+      "id": "cli",
+      "tempPrefix": "clockify-cli-consumer-",
+      "installPackageIds": [
+        "wrapper",
+        "cli"
+      ]
+    },
+    {
+      "id": "mcp",
+      "tempPrefix": "clockify-mcp-consumer-",
+      "installPackageIds": [
+        "wrapper",
+        "mcp"
+      ]
+    }
+  ],
+  "requiredScriptMarkers": [
+    "npm",
+    "pack",
+    "install",
+    "clockify-sdk-ts-115",
+    "clockify-sdk-ts-115/iter",
+    "clockify-sdk-ts-115/webhooks",
+    "clockify-sdk-ts-115/errors",
+    "@clockify115",
+    "dist",
+    "index.js",
+    "--version",
+    "@clockify115/mcp-server/server",
+    "@clockify115/mcp-server/client",
+    "packed consumer smoke passed",
+    "pack consumer smoke contract shape failed",
+    "wiring.makeTarget",
+    "wiring.checker"
+  ],
+  "keepTempEnv": "KEEP_CLOCKIFY_PACK_SMOKE_TEMP",
+  "wiring": {
+    "makeTarget": "pack-smoke",
+    "checker": "scripts/pack-consumer-smoke.mjs",
+    "enterpriseAuditId": "packed-consumer-proof"
+  }
+}

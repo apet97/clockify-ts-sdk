@@ -26,8 +26,9 @@ clk115 stop
 
 In precedence order (highest wins):
 
-1. **Command-line flags:** `--api-key`, `--workspace`
-2. **Environment variables:** `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`
+1. **Command-line flags:** `--api-key`, `--workspace`, `--base-url`
+2. **Environment variables:** `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`,
+   optional `CLOCKIFY_BASE_URL` for mock/replay or private gateway tests
 3. **Rc file:** `~/.clockifyrc.json` (or `clockifyrc.json` in
    `$CLOCKIFY_HOME`)
 
@@ -36,9 +37,14 @@ Rc file shape:
 ```json
 {
     "apiKey": "abcd1234…",
-    "workspaceId": "65b382b6…"
+    "workspaceId": "65b382b6…",
+    "baseUrl": "https://api.clockify.me/api/v1"
 }
 ```
+
+Do not set `baseUrl` for normal Clockify use. It exists so tests can
+point the CLI at `make mock-clockify` or a replay gateway without
+touching production credentials.
 
 ## Output modes
 
@@ -52,12 +58,14 @@ when stdout is not a TTY (e.g. piped to a file).
 
 ## Commands
 
+<!-- BEGIN generated:cli-commands -->
 | Command | What it does |
 |---|---|
-| `clk115 status` | Print workspace + user + running timer. |
-| `clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]` | Start a timer. Resolves project/task/tag names to IDs. |
+| `clk115 status` | Print workspace, current user, and running timer. |
+| `clk115 doctor` | Check local CLI configuration without contacting Clockify. |
+| `clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]` | Start a timer. Resolves project, task, and tag names to IDs. |
 | `clk115 stop` | Stop the running timer for the current user. |
-| `clk115 log <duration> <description> [-p projectId] [-t taskId] [--tag tagId…] [--billable] [--end iso]` | Log a finished entry. Duration accepts `1h30m`, `90m`, `PT1H30M`. |
+| `clk115 log <duration> <description> [-p projectId] [-t taskId] [--tag tagId…] [--billable] [--end iso]` | Log a finished entry. Duration accepts `1h30m`, `90m`, or `PT1H30M`. |
 | `clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]` | List time entries for the current user. |
 | `clk115 entries delete <id>` | Delete a time entry. |
 | `clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]` | List projects. |
@@ -76,10 +84,12 @@ when stdout is not a TTY (e.g. piped to a file).
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
 | `clk115 timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. |
 | `clk115 scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
-| `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment (drafts by default; pass `--publish` to publish). |
+| `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment. Drafts by default; pass `--publish` to publish. |
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
-| `clk115 help [command]` | Per-command help. |
+| `clk115 completion [zsh\|bash\|fish]` | Print a shell completion script for zsh, bash, or fish. |
+| `clk115 help [command]` | Print per-command help. |
 | `clk115 --version` | Print CLI version. |
+<!-- END generated:cli-commands -->
 
 ## Examples
 
@@ -121,7 +131,7 @@ git clone https://github.com/apet97/clockify-ts-sdk
 cd clockify-ts-sdk/cli
 npm install
 npm run dev -- status        # via tsx, no build needed
-npm test                     # 26 unit tests across duration / config / output / CLI contract
+npm test                     # unit tests across duration / config / output / CLI contract / mock server
 npm run build                # tsc → dist/
 node dist/index.js status    # smoke test (or invoke installed clk115/clockify115)
 ```

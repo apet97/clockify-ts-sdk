@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Configuration precedence contract for SDK options/env fallback, CLI flags/env/rc files, MCP env-only startup, base URL override safety, and missing-config recovery wording.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-config-precedence-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-required-targets",
+    "typed-required-docs",
+    "typed-surface-evidence",
+    "typed-supporting-evidence",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/config-precedence-policy.md",
+    "contains": [
+      "Surface precedence",
+      "Base URL override rule",
+      "Missing configuration errors",
+      "Contract-shape rule",
+      "Change rules",
+      "Proof gates",
+      "CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN",
+      "Command-line flags win over env vars",
+      "Process env only"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD", "rc file override a flag", "normal production setting"]
+  },
+  "requiredTargets": [
+    "config-precedence",
+    "env-contract",
+    "user-docs",
+    "cli-contract",
+    "mcp-contract"
+  ],
+  "requiredDocs": [
+    "docs/config-precedence-policy.md",
+    "docs/env-contract.json",
+    "docs/install-personas.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md"
+  ],
+  "surfaces": [
+    {
+      "id": "sdk-auth",
+      "evidence": "wrapper/create-client.ts",
+      "markers": [
+        "CLOCKIFY_API_KEY is preferred over",
+        "pass only one of `apiKey` or `addonToken`",
+        "must provide exactly one of `apiKey` or `addonToken`"
+      ]
+    },
+    {
+      "id": "cli-precedence",
+      "evidence": "cli/src/config.ts",
+      "markers": [
+        "lowest → highest precedence",
+        "CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID / CLOCKIFY_BASE_URL env vars",
+        "--api-key / --workspace / --base-url command-line flags",
+        "flags.apiKey ?? env.CLOCKIFY_API_KEY ?? file.apiKey",
+        "Provide --api-key, set CLOCKIFY_API_KEY",
+        "Provide --workspace, set CLOCKIFY_WORKSPACE_ID",
+        "failed to read Clockify rc file"
+      ]
+    },
+    {
+      "id": "mcp-env-only",
+      "evidence": "mcp/src/client.ts",
+      "markers": [
+        "CLOCKIFY_API_KEY is not set",
+        "CLOCKIFY_WORKSPACE_ID is not set",
+        "one-user server is pinned to a single workspace",
+        "CLOCKIFY_BASE_URL"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/env-contract.json",
+      "contains": ["CLOCKIFY_API_KEY", "CLOCKIFY_ADDON_TOKEN", "CLOCKIFY_BASE_URL", "mustMentionSafety"]
+    },
+    {
+      "path": "cli/README.md",
+      "contains": ["Configuration", "Command-line flags", "Environment variables", "CLOCKIFY_HOME"]
+    },
+    {
+      "path": "mcp/README.md",
+      "contains": ["process environment", "CLOCKIFY_API_KEY", "CLOCKIFY_WORKSPACE_ID", "CLOCKIFY_BASE_URL"]
+    },
+    {
+      "path": "wrapper/README.md",
+      "contains": ["CLOCKIFY_API_KEY", "CLOCKIFY_ADDON_TOKEN", "priority"]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "config-precedence",
+    "checker": "scripts/check-config-precedence.mjs",
+    "docsIndex": [
+      "config-precedence-policy.md",
+      "config-precedence-contract.json"
+    ],
+    "qualityGate": "make config-precedence",
+    "inventoryId": "config-precedence",
+    "auditId": "config-precedence"
+  }
+}

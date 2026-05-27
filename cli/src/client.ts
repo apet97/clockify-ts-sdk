@@ -12,5 +12,5 @@ export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
 export function buildClient(config: CliConfig): ClockifyClient {
     const apiKey = requireApiKey(config);
-    return createClockifyClient({ apiKey });
+    return createClockifyClient({ apiKey, environment: config.baseUrl });
 }

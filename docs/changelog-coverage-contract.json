@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Package changelog coverage contract for wrapper, CLI, and MCP package scopes when user-visible files are touched.",
+  "contractInvariants": [
+    "schema-versioned-changelog-coverage-contract",
+    "safe-changelog-coverage-paths",
+    "typed-package-scope-entries",
+    "package-scope-changelog-required",
+    "unreleased-heading-required",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "changelog-drift",
+    "checker": "scripts/check-changelog-entry.mjs",
+    "enterpriseAuditId": "changelog-coverage"
+  },
+  "requiredHeading": "[Unreleased]",
+  "expectedPackageScopeCount": 3,
+  "requiredPackageIds": [
+    "wrapper",
+    "cli",
+    "mcp"
+  ],
+  "packageScopes": [
+    {
+      "id": "wrapper",
+      "paths": [
+        "wrapper/"
+      ],
+      "changelog": "wrapper/CHANGELOG.md"
+    },
+    {
+      "id": "cli",
+      "paths": [
+        "cli/"
+      ],
+      "changelog": "cli/CHANGELOG.md"
+    },
+    {
+      "id": "mcp",
+      "paths": [
+        "mcp/"
+      ],
+      "changelog": "mcp/CHANGELOG.md"
+    }
+  ]
+}

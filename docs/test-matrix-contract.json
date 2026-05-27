@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Structural test-matrix contract for SDK, CLI, and MCP. This does not execute tests; it verifies the expected test files and package scripts remain present, and that last-resort package gates keep the expected command shape, so the real gates have something meaningful to run.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "typed-package-test-matrix",
+    "safe-test-matrix-evidence-paths",
+    "typed-root-gate-targets",
+    "typed-wiring-contract"
+  ],
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "requiredScripts": ["type-check", "test", "build", "build:smoke", "prepublishOnly"],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+      },
+      "requiredTests": [
+        "wrapper/tests/axioms-checklist.test.ts",
+        "wrapper/tests/composed-fetch.test.ts",
+        "wrapper/tests/create-client.test.ts",
+        "wrapper/tests/dual-build.test.ts",
+        "wrapper/tests/errors.test.ts",
+        "wrapper/tests/health.test.ts",
+        "wrapper/tests/iter.test.ts",
+        "wrapper/tests/mock-clockify.test.ts",
+        "wrapper/tests/pagination.test.ts",
+        "wrapper/tests/rate-limit.test.ts",
+        "wrapper/tests/sandbox.test.ts",
+        "wrapper/tests/webhooks.test.ts",
+        "wrapper/tests/with-response.test.ts"
+      ],
+      "forbiddenSkipPatterns": ["it.skip", "test.skip", "xit", "xdescribe"]
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "requiredScripts": ["type-check", "test", "build", "prepublishOnly"],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "requiredTests": [
+        "cli/tests/completions.test.ts",
+        "cli/tests/config.test.ts",
+        "cli/tests/exit-contract.test.ts",
+        "cli/tests/index.test.ts",
+        "cli/tests/mock-clockify.test.ts",
+        "cli/tests/output.test.ts",
+        "cli/tests/sandbox.test.ts"
+      ]
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "requiredScripts": ["type-check", "test", "build", "verify:live-cleanup", "prepublishOnly"],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "requiredTests": [
+        "mcp/tests/client.test.ts",
+        "mcp/tests/mock-clockify.test.ts",
+        "mcp/tests/result.test.ts",
+        "mcp/tests/sandbox.test.ts",
+        "mcp/tests/server.test.ts",
+        "mcp/tests/workflows.test.ts"
+      ]
+    }
+  ],
+  "rootGateTargets": ["wrapper-gates", "cli-gates", "mcp-gates", "perfect-fast", "perfect-full"],
+  "wiring": {
+    "makeTarget": "test-matrix",
+    "checker": "scripts/check-test-matrix-contract.mjs",
+    "docsIndex": [
+      "test-matrix-contract.json"
+    ],
+    "qualityGate": "make test-matrix",
+    "inventoryId": "test-matrix",
+    "auditId": "test-matrix"
+  }
+}

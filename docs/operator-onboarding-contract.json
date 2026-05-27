@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Operator onboarding contract for non-coder bootstrap, SDK/CLI/MCP path selection, mock/live safety, stop conditions, and readiness boundaries.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-operator-onboarding-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-supporting-doc-entries",
+    "typed-plan-generator-contract",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/operator-onboarding.md",
+    "mustContain": [
+      "First five minutes",
+      "Choose the path",
+      "Contract-shape rule",
+      "Generate a local plan",
+      "Safe bootstrap sequence",
+      "Mock versus live",
+      "Stop conditions",
+      "Readiness boundaries",
+      "Readiness context",
+      "readinessContext",
+      "finalBlockingSignalIds",
+      "blockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "Exit status: 0",
+      "Result: passed",
+      "prose success summary is not enough",
+      "completed live sandbox proof",
+      "no blocking residual risks"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "supportingDocs": [
+    {
+      "path": "docs/install-personas.md",
+      "mustContain": [
+        "SDK user",
+        "CLI user",
+        "MCP user",
+        "make pack-smoke",
+        "CLOCKIFY_BASE_URL"
+      ]
+    },
+    {
+      "path": "docs/developer-environment-policy.md",
+      "mustContain": [
+        "package-local",
+        "There is no root `package.json`",
+        "Docker",
+        "../GOCLMCP",
+        "Do not confuse environment readiness with final product readiness"
+      ]
+    },
+    {
+      "path": "docs/dependency-policy.md",
+      "mustContain": [
+        "Package runtime floors",
+        "Dependency boundaries",
+        "Security posture"
+      ]
+    },
+    {
+      "path": "docs/live-tests.md",
+      "mustContain": [
+        "sacrificial sandbox",
+        "make perfect-live",
+        "Mock/replay proof never replaces live sandbox proof"
+      ]
+    },
+    {
+      "path": "docs/final-proof-runbook.md",
+      "mustContain": [
+        "final proof receipt",
+        "temporary context file",
+        "final-proof-final"
+      ]
+    }
+  ],
+  "planGenerator": {
+    "path": "scripts/onboarding-plan.mjs",
+    "makeTarget": "onboarding-plan",
+    "mustContain": [
+      "SDK user",
+      "CLI user",
+      "MCP user",
+      "Mock/replay proof",
+      "Live sandbox proof",
+      "Full product readiness",
+      "Support escalation",
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "node scripts/repo-doctor.mjs",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+      "readinessContext",
+      "safeCommandHints",
+      "finalBlockingSignalIds",
+      "blockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "Exit status: 0",
+      "Result: passed",
+      "deferral is draft-only",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls"
+    ],
+    "generatedPlan": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "goal": "all",
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "secretsCaptured": false,
+        "workspaceIdsCaptured": false
+      },
+      "requiredGoalIds": [
+        "sdk",
+        "cli",
+        "mcp",
+        "mock",
+        "live",
+        "full",
+        "support"
+      ],
+      "requiredGoalArrayFields": [
+        "firstReads",
+        "safeStart",
+        "proofWhenAllowed",
+        "stopIf"
+      ],
+      "requiredGoalTextMarkers": {
+        "full": [
+          "make final-proof-preflight",
+          "readinessContext",
+          "finalBlockingSignalIds",
+          "blockingSignalIds",
+          "riskRoutingSummary",
+          "orderedProofChainCoverage"
+        ],
+        "support": [
+          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "readinessContext",
+          "safeCommandHints",
+          "finalBlockingSignalIds",
+          "blockingSignalIds",
+          "riskRoutingSummary",
+          "orderedProofChainCoverage"
+        ]
+      }
+    }
+  },
+  "requiredMakeTargets": [
+    "onboarding-plan",
+    "operator-onboarding",
+    "developer-environment",
+    "runtime-support",
+    "package-contract",
+    "mock-contract",
+    "workflow-plan",
+    "workflow-cookbook",
+    "live-safety",
+    "final-proof-receipt-check"
+  ],
+  "wiring": {
+    "makeTarget": "operator-onboarding",
+    "checker": "scripts/check-operator-onboarding.mjs",
+    "docsIndex": [
+      "operator-onboarding.md",
+      "operator-onboarding-contract.json"
+    ],
+    "qualityGate": "make operator-onboarding",
+    "inventoryId": "operator-onboarding",
+    "auditId": "operator-onboarding"
+  }
+}

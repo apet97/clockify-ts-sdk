@@ -80,6 +80,13 @@ describe("printSuccess / printError", () => {
         printSuccess("done", json);
         printError("nope", json);
         expect(JSON.parse(logged[0] ?? "")).toEqual({ ok: true, message: "done" });
-        expect(JSON.parse(errored[0] ?? "")).toEqual({ ok: false, error: "nope" });
+        expect(JSON.parse(errored[0] ?? "")).toEqual({
+            ok: false,
+            error: "nope",
+            code: "error",
+            recovery:
+                "Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior.",
+            retryable: false,
+        });
     });
 });

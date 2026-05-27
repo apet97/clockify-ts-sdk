@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Runnable SDK examples contract. Examples must import the public package name, stay catalogued in wrapper/examples/README.md, and avoid local source imports or committed secrets.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-examples-evidence-paths",
+    "typed-example-inventory",
+    "typed-forbidden-marker-lists",
+    "typed-secret-regexes",
+    "typed-supporting-contracts",
+    "typed-wiring-contract"
+  ],
+  "packageName": "clockify-sdk-ts-115",
+  "directory": "wrapper/examples",
+  "readme": "wrapper/examples/README.md",
+  "examples": [
+    "auth.ts",
+    "bulk-archive.ts",
+    "create-project.ts",
+    "generate-report.ts",
+    "handle-abort.ts",
+    "handle-connection-error.ts",
+    "idempotency.ts",
+    "log-time-entry.ts",
+    "middleware-datadog.ts",
+    "paginate-all.ts",
+    "paginated-list-basic.ts",
+    "pass-idempotency-key.ts",
+    "per-request-overrides.ts",
+    "retry-custom.ts",
+    "structured-logging.ts",
+    "typed-errors.ts",
+    "upload-image.ts",
+    "verify-webhook.ts"
+  ],
+  "forbiddenPackageMarkers": [
+    "clockify-sdk-ts\"",
+    "clockify-sdk-ts'",
+    "clockify-sdk-ts/README"
+  ],
+  "forbiddenImportPrefixes": [
+    "../",
+    "./",
+    "/Users/"
+  ],
+  "forbiddenSecretPatterns": [
+    "sk-[A-Za-z0-9_-]{20,}",
+    "xox[baprs]-[A-Za-z0-9-]{20,}",
+    "CLOCKIFY_API_KEY=[A-Za-z0-9_-]{16,}"
+  ],
+  "supportingContracts": [
+    {
+      "path": "docs/snippet-safety-contract.json",
+      "mustContain": [
+        "Snippet rules",
+        "Copy-paste safety checklist",
+        "Forbidden snippet patterns"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "examples-contract",
+    "checker": "scripts/check-examples-contract.mjs",
+    "docsIndex": [
+      "examples-contract.json"
+    ],
+    "qualityGate": "make examples-contract",
+    "inventoryId": "examples-contract",
+    "auditId": "examples-contract"
+  }
+}

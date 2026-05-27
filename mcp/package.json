@@ -23,7 +23,7 @@
     ],
     "type": "module",
     "engines": {
-        "node": ">=18.18"
+        "node": ">=20"
     },
     "exports": {
         ".": {
@@ -54,7 +54,7 @@
         "test:watch": "vitest",
         "type-check": "tsc --noEmit",
         "verify:live-cleanup": "npm run build && node scripts/assert-clean-prefixes.mjs",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.29.0",

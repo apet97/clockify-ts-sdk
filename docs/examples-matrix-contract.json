@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cross-surface examples matrix contract tying SDK starter scripts, CLI commands, MCP workflows, mock/live boundaries, and receipt expectations to real user jobs.",
+  "contractInvariants": [
+    "schema-versioned-examples-matrix-contract",
+    "safe-examples-matrix-paths",
+    "typed-example-rows",
+    "generated-plan-static-no-network",
+    "required-target-wiring",
+    "required-doc-evidence",
+    "supporting-evidence-marker-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "examples-matrix",
+    "checker": "scripts/check-examples-matrix.mjs",
+    "enterpriseAuditId": "examples-matrix"
+  },
+  "matrixDocument": {
+    "path": "docs/examples-matrix.md",
+    "contains": [
+      "Examples are a product surface",
+      "Coverage matrix",
+      "node scripts/examples-plan.mjs --example auth-status",
+      "Mock versus live",
+      "Promotion checklist",
+      "clockify-sdk-ts-115",
+      "clk115 status",
+      "clockify_status",
+      "dry_run:true",
+      "confirm_token",
+      "Non-idempotent creates are not auto-retried by default"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "requiredTargets": [
+    "examples-plan",
+    "examples-matrix",
+    "examples-contract",
+    "snippet-safety",
+    "workflow-cookbook",
+    "mutation-safety",
+    "user-docs"
+  ],
+  "requiredDocs": [
+    "docs/examples-matrix.md",
+    "docs/examples-contract.json",
+    "docs/snippet-safety-policy.md",
+    "docs/workflow-cookbook.md",
+    "docs/mutation-safety-policy.md",
+    "wrapper/examples/README.md",
+    "cli/README.md",
+    "mcp/README.md"
+  ],
+  "expectedRowCount": 7,
+  "requiredRowIds": [
+    "auth-status",
+    "pagination",
+    "time-entry",
+    "business-admin",
+    "retry-idempotency",
+    "observability",
+    "demo-cleanup"
+  ],
+  "rows": [
+    { "id": "auth-status", "markers": ["auth.ts", "clk115 status", "clockify_status"] },
+    { "id": "pagination", "markers": ["paginate-all.ts", "paginated-list-basic.ts", "clk115 projects list --json"] },
+    { "id": "time-entry", "markers": ["log-time-entry.ts", "clk115 log", "clockify_log_work"] },
+    { "id": "business-admin", "markers": ["invoices create", "clockify_invoice_client_work", "dry_run:true"] },
+    { "id": "retry-idempotency", "markers": ["retry-custom.ts", "idempotency.ts", "Non-idempotent creates are not auto-retried by default"] },
+    { "id": "observability", "markers": ["structured-logging.ts", "middleware-datadog.ts", "structuredContent"] },
+    { "id": "demo-cleanup", "markers": ["clockify_demo_seed", "clockify_demo_cleanup", "leftover count"] }
+  ],
+  "planner": {
+    "path": "scripts/examples-plan.mjs",
+    "makeTarget": "examples-plan",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This plan is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "auth-status",
+      "pagination",
+      "time-entry",
+      "business-admin",
+      "retry-idempotency",
+      "demo-cleanup",
+      "clockify_demo_cleanup",
+      "dry_run:true"
+    ],
+    "generatedPlan": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "example": "all"
+      },
+      "requiredExampleIds": [
+        "auth-status",
+        "pagination",
+        "time-entry",
+        "work-package",
+        "business-admin",
+        "retry-idempotency",
+        "observability",
+        "webhooks",
+        "demo-cleanup"
+      ],
+      "requiredExampleFields": [
+        "job",
+        "sdk",
+        "cli",
+        "mcp",
+        "safety",
+        "proof"
+      ]
+    }
+  },
+  "supportingEvidence": [
+    {
+      "path": "docs/examples-contract.json",
+      "contains": ["clockify-sdk-ts-115", "forbiddenImportPrefixes", "forbiddenSecretPatterns"]
+    },
+    {
+      "path": "wrapper/examples/README.md",
+      "contains": ["Catalogue", "sandbox workspace", "idempotency.ts", "structured-logging.ts"]
+    },
+    {
+      "path": "docs/workflow-cookbook.md",
+      "contains": ["Daily time tracking", "Business and admin workflows", "Recovery pattern"]
+    },
+    {
+      "path": "docs/mutation-safety-policy.md",
+      "contains": ["Mutation classes", "Non-idempotent create", "Ambiguous failure recovery"]
+    },
+    {
+      "path": "docs/product-surface.json",
+      "contains": ["time-tracking", "work-package", "business-workflows", "demo-and-cleanup"]
+    }
+  ]
+}

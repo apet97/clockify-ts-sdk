@@ -14,6 +14,8 @@ describe("buildProgram", () => {
         expect(commandNames).toEqual([
             "audit-log",
             "clients",
+            "completion",
+            "doctor",
             "entries",
             "expenses",
             "invoices",

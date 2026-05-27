@@ -1,16 +1,16 @@
 /**
- * Package root entry for `clockify-sdk-ts`. Re-exports the Fern-
+ * Package root entry for `clockify-sdk-ts-115`. Re-exports the Fern-
  * generated SDK surface (from `./src/index.js`) plus the
  * hand-written ergonomic helpers that live alongside it.
  *
  * Per-subpath entries are still exported individually for tree-shake
- * and intent-revealing imports (`clockify-sdk-ts/create-client`,
- * `clockify-sdk-ts/pagination`). This file just gives a single import
+ * and intent-revealing imports (`clockify-sdk-ts-115/create-client`,
+ * `clockify-sdk-ts-115/pagination`). This file just gives a single import
  * site for the common case.
  */
 export * from "./src/index.js";
 // Re-export per-status error classes flat so consumers can do
-// `import { NotFoundError } from "clockify-sdk-ts"` instead of
+// `import { NotFoundError } from "clockify-sdk-ts-115"` instead of
 // `ClockifyApi.NotFoundError`. The namespace import still works.
 export {
     BadRequestError,
@@ -22,8 +22,14 @@ export {
 export {
     ClockifyAbortError,
     ClockifyConnectionError,
+    CLOCKIFY_ERROR_CODES,
+    classifyClockifyError,
     ConflictError,
+    errorCodeEntry,
+    errorCodeForMessage,
+    errorCodeForStatus,
     getErrorCode,
+    getStableErrorCode,
     InternalServerError,
     isAbortError,
     isClockifyApiError,
@@ -34,7 +40,12 @@ export {
     isServiceUnavailableError,
     promoteApiError,
     RateLimitError,
+    recoveryForCode,
+    retryableForCode,
     ServiceUnavailableError,
+    type ClockifyErrorClassification,
+    type ClockifyErrorCode,
+    type ClockifyErrorCodeEntry,
 } from "./errors.js";
 export { warnOnce } from "./deprecation.js";
 export {
@@ -90,7 +101,7 @@ export {
     type WebhookHeadersInput,
 } from "./webhooks.js";
 // Typed webhook event union. Individual variant types (e.g. WebhookEventNewProject)
-// are available via the subpath: import type { ... } from "clockify-sdk-ts/webhook-events"
+// are available via the subpath: import type { ... } from "clockify-sdk-ts-115/webhook-events"
 export {
     CLOCKIFY_WEBHOOK_EVENT_NAMES,
     type ClockifyWebhookEvent,
@@ -98,4 +109,13 @@ export {
 } from "./webhook-events.js";
 export { otelHooks, type OtelHooksOptions, type OtelLikeSpan } from "./otel-hooks.js";
 export { clockifyHealth, type HealthCheckResult } from "./health.js";
+export {
+    clockifyDiagnostics,
+    type ClockifyDiagnosticCheck,
+    type ClockifyDiagnosticsInput,
+    type ClockifyDiagnosticsReadiness,
+    type ClockifyDiagnosticsResult,
+    type ClockifyDiagnosticsSource,
+    type ClockifyDiagnosticsStatus,
+} from "./diagnostics.js";
 export { getRateLimit, getRateLimitFromError, type RateLimitSnapshot } from "./rate-limit.js";

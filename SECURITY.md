@@ -2,15 +2,16 @@
 
 ## Supported Versions
 
-`clockify-sdk-ts` follows semantic versioning. Security fixes land
-on the latest minor of the latest major; older majors receive
+The public packages in this repo are `clockify-sdk-ts-115`,
+`@clockify115/cli`, and `@clockify115/mcp-server`. Security fixes
+land on the latest minor of the latest major; older majors receive
 security fixes only when there's no migration path and the fix is
 trivial.
 
 | Version | Supported |
 |---|---|
-| `0.x` (pre-1.0) | ✅ — only the latest 0.x minor receives fixes |
-| `≥ 1.0` | ✅ — fixes land on the latest minor of the latest major |
+| `0.x` (pre-1.0) | Supported for the latest 0.x minor only |
+| `>= 1.0` | Supported on the latest minor of the latest major |
 
 ## Reporting a Vulnerability
 
@@ -24,12 +25,14 @@ Use one of the private disclosure channels below:
    This gives us a private channel to discuss the issue + draft a
    CVE if needed.
 2. **Direct email** — `petkovic.aleksandar037@gmail.com` with
-   subject prefix `[security] clockify-sdk-ts:`. PGP key
+   subject prefix `[security] clockify-sdk-ts-115:`. PGP key
    fingerprint not yet published; ping if you need one.
 
 ### What to include
 
-- The npm version(s) affected (`npm ls clockify-sdk-ts`).
+- The package and version affected, for example
+  `clockify-sdk-ts-115@0.9.0`, `@clockify115/cli@0.1.0`, or
+  `@clockify115/mcp-server@0.3.0`.
 - A minimal reproducer (TypeScript or JavaScript). Don't include
   real API keys or workspace IDs.
 - The expected vs actual behavior.
@@ -41,21 +44,27 @@ Use one of the private disclosure channels below:
 |---|---|
 | First acknowledgment | within **72 hours** of receipt |
 | Triage + severity confirmation | within **7 days** |
-| Fix shipped to npm (for critical) | within **14 days** |
-| Fix shipped to npm (for high) | within **30 days** |
+| Fix shipped or patched (for critical) | within **14 days** |
+| Fix shipped or patched (for high) | within **30 days** |
 | CVE published (if applicable) | with the fix release |
 
 Slower-cadence issues (moderate / low) move on the regular
-release schedule but always get an acknowledgment + tracking
-issue.
+release schedule but always get an acknowledgment and private
+tracking. npm publication is not the default path for this repo;
+if packages are not published, the fix ships as a tagged commit,
+tarball, or maintainer-approved release artifact.
 
 ## Scope
 
 In scope:
-- The hand-written wrapper surface in `wrapper/`
+- The hand-written SDK wrapper surface in `wrapper/`
   (`create-client.ts`, `composed-fetch.ts`, `iter.ts`,
   `webhooks.ts`, `pagination.ts`, `index.ts`).
-- The publish pipeline (`.github/workflows/release.yml`).
+- The CLI surface in `cli/`, including JSON output and exit codes.
+- The MCP surface in `mcp/`, including tool envelopes, output
+  schemas, resources, prompts, and confirmation flow.
+- The publish pipeline (`.github/workflows/release.yml`) if a
+  maintainer explicitly chooses to publish.
 - The dual ESM + CJS build chain (`tsconfig.{esm,cjs}.json`,
   `scripts/finalize-cjs.sh`, `scripts/verify-dual-build.sh`).
 - Webhook signature verification (`webhooks.ts`).

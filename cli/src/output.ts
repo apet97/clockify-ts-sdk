@@ -1,6 +1,8 @@
 import Table from "cli-table3";
 import pc from "picocolors";
 
+import { errorCodeForMessage, recoveryForCode, retryableForCode } from "./error-codes.js";
+
 export type OutputMode = "table" | "json";
 
 export interface OutputOptions {
@@ -73,7 +75,16 @@ export function printSuccess(message: string, opts: OutputOptions): void {
  */
 export function printError(message: string, opts: OutputOptions): void {
     if (opts.mode === "json") {
-        console.error(JSON.stringify({ ok: false, error: message }));
+        const code = errorCodeForMessage(message);
+        console.error(
+            JSON.stringify({
+                ok: false,
+                error: message,
+                code,
+                recovery: recoveryForCode(code),
+                retryable: retryableForCode(code),
+            }),
+        );
         return;
     }
     const prefix = opts.color ? pc.red("ERR") : "ERR";

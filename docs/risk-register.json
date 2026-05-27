@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Known risks, limitations, provisional states, and upstream blockers for the SDK/CLI/MCP/OpenAPI platform. Every entry needs evidence, mitigation, and a closure gate.",
+  "wiring": {
+    "makeTarget": "risk-register",
+    "checker": "scripts/check-risk-register.mjs",
+    "enterpriseAuditId": "risk-register"
+  },
+  "allowedStatuses": [
+    "open",
+    "provisional",
+    "blocked-upstream",
+    "accepted"
+  ],
+  "reportGenerator": {
+    "path": "scripts/risk-status-report.mjs",
+    "makeTarget": "risk-status-report",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This report is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+      "docs/final-proof-receipt.md",
+      "finalReceiptPresenceStatus",
+      "failed-draft marker",
+      "NOT COMPLETE:",
+      "docs/final-proof-receipt.md exists but contains failed-draft marker",
+      "docs/performance-baseline-latest.json",
+      "performanceReceiptStatus",
+      "readJsonState",
+      "parseError",
+      "not valid receipt JSON",
+      "failedMeasurements",
+      "measurement?.ok !== true",
+      "expectedPerformanceReceiptCalibrationStatus",
+      "embedded calibrationPolicy.status",
+      "has passing measurements but embedded calibrationPolicy.status",
+      "expectedBudgetSchemaVersion",
+      "budgetsSchemaVersion",
+      "has passing measurements but budgetsSchemaVersion",
+      "expectedBudgetFingerprint",
+      "budgetFingerprint",
+      "has passing measurements but budgetFingerprint",
+      "successful latest receipt",
+      "fileSignalDetails",
+      "finalReadinessBlocking",
+      "Final-readiness blocking",
+      "readinessBlockingRiskIds",
+      "nonBlockingOpenOrProvisionalRiskIds",
+      "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
+      "liveProofSection",
+      "liveProofStatus",
+      "allowedLiveProofStatuses",
+      "failed",
+      "readListField",
+      "finalProofManifest.liveProof?.sectionStart",
+      "liveProofStatusDetail",
+      "failed live proof; rerun make perfect-live successfully",
+      "deferral is draft-only",
+      "Final-readiness risk routing",
+      "riskRoutingSummary",
+      "finalReadinessRiskStatus",
+      "readinessBlockingRiskCount",
+      "nonBlockingOpenOrProvisionalRiskCount",
+      "Blocking risk count",
+      "Visible non-blocking open/provisional risks"
+    ],
+    "generatedReport": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "reportScope": "all"
+      },
+      "requiredCountKeys": [
+        "open",
+        "provisional",
+        "blocked-upstream",
+        "accepted"
+      ],
+      "requiredFileSignalKeys": [
+        "temporaryContext",
+        "finalProofReceipt",
+        "performanceBaselineLatest",
+        "performanceCalibration",
+        "finalReceiptLiveStatus"
+      ],
+      "requiredFileSignalDetailKeys": [
+        "finalProofReceipt",
+        "performanceBaselineLatest",
+        "finalReceiptLiveStatus"
+      ],
+      "requiredFileSignalDetailKeysAreNonEmpty": true,
+      "requiredRiskRoutingSummaryKeys": [
+        "finalReadinessRiskStatus",
+        "readinessBlockingRiskCount",
+        "nonBlockingOpenOrProvisionalRiskCount",
+        "blockedUpstreamRiskCount",
+        "acceptedRiskCount"
+      ],
+      "requiredRiskIds": [
+        "performance-budgets-provisional",
+        "final-proof-pending",
+        "legacy-release-workflow-needs-maintainer-decision"
+      ],
+      "requiredReadinessBlockingRiskIds": [
+        "performance-budgets-provisional",
+        "final-proof-pending"
+      ],
+      "requiredNonBlockingOpenOrProvisionalRiskIds": [
+        "legacy-release-workflow-needs-maintainer-decision"
+      ]
+    }
+  },
+  "risks": [
+    {
+      "id": "fern-bare-array-pagination",
+      "status": "blocked-upstream",
+      "surface": "SDK generation",
+      "summary": "Fern CLI currently rejects bare-array response pagination metadata, so wrapper pagination helpers remain the supported public pagination surface.",
+      "impact": "Generated SDK pagination annotations cannot fully replace hand-written iterAll, iterPages, and paginate helpers yet.",
+      "mitigation": "Keep pagination wrappers tested and keep generated operation parity/drift checks active.",
+      "closureGate": "Re-test on Fern CLI/generator bump, remove the workaround only after generated pagination passes wrapper tests and pack smoke.",
+      "evidence": [
+        {
+          "path": "spec/evidence/discrepancies.md",
+          "contains": "fern.x-fern-pagination.bare-array-unsupported"
+        },
+        {
+          "path": "wrapper/iter.ts",
+          "contains": "iterAll"
+        }
+      ]
+    },
+    {
+      "id": "fern-addon-token-type-workaround",
+      "status": "blocked-upstream",
+      "surface": "SDK auth",
+      "summary": "Fern types apiKey and addonToken as both required even though Clockify accepts exactly one token mode.",
+      "impact": "The SDK factory must hide an internal addonToken type cast until the upstream type issue is resolved.",
+      "mitigation": "Keep createClockifyClient as the recommended entrypoint and keep the raw cast isolated.",
+      "closureGate": "Remove the cast only after Fern emits mutually-exclusive auth types and SDK auth tests pass.",
+      "evidence": [
+        {
+          "path": "spec/evidence/discrepancies.md",
+          "contains": "fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive"
+        },
+        {
+          "path": "wrapper/create-client.ts",
+          "contains": "addonToken"
+        }
+      ]
+    },
+    {
+      "id": "performance-budgets-provisional",
+      "status": "provisional",
+      "surface": "SDK/CLI/MCP package performance",
+      "summary": "Performance ceilings are intentionally provisional until repeated receipts establish current clean-tree baselines.",
+      "impact": "Size/startup thresholds are useful as regression tripwires but are not yet calibrated final budgets.",
+      "mitigation": "Run the no-network calibration planner, record performance receipts after builds, and tighten ceilings after calibrationPolicy.requiredSuccessfulRuns successful baseline runs.",
+      "closureGate": "Set docs/performance-budgets.json calibrationPolicy.status to calibrated and pass make final-proof-receipt-check.",
+      "evidence": [
+        {
+          "path": "docs/performance-budgets.json",
+          "contains": "\"status\": \"provisional\""
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": "make performance-receipt"
+        },
+        {
+          "path": "scripts/performance-calibration-plan.mjs",
+          "contains": "performance-budgets-provisional"
+        }
+      ]
+    },
+    {
+      "id": "final-proof-pending",
+      "status": "open",
+      "surface": "Release/readiness proof",
+      "summary": "The hardening objective is not complete until the final proof receipt is filled from command output, the temporary context file is removed, and make final-proof-final passes.",
+      "impact": "Artifact coverage alone is not enough to claim enterprise readiness.",
+      "mitigation": "Keep final proof runbook, active-goal status report, receipt checker, and final audit gates wired into Makefile.",
+      "closureGate": "Run the final proof draft flow, fill docs/final-proof-receipt.md, remove the temporary context file, and pass make final-proof-final.",
+      "evidence": [
+        {
+          "path": "docs/final-proof-runbook.md",
+          "contains": "make final-proof-final"
+        },
+        {
+          "path": "scripts/check-final-proof-receipt.mjs",
+          "contains": "final proof receipt is complete"
+        },
+        {
+          "path": "scripts/enterprise-goal-status.mjs",
+          "contains": "finalProofCommands"
+        },
+        {
+          "path": "docs/enterprise-goal-status-contract.json",
+          "contains": "final-proof-final"
+        }
+      ]
+    },
+    {
+      "id": "live-tests-sandbox-only",
+      "status": "accepted",
+      "surface": "Live Clockify proof",
+      "summary": "Live tests intentionally mutate Clockify state and must run only against a sacrificial sandbox workspace.",
+      "impact": "Live proof is high value but unsafe against customer workspaces.",
+      "mitigation": "Require explicit env vars and document sandbox-only usage before running live gates.",
+      "closureGate": "Keep live proof receipts showing sandbox cleanup; never generalize live gates to customer workspaces.",
+      "evidence": [
+        {
+          "path": "docs/quality-gates.md",
+          "contains": "Never run live gates against a customer workspace"
+        },
+        {
+          "path": "Makefile",
+          "contains": "CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are required"
+        }
+      ]
+    },
+    {
+      "id": "no-default-npm-publish",
+      "status": "accepted",
+      "surface": "Release operations",
+      "summary": "Packages are packable but npm publication is not the default path.",
+      "impact": "Publish-related manifest fields exist for safety, but publishing still requires explicit maintainer approval.",
+      "mitigation": "Keep release/support policy and package contract aligned with the no-default-publish stance.",
+      "closureGate": "Only publish after explicit maintainer approval plus perfect-full, pack-smoke, and release/support proof.",
+      "evidence": [
+        {
+          "path": "docs/release-support-policy.md",
+          "contains": "npm publication is not the default path"
+        },
+        {
+          "path": "AGENTS.md",
+          "contains": "Never run `npm publish`"
+        }
+      ]
+    },
+    {
+      "id": "legacy-release-workflow-needs-maintainer-decision",
+      "status": "open",
+      "finalReadinessBlocking": false,
+      "surface": "CI/CD release automation",
+      "summary": "A legacy tag-triggered npm release workflow still exists, but this hardening goal must not change CI/CD, auth, provenance, or release triggers without explicit maintainer approval.",
+      "impact": "Release automation may need a dedicated maintainer decision before any future publish attempt; local packable readiness is not the same as permission to publish.",
+      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release decision planner visible; do not run or modify release automation casually.",
+      "closureGate": "Explicit maintainer approval plus a dedicated release-workflow update/review that aligns package names, smoke install commands, provenance, and support policy.",
+      "evidence": [
+        {
+          "path": ".github/workflows/release.yml",
+          "contains": "Release to npm"
+        },
+        {
+          "path": "docs/release-support-policy.md",
+          "contains": "Do not change CI/CD"
+        },
+        {
+          "path": "scripts/release-decision-plan.mjs",
+          "contains": "legacy-release-workflow-needs-maintainer-decision"
+        },
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "contains": "node scripts/release-decision-plan.mjs --decision all"
+        }
+      ]
+    },
+    {
+      "id": "generated-core-is-not-product",
+      "status": "accepted",
+      "surface": "OpenAPI/Fern generation",
+      "summary": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
+      "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
+      "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",
+      "closureGate": "No closure planned; this is a permanent architecture constraint.",
+      "evidence": [
+        {
+          "path": "docs/axioms.md",
+          "contains": "Generated code is a dependency"
+        },
+        {
+          "path": "scripts/check-generator-independence.mjs",
+          "contains": "output/ts-sdk"
+        }
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "typed-risk-entries",
+    "safe-risk-evidence-paths",
+    "typed-risk-report-generator",
+    "typed-generated-risk-report-contract",
+    "typed-allowed-risk-statuses",
+    "makefile-audit-wiring"
+  ]
+}

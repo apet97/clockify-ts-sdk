@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "purpose": "One Clockify vocabulary contract across SDK methods, CLI commands, MCP tools, docs, examples, generated metadata, and operation parity.",
+  "contractInvariants": [
+    "schema-versioned-naming-taxonomy-contract",
+    "safe-naming-taxonomy-paths",
+    "typed-vocabulary-groups",
+    "required-target-wiring",
+    "required-doc-evidence",
+    "combined-vocabulary-evidence",
+    "supporting-evidence-marker-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "naming-taxonomy",
+    "checker": "scripts/check-naming-taxonomy.mjs",
+    "enterpriseAuditId": "naming-taxonomy"
+  },
+  "policyDocument": {
+    "path": "docs/naming-taxonomy-policy.md",
+    "contains": [
+      "Canonical vocabulary",
+      "Time entries",
+      "Workflows",
+      "Business workflows",
+      "Recovery",
+      "Generated API truth",
+      "Drift signals",
+      "make naming-taxonomy"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD", "clockify-sdk-ts\"", "clockify-sdk-ts'"]
+  },
+  "requiredTargets": [
+    "naming-taxonomy",
+    "product-surface-drift",
+    "operation-parity-drift",
+    "readme-tables-drift",
+    "sdk-public-api",
+    "cli-contract",
+    "mcp-contract",
+    "examples-matrix",
+    "workflow-cookbook"
+  ],
+  "requiredDocs": [
+    "docs/naming-taxonomy-policy.md",
+    "docs/product-north-star.md",
+    "docs/product-surface.json",
+    "docs/operation-parity.json",
+    "docs/cli-commands.json",
+    "docs/mcp-tools.json",
+    "docs/workflow-cookbook.md",
+    "docs/examples-matrix.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md"
+  ],
+  "combinedVocabularyDocs": [
+    "docs/product-surface.json",
+    "docs/operation-parity.json",
+    "docs/cli-commands.json",
+    "docs/mcp-tools.json",
+    "docs/workflow-cookbook.md",
+    "docs/examples-matrix.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md"
+  ],
+  "expectedVocabularyGroupCount": 5,
+  "requiredVocabularyIds": [
+    "package-names",
+    "time-entry-surface",
+    "workflow-verbs",
+    "business-workflows",
+    "receipt-language"
+  ],
+  "vocabulary": [
+    {
+      "id": "package-names",
+      "markers": ["clockify-sdk-ts-115", "@clockify115/cli", "@clockify115/mcp-server"]
+    },
+    {
+      "id": "time-entry-surface",
+      "markers": ["client.timeEntries", "clk115 entries", "clockify_entries_", "clockify_log_work"]
+    },
+    {
+      "id": "workflow-verbs",
+      "markers": ["clockify_start_work", "clockify_stop_work", "clockify_switch_work", "clockify_review_day", "clockify_fix_entry"]
+    },
+    {
+      "id": "business-workflows",
+      "markers": ["clk115 invoices create", "clockify_invoice_client_work", "clockify_record_expense", "clockify_setup_webhook"]
+    },
+    {
+      "id": "receipt-language",
+      "markers": ["changed", "warnings", "next", "recovery", "retryable"]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/product-north-star.md",
+      "contains": ["One Clockify vocabulary", "SDK, CLI, MCP, docs, changelog, examples"]
+    },
+    {
+      "path": "docs/product-surface.json",
+      "contains": ["client.timeEntries", "clk115 start", "clockify_start_work", "clockify_create_work_package"]
+    },
+    {
+      "path": "docs/operation-parity.json",
+      "contains": ["operationId", "candidateTools", "overrideReason", "tsMcp", "goMcp"]
+    },
+    {
+      "path": "docs/cli-commands.json",
+      "contains": ["clk115 entries delete <id>", "clk115 invoices create", "clk115 completion"]
+    },
+    {
+      "path": "docs/mcp-tools.json",
+      "contains": ["clockify_status", "clockify_create_work_package", "clockify_invoice_client_work"]
+    },
+    {
+      "path": "docs/examples-matrix.md",
+      "contains": ["SDK example or path", "CLI example or path", "MCP example or path"]
+    },
+    {
+      "path": "docs/workflow-cookbook.md",
+      "contains": ["Daily time tracking", "Business and admin workflows", "Recovery pattern"]
+    }
+  ]
+}

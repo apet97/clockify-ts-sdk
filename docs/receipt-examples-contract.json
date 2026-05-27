@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Golden receipt examples contract for SDK, CLI, and MCP success/error output shapes.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-receipt-example-evidence-paths",
+    "typed-examples-document-contract",
+    "typed-required-docs",
+    "typed-receipt-examples",
+    "typed-supporting-evidence",
+    "typed-required-targets",
+    "typed-wiring-contract"
+  ],
+  "examplesDocument": {
+    "path": "docs/receipt-examples.md",
+    "contains": [
+      "SDK success receipt",
+      "SDK error receipt",
+      "CLI success receipt",
+      "CLI error receipt",
+      "MCP success receipt",
+      "MCP recovery receipt",
+      "Stable fields",
+      "Contract-shape rule",
+      "Review rule"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "sk-",
+      "PASTE TOKEN"
+    ]
+  },
+  "requiredTargets": [
+    "receipt-examples",
+    "receipts-contract",
+    "cli-contract",
+    "mcp-contract",
+    "sdk-runtime-contract"
+  ],
+  "requiredDocs": [
+    "docs/receipt-examples.md",
+    "docs/receipts-policy.md",
+    "docs/error-codes.json",
+    "docs/cli-contract.json",
+    "docs/mcp-contract.json",
+    "docs/sdk-runtime-contract.json"
+  ],
+  "examples": [
+    {
+      "id": "sdk-success",
+      "surface": "sdk",
+      "requiredMarkers": [
+        "requestId",
+        "status",
+        "headers",
+        "data"
+      ]
+    },
+    {
+      "id": "sdk-error",
+      "surface": "sdk",
+      "requiredMarkers": [
+        "code",
+        "retryable",
+        "recovery",
+        "requestId"
+      ]
+    },
+    {
+      "id": "cli-success",
+      "surface": "cli",
+      "requiredMarkers": [
+        "ok",
+        "command",
+        "changed",
+        "id"
+      ]
+    },
+    {
+      "id": "cli-error",
+      "surface": "cli",
+      "requiredMarkers": [
+        "ok",
+        "exitCode",
+        "code",
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "id": "mcp-success",
+      "surface": "mcp",
+      "requiredMarkers": [
+        "structuredContent",
+        "ok",
+        "changed",
+        "warnings",
+        "next"
+      ]
+    },
+    {
+      "id": "mcp-recovery",
+      "surface": "mcp",
+      "requiredMarkers": [
+        "structuredContent",
+        "ok",
+        "changed",
+        "code",
+        "retryable",
+        "recovery",
+        "next"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/receipts-contract.json",
+      "contains": [
+        "structuredContent",
+        "retryable",
+        "requestId"
+      ]
+    },
+    {
+      "path": "docs/error-codes.json",
+      "contains": [
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "path": "cli/src/output.ts",
+      "contains": [
+        "ok: false",
+        "recoveryForCode",
+        "retryableForCode"
+      ]
+    },
+    {
+      "path": "mcp/src/result.ts",
+      "contains": [
+        "structuredContent",
+        "changed",
+        "warnings",
+        "next",
+        "recovery"
+      ]
+    },
+    {
+      "path": "wrapper/with-response.ts",
+      "contains": [
+        "requestId",
+        "headers",
+        "status"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "receipt-examples",
+    "checker": "scripts/check-receipt-examples.mjs",
+    "docsIndexDoc": "receipt-examples.md",
+    "docsIndexContract": "receipt-examples-contract.json",
+    "qualityGate": "make receipt-examples",
+    "inventoryId": "receipt-examples",
+    "auditId": "receipt-examples"
+  }
+}

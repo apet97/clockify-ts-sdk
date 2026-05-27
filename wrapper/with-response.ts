@@ -65,7 +65,7 @@ export interface ResponseAwarePromise<T> extends PromiseLike<T> {
  *
  * @example
  * ```ts
- * import { createClockifyClient, withResponse } from "clockify-sdk-ts";
+ * import { createClockifyClient, withResponse } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient({ apiKey: "..." });
  *

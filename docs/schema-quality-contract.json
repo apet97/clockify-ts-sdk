@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Schema and generated model quality contract for corrected OpenAPI components, enums, request/response models, loose objects, and TypeScript SDK ergonomics.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-schema-quality-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-corrected-spec-contract",
+    "typed-evidence-ledger-contract",
+    "typed-generated-sdk-evidence",
+    "typed-supporting-evidence",
+    "typed-schema-thresholds",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/schema-quality-policy.md",
+    "mustContain": [
+      "Model quality rules",
+      "additionalProperties: true",
+      "Generated model review checklist",
+      "Contract-shape rule",
+      "make schema-quality"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "correctedSpec": {
+    "path": "spec/corrected/clockify.corrected.openapi.yaml",
+    "mustContain": [
+      "components:",
+      "schemas:",
+      "enum:",
+      "additionalProperties:",
+      "x-fern-sdk-group-name:",
+      "x-fern-sdk-method-name:",
+      "page-size"
+    ],
+    "forbiddenMarkers": [
+      "Type_42"
+    ]
+  },
+  "evidenceLedger": {
+    "path": "spec/evidence/discrepancies.md",
+    "mustContain": [
+      "time-off.request.status.schema-collision",
+      "time-off.request.missing-top-level-fields",
+      "gen-clockify-openapi.merge_parameters.destructive-concat",
+      "routes.literal-vs-parameterized.collisions"
+    ]
+  },
+  "generatedSdkEvidence": [
+    {
+      "path": "output/ts-sdk/api/resources/tags/client/requests/TagCreate.ts",
+      "mustContain": [
+        "export interface TagCreate",
+        "name"
+      ],
+      "forbiddenMarkers": [
+        "page?:",
+        "pageSize?:"
+      ]
+    },
+    {
+      "path": "output/ts-sdk/api/resources/timeOff/client/requests/SubmitTimeOffRequest.ts",
+      "mustContain": [
+        "export interface SubmitTimeOffRequest"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "scripts/lint-openapi-contract.mjs",
+      "mustContain": [
+        "pagination must include both page and page-size",
+        "expected at least 169 SDK-named operations"
+      ]
+    },
+    {
+      "path": "scripts/check-generator-comparison.mjs",
+      "mustContain": [
+        "generated TypeScript SDK root",
+        "generated method missing"
+      ]
+    },
+    {
+      "path": "docs/openapi-evidence-policy.md",
+      "mustContain": [
+        "five questions",
+        "Generated TypeScript is an output"
+      ]
+    },
+    {
+      "path": "docs/sdk-runtime-policy.md",
+      "mustContain": [
+        "Fern-generated SDK is the transport layer",
+        "hand-written seams"
+      ]
+    }
+  ],
+  "thresholds": {
+    "minimumAdditionalPropertiesMarkers": 1,
+    "minimumEnumBlocks": 10,
+    "minimumSdkMethodStamps": 169
+  },
+  "requiredMakeTargets": [
+    "schema-quality",
+    "openapi-lint",
+    "openapi-evidence",
+    "generator-comparison",
+    "sdk-runtime-contract",
+    "operation-coverage"
+  ],
+  "wiring": {
+    "makeTarget": "schema-quality",
+    "checker": "scripts/check-schema-quality.mjs",
+    "docsIndex": [
+      "schema-quality-policy.md",
+      "schema-quality-contract.json"
+    ],
+    "qualityGate": "make schema-quality",
+    "inventoryId": "schema-quality",
+    "auditId": "schema-quality"
+  }
+}

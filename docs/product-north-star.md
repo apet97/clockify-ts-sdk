@@ -34,6 +34,9 @@ release gates, and examples that survive contact with a real account.
 - **Docs as product.** README snippets, CLI examples, MCP examples, and
   generated resource docs must be runnable or explicitly marked as
   illustrative. No stale names, no catch-all lists, no generic SDK hype.
+- **One-command proof.** A non-coder should be able to run root targets
+  for fast local proof, full generation/package proof, and explicit
+  sandbox/live proof without remembering package internals.
 
 ## Current Package Roles
 
@@ -80,9 +83,12 @@ release gates, and examples that survive contact with a real account.
 6. **Docs and release gates**
    - Root docs explain the repo.
    - Package docs explain user-facing usage.
-   - Agent docs explain how to change the repo safely.
-   - CI gates prove the package that changed, plus any upstream package
-     it depends on.
+- Agent docs explain how to change the repo safely.
+- CI gates prove the package that changed, plus any upstream package
+  it depends on.
+- Root gates (`make perfect-fast`, `make perfect-full`,
+  `make perfect-live`) connect the package-specific proof chain into
+  one operator-facing surface.
 
 ## How Agents Should Code Here
 
@@ -151,5 +157,4 @@ the implementation repo-native.
   behavior.
 - Live tests either pass against the sandbox or skip loudly because env
   is absent.
-- The repo can explain itself to a human, a Claude Code session, and a
-  weaker follow-on agent without relying on memory from prior chats.
+- The repo can explain itself to a human, a Claude Code session, and a weaker follow-on agent without relying on memory from prior chats.

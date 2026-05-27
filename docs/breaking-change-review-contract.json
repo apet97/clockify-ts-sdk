@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Breaking-change review contract for SDK exports, CLI commands, MCP tools, OpenAPI generation, packages, docs, changelogs, migration notes, and proof gates.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-breaking-change-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-surface-contracts",
+    "typed-migration-evidence",
+    "typed-changelog-evidence",
+    "typed-version-policy-evidence",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/breaking-change-review-policy.md",
+    "mustContain": [
+      "No silent removals",
+      "Replacement-first rule",
+      "Contract-shape rule",
+      "Review record",
+      "Forbidden shortcuts",
+      "make breaking-change-review"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "surfaceContracts": [
+    {
+      "id": "sdk-public-surface",
+      "path": "docs/sdk-public-api.json",
+      "mustContain": [
+        "rootSymbols",
+        "subpaths",
+        "createClockifyClient",
+        "withResponse"
+      ]
+    },
+    {
+      "id": "cli-public-surface",
+      "path": "docs/cli-contract.json",
+      "mustContain": [
+        "commandCount",
+        "globalFlags",
+        "exitCodes",
+        "completionShells"
+      ]
+    },
+    {
+      "id": "mcp-public-surface",
+      "path": "docs/mcp-contract.json",
+      "mustContain": [
+        "totalTools",
+        "resources",
+        "prompts",
+        "outputSchema"
+      ]
+    },
+    {
+      "id": "package-public-surface",
+      "path": "docs/package-contract.json",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "@clockify115/cli",
+        "@clockify115/mcp-server",
+        "clockify115-mcp"
+      ]
+    },
+    {
+      "id": "version-and-release-surface",
+      "path": "docs/version-policy.json",
+      "mustContain": [
+        "productSurfaceMustMatchManifest",
+        "changelog-anchors-required",
+        "version-policy"
+      ]
+    },
+    {
+      "id": "openapi-truth-surface",
+      "path": "docs/operation-coverage-contract.json",
+      "mustContain": [
+        "sdkNamed",
+        "tsMcpExact",
+        "goMcpExact",
+        "curated"
+      ]
+    }
+  ],
+  "migrationEvidence": [
+    {
+      "path": "docs/compatibility-policy.md",
+      "mustContain": [
+        "Do not remove or rename",
+        "Add aliases before removals",
+        "warnOnce"
+      ]
+    },
+    {
+      "path": "docs/migration-guide.md",
+      "mustContain": [
+        "Breaking change review",
+        "Replacement first",
+        "Changelog and migration notes"
+      ]
+    },
+    {
+      "path": "docs/release-readiness-checklist.md",
+      "mustContain": [
+        "Breaking-change review",
+        "make breaking-change-review"
+      ]
+    },
+    {
+      "path": "docs/acceptance-scenarios.md",
+      "mustContain": [
+        "Change rule",
+        "unit test and no user-facing path"
+      ]
+    }
+  ],
+  "changelogs": [
+    {
+      "path": "wrapper/CHANGELOG.md",
+      "mustContain": ["## [Unreleased]"]
+    },
+    {
+      "path": "cli/CHANGELOG.md",
+      "mustContain": ["## [Unreleased]"]
+    },
+    {
+      "path": "mcp/CHANGELOG.md",
+      "mustContain": ["## [Unreleased]"]
+    }
+  ],
+  "requiredMakeTargets": [
+    "breaking-change-review",
+    "compatibility-contract",
+    "sdk-public-api",
+    "cli-contract",
+    "mcp-contract",
+    "operation-coverage",
+    "acceptance-scenarios",
+    "changelog-drift",
+    "version-policy",
+    "pack-smoke"
+  ],
+  "wiring": {
+    "makeTarget": "breaking-change-review",
+    "docsIndex": [
+      "breaking-change-review-policy.md",
+      "breaking-change-review-contract.json"
+    ],
+    "qualityGate": "make breaking-change-review",
+    "inventoryId": "breaking-change-review",
+    "auditId": "breaking-change-review"
+  }
+}

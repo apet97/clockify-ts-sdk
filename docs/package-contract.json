@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Public package contract snapshot for SDK, CLI, and MCP manifests. This is intentionally smaller than package.json: it captures user-visible names, bins, exports, pack files, and publish-safety invariants.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-package-manifest-paths",
+    "typed-package-contracts",
+    "typed-pack-file-lists",
+    "typed-bin-keys",
+    "typed-export-keys",
+    "typed-required-scripts",
+    "typed-package-metadata",
+    "typed-publish-safety-flags",
+    "makefile-audit-wiring"
+  ],
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "name": "clockify-sdk-ts-115",
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "examples",
+        "docs"
+      ],
+      "binKeys": [],
+      "exportKeys": [
+        ".",
+        "./composed-fetch",
+        "./create-client",
+        "./diagnostics",
+        "./deprecation",
+        "./errors",
+        "./health",
+        "./iter",
+        "./otel-hooks",
+        "./paginated-list",
+        "./pagination",
+        "./rate-limit",
+        "./scoped-client",
+        "./webhook-events",
+        "./webhooks",
+        "./with-response"
+      ],
+      "requiredScripts": {
+        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+      },
+      "expectedType": "module",
+      "expectedLicense": "MIT",
+      "expectedNodeEngine": ">=20",
+      "expectedRepositoryUrl": "https://github.com/apet97/clockify-ts-sdk.git",
+      "expectedBugsUrl": "https://github.com/apet97/clockify-ts-sdk/issues",
+      "expectedHomepage": "https://github.com/apet97/clockify-ts-sdk",
+      "expectedSideEffects": false,
+      "expectedPublishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requireDescription": true,
+      "requirePublishConfig": true,
+      "requirePrepublishOnly": true,
+      "disallowPrivate": true
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "name": "@clockify115/cli",
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "tests"
+      ],
+      "binKeys": [
+        "clockify115",
+        "clk115"
+      ],
+      "exportKeys": [
+        "."
+      ],
+      "requiredScripts": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "expectedType": "module",
+      "expectedLicense": "MIT",
+      "expectedNodeEngine": ">=20",
+      "expectedRepositoryUrl": "https://github.com/apet97/clockify-ts-sdk.git",
+      "expectedRepositoryDirectory": "cli",
+      "expectedBugsUrl": "https://github.com/apet97/clockify-ts-sdk/issues",
+      "expectedHomepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/cli",
+      "expectedPublishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requireDescription": true,
+      "requirePublishConfig": true,
+      "requirePrepublishOnly": true,
+      "disallowPrivate": true
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "name": "@clockify115/mcp-server",
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "tests"
+      ],
+      "binKeys": [
+        "clockify115-mcp"
+      ],
+      "exportKeys": [
+        ".",
+        "./client",
+        "./server"
+      ],
+      "requiredScripts": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "expectedType": "module",
+      "expectedLicense": "MIT",
+      "expectedNodeEngine": ">=20",
+      "expectedRepositoryUrl": "https://github.com/apet97/clockify-ts-sdk.git",
+      "expectedRepositoryDirectory": "mcp",
+      "expectedBugsUrl": "https://github.com/apet97/clockify-ts-sdk/issues",
+      "expectedHomepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",
+      "expectedPublishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requireDescription": true,
+      "requirePublishConfig": true,
+      "requirePrepublishOnly": true,
+      "disallowPrivate": true
+    }
+  ],
+  "wiring": {
+    "makeTarget": "package-contract",
+    "checker": "scripts/check-package-contract.mjs",
+    "enterpriseAuditId": "package-contract"
+  }
+}

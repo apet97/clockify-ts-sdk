@@ -28,26 +28,45 @@ describe("loadConfig", () => {
     it("reads env vars", () => {
         const config = loadConfig(
             {},
-            envWithHome({ CLOCKIFY_API_KEY: "env-key", CLOCKIFY_WORKSPACE_ID: "env-ws" }),
+            envWithHome({
+                CLOCKIFY_API_KEY: "env-key",
+                CLOCKIFY_WORKSPACE_ID: "env-ws",
+                CLOCKIFY_BASE_URL: "https://clockify.test/api/v1",
+            }),
         );
-        expect(config).toEqual({ apiKey: "env-key", workspaceId: "env-ws" });
+        expect(config).toEqual({
+            apiKey: "env-key",
+            workspaceId: "env-ws",
+            baseUrl: "https://clockify.test/api/v1",
+        });
     });
 
     it("reads ~/.clockifyrc.json (clockifyrc.json variant)", () => {
-        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key", workspaceId: "rc-ws" }));
+        writeFileSync(
+            join(home, "clockifyrc.json"),
+            JSON.stringify({ apiKey: "rc-key", workspaceId: "rc-ws", baseUrl: "https://rc.test" }),
+        );
         const config = loadConfig({}, envWithHome());
-        expect(config).toEqual({ apiKey: "rc-key", workspaceId: "rc-ws" });
+        expect(config).toEqual({ apiKey: "rc-key", workspaceId: "rc-ws", baseUrl: "https://rc.test" });
     });
 
     it("env vars beat rc file", () => {
-        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key" }));
-        const config = loadConfig({}, envWithHome({ CLOCKIFY_API_KEY: "env-key" }));
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key", baseUrl: "https://rc.test" }));
+        const config = loadConfig(
+            {},
+            envWithHome({ CLOCKIFY_API_KEY: "env-key", CLOCKIFY_BASE_URL: "https://env.test" }),
+        );
         expect(config.apiKey).toBe("env-key");
+        expect(config.baseUrl).toBe("https://env.test");
     });
 
     it("flags beat env vars", () => {
-        const config = loadConfig({ apiKey: "flag-key" }, envWithHome({ CLOCKIFY_API_KEY: "env-key" }));
+        const config = loadConfig(
+            { apiKey: "flag-key", baseUrl: "https://flag.test" },
+            envWithHome({ CLOCKIFY_API_KEY: "env-key", CLOCKIFY_BASE_URL: "https://env.test" }),
+        );
         expect(config.apiKey).toBe("flag-key");
+        expect(config.baseUrl).toBe("https://flag.test");
     });
 
     it("throws a helpful message on malformed rc file", () => {

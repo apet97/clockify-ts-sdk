@@ -1,0 +1,335 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable threat model contract for SDK, CLI, MCP, OpenAPI generation, mock/replay, live proof, and release safety.",
+  "contractInvariants": [
+    "schema-versioned-security-threat-model-contract",
+    "safe-security-threat-model-paths",
+    "typed-risk-surfaces",
+    "typed-supporting-evidence",
+    "declared-non-make-proof-targets",
+    "required-target-wiring",
+    "required-doc-evidence",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "security-threat-model",
+    "checker": "scripts/check-security-threat-model.mjs",
+    "enterpriseAuditId": "security-threat-model"
+  },
+  "threatModelDocument": {
+    "path": "docs/security-threat-model.md",
+    "contains": [
+      "Credential handling",
+      "Mock/replay base URL",
+      "MCP write safety",
+      "CLI write safety",
+      "Webhook verification",
+      "Live proof",
+      "OpenAPI truth chain",
+      "Supply chain and release",
+      "Support-bundle package metadata",
+      "First-run support handoff",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "Observability receipts",
+      "Required receipts",
+      "final acceptance requires completed sandbox live proof",
+      "not final readiness"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "PASTE TOKEN",
+      "sk-"
+    ]
+  },
+  "requiredTargets": [
+    "security-threat-model",
+    "secret-hygiene",
+    "env-contract",
+    "mcp-write-safety",
+    "cli-write-safety",
+    "live-safety",
+    "supply-chain",
+    "receipts-contract",
+    "workflow-cookbook"
+  ],
+  "requiredDocs": [
+    "docs/security-threat-model.md",
+    "docs/secret-hygiene.json",
+    "docs/env-contract.json",
+    "docs/mcp-write-safety-policy.md",
+    "docs/cli-write-safety-policy.md",
+    "docs/live-tests.md",
+    "docs/supply-chain-policy.md",
+    "docs/openapi-evidence-policy.md",
+    "docs/receipts-policy.md"
+  ],
+  "allowedNonMakeProofTargets": [
+    "perfect-full",
+    "perfect-live",
+    "pack-smoke"
+  ],
+  "supportingEvidence": [
+    {
+      "id": "credential-handling",
+      "path": "docs/secret-hygiene.json",
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "NPM_TOKEN",
+        "gitleaks"
+      ]
+    },
+    {
+      "id": "environment-and-mock-base-url",
+      "path": "docs/env-contract.json",
+      "contains": [
+        "CLOCKIFY_BASE_URL",
+        "CLOCKIFY_API_KEY",
+        "mustMentionSafety"
+      ]
+    },
+    {
+      "id": "mcp-write-safety",
+      "path": "docs/mcp-write-safety-policy.md",
+      "contains": [
+        "dry_run",
+        "confirm_token",
+        "destructiveHint: true",
+        "changed"
+      ]
+    },
+    {
+      "id": "cli-write-safety",
+      "path": "docs/cli-write-safety-policy.md",
+      "contains": [
+        "CLI writes stay non-interactive",
+        "Destructive commands must be ID-scoped",
+        "Errors must stay machine-readable"
+      ]
+    },
+    {
+      "id": "live-safety",
+      "path": "docs/live-tests.md",
+      "contains": [
+        "Never run live gates against a customer workspace",
+        "verify:live-cleanup",
+        "DEFER_LIVE_REASON"
+      ]
+    },
+    {
+      "id": "supply-chain",
+      "path": "docs/supply-chain-policy.md",
+      "contains": [
+        "Package supply-chain rules",
+        "publishConfig.provenance: true",
+        "Required receipts"
+      ]
+    },
+    {
+      "id": "support-bundle-package-metadata",
+      "path": "docs/support-bundle-contract.json",
+      "contains": [
+        "lockfileSummary",
+        "forbiddenFields",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints",
+        "integrity",
+        "node_modules"
+      ]
+    },
+    {
+      "id": "first-run-support-handoff",
+      "path": "docs/workflow-cookbook.md",
+      "contains": [
+        "First-run diagnostics and support handoff",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints"
+      ]
+    },
+    {
+      "id": "openapi-evidence",
+      "path": "docs/openapi-evidence-policy.md",
+      "contains": [
+        "Evidence ledger contract",
+        "five questions",
+        "Required receipts"
+      ]
+    },
+    {
+      "id": "receipts",
+      "path": "docs/receipts-policy.md",
+      "contains": [
+        "Cross-surface receipt rules",
+        "SDK correlation",
+        "Agent receipts"
+      ]
+    },
+    {
+      "id": "webhook-verification",
+      "path": "wrapper/webhooks.ts",
+      "contains": [
+        "Clockify-Signature-Token",
+        "verifyClockifyWebhook",
+        "constructEvent"
+      ]
+    }
+  ],
+  "expectedRiskSurfaceCount": 10,
+  "requiredRiskSurfaceIds": [
+    "credential-handling",
+    "mock-replay-base-url",
+    "agent-write-safety",
+    "cli-write-safety",
+    "webhook-verification",
+    "live-proof-containment",
+    "generated-code-trust-boundary",
+    "supply-chain-release",
+    "first-run-support-handoff",
+    "observability-receipts"
+  ],
+  "riskSurfaces": [
+    {
+      "id": "credential-handling",
+      "attackPath": "A token is committed, logged, pasted into docs, or returned inside a structured receipt.",
+      "mitigations": [
+        "secret-hygiene",
+        "env-contract",
+        "receipts-contract"
+      ],
+      "proofTargets": [
+        "secret-hygiene",
+        "env-contract",
+        "receipts-contract"
+      ]
+    },
+    {
+      "id": "mock-replay-base-url",
+      "attackPath": "A developer points CLOCKIFY_BASE_URL at an untrusted host while using real credentials.",
+      "mitigations": [
+        "env-contract",
+        "mock-contract",
+        "security-threat-model"
+      ],
+      "proofTargets": [
+        "env-contract",
+        "mock-contract",
+        "security-threat-model"
+      ]
+    },
+    {
+      "id": "agent-write-safety",
+      "attackPath": "An MCP client performs a high-risk write without preview, confirmation, or recovery instructions.",
+      "mitigations": [
+        "mcp-write-safety",
+        "receipts-contract",
+        "live-safety"
+      ],
+      "proofTargets": [
+        "mcp-write-safety",
+        "receipts-contract",
+        "live-safety"
+      ]
+    },
+    {
+      "id": "cli-write-safety",
+      "attackPath": "A shell script deletes or mutates the wrong object because the CLI target is implicit.",
+      "mitigations": [
+        "cli-write-safety",
+        "cli-contract",
+        "receipts-contract"
+      ],
+      "proofTargets": [
+        "cli-write-safety",
+        "cli-contract",
+        "receipts-contract"
+      ]
+    },
+    {
+      "id": "webhook-verification",
+      "attackPath": "Unsigned webhook payloads are accepted or Clockify's shared-secret token scheme is misrepresented as HMAC.",
+      "mitigations": [
+        "sdk-runtime-contract",
+        "test-matrix"
+      ],
+      "proofTargets": [
+        "sdk-runtime-contract",
+        "test-matrix"
+      ]
+    },
+    {
+      "id": "live-proof-containment",
+      "attackPath": "A live gate mutates customer data or leaves sandbox objects behind.",
+      "mitigations": [
+        "live-safety",
+        "perfect-live",
+        "final-proof-receipt-check"
+      ],
+      "proofTargets": [
+        "live-safety",
+        "perfect-live",
+        "final-proof-receipt-check"
+      ]
+    },
+    {
+      "id": "generated-code-trust-boundary",
+      "attackPath": "Manual generated-output edits bypass the canonical OpenAPI evidence chain.",
+      "mitigations": [
+        "generated-edit-check",
+        "openapi-evidence",
+        "perfect-full"
+      ],
+      "proofTargets": [
+        "generated-edit-check",
+        "openapi-evidence",
+        "perfect-full"
+      ]
+    },
+    {
+      "id": "supply-chain-release",
+      "attackPath": "A package is published or packed with unsafe files, unexpected dependencies, or bypassed gates.",
+      "mitigations": [
+        "supply-chain",
+        "dependency-boundary",
+        "pack-smoke"
+      ],
+      "proofTargets": [
+        "supply-chain",
+        "dependency-boundary",
+        "pack-smoke"
+      ]
+    },
+    {
+      "id": "first-run-support-handoff",
+      "attackPath": "A first-run support issue escalates into raw logs, env dumps, live Clockify calls, mutation, or release changes before local diagnostics are mapped.",
+      "mitigations": [
+        "workflow-cookbook",
+        "support-bundle",
+        "data-handling",
+        "security-threat-model"
+      ],
+      "proofTargets": [
+        "workflow-cookbook",
+        "support-bundle",
+        "data-handling",
+        "security-threat-model"
+      ]
+    },
+    {
+      "id": "observability-receipts",
+      "attackPath": "Receipts lack request correlation or expose sensitive data while trying to help operators debug.",
+      "mitigations": [
+        "receipts-contract",
+        "sdk-runtime-contract",
+        "cli-contract",
+        "mcp-contract"
+      ],
+      "proofTargets": [
+        "receipts-contract",
+        "sdk-runtime-contract",
+        "cli-contract",
+        "mcp-contract"
+      ]
+    }
+  ]
+}

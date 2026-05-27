@@ -1,0 +1,171 @@
+#!/usr/bin/env node
+import http from "node:http";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+export function createMockClockifyServer(options = {}) {
+    const workspaceId = options.workspaceId ?? process.env.CLOCKIFY_MOCK_WORKSPACE_ID ?? "000000000000000000000001";
+    const userId = options.userId ?? process.env.CLOCKIFY_MOCK_USER_ID ?? "000000000000000000000002";
+    const state = options.state ?? {
+        tags: [
+            { id: "000000000000000000000101", name: "Deep Work", archived: false },
+            { id: "000000000000000000000102", name: "Review", archived: false },
+        ],
+        clients: [{ id: "000000000000000000000201", name: "Acme", archived: false }],
+        projects: [
+            {
+                id: "000000000000000000000301",
+                name: "Website",
+                archived: false,
+                clientId: "000000000000000000000201",
+            },
+        ],
+        entries: [],
+    };
+
+    function json(res, status, body, headers = {}) {
+        const payload = JSON.stringify(body);
+        res.writeHead(status, {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+            "X-Request-Id": randomUUID(),
+            ...headers,
+        });
+        res.end(payload);
+    }
+
+    function notFound(res) {
+        json(res, 404, { code: "not_found", message: "Mock route not found" });
+    }
+
+    function readBody(req) {
+        return new Promise((resolve, reject) => {
+            let data = "";
+            req.setEncoding("utf8");
+            req.on("data", (chunk) => {
+                data += chunk;
+            });
+            req.on("end", () => {
+                if (!data) resolve({});
+                else {
+                    try {
+                        resolve(JSON.parse(data));
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            });
+            req.on("error", reject);
+        });
+    }
+
+    function page(items, url) {
+        const pageNumber = Number(url.searchParams.get("page") ?? "1");
+        const pageSize = Number(url.searchParams.get("page-size") ?? url.searchParams.get("limit") ?? "50");
+        const start = Math.max(0, (pageNumber - 1) * pageSize);
+        return items.slice(start, start + pageSize);
+    }
+
+    function normalizedParts(url) {
+        const raw = url.pathname.split("/").filter(Boolean);
+        if (raw[0] === "api" && raw[1] === "v1") return raw.slice(2);
+        return raw;
+    }
+
+    const server = http.createServer(async (req, res) => {
+        try {
+            const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
+            const parts = normalizedParts(url);
+
+            if (req.method === "GET" && parts.length === 1 && parts[0] === "user") {
+                json(res, 200, { id: userId, email: "mock@example.com", name: "Mock User" });
+                return;
+            }
+
+            if (req.method === "GET" && parts.length === 1 && parts[0] === "workspaces") {
+                json(res, 200, [{ id: workspaceId, name: "Mock Workspace" }], { "Last-Page": "true" });
+                return;
+            }
+
+            if (parts[0] === "workspaces" && parts[1] === workspaceId) {
+                const rest = parts.slice(2);
+                const resource = rest[0];
+                const id = rest[1];
+
+                if (req.method === "GET" && resource === "tags" && !id) {
+                    json(res, 200, page(state.tags, url), { "Last-Page": "true" });
+                    return;
+                }
+                if (req.method === "POST" && resource === "tags" && !id) {
+                    const body = await readBody(req);
+                    const tag = {
+                        id: randomUUID().replaceAll("-", "").slice(0, 24),
+                        name: body.name ?? body.body?.name ?? "Mock Tag",
+                        archived: false,
+                    };
+                    state.tags.push(tag);
+                    json(res, 201, tag);
+                    return;
+                }
+                if (req.method === "DELETE" && resource === "tags" && id) {
+                    state.tags = state.tags.filter((tag) => tag.id !== id);
+                    json(res, 200, { id, deleted: true });
+                    return;
+                }
+                if (req.method === "GET" && resource === "clients" && !id) {
+                    json(res, 200, page(state.clients, url), { "Last-Page": "true" });
+                    return;
+                }
+                if (req.method === "GET" && resource === "projects" && !id) {
+                    json(res, 200, page(state.projects, url), { "Last-Page": "true" });
+                    return;
+                }
+                if (
+                    req.method === "GET" &&
+                    (resource === "time-entries" || resource === "user") &&
+                    (rest.includes("in-progress") || rest.includes("time-entries") || url.searchParams.get("in-progress") === "true")
+                ) {
+                    json(res, 200, page(state.entries, url), { "Last-Page": "true" });
+                    return;
+                }
+            }
+
+            notFound(res);
+        } catch (error) {
+            json(res, 500, { code: "mock_error", message: error instanceof Error ? error.message : String(error) });
+        }
+    });
+
+    return {
+        server,
+        state,
+        workspaceId,
+        userId,
+        async listen(port = 0, host = "127.0.0.1") {
+            await new Promise((resolve) => server.listen(port, host, resolve));
+            const address = server.address();
+            if (typeof address !== "object" || address == null) throw new Error("mock server address unavailable");
+            return `http://${host}:${address.port}/api/v1`;
+        },
+        async close() {
+            if (!server.listening) return;
+            await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+        },
+    };
+}
+
+async function main() {
+    const port = Number(process.env.CLOCKIFY_MOCK_PORT ?? 45881);
+    const mock = createMockClockifyServer();
+    const baseUrl = await mock.listen(port);
+    console.log(`Mock Clockify server listening on ${baseUrl}`);
+    console.log(`Workspace: ${mock.workspaceId}`);
+}
+
+const invokedDirectly = process.argv[1] != null && fileURLToPath(import.meta.url) === process.argv[1];
+if (invokedDirectly) {
+    main().catch((error) => {
+        console.error(error instanceof Error ? error.message : String(error));
+        process.exit(1);
+    });
+}

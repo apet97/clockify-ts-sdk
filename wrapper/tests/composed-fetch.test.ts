@@ -31,7 +31,7 @@ function mockFetch(
 
 describe("defaultUserAgent", () => {
     it("starts with the package name + version", () => {
-        expect(defaultUserAgent()).toMatch(/^clockify-sdk-ts\/[\d.]+/);
+        expect(defaultUserAgent()).toMatch(/^clockify-sdk-ts-115\/[\d.]+/);
     });
 
     it("includes Node.js runtime, platform, and arch", () => {
@@ -61,7 +61,7 @@ describe("composedFetch — header injection", () => {
         const f = composedFetch({ fetch: fn });
         await f("https://example.test/x");
         const headers = new Headers(calls[0]!.init?.headers);
-        expect(headers.get(USER_AGENT_HEADER)).toMatch(/^clockify-sdk-ts\//);
+        expect(headers.get(USER_AGENT_HEADER)).toMatch(/^clockify-sdk-ts-115\//);
     });
 
     it("respects a string userAgent override", async () => {

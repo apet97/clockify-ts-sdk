@@ -24,6 +24,7 @@ export interface LoadContextOptions {
 export function loadContext(env: NodeJS.ProcessEnv = process.env, options: LoadContextOptions = {}): Context {
     const apiKey = env.CLOCKIFY_API_KEY;
     const workspaceId = env.CLOCKIFY_WORKSPACE_ID;
+    const environment = env.CLOCKIFY_BASE_URL;
     if (!apiKey) {
         throw new Error(
             "CLOCKIFY_API_KEY is not set. Configure it in your MCP client's env block, e.g.\n" +
@@ -34,7 +35,7 @@ export function loadContext(env: NodeJS.ProcessEnv = process.env, options: LoadC
         throw new Error("CLOCKIFY_WORKSPACE_ID is not set. The one-user server is pinned to a single workspace.");
     }
     return {
-        client: createClockifyClient({ apiKey, ...options }),
+        client: createClockifyClient({ apiKey, environment, ...options }),
         workspaceId,
         confirmationTokens: new ConfirmationTokenStore(),
     };

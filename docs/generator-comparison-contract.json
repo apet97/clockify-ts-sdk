@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "purpose": "OpenAPI SDK-stamp to generated TypeScript method comparison contract. Keeps generated SDK method names aligned with corrected OpenAPI x-fern SDK metadata.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-generator-comparison-evidence-paths",
+    "typed-operation-inventory-contract",
+    "typed-generated-root-contract",
+    "typed-client-scan-contract",
+    "typed-thresholds",
+    "typed-wiring-contract"
+  ],
+  "operationInventory": {
+    "path": "docs/openapi-operations.json",
+    "arrayField": "operations",
+    "requiredStampedFields": [
+      "operationId",
+      "sdkGroup",
+      "sdkMethod"
+    ]
+  },
+  "generatedRoots": {
+    "candidates": [
+      "output/ts-sdk",
+      "wrapper/src"
+    ],
+    "resourcesPath": "api/resources"
+  },
+  "clientScan": {
+    "clientPath": "client/Client.ts",
+    "methodRegex": "public\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
+  },
+  "thresholds": {
+    "minimumStampedOperations": 169,
+    "minimumGeneratedMethods": 184
+  },
+  "wiring": {
+    "makeTarget": "generator-comparison",
+    "checker": "scripts/check-generator-comparison.mjs",
+    "docsIndex": [
+      "generator-comparison-contract.json"
+    ],
+    "qualityGate": "make generator-comparison",
+    "inventoryId": "generator-comparison",
+    "auditId": "generator-comparison"
+  }
+}

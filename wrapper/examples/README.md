@@ -1,8 +1,8 @@
-# clockify-sdk-ts examples
+# clockify-sdk-ts-115 examples
 
 Runnable starter scripts for every major SDK surface. Each file
 imports from the package via its name (`import { ... } from
-"clockify-sdk-ts"`) so copy-pasting into a real project requires
+"clockify-sdk-ts-115"`) so copy-pasting into a real project requires
 no path changes.
 
 ## Running locally (from the wrapper/ directory)

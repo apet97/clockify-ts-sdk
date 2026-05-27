@@ -1,7 +1,7 @@
 <!--
-Thanks for the PR. The full contributor contract lives in
-AGENTS.md at the repo root; this template just surfaces the
-verify-gates checklist for the specific surface you're touching.
+Thanks for the PR. The contributor contract lives in AGENTS.md; this template
+keeps review focused on changed surfaces, proof, docs, and residual risk.
+Do not paste secrets, customer data, raw live probe captures, or private tokens.
 -->
 
 ## Summary
@@ -12,59 +12,57 @@ verify-gates checklist for the specific surface you're touching.
 
 <!-- Tick everything you touched. -->
 
-- [ ] Hand-written wrapper modules (`wrapper/*.ts`)
-- [ ] Tests (`wrapper/tests/**`)
-- [ ] Build chain (`wrapper/tsconfig.*.json`, `wrapper/package.json`,
-      `wrapper/scripts/**`)
-- [ ] Examples (`wrapper/examples/**`)
-- [ ] Per-resource docs (`wrapper/docs/resources/**` — regenerated
-      via `npm run docs:resources`)
-- [ ] Spec / OpenAPI snapshot (`spec/corrected/**` — SHOULD NOT
-      happen; edits belong in GOCLMCP)
-- [ ] CI workflows (`.github/workflows/**`)
-- [ ] Governance (`SECURITY.md`, `CONTRIBUTING.md`,
-      `.github/ISSUE_TEMPLATE/**`, this template)
-- [ ] Discrepancies ledger (`spec/evidence/discrepancies.md`)
-- [ ] Top-level docs (`README.md`, `AGENTS.md`, `CLAUDE.md`)
+- [ ] SDK wrapper (`wrapper/*.ts`, `wrapper/tests/**`, `wrapper/examples/**`)
+- [ ] CLI (`cli/src/**`, `cli/tests/**`, `cli/README.md`)
+- [ ] MCP (`mcp/src/**`, `mcp/tests/**`, `mcp/README.md`)
+- [ ] OpenAPI / Fern / GOCLMCP handoff (`spec/fern/**`, generated metadata)
+- [ ] Docs or contracts (`docs/**`, `README.md`, `AGENTS.md`, `CLAUDE.md`)
+- [ ] Package/install surface (`package.json`, lockfiles, pack smoke, runtime support)
+- [ ] Governance (`SECURITY.md`, `.github/ISSUE_TEMPLATE/**`, PR template)
+- [ ] CI/CD or release workflow (`.github/workflows/**`) — requires explicit maintainer approval
 
-## Verify gates run
+## Evidence and gates
 
-<!-- Tick what passed locally. CI re-runs everything. -->
+<!-- Paste exact commands run, or explain why proof is deferred. Use root gates when possible. -->
 
-- [ ] `npm run type-check` (clean)
-- [ ] `npm run build` (clean — both ESM + CJS pass)
-- [ ] `npm run build:smoke` (17 names resolve in each module system)
-- [ ] `npm test` (93/93 — or expected count after your changes)
-- [ ] `npm pack --dry-run` (no surprise additions)
-- [ ] Pack snapshot matches `wrapper/.packsnapshot` (or baseline
-      regenerated + committed if intentional)
-- [ ] If touched docs: `npm run docs` rebuilds clean
-- [ ] If touched per-resource docs: `npm run docs:resources`
-      regenerates cleanly + diff committed
+- [ ] `make change-impact`
+- [ ] Narrow contract gate(s): `make ...`
+- [ ] Package gate(s): `make wrapper-gates`, `make cli-gates`, and/or `make mcp-gates`
+- [ ] Generated/readme/docs drift: `make readme-tables-drift`, `make docs-index-drift`, `make docs-drift`
+- [ ] Acceptance/support proof: `make acceptance-scenarios`, `make issue-intake`, `make support-bundle`
+- [ ] Packed consumer proof: `make pack-smoke`
+- [ ] Full proof when required: `make perfect-full`
+- [ ] Live proof only with sacrificial sandbox: `make perfect-live`
 
-## AGENTS.md compliance
+## Docs, changelog, and support
 
-<!-- Spot-check the rules most often violated. -->
+- [ ] User-facing behavior documented in README, migration guide, cookbook, or examples.
+- [ ] Touched package changelog updated when public package behavior changed.
+- [ ] Support/risk docs updated for new workaround, limitation, live-proof deferral, or provisional state.
+- [ ] Breaking-change review completed when any public surface was renamed, removed, or changed meaningfully.
 
-- [ ] Did NOT edit `wrapper/src/**` (wiped by sync)
-- [ ] Did NOT edit `spec/corrected/clockify.corrected.openapi.yaml`
-      (frozen snapshot; edits land in GOCLMCP)
-- [ ] Did NOT commit raw probe files (`spec/evidence/probes/*.{json,hdr}`)
-- [ ] If publish-relevant: ran `npm pack --dry-run` and reviewed
-      file list
-- [ ] No `it.skip` / `test.skip` / `xit` / `xdescribe` introduced
-- [ ] Conventional-commits subject + 72-char wrap
+## Diagnostics and support bundle
 
-## Discrepancies entry
+- [ ] Quickstart receipt impact considered (run `make quickstart-receipt` and review the quickstart receipt artifacts).
+- [ ] First-run support workflow impact considered: `node scripts/workflow-plan.mjs --workflow first-run-support`.
+- [ ] SDK diagnostics impact considered: `clockifyDiagnostics()`.
+- [ ] CLI diagnostics impact considered: `clk115 doctor --json`.
+- [ ] MCP diagnostics impact considered: `clockify://mcp/doctor`.
+- [ ] Support bundle impact considered: `node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json`.
+- [ ] If this changes first-run/setup support, first-run workflow, diagnostic surface, and `safeCommandHints` impact are described.
+- [ ] If this changes readiness, proof routing, support, or release handoff, `readinessContext` impact is described, including `finalBlockingSignalIds`, `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
+- [ ] No support artifact includes env values, tokens, workspace IDs, raw logs, probe captures, browser cookies, shell history, or `.env` files.
 
-<!-- If this PR touches behaviour with a known spec/runtime gap,
-     link or add the entry in spec/evidence/discrepancies.md. -->
+## Generated-path discipline
 
-- [ ] N/A (no spec/runtime gap touched)
-- [ ] Updated entry: `…`
-- [ ] New entry: `…`
+- [ ] Did not hand-edit `spec/corrected/**`.
+- [ ] Did not hand-edit `output/ts-sdk/**`.
+- [ ] Did not hand-edit `wrapper/src/**`.
+- [ ] Did not commit raw probe files from `spec/evidence/probes/*.{json,hdr}`.
 
-## Notes for reviewers
+## Residual risk
 
-<!-- Anything reviewers should know that isn't obvious from the
-     diff. Open questions. Things you tried that didn't work. -->
+<!-- What remains unproven, deferred, blocked upstream, or intentionally accepted? -->
+
+- Risk:
+- Owner / next proof:

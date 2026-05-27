@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Dependency boundary contract for SDK, CLI, and MCP packages. Keeps runtime dependencies intentional and prevents generated SDK internals from leaking into sibling packages.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-package-manifest-paths",
+    "safe-source-roots",
+    "typed-package-dependency-contracts",
+    "typed-package-lockfiles",
+    "typed-runtime-dependency-lists",
+    "typed-peer-and-dev-dependency-maps",
+    "typed-forbidden-runtime-dependencies",
+    "typed-forbidden-import-markers",
+    "makefile-audit-wiring"
+  ],
+  "sourceRoots": [
+    "cli/src",
+    "cli/tests",
+    "mcp/src",
+    "mcp/tests",
+    "wrapper"
+  ],
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "lockfile": "wrapper/package-lock.json",
+      "lockfileVersion": 3,
+      "runtimeDependencies": [],
+      "peerDependencies": {},
+      "requiredDevDependencies": [
+        "typescript",
+        "vitest",
+        "tsx"
+      ]
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "lockfile": "cli/package-lock.json",
+      "lockfileVersion": 3,
+      "runtimeDependencies": [
+        "cli-table3",
+        "commander",
+        "picocolors"
+      ],
+      "peerDependencies": {
+        "clockify-sdk-ts-115": ">=0.9.0"
+      },
+      "devDependencies": {
+        "clockify-sdk-ts-115": "file:../wrapper"
+      },
+      "requiredDevDependencies": [
+        "typescript",
+        "vitest",
+        "tsx"
+      ]
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "lockfile": "mcp/package-lock.json",
+      "lockfileVersion": 3,
+      "runtimeDependencies": [
+        "@modelcontextprotocol/sdk",
+        "zod"
+      ],
+      "peerDependencies": {
+        "clockify-sdk-ts-115": ">=0.9.0"
+      },
+      "devDependencies": {
+        "clockify-sdk-ts-115": "file:../wrapper"
+      },
+      "requiredDevDependencies": [
+        "typescript",
+        "vitest",
+        "tsx"
+      ]
+    }
+  ],
+  "forbiddenRuntimeDependencies": [
+    "axios",
+    "lodash",
+    "moment",
+    "request",
+    "openai",
+    "@anthropic-ai/sdk"
+  ],
+  "forbiddenImportMarkers": [
+    "output/ts-sdk",
+    "../wrapper/src",
+    "wrapper/src"
+  ],
+  "wiring": {
+    "makeTarget": "dependency-boundary",
+    "checker": "scripts/check-dependency-boundary.mjs",
+    "enterpriseAuditId": "dependency-boundary"
+  }
+}

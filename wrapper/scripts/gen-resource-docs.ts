@@ -1,7 +1,7 @@
 /**
  * Generate per-resource markdown reference from the synced SDK.
  *
- * For each resource under wrapper/src/api/resources/, parses the
+ * For each resource under the synced api/resources/ tree, parses the
  * generated Client.ts for method signatures and the matching
  * client/requests/*.ts files for request-field declarations, then
  * emits wrapper/docs/resources/<resource>.md with a method list +

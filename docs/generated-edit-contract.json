@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Generated and snapshot edit guard contract for paths that must only change through the GOCLMCP -> Fern -> wrapper sync chain.",
+  "contractInvariants": [
+    "schema-versioned-generated-edit-contract",
+    "safe-generated-edit-prefixes",
+    "typed-guarded-prefixes",
+    "explicit-bypass-env",
+    "regenerate-chain-guidance",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "generated-edit-check",
+    "checker": "scripts/check-no-generated-edits.mjs",
+    "enterpriseAuditId": "generated-edit-guard"
+  },
+  "guardedPrefixes": [
+    "spec/corrected/",
+    "output/ts-sdk/",
+    "wrapper/src/"
+  ],
+  "bypassEnv": "CLOCKIFY_ALLOW_GENERATED_DIFF",
+  "regenerationGuidance": "Do not hand-edit these paths. Regenerate through GOCLMCP -> Fern -> wrapper sync."
+}

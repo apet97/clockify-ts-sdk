@@ -11,11 +11,11 @@
  *   early-stop.
  *
  * Compare to `iterAll(...)` / `iterPages(...)` from
- * `clockify-sdk-ts/iter` — these are the underlying primitives.
+ * `clockify-sdk-ts-115/iter` — these are the underlying primitives.
  * `paginatedList` is a single value you can pass around;
  * `iterAll` is a one-shot generator. Use whichever fits.
  */
-import { createClockifyClient, paginatedList } from "clockify-sdk-ts";
+import { createClockifyClient, paginatedList } from "clockify-sdk-ts-115";
 
 async function main(): Promise<void> {
     const client = createClockifyClient();

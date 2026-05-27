@@ -1,10 +1,10 @@
 /**
- * Composed `fetch` wrapper for `clockify-sdk-ts`.
+ * Composed `fetch` wrapper for `clockify-sdk-ts-115`.
  *
  * Wraps the user's `fetch` (or `globalThis.fetch`) with four
  * orthogonal concerns, each opt-out:
  *
- * 1. **User-Agent** — `clockify-sdk-ts/<ver> (Node.js <ver>;
+ * 1. **User-Agent** — `clockify-sdk-ts-115/<ver> (Node.js <ver>;
  *    <platform> <arch>)` injected on every request. Disable with
  *    `userAgent: false`; override with `userAgent: "my-string"`.
  * 2. **X-Request-Id** — UUID v4 injected per request (uses
@@ -25,7 +25,7 @@
  * `createClockifyClient` wraps every constructed client with this
  * fetcher using sensible defaults (UA + req-id on, no retry layer
  * beyond Fern's, no hooks). Direct callers can use `composedFetch`
- * via the `clockify-sdk-ts/composed-fetch` subpath for non-Clockify
+ * via the `clockify-sdk-ts-115/composed-fetch` subpath for non-Clockify
  * fetch needs (e.g. testing, observability piping, multi-SDK
  * aggregation).
  */
@@ -37,7 +37,7 @@ import { platform, arch } from "node:os";
  *  package version, update this constant too. (Phase 2 dual-build
  *  will substitute this at build time.) */
 const PACKAGE_VERSION = "0.9.0" as const; // x-release-please-version
-const PACKAGE_NAME = "clockify-sdk-ts" as const;
+const PACKAGE_NAME = "clockify-sdk-ts-115" as const;
 
 /** Header name carrying the per-request UUID. */
 export const REQUEST_ID_HEADER = "X-Request-Id" as const;
@@ -173,7 +173,7 @@ export function generateRequestId(): string {
  *
  * @example
  * ```ts
- * import { composedFetch } from "clockify-sdk-ts/composed-fetch";
+ * import { composedFetch } from "clockify-sdk-ts-115/composed-fetch";
  *
  * const myFetch = composedFetch({
  *   hooks: {
@@ -465,6 +465,6 @@ async function safeHook<T>(
         await hook(arg);
     } catch (err) {
         // Hooks are best-effort: log + continue.
-        console.warn("clockify-sdk-ts composedFetch hook failed:", err);
+        console.warn("clockify-sdk-ts-115 composedFetch hook failed:", err);
     }
 }

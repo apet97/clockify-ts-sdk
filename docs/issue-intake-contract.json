@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Issue, feature, PR, support, and security intake quality contract for SDK, CLI, MCP, OpenAPI/generator, docs, mock/live proof, receipts, and redaction boundaries.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-issue-intake-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-template-contracts",
+    "typed-supporting-evidence",
+    "typed-quickstart-diagnostics-intake",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/issue-intake-policy.md",
+    "mustContain": [
+      "Intake surfaces",
+      "Required bug evidence",
+      "Required feature evidence",
+      "PR checklist quality",
+      "readinessContext",
+      "quickstart receipt",
+      "diagnostic surface",
+      "safeCommandHints",
+      "finalBlockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "Contract-shape rule",
+      "make issue-intake"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "templates": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "mustContain": [
+        "Affected surface",
+        "Package and version",
+        "Command, tool, import path, or operation",
+        "Sanitized receipt",
+        "Generated support bundle",
+        "Quickstart and diagnostics context",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "clockifyDiagnostics()",
+        "clk115 doctor --json",
+        "clockify://mcp/doctor",
+        "readinessContext",
+        "finalBlockingSignalIds",
+        "riskRoutingSummary",
+        "orderedProofChainCoverage",
+        "Proof attempted",
+        "Mock/live boundary",
+        "SECURITY.md"
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "mustContain": [
+        "Target surface",
+        "User job",
+        "Current workaround",
+        "Acceptance evidence",
+        "Breaking-change risk",
+        "docs/breaking-change-review-policy.md"
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "mustContain": [
+        "Security vulnerability",
+        "Clockify API behaviour",
+        "Spec / generator issue",
+        "wrapper/src/**"
+      ]
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "mustContain": [
+        "Surface",
+        "Evidence and gates",
+        "Docs, changelog, and support",
+        "Diagnostics and support bundle",
+        "Quickstart receipt impact considered",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "diagnostic surface",
+        "safeCommandHints",
+        "readinessContext",
+        "finalBlockingSignalIds",
+        "riskRoutingSummary",
+        "orderedProofChainCoverage",
+        "Generated-path discipline",
+        "Residual risk"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/support-runbook.md",
+      "mustContain": [
+        "Safe diagnostic bundle",
+        "readinessContext",
+        "Never include",
+        "Escalation template"
+      ]
+    },
+    {
+      "path": "docs/risk-register.md",
+      "mustContain": [
+        "open",
+        "provisional",
+        "blocked-upstream",
+        "accepted"
+      ]
+    },
+    {
+      "path": "docs/acceptance-scenarios.md",
+      "mustContain": [
+        "Scenario matrix",
+        "Evidence escalation"
+      ]
+    },
+    {
+      "path": "docs/breaking-change-review-policy.md",
+      "mustContain": [
+        "Replacement-first rule",
+        "Review record"
+      ]
+    },
+    {
+      "path": "SECURITY.md",
+      "mustContain": [
+        "Do NOT open a public GitHub issue",
+        "GitHub Security Advisories"
+      ]
+    }
+  ],
+  "readinessContextFields": [
+    "readinessContext",
+    "finalBlockingSignalIds",
+    "blockingSignalIds",
+    "riskRoutingSummary",
+    "orderedProofChainCoverage"
+  ],
+  "quickstartDiagnosticsFields": [
+    "quickstart receipt",
+    "node scripts/workflow-plan.mjs --workflow first-run-support",
+    "diagnostic surface",
+    "clockifyDiagnostics()",
+    "clk115 doctor --json",
+    "clockify://mcp/doctor",
+    "safeCommandHints"
+  ],
+  "wiring": {
+    "makeTarget": "issue-intake",
+    "docsIndex": [
+      "issue-intake-policy.md",
+      "issue-intake-contract.json"
+    ],
+    "qualityGate": "make issue-intake",
+    "supportBundleCommand": "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+    "inventoryId": "issue-intake",
+    "auditId": "issue-intake"
+  }
+}

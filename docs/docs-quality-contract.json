@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, generated docs, operator docs, and final proof claims.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-docs-quality-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-key-document-entries",
+    "typed-supporting-evidence-entries",
+    "typed-generated-truth-surfaces",
+    "typed-product-surface-claim-contract",
+    "typed-scan-paths",
+    "typed-unsupported-claim-regexes",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/docs-quality-policy.md",
+    "mustContain": [
+      "Evidence-first claims",
+      "Generated claim backing",
+      "Style rules",
+      "Unsupported claim blacklist",
+      "Non-coder readability",
+      "Contract-shape rule",
+      "make docs-quality",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "not proof"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "keyDocuments": [
+    {
+      "id": "root-readme",
+      "path": "README.md",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "@clockify115/cli",
+        "@clockify115/mcp-server",
+        "make perfect-fast",
+        "make perfect-full",
+        "not public npm publication"
+      ]
+    },
+    {
+      "id": "sdk-readme",
+      "path": "wrapper/README.md",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "Observability",
+        "Supported runtimes",
+        "packable/local, not public npm publication"
+      ]
+    },
+    {
+      "id": "sdk-changelog",
+      "path": "wrapper/CHANGELOG.md",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "create-client",
+        "composed-fetch",
+        "webhooks"
+      ]
+    },
+    {
+      "id": "cli-readme",
+      "path": "cli/README.md",
+      "mustContain": [
+        "@clockify115/cli",
+        "CLOCKIFY_BASE_URL",
+        "generated:cli-commands",
+        "Exit codes"
+      ]
+    },
+    {
+      "id": "cli-changelog",
+      "path": "cli/CHANGELOG.md",
+      "mustContain": [
+        "@clockify115/cli",
+        "clockify115",
+        "clk115"
+      ]
+    },
+    {
+      "id": "mcp-readme",
+      "path": "mcp/README.md",
+      "mustContain": [
+        "@clockify115/mcp-server",
+        "structuredContent",
+        "generated:mcp-workflow-tools",
+        "generated:mcp-domain-tools"
+      ]
+    },
+    {
+      "id": "mcp-changelog",
+      "path": "mcp/CHANGELOG.md",
+      "mustContain": [
+        "@clockify115/mcp-server",
+        "105-tool surface",
+        "workflow tools"
+      ]
+    },
+    {
+      "id": "docs-index",
+      "path": "docs/README.md",
+      "mustContain": [
+        "Documentation Index",
+        "Operator docs",
+        "Generated truth surfaces",
+        "Contract checks"
+      ]
+    },
+    {
+      "id": "axioms",
+      "path": "docs/axioms.md",
+      "mustContain": [
+        "SDK CLI MCP Axioms",
+        "Add metadata before adding prose",
+        "Add gates before adding promises",
+        "Never make a release/readiness claim without a command that proves it."
+      ]
+    },
+    {
+      "id": "axioms-contract",
+      "path": "docs/axioms-contract.json",
+      "mustContain": [
+        "typed-axiom-entries",
+        "supportingEvidence",
+        "makefile-audit-wiring",
+        "truth-source",
+        "non-coder-reproducibility"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "scripts/check-docs-drift.mjs",
+      "mustContain": [
+        "legacy-sdk-package-name",
+        "wrapper/CHANGELOG.md",
+        "old-mcp-tool-count",
+        "placeholder-marker",
+        "Documentation drift check passed"
+      ]
+    },
+    {
+      "path": "docs/user-docs-policy.md",
+      "mustContain": [
+        "Required style",
+        "make docs-quality",
+        "make user-docs"
+      ]
+    },
+    {
+      "path": "docs/quality-gates.md",
+      "mustContain": [
+        "make docs-quality",
+        "make docs-drift",
+        "make final-proof-receipt-check"
+      ]
+    },
+    {
+      "path": "docs/final-proof-runbook.md",
+      "mustContain": [
+        "real receipt",
+        "provisional budgets are not a completed state",
+        "residual risk"
+      ]
+    }
+  ],
+  "generatedTruthSurfaces": [
+    "docs/product-surface.json",
+    "docs/openapi-operations.json",
+    "docs/operation-parity.json",
+    "docs/cli-commands.json",
+    "docs/mcp-tools.json"
+  ],
+  "productSurfaceClaims": {
+    "path": "docs/product-surface.json",
+    "requiredWorkflowFields": [
+      "surfaceAvailability",
+      "proofMode",
+      "recovery",
+      "intentionalGaps"
+    ],
+    "surfaceAvailabilityFields": [
+      "sdk",
+      "cli",
+      "tsMcp",
+      "goMcp"
+    ],
+    "emptySurfaceRequiresIntentionalGap": [
+      "sdk",
+      "cli",
+      "tsMcp",
+      "goMcp"
+    ]
+  },
+  "scanPaths": [
+    "README.md",
+    "wrapper/README.md",
+    "wrapper/CHANGELOG.md",
+    "cli/README.md",
+    "cli/CHANGELOG.md",
+    "mcp/README.md",
+    "mcp/CHANGELOG.md",
+    "docs/README.md",
+    "docs/user-docs-policy.md",
+    "docs/migration-guide.md",
+    "docs/release-readiness-checklist.md"
+  ],
+  "forbiddenUnsupportedClaims": [
+    "world[- ]class",
+    "battle[- ]tested",
+    "production-ready",
+    "best[- ]in[- ]class",
+    "just works",
+    "zero[- ]config"
+  ],
+  "wiring": {
+    "makeTarget": "docs-quality",
+    "checker": "scripts/check-docs-quality.mjs",
+    "docsIndex": [
+      "docs-quality-policy.md",
+      "docs-quality-contract.json"
+    ],
+    "qualityGate": "make docs-quality",
+    "inventoryId": "docs-quality",
+    "auditId": "docs-quality"
+  }
+}

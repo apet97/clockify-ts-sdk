@@ -1,0 +1,5909 @@
+{
+  "schemaVersion": 1,
+  "source": "spec/corrected/clockify.corrected.openapi.yaml",
+  "operationCount": 185,
+  "operations": [
+    {
+      "method": "POST",
+      "path": "/file/image",
+      "operationId": "uploadImage",
+      "tags": [
+        "Files"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": []
+    },
+    {
+      "method": "GET",
+      "path": "/shared-reports/{sharedReportId}",
+      "operationId": "getSharedReportsSharedReportId",
+      "tags": [
+        "Shared Reports"
+      ],
+      "sdkGroup": "sharedReports",
+      "sdkMethod": "view",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "exportType",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sharedReportId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/user",
+      "operationId": "getCurrentUser",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "include-memberships",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces",
+      "operationId": "getAllMyWorkspaces",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "roles",
+          "in": "query",
+          "required": false,
+          "schemaType": "array"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces",
+      "operationId": "addWorkspace",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": []
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}",
+      "operationId": "getWorkspaceInfo",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}",
+      "operationId": "putWorkspacesWorkspaceId",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "405"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/addons/{addonId}/webhooks",
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "listForAddon",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "addonId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "operationId": "getApprovalRequests",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "operationId": "submitApprovalRequest",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "submit",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
+      "operationId": "resubmitEntriesForApproval",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "resubmit",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}",
+      "operationId": "submitApprovalRequestForUser",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "submitForUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
+      "operationId": "resubmitEntriesForApprovalForUser",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "resubmitForUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "operationId": "updateApprovalRequest",
+      "tags": [
+        "Approvals"
+      ],
+      "sdkGroup": "approvals",
+      "sdkMethod": "updateStatus",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/audit-log",
+      "operationId": "searchAuditLogs",
+      "tags": [
+        "Audit Log Report"
+      ],
+      "sdkGroup": "auditLogReport",
+      "sdkMethod": "search",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/clients",
+      "operationId": "getWorkspacesWorkspaceIdClients",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "archived",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "address",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "note",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/clients",
+      "operationId": "postWorkspacesWorkspaceIdClients",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "getWorkspacesWorkspaceIdClientsClientId",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "clientId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "putWorkspacesWorkspaceIdClientsClientId",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "clientId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "deleteWorkspacesWorkspaceIdClientsClientId",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "clientId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
+      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
+      "tags": [
+        "Clients"
+      ],
+      "sdkGroup": "clients",
+      "sdkMethod": "archive",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "clientId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/cost-rate",
+      "operationId": "updateWorkspaceCostRate",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "updateCostRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "operationId": "listWorkspaceCustomFields",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "listForWorkspace",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200",
+        "401"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "operationId": "createWorkspaceCustomField",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "createForWorkspace",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201",
+        "401"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "operationId": "updateWorkspaceCustomField",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "updateForWorkspace",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "401",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "customFieldId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "operationId": "deleteWorkspaceCustomField",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "deleteForWorkspace",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "204",
+        "401",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "customFieldId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/created",
+      "operationId": "getCreatedEntityInfo",
+      "tags": [
+        "Entity changes (Experimental)"
+      ],
+      "sdkGroup": "entityChangesExperimental",
+      "sdkMethod": "listCreated",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": true,
+          "schemaType": "array"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/deleted",
+      "operationId": "getDeletedEntityInfo",
+      "tags": [
+        "Entity changes (Experimental)"
+      ],
+      "sdkGroup": "entityChangesExperimental",
+      "sdkMethod": "listDeleted",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": true,
+          "schemaType": "array"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/updated",
+      "operationId": "getUpdatedEntityInfo",
+      "tags": [
+        "Entity changes (Experimental)"
+      ],
+      "sdkGroup": "entityChangesExperimental",
+      "sdkMethod": "listUpdated",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "required": true,
+          "schemaType": "array"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "operationId": "getWorkspaceExpenses",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "operationId": "createExpense",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "operationId": "getExpenseCategories",
+      "tags": [
+        "Expense categories"
+      ],
+      "sdkGroup": "expenseCategories",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "operationId": "addExpenseCategory",
+      "tags": [
+        "Expense categories"
+      ],
+      "sdkGroup": "expenseCategories",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "operationId": "updateExpenseCategory",
+      "tags": [
+        "Expense categories"
+      ],
+      "sdkGroup": "expenseCategories",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "categoryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "operationId": "deleteExpenseCategory",
+      "tags": [
+        "Expense categories"
+      ],
+      "sdkGroup": "expenseCategories",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "categoryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}/status",
+      "operationId": "archiveExpenseCategory",
+      "tags": [
+        "Expense categories"
+      ],
+      "sdkGroup": "expenseCategories",
+      "sdkMethod": "archive",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "categoryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "getExpenseById",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "expenseId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "updateExpense",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "expenseId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "deleteExpense",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "expenseId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}",
+      "operationId": "downloadExpenseReceipt",
+      "tags": [
+        "Expenses"
+      ],
+      "sdkGroup": "expenses",
+      "sdkMethod": "downloadReceipt",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "expenseId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "fileId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "operationId": "getWorkspaceHolidays",
+      "tags": [
+        "Holidays"
+      ],
+      "sdkGroup": "holidays",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "assigned-to",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "operationId": "createHoliday",
+      "tags": [
+        "Holidays"
+      ],
+      "sdkGroup": "holidays",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/holidays/in-period",
+      "operationId": "getWorkspaceHolidaysInPeriod",
+      "tags": [
+        "Holidays"
+      ],
+      "sdkGroup": "holidays",
+      "sdkMethod": "listInPeriod",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "assigned-to",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "operationId": "updateHoliday",
+      "tags": [
+        "Holidays"
+      ],
+      "sdkGroup": "holidays",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "holidayId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "operationId": "deleteHoliday",
+      "tags": [
+        "Holidays"
+      ],
+      "sdkGroup": "holidays",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "holidayId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/hourly-rate",
+      "operationId": "updateWorkspaceBillableRate",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "updateBillableRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "operationId": "getWorkspaceInvoices",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "operationId": "addInvoice",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/info",
+      "operationId": "filterInvoices",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "filter",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "operationId": "getInvoiceSettings",
+      "tags": [
+        "Invoice settings"
+      ],
+      "sdkGroup": "invoiceSettings",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "operationId": "updateInvoiceSettings",
+      "tags": [
+        "Invoice settings"
+      ],
+      "sdkGroup": "invoiceSettings",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "getInvoiceById",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "updateInvoice",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "deleteInvoice",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
+      "operationId": "duplicateInvoice",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "duplicate",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/export",
+      "operationId": "exportInvoice",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "export",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userLocale",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items",
+      "operationId": "addInvoiceItem",
+      "tags": [
+        "Invoice items"
+      ],
+      "sdkGroup": "invoiceItems",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/import",
+      "operationId": "importInvoiceItems",
+      "tags": [
+        "Invoice items"
+      ],
+      "sdkGroup": "invoiceItems",
+      "sdkMethod": "import",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
+      "operationId": "deleteInvoiceItem",
+      "tags": [
+        "Invoice items"
+      ],
+      "sdkGroup": "invoiceItems",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "order",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "operationId": "getInvoicePayments",
+      "tags": [
+        "Invoice payments"
+      ],
+      "sdkGroup": "invoicePayments",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "operationId": "addInvoicePayment",
+      "tags": [
+        "Invoice payments"
+      ],
+      "sdkGroup": "invoicePayments",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}",
+      "operationId": "deleteInvoicePayment",
+      "tags": [
+        "Invoice payments"
+      ],
+      "sdkGroup": "invoicePayments",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "paymentId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/status",
+      "operationId": "changeInvoiceStatus",
+      "tags": [
+        "Invoices"
+      ],
+      "sdkGroup": "invoices",
+      "sdkMethod": "updateStatus",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "invoiceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "getMemberProfile",
+      "tags": [
+        "Member profiles"
+      ],
+      "sdkGroup": "memberProfiles",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "putWorkspacesWorkspaceIdMemberProfileUserId",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "updateMemberProfile",
+      "tags": [
+        "Member profiles"
+      ],
+      "sdkGroup": "memberProfiles",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/policies",
+      "operationId": "getWorkspacesWorkspaceIdPolicies",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "archived",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/policies",
+      "operationId": "postWorkspacesWorkspaceIdPolicies",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "getWorkspacesWorkspaceIdPoliciesPolicyId",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "putWorkspacesWorkspaceIdPoliciesPolicyId",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "deleteWorkspacesWorkspaceIdPoliciesPolicyId",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}/archive",
+      "operationId": "patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive",
+      "tags": [
+        "Policies"
+      ],
+      "sdkGroup": "policies",
+      "sdkMethod": "archive",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects",
+      "operationId": "getWorkspaceProjects",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "strict-name-search",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "archived",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "billable",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "clients",
+          "in": "query",
+          "required": false,
+          "schemaType": "array"
+        },
+        {
+          "name": "contains-client",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "client-status",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "users",
+          "in": "query",
+          "required": false,
+          "schemaType": "array"
+        },
+        {
+          "name": "contains-user",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "user-status",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "is-template",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "access",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "expense-limit",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "expense-date",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "userGroups",
+          "in": "query",
+          "required": false,
+          "schemaType": "array"
+        },
+        {
+          "name": "contains-group",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects",
+      "operationId": "createProject",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/from-template",
+      "operationId": "createProjectFromTemplate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "createFromTemplate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "getProjectById",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "custom-field-entity-type",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "expense-limit",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "expense-date",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "updateProject",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "deleteProject",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "archive",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/cost-rate",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdCostRate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateCostRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields",
+      "operationId": "listProjectCustomFields",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "listForProject",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200",
+        "401",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "operationId": "updateProjectCustomField",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "updateForProject",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "401",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "customFieldId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "operationId": "removeProjectCustomField",
+      "tags": [
+        "Custom Fields"
+      ],
+      "sdkGroup": "customFields",
+      "sdkMethod": "removeFromProject",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200",
+        "401",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "customFieldId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/estimate",
+      "operationId": "updateProjectEstimate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateEstimate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/hourly-rate",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateHourlyRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "operationId": "assignOrRemoveProjectUsers",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "setMembers",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "operationId": "updateProjectMemberships",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateMemberships",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "operationId": "findTasksOnProject",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "strict-name-search",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "is-active",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "operationId": "addTaskOnProject",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "getTaskById",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "taskId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "updateTaskOnProject",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "taskId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "deleteTaskFromProject",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "taskId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/cost-rate",
+      "operationId": "updateTaskCostRate",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "updateCostRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "taskId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/hourly-rate",
+      "operationId": "updateTaskBillableRate",
+      "tags": [
+        "Tasks"
+      ],
+      "sdkGroup": "tasks",
+      "sdkMethod": "updateBillableRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "taskId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/template",
+      "operationId": "updateProjectTemplate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateTemplate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/cost-rate",
+      "operationId": "updateProjectUserCostRate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateUserCostRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/hourly-rate",
+      "operationId": "updateProjectUserHourlyRate",
+      "tags": [
+        "Projects"
+      ],
+      "sdkGroup": "projects",
+      "sdkMethod": "updateUserHourlyRate",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "projectId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/attendance",
+      "operationId": "generateAttendanceReport",
+      "tags": [
+        "Reports"
+      ],
+      "sdkGroup": "reports",
+      "sdkMethod": "attendance",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "400",
+        "401",
+        "403",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/detailed",
+      "operationId": "generateDetailedReport",
+      "tags": [
+        "Reports"
+      ],
+      "sdkGroup": "reports",
+      "sdkMethod": "detailed",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "400",
+        "401",
+        "403",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/expenses/detailed",
+      "operationId": "generateDetailedReportV1",
+      "tags": [
+        "Expense Report"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/summary",
+      "operationId": "generateSummaryReport",
+      "tags": [
+        "Reports"
+      ],
+      "sdkGroup": "reports",
+      "sdkMethod": "summary",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "400",
+        "401",
+        "403",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/weekly",
+      "operationId": "generateWeeklyReport",
+      "tags": [
+        "Reports"
+      ],
+      "sdkGroup": "reports",
+      "sdkMethod": "weekly",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200",
+        "400",
+        "401",
+        "403",
+        "404"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments",
+      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignments",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/all",
+      "operationId": "getAllSchedulingAssignments",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "operationId": "getScheduledAssignmentsPerProject",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "listPerProject",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}",
+      "operationId": "getScheduledAssignmentsOnProject",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "listOnProject",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/publish",
+      "operationId": "publishAssignments",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "publish",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring",
+      "operationId": "createRecurringAssignment",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "createRecurring",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "replaceRecurring",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "assignmentId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "updateRecurringAssignment",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "updateRecurring",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "deleteRecurringAssignment",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "deleteRecurring",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}",
+      "operationId": "changeRecurringPeriod",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals",
+      "operationId": "getUsersCapacityTotals",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "getUsersCapacityFiltered",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/totals",
+      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "calculateUsersTotals",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals",
+      "operationId": "getUserCapacityTotal",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "getUserCapacity",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
+      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "assignmentId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
+      "operationId": "deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "assignmentId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy",
+      "operationId": "copyScheduledAssignment",
+      "tags": [
+        "Scheduling"
+      ],
+      "sdkGroup": "scheduling",
+      "sdkMethod": "copy",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "operationId": "getWorkspacesWorkspaceIdSharedReports",
+      "tags": [
+        "Shared Reports"
+      ],
+      "sdkGroup": "sharedReports",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "operationId": "postWorkspacesWorkspaceIdSharedReports",
+      "tags": [
+        "Shared Reports"
+      ],
+      "sdkGroup": "sharedReports",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "operationId": "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "tags": [
+        "Shared Reports"
+      ],
+      "sdkGroup": "sharedReports",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "sharedReportId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "operationId": "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "tags": [
+        "Shared Reports"
+      ],
+      "sdkGroup": "sharedReports",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "sharedReportId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/tags",
+      "operationId": "getWorkspacesWorkspaceIdTags",
+      "tags": [
+        "Tags"
+      ],
+      "sdkGroup": "tags",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "archived",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/tags",
+      "operationId": "postWorkspacesWorkspaceIdTags",
+      "tags": [
+        "Tags"
+      ],
+      "sdkGroup": "tags",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "getWorkspacesWorkspaceIdTagsTagId",
+      "tags": [
+        "Tags"
+      ],
+      "sdkGroup": "tags",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "tagId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "putWorkspacesWorkspaceIdTagsTagId",
+      "tags": [
+        "Tags"
+      ],
+      "sdkGroup": "tags",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "tagId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
+      "tags": [
+        "Tags"
+      ],
+      "sdkGroup": "tags",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "tagId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries",
+      "operationId": "postWorkspacesWorkspaceIdTimeEntries",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced",
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "markInvoiced",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "markInvoicedBulk",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/status/in-progress",
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "listInProgress",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "consider-duration-format",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "timeEntryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "putWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "timeEntryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "timeEntryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "operationId": "getBalancesForPolicy",
+      "tags": [
+        "Balances"
+      ],
+      "sdkGroup": "balances",
+      "sdkMethod": "listForPolicy",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "operationId": "updateBalance",
+      "tags": [
+        "Balances"
+      ],
+      "sdkGroup": "balances",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/user/{userId}",
+      "operationId": "getBalanceForUser",
+      "tags": [
+        "Balances"
+      ],
+      "sdkGroup": "balances",
+      "sdkMethod": "getForUser",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "operationId": "getTimeOffPolicies",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "operationId": "createTimeOffPolicy",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "getTimeOffPolicy",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "updateTimeOffPolicy",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "changeTimeOffPolicyStatus",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "updateStatus",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "deleteTimeOffPolicy",
+      "tags": [
+        "Time Off Policies"
+      ],
+      "sdkGroup": "timeOffPolicies",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
+      "operationId": "createTimeOffRequest",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "submit",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "operationId": "changeTimeOffRequestStatus",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "operationId": "deleteTimeOffRequest",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "withdraw",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
+      "operationId": "createTimeOffRequestForUser",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "submitForUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "policyId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/requests",
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
+      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+      "tags": [
+        "Time Off"
+      ],
+      "sdkGroup": "timeOff",
+      "sdkMethod": "updateStatus",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "requestId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "operationId": "findAllGroupsOnWorkspace",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "list",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "operationId": "addNewGroup",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupId",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "405"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "updateGroup",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "deleteGroup",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
+      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupIdUsers",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "listMembers",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "405"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
+      "operationId": "addUsersToGroup",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "addMembers",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}",
+      "operationId": "removeUserFromGroup",
+      "tags": [
+        "User Groups"
+      ],
+      "sdkGroup": "userGroups",
+      "sdkMethod": "removeMember",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "groupId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "listForUser",
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "description",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "project",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "task",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "tags",
+          "in": "query",
+          "required": false,
+          "schemaType": "array"
+        },
+        {
+          "name": "project-required",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "task-required",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "hydrated",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "in-progress",
+          "in": "query",
+          "required": false,
+          "schemaType": "boolean"
+        },
+        {
+          "name": "get-week-before",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "createForUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "startTimer",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "updateForUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "deleteMany",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "time-entry-ids",
+          "in": "query",
+          "required": true,
+          "schemaType": "array"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/stop",
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "stopTimer",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate",
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
+      "tags": [
+        "Time Entries"
+      ],
+      "sdkGroup": "timeEntries",
+      "sdkMethod": "duplicate",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "timeEntryId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/users",
+      "operationId": "findWorkspaceUsers",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "email",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "project-id",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "account-statuses",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "name",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "memberships",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "include-roles",
+          "in": "query",
+          "required": true,
+          "schemaType": "boolean"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users",
+      "operationId": "addUserToWorkspace",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": "workspaces",
+      "sdkMethod": "addUser",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "send-email",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users/info",
+      "operationId": "filterWorkspaceUsers",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "updateUserStatus",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/cost-rate",
+      "operationId": "updateUserCostRate",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
+      "operationId": "updateUserCustomFieldValue",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "customFieldId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/hourly-rate",
+      "operationId": "updateUserHourlyRate",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/users/{userId}/managers",
+      "operationId": "findUserTeamManagers",
+      "tags": [
+        "Users"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": true,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-column",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "sort-order",
+          "in": "query",
+          "required": false,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "operationId": "giveUserManagerRole",
+      "tags": [
+        "Roles"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "operationId": "removeUserManagerRole",
+      "tags": [
+        "Roles"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "204"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "userId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "operationId": "getWebhooksOnWorkspace",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "list",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "type",
+          "in": "query",
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "operationId": "createWebhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "create",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "201"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "getWebhookById",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "get",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "updateWebhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "update",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "deleteWebhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "delete",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "rotateToken",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "listLogs",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "405"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "operationId": "getWebhookLogs",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "searchLogs",
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/token",
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": "webhooks",
+      "sdkMethod": "updateToken",
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200",
+        "405"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    }
+  ]
+}

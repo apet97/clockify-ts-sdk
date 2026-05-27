@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cross-surface observability contract for request correlation, telemetry hooks, structured receipts, and safe support bundles.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-observability-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-sdk-observability-evidence",
+    "typed-cli-observability-evidence",
+    "typed-mcp-observability-evidence",
+    "typed-support-observability-evidence",
+    "typed-redaction-observability-evidence",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/observability-policy.md",
+    "mustContain": [
+      "Observability is a product surface",
+      "X-Request-Id",
+      "Telemetry levels",
+      "Contract-shape rule",
+      "prepublish gate metadata",
+      "package-lock metadata",
+      "Redaction rules",
+      "Use `<redacted>`",
+      "role placeholders",
+      "Do not jump from correlation to raw payload logging",
+      "make observability"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "sdk": [
+    {
+      "path": "wrapper/composed-fetch.ts",
+      "mustContain": [
+        "REQUEST_ID_HEADER",
+        "USER_AGENT_HEADER",
+        "ComposedFetchHooks",
+        "beforeRequest",
+        "afterResponse",
+        "onError",
+        "onRetry",
+        "getRequestIdFromError"
+      ]
+    },
+    {
+      "path": "wrapper/with-response.ts",
+      "mustContain": [
+        "withResponse",
+        "requestId",
+        "headers",
+        "status",
+        "withRawResponse"
+      ]
+    },
+    {
+      "path": "wrapper/otel-hooks.ts",
+      "mustContain": [
+        "otelHooks",
+        "http.request.method",
+        "http.response.status_code",
+        "http.client.request.duration",
+        "peer.service"
+      ]
+    }
+  ],
+  "cli": [
+    {
+      "path": "cli/src/output.ts",
+      "mustContain": [
+        "ok: false",
+        "code",
+        "recoveryForCode",
+        "retryableForCode"
+      ]
+    },
+    {
+      "path": "cli/tests/exit-contract.test.ts",
+      "mustContain": [
+        "--json",
+        "retryable",
+        "recovery"
+      ]
+    }
+  ],
+  "mcp": [
+    {
+      "path": "mcp/src/result.ts",
+      "mustContain": [
+        "structuredContent",
+        "changed",
+        "warnings",
+        "next",
+        "recovery",
+        "retryableForCode"
+      ]
+    },
+    {
+      "path": "mcp/src/output-schema.ts",
+      "mustContain": [
+        "MCP_RESULT_OUTPUT_SCHEMA",
+        "structuredContent",
+        "changed",
+        "retryAfterSeconds"
+      ]
+    }
+  ],
+  "support": [
+    {
+      "path": "docs/support-runbook.md",
+      "mustContain": [
+        "Safe diagnostic bundle",
+        "Prepublish gate",
+        "Package-lock",
+        "requestId",
+        "Never include",
+        "Proof attempted",
+        "Escalation template"
+      ]
+    },
+    {
+      "path": "docs/data-handling-policy.md",
+      "mustContain": [
+        "Workspace identifiers",
+        "Allowed placeholders",
+        "Prohibited committed evidence",
+        "<redacted>"
+      ]
+    },
+    {
+      "path": "docs/receipt-examples.md",
+      "mustContain": [
+        "SDK success receipt",
+        "CLI error receipt",
+        "MCP recovery receipt",
+        "requestId",
+        "retryable",
+        "recovery"
+      ]
+    }
+  ],
+  "redaction": [
+    {
+      "path": "docs/observability-policy.md",
+      "mustContain": [
+        "Redaction rules",
+        "Use `<redacted>`",
+        "role placeholders",
+        "Raw Clockify bodies are a"
+      ]
+    },
+    {
+      "path": "docs/data-handling-policy.md",
+      "mustContain": [
+        "Prohibited committed evidence",
+        "Raw package-lock dependency names",
+        "<redacted>"
+      ]
+    },
+    {
+      "path": "docs/support-bundle-contract.json",
+      "mustContain": [
+        "redaction",
+        "package-lock",
+        "readinessContext"
+      ]
+    }
+  ],
+  "requiredMakeTargets": [
+    "observability",
+    "data-handling",
+    "support-bundle",
+    "receipts-contract",
+    "receipt-examples"
+  ],
+  "wiring": {
+    "makeTarget": "observability",
+    "docsIndex": [
+      "observability-policy.md",
+      "observability-contract.json"
+    ],
+    "qualityGate": "make observability",
+    "inventoryId": "observability",
+    "auditId": "observability-contract"
+  }
+}

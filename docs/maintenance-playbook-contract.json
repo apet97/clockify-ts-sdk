@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Maintainer maintenance and upgrade playbook contract for dependency updates, Fern/generator bumps, Clockify API drift, release rehearsal, rollback, and receipt discipline.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-maintenance-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-planner-contract",
+    "typed-required-targets",
+    "typed-required-docs",
+    "typed-procedures",
+    "typed-supporting-evidence",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/maintenance-playbook.md",
+    "contains": [
+      "Maintenance cadence",
+      "Contract-shape rule",
+      "No-network maintenance planner",
+      "node scripts/maintenance-plan.mjs --cadence all",
+      "Dependency update procedure",
+      "Fern and generator bump procedure",
+      "Clockify API drift response",
+      "Release rehearsal procedure",
+      "Rollback procedure",
+      "Readiness context maintenance rule",
+      "readinessContext",
+      "finalBlockingSignalIds",
+      "blockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "Required maintenance receipts"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "just publish",
+      "skip proof"
+    ]
+  },
+  "planner": {
+    "path": "scripts/maintenance-plan.mjs",
+    "markers": [
+      "network",
+      "commandsExecuted",
+      "envValuesCaptured",
+      "weekly",
+      "monthly",
+      "dependency",
+      "generator",
+      "drift",
+      "release",
+      "rollback",
+      "This plan is not proof",
+      "Routine maintenance may leave budgets provisional",
+      "final readiness requires measured tightening",
+      "deferral is draft-only",
+      "readinessContext",
+      "finalBlockingSignalIds",
+      "blockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "immediately before final-proof-final"
+    ],
+    "generatedReport": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "reportScope": "maintenance-plan",
+        "selectedCadence": "all"
+      },
+      "requiredCadenceIds": [
+        "weekly",
+        "monthly",
+        "dependency",
+        "generator",
+        "drift",
+        "release",
+        "rollback"
+      ],
+      "requiredCadenceFields": [
+        "safeStart",
+        "proofTargets",
+        "docs",
+        "receipts",
+        "stopConditions"
+      ],
+      "requiredCadenceTextMarkers": {
+        "release": [
+          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+          "safeCommandHints",
+          "readinessContext",
+          "finalBlockingSignalIds",
+          "blockingSignalIds",
+          "riskRoutingSummary",
+          "orderedProofChainCoverage"
+        ],
+        "rollback": [
+          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "safeCommandHints",
+          "readinessContext",
+          "risk-routing",
+          "ordered proof-chain"
+        ]
+      }
+    }
+  },
+  "requiredTargets": [
+    "maintenance-playbook",
+    "maintenance-plan",
+    "change-impact",
+    "dependency-boundary",
+    "generator-config",
+    "generator-portability",
+    "release-readiness",
+    "risk-register"
+  ],
+  "requiredDocs": [
+    "docs/maintenance-playbook.md",
+    "docs/change-impact-policy.md",
+    "docs/dependency-policy.md",
+    "docs/dependency-boundary.json",
+    "docs/generator-portability-plan.md",
+    "docs/release-readiness-checklist.md",
+    "docs/risk-register.md",
+    "docs/final-proof-runbook.md"
+  ],
+  "procedures": [
+    {
+      "id": "dependency-update",
+      "markers": [
+        "runtime dependencies small",
+        "Update lockfiles only",
+        "change-impact contract"
+      ]
+    },
+    {
+      "id": "fern-generator-bump",
+      "markers": [
+        "release-critical pins",
+        "GOCLMCP canonical chain",
+        "never hand-edit"
+      ]
+    },
+    {
+      "id": "api-drift-response",
+      "markers": [
+        "spec/evidence/probes/",
+        "discrepancies.md",
+        "unsupported behavior honest"
+      ]
+    },
+    {
+      "id": "release-rehearsal",
+      "markers": [
+        "pack-smoke",
+        "npm publication disabled by default",
+        "final proof receipt",
+        "readinessContext"
+      ]
+    },
+    {
+      "id": "rollback",
+      "markers": [
+        "never reset unrelated user work",
+        "Restore the previous documented pin",
+        "narrow target"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/change-impact-contract.json",
+      "contains": [
+        "openapi-truth",
+        "release-ci-supply-chain",
+        "performance-calibration",
+        "final-proof"
+      ]
+    },
+    {
+      "path": "docs/dependency-policy.md",
+      "contains": [
+        "Dependency",
+        "Node",
+        ">=20"
+      ]
+    },
+    {
+      "path": "docs/generator-portability-plan.md",
+      "contains": [
+        "without paying for Stainless, Speakeasy, Fern Cloud",
+        "Vendor-exit checklist"
+      ]
+    },
+    {
+      "path": "docs/release-readiness-checklist.md",
+      "contains": [
+        "Required evidence",
+        "Publish decision boundary",
+        "Final proof closure",
+        "stays through evidence capture"
+      ]
+    },
+    {
+      "path": "docs/risk-register.md",
+      "contains": [
+        "performance-budgets-provisional",
+        "final-proof-pending",
+        "legacy-release-workflow-needs-maintainer-decision",
+        "make final-proof-final passes"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "maintenance-playbook",
+    "checker": "scripts/check-maintenance-playbook.mjs",
+    "docsIndex": [
+      "maintenance-playbook.md",
+      "maintenance-playbook-contract.json"
+    ],
+    "qualityGate": "make maintenance-playbook",
+    "inventoryId": "maintenance-playbook",
+    "auditId": "maintenance-playbook"
+  }
+}

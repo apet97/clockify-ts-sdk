@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Allowlisted documentation drift contract for stale public package, version, placeholder, and tool-count markers across hand-written docs and package surfaces.",
+  "contractInvariants": [
+    "schema-versioned-docs-drift-contract",
+    "safe-docs-drift-paths",
+    "typed-scan-roots",
+    "typed-excluded-dirs",
+    "typed-scan-rules",
+    "declared-allowlists",
+    "wrapper-scan-boundary",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "docs-drift",
+    "checker": "scripts/check-docs-drift.mjs",
+    "enterpriseAuditId": "docs-drift-checker"
+  },
+  "scanRoots": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "docs",
+    "wrapper/README.md",
+    "wrapper/CHANGELOG.md",
+    "wrapper/tsconfig.json",
+    "wrapper/tsconfig.esm.json",
+    "wrapper/tsconfig.cjs.json",
+    "wrapper",
+    "cli/README.md",
+    "cli/CHANGELOG.md",
+    "mcp/README.md",
+    "mcp/CHANGELOG.md"
+  ],
+  "excludedDirs": [
+    "docs/api",
+    "docs/superpowers",
+    "wrapper/dist",
+    "wrapper/node_modules",
+    "wrapper/src"
+  ],
+  "allowedExtensions": [
+    ".md",
+    ".json",
+    ".ts"
+  ],
+  "wrapperScanAllowPattern": "^wrapper/(?:[^/]+\\.ts|tests/.*\\.ts|tsconfig(?:\\.[^.]+)?\\.json|README\\.md|CHANGELOG\\.md)$",
+  "expectedRuleCount": 4,
+  "requiredRuleIds": [
+    "legacy-sdk-package-name",
+    "old-version-marker",
+    "old-mcp-tool-count",
+    "placeholder-marker"
+  ],
+  "rules": [
+    {
+      "id": "legacy-sdk-package-name",
+      "pattern": "clockify-sdk-ts(?!-115)",
+      "flags": "g",
+      "allowedPaths": [
+        "docs/migration-guide.md",
+        "docs/release-support-contract.json",
+        "docs/examples-contract.json",
+        "docs/agent-handoff-contract.json",
+        "docs/docs-drift-contract.json",
+        "docs/naming-taxonomy-contract.json",
+        "docs/sdk-public-api.json",
+        "docs/snippet-safety-policy.md",
+        "docs/user-docs-contract.json",
+        "docs/api-docs-contract.json",
+        "docs/api-docs-policy.md",
+        "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
+      ]
+    },
+    {
+      "id": "old-version-marker",
+      "pattern": "v0\\.2\\.0",
+      "flags": "g",
+      "allowedPaths": []
+    },
+    {
+      "id": "old-mcp-tool-count",
+      "pattern": "89 tools|no workflow tools",
+      "flags": "g",
+      "allowedPaths": [
+        "docs/agent-handoff-contract.json",
+        "docs/docs-drift-contract.json"
+      ]
+    },
+    {
+      "id": "placeholder-marker",
+      "pattern": "\\bTODO\\b|\\bTBD\\b",
+      "flags": "g",
+      "allowedPathPattern": "^docs/[^/]+-contract\\.json$",
+      "allowedPaths": [
+        "docs/final-proof-receipt-manifest.json",
+        "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
+      ]
+    }
+  ]
+}

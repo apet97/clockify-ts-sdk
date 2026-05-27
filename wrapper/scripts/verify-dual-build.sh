@@ -14,10 +14,11 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,getRateLimit,getRateLimitFromError"
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError"
+EXPECTED_ROOT_SURFACE_COUNT=47
 
 echo "==> ESM import smoke"
-SURFACE="$SURFACE" node --input-type=module -e "
+SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
 import('./dist/esm/index.js').then(m => {
   const surface = process.env.SURFACE.split(',');
   const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
@@ -30,7 +31,7 @@ import('./dist/esm/index.js').then(m => {
 "
 
 echo "==> CJS require smoke"
-SURFACE="$SURFACE" node -e "
+SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node -e "
 const m = require('./dist/cjs/index.js');
 const surface = process.env.SURFACE.split(',');
 const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
@@ -62,6 +63,10 @@ if (typeof pl.PaginatedList !== 'function') { console.error('CJS subpath paginat
 if (typeof wr.withResponse !== 'function') { console.error('CJS subpath with-response broken'); process.exit(1); }
 if (typeof er.RateLimitError !== 'function') { console.error('CJS subpath errors broken'); process.exit(1); }
 if (typeof er.promoteApiError !== 'function') { console.error('CJS subpath errors.promoteApiError broken'); process.exit(1); }
+if (typeof er.classifyClockifyError !== 'function') { console.error('CJS subpath errors.classifyClockifyError missing'); process.exit(1); }
+if (typeof er.getStableErrorCode !== 'function') { console.error('CJS subpath errors.getStableErrorCode missing'); process.exit(1); }
+if (!Array.isArray(er.CLOCKIFY_ERROR_CODES)) { console.error('CJS subpath errors.CLOCKIFY_ERROR_CODES missing'); process.exit(1); }
+if (typeof er.errorCodeForStatus !== 'function') { console.error('CJS subpath errors.errorCodeForStatus missing'); process.exit(1); }
 if (typeof dp.warnOnce !== 'function') { console.error('CJS subpath deprecation.warnOnce broken'); process.exit(1); }
 const we = require('./dist/cjs/webhook-events.js');
 if (!Array.isArray(we.CLOCKIFY_WEBHOOK_EVENT_NAMES)) { console.error('CJS subpath webhook-events.CLOCKIFY_WEBHOOK_EVENT_NAMES missing'); process.exit(1); }
@@ -73,10 +78,12 @@ const oh = require('./dist/cjs/otel-hooks.js');
 if (typeof oh.otelHooks !== 'function') { console.error('CJS subpath otel-hooks.otelHooks broken'); process.exit(1); }
 const hh = require('./dist/cjs/health.js');
 if (typeof hh.clockifyHealth !== 'function') { console.error('CJS subpath health.clockifyHealth broken'); process.exit(1); }
+const dg = require('./dist/cjs/diagnostics.js');
+if (typeof dg.clockifyDiagnostics !== 'function') { console.error('CJS subpath diagnostics.clockifyDiagnostics broken'); process.exit(1); }
 const rl = require('./dist/cjs/rate-limit.js');
 if (typeof rl.getRateLimit !== 'function') { console.error('CJS subpath rate-limit.getRateLimit broken'); process.exit(1); }
 if (typeof rl.getRateLimitFromError !== 'function') { console.error('CJS subpath rate-limit.getRateLimitFromError broken'); process.exit(1); }
-console.log('OK: All 14 CJS subpaths resolve');
+console.log('OK: All 15 CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"

@@ -21,7 +21,7 @@ import {
     isClockifyApiError,
     isRateLimitError,
     promoteApiError,
-} from "clockify-sdk-ts";
+} from "clockify-sdk-ts-115";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;

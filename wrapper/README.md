@@ -16,6 +16,8 @@ surface), and dual ESM + CJS.
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
   user-visible workaround casts
+- `clockifyDiagnostics()` — no-network readiness receipt for auth,
+  runtime, workspace ID, base URL overrides, warnings, and next steps
 - Pagination — per-resource `iterAll` + page-envelope `iterPages`
     - low-level `paginate` callback iterator;
       `iterPages` consumes the `Last-Page` response header where the
@@ -35,6 +37,7 @@ surface), and dual ESM + CJS.
 - [Quick start](#quick-start)
 - [Authentication](#authentication)
 - [Resource modules](#resource-modules)
+- [No-network diagnostics](#no-network-diagnostics)
 - [Pagination](#pagination)
 - [Error handling](#error-handling)
     - [Connection failures and aborts](#connection-failures-and-aborts)
@@ -114,10 +117,10 @@ const broken = createClockifyClient({ apiKey: "a", addonToken: "t" });
 
 If you omit both, the factory reads from the environment:
 
-| Env var                | Used as      | Precedence  |
-| ---------------------- | ------------ | ----------- |
-| `CLOCKIFY_API_KEY`     | `apiKey`     | 1 (highest) |
-| `CLOCKIFY_ADDON_TOKEN` | `addonToken` | 2           |
+| Env var                | Used as      | Precedence (priority)  |
+| ---------------------- | ------------ | ---------------------- |
+| `CLOCKIFY_API_KEY`     | `apiKey`     | 1 (highest)            |
+| `CLOCKIFY_ADDON_TOKEN` | `addonToken` | 2                      |
 
 Explicit options always win. Empty-string env values are treated
 as absent. Throws if both env vars are also unset.
@@ -156,6 +159,31 @@ limitation — see
 `spec/evidence/discrepancies.md` →
 `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
 `createClockifyClient` hides it for the 99% case.
+
+## No-network diagnostics
+
+Use `clockifyDiagnostics()` before constructing a client when you want a
+local readiness receipt without contacting Clockify. It never returns raw
+tokens; auth values are reported only as configured/redacted. Pair it with
+`client.health()` for the first live credential probe.
+
+```typescript
+import { clockifyDiagnostics, createClockifyClient } from "clockify-sdk-ts-115";
+
+const diagnostics = clockifyDiagnostics();
+if (!diagnostics.ok) {
+    console.error(diagnostics.readiness, diagnostics.next);
+    process.exit(1);
+}
+
+const client = createClockifyClient();
+const health = await client.health();
+```
+
+The diagnostics receipt includes `checks`, `warnings`, and `next` fields
+for operator runbooks and support bundles. It checks `CLOCKIFY_API_KEY`,
+`CLOCKIFY_ADDON_TOKEN`, `CLOCKIFY_WORKSPACE_ID`, Node.js 20+, and base URL
+overrides without creating network traffic.
 
 ## Resource modules
 
@@ -379,9 +407,36 @@ catch (err) {
 
 ### Error codes
 
-Use `getErrorCode(err)` to read the server-side error code from
-the response body, in a way that survives wording changes in
-`error.message`:
+Use `classifyClockifyError(err)` when you want the same stable
+recovery vocabulary used by the CLI and MCP surfaces:
+
+```typescript
+import { classifyClockifyError } from "clockify-sdk-ts-115";
+
+try {
+    await client.tags.create({ workspaceId, name });
+} catch (err) {
+    const classified = classifyClockifyError(err);
+    if (!classified) throw err;
+
+    if (classified.code === "rate_limited" && classified.retryable) {
+        // back off, then retry
+        return;
+    }
+
+    console.error(classified.code, classified.recovery);
+    throw err;
+}
+```
+
+`classifyClockifyError` returns `{ code, recovery, retryable,
+statusCode?, serverCode?, message }`. The stable `code` comes from
+`docs/error-codes.json`; `serverCode` preserves any Clockify
+body-level code.
+
+Use `getStableErrorCode(err)` when only the shared stable code is
+needed. Use `getErrorCode(err)` when you specifically want the
+server-side body code from Clockify:
 
 ```typescript
 import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts-115";
@@ -680,10 +735,15 @@ const { createClockifyClient } = require("clockify-sdk-ts-115");
 Both module systems resolve via the modern triple-tier `exports`
 map. TypeScript picks the correct `.d.ts` per consumer's
 `moduleResolution`. Subpaths (`clockify-sdk-ts-115/iter`,
-`/webhooks`, `/composed-fetch`, `/create-client`, `/pagination`,
-`/with-response`) work in both.
+`/webhooks`, `/composed-fetch`, `/create-client`, `/diagnostics`,
+`/pagination`, `/with-response`) work in both. The
+`/with-response` subpath ships the `withResponse(...)` helper for
+lifting `HttpResponsePromise` into a flat `{ data, response, headers,
+requestId, status }` shape.
 
 ## Supported runtimes
+
+The SDK supports Node 20+.
 
 | Runtime    | Minimum                                                             | Tested         |
 | ---------- | ------------------------------------------------------------------- | -------------- |
@@ -705,7 +765,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 38 exports + 14 subpaths                                                         | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 47 exports + 15 subpaths                                                         | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |
@@ -713,8 +773,9 @@ matches what Speakeasy / Stainless SDKs ship:
 | Spec health     | `fern check --warnings --from-openapi` on the corrected snapshot                                                                    | CI `spec-check`                         |
 
 Lint scope is the hand-written wrapper (`*.ts` at root + `tests/**`).
-`wrapper/src/**` is wiped on every `npm run sync`, so linting there
-would only produce churn; `tsc --strict` covers it instead.
+Generated sources under the package's local src tree are wiped on every
+`npm run sync`, so linting there would only produce churn; `tsc --strict`
+covers them instead.
 
 ## Migration and contributing
 

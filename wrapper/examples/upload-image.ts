@@ -11,7 +11,7 @@
  *
  * WARNING: writes to your sandbox workspace.
  */
-import { createClockifyClient, ClockifyApiError } from "clockify-sdk-ts";
+import { createClockifyClient, ClockifyApiError } from "clockify-sdk-ts-115";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 if (!apiKey) {

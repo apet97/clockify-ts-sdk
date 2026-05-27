@@ -11,7 +11,7 @@
  * Run this against an unreachable host to see the path in
  * action (CLOCKIFY_API_KEY=test bun examples/handle-connection-error.ts).
  */
-import { createClockifyClient, isConnectionError, promoteApiError } from "clockify-sdk-ts";
+import { createClockifyClient, isConnectionError, promoteApiError } from "clockify-sdk-ts-115";
 
 async function main(): Promise<void> {
     const client = createClockifyClient({

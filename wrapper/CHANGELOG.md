@@ -1,9 +1,22 @@
 # Changelog
 
-All notable changes to `clockify-sdk-ts` are documented here.
+All notable changes to `clockify-sdk-ts-115` are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
+
+## [Unreleased]
+
+### Added
+
+- Exported shared error-code and recovery helpers from the SDK error surface.
+- Added `classifyClockifyError()` and `getStableErrorCode()` for SDK runtime recovery classification.
+- Added deterministic mock Clockify server coverage for SDK health and pagination flows.
+- Added `clockifyDiagnostics()` as a no-network SDK readiness receipt for auth, runtime, workspace ID, base URL override, warnings, and next steps.
+
+### Changed
+
+- Expanded the dual-build smoke surface to include generated error-code helpers, SDK classification helpers, and the diagnostics helper.
 
 ## [0.9.0] — 2026-05-25
 
@@ -65,7 +78,7 @@ quality bar. No breaking changes — all additions are opt-in.
   for `body.code` first, then `body.error.code` (string). Returns
   `undefined` when no code is present or `err` isn't a
   `ClockifyApiError`. Stripe / OpenAI / Anthropic SDK convention.
-- `PaginatedList<T>` class (subpath: `clockify-sdk-ts/paginated-list`).
+- `PaginatedList<T>` class (subpath: `clockify-sdk-ts-115/paginated-list`).
   Async-iterable wrapper around `iterAll`/`iterPages` with
   `.pages()`, `.toArray({ limit? })`, and direct
   `for await (const item of list)` ergonomic.
@@ -182,7 +195,7 @@ backward-compatible with v0.5.0 catch sites.
   `ConflictError` (409), `InternalServerError` (500),
   `ServiceUnavailableError` (503).** All extend `ClockifyApiError`
   so existing `instanceof ClockifyApiError` catches keep working.
-  Available from the package root and the `clockify-sdk-ts/errors`
+  Available from the package root and the `clockify-sdk-ts-115/errors`
   subpath. `RateLimitError` parses `Retry-After` (seconds or
   HTTP-date) and `X-RateLimit-Reset` (epoch seconds) into
   structured `retryAfterMs: number | undefined` and
@@ -198,7 +211,7 @@ backward-compatible with v0.5.0 catch sites.
   `isInternalServerError`, `isServiceUnavailableError`.** Match on
   `statusCode` without re-allocating the error.
 - **`warnOnce(key, message)` helper for deprecation paths.** Lives
-  at the new `clockify-sdk-ts/deprecation` subpath and is also
+  at the new `clockify-sdk-ts-115/deprecation` subpath and is also
   re-exported from the root. Dedupes by `key`; silent under
   `NODE_ENV === "test"` so the test suite isn't noisy. Two-phase
   removal convention documented in CONTRIBUTING.md
@@ -506,7 +519,7 @@ of the driving plan); the remaining cross-repo G-track lives in
 ### Added
 
 - **`withResponse()` ergonomic shim (Phase 1.7).** New
-  `clockify-sdk-ts/with-response` subpath exposes
+  `clockify-sdk-ts-115/with-response` subpath exposes
   `withResponse(promise) -> { data, response, headers, requestId,
   status }`. Thin wrapper over the synced
   `HttpResponsePromise.withRawResponse()` that lifts the
@@ -652,7 +665,7 @@ of the driving plan); the remaining cross-repo G-track lives in
   `auth.ts`, `paginate-all.ts`, `log-time-entry.ts`,
   `create-project.ts`, `generate-report.ts`, `upload-image.ts`,
   `verify-webhook.ts`, `middleware-datadog.ts`, `retry-custom.ts`.
-  Each imports from `clockify-sdk-ts` (package self-reference)
+  Each imports from `clockify-sdk-ts-115` (package self-reference)
   so copy-pasting into a real project requires no path changes.
   Live-API examples skip cleanly if `CLOCKIFY_API_KEY` is missing
   and use timestamp slugs for safety. The conceptual examples
@@ -668,7 +681,7 @@ of the driving plan); the remaining cross-repo G-track lives in
 - **Per-status error classes re-exported flat** from the package
   root: `BadRequestError`, `UnauthorizedError`, `ForbiddenError`,
   `NotFoundError`, `MethodNotAllowedError`. Consumers can now do
-  `import { NotFoundError } from "clockify-sdk-ts"` instead of
+  `import { NotFoundError } from "clockify-sdk-ts-115"` instead of
   the namespaced `ClockifyApi.NotFoundError`. Both forms work.
   `scripts/verify-dual-build.sh` checks 17 expected names per
   module system (was 12).
@@ -686,9 +699,9 @@ of the driving plan); the remaining cross-repo G-track lives in
   Documented in the JSDoc + README's pagination section.
 - **Dual ESM + CJS build.** The package now ships both module
   systems from `dist/esm/` and `dist/cjs/`. CommonJS consumers can
-  `require("clockify-sdk-ts")` and get the same surface ESM
+  `require("clockify-sdk-ts-115")` and get the same surface ESM
   consumers get via `import`. Every subpath
-  (`clockify-sdk-ts/{create-client, composed-fetch, iter, webhooks,
+  (`clockify-sdk-ts-115/{create-client, composed-fetch, iter, webhooks,
   pagination}`) is published in both module systems. Each `exports`
   entry uses the modern `{ import: { types, default }, require: {
   types, default } }` triple-tier shape so TypeScript resolves
@@ -709,10 +722,10 @@ of the driving plan); the remaining cross-repo G-track lives in
   now publishes publicly with sigstore provenance by default.
 - `npm run build:smoke` script that re-runs the dual-build
   verification standalone (useful in CI matrix legs).
-- `composedFetch()` at the new `clockify-sdk-ts/composed-fetch`
+- `composedFetch()` at the new `clockify-sdk-ts-115/composed-fetch`
   subpath — a `fetch`-compatible wrapper bundling four orthogonal
   concerns: `User-Agent` injection (default
-  `clockify-sdk-ts/<ver> (Node.js <ver>; <platform> <arch>)`),
+  `clockify-sdk-ts-115/<ver> (Node.js <ver>; <platform> <arch>)`),
   `X-Request-Id` injection (default UUID v4 per request),
   lifecycle hooks (`beforeRequest`, `afterResponse`, `onError`,
   `onRetry`), and a configurable retry policy with all knobs
@@ -731,11 +744,11 @@ of the driving plan); the remaining cross-repo G-track lives in
   for existing callers — only behavior change is the addition of
   the two default headers, which Clockify already tolerates.
 - `getRequestIdFromError()` helper exported from
-  `clockify-sdk-ts/composed-fetch` and the root entry. Extracts
+  `clockify-sdk-ts-115/composed-fetch` and the root entry. Extracts
   the `X-Request-Id` from a thrown `ClockifyApiError`'s
   `rawResponse.headers` for log correlation.
 - Webhook signature verification at the new
-  `clockify-sdk-ts/webhooks` subpath. `verifyClockifyWebhook({ headers,
+  `clockify-sdk-ts-115/webhooks` subpath. `verifyClockifyWebhook({ headers,
   expectedToken })` returns boolean for explicit handling;
   `constructEvent({ headers, payload, expectedToken })` verifies AND
   parses the JSON payload, throwing `WebhookSignatureMismatchError`
@@ -750,7 +763,7 @@ of the driving plan); the remaining cross-repo G-track lives in
   entry `webhook.signature-scheme.shared-secret-not-hmac-doc-only`
   captures the doc-vs-live uncertainty (no live probe yet).
 - `iterAll()` and `iterPages()` per-resource pagination helpers at
-  the new `clockify-sdk-ts/iter` subpath. `iterAll` yields items
+  the new `clockify-sdk-ts-115/iter` subpath. `iterAll` yields items
   flat across page boundaries; `iterPages` yields per-page
   envelopes (`{ items, page, pageSize, hasNextPage }`) for
   resumable pagination and progress UI. Both wrap any
@@ -762,9 +775,9 @@ of the driving plan); the remaining cross-repo G-track lives in
   assertion (in `tests/iter.test.ts`) verifies each pair still
   exists on a freshly-constructed client. The lower-level
   callback-style `paginate<T>` remains exported from
-  `clockify-sdk-ts/pagination` for advanced use.
+  `clockify-sdk-ts-115/pagination` for advanced use.
 - `createClockifyClient()` factory at the new
-  `clockify-sdk-ts/create-client` subpath — hides the documented
+  `clockify-sdk-ts-115/create-client` subpath — hides the documented
   `addonToken: (() => undefined) as unknown as () => string`
   workaround behind a discriminated-union options type that enforces
   "exactly one of `apiKey` or `addonToken`" at both compile and
@@ -775,9 +788,9 @@ of the driving plan); the remaining cross-repo G-track lives in
 - Package-root entry now re-exports both the synced SDK surface and
   the hand-written helpers (`createClockifyClient`, `paginate`),
   enabling `import { createClockifyClient, ClockifyApiClient,
-  paginate } from "clockify-sdk-ts"` in one statement. Per-subpath
-  imports (`clockify-sdk-ts/create-client`,
-  `clockify-sdk-ts/pagination`) remain for intent-revealing
+  paginate } from "clockify-sdk-ts-115"` in one statement. Per-subpath
+  imports (`clockify-sdk-ts-115/create-client`,
+  `clockify-sdk-ts-115/pagination`) remain for intent-revealing
   imports.
 
 ### Changed
@@ -789,15 +802,15 @@ of the driving plan); the remaining cross-repo G-track lives in
   `tsc -p tsconfig.build.json` invocation. Tarball shape: the synced
   Fern code now lives under `dist/src/` (was: flat under `dist/`);
   hand-written modules continue to emit flat at `dist/<name>.js`.
-  Public exports (`clockify-sdk-ts`,
-  `clockify-sdk-ts/pagination`, `clockify-sdk-ts/create-client`)
+  Public exports (`clockify-sdk-ts-115`,
+  `clockify-sdk-ts-115/pagination`, `clockify-sdk-ts-115/create-client`)
   resolve identically to before — only internal package paths moved.
 
-## [0.1.0] — TBD (initial publish)
+## [0.1.0] — 2026-05-24
 
 Initial publish. TypeScript SDK for the Clockify API, generated
 from the canonical Clockify OpenAPI by Fern and wrapped for npm
-distribution as `clockify-sdk-ts`.
+distribution as `clockify-sdk-ts-115`.
 
 ### Added
 
@@ -812,7 +825,7 @@ distribution as `clockify-sdk-ts`.
 - `ClockifyApiClient` constructor exposing `X-Api-Key` header auth.
 - `page` + `page-size` query parameters on 18 list endpoints,
   surfaced through every paginated `get…` method.
-- `clockify-sdk-ts/pagination` subpath export with the hand-written
+- `clockify-sdk-ts-115/pagination` subpath export with the hand-written
   `paginate<T>` async iterator, filling the gap left by Fern's
   unsupported bare-array pagination.
 - Tightened enum surface on `getTimeOffPolicies`:
@@ -829,7 +842,7 @@ evidence, repro, and current decision.
   `x-fern-pagination` offset mode requires an envelope-shaped
   response (`results: $response.<field>`); Clockify's list endpoints
   return bare top-level arrays. Use the
-  `paginate()` helper exported from `clockify-sdk-ts/pagination`
+  `paginate()` helper exported from `clockify-sdk-ts-115/pagination`
   (preferred) or write a manual `page` / `page-size` loop. Ledger
   entry: `fern.x-fern-pagination.bare-array-unsupported`.
 - **SDK method names are operationId-derived, not CRUDL.**

@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "purpose": "CI/workflow posture contract. Checks existing workflow safety rails and local documentation without changing CI/CD behavior.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-ci-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-workflow-entries",
+    "typed-supporting-doc-entries",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/ci-policy.md",
+    "mustContain": [
+      "Current workflow roles",
+      "CI safety rules",
+      "Contract-shape rule",
+      "make ci-contract",
+      "Legacy tag-triggered npm release path",
+      "explicit maintainer approval"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "workflows": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "mustContain": [
+        "name: CI",
+        "node-version: [\"20\", \"22\"]",
+        "npm run sync",
+        "npm run type-check",
+        "npm run build",
+        "npm run build:smoke",
+        "npm test",
+        "npm run test:types",
+        "npm pack --dry-run --json",
+        "fern check --warnings --from-openapi",
+        "persist-credentials: false"
+      ]
+    },
+    {
+      "path": ".github/workflows/ci-cli.yml",
+      "mustContain": [
+        "name: CI (cli)",
+        "node-version: [\"20\", \"22\"]",
+        "working-directory: wrapper",
+        "working-directory: cli",
+        "npm run type-check",
+        "npm test",
+        "npm run build",
+        "npm pack --dry-run --json",
+        "persist-credentials: false"
+      ]
+    },
+    {
+      "path": ".github/workflows/ci-mcp.yml",
+      "mustContain": [
+        "name: CI (mcp)",
+        "node-version: [\"20\", \"22\"]",
+        "working-directory: wrapper",
+        "working-directory: mcp",
+        "npm run type-check",
+        "npm test",
+        "npm run build",
+        "npm pack --dry-run --json",
+        "persist-credentials: false"
+      ]
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "mustContain": [
+        "name: CodeQL",
+        "security-and-quality",
+        "security-events: write",
+        "wrapper/composed-fetch.ts",
+        ".github/workflows"
+      ]
+    },
+    {
+      "path": ".github/workflows/docs.yml",
+      "mustContain": [
+        "name: Docs",
+        "pages: write",
+        "id-token: write",
+        "npm run docs",
+        "actions/deploy-pages"
+      ]
+    },
+    {
+      "path": ".github/workflows/release-please.yml",
+      "mustContain": [
+        "name: release-please",
+        "googleapis/release-please-action",
+        "release-please-config.json",
+        ".release-please-manifest.json"
+      ]
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "mustContain": [
+        "name: Release to npm",
+        "tags:",
+        "Verify tag matches package version",
+        "id-token: write",
+        "npm publish",
+        "npm sbom",
+        "Post-publish smoke install"
+      ]
+    }
+  ],
+  "supportingDocs": [
+    {
+      "path": "docs/release-support-policy.md",
+      "mustContain": ["Do not change CI/CD", "npm publication is not the default path"]
+    },
+    {
+      "path": "scripts/release-decision-plan.mjs",
+      "mustContain": ["network", "commandsExecuted", "explicitMaintainerApprovalRequired", "npm-via-ci"]
+    },
+    {
+      "path": "docs/risk-register.json",
+      "mustContain": ["legacy-release-workflow-needs-maintainer-decision"]
+    },
+    {
+      "path": "AGENTS.md",
+      "mustContain": ["Never run `npm publish`", ".github/workflows/**"]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "ci-contract",
+    "checker": "scripts/check-ci-contract.mjs",
+    "docsIndex": [
+      "ci-policy.md",
+      "ci-contract.json"
+    ],
+    "qualityGate": "make ci-contract",
+    "inventoryId": "ci-contract",
+    "auditId": "ci-contract"
+  }
+}

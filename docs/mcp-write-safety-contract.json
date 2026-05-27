@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable MCP write-safety contract. High-risk workflow writes must require dry-run confirmation; low-level destructive tools must advertise destructive semantics and return receipts.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-mcp-write-evidence-paths",
+    "typed-destructive-tool-threshold",
+    "typed-workflow-tool-lists",
+    "typed-required-file-evidence",
+    "typed-workflow-marker-contracts",
+    "typed-forbidden-policy-markers",
+    "typed-wiring-contract"
+  ],
+  "minimumDestructiveToolCount": 20,
+  "highRiskWorkflowTools": [
+    "clockify_invoice_client_work",
+    "clockify_record_expense",
+    "clockify_request_time_off",
+    "clockify_schedule_work",
+    "clockify_setup_webhook"
+  ],
+  "idempotentWorkflowTools": [
+    "clockify_demo_seed"
+  ],
+  "requiredFiles": [
+    {
+      "path": "docs/mcp-write-safety-policy.md",
+      "contains": [
+        "High-risk workflow writes require preview confirmation",
+        "destructiveHint: true",
+        "dry_run",
+        "confirm_token",
+        "Contract-shape rule",
+        "changed",
+        "recovery"
+      ]
+    },
+    {
+      "path": "mcp/README.md",
+      "contains": [
+        "confirm_token",
+        "dry_run",
+        "changed",
+        "recovery"
+      ]
+    },
+    {
+      "path": "mcp/src/orchestration/confirmation.ts",
+      "contains": [
+        "ConfirmationTokenStore",
+        "validate(confirmToken",
+        "tokens.delete",
+        "confirmation token does not match this tool call"
+      ]
+    },
+    {
+      "path": "mcp/src/resources.ts",
+      "contains": [
+        "dry_run",
+        "confirm_token",
+        "recovery"
+      ]
+    },
+    {
+      "path": "mcp/src/prompts.ts",
+      "contains": [
+        "preview step before any confirmed write",
+        "recovery code"
+      ]
+    },
+    {
+      "path": "mcp/src/output-schema.ts",
+      "contains": [
+        "changed",
+        "warnings",
+        "next",
+        "recovery"
+      ]
+    }
+  ],
+  "workflowRequiredMarkers": [
+    "destructiveHint: true",
+    "dry_run",
+    "confirm_token",
+    "maybeConfirm"
+  ],
+  "confirmationRequiredMarkers": [
+    "confirmationPayload",
+    "store.validate",
+    "dry_run confirmation required before executing this workflow",
+    "Run this workflow with dry_run:true"
+  ],
+  "forbiddenPolicyMarkers": [
+    "TODO",
+    "TBD"
+  ],
+  "wiring": {
+    "makeTarget": "mcp-write-safety",
+    "checker": "scripts/check-mcp-write-safety.mjs",
+    "toolsDirectory": "mcp/src/tools",
+    "workflowsFile": "mcp/src/tools/workflows.ts",
+    "docsIndexPolicy": "mcp-write-safety-policy.md",
+    "docsIndexContract": "mcp-write-safety-contract.json",
+    "qualityGate": "make mcp-write-safety",
+    "inventoryId": "mcp-write-safety",
+    "auditId": "mcp-write-safety"
+  }
+}

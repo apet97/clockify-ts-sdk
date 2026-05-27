@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable CLI write-safety contract. CLI writes remain deterministic and non-interactive; destructive commands must be ID-scoped and receipt-oriented.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-cli-write-evidence-paths",
+    "typed-required-file-evidence",
+    "typed-write-command-evidence",
+    "typed-forbidden-policy-markers",
+    "typed-wiring-contract"
+  ],
+  "requiredFiles": [
+    {
+      "path": "docs/cli-write-safety-policy.md",
+      "contains": [
+        "CLI writes stay non-interactive",
+        "Destructive commands must be ID-scoped",
+        "Create commands must return identifiers",
+        "Contract-shape rule",
+        "Errors must stay machine-readable"
+      ]
+    },
+    {
+      "path": "cli/README.md",
+      "contains": [
+        "--json",
+        "entries delete <id>",
+        "webhooks delete <id>",
+        "invoices create",
+        "scheduling create"
+      ]
+    },
+    {
+      "path": "cli/src/output.ts",
+      "contains": [
+        "printObject",
+        "printSuccess",
+        "recovery",
+        "errorCodeForMessage"
+      ]
+    },
+    {
+      "path": "cli/src/index.ts",
+      "contains": [
+        "exitCode",
+        "commander.unknownCommand",
+        "process.exit"
+      ]
+    }
+  ],
+  "writeCommands": [
+    {
+      "name": "log time entry",
+      "path": "cli/src/commands/log.ts",
+      "readmeCommand": "clk115 --json log",
+      "markers": ["timeEntries.create", "printObject", "id:"]
+    },
+    {
+      "name": "start timer",
+      "path": "cli/src/commands/start.ts",
+      "readmeCommand": "clk115 start",
+      "markers": ["timeEntries.create", "printObject", "id:"]
+    },
+    {
+      "name": "entries delete",
+      "path": "cli/src/commands/entries.ts",
+      "readmeCommand": "entries delete <id>",
+      "markers": [".command(\"delete\")", ".argument(\"<id>\"", "timeEntries.delete", "printSuccess", "deleted time entry"]
+    },
+    {
+      "name": "projects create",
+      "path": "cli/src/commands/projects.ts",
+      "readmeCommand": "projects create <name>",
+      "markers": [".command(\"create\")", "projects.create", "printObject", "id:"]
+    },
+    {
+      "name": "clients create",
+      "path": "cli/src/commands/clients.ts",
+      "readmeCommand": "clients create <name>",
+      "markers": [".command(\"create\")", "clients.create", "printObject", "id:"]
+    },
+    {
+      "name": "tags create",
+      "path": "cli/src/commands/tags.ts",
+      "readmeCommand": "tags create <name>",
+      "markers": [".command(\"create\")", "tags.create", "printObject", "id:"]
+    },
+    {
+      "name": "webhooks create",
+      "path": "cli/src/commands/webhooks.ts",
+      "readmeCommand": "webhooks create",
+      "markers": [".command(\"create\")", "webhooks.create", "printObject", "id:"]
+    },
+    {
+      "name": "webhooks delete",
+      "path": "cli/src/commands/webhooks.ts",
+      "readmeCommand": "webhooks delete <id>",
+      "markers": [".command(\"delete\")", ".argument(\"<id>\"", "webhooks.delete", "printSuccess", "deleted webhook"]
+    },
+    {
+      "name": "invoices create",
+      "path": "cli/src/commands/invoices.ts",
+      "readmeCommand": "invoices create",
+      "markers": [".command(\"create\")", "invoices.create", "printObject", "id:"]
+    },
+    {
+      "name": "scheduling create",
+      "path": "cli/src/commands/scheduling.ts",
+      "readmeCommand": "scheduling create",
+      "markers": [".command(\"create\")", "scheduling.create", "printObject", "id:"]
+    },
+    {
+      "name": "time off submit",
+      "path": "cli/src/commands/timeoff.ts",
+      "readmeCommand": "time-off",
+      "markers": ["timeOff.submit", "printObject", "id:"]
+    }
+  ],
+  "forbiddenPolicyMarkers": [
+    "TODO",
+    "TBD"
+  ],
+  "wiring": {
+    "makeTarget": "cli-write-safety",
+    "checker": "scripts/check-cli-write-safety.mjs",
+    "docsIndexPolicy": "cli-write-safety-policy.md",
+    "docsIndexContract": "cli-write-safety-contract.json",
+    "qualityGate": "make cli-write-safety",
+    "inventoryId": "cli-write-safety",
+    "auditId": "cli-write-safety"
+  }
+}

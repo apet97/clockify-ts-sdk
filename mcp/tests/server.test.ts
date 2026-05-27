@@ -1,3 +1,5 @@
+// Server tests exercise the canonical envelope: every tool returns content[0].text
+// plus structuredContent matching the advertised output schema.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
@@ -213,6 +215,42 @@ describe("@clockify115/mcp-server", () => {
 
         expect(weakDescriptions).toEqual([]);
         expect(missingAnnotations).toEqual([]);
+    });
+
+    it("advertises a structured output schema for every tool", async () => {
+        const client = await connect(fakeContext());
+        const tools = (await client.listTools()).tools;
+
+        const missingOutputSchema = tools
+            .filter((tool) => !tool.outputSchema)
+            .map((tool) => tool.name);
+        const weakOutputSchema = tools
+            .filter((tool) => tool.outputSchema && !("properties" in tool.outputSchema))
+            .map((tool) => tool.name);
+
+        expect(missingOutputSchema).toEqual([]);
+        expect(weakOutputSchema).toEqual([]);
+    });
+
+    it("advertises guide resources and workflow prompt", async () => {
+        const client = await connect(fakeContext());
+        const resources = await client.listResources();
+        const prompts = await client.listPrompts();
+
+        expect(resources.resources.map((resource) => resource.uri).sort()).toEqual([
+            "clockify://guide/axioms",
+            "clockify://guide/safety",
+            "clockify://guide/workflows",
+            "clockify://mcp/doctor",
+        ]);
+        expect(prompts.prompts.map((prompt) => prompt.name)).toContain("clockify-workflow-plan");
+
+        const cookbook = await client.readResource({ uri: "clockify://guide/workflows" });
+        expect(cookbook.contents[0]?.text).toContain("clockify_status");
+
+        const doctor = await client.readResource({ uri: "clockify://mcp/doctor" });
+        expect(doctor.contents[0]?.text).toContain("no-network diagnostics checklist");
+        expect(doctor.contents[0]?.text).toContain("CLOCKIFY_API_KEY");
     });
 
     it("clockify_status returns the canonical envelope", async () => {

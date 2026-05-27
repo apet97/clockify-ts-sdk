@@ -8,8 +8,8 @@
  *
  * @example
  * ```ts
- * import { createClockifyClient } from "clockify-sdk-ts";
- * import { otelHooks } from "clockify-sdk-ts/otel-hooks";
+ * import { createClockifyClient } from "clockify-sdk-ts-115";
+ * import { otelHooks } from "clockify-sdk-ts-115/otel-hooks";
  * import { trace } from "@opentelemetry/api";
  *
  * const tracer = trace.getTracer("my-app");
@@ -63,6 +63,7 @@ const ATTR_HTTP_METHOD = "http.request.method" as const;
 const ATTR_HTTP_URL = "url.full" as const;
 const ATTR_HTTP_STATUS = "http.response.status_code" as const;
 const ATTR_PEER_SERVICE = "peer.service" as const;
+const ATTR_SERVER_ADDRESS = "server.address" as const;
 const ATTR_RETRY_ATTEMPT = "http.request.resend_count" as const;
 const ATTR_DURATION_MS = "http.client.request.duration" as const;
 
@@ -100,6 +101,11 @@ export function otelHooks(options: OtelHooksOptions): ComposedFetchHooks {
                 [ATTR_PEER_SERVICE]: "clockify",
                 [ATTR_RETRY_ATTEMPT]: ctx.attempt,
             };
+            try {
+                initialAttrs[ATTR_SERVER_ADDRESS] = new URL(ctx.url).host;
+            } catch {
+                // ignore unparseable URLs; server.address is best-effort.
+            }
             const span = options.startSpan(`HTTP ${ctx.method}`, initialAttrs);
             // Always set attrs on the span directly so callers that ignore
             // the `attributes` arg still receive them.

@@ -9,7 +9,7 @@
  *
  * @example
  * ```ts
- * import { createClockifyClient, withResponse, getRateLimit } from "clockify-sdk-ts";
+ * import { createClockifyClient, withResponse, getRateLimit } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient();
  * const result = await withResponse(client.tags.list({ workspaceId }));
@@ -54,6 +54,17 @@ export function getRateLimit(headers: HeaderReader): RateLimitSnapshot {
             headers.get("X-RateLimit-Reset") ?? headers.get("x-ratelimit-reset"),
         ),
     };
+}
+
+/**
+ * Compute milliseconds until the rate-limit window resets. Returns
+ * `undefined` when {@link RateLimitSnapshot.resetAt} is unset. Useful
+ * for backoff loops: `setTimeout(retry, retryAfterMs(snapshot) ?? 0)`.
+ */
+export function retryAfterMs(snapshot: RateLimitSnapshot, now: Date = new Date()): number | undefined {
+    if (snapshot.resetAt == null) return undefined;
+    const ms = snapshot.resetAt.getTime() - now.getTime();
+    return ms > 0 ? ms : 0;
 }
 
 /**

@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Safe support and escalation bundle contract for SDK, CLI, MCP, OpenAPI/generator, mock/replay, and live-proof issues.",
+  "wiring": {
+    "makeTarget": "support-bundle",
+    "checker": "scripts/check-support-bundle.mjs",
+    "enterpriseAuditId": "support-bundle"
+  },
+  "runbook": {
+    "path": "docs/support-runbook.md",
+    "contains": [
+      "Safe diagnostic bundle",
+      "Never include",
+      "SDK support checklist",
+      "CLI support checklist",
+      "MCP support checklist",
+      "OpenAPI and generator support checklist",
+      "Live proof escalation",
+      "Generated support bundle command",
+      "Redaction rules",
+      "Escalation template",
+      "draft with a concrete deferral reason",
+      "Deferred live proof is not final readiness",
+      "Quickstart and diagnostics handoff",
+      "make quickstart-receipt",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "clockifyDiagnostics()"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "PASTE TOKEN"
+    ]
+  },
+  "generator": {
+    "path": "scripts/create-support-bundle.mjs",
+    "command": "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "secretsCaptured: false",
+      "workspaceIdsCaptured: false",
+      "rawProbeCapturesCaptured: false",
+      "readinessContext",
+      "reportsCaptured",
+      "enterpriseGoalStatus",
+      "releaseReadiness",
+      "riskStatus",
+      "contractInventory",
+      "finalBlockingSignalIds",
+      "requiredFinalProofCommandOrder",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "prepublishOnly",
+      "lockfileVersion",
+      "packageCount",
+      "CLOCKIFY_API_KEY",
+      "CLOCKIFY_ADDON_TOKEN",
+      "CLOCKIFY_WORKSPACE_ID",
+      "NPM_TOKEN",
+      "GITHUB_TOKEN",
+      "diagnosticsSurfaces",
+      "safeCommandHints",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "make quickstart-receipt"
+    ],
+    "forbiddenMarkers": [
+      "resolved",
+      "integrity",
+      "dependencies",
+      "node_modules"
+    ]
+  },
+  "lockfileSummary": {
+    "comment": "Summarizes the package-lock files for each package without copying the full dependency tree.",
+    "allowedFields": [
+      "path",
+      "available",
+      "error",
+      "lockfileVersion",
+      "packageCount"
+    ],
+    "forbiddenFields": [
+      "dependencies",
+      "devDependencies",
+      "optionalDependencies",
+      "peerDependencies",
+      "resolved",
+      "integrity",
+      "node_modules"
+    ]
+  },
+  "generatedBundleShape": {
+    "packageCount": 3,
+    "requiredPackageFields": [
+      "path",
+      "available",
+      "name",
+      "version",
+      "prepublishOnly",
+      "lockfile"
+    ],
+    "environmentShapeFalseFields": [
+      "envValuesCaptured",
+      "secretsCaptured",
+      "workspaceIdsCaptured"
+    ],
+    "redactionFalseFields": [
+      "envValuesCaptured",
+      "secretsCaptured",
+      "workspaceIdsCaptured",
+      "rawLogsCaptured",
+      "rawProbeCapturesCaptured",
+      "rawHttpPayloadsCaptured",
+      "browserCookiesCaptured",
+      "shellHistoryCaptured",
+      "localDotEnvFilesCaptured"
+    ],
+    "requiredReadinessContextFields": [
+      "network",
+      "commandsExecuted",
+      "reportsCaptured",
+      "enterpriseGoalStatus",
+      "releaseReadiness",
+      "riskStatus",
+      "contractInventory"
+    ],
+    "requiredReadinessReports": [
+      "enterprise-goal-status",
+      "release-readiness",
+      "risk-status",
+      "contract-inventory"
+    ],
+    "requiredDiagnosticSurfaces": [
+      "SDK",
+      "CLI",
+      "MCP"
+    ],
+    "requiredSafeCommandHints": [
+      "make diagnostics",
+      "make quickstart-receipt",
+      "make support-bundle",
+      "make mock-clockify"
+    ]
+  },
+  "requiredTargets": [
+    "support-bundle",
+    "secret-hygiene",
+    "security-threat-model",
+    "receipt-examples",
+    "receipts-contract",
+    "troubleshooting-drift",
+    "live-safety"
+  ],
+  "requiredDocs": [
+    "docs/support-runbook.md",
+    "docs/receipt-examples.md",
+    "docs/security-threat-model.md",
+    "docs/troubleshooting.md",
+    "docs/live-tests.md",
+    "docs/env-contract.json",
+    "docs/error-codes.json"
+  ],
+  "bundleFields": [
+    "Surface",
+    "Package/version",
+    "Prepublish gate",
+    "Runtime",
+    "Package-lock",
+    "Command/tool/import/operation",
+    "Sanitized receipt",
+    "Request ID",
+    "Stable error code",
+    "Retryable",
+    "Recovery shown",
+    "Changed",
+    "Live workspace type",
+    "Proof attempted",
+    "What changed recently",
+    "What must not be retried automatically"
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/receipt-examples.md",
+      "contains": [
+        "SDK success receipt",
+        "CLI error receipt",
+        "MCP recovery receipt"
+      ]
+    },
+    {
+      "path": "docs/security-threat-model.md",
+      "contains": [
+        "Credential handling",
+        "Mock/replay base URL",
+        "Live proof",
+        "final acceptance requires completed sandbox live proof",
+        "not final readiness"
+      ]
+    },
+    {
+      "path": "docs/troubleshooting.md",
+      "contains": [
+        "Troubleshooting",
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "path": "docs/live-tests.md",
+      "contains": [
+        "Never run live gates against a customer workspace",
+        "DEFER_LIVE_REASON"
+      ]
+    },
+    {
+      "path": "docs/env-contract.json",
+      "contains": [
+        "CLOCKIFY_BASE_URL",
+        "CLOCKIFY_API_KEY",
+        "mustMentionSafety"
+      ]
+    },
+    {
+      "path": "docs/error-codes.json",
+      "contains": [
+        "retryable",
+        "recovery"
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-support-bundle-paths",
+    "typed-runbook-contract",
+    "typed-generator-contract",
+    "typed-lockfile-summary-contract",
+    "typed-generated-bundle-shape",
+    "typed-supporting-evidence",
+    "makefile-audit-wiring",
+    "typed-diagnostics-and-quickstart-summary"
+  ]
+}

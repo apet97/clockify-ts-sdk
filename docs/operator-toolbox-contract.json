@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Operator toolbox contract for no-network preflight helpers that orient non-coders and future agents without claiming proof.",
+  "wiring": {
+    "makeTarget": "operator-toolbox",
+    "checker": "scripts/check-operator-toolbox.mjs",
+    "enterpriseAuditId": "operator-toolbox"
+  },
+  "toolbox": {
+    "path": "docs/operator-toolbox.md",
+    "mustContain": [
+      "Operator Toolbox",
+      "No command in this toolbox runs Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "node scripts/repo-doctor.mjs",
+      "node scripts/onboarding-plan.mjs --goal all",
+      "Shape-checked Markdown or JSON onboarding plan",
+      "node scripts/enterprise-goal-status.mjs",
+      "node scripts/enterprise-goal-status.mjs --format json",
+      "make enterprise-goal-status",
+      "make final-proof-preflight",
+      "make enterprise-audit",
+      "make perfect-fast",
+      "make performance-receipt",
+      "make perfect-full",
+      "make perfect-live",
+      "final-proof evidence sequence",
+      "final-proof-draft",
+      "final-proof-receipt-check",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "Shape-checked no-network SDK, CLI, MCP diagnostics path",
+      "safeCommandHints",
+      "node scripts/workflow-plan.mjs --workflow all",
+      "Shape-checked SDK, CLI, MCP paths",
+      "node scripts/acceptance-plan.mjs --scenario all",
+      "Shape-checked scenario proof plan",
+      "node scripts/examples-plan.mjs --example all",
+      "Shape-checked SDK, CLI, MCP examples",
+      "node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md",
+      "Shape-checked change scopes",
+      "node scripts/maintenance-plan.mjs --cadence all",
+      "Shape-checked weekly, monthly, dependency, generator, drift, release, and rollback plans",
+      "node scripts/contract-inventory-report.mjs",
+      "generated report/helper ownership",
+      "Every helper in this toolbox has an owner in `docs/contract-inventory.json`",
+      "node scripts/risk-status-report.mjs --status all",
+      "generated risk-status report shape",
+      "node scripts/release-readiness-report.mjs",
+      "node scripts/release-decision-plan.mjs --decision all",
+      "generated approval-boundary checks",
+      "node scripts/performance-calibration-plan.mjs",
+      "Budget-policy-backed calibration path",
+      "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+      "make axioms-contract",
+      "make final-proof-final",
+      "Inventory shape status",
+      "structural invariants",
+      "safe repo-relative paths",
+      "finalBlockingSignalIds",
+      "finalBlockingRiskIds",
+      "blockingSignalIds",
+      "blockingRiskIds"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "helperScripts": [
+    "scripts/repo-doctor.mjs",
+    "scripts/onboarding-plan.mjs",
+    "scripts/enterprise-goal-status.mjs",
+    "scripts/workflow-plan.mjs",
+    "scripts/acceptance-plan.mjs",
+    "scripts/examples-plan.mjs",
+    "scripts/change-impact-plan.mjs",
+    "scripts/maintenance-plan.mjs",
+    "scripts/contract-inventory-report.mjs",
+    "scripts/risk-status-report.mjs",
+    "scripts/release-readiness-report.mjs",
+    "scripts/release-decision-plan.mjs",
+    "scripts/performance-calibration-plan.mjs",
+    "scripts/create-support-bundle.mjs"
+  ],
+  "listInvariants": [
+    "typed-helper-command-coverage",
+    "typed-helper-lists",
+    "safe-toolbox-paths",
+    "valid-purpose",
+    "valid-schema-version",
+    "unique-helper-scripts",
+    "unique-required-owned-scripts",
+    "unique-required-targets",
+    "unique-supporting-docs",
+    "makefile-audit-wiring"
+  ],
+  "helperCommandCoverage": [
+    {
+      "script": "scripts/repo-doctor.mjs",
+      "documentedCommand": "node scripts/repo-doctor.mjs"
+    },
+    {
+      "script": "scripts/onboarding-plan.mjs",
+      "documentedCommand": "node scripts/onboarding-plan.mjs --goal all"
+    },
+    {
+      "script": "scripts/enterprise-goal-status.mjs",
+      "documentedCommand": "node scripts/enterprise-goal-status.mjs --format json"
+    },
+    {
+      "script": "scripts/workflow-plan.mjs",
+      "documentedCommand": "node scripts/workflow-plan.mjs --workflow all"
+    },
+    {
+      "script": "scripts/acceptance-plan.mjs",
+      "documentedCommand": "node scripts/acceptance-plan.mjs --scenario all"
+    },
+    {
+      "script": "scripts/examples-plan.mjs",
+      "documentedCommand": "node scripts/examples-plan.mjs --example all"
+    },
+    {
+      "script": "scripts/change-impact-plan.mjs",
+      "documentedCommand": "node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md"
+    },
+    {
+      "script": "scripts/maintenance-plan.mjs",
+      "documentedCommand": "node scripts/maintenance-plan.mjs --cadence all"
+    },
+    {
+      "script": "scripts/contract-inventory-report.mjs",
+      "documentedCommand": "node scripts/contract-inventory-report.mjs"
+    },
+    {
+      "script": "scripts/risk-status-report.mjs",
+      "documentedCommand": "node scripts/risk-status-report.mjs --status all"
+    },
+    {
+      "script": "scripts/release-readiness-report.mjs",
+      "documentedCommand": "node scripts/release-readiness-report.mjs"
+    },
+    {
+      "script": "scripts/release-decision-plan.mjs",
+      "documentedCommand": "node scripts/release-decision-plan.mjs --decision all"
+    },
+    {
+      "script": "scripts/performance-calibration-plan.mjs",
+      "documentedCommand": "node scripts/performance-calibration-plan.mjs"
+    },
+    {
+      "script": "scripts/create-support-bundle.mjs",
+      "documentedCommand": "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json"
+    }
+  ],
+  "helperCommandCoverageInvariants": [
+    "no-extra-script-mappings",
+    "no-duplicate-script-mappings"
+  ],
+  "helperOwnership": {
+    "inventoryPath": "docs/contract-inventory.json",
+    "ownedBy": [
+      "reportGenerator.path",
+      "entries[].reports"
+    ],
+    "requiredOwnedScripts": [
+      "scripts/repo-doctor.mjs",
+      "scripts/onboarding-plan.mjs",
+      "scripts/enterprise-goal-status.mjs",
+      "scripts/workflow-plan.mjs",
+      "scripts/acceptance-plan.mjs",
+      "scripts/examples-plan.mjs",
+      "scripts/change-impact-plan.mjs",
+      "scripts/maintenance-plan.mjs",
+      "scripts/contract-inventory-report.mjs",
+      "scripts/risk-status-report.mjs",
+      "scripts/release-readiness-report.mjs",
+      "scripts/release-decision-plan.mjs",
+      "scripts/performance-calibration-plan.mjs",
+      "scripts/create-support-bundle.mjs"
+    ]
+  },
+  "requiredTargets": [
+    "operator-toolbox",
+    "repo-doctor",
+    "onboarding-plan",
+    "enterprise-goal-status",
+    "final-proof-preflight",
+    "workflow-plan",
+    "acceptance-plan",
+    "examples-plan",
+    "change-impact-plan",
+    "maintenance-plan",
+    "contract-inventory-report",
+    "risk-status-report",
+    "release-readiness-report",
+    "release-decision-plan",
+    "performance-calibration-plan",
+    "support-bundle"
+  ],
+  "makeHelpMustContain": [
+    "make operator-toolbox",
+    "Check no-network helper catalogue and inventory ownership"
+  ],
+  "supportingDocs": [
+    "docs/quality-gates.md",
+    "docs/final-proof-runbook.md",
+    "docs/support-runbook.md",
+    "docs/operator-onboarding.md"
+  ],
+  "supportingDocMarkers": [
+    {
+      "path": "docs/quality-gates.md",
+      "mustContain": [
+        "inventory-owned",
+        "toolbox helper ownership"
+      ]
+    },
+    {
+      "path": "docs/README.md",
+      "mustContain": [
+        "inventory-ownership contract",
+        "inventory ownership for operators"
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-toolbox-paths",
+    "typed-helper-lists",
+    "typed-helper-command-coverage",
+    "typed-helper-ownership-contract",
+    "typed-supporting-doc-markers",
+    "makefile-audit-wiring"
+  ]
+}

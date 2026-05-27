@@ -11,7 +11,7 @@
  *
  * @example
  * ```ts
- * import { createClockifyClient } from "clockify-sdk-ts";
+ * import { createClockifyClient } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient();
  * const health = await client.health();
@@ -51,7 +51,7 @@ export interface HealthCheckResult {
  *
  * @example
  * ```ts
- * import { createClockifyClient, clockifyHealth } from "clockify-sdk-ts";
+ * import { createClockifyClient, clockifyHealth } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient();
  * const result = await clockifyHealth(client);
