@@ -1,0 +1,3355 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScript MCP tools, and GOCLMCP tools.",
+  "sources": {
+    "openapi": "docs/openapi-operations.json",
+    "tsMcp": "mcp/src/tools/*.ts",
+    "goMcp": "../GOCLMCP/docs/tool-catalog.json",
+    "overrides": "docs/operation-parity-overrides.json"
+  },
+  "summary": {
+    "operations": 185,
+    "sdkNamed": 170,
+    "tsMcpExact": 69,
+    "goMcpExact": 84,
+    "curated": 29
+  },
+  "operations": [
+    {
+      "method": "POST",
+      "path": "/file/image",
+      "operationId": "uploadImage",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_files_upload_image"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/shared-reports/{sharedReportId}",
+      "operationId": "getSharedReportsSharedReportId",
+      "sdk": "client.sharedReports.view",
+      "candidateTools": [
+        "clockify_shared_reports_view"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/user",
+      "operationId": "getCurrentUser",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_get_current_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces",
+      "operationId": "getAllMyWorkspaces",
+      "sdk": "client.workspaces.list",
+      "candidateTools": [
+        "clockify_workspaces_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces",
+      "operationId": "addWorkspace",
+      "sdk": "client.workspaces.create",
+      "candidateTools": [
+        "clockify_workspaces_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}",
+      "operationId": "getWorkspaceInfo",
+      "sdk": "client.workspaces.get",
+      "candidateTools": [
+        "clockify_workspaces_get"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}",
+      "operationId": "putWorkspacesWorkspaceId",
+      "sdk": "client.workspaces.update",
+      "candidateTools": [
+        "clockify_workspaces_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/addons/{addonId}/webhooks",
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "sdk": "client.webhooks.listForAddon",
+      "candidateTools": [
+        "clockify_webhooks_list_for_addon"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "operationId": "getApprovalRequests",
+      "sdk": "client.approvals.list",
+      "candidateTools": [
+        "clockify_approvals_list"
+      ],
+      "tsMcp": "clockify_approvals_list",
+      "goMcp": "clockify_approvals_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "operationId": "submitApprovalRequest",
+      "sdk": "client.approvals.submit",
+      "candidateTools": [
+        "clockify_approvals_submit",
+        "clockify_approvals_create"
+      ],
+      "tsMcp": "clockify_approvals_submit",
+      "goMcp": "clockify_approvals_submit",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
+      "operationId": "resubmitEntriesForApproval",
+      "sdk": "client.approvals.resubmit",
+      "candidateTools": [
+        "clockify_approvals_resubmit"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_approvals_resubmit",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}",
+      "operationId": "submitApprovalRequestForUser",
+      "sdk": "client.approvals.submitForUser",
+      "candidateTools": [
+        "clockify_approvals_submit_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
+      "operationId": "resubmitEntriesForApprovalForUser",
+      "sdk": "client.approvals.resubmitForUser",
+      "candidateTools": [
+        "clockify_approvals_resubmit_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "operationId": "updateApprovalRequest",
+      "sdk": "client.approvals.updateStatus",
+      "candidateTools": [
+        "clockify_approvals_update_status"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/audit-log",
+      "operationId": "searchAuditLogs",
+      "sdk": "client.auditLogReport.search",
+      "candidateTools": [
+        "clockify_audit_log_search"
+      ],
+      "tsMcp": "clockify_audit_log_search",
+      "goMcp": "clockify_audit_logs_search",
+      "overrideReason": "GOCLMCP keeps audit logs plural in the tool name.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/clients",
+      "operationId": "getWorkspacesWorkspaceIdClients",
+      "sdk": "client.clients.list",
+      "candidateTools": [
+        "clockify_clients_list"
+      ],
+      "tsMcp": "clockify_clients_list",
+      "goMcp": "clockify_clients_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/clients",
+      "operationId": "postWorkspacesWorkspaceIdClients",
+      "sdk": "client.clients.create",
+      "candidateTools": [
+        "clockify_clients_create"
+      ],
+      "tsMcp": "clockify_clients_create",
+      "goMcp": "clockify_clients_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "getWorkspacesWorkspaceIdClientsClientId",
+      "sdk": "client.clients.get",
+      "candidateTools": [
+        "clockify_clients_get"
+      ],
+      "tsMcp": "clockify_clients_get",
+      "goMcp": "clockify_clients_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "putWorkspacesWorkspaceIdClientsClientId",
+      "sdk": "client.clients.update",
+      "candidateTools": [
+        "clockify_clients_update"
+      ],
+      "tsMcp": "clockify_clients_update",
+      "goMcp": "clockify_clients_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "operationId": "deleteWorkspacesWorkspaceIdClientsClientId",
+      "sdk": "client.clients.delete",
+      "candidateTools": [
+        "clockify_clients_delete"
+      ],
+      "tsMcp": "clockify_clients_delete",
+      "goMcp": "clockify_clients_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
+      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
+      "sdk": "client.clients.archive",
+      "candidateTools": [
+        "clockify_clients_archive"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/cost-rate",
+      "operationId": "updateWorkspaceCostRate",
+      "sdk": "client.workspaces.updateCostRate",
+      "candidateTools": [
+        "clockify_workspaces_update_cost_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "operationId": "listWorkspaceCustomFields",
+      "sdk": "client.customFields.listForWorkspace",
+      "candidateTools": [
+        "clockify_custom_fields_list_for_workspace"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "operationId": "createWorkspaceCustomField",
+      "sdk": "client.customFields.createForWorkspace",
+      "candidateTools": [
+        "clockify_custom_fields_create_for_workspace"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "operationId": "updateWorkspaceCustomField",
+      "sdk": "client.customFields.updateForWorkspace",
+      "candidateTools": [
+        "clockify_custom_fields_update_for_workspace"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "operationId": "deleteWorkspaceCustomField",
+      "sdk": "client.customFields.deleteForWorkspace",
+      "candidateTools": [
+        "clockify_custom_fields_delete_for_workspace"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/created",
+      "operationId": "getCreatedEntityInfo",
+      "sdk": "client.entityChangesExperimental.listCreated",
+      "candidateTools": [
+        "clockify_entity_changes_experimental_list_created"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/deleted",
+      "operationId": "getDeletedEntityInfo",
+      "sdk": "client.entityChangesExperimental.listDeleted",
+      "candidateTools": [
+        "clockify_entity_changes_experimental_list_deleted"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/entities/updated",
+      "operationId": "getUpdatedEntityInfo",
+      "sdk": "client.entityChangesExperimental.listUpdated",
+      "candidateTools": [
+        "clockify_entity_changes_experimental_list_updated"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "operationId": "getWorkspaceExpenses",
+      "sdk": "client.expenses.list",
+      "candidateTools": [
+        "clockify_expenses_list"
+      ],
+      "tsMcp": "clockify_expenses_list",
+      "goMcp": "clockify_expenses_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "operationId": "createExpense",
+      "sdk": "client.expenses.create",
+      "candidateTools": [
+        "clockify_expenses_create"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_expenses_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "operationId": "getExpenseCategories",
+      "sdk": "client.expenseCategories.list",
+      "candidateTools": [
+        "clockify_expenses_list"
+      ],
+      "tsMcp": "clockify_expenses_categories_list",
+      "goMcp": "clockify_expenses_categories_list",
+      "overrideReason": "Category tools live under the expenses_categories prefix.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "operationId": "addExpenseCategory",
+      "sdk": "client.expenseCategories.create",
+      "candidateTools": [
+        "clockify_expenses_create"
+      ],
+      "tsMcp": "clockify_expenses_categories_create",
+      "goMcp": "clockify_expenses_categories_create",
+      "overrideReason": "Category tools live under the expenses_categories prefix.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "operationId": "updateExpenseCategory",
+      "sdk": "client.expenseCategories.update",
+      "candidateTools": [
+        "clockify_expenses_update"
+      ],
+      "tsMcp": "clockify_expenses_categories_update",
+      "goMcp": "clockify_expenses_categories_update",
+      "overrideReason": "Category tools live under the expenses_categories prefix.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "operationId": "deleteExpenseCategory",
+      "sdk": "client.expenseCategories.delete",
+      "candidateTools": [
+        "clockify_expenses_delete"
+      ],
+      "tsMcp": "clockify_expenses_categories_delete",
+      "goMcp": "clockify_expenses_categories_delete",
+      "overrideReason": "Category tools live under the expenses_categories prefix.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}/status",
+      "operationId": "archiveExpenseCategory",
+      "sdk": "client.expenseCategories.archive",
+      "candidateTools": [
+        "clockify_expenses_archive"
+      ],
+      "tsMcp": "clockify_expenses_categories_archive",
+      "goMcp": null,
+      "overrideReason": "The TS MCP has an archive helper; GOCLMCP models archive under update/delete style category operations.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": false,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "getExpenseById",
+      "sdk": "client.expenses.get",
+      "candidateTools": [
+        "clockify_expenses_get"
+      ],
+      "tsMcp": "clockify_expenses_get",
+      "goMcp": "clockify_expenses_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "updateExpense",
+      "sdk": "client.expenses.update",
+      "candidateTools": [
+        "clockify_expenses_update"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_expenses_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "operationId": "deleteExpense",
+      "sdk": "client.expenses.delete",
+      "candidateTools": [
+        "clockify_expenses_delete"
+      ],
+      "tsMcp": "clockify_expenses_delete",
+      "goMcp": "clockify_expenses_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}",
+      "operationId": "downloadExpenseReceipt",
+      "sdk": "client.expenses.downloadReceipt",
+      "candidateTools": [
+        "clockify_expenses_download_receipt"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "operationId": "getWorkspaceHolidays",
+      "sdk": "client.holidays.list",
+      "candidateTools": [
+        "clockify_holidays_list"
+      ],
+      "tsMcp": "clockify_holidays_list",
+      "goMcp": "clockify_holidays_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "operationId": "createHoliday",
+      "sdk": "client.holidays.create",
+      "candidateTools": [
+        "clockify_holidays_create"
+      ],
+      "tsMcp": "clockify_holidays_create",
+      "goMcp": "clockify_holidays_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/holidays/in-period",
+      "operationId": "getWorkspaceHolidaysInPeriod",
+      "sdk": "client.holidays.listInPeriod",
+      "candidateTools": [
+        "clockify_holidays_list_in_period"
+      ],
+      "tsMcp": "clockify_holidays_list_in_period",
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "operationId": "updateHoliday",
+      "sdk": "client.holidays.update",
+      "candidateTools": [
+        "clockify_holidays_update"
+      ],
+      "tsMcp": "clockify_holidays_update",
+      "goMcp": "clockify_holidays_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "operationId": "deleteHoliday",
+      "sdk": "client.holidays.delete",
+      "candidateTools": [
+        "clockify_holidays_delete"
+      ],
+      "tsMcp": "clockify_holidays_delete",
+      "goMcp": "clockify_holidays_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/hourly-rate",
+      "operationId": "updateWorkspaceBillableRate",
+      "sdk": "client.workspaces.updateBillableRate",
+      "candidateTools": [
+        "clockify_workspaces_update_billable_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "operationId": "getWorkspaceInvoices",
+      "sdk": "client.invoices.list",
+      "candidateTools": [
+        "clockify_invoices_list"
+      ],
+      "tsMcp": "clockify_invoices_list",
+      "goMcp": "clockify_invoices_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "operationId": "addInvoice",
+      "sdk": "client.invoices.create",
+      "candidateTools": [
+        "clockify_invoices_create"
+      ],
+      "tsMcp": "clockify_invoices_create",
+      "goMcp": "clockify_invoices_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/info",
+      "operationId": "filterInvoices",
+      "sdk": "client.invoices.filter",
+      "candidateTools": [
+        "clockify_invoices_filter",
+        "clockify_invoices_list"
+      ],
+      "tsMcp": "clockify_invoices_list",
+      "goMcp": "clockify_invoices_info",
+      "overrideReason": "Clockify invoice info search is a filtered list, not the plain invoice list tool.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "operationId": "getInvoiceSettings",
+      "sdk": "client.invoiceSettings.get",
+      "candidateTools": [
+        "clockify_invoice_settings_get"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "operationId": "updateInvoiceSettings",
+      "sdk": "client.invoiceSettings.update",
+      "candidateTools": [
+        "clockify_invoice_settings_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "getInvoiceById",
+      "sdk": "client.invoices.get",
+      "candidateTools": [
+        "clockify_invoices_get"
+      ],
+      "tsMcp": "clockify_invoices_get",
+      "goMcp": "clockify_invoices_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "updateInvoice",
+      "sdk": "client.invoices.update",
+      "candidateTools": [
+        "clockify_invoices_update"
+      ],
+      "tsMcp": "clockify_invoices_update",
+      "goMcp": "clockify_invoices_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "operationId": "deleteInvoice",
+      "sdk": "client.invoices.delete",
+      "candidateTools": [
+        "clockify_invoices_delete"
+      ],
+      "tsMcp": "clockify_invoices_delete",
+      "goMcp": "clockify_invoices_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
+      "operationId": "duplicateInvoice",
+      "sdk": "client.invoices.duplicate",
+      "candidateTools": [
+        "clockify_invoices_duplicate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/export",
+      "operationId": "exportInvoice",
+      "sdk": "client.invoices.export",
+      "candidateTools": [
+        "clockify_invoices_export"
+      ],
+      "tsMcp": "clockify_invoices_export",
+      "goMcp": "clockify_invoices_export",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items",
+      "operationId": "addInvoiceItem",
+      "sdk": "client.invoiceItems.create",
+      "candidateTools": [
+        "clockify_invoices_create"
+      ],
+      "tsMcp": "clockify_invoices_create",
+      "goMcp": "clockify_invoices_items_add",
+      "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/import",
+      "operationId": "importInvoiceItems",
+      "sdk": "client.invoiceItems.import",
+      "candidateTools": [
+        "clockify_invoices_import"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_invoices_import_time",
+      "overrideReason": "GOCLMCP exposes import workflows instead of a direct generated operation name.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
+      "operationId": "deleteInvoiceItem",
+      "sdk": "client.invoiceItems.delete",
+      "candidateTools": [
+        "clockify_invoices_delete"
+      ],
+      "tsMcp": "clockify_invoices_delete",
+      "goMcp": "clockify_invoices_items_delete",
+      "overrideReason": "GOCLMCP groups invoice item operations under invoices_items.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "operationId": "getInvoicePayments",
+      "sdk": "client.invoicePayments.list",
+      "candidateTools": [
+        "clockify_invoices_list"
+      ],
+      "tsMcp": "clockify_invoices_list",
+      "goMcp": "clockify_invoices_payments_list",
+      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "operationId": "addInvoicePayment",
+      "sdk": "client.invoicePayments.create",
+      "candidateTools": [
+        "clockify_invoices_create"
+      ],
+      "tsMcp": "clockify_invoices_create",
+      "goMcp": "clockify_invoices_payments_create",
+      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}",
+      "operationId": "deleteInvoicePayment",
+      "sdk": "client.invoicePayments.delete",
+      "candidateTools": [
+        "clockify_invoices_delete"
+      ],
+      "tsMcp": "clockify_invoices_delete",
+      "goMcp": "clockify_invoices_payments_delete",
+      "overrideReason": "GOCLMCP groups invoice payment operations under invoices_payments.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/status",
+      "operationId": "changeInvoiceStatus",
+      "sdk": "client.invoices.updateStatus",
+      "candidateTools": [
+        "clockify_invoices_update_status"
+      ],
+      "tsMcp": "clockify_invoices_update_status",
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "getMemberProfile",
+      "sdk": "client.memberProfiles.get",
+      "candidateTools": [
+        "clockify_member_profiles_get"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_users_profile",
+      "overrideReason": "GOCLMCP exposes member profile lookup through users_profile.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "putWorkspacesWorkspaceIdMemberProfileUserId",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_put_workspaces_workspace_id_member_profile_user_id"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "operationId": "updateMemberProfile",
+      "sdk": "client.memberProfiles.update",
+      "candidateTools": [
+        "clockify_member_profiles_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/policies",
+      "operationId": "getWorkspacesWorkspaceIdPolicies",
+      "sdk": "client.policies.list",
+      "candidateTools": [
+        "clockify_policies_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/policies",
+      "operationId": "postWorkspacesWorkspaceIdPolicies",
+      "sdk": "client.policies.create",
+      "candidateTools": [
+        "clockify_policies_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "getWorkspacesWorkspaceIdPoliciesPolicyId",
+      "sdk": "client.policies.get",
+      "candidateTools": [
+        "clockify_policies_get"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "putWorkspacesWorkspaceIdPoliciesPolicyId",
+      "sdk": "client.policies.update",
+      "candidateTools": [
+        "clockify_policies_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}",
+      "operationId": "deleteWorkspacesWorkspaceIdPoliciesPolicyId",
+      "sdk": "client.policies.delete",
+      "candidateTools": [
+        "clockify_policies_delete"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/policies/{policyId}/archive",
+      "operationId": "patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive",
+      "sdk": "client.policies.archive",
+      "candidateTools": [
+        "clockify_policies_archive"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects",
+      "operationId": "getWorkspaceProjects",
+      "sdk": "client.projects.list",
+      "candidateTools": [
+        "clockify_projects_list"
+      ],
+      "tsMcp": "clockify_projects_list",
+      "goMcp": "clockify_projects_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects",
+      "operationId": "createProject",
+      "sdk": "client.projects.create",
+      "candidateTools": [
+        "clockify_projects_create"
+      ],
+      "tsMcp": "clockify_projects_create",
+      "goMcp": "clockify_projects_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/from-template",
+      "operationId": "createProjectFromTemplate",
+      "sdk": "client.projects.createFromTemplate",
+      "candidateTools": [
+        "clockify_projects_create_from_template"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "getProjectById",
+      "sdk": "client.projects.get",
+      "candidateTools": [
+        "clockify_projects_get"
+      ],
+      "tsMcp": "clockify_projects_get",
+      "goMcp": "clockify_projects_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "updateProject",
+      "sdk": "client.projects.update",
+      "candidateTools": [
+        "clockify_projects_update"
+      ],
+      "tsMcp": "clockify_projects_update",
+      "goMcp": "clockify_projects_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "operationId": "deleteProject",
+      "sdk": "client.projects.delete",
+      "candidateTools": [
+        "clockify_projects_delete"
+      ],
+      "tsMcp": "clockify_projects_delete",
+      "goMcp": "clockify_projects_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
+      "sdk": "client.projects.archive",
+      "candidateTools": [
+        "clockify_projects_archive"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_projects_archive",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/cost-rate",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdCostRate",
+      "sdk": "client.projects.updateCostRate",
+      "candidateTools": [
+        "clockify_projects_update_cost_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields",
+      "operationId": "listProjectCustomFields",
+      "sdk": "client.customFields.listForProject",
+      "candidateTools": [
+        "clockify_custom_fields_list_for_project"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "operationId": "updateProjectCustomField",
+      "sdk": "client.customFields.updateForProject",
+      "candidateTools": [
+        "clockify_custom_fields_update_for_project"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "operationId": "removeProjectCustomField",
+      "sdk": "client.customFields.removeFromProject",
+      "candidateTools": [
+        "clockify_custom_fields_remove_from_project"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/estimate",
+      "operationId": "updateProjectEstimate",
+      "sdk": "client.projects.updateEstimate",
+      "candidateTools": [
+        "clockify_projects_update_estimate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/hourly-rate",
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate",
+      "sdk": "client.projects.updateHourlyRate",
+      "candidateTools": [
+        "clockify_projects_update_hourly_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "operationId": "assignOrRemoveProjectUsers",
+      "sdk": "client.projects.setMembers",
+      "candidateTools": [
+        "clockify_projects_set_members"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "operationId": "updateProjectMemberships",
+      "sdk": "client.projects.updateMemberships",
+      "candidateTools": [
+        "clockify_projects_update_memberships"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "operationId": "findTasksOnProject",
+      "sdk": "client.tasks.list",
+      "candidateTools": [
+        "clockify_tasks_list"
+      ],
+      "tsMcp": "clockify_tasks_list",
+      "goMcp": "clockify_tasks_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "operationId": "addTaskOnProject",
+      "sdk": "client.tasks.create",
+      "candidateTools": [
+        "clockify_tasks_create"
+      ],
+      "tsMcp": "clockify_tasks_create",
+      "goMcp": "clockify_tasks_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "getTaskById",
+      "sdk": "client.tasks.get",
+      "candidateTools": [
+        "clockify_tasks_get"
+      ],
+      "tsMcp": "clockify_tasks_get",
+      "goMcp": "clockify_tasks_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "updateTaskOnProject",
+      "sdk": "client.tasks.update",
+      "candidateTools": [
+        "clockify_tasks_update"
+      ],
+      "tsMcp": "clockify_tasks_update",
+      "goMcp": "clockify_tasks_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "operationId": "deleteTaskFromProject",
+      "sdk": "client.tasks.delete",
+      "candidateTools": [
+        "clockify_tasks_delete"
+      ],
+      "tsMcp": "clockify_tasks_delete",
+      "goMcp": "clockify_tasks_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/cost-rate",
+      "operationId": "updateTaskCostRate",
+      "sdk": "client.tasks.updateCostRate",
+      "candidateTools": [
+        "clockify_tasks_update_cost_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/hourly-rate",
+      "operationId": "updateTaskBillableRate",
+      "sdk": "client.tasks.updateBillableRate",
+      "candidateTools": [
+        "clockify_tasks_update_billable_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/template",
+      "operationId": "updateProjectTemplate",
+      "sdk": "client.projects.updateTemplate",
+      "candidateTools": [
+        "clockify_projects_update_template"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/cost-rate",
+      "operationId": "updateProjectUserCostRate",
+      "sdk": "client.projects.updateUserCostRate",
+      "candidateTools": [
+        "clockify_projects_update_user_cost_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/hourly-rate",
+      "operationId": "updateProjectUserHourlyRate",
+      "sdk": "client.projects.updateUserHourlyRate",
+      "candidateTools": [
+        "clockify_projects_update_user_hourly_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/attendance",
+      "operationId": "generateAttendanceReport",
+      "sdk": "client.reports.attendance",
+      "candidateTools": [
+        "clockify_reports_attendance"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_reports_attendance",
+      "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/detailed",
+      "operationId": "generateDetailedReport",
+      "sdk": "client.reports.detailed",
+      "candidateTools": [
+        "clockify_reports_detailed"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_reports_detailed",
+      "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/expenses/detailed",
+      "operationId": "generateDetailedReportV1",
+      "sdk": "client.expenseReport.generateDetailedReportV1",
+      "candidateTools": [
+        "clockify_expenses_generate_detailed_report_v1",
+        "clockify_expenses_list"
+      ],
+      "tsMcp": "clockify_expenses_list",
+      "goMcp": "clockify_reports_expense",
+      "overrideReason": "Expense reports are generated under an operationId-derived SDK module and a reports-family Go MCP tool.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/summary",
+      "operationId": "generateSummaryReport",
+      "sdk": "client.reports.summary",
+      "candidateTools": [
+        "clockify_reports_summary"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_reports_summary",
+      "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/reports/weekly",
+      "operationId": "generateWeeklyReport",
+      "sdk": "client.reports.weekly",
+      "candidateTools": [
+        "clockify_reports_weekly"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_reports_weekly",
+      "overrideReason": "GOCLMCP reports use report-family names instead of generic operation verbs.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments",
+      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignments",
+      "sdk": "client.scheduling.create",
+      "candidateTools": [
+        "clockify_scheduling_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/all",
+      "operationId": "getAllSchedulingAssignments",
+      "sdk": "client.scheduling.list",
+      "candidateTools": [
+        "clockify_scheduling_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "operationId": "getScheduledAssignmentsPerProject",
+      "sdk": "client.scheduling.listPerProject",
+      "candidateTools": [
+        "clockify_scheduling_list_per_project"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_scheduling_project_totals",
+      "overrideReason": "GOCLMCP exposes project totals as a scheduling aggregate tool.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}",
+      "operationId": "getScheduledAssignmentsOnProject",
+      "sdk": "client.scheduling.listOnProject",
+      "candidateTools": [
+        "clockify_scheduling_list_on_project"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/publish",
+      "operationId": "publishAssignments",
+      "sdk": "client.scheduling.publish",
+      "candidateTools": [
+        "clockify_scheduling_publish"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_scheduling_publish",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring",
+      "operationId": "createRecurringAssignment",
+      "sdk": "client.scheduling.createRecurring",
+      "candidateTools": [
+        "clockify_scheduling_create_recurring"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId",
+      "sdk": "client.scheduling.replaceRecurring",
+      "candidateTools": [
+        "clockify_scheduling_replace_recurring"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "updateRecurringAssignment",
+      "sdk": "client.scheduling.updateRecurring",
+      "candidateTools": [
+        "clockify_scheduling_update_recurring"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "operationId": "deleteRecurringAssignment",
+      "sdk": "client.scheduling.deleteRecurring",
+      "candidateTools": [
+        "clockify_scheduling_delete_recurring"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}",
+      "operationId": "changeRecurringPeriod",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_scheduling_change_recurring_period"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals",
+      "operationId": "getUsersCapacityTotals",
+      "sdk": "client.scheduling.getUsersCapacityFiltered",
+      "candidateTools": [
+        "clockify_scheduling_get_users_capacity_filtered"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_scheduling_capacity",
+      "overrideReason": "GOCLMCP names capacity totals as the capacity workflow.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/totals",
+      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals",
+      "sdk": "client.scheduling.calculateUsersTotals",
+      "candidateTools": [
+        "clockify_scheduling_calculate_users_totals"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_scheduling_user_totals",
+      "overrideReason": "GOCLMCP exposes user totals as a scheduling aggregate tool.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals",
+      "operationId": "getUserCapacityTotal",
+      "sdk": "client.scheduling.getUserCapacity",
+      "candidateTools": [
+        "clockify_scheduling_get_user_capacity"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
+      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
+      "sdk": "client.scheduling.update",
+      "candidateTools": [
+        "clockify_scheduling_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
+      "operationId": "deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
+      "sdk": "client.scheduling.delete",
+      "candidateTools": [
+        "clockify_scheduling_delete"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy",
+      "operationId": "copyScheduledAssignment",
+      "sdk": "client.scheduling.copy",
+      "candidateTools": [
+        "clockify_scheduling_copy"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "operationId": "getWorkspacesWorkspaceIdSharedReports",
+      "sdk": "client.sharedReports.list",
+      "candidateTools": [
+        "clockify_shared_reports_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "operationId": "postWorkspacesWorkspaceIdSharedReports",
+      "sdk": "client.sharedReports.create",
+      "candidateTools": [
+        "clockify_shared_reports_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "operationId": "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "sdk": "client.sharedReports.update",
+      "candidateTools": [
+        "clockify_shared_reports_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "operationId": "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "sdk": "client.sharedReports.delete",
+      "candidateTools": [
+        "clockify_shared_reports_delete"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/tags",
+      "operationId": "getWorkspacesWorkspaceIdTags",
+      "sdk": "client.tags.list",
+      "candidateTools": [
+        "clockify_tags_list"
+      ],
+      "tsMcp": "clockify_tags_list",
+      "goMcp": "clockify_tags_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/tags",
+      "operationId": "postWorkspacesWorkspaceIdTags",
+      "sdk": "client.tags.create",
+      "candidateTools": [
+        "clockify_tags_create"
+      ],
+      "tsMcp": "clockify_tags_create",
+      "goMcp": "clockify_tags_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "getWorkspacesWorkspaceIdTagsTagId",
+      "sdk": "client.tags.get",
+      "candidateTools": [
+        "clockify_tags_get"
+      ],
+      "tsMcp": "clockify_tags_get",
+      "goMcp": "clockify_tags_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "putWorkspacesWorkspaceIdTagsTagId",
+      "sdk": "client.tags.update",
+      "candidateTools": [
+        "clockify_tags_update"
+      ],
+      "tsMcp": "clockify_tags_update",
+      "goMcp": "clockify_tags_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
+      "sdk": "client.tags.delete",
+      "candidateTools": [
+        "clockify_tags_delete"
+      ],
+      "tsMcp": "clockify_tags_delete",
+      "goMcp": "clockify_tags_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries",
+      "operationId": "postWorkspacesWorkspaceIdTimeEntries",
+      "sdk": "client.timeEntries.create",
+      "candidateTools": [
+        "clockify_entries_create"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_entries_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced",
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
+      "sdk": "client.timeEntries.markInvoiced",
+      "candidateTools": [
+        "clockify_entries_mark_invoiced"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_entries_mark_invoiced",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
+      "sdk": "client.timeEntries.markInvoicedBulk",
+      "candidateTools": [
+        "clockify_entries_mark_invoiced_bulk"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/status/in-progress",
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+      "sdk": "client.timeEntries.listInProgress",
+      "candidateTools": [
+        "clockify_entries_list_in_progress",
+        "clockify_entries_list"
+      ],
+      "tsMcp": "clockify_entries_list",
+      "goMcp": "clockify_entries_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "sdk": "client.timeEntries.get",
+      "candidateTools": [
+        "clockify_entries_get"
+      ],
+      "tsMcp": "clockify_entries_get",
+      "goMcp": "clockify_entries_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "putWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "sdk": "client.timeEntries.update",
+      "candidateTools": [
+        "clockify_entries_update"
+      ],
+      "tsMcp": "clockify_entries_update",
+      "goMcp": "clockify_entries_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "sdk": "client.timeEntries.delete",
+      "candidateTools": [
+        "clockify_entries_delete"
+      ],
+      "tsMcp": "clockify_entries_delete",
+      "goMcp": "clockify_entries_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "operationId": "getBalancesForPolicy",
+      "sdk": "client.balances.listForPolicy",
+      "candidateTools": [
+        "clockify_balances_list_for_policy"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "operationId": "updateBalance",
+      "sdk": "client.balances.update",
+      "candidateTools": [
+        "clockify_balances_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/user/{userId}",
+      "operationId": "getBalanceForUser",
+      "sdk": "client.balances.getForUser",
+      "candidateTools": [
+        "clockify_balances_get_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "operationId": "getTimeOffPolicies",
+      "sdk": "client.timeOffPolicies.list",
+      "candidateTools": [
+        "clockify_time_off_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "operationId": "createTimeOffPolicy",
+      "sdk": "client.timeOffPolicies.create",
+      "candidateTools": [
+        "clockify_time_off_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "getTimeOffPolicy",
+      "sdk": "client.timeOffPolicies.get",
+      "candidateTools": [
+        "clockify_time_off_get"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "updateTimeOffPolicy",
+      "sdk": "client.timeOffPolicies.update",
+      "candidateTools": [
+        "clockify_time_off_update"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "changeTimeOffPolicyStatus",
+      "sdk": "client.timeOffPolicies.updateStatus",
+      "candidateTools": [
+        "clockify_time_off_update_status"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "operationId": "deleteTimeOffPolicy",
+      "sdk": "client.timeOffPolicies.delete",
+      "candidateTools": [
+        "clockify_time_off_delete"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
+      "operationId": "createTimeOffRequest",
+      "sdk": "client.timeOff.submit",
+      "candidateTools": [
+        "clockify_time_off_submit",
+        "clockify_time_off_create"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "operationId": "changeTimeOffRequestStatus",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_time_off_change_time_off_request_status"
+      ],
+      "tsMcp": "clockify_time_off_requests_update_status",
+      "goMcp": "clockify_time_off_requests_update",
+      "overrideReason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers.",
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "operationId": "deleteTimeOffRequest",
+      "sdk": "client.timeOff.withdraw",
+      "candidateTools": [
+        "clockify_time_off_withdraw"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
+      "operationId": "createTimeOffRequestForUser",
+      "sdk": "client.timeOff.submitForUser",
+      "candidateTools": [
+        "clockify_time_off_submit_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/requests",
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "sdk": "client.timeOff.list",
+      "candidateTools": [
+        "clockify_time_off_list"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "sdk": "client.timeOff.get",
+      "candidateTools": [
+        "clockify_time_off_get"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "sdk": "client.timeOff.delete",
+      "candidateTools": [
+        "clockify_time_off_delete"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
+      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+      "sdk": "client.timeOff.updateStatus",
+      "candidateTools": [
+        "clockify_time_off_update_status"
+      ],
+      "tsMcp": "clockify_time_off_requests_update_status",
+      "goMcp": "clockify_time_off_requests_update",
+      "overrideReason": "TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "operationId": "findAllGroupsOnWorkspace",
+      "sdk": "client.userGroups.list",
+      "candidateTools": [
+        "clockify_groups_list"
+      ],
+      "tsMcp": "clockify_groups_list",
+      "goMcp": "clockify_groups_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "operationId": "addNewGroup",
+      "sdk": "client.userGroups.create",
+      "candidateTools": [
+        "clockify_groups_create"
+      ],
+      "tsMcp": "clockify_groups_create",
+      "goMcp": "clockify_groups_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupId",
+      "sdk": "client.userGroups.get",
+      "candidateTools": [
+        "clockify_groups_get"
+      ],
+      "tsMcp": "clockify_groups_get",
+      "goMcp": "clockify_groups_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "updateGroup",
+      "sdk": "client.userGroups.update",
+      "candidateTools": [
+        "clockify_groups_update"
+      ],
+      "tsMcp": "clockify_groups_update",
+      "goMcp": "clockify_groups_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "operationId": "deleteGroup",
+      "sdk": "client.userGroups.delete",
+      "candidateTools": [
+        "clockify_groups_delete"
+      ],
+      "tsMcp": "clockify_groups_delete",
+      "goMcp": "clockify_groups_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
+      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupIdUsers",
+      "sdk": "client.userGroups.listMembers",
+      "candidateTools": [
+        "clockify_groups_list_members"
+      ],
+      "tsMcp": "clockify_groups_list_members",
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
+      "operationId": "addUsersToGroup",
+      "sdk": "client.userGroups.addMembers",
+      "candidateTools": [
+        "clockify_groups_add_members"
+      ],
+      "tsMcp": "clockify_groups_add_member",
+      "goMcp": "clockify_groups_add_user",
+      "overrideReason": "TS MCP uses member terminology; GOCLMCP uses user terminology.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}",
+      "operationId": "removeUserFromGroup",
+      "sdk": "client.userGroups.removeMember",
+      "candidateTools": [
+        "clockify_groups_remove_member"
+      ],
+      "tsMcp": "clockify_groups_remove_member",
+      "goMcp": "clockify_groups_remove_user",
+      "overrideReason": "TS MCP uses member terminology; GOCLMCP uses user terminology.",
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "sdk": "client.timeEntries.listForUser",
+      "candidateTools": [
+        "clockify_entries_list_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "sdk": "client.timeEntries.createForUser",
+      "candidateTools": [
+        "clockify_entries_create_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "sdk": "client.timeEntries.startTimer",
+      "candidateTools": [
+        "clockify_entries_start_timer"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "sdk": "client.timeEntries.updateForUser",
+      "candidateTools": [
+        "clockify_entries_update_for_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "operationId": "deleteMany",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_entries_delete_many"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/stop",
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop",
+      "sdk": "client.timeEntries.stopTimer",
+      "candidateTools": [
+        "clockify_entries_stop_timer"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate",
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
+      "sdk": "client.timeEntries.duplicate",
+      "candidateTools": [
+        "clockify_entries_duplicate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/users",
+      "operationId": "findWorkspaceUsers",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_find_workspace_users",
+        "clockify_users_list"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_users_list",
+      "overrideReason": "GOCLMCP exposes workspace users through the users_list tool.",
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users",
+      "operationId": "addUserToWorkspace",
+      "sdk": "client.workspaces.addUser",
+      "candidateTools": [
+        "clockify_workspaces_add_user"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users/info",
+      "operationId": "filterWorkspaceUsers",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_filter_workspace_users"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "operationId": "updateUserStatus",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_workspaces_update_user_status"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/cost-rate",
+      "operationId": "updateUserCostRate",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_workspaces_update_user_cost_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
+      "operationId": "updateUserCustomFieldValue",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_update_user_custom_field_value"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/hourly-rate",
+      "operationId": "updateUserHourlyRate",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_workspaces_update_user_hourly_rate"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/users/{userId}/managers",
+      "operationId": "findUserTeamManagers",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_users_find_user_team_managers"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "operationId": "giveUserManagerRole",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_roles_give_user_manager_role"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_users_role",
+      "overrideReason": "GOCLMCP groups user role writes under users_role.",
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "operationId": "removeUserManagerRole",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_roles_remove_user_manager_role"
+      ],
+      "tsMcp": null,
+      "goMcp": "clockify_users_role",
+      "overrideReason": "GOCLMCP groups user role writes under users_role.",
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": true,
+        "curated": true
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "operationId": "getWebhooksOnWorkspace",
+      "sdk": "client.webhooks.list",
+      "candidateTools": [
+        "clockify_webhooks_list"
+      ],
+      "tsMcp": "clockify_webhooks_list",
+      "goMcp": "clockify_webhooks_list",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "operationId": "createWebhook",
+      "sdk": "client.webhooks.create",
+      "candidateTools": [
+        "clockify_webhooks_create"
+      ],
+      "tsMcp": "clockify_webhooks_create",
+      "goMcp": "clockify_webhooks_create",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "getWebhookById",
+      "sdk": "client.webhooks.get",
+      "candidateTools": [
+        "clockify_webhooks_get"
+      ],
+      "tsMcp": "clockify_webhooks_get",
+      "goMcp": "clockify_webhooks_get",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "updateWebhook",
+      "sdk": "client.webhooks.update",
+      "candidateTools": [
+        "clockify_webhooks_update"
+      ],
+      "tsMcp": "clockify_webhooks_update",
+      "goMcp": "clockify_webhooks_update",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "DELETE",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "operationId": "deleteWebhook",
+      "sdk": "client.webhooks.delete",
+      "candidateTools": [
+        "clockify_webhooks_delete"
+      ],
+      "tsMcp": "clockify_webhooks_delete",
+      "goMcp": "clockify_webhooks_delete",
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": true,
+        "goMcpExact": true,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
+      "sdk": "client.webhooks.rotateToken",
+      "candidateTools": [
+        "clockify_webhooks_rotate_token"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
+      "sdk": "client.webhooks.listLogs",
+      "candidateTools": [
+        "clockify_webhooks_list_logs"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "operationId": "getWebhookLogs",
+      "sdk": "client.webhooks.searchLogs",
+      "candidateTools": [
+        "clockify_webhooks_search_logs"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/token",
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+      "sdk": "client.webhooks.updateToken",
+      "candidateTools": [
+        "clockify_webhooks_update_token"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    }
+  ]
+}

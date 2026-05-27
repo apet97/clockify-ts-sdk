@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Deterministic mock Clockify contract. Keeps the local mock API, mock-backed SDK/CLI/MCP tests, and mock/replay docs aligned.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-mock-evidence-paths",
+    "typed-server-contract",
+    "typed-route-contracts",
+    "typed-header-contracts",
+    "typed-mock-test-evidence",
+    "typed-doc-evidence",
+    "typed-wiring-contract"
+  ],
+  "server": "scripts/mock-clockify-server.mjs",
+  "exports": ["createMockClockifyServer"],
+  "defaultWorkspaceId": "000000000000000000000001",
+  "requiredRoutes": [
+    "GET /user",
+    "GET /workspaces",
+    "GET /workspaces/{workspaceId}/tags",
+    "POST /workspaces/{workspaceId}/tags",
+    "DELETE /workspaces/{workspaceId}/tags/{tagId}",
+    "GET /workspaces/{workspaceId}/clients",
+    "GET /workspaces/{workspaceId}/projects",
+    "GET /workspaces/{workspaceId}/time-entries/status/in-progress"
+  ],
+  "requiredHeaders": ["X-Request-Id", "Last-Page"],
+  "mockTests": [
+    {
+      "surface": "sdk",
+      "path": "wrapper/tests/mock-clockify.test.ts",
+      "mustContain": ["createClockifyClient", "iterAll", "Deep Work"]
+    },
+    {
+      "surface": "cli",
+      "path": "cli/tests/mock-clockify.test.ts",
+      "mustContain": ["CLOCKIFY_BASE_URL", "--base-url", "tags"]
+    },
+    {
+      "surface": "mcp",
+      "path": "mcp/tests/mock-clockify.test.ts",
+      "mustContain": ["loadContext", "CLOCKIFY_BASE_URL", "clockify_status"]
+    }
+  ],
+  "docs": [
+    {
+      "path": "docs/quality-gates.md",
+      "contains": ["make mock-clockify", "CLOCKIFY_BASE_URL", "Contract-shape rule"]
+    },
+    {
+      "path": "docs/install-personas.md",
+      "contains": ["CLOCKIFY_BASE_URL", "mock/replay"]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "mock-contract",
+    "qualityGate": "make mock-contract",
+    "docsIndexContract": "mock-clockify-contract.json",
+    "inventoryId": "mock-contract",
+    "auditId": "mock-contract"
+  }
+}

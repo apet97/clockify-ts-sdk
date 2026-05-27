@@ -1,0 +1,424 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Contract for the final proof command split and final receipt acceptance invariants. Draft receipt generation must use final-proof-draft, final acceptance must use final-proof-final, the legacy final-proof target may appear only as a documented draft alias, and the receipt manifest/checker/status reports must preserve final-only proof requirements. Composite proof targets are make perfect-fast, make perfect-full, and make perfect-live.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-final-proof-command-paths",
+    "typed-final-proof-targets",
+    "typed-required-docs",
+    "typed-required-scripts",
+    "typed-required-receipt-contracts",
+    "typed-ambiguous-reference-policy",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "final-proof-command-contract",
+    "checker": "scripts/check-final-proof-command-contract.mjs",
+    "enterpriseAuditId": "final-proof-command-contract"
+  },
+  "targets": {
+    "preflight": "final-proof-preflight",
+    "draft": "final-proof-draft",
+    "legacyAlias": "final-proof",
+    "final": "final-proof-final",
+    "receiptCheck": "final-proof-receipt-check",
+    "rawFinalAudit": "enterprise-audit-final"
+  },
+  "makefile": {
+    "path": "Makefile",
+    "mustContain": [
+      "final-proof: final-proof-draft",
+      "final-proof-preflight:",
+      "final-proof-draft:",
+      "final-proof-final: final-proof-receipt-check enterprise-audit-final",
+      "performance_args=\"\"",
+      "performance_args=\"--performance-runs=$${PERFORMANCE_RUNS}\"",
+      "Optional: PERFORMANCE_RUNS=<count>; omitted uses docs/performance-budgets.json requiredSuccessfulRuns.",
+      "Alias for final-proof-draft",
+      "receipt invariants"
+    ],
+    "mustNotContain": [
+      "PERFORMANCE_RUNS:-3",
+      "--performance-runs=\"$${PERFORMANCE_RUNS:-3}\""
+    ]
+  },
+  "requiredDocs": [
+    {
+      "path": "docs/final-proof-runbook.md",
+      "mustContain": [
+        "LIVE=1 make final-proof-draft",
+        "make final-proof-preflight",
+        "make final-proof` remains a back-compatible alias",
+        "make final-proof-final",
+        "make axioms-contract",
+        "Axioms contract proof",
+        "Exit status: 0",
+        "Result: passed",
+        "prose `ok` sentence is not enough",
+        "### Receipt N",
+        "duplicate that block until the number of successful performance receipts matches",
+        "Residual risk status: none",
+        "Draft receipts may use",
+        "Live proof status: failed",
+        "make final-proof-receipt-check` passes after temporary context removal"
+      ]
+    },
+    {
+      "path": "docs/quality-gates.md",
+      "mustContain": [
+        "Run final proof draft flow",
+        "receipt invariants",
+        "Back-compatible final proof draft alias",
+        "Run final proof acceptance gate"
+      ]
+    },
+    {
+      "path": "docs/release-readiness-checklist.md",
+      "mustContain": [
+        "make final-proof-draft",
+        "make final-proof-final",
+        "make axioms-contract"
+      ]
+    },
+    {
+      "path": "docs/risk-register.md",
+      "mustContain": [
+        "final proof draft flow",
+        "make final-proof-final",
+        "make axioms-contract"
+      ]
+    },
+    {
+      "path": "docs/operator-toolbox.md",
+      "mustContain": [
+        "make enterprise-goal-status",
+        "Draft receipt",
+        "make final-proof-receipt-check",
+        "Final acceptance",
+        "make axioms-contract"
+      ]
+    },
+    {
+      "path": "docs/README.md",
+      "mustContain": [
+        "Enterprise goal status",
+        "receipt acceptance invariants",
+        "Final proof draft",
+        "Final proof acceptance"
+      ]
+    }
+  ],
+  "requiredScripts": [
+    {
+      "path": "scripts/release-readiness-report.mjs",
+      "mustContain": [
+        "final-proof-draft",
+        "final-proof-final"
+      ]
+    },
+    {
+      "path": "scripts/enterprise-goal-status.mjs",
+      "mustContain": [
+        "make final-proof-draft",
+        "make final-proof-final",
+        "make axioms-contract"
+      ]
+    },
+    {
+      "path": "scripts/run-final-proof.mjs",
+      "mustContain": [
+        "draftBlockers",
+        "Axioms contract proof",
+        "make axioms-contract",
+        "extractCleanupReceipt",
+        "missingPrefixes",
+        "liveProofStatus = \"failed\"",
+        "live proof cannot be marked completed",
+        "requestedPerformanceRuns",
+        "requiredSuccessfulRuns",
+        "defaults to docs/performance-budgets.json requiredSuccessfulRuns",
+        "--performance-runs must be at least",
+        "assert-clean-prefixes cleanup JSON",
+        "final-proof-preflight",
+        "run make final-proof-final"
+      ],
+      "mustNotContain": [
+        "requiredSuccessfulRuns ?? 1",
+        "requiredSuccessfulRuns ?? 3"
+      ]
+    },
+    {
+      "path": "scripts/check-final-proof-command-contract.mjs",
+      "mustContain": [
+        "validateContractShape",
+        "contract.schemaVersion",
+        "contractRelativePath",
+        "repo-relative path without parent traversal",
+        "contract.requiredDocs",
+        "contract.requiredScripts",
+        "contract.requiredReceiptContracts",
+        "contract.ambiguousReferencePolicy.scanRoots",
+        "contract.ambiguousReferencePolicy.allowedLineMarkers",
+        "contains duplicate entry",
+        "must be a non-empty array",
+        "must be a non-empty string"
+      ],
+      "mustNotContain": []
+    }
+  ],
+  "requiredReceiptContracts": [
+    {
+      "path": "docs/final-proof-receipt-manifest.json",
+      "mustContain": [
+        "\"finalRequiredStatus\": \"completed\"",
+        "\"finalRequiredStatus\": \"none\"",
+        "mustBeAbsentOnDisk",
+        "riskRegisterPath",
+        "blockingStatuses",
+        "nonBlockingOverrideField",
+        "successSectionFailureForbiddenPatterns",
+        "successSectionRequiredPatterns",
+        "Result:\\\\s*passed",
+        "receiptFailureForbiddenPatterns",
+        "completedCleanupRequiredPrefixes",
+        "completedSuccessRequiredPatterns",
+        "completedSectionForbiddenMarkers",
+        "failedRequiredPatterns",
+        "cleanupReceiptJsonShape",
+        "requiredReceiptValue",
+        "requiredCalibrationStatus",
+        "\"latestReceipt\"",
+        "\"pathSource\": \"calibrationPolicy.receiptPath\"",
+        "\"mustBeJsonObject\": true",
+        "\"requireMeasurements\": true",
+        "\"forbidFailures\": true",
+        "\"forbidFailedMeasurements\": true",
+        "\"calibrationStatusPath\": \"calibrationPolicy.status\"",
+        "\"mustMatchBudgetRequiredCalibrationStatus\": true",
+        "\"budgetSchemaVersionField\": \"budgetsSchemaVersion\"",
+        "\"mustMatchBudgetSchemaVersion\": true",
+        "\"budgetFingerprintField\": \"budgetFingerprint\"",
+        "\"mustMatchBudgetFingerprint\": true",
+        "make axioms-contract",
+        "## Axioms contract proof"
+      ],
+      "mustNotContain": [
+        "successPattern",
+        "completedPassPattern",
+        "\\\\b(pass|passed|success|succeeded|ok)\\\\b"
+      ]
+    },
+    {
+      "path": "docs/final-proof-receipt.template.md",
+      "mustContain": [
+        "docs/final-proof-receipt-manifest.json",
+        "Axioms contract proof",
+        "make axioms-contract",
+        "Exit status: 0",
+        "Result: passed",
+        "prose success summaries are not enough",
+        "calibrationPolicy.requiredSuccessfulRuns",
+        "calibrationPolicy.receiptPath",
+        "calibrationPolicy.status: calibrated",
+        "budgetsSchemaVersion",
+        "no failed measurement entries",
+        "Pasted output",
+        "repeat this numbered receipt block until the configured count is met",
+        "### Receipt N",
+        "PASTE OUTPUT HERE",
+        "PASTE CLEANUP RECEIPT HERE"
+      ],
+      "mustNotContain": [
+        "### Receipt 2",
+        "### Receipt 3"
+      ]
+    },
+    {
+      "path": "scripts/check-final-proof-receipt.mjs",
+      "mustContain": [
+        "live proof status must be",
+        "residual risk status must be",
+        "manifestRelativePath",
+        "manifest.receiptPath",
+        "manifest.budgetPath",
+        "manifest.riskRegisterPath",
+        "manifest.temporaryContextPath",
+        "manifest.temporaryContextRemoval.pathPattern",
+        "manifest.temporaryContextPath must match manifest.temporaryContextRemoval.pathPattern",
+        "manifestTemporaryRemovalPath",
+        "if (!fs.existsSync(receiptPath))",
+        "Manifest structural validation runs before the final receipt file",
+        "path.isAbsolute",
+        "repo-relative path without parent traversal",
+        "readJsonFile",
+        "could not be read as JSON",
+        "manifest.schemaVersion must be 1",
+        "requiredSections",
+        "orderedSections",
+        "manifest required section is not assigned to orderedSections",
+        "manifest ordered section is not listed in requiredSections",
+        "manifest success section is not listed in requiredSections",
+        "manifest command section is not listed in requiredSections",
+        "assertUnique",
+        "manifest.requiredSections",
+        "manifest.orderedSections",
+        "manifest.successSections",
+        "manifest.requiredCommands",
+        "manifest.commandSections[].section",
+        "manifest.commandSections[].commands",
+        "assertNonEmptyString",
+        "must be a non-empty string",
+        "assertNonEmptyArray",
+        "must be a non-empty array",
+        "assertPositiveInteger",
+        "must be a positive integer",
+        "assertBoolean",
+        "must be a boolean",
+        "assertTrue",
+        "must be true",
+        "assertNonEmptyStrings",
+        "assertRegexPatterns",
+        "contains non-string or empty entry",
+        "contains invalid regex pattern",
+        "manifest.forbiddenPlaceholders",
+        "manifest.liveProof.completedCleanupRequiredPrefixes",
+        "manifest.liveProof.completedSectionForbiddenMarkers",
+        "manifest.liveProof.deferredRequiredMarkers",
+        "manifest.residualRisk.noneForbiddenPatterns",
+        "manifest.residualRisk.carriedRequiredPatterns",
+        "manifest.budget.field",
+        "manifest.budget.latestReceipt.pathSource",
+        "manifest.budget.latestReceipt.pathSource must be calibrationPolicy.receiptPath",
+        "manifest.budget.latestReceipt.mustBeJsonObject",
+        "manifest.budget.latestReceipt.requireMeasurements",
+        "manifest.budget.latestReceipt.forbidFailures",
+        "manifest.budget.latestReceipt.forbidFailedMeasurements",
+        "manifest.budget.latestReceipt.calibrationStatusPath",
+        "manifest.budget.latestReceipt.calibrationStatusPath must be calibrationPolicy.status",
+        "manifest.budget.latestReceipt.mustMatchBudgetRequiredCalibrationStatus",
+        "manifest.budget.latestReceipt.budgetSchemaVersionField",
+        "manifest.budget.latestReceipt.budgetSchemaVersionField must be budgetsSchemaVersion",
+        "manifest.budget.latestReceipt.mustMatchBudgetSchemaVersion",
+        "manifest.budget.latestReceipt.budgetFingerprintField",
+        "manifest.budget.latestReceipt.budgetFingerprintField must be budgetFingerprint",
+        "manifest.budget.latestReceipt.mustMatchBudgetFingerprint",
+        "budget.calibrationPolicy.receiptPath",
+        "latest performance receipt",
+        "failed measurement entries",
+        "latest performance receipt calibrationPolicy.status must be",
+        "latest performance receipt budgetsSchemaVersion must match",
+        "latest performance receipt budgetFingerprint must match",
+        "budgetFingerprint",
+        "./budget-fingerprint.mjs",
+        "readDottedField",
+        "manifest.liveProof.field",
+        "manifest.liveProof.minDeferralReasonLength",
+        "manifest.liveProof.allowedStatuses",
+        "manifest.liveProof.finalRequiredStatus must be listed in manifest.liveProof.allowedStatuses",
+        "manifest.temporaryContextRemoval.section",
+        "manifest.temporaryContextRemoval.mustBeAbsentOnDisk",
+        "manifest.residualRisk.statusField",
+        "manifest.residualRisk.allowedStatuses",
+        "manifest.residualRisk.finalRequiredStatus must be listed in manifest.residualRisk.allowedStatuses",
+        "manifest.riskRegister.blockingStatuses",
+        "manifest.riskRegister.nonBlockingOverrideField",
+        "manifest.riskRegister.acceptedNonBlockingStatuses",
+        "manifest command section is missing a section name",
+        "manifest command section has no commands",
+        "manifest.successSectionRequiredPatterns",
+        "manifest.successSectionFailureForbiddenPatterns",
+        "manifest.budget receipt patterns",
+        "manifest.liveProof completed patterns",
+        "contains duplicate entry",
+        "requiredCommands",
+        "sectionScopedCommands",
+        "manifest required command is not assigned to a command section",
+        "manifest command section includes command not listed in requiredCommands",
+        "requiredSuccessfulRuns",
+        "readListField(performanceSection, manifest.budget.field)",
+        "still exists on disk",
+        "temporaryContextSection",
+        "temporary context removal section must record the removed temporary context path",
+        "temporary context path appears outside the removal receipt section",
+        "parseJsonObject",
+        "successSectionFailureForbiddenPatterns",
+        "successSectionRequiredPatterns",
+        "required success pattern",
+        "const liveSection = readSection(text, manifest.liveProof.sectionStart, manifest.liveProof.sectionEnd)",
+        "readListField(liveSection, manifest.liveProof.field)",
+        "readListField(liveSection, manifest.liveProof.deferralReasonField)",
+        "completedSuccessRequiredPatterns",
+        "completedSectionForbiddenMarkers",
+        "live section contains forbidden marker",
+        "live section is missing required success pattern",
+        "printSuggestedNextActions",
+        "Suggested next actions"
+      ],
+      "mustNotContain": [
+        "manifest.successPattern",
+        "completedPassPattern",
+        "function stableJson",
+        "createHash",
+        "if (!text.includes(command))",
+        "receipt missing command:",
+        "readListField(text, manifest.budget.field)",
+        "temporary context path appears, but not under the removal receipt",
+        "receipt section lacks explicit pass/success wording",
+        "successPattern.test(text)",
+        "receipt does not contain any explicit pass/success wording"
+      ]
+    },
+    {
+      "path": "scripts/enterprise-goal-status.mjs",
+      "mustContain": [
+        "finalReceiptHasFinalLiveProofStatus",
+        "finalReceiptHasFinalResidualRiskStatus",
+        "finalReceiptHasRiskRegisterClear",
+        "risk-register-final-status",
+        "finalReadinessBlocking",
+        "final-blocking open/provisional",
+        "finalReceiptHasPerformanceProof",
+        "finalReceiptHasFailureMarkers",
+        "finalReceiptHasRequiredSuccessSectionEvidence",
+        "success-section-evidence",
+        "successSectionRequiredPatterns",
+        "readReceiptSection"
+      ]
+    },
+    {
+      "path": "scripts/release-readiness-report.mjs",
+      "mustContain": [
+        "finalReceiptHasFinalLiveProofStatus",
+        "finalReceiptHasFinalResidualRiskStatus",
+        "finalReceiptHasRiskRegisterClear",
+        "risk-register-final-status",
+        "finalReadinessBlocking",
+        "final-blocking open/provisional",
+        "finalReceiptHasPerformanceProof",
+        "finalReceiptHasFailureMarkers",
+        "finalReceiptHasRequiredSuccessSectionEvidence",
+        "success-section-evidence",
+        "successSectionRequiredPatterns",
+        "readReceiptSection"
+      ]
+    }
+  ],
+  "ambiguousReferencePolicy": {
+    "pattern": "make final-proof",
+    "allowedLineMarkers": [
+      "Alias",
+      "alias",
+      "back-compatible",
+      "ambiguous",
+      "final-proof-draft",
+      "final-proof-final",
+      "\"pattern\":"
+    ],
+    "scanRoots": [
+      "docs",
+      "scripts",
+      "Makefile"
+    ]
+  }
+}

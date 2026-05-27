@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable requirements for docs/final-proof-receipt.md. This is not proof; it defines the receipt fields, sections, commands, status values, and completion markers that the checker enforces after real command evidence exists.",
+  "receiptPath": "docs/final-proof-receipt.md",
+  "budgetPath": "docs/performance-budgets.json",
+  "riskRegisterPath": "docs/risk-register.json",
+  "temporaryContextPath": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+  "forbiddenPlaceholders": [
+    "PASTE OUTPUT HERE",
+    "DESCRIBE BUDGET CHANGES HERE",
+    "PASTE CLEANUP RECEIPT HERE",
+    "None, or list exact remaining risks",
+    "NOT COMPLETE:",
+    "Run after removing the temporary context file."
+  ],
+  "summaryFields": [
+    "- Date:",
+    "- Operator:",
+    "- Branch or checkout:",
+    "- Goal:"
+  ],
+  "requiredSections": [
+    "## No-network preflight",
+    "## Artifact audit",
+    "## Axioms contract proof",
+    "## Deterministic local proof",
+    "## Performance receipts",
+    "## Full generation and pack proof",
+    "## Live sandbox proof",
+    "## Temporary context cleanup",
+    "## Residual risk"
+  ],
+  "orderedSections": [
+    "## No-network preflight",
+    "## Artifact audit",
+    "## Axioms contract proof",
+    "## Deterministic local proof",
+    "## Performance receipts",
+    "## Full generation and pack proof",
+    "## Live sandbox proof",
+    "## Temporary context cleanup",
+    "## Residual risk"
+  ],
+  "requiredCommands": [
+    "make final-proof-preflight",
+    "make enterprise-audit",
+    "make axioms-contract",
+    "make perfect-fast",
+    "make performance-receipt",
+    "make perfect-full",
+    "make perfect-live",
+    "make enterprise-audit-final"
+  ],
+  "commandSections": [
+    {
+      "section": "## No-network preflight",
+      "commands": [
+        "make final-proof-preflight"
+      ]
+    },
+    {
+      "section": "## Artifact audit",
+      "commands": [
+        "make enterprise-audit"
+      ]
+    },
+    {
+      "section": "## Axioms contract proof",
+      "commands": [
+        "make axioms-contract"
+      ]
+    },
+    {
+      "section": "## Deterministic local proof",
+      "commands": [
+        "make perfect-fast"
+      ]
+    },
+    {
+      "section": "## Performance receipts",
+      "commands": [
+        "make performance-receipt"
+      ]
+    },
+    {
+      "section": "## Full generation and pack proof",
+      "commands": [
+        "make perfect-full"
+      ]
+    },
+    {
+      "section": "## Live sandbox proof",
+      "commands": [
+        "make perfect-live"
+      ]
+    },
+    {
+      "section": "## Temporary context cleanup",
+      "commands": [
+        "make enterprise-audit-final"
+      ]
+    }
+  ],
+  "successSections": [
+    "## No-network preflight",
+    "## Artifact audit",
+    "## Axioms contract proof",
+    "## Deterministic local proof",
+    "## Performance receipts",
+    "## Full generation and pack proof",
+    "## Temporary context cleanup"
+  ],
+  "successSectionRequiredPatterns": [
+    "Exit status:\\s*0",
+    "Result:\\s*passed"
+  ],
+  "successSectionFailureForbiddenPatterns": [
+    "Result:\\s*failed",
+    "Exit status:\\s*[1-9]"
+  ],
+  "budget": {
+    "field": "- Budget status:",
+    "requiredReceiptValue": "tightened",
+    "requiredCalibrationStatus": "calibrated",
+    "section": "## Performance receipts",
+    "receiptHeadingPattern": "### Receipt \\d+",
+    "receiptPassPattern": "Result:\\s*passed",
+    "receiptExitZeroPattern": "Exit status:\\s*0",
+    "receiptFailureForbiddenPatterns": [
+      "Result:\\s*failed",
+      "Exit status:\\s*[1-9]"
+    ],
+    "latestReceipt": {
+      "pathSource": "calibrationPolicy.receiptPath",
+      "mustBeJsonObject": true,
+      "requireMeasurements": true,
+      "forbidFailures": true,
+      "forbidFailedMeasurements": true,
+      "calibrationStatusPath": "calibrationPolicy.status",
+      "mustMatchBudgetRequiredCalibrationStatus": true,
+      "budgetSchemaVersionField": "budgetsSchemaVersion",
+      "mustMatchBudgetSchemaVersion": true,
+      "budgetFingerprintField": "budgetFingerprint",
+      "mustMatchBudgetFingerprint": true
+    }
+  },
+  "liveProof": {
+    "field": "- Live proof status:",
+    "allowedStatuses": [
+      "completed",
+      "failed",
+      "deferred"
+    ],
+    "finalRequiredStatus": "completed",
+    "deferralReasonField": "- Live deferral reason:",
+    "minDeferralReasonLength": 20,
+    "sectionStart": "## Live sandbox proof",
+    "sectionEnd": "## Temporary context cleanup",
+    "completedSuccessRequiredPatterns": [
+      "Exit status:\\s*0",
+      "Result:\\s*passed"
+    ],
+    "cleanupReceiptMarker": "Sandbox cleanup receipt:",
+    "cleanupReceiptBlock": "first fenced block after cleanupReceiptMarker",
+    "cleanupReceiptJsonShape": {
+      "prefixes": "array",
+      "total": 0,
+      "leftovers": "object"
+    },
+    "completedCleanupRequiredPatterns": [
+      "\"prefixes\"\\s*:",
+      "\"total\"\\s*:\\s*0",
+      "\"leftovers\"\\s*:"
+    ],
+    "completedCleanupRequiredPrefixes": [
+      "sdk-test-",
+      "mcp-sandbox-",
+      "mcp-workflow-",
+      "mcp-log-",
+      "mcp-fix-",
+      "DEMO-"
+    ],
+    "completedFailureForbiddenPatterns": [
+      "Result:\\s*failed",
+      "Exit status:\\s*[1-9]"
+    ],
+    "completedSectionForbiddenMarkers": [
+      "NOT RUN",
+      "PASTE CLEANUP RECEIPT HERE"
+    ],
+    "completedCleanupForbiddenMarkers": [
+      "NOT RUN",
+      "PASTE CLEANUP RECEIPT HERE"
+    ],
+    "failedRequiredPatterns": [
+      "Result:\\s*failed"
+    ],
+    "deferredRequiredMarkers": [
+      "NOT RUN"
+    ],
+    "deferredCleanupRequiredMarkers": [
+      "NOT RUN: no live objects were created by this proof runner."
+    ]
+  },
+  "temporaryContextRemoval": {
+    "section": "## Temporary context cleanup",
+    "removedMarker": "Removed:",
+    "pathPattern": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+    "mustBeAbsentOnDisk": true
+  },
+  "residualRisk": {
+    "section": "## Residual risk",
+    "statusField": "- Residual risk status:",
+    "allowedStatuses": [
+      "none",
+      "carried"
+    ],
+    "finalRequiredStatus": "none",
+    "noneRequiredMarker": "No remaining risks after final proof.",
+    "noneForbiddenPatterns": [
+      "Owner:",
+      "Reason:",
+      "Closure gate:"
+    ],
+    "carriedRequiredPatterns": [
+      "Owner:",
+      "Reason:",
+      "Closure gate:"
+    ],
+    "forbiddenMarkers": [
+      "None, or list exact remaining risks",
+      "TBD",
+      "TODO"
+    ]
+  },
+  "riskRegister": {
+    "blockingStatuses": [
+      "open",
+      "provisional"
+    ],
+    "nonBlockingOverrideField": "finalReadinessBlocking",
+    "acceptedNonBlockingStatuses": [
+      "accepted",
+      "blocked-upstream"
+    ]
+  },
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-final-proof-receipt-paths",
+    "typed-required-receipt-contracts",
+    "typed-live-proof-contract",
+    "typed-residual-risk-contract",
+    "typed-budget-receipt-contract",
+    "typed-temporary-context-removal",
+    "typed-risk-register-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "final-proof-receipt-check",
+    "checker": "scripts/check-final-proof-receipt.mjs",
+    "enterpriseAuditId": "final-proof-command-contract"
+  }
+}

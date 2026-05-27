@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable contract for durable architecture and operations decision records.",
+  "contractInvariants": [
+    "schema-versioned-decision-records-contract",
+    "safe-decision-record-paths",
+    "typed-decision-record-entries",
+    "required-heading-contract",
+    "zero-padded-decision-numbering",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "decision-records",
+    "checker": "scripts/check-decision-records.mjs",
+    "enterpriseAuditId": "decision-records"
+  },
+  "policyDocument": {
+    "path": "docs/decision-records-policy.md",
+    "contains": [
+      "Record decisions that change where work belongs",
+      "Keep each record operational",
+      "Do not hide residual risk",
+      "Do not use decision records to bypass proof",
+      "after removing the"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "requiredHeadings": [
+    "Status",
+    "Context",
+    "Decision",
+    "Consequences",
+    "Proof"
+  ],
+  "expectedRecordCount": 5,
+  "requiredRecordIds": [
+    "canonical-api-truth",
+    "generated-core-boundary",
+    "no-default-npm-publish",
+    "sandbox-only-live-proof",
+    "temporary-context-final-proof"
+  ],
+  "records": [
+    {
+      "id": "canonical-api-truth",
+      "path": "docs/decisions/0001-canonical-api-truth.md",
+      "contains": [
+        "GOCLMCP owns canonical Clockify OpenAPI generation",
+        "spec/corrected/clockify.corrected.openapi.yaml is a snapshot",
+        "make perfect-full"
+      ]
+    },
+    {
+      "id": "generated-core-boundary",
+      "path": "docs/decisions/0002-generated-core-boundary.md",
+      "contains": [
+        "Generated code is a dependency",
+        "wrapper/src/** is not a product-editing surface",
+        "make generator-independence"
+      ]
+    },
+    {
+      "id": "no-default-npm-publish",
+      "path": "docs/decisions/0003-no-default-npm-publish.md",
+      "contains": [
+        "Do not publish by default",
+        "prepublishOnly remains present",
+        "make supply-chain"
+      ]
+    },
+    {
+      "id": "sandbox-only-live-proof",
+      "path": "docs/decisions/0004-sandbox-only-live-proof.md",
+      "contains": [
+        "Live proof mutates Clockify state",
+        "sacrificial sandbox workspace",
+        "make perfect-live"
+      ]
+    },
+    {
+      "id": "temporary-context-final-proof",
+      "path": "docs/decisions/0005-temporary-context-final-proof.md",
+      "contains": [
+        "temporary context file is intentionally temporary",
+        "docs/final-proof-receipt.md",
+        "immediately before final acceptance",
+        "make final-proof-final"
+      ]
+    }
+  ]
+}

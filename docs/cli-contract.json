@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "purpose": "CLI public contract for @clockify115/cli. Keeps command metadata, README tables (generated:cli-commands block), binary aliases, global flags, completion support, and Exit codes contract tests aligned.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-cli-contract-paths",
+    "typed-metadata-reference",
+    "typed-expected-command-surface",
+    "typed-exit-codes",
+    "typed-source-evidence",
+    "typed-wiring-contract"
+  ],
+  "metadata": "docs/cli-commands.json",
+  "expected": {
+    "commandCount": 28,
+    "binaries": [
+      "clockify115",
+      "clk115"
+    ],
+    "globalFlags": [
+      "--api-key",
+      "--workspace",
+      "--base-url",
+      "--json",
+      "--no-color"
+    ],
+    "completionShells": [
+      "zsh",
+      "bash",
+      "fish"
+    ],
+    "exitCodes": {
+      "success": 0,
+      "runtimeOrApiError": 1,
+      "usageError": 2
+    }
+  },
+  "sourceEvidence": {
+    "entrypoint": "cli/src/index.ts",
+    "completions": "cli/src/completions.ts",
+    "readme": "cli/README.md",
+    "indexTest": "cli/tests/index.test.ts",
+    "completionTest": "cli/tests/completions.test.ts",
+    "exitContractTest": "cli/tests/exit-contract.test.ts"
+  },
+  "wiring": {
+    "makeTarget": "cli-contract",
+    "checker": "scripts/check-cli-contract.mjs",
+    "docsIndexContract": "cli-contract.json",
+    "qualityGate": "make cli-contract",
+    "inventoryId": "cli-contract",
+    "auditId": "cli-contract"
+  }
+}

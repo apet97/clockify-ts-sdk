@@ -13,7 +13,7 @@ import {
     constructEvent,
     verifyClockifyWebhook,
     WebhookSignatureMismatchError,
-} from "clockify-sdk-ts";
+} from "clockify-sdk-ts-115";
 
 // --- Pattern 1: boolean check ---
 function explicitlyMappedHandler(req: { headers: Record<string, string>; body: string }): {

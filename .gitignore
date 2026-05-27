@@ -26,3 +26,4 @@ spec/evidence/probes/*.hdr
 .idea/
 .vscode/
 *.swp
+.claude/

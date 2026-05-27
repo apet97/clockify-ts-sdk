@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Developer environment and bootstrap contract for local SDK/CLI/MCP/OpenAPI work. Run make help to list all available gates.",
+  "policyDocument": {
+    "path": "docs/developer-environment-policy.md",
+    "mustContain": [
+      "Node `>=20`",
+      "package-lock.json",
+      "There is no root `package.json`",
+      "exact `prepublishOnly` command shapes",
+      "Docker",
+      "../GOCLMCP",
+      "node scripts/repo-doctor.mjs",
+      "make developer-environment"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "root": {
+    "forbiddenFiles": [
+      "package.json",
+      "package-lock.json"
+    ]
+  },
+  "repoDoctor": {
+    "path": "scripts/repo-doctor.mjs",
+    "makeTarget": "repo-doctor",
+    "mustContain": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "CLOCKIFY_API_KEY",
+      "NPM_TOKEN",
+      "GITHUB_TOKEN",
+      "../GOCLMCP",
+      "fernapi/fern-typescript-node-sdk",
+      "requiredScriptValues",
+      "wrapper/src",
+      "output/ts-sdk"
+    ],
+    "generatedReport": {
+      "network": "none",
+      "environmentShapeFalseFields": [
+        "envValuesCaptured",
+        "secretsCaptured",
+        "workspaceIdsCaptured"
+      ],
+      "requiredCheckIds": [
+        "node.floor",
+        "root.no-package-json",
+        "root.no-package-lock",
+        "wrapper.script.prepublishOnly.command",
+        "cli.script.prepublishOnly.command",
+        "mcp.script.prepublishOnly.command",
+        "fern.cli-pin",
+        "fern.generator-pin",
+        "goclmcp.sibling"
+      ]
+    }
+  },
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "lockfile": "wrapper/package-lock.json",
+      "requiredScripts": [
+        "sync",
+        "type-check",
+        "build",
+        "build:smoke",
+        "test",
+        "prepublishOnly"
+      ],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
+      },
+      "engine": ">=20"
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "lockfile": "cli/package-lock.json",
+      "requiredScripts": [
+        "type-check",
+        "build",
+        "test",
+        "prepublishOnly"
+      ],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "engine": ">=20"
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "lockfile": "mcp/package-lock.json",
+      "requiredScripts": [
+        "type-check",
+        "build",
+        "test",
+        "verify:live-cleanup",
+        "prepublishOnly"
+      ],
+      "requiredScriptValues": {
+        "prepublishOnly": "npm run type-check && npm test && npm run build"
+      },
+      "engine": ">=20"
+    }
+  ],
+  "fern": {
+    "config": "spec/fern/fern.config.json",
+    "generators": "spec/fern/generators.yml",
+    "mustContain": [
+      "\"version\": \"5.37.9\"",
+      "fernapi/fern-typescript-node-sdk",
+      "version: 3.71.2",
+      "path: ../../output/ts-sdk"
+    ]
+  },
+  "supportingDocs": [
+    {
+      "path": "AGENTS.md",
+      "mustContain": [
+        "They are not yet npm workspaces",
+        "../GOCLMCP",
+        "Local Docker daemon required"
+      ]
+    },
+    {
+      "path": "docs/dependency-policy.md",
+      "mustContain": [
+        "Package runtime floors",
+        "Fern CLI"
+      ]
+    },
+    {
+      "path": "docs/runtime-support.json",
+      "mustContain": [
+        "\"nodeFloor\": \">=20\"",
+        "\"moduleType\": \"module\""
+      ]
+    },
+    {
+      "path": "docs/generator-config-contract.json",
+      "mustContain": [
+        "5.37.9",
+        "3.71.2"
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-developer-environment-paths",
+    "typed-policy-document-contract",
+    "typed-root-boundary",
+    "typed-repo-doctor-contract",
+    "typed-package-contracts",
+    "typed-fern-contract",
+    "typed-supporting-doc-contracts",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "developer-environment",
+    "checker": "scripts/check-developer-environment.mjs",
+    "enterpriseAuditId": "developer-environment"
+  }
+}

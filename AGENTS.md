@@ -26,8 +26,8 @@ subdirectory:
   interface on top of the SDK. **21 commands** across 15 groups.
   Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **105 tools**: 16
-  workflow tools plus 89 domain tools across 17 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **105 tools**: 17
+  workflow tools plus 88 domain tools across 16 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup. Domain tools provide broad CRUDL coverage;
@@ -174,7 +174,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 38 names + 14 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 46 names + 14 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -189,6 +189,28 @@ clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default pat
 Local Docker daemon required; CI uses the same container.
 
 ## 4. Verify gates (run before every commit)
+
+Root shortcuts for non-coder operation and future-agent handoff:
+
+| Goal | Run |
+|---|---|
+| See available gates | `make help` |
+| Fast deterministic local proof | `make perfect-fast` |
+| Full GOCLMCP + Fern + package + packed-consumer proof | `make perfect-full` |
+| Explicit sandbox/live cleanup proof | `make perfect-live` |
+| Refresh SDK/CLI/MCP product metadata | `make product-surface` |
+| Refresh shared error/recovery docs | `make error-docs` |
+| Refresh troubleshooting guide from error registry | `make troubleshooting` |
+| Refresh corrected OpenAPI operation inventory | `make openapi-operations` |
+| Refresh OpenAPI/SDK/MCP operation parity | `make operation-parity` |
+| Check corrected OpenAPI contract invariants | `make openapi-lint` |
+| Check generated-core replaceability boundaries | `make generator-independence` |
+| Compare OpenAPI SDK stamps to generated TS methods | `make generator-comparison` |
+| Refresh generated CLI/MCP README tables | `make readme-tables` |
+| Check touched package changelog coverage | `make changelog-drift` |
+| Check documentation index links | `make docs-index-drift` |
+| Check package size/startup budgets | `make performance-budgets` |
+| Check future-agent guidance parity | `make agent-handoff` |
 
 | Change scope | Run |
 |---|---|
@@ -279,7 +301,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (38 names, 14 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (46 names, 14 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`

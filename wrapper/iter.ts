@@ -24,7 +24,7 @@
  * convention work without changes here.
  *
  * For the lower-level callback-style helper that exposes the page
- * number directly to the user, see `clockify-sdk-ts/pagination`'s
+ * number directly to the user, see `clockify-sdk-ts-115/pagination`'s
  * `paginate<T>`.
  */
 
@@ -127,8 +127,8 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  *
  * @example
  * ```ts
- * import { createClockifyClient } from "clockify-sdk-ts";
- * import { iterAll } from "clockify-sdk-ts/iter";
+ * import { createClockifyClient } from "clockify-sdk-ts-115";
+ * import { iterAll } from "clockify-sdk-ts-115/iter";
  *
  * const client = createClockifyClient({
  *   apiKey: process.env.CLOCKIFY_API_KEY!,

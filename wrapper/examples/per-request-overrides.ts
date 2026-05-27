@@ -18,7 +18,7 @@
  */
 import { randomUUID } from "node:crypto";
 
-import { ClockifyApiTimeoutError, createClockifyClient } from "clockify-sdk-ts";
+import { ClockifyApiTimeoutError, createClockifyClient } from "clockify-sdk-ts-115";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;

@@ -17,6 +17,8 @@
  */
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
+import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
+
 export interface SuccessEnvelope {
     ok: true;
     action: string;
@@ -99,27 +101,18 @@ export function successResult(
 export function errorResult(action: string, err: unknown, recovery?: string | RecoveryHint): CallToolResult {
     const message = err instanceof Error ? err.message : String(err);
     const status = (err as { statusCode?: number }).statusCode;
-    const code = statusToCode(status, message);
+    const code = errorCodeForStatus(status) ?? errorCodeForMessage(message);
     const envelope: ErrorEnvelope = { ok: false, action, error: { code, message } };
-    if (recovery) envelope.recovery = typeof recovery === "string" ? { hint: recovery } : recovery;
+    if (recovery) {
+        envelope.recovery = typeof recovery === "string" ? { hint: recovery } : recovery;
+    } else {
+        envelope.recovery = { hint: recoveryForCode(code), retryable: retryableForCode(code) };
+    }
     return {
         content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
         structuredContent: envelope as unknown as Record<string, unknown>,
         isError: true,
     };
-}
-
-function statusToCode(status: number | undefined, message: string): string {
-    if (status === 400) return "invalid_request";
-    if (status === 401 || status === 403) return "auth_or_permission";
-    if (status === 404) return "not_found";
-    if (status === 409) return "conflict";
-    if (status === 429) return "rate_limited";
-    if (status === 402) return "feature_unavailable";
-    if (status && status >= 500) return "clockify_upstream_error";
-    if (/(required|provide|missing|invalid|could not parse|not valid|must use|must not|confirmation token)/i.test(message)) return "invalid_request";
-    if (/not found/i.test(message)) return "not_found";
-    return "error";
 }
 
 function cleanIds(ids: Record<string, string | undefined> | undefined): Record<string, string> | undefined {

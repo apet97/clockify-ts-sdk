@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "purpose": "End-to-end acceptance scenario contract for SDK, CLI, MCP, mock/live proof, receipts, and OpenAPI truth.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-acceptance-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-planner-contract",
+    "typed-generated-plan-contract",
+    "typed-scenarios",
+    "typed-supporting-evidence",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/acceptance-scenarios.md",
+    "mustContain": [
+      "Acceptance Scenarios",
+      "Scenario rules",
+      "Contract-shape rule",
+      "Scenario matrix",
+      "node scripts/acceptance-plan.mjs --scenario auth-status",
+      "node scripts/acceptance-plan.mjs --scenario first-run-diagnostics-support",
+      "Evidence escalation",
+      "make acceptance-scenarios"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "planner": {
+    "path": "scripts/acceptance-plan.mjs",
+    "makeTarget": "acceptance-plan",
+    "mustContain": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This plan is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "auth-status",
+      "first-run-diagnostics-support",
+      "make quickstart-receipt",
+      "make support-bundle",
+      "clockify://mcp/doctor",
+      "safeCommandHints",
+      "paginated-list-traversal",
+      "time-entry-mutation-cleanup",
+      "business-admin-guarded-write",
+      "openapi-generated-core",
+      "package-consumer-install-smoke",
+      "make acceptance-scenarios"
+    ],
+    "generatedPlan": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "scenario": "all"
+      },
+      "requiredScenarioIds": [
+        "auth-status",
+        "first-run-diagnostics-support",
+        "paginated-list-traversal",
+        "time-entry-mutation-cleanup",
+        "work-package-setup",
+        "business-admin-guarded-write",
+        "recovery-observability",
+        "openapi-generated-core",
+        "package-consumer-install-smoke"
+      ],
+      "requiredScenarioFields": [
+        "sdk",
+        "cli",
+        "mcp",
+        "evidence",
+        "escalation",
+        "cleanup"
+      ]
+    }
+  },
+  "scenarios": [
+    {
+      "id": "auth-status",
+      "mustContain": [
+        "Auth and status",
+        "createClockifyClient()",
+        "clk115 status --json",
+        "clockify_status"
+      ]
+    },
+    {
+      "id": "first-run-diagnostics-support",
+      "mustContain": [
+        "First-run diagnostics and support handoff",
+        "clockifyDiagnostics()",
+        "clk115 doctor --json",
+        "clockify://mcp/doctor",
+        "make quickstart-receipt",
+        "make support-bundle",
+        "safeCommandHints"
+      ]
+    },
+    {
+      "id": "paginated-list-traversal",
+      "mustContain": [
+        "Paginated list traversal",
+        "iterAll",
+        "Last-Page",
+        "real Clockify pagination"
+      ]
+    },
+    {
+      "id": "time-entry-mutation-cleanup",
+      "mustContain": [
+        "Time-entry mutation and cleanup",
+        "clk115 log",
+        "clockify_log_work",
+        "final leftover count"
+      ]
+    },
+    {
+      "id": "business-admin-guarded-write",
+      "mustContain": [
+        "Business/admin guarded write",
+        "dry_run:true",
+        "confirm_token",
+        "no blind retry"
+      ]
+    },
+    {
+      "id": "recovery-observability",
+      "mustContain": [
+        "Recovery and observability",
+        "stable codes",
+        "structuredContent",
+        "support bundle"
+      ]
+    },
+    {
+      "id": "openapi-generated-core",
+      "mustContain": [
+        "OpenAPI truth and generated core",
+        "GOCLMCP drift gates",
+        "Fern check/generate",
+        "generated-edit guard"
+      ]
+    },
+    {
+      "id": "package-consumer-install-smoke",
+      "mustContain": [
+        "Package-consumer install smoke",
+        "make pack-smoke",
+        "clockify115-mcp"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/workflow-cookbook.md",
+      "mustContain": [
+        "First-run diagnostics and support handoff",
+        "Daily time tracking",
+        "clockify://mcp/doctor",
+        "make support-bundle",
+        "Work package setup",
+        "Business and admin workflows",
+        "Recovery pattern"
+      ]
+    },
+    {
+      "path": "docs/examples-matrix.md",
+      "mustContain": [
+        "Coverage matrix",
+        "Mock versus live",
+        "Demo and cleanup",
+        "Observability and support"
+      ]
+    },
+    {
+      "path": "docs/mock-clockify-contract.json",
+      "mustContain": [
+        "createMockClockifyServer",
+        "X-Request-Id",
+        "wrapper/tests/mock-clockify.test.ts",
+        "mcp/tests/mock-clockify.test.ts"
+      ]
+    },
+    {
+      "path": "docs/live-tests.md",
+      "mustContain": [
+        "make perfect-live",
+        "sacrificial sandbox",
+        "cleanup receipt",
+        "Mock/replay proof never replaces live sandbox proof"
+      ]
+    },
+    {
+      "path": "docs/observability-contract.json",
+      "mustContain": [
+        "wrapper/composed-fetch.ts",
+        "cli/src/output.ts",
+        "mcp/src/result.ts"
+      ]
+    },
+    {
+      "path": "docs/quickstart-receipt.md",
+      "mustContain": [
+        "Copy-paste safety",
+        "clockifyDiagnostics",
+        "clockify://mcp/doctor",
+        "Raw secrets printed: no"
+      ]
+    },
+    {
+      "path": "docs/support-bundle-contract.json",
+      "mustContain": [
+        "requiredDiagnosticSurfaces",
+        "requiredSafeCommandHints",
+        "make quickstart-receipt"
+      ]
+    },
+    {
+      "path": "docs/issue-intake-contract.json",
+      "mustContain": [
+        "quickstartDiagnosticsFields",
+        "safeCommandHints",
+        "clockify://mcp/doctor"
+      ]
+    },
+    {
+      "path": "docs/diagnostics-contract.json",
+      "mustContain": [
+        "noNetworkEvidence",
+        "clockify://mcp/doctor"
+      ]
+    },
+    {
+      "path": "docs/operation-coverage-contract.json",
+      "mustContain": [
+        "sdkNamed",
+        "tsMcpExact",
+        "goMcpExact",
+        "curated"
+      ]
+    },
+    {
+      "path": "scripts/pack-consumer-smoke.mjs",
+      "mustContain": [
+        "npm pack",
+        "clockify-sdk-ts-115",
+        "@clockify115/cli",
+        "@clockify115/mcp-server"
+      ]
+    },
+    {
+      "path": "wrapper/tests/mock-clockify.test.ts",
+      "mustContain": [
+        "createMockClockifyServer",
+        "createClockifyClient",
+        "iterAll"
+      ]
+    },
+    {
+      "path": "cli/tests/mock-clockify.test.ts",
+      "mustContain": [
+        "CLOCKIFY_BASE_URL",
+        "--base-url",
+        "status"
+      ]
+    },
+    {
+      "path": "mcp/tests/mock-clockify.test.ts",
+      "mustContain": [
+        "CLOCKIFY_BASE_URL",
+        "clockify_status",
+        "loadContext"
+      ]
+    },
+    {
+      "path": "mcp/tests/sandbox.test.ts",
+      "mustContain": [
+        "clockify_log_work",
+        "clockify_review_day",
+        "clockify_fix_entry"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "acceptance-scenarios",
+    "checker": "scripts/check-acceptance-scenarios.mjs",
+    "docsIndex": [
+      "acceptance-scenarios.md",
+      "acceptance-scenarios-contract.json"
+    ],
+    "qualityGate": "make acceptance-scenarios",
+    "inventoryId": "acceptance-scenarios",
+    "auditId": "acceptance-scenarios"
+  }
+}

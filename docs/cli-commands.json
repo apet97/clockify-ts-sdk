@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "commands": [
+    {
+      "command": "clk115 status",
+      "description": "Print workspace, current user, and running timer."
+    },
+    {
+      "command": "clk115 doctor",
+      "description": "Check local CLI configuration without contacting Clockify."
+    },
+    {
+      "command": "clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]",
+      "description": "Start a timer. Resolves project, task, and tag names to IDs."
+    },
+    {
+      "command": "clk115 stop",
+      "description": "Stop the running timer for the current user."
+    },
+    {
+      "command": "clk115 log <duration> <description> [-p projectId] [-t taskId] [--tag tagId…] [--billable] [--end iso]",
+      "description": "Log a finished entry. Duration accepts `1h30m`, `90m`, or `PT1H30M`."
+    },
+    {
+      "command": "clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]",
+      "description": "List time entries for the current user."
+    },
+    {
+      "command": "clk115 entries delete <id>",
+      "description": "Delete a time entry."
+    },
+    {
+      "command": "clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]",
+      "description": "List projects."
+    },
+    {
+      "command": "clk115 projects create <name> [--client id] [--color hex] [--billable]",
+      "description": "Create a project."
+    },
+    {
+      "command": "clk115 clients list [--limit N] [--page N] [--name text] [--archived]",
+      "description": "List clients."
+    },
+    {
+      "command": "clk115 clients create <name> [--note text]",
+      "description": "Create a client."
+    },
+    {
+      "command": "clk115 tasks list <projectId> [--limit N] [--page N] [--name text]",
+      "description": "List tasks for a project."
+    },
+    {
+      "command": "clk115 tags list [--limit N] [--page N] [--name text] [--archived]",
+      "description": "List tags."
+    },
+    {
+      "command": "clk115 tags create <name>",
+      "description": "Create a tag."
+    },
+    {
+      "command": "clk115 webhooks list [--type type]",
+      "description": "List outbound webhooks."
+    },
+    {
+      "command": "clk115 webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]",
+      "description": "Create a webhook subscription."
+    },
+    {
+      "command": "clk115 webhooks delete <id>",
+      "description": "Delete a webhook subscription."
+    },
+    {
+      "command": "clk115 invoices list",
+      "description": "List invoices in the workspace."
+    },
+    {
+      "command": "clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]",
+      "description": "Create an invoice draft."
+    },
+    {
+      "command": "clk115 expenses list [--limit N] [--page N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]",
+      "description": "List workspace expenses."
+    },
+    {
+      "command": "clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]",
+      "description": "List time-off requests."
+    },
+    {
+      "command": "clk115 timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF|SECOND_HALF]",
+      "description": "Submit a time-off request against a policy."
+    },
+    {
+      "command": "clk115 scheduling list [--limit N] [--page N] [--name text]",
+      "description": "List scheduling assignments."
+    },
+    {
+      "command": "clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]",
+      "description": "Create a scheduling assignment. Drafts by default; pass `--publish` to publish."
+    },
+    {
+      "command": "clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS|DOES_NOT_CONTAIN --page N --limit N]",
+      "description": "Search the workspace audit log. Window must be ≤ 31 days."
+    },
+    {
+      "command": "clk115 completion [zsh|bash|fish]",
+      "description": "Print a shell completion script for zsh, bash, or fish."
+    },
+    {
+      "command": "clk115 help [command]",
+      "description": "Print per-command help."
+    },
+    {
+      "command": "clk115 --version",
+      "description": "Print CLI version."
+    }
+  ]
+}

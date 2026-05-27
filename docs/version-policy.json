@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Package version, identity, and publish-gate contract. Keeps manifests, generated product-surface metadata, changelog anchors, README install examples, and last-resort prepublish gates aligned before any pack or release claim.",
+  "contractInvariants": [
+    "schema-versioned-version-policy",
+    "safe-version-policy-paths",
+    "typed-version-package-entries",
+    "product-surface-fields-explicit",
+    "package-field-maps-to-manifest-name",
+    "changelog-anchors-required",
+    "makefile-audit-wiring"
+  ],
+  "productSurfacePath": "docs/product-surface.json",
+  "productSurfaceMustMatchManifest": [
+    "package",
+    "version",
+    "prepublishOnly"
+  ],
+  "expectedPackageCount": 3,
+  "requiredPackageIds": [
+    "wrapper",
+    "cli",
+    "mcp"
+  ],
+  "wiring": {
+    "makeTarget": "version-policy",
+    "checker": "scripts/check-version-policy.mjs",
+    "enterpriseAuditId": "version-policy"
+  },
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "changelog": "wrapper/CHANGELOG.md",
+      "productSurfaceId": "sdk",
+      "readme": "wrapper/README.md",
+      "installExampleMustContain": "clockify-sdk-ts-115-0.9.0.tgz",
+      "requireCurrentVersionHeading": true
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "changelog": "cli/CHANGELOG.md",
+      "productSurfaceId": "cli",
+      "requireCurrentVersionHeading": true
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "changelog": "mcp/CHANGELOG.md",
+      "productSurfaceId": "tsMcp",
+      "requireCurrentVersionHeading": true
+    }
+  ]
+}

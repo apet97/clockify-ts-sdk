@@ -3,7 +3,7 @@
     "entryPoints": ["index.ts", "src/api/resources"],
     "entryPointStrategy": "expand",
     "out": "../docs/api",
-    "name": "clockify-sdk-ts",
+    "name": "clockify-sdk-ts-115",
     "includeVersion": true,
     "readme": "./README.md",
     "excludePrivate": true,
@@ -15,7 +15,7 @@
     "hideGenerator": false,
     "navigationLinks": {
         "GitHub": "https://github.com/apet97/clockify-ts-sdk",
-        "npm": "https://www.npmjs.com/package/clockify-sdk-ts"
+        "npm": "https://www.npmjs.com/package/clockify-sdk-ts-115"
     },
     "sort": ["source-order"]
 }

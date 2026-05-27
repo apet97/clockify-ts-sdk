@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Fern/OpenAPI generator configuration contract. Keeps local generator pins, active OpenAPI snapshot, and generated output paths intentional and reviewable.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-generator-config-evidence-paths",
+    "typed-fern-config-contract",
+    "typed-generators-contract",
+    "typed-required-docs",
+    "typed-wiring-contract"
+  ],
+  "fernConfig": {
+    "path": "spec/fern/fern.config.json",
+    "organization": "clockify",
+    "cliVersion": "5.37.9"
+  },
+  "generators": {
+    "path": "spec/fern/generators.yml",
+    "defaultGroup": "ts",
+    "activeOpenApiPath": "../corrected/clockify.corrected.openapi.yaml",
+    "groups": {
+      "ts": {
+        "name": "fernapi/fern-typescript-node-sdk",
+        "version": "3.71.2",
+        "outputPath": "../../output/ts-sdk"
+      },
+      "py": {
+        "name": "fernapi/fern-python-sdk",
+        "version": "5.14.3",
+        "outputPath": "../../output/py-sdk"
+      },
+      "postman": {
+        "name": "fernapi/fern-postman",
+        "version": "0.6.1",
+        "outputPath": "../../output/postman"
+      }
+    }
+  },
+  "requiredDocs": [
+    {
+      "path": "AGENTS.md",
+      "contains": [
+        "Fern CLI pinned to",
+        "fernapi/fern-typescript-node-sdk:3.71.2"
+      ]
+    },
+    {
+      "path": "docs/dependency-policy.md",
+      "contains": [
+        "Fern CLI",
+        "fernapi/fern-typescript-node-sdk:3.71.2"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "generator-config",
+    "checker": "scripts/check-generator-config.mjs",
+    "docsIndex": [
+      "generator-config-contract.json"
+    ],
+    "qualityGate": "make generator-config",
+    "inventoryId": "generator-config",
+    "auditId": "generator-config"
+  }
+}

@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cross-surface receipt and observability contract for SDK, CLI, and MCP behavior.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-receipt-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-sdk-receipt-evidence",
+    "typed-cli-receipt-evidence",
+    "typed-mcp-receipt-evidence",
+    "typed-supporting-contracts",
+    "typed-required-make-targets",
+    "typed-docs-index-contract",
+    "makefile-audit-wiring"
+  ],
+  "policyDocument": {
+    "path": "docs/receipts-policy.md",
+    "mustContain": [
+      "X-Request-Id",
+      "withResponse",
+      "structuredContent",
+      "retryable",
+      "Contract-shape rule",
+      "make receipts-contract"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "sdk": [
+    {
+      "path": "wrapper/composed-fetch.ts",
+      "mustContain": [
+        "REQUEST_ID_HEADER",
+        "ComposedFetchHooks",
+        "beforeRequest",
+        "afterResponse",
+        "onRetry",
+        "getRequestIdFromError"
+      ]
+    },
+    {
+      "path": "wrapper/with-response.ts",
+      "mustContain": [
+        "requestId",
+        "headers",
+        "status",
+        "withRawResponse"
+      ]
+    },
+    {
+      "path": "wrapper/otel-hooks.ts",
+      "mustContain": [
+        "otelHooks",
+        "http.request.method",
+        "http.response.status_code",
+        "http.client.request.duration"
+      ]
+    },
+    {
+      "path": "wrapper/tests/composed-fetch.test.ts",
+      "mustContain": [
+        "injects an X-Request-Id UUID per request by default",
+        "hook rejections do NOT block the request"
+      ]
+    },
+    {
+      "path": "wrapper/tests/with-response.test.ts",
+      "mustContain": [
+        "returns data + response + headers + requestId + status"
+      ]
+    }
+  ],
+  "cli": [
+    {
+      "path": "cli/src/output.ts",
+      "mustContain": [
+        "ok: false",
+        "recoveryForCode",
+        "retryableForCode"
+      ]
+    },
+    {
+      "path": "cli/tests/exit-contract.test.ts",
+      "mustContain": [
+        "--json",
+        "retryable"
+      ]
+    }
+  ],
+  "mcp": [
+    {
+      "path": "mcp/src/result.ts",
+      "mustContain": [
+        "structuredContent",
+        "changed",
+        "warnings",
+        "next",
+        "recovery"
+      ]
+    },
+    {
+      "path": "mcp/src/output-schema.ts",
+      "mustContain": [
+        "MCP_RESULT_OUTPUT_SCHEMA",
+        "structuredContent",
+        "retryAfterSeconds"
+      ]
+    },
+    {
+      "path": "mcp/tests/server.test.ts",
+      "mustContain": [
+        "structured output schema",
+        "canonical envelope",
+        "structuredContent"
+      ]
+    }
+  ],
+  "supportingContracts": [
+    {
+      "path": "docs/error-codes.json",
+      "mustContain": [
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "path": "docs/mcp-contract.json",
+      "mustContain": [
+        "outputSchema",
+        "resources",
+        "prompts"
+      ]
+    },
+    {
+      "path": "docs/cli-contract.json",
+      "mustContain": [
+        "exitCodes",
+        "globalFlags"
+      ]
+    },
+    {
+      "path": "docs/receipt-examples-contract.json",
+      "mustContain": [
+        "SDK success receipt",
+        "CLI error receipt",
+        "MCP recovery receipt"
+      ]
+    }
+  ],
+  "requiredMakeTargets": [
+    "receipts-contract"
+  ],
+  "docsIndex": [
+    "receipts-policy.md",
+    "receipts-contract.json"
+  ],
+  "wiring": {
+    "makeTarget": "receipts-contract",
+    "checker": "scripts/check-receipts-contract.mjs",
+    "enterpriseAuditId": "receipts-contract"
+  }
+}

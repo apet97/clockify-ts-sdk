@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Upstream Clockify API, GOCLMCP generator, Fern, SDK, CLI, MCP, and docs drift lifecycle contract.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-upstream-drift-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-lifecycle-evidence",
+    "typed-generated-truth-surfaces",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/upstream-drift-policy.md",
+    "mustContain": [
+      "Drift lifecycle",
+      "Contract-shape rule",
+      "Routing rules",
+      "Raw evidence safety",
+      "Required updates after real drift",
+      "make upstream-drift"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "lifecycleEvidence": [
+    {
+      "path": "docs/openapi-evidence-policy.md",
+      "mustContain": [
+        "spec/evidence/discrepancies.md",
+        "five questions",
+        "Raw probe files stay out of git"
+      ]
+    },
+    {
+      "path": "spec/evidence/discrepancies.md",
+      "mustContain": [
+        "Clockify OpenAPI Discrepancies",
+        "What does official documentation claim?",
+        "Which MCP tool depends on it?",
+        "Status"
+      ]
+    },
+    {
+      "path": "docs/operation-coverage-policy.md",
+      "mustContain": [
+        "Coverage baseline",
+        "Required escalation",
+        "make operation-coverage"
+      ]
+    },
+    {
+      "path": "docs/maintenance-playbook.md",
+      "mustContain": [
+        "Clockify API drift response",
+        "GOCLMCP",
+        "spec/evidence/discrepancies.md"
+      ]
+    },
+    {
+      "path": "docs/issue-intake-policy.md",
+      "mustContain": [
+        "Clockify API server behavior",
+        "OpenAPI/generator",
+        "Proof attempted"
+      ]
+    },
+    {
+      "path": "docs/data-handling-policy.md",
+      "mustContain": [
+        "Raw live evidence",
+        "Prohibited committed evidence",
+        "<redacted>"
+      ]
+    }
+  ],
+  "generatedTruthSurfaces": [
+    "docs/openapi-operations.json",
+    "docs/operation-parity.json",
+    "docs/product-surface.json",
+    "docs/cli-commands.json",
+    "docs/mcp-tools.json"
+  ],
+  "requiredMakeTargets": [
+    "upstream-drift",
+    "openapi-evidence",
+    "operation-coverage",
+    "openapi-lint",
+    "operation-parity-drift",
+    "generator-comparison",
+    "acceptance-scenarios",
+    "issue-intake",
+    "perfect-full"
+  ],
+  "wiring": {
+    "makeTarget": "upstream-drift",
+    "checker": "scripts/check-upstream-drift.mjs",
+    "docsIndex": [
+      "upstream-drift-policy.md",
+      "upstream-drift-contract.json"
+    ],
+    "qualityGate": "make upstream-drift",
+    "inventoryId": "upstream-drift",
+    "auditId": "upstream-drift"
+  }
+}

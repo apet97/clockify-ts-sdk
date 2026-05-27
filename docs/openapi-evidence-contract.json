@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Contract for the OpenAPI discrepancy/evidence ledger that backs manual Clockify spec corrections and generator decisions.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-openapi-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-ledger-contract",
+    "typed-supporting-evidence",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/openapi-evidence-policy.md",
+    "mustContain": [
+      "spec/evidence/discrepancies.md",
+      "five questions",
+      "Contract-shape rule",
+      "make openapi-evidence",
+      "make openapi-lint",
+      "Generated TypeScript is an output"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "ledger": {
+    "path": "spec/evidence/discrepancies.md",
+    "mustContain": [
+      "Clockify OpenAPI Discrepancies",
+      "What does official documentation claim?",
+      "What does Clockify actually return?",
+      "Which live test proves it?",
+      "Which MCP tool depends on it?",
+      "Which uncertainty remains?",
+      "Status",
+      "Template"
+    ],
+    "requiredFindings": [
+      "gen-clockify-openapi.merge_parameters.destructive-concat",
+      "time-off.request.status.schema-collision",
+      "time-off.request.missing-top-level-fields",
+      "routes.literal-vs-parameterized.collisions",
+      "sdk.resource-duplication"
+    ],
+    "requiredStatusMarkers": [
+      "fixed-in-generator-script",
+      "fixed-in-canonical-generator",
+      "RESOLVED-AT-SCHEMA"
+    ]
+  },
+  "supportingEvidence": [
+    {
+      "path": "docs/risk-register.json",
+      "mustContain": [
+        "fern-bare-array-pagination",
+        "fern-addon-token-type-workaround"
+      ]
+    },
+    {
+      "path": "scripts/lint-openapi-contract.mjs",
+      "mustContain": [
+        "SDK-named",
+        "Last-Page"
+      ]
+    },
+    {
+      "path": "scripts/generate-openapi-operations.mjs",
+      "mustContain": [
+        "operationId",
+        "--check"
+      ]
+    },
+    {
+      "path": "scripts/generate-operation-parity.mjs",
+      "mustContain": [
+        "operation-parity-overrides",
+        "tsMcp",
+        "goMcp"
+      ]
+    }
+  ],
+  "requiredMakeTargets": [
+    "openapi-evidence",
+    "openapi-lint",
+    "openapi-operations-drift",
+    "operation-parity-drift"
+  ],
+  "wiring": {
+    "makeTarget": "openapi-evidence",
+    "checker": "scripts/check-openapi-evidence.mjs",
+    "docsIndex": [
+      "openapi-evidence-policy.md",
+      "openapi-evidence-contract.json"
+    ],
+    "qualityGate": "make openapi-evidence",
+    "inventoryId": "openapi-evidence",
+    "auditId": "openapi-evidence-contract"
+  }
+}

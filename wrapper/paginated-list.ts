@@ -1,6 +1,6 @@
 /**
  * Axioms-style ergonomic wrapper around `iterPages` (from
- * `clockify-sdk-ts/iter`). Constructs a single value that the
+ * `clockify-sdk-ts-115/iter`). Constructs a single value that the
  * caller can:
  *
  * 1. `for await (const item of list) …` — flat-yield individual
@@ -50,7 +50,7 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
     /** Yields per-page envelopes `{ items, page, pageSize,
      *  hasNextPage }`. Honors the `Last-Page` header when the
      *  fetcher exposes `withRawResponse` (see
-     *  `clockify-sdk-ts/iter` for the contract). */
+     *  `clockify-sdk-ts-115/iter` for the contract). */
     pages(): AsyncGenerator<PageEnvelope<TItem>, void, void> {
         return iterPages<PaginatedRequest & Record<string, unknown>, TItem>(
             this.fetcher,
@@ -89,7 +89,7 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
  *
  * @example
  * ```ts
- * import { createClockifyClient, paginatedList } from "clockify-sdk-ts";
+ * import { createClockifyClient, paginatedList } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient();
  * const tags = paginatedList(

@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-05-27T08:30:06.094Z",
+  "source": "scripts/check-performance-budgets.mjs",
+  "budgetsSchemaVersion": 2,
+  "calibrationPolicy": {
+    "status": "provisional",
+    "finalStatus": "calibrated",
+    "requiredSuccessfulRuns": 3,
+    "receiptPath": "docs/performance-baseline-latest.json",
+    "tighteningRule": "After calibrationPolicy.requiredSuccessfulRuns successful runs on a clean built tree, set each ceiling to the greater of actual * 1.35 or actual + the smallest practical fixed buffer."
+  },
+  "measurements": [
+    {
+      "kind": "fileSize",
+      "path": "wrapper/dist/esm/index.js",
+      "actualBytes": 2267,
+      "maxBytes": 120000,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "fileSize",
+      "path": "wrapper/dist/cjs/index.js",
+      "actualBytes": 10120,
+      "maxBytes": 140000,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "fileSize",
+      "path": "cli/dist/index.js",
+      "actualBytes": 4734,
+      "maxBytes": 180000,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "fileSize",
+      "path": "mcp/dist/index.js",
+      "actualBytes": 1110,
+      "maxBytes": 220000,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "timing",
+      "name": "sdk-esm-import",
+      "actualMs": 162,
+      "maxMs": 1500,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "timing",
+      "name": "cli-version",
+      "actualMs": 173,
+      "maxMs": 1500,
+      "ok": true,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    },
+    {
+      "kind": "timing",
+      "name": "mcp-tools-list",
+      "actualMs": 102,
+      "maxMs": 3000,
+      "ok": false,
+      "measuredAt": "2026-05-27T08:30:06.094Z"
+    }
+  ],
+  "failures": [
+    "mcp-tools-list: command exited 1: node:internal/modules/esm/resolve:271\n    throw new ERR_MODULE_NOT_FOUND(\n          ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/Users/15x/Downloads/WORKING/addons-me/fern/mcp/node_modules/@modelcontextprotocol/sdk/client/index.js' imported from /Users/15x/Downloads/WORKING/addons-me/fern/[eval1]\n    at finalizeResolution (node:internal/modules/esm/resolve:271:11)\n    at moduleResolve (node:internal/modules/esm/resolve:861:10)\n    at defaultResolve (node:internal/modules/esm/resolve:988:11)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:700:20)\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:717:38)\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:749:52)\n    at #resolve (node:internal/modules/esm/loader:682:17)\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:602:35)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:631:32)\n    at TracingChannel.tracePromise (node:diagnostics_channel:363:22) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///Users/15x/Downloads/WORKING/addons-me/fern/mcp/node_modules/@modelcontextprotocol/sdk/client/index.js'\n}\n\nNode.js v26.0.0"
+  ]
+}

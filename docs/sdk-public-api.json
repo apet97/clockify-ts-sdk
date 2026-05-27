@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "packageName": "clockify-sdk-ts-115",
+  "purpose": "Intentional SDK public API contract (publicExports). Keep this in sync with wrapper/index.ts, wrapper/package.json exports, wrapper/tsconfig.json package self-reference aliases, and wrapper/scripts/verify-dual-build.sh whenever a public symbol or subpath changes.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-sdk-public-api-evidence-paths",
+    "typed-wrapper-file-inputs",
+    "typed-root-symbols",
+    "typed-subpath-symbols",
+    "typed-tsconfig-aliases",
+    "typed-package-marker-scan",
+    "typed-wiring-contract"
+  ],
+  "files": {
+    "wrapperPackage": "wrapper/package.json",
+    "wrapperTsconfig": "wrapper/tsconfig.json",
+    "dualBuildSmoke": "wrapper/scripts/verify-dual-build.sh"
+  },
+  "rootSymbols": [
+    "ClockifyApiClient",
+    "createClockifyClient",
+    "composedFetch",
+    "iterAll",
+    "iterPages",
+    "paginate",
+    "paginatedList",
+    "PaginatedList",
+    "verifyClockifyWebhook",
+    "constructEvent",
+    "WebhookSignatureMismatchError",
+    "CLOCKIFY_WEBHOOK_EVENT_NAMES",
+    "ClockifyApiError",
+    "ClockifyApiTimeoutError",
+    "getRequestIdFromError",
+    "BadRequestError",
+    "UnauthorizedError",
+    "ForbiddenError",
+    "NotFoundError",
+    "MethodNotAllowedError",
+    "withResponse",
+    "RateLimitError",
+    "ConflictError",
+    "InternalServerError",
+    "ServiceUnavailableError",
+    "promoteApiError",
+    "classifyClockifyError",
+    "getStableErrorCode",
+    "isClockifyApiError",
+    "isRateLimitError",
+    "isConflictError",
+    "isInternalServerError",
+    "isServiceUnavailableError",
+    "CLOCKIFY_ERROR_CODES",
+    "errorCodeEntry",
+    "errorCodeForMessage",
+    "errorCodeForStatus",
+    "recoveryForCode",
+    "retryableForCode",
+    "warnOnce",
+    "Workspace",
+    "wrapResource",
+    "otelHooks",
+    "clockifyHealth",
+    "clockifyDiagnostics",
+    "getRateLimit",
+    "getRateLimitFromError"
+  ],
+  "subpaths": {
+    ".": [
+      "ClockifyApiClient",
+      "createClockifyClient"
+    ],
+    "./composed-fetch": [
+      "composedFetch"
+    ],
+    "./create-client": [
+      "createClockifyClient"
+    ],
+    "./deprecation": [
+      "warnOnce"
+    ],
+    "./errors": [
+      "RateLimitError",
+      "promoteApiError",
+      "classifyClockifyError",
+      "getStableErrorCode",
+      "CLOCKIFY_ERROR_CODES",
+      "errorCodeForStatus"
+    ],
+    "./health": [
+      "clockifyHealth"
+    ],
+    "./iter": [
+      "iterAll"
+    ],
+    "./otel-hooks": [
+      "otelHooks"
+    ],
+    "./paginated-list": [
+      "paginatedList",
+      "PaginatedList"
+    ],
+    "./pagination": [
+      "paginate"
+    ],
+    "./rate-limit": [
+      "getRateLimit",
+      "getRateLimitFromError"
+    ],
+    "./scoped-client": [
+      "Workspace",
+      "wrapResource"
+    ],
+    "./webhook-events": [
+      "CLOCKIFY_WEBHOOK_EVENT_NAMES"
+    ],
+    "./webhooks": [
+      "verifyClockifyWebhook"
+    ],
+    "./with-response": [
+      "withResponse"
+    ],
+    "./diagnostics": [
+      "clockifyDiagnostics"
+    ]
+  },
+  "tsconfigAliases": {
+    "clockify-sdk-ts-115": [
+      "./index.ts"
+    ],
+    "clockify-sdk-ts-115/create-client": [
+      "./create-client.ts"
+    ],
+    "clockify-sdk-ts-115/composed-fetch": [
+      "./composed-fetch.ts"
+    ],
+    "clockify-sdk-ts-115/iter": [
+      "./iter.ts"
+    ],
+    "clockify-sdk-ts-115/webhooks": [
+      "./webhooks.ts"
+    ],
+    "clockify-sdk-ts-115/webhook-events": [
+      "./webhook-events.ts"
+    ],
+    "clockify-sdk-ts-115/pagination": [
+      "./pagination.ts"
+    ],
+    "clockify-sdk-ts-115/paginated-list": [
+      "./paginated-list.ts"
+    ],
+    "clockify-sdk-ts-115/with-response": [
+      "./with-response.ts"
+    ],
+    "clockify-sdk-ts-115/errors": [
+      "./errors.ts"
+    ],
+    "clockify-sdk-ts-115/deprecation": [
+      "./deprecation.ts"
+    ],
+    "clockify-sdk-ts-115/scoped-client": [
+      "./scoped-client.ts"
+    ],
+    "clockify-sdk-ts-115/otel-hooks": [
+      "./otel-hooks.ts"
+    ],
+    "clockify-sdk-ts-115/health": [
+      "./health.ts"
+    ],
+    "clockify-sdk-ts-115/rate-limit": [
+      "./rate-limit.ts"
+    ],
+    "clockify-sdk-ts-115/diagnostics": [
+      "./diagnostics.ts"
+    ]
+  },
+  "packageMarkerScan": {
+    "forbiddenRegex": "clockify-sdk-ts(?!-115)",
+    "paths": [
+      "wrapper/index.ts",
+      "wrapper/create-client.ts",
+      "wrapper/composed-fetch.ts",
+      "wrapper/iter.ts",
+      "wrapper/pagination.ts",
+      "wrapper/paginated-list.ts",
+      "wrapper/webhooks.ts",
+      "wrapper/with-response.ts",
+      "wrapper/errors.ts",
+      "wrapper/deprecation.ts",
+      "wrapper/scoped-client.ts",
+      "wrapper/otel-hooks.ts",
+      "wrapper/health.ts",
+      "wrapper/rate-limit.ts",
+      "wrapper/tsconfig.json",
+      "wrapper/tests/composed-fetch.test.ts",
+      "wrapper/tests/sandbox.test.ts",
+      "wrapper/diagnostics.ts",
+      "wrapper/tests/diagnostics.test.ts"
+    ]
+  },
+  "wiring": {
+    "makeTarget": "sdk-public-api",
+    "checker": "scripts/check-sdk-public-api.mjs",
+    "docsIndex": [
+      "sdk-public-api.json"
+    ],
+    "qualityGate": "make sdk-public-api",
+    "inventoryId": "sdk-public-api",
+    "auditId": "sdk-public-api"
+  }
+}

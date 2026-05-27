@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Live sandbox test data lifecycle contract for SDK, CLI, MCP, prefixes, cleanup, leftover scans, and safe final proof receipts.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-test-data-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-prefix-ledger",
+    "typed-cleanup-script-contract",
+    "typed-live-test-evidence",
+    "typed-supporting-evidence",
+    "typed-required-make-targets",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/test-data-lifecycle-policy.md",
+    "mustContain": [
+      "Prefix ledger",
+      "Lifecycle rules",
+      "Cleanup proof",
+      "Contract-shape rule",
+      "Stop conditions",
+      "make test-data-lifecycle"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "prefixes": [
+    "sdk-test-",
+    "mcp-sandbox-",
+    "mcp-workflow-",
+    "mcp-log-",
+    "mcp-fix-",
+    "DEMO-"
+  ],
+  "cleanupScript": {
+    "path": "mcp/scripts/assert-clean-prefixes.mjs",
+    "mustContain": [
+      "DEFAULT_PREFIXES",
+      "sdk-test-",
+      "mcp-sandbox-",
+      "mcp-workflow-",
+      "mcp-log-",
+      "mcp-fix-",
+      "DEMO-",
+      "leftovers",
+      "process.exitCode = total === 0 ? 0 : 1"
+    ]
+  },
+  "liveTests": [
+    {
+      "path": "wrapper/tests/sandbox.test.ts",
+      "mustContain": [
+        "sdk-test-",
+        "creates, fetches by id, and deletes a tag",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_WORKSPACE_ID"
+      ]
+    },
+    {
+      "path": "cli/tests/sandbox.test.ts",
+      "mustContain": [
+        "Tests are deliberately read-only",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_WORKSPACE_ID",
+        "--json"
+      ]
+    },
+    {
+      "path": "mcp/tests/sandbox.test.ts",
+      "mustContain": [
+        "mcp-sandbox-",
+        "mcp-workflow-",
+        "mcp-log-",
+        "mcp-fix-",
+        "finally",
+        "cleanupPackage"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/live-tests.md",
+      "mustContain": [
+        "sacrificial sandbox",
+        "cleanup receipt",
+        "make perfect-live"
+      ]
+    },
+    {
+      "path": "docs/live-safety-contract.json",
+      "mustContain": [
+        "verify:live-cleanup",
+        "assert-clean-prefixes.mjs",
+        "DEFER_LIVE_REASON"
+      ]
+    },
+    {
+      "path": "docs/support-runbook.md",
+      "mustContain": [
+        "cleanup prefix",
+        "leftover count",
+        "sanitized IDs"
+      ]
+    },
+    {
+      "path": "docs/mutation-safety-policy.md",
+      "mustContain": [
+        "Ambiguous failure recovery",
+        "Proof gates"
+      ]
+    }
+  ],
+  "requiredMakeTargets": [
+    "test-data-lifecycle",
+    "live-safety",
+    "mock-contract",
+    "mutation-safety",
+    "support-bundle",
+    "perfect-live"
+  ],
+  "wiring": {
+    "makeTarget": "test-data-lifecycle",
+    "docsIndex": [
+      "test-data-lifecycle-policy.md",
+      "test-data-lifecycle-contract.json"
+    ],
+    "qualityGate": "make test-data-lifecycle",
+    "inventoryId": "test-data-lifecycle",
+    "auditId": "test-data-lifecycle"
+  }
+}

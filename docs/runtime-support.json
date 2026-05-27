@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Runtime support contract for the SDK, CLI, and MCP packages. Keep package engines and docs aligned so users do not hit install/runtime traps.",
+  "contractInvariants": [
+    "schema-versioned-runtime-support-contract",
+    "safe-runtime-support-paths",
+    "typed-runtime-package-entries",
+    "package-engines-match-node-floor",
+    "runtime-docs-mention-node-floor",
+    "makefile-audit-wiring"
+  ],
+  "nodeFloor": ">=20",
+  "moduleType": "module",
+  "expectedPackageCount": 3,
+  "requiredPackageIds": [
+    "wrapper",
+    "cli",
+    "mcp"
+  ],
+  "wiring": {
+    "makeTarget": "runtime-support",
+    "checker": "scripts/check-runtime-support.mjs",
+    "enterpriseAuditId": "runtime-support"
+  },
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "name": "clockify-sdk-ts-115",
+      "engine": ">=20",
+      "docs": ["wrapper/README.md", "docs/dependency-policy.md"]
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "name": "@clockify115/cli",
+      "engine": ">=20",
+      "docs": ["docs/dependency-policy.md"]
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "name": "@clockify115/mcp-server",
+      "engine": ">=20",
+      "docs": ["mcp/README.md", "docs/dependency-policy.md"]
+    }
+  ],
+  "requiredDocsMarkers": [
+    "Node 20",
+    ">=20"
+  ]
+}

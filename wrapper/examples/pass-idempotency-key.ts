@@ -15,7 +15,7 @@
  * call sites continue to work without code changes — the header
  * suddenly becomes load-bearing.
  */
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 import { randomUUID } from "node:crypto";
 
 async function main(): Promise<void> {

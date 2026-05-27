@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Agent handoff contract for canonical guidance, generated-path boundaries, root gates, temporary context lifecycle, and stale-count prevention.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-agent-handoff-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-guidance-entries",
+    "typed-supporting-check-entries",
+    "typed-guidance-scan-paths",
+    "typed-forbidden-guidance-markers",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/agent-handoff-policy.md",
+    "mustContain": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      "Contract-shape rule",
+      "TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL",
+      "immediately before final acceptance",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "make agent-handoff",
+      "make perfect-fast",
+      "make perfect-full",
+      "make perfect-live"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "guidance": [
+    {
+      "path": "AGENTS.md",
+      "mustContain": [
+        "Canonical contributor + agent contract",
+        "GOCLMCP",
+        "Read this whole file before touching anything",
+        "make perfect-fast",
+        "make perfect-full",
+        "make perfect-live",
+        "Never edit `spec/corrected/clockify.corrected.openapi.yaml`",
+        "Never edit `output/ts-sdk/**`",
+        "Never edit `wrapper/src/**`"
+      ]
+    },
+    {
+      "path": "CLAUDE.md",
+      "mustContain": [
+        "canonical",
+        "AGENTS.md",
+        "46 public names",
+        "make perfect-fast",
+        "make perfect-full",
+        "make perfect-live",
+        "TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL",
+        "No `npm publish`"
+      ]
+    },
+    {
+      "path": "docs/product-north-star.md",
+      "mustContain": [
+        "The repo can explain itself to a human, a Claude Code session, and a weaker follow-on agent",
+        "One-command proof",
+        "Generated core, durable public layer"
+      ]
+    },
+    {
+      "path": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+      "mustContain": [
+        "Remove this file after",
+        "Do not forget",
+        "Remaining high-impact work",
+        "first-run-support"
+      ]
+    },
+    {
+      "path": "docs/workflow-cookbook.md",
+      "mustContain": [
+        "First-run diagnostics and support handoff",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints"
+      ]
+    },
+    {
+      "path": "docs/final-proof-runbook.md",
+      "mustContain": [
+        "rm docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+        "temporary context file is gone",
+        "make final-proof-final"
+      ]
+    }
+  ],
+  "supportingChecks": [
+    {
+      "path": "scripts/check-no-generated-edits.mjs",
+      "mustContain": ["spec/corrected/", "output/ts-sdk/", "wrapper/src/"]
+    },
+    {
+      "path": "scripts/check-generator-independence.mjs",
+      "mustContain": ["generated core is isolated", "file:../wrapper"]
+    },
+    {
+      "path": "docs/user-docs-contract.json",
+      "mustContain": ["root-readme", "sdk-readme", "mcp-readme"]
+    }
+  ],
+  "guidanceScanPaths": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "docs/README.md",
+    "docs/product-north-star.md",
+    "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+    "docs/workflow-cookbook.md"
+  ],
+  "forbiddenGuidanceMarkers": [
+    "44 public names",
+    "89 tools",
+    "no workflow tools",
+    "clockify-sdk-ts` |"
+  ],
+  "wiring": {
+    "makeTarget": "agent-handoff",
+    "checker": "scripts/check-agent-handoff.mjs",
+    "docsIndex": [
+      "agent-handoff-policy.md",
+      "agent-handoff-contract.json"
+    ],
+    "qualityGate": "make agent-handoff",
+    "inventoryId": "agent-handoff",
+    "auditId": "agent-handoff"
+  }
+}

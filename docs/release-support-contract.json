@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Release, support, and security documentation contract for the SDK/CLI/MCP platform.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-release-support-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-security-document-contract",
+    "typed-package-contract-reference",
+    "typed-required-make-targets",
+    "typed-docs-index-contract",
+    "typed-forbidden-policy-markers",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/release-support-policy.md",
+    "mustContain": [
+      "clockify-sdk-ts-115",
+      "@clockify115/cli",
+      "@clockify115/mcp-server",
+      "Contract-shape rule",
+      "make perfect-fast",
+      "make perfect-full",
+      "make pack-smoke",
+      "npm publish",
+      "SECURITY.md",
+      "draft blocker",
+      "completed sandbox live proof",
+      "immediately before"
+    ]
+  },
+  "securityDocument": {
+    "path": "SECURITY.md",
+    "mustContain": [
+      "clockify-sdk-ts-115",
+      "@clockify115/cli",
+      "@clockify115/mcp-server",
+      "GitHub Security Advisories",
+      "Do NOT open a public GitHub issue",
+      "coordinated-disclosure"
+    ],
+    "forbiddenRegex": [
+      "\\bnpm ls clockify-sdk-ts\\b",
+      "\\bclockify-sdk-ts\\b(?!-115)"
+    ]
+  },
+  "packageContract": {
+    "path": "docs/package-contract.json",
+    "packageNamesMustAppearInPolicy": true,
+    "requiredMarkers": [
+      "requiredScripts",
+      "prepublishOnly"
+    ]
+  },
+  "requiredMakeTargets": [
+    "release-support-contract",
+    "package-contract",
+    "version-policy",
+    "changelog-drift",
+    "pack-smoke",
+    "final-proof-receipt-check"
+  ],
+  "docsIndex": [
+    "release-support-policy.md",
+    "release-support-contract.json"
+  ],
+  "forbiddenPolicyMarkers": [
+    "TODO",
+    "TBD"
+  ],
+  "wiring": {
+    "makeTarget": "release-support-contract",
+    "qualityGate": "make release-support-contract",
+    "inventoryId": "release-support-contract",
+    "auditId": "release-support-contract"
+  }
+}

@@ -1,0 +1,542 @@
+{
+  "schemaVersion": 1,
+  "purpose": "User-facing documentation contract for SDK, CLI, MCP, install, migration, workflow cookbook, and troubleshooting surfaces.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-user-docs-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-document-entries",
+    "typed-supporting-contract-entries",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/user-docs-policy.md",
+    "mustContain": [
+      "Documentation roles",
+      "Required style",
+      "Contract-shape rule",
+      "make user-docs",
+      "readme-tables-drift",
+      "troubleshooting-drift"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "documents": [
+    {
+      "id": "root-readme",
+      "path": "README.md",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "@clockify115/cli",
+        "@clockify115/mcp-server",
+        "make perfect-fast",
+        "make perfect-full",
+        "make perfect-live",
+        "spec/evidence/discrepancies.md"
+      ]
+    },
+    {
+      "id": "docs-quality-policy",
+      "path": "docs/docs-quality-policy.md",
+      "mustContain": [
+        "Evidence-first claims",
+        "Style rules",
+        "Unsupported claim blacklist",
+        "Non-coder readability",
+        "Required proof"
+      ]
+    },
+    {
+      "id": "axioms-contract",
+      "path": "docs/axioms-contract.json",
+      "mustContain": [
+        "typed-axiom-entries",
+        "makefile-audit-wiring",
+        "truth-source",
+        "generated-core-boundary",
+        "non-coder-reproducibility"
+      ]
+    },
+    {
+      "id": "sdk-readme",
+      "path": "wrapper/README.md",
+      "mustContain": [
+        "Install",
+        "Quick start",
+        "Authentication",
+        "Pagination",
+        "Error handling",
+        "Webhooks",
+        "Observability",
+        "Supported runtimes"
+      ]
+    },
+    {
+      "id": "sdk-changelog",
+      "path": "wrapper/CHANGELOG.md",
+      "mustContain": [
+        "clockify-sdk-ts-115",
+        "create-client",
+        "composed-fetch",
+        "webhooks"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD",
+        "clockify-sdk-ts\"",
+        "clockify-sdk-ts'",
+        "clockify-sdk-ts/"
+      ]
+    },
+    {
+      "id": "cli-readme",
+      "path": "cli/README.md",
+      "mustContain": [
+        "Configuration",
+        "Output modes",
+        "Commands",
+        "Exit codes",
+        "CLOCKIFY_BASE_URL",
+        "generated:cli-commands"
+      ]
+    },
+    {
+      "id": "cli-changelog",
+      "path": "cli/CHANGELOG.md",
+      "mustContain": [
+        "@clockify115/cli",
+        "clockify115",
+        "clk115"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD",
+        "@clockify/cli",
+        "clockify-cli"
+      ]
+    },
+    {
+      "id": "mcp-readme",
+      "path": "mcp/README.md",
+      "mustContain": [
+        "Workflow Tools",
+        "Domain Tools",
+        "Resources and Prompts",
+        "Result Envelope",
+        "Telemetry",
+        "structuredContent",
+        "generated:mcp-workflow-tools",
+        "generated:mcp-domain-tools"
+      ]
+    },
+    {
+      "id": "mcp-changelog",
+      "path": "mcp/CHANGELOG.md",
+      "mustContain": [
+        "@clockify115/mcp-server",
+        "105-tool surface",
+        "workflow tools"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD",
+        "@clockify/mcp-server",
+        "clockify-mcp"
+      ]
+    },
+    {
+      "id": "mcp-agent-ux-policy",
+      "path": "docs/mcp-agent-ux-policy.md",
+      "mustContain": [
+        "Agent UX rules",
+        "Required agent-facing surfaces",
+        "Server instructions",
+        "Tool metadata",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "install-personas",
+      "path": "docs/install-personas.md",
+      "mustContain": [
+        "SDK user",
+        "CLI user",
+        "MCP user",
+        "make pack-smoke",
+        "clockify115-mcp"
+      ]
+    },
+    {
+      "id": "operator-onboarding",
+      "path": "docs/operator-onboarding.md",
+      "mustContain": [
+        "First five minutes",
+        "Choose the path",
+        "Safe bootstrap sequence",
+        "Mock versus live",
+        "Stop conditions",
+        "Readiness boundaries",
+        "completed live sandbox proof"
+      ]
+    },
+    {
+      "id": "quickstart-receipt",
+      "path": "docs/quickstart-receipt.md",
+      "mustContain": [
+        "Local diagnostics, no network",
+        "clockifyDiagnostics",
+        "node dist/index.js --json doctor",
+        "clockify://mcp/doctor",
+        "make mock-clockify",
+        "client.health()",
+        "clk115 --json status",
+        "clockify_status",
+        "Raw secrets printed: no",
+        "Workspace ID printed raw: no"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD"
+      ]
+    },
+    {
+      "id": "migration-guide",
+      "path": "docs/migration-guide.md",
+      "mustContain": [
+        "Package names",
+        "Import paths",
+        "Auth",
+        "Generated surfaces",
+        "CLI behavior",
+        "MCP behavior"
+      ]
+    },
+    {
+      "id": "breaking-change-review-policy",
+      "path": "docs/breaking-change-review-policy.md",
+      "mustContain": [
+        "No silent removals",
+        "Replacement-first rule",
+        "Review record",
+        "Forbidden shortcuts",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "generator-portability-plan",
+      "path": "docs/generator-portability-plan.md",
+      "mustContain": [
+        "Portability principles",
+        "Vendor-exit checklist",
+        "Forbidden portability shortcuts",
+        "Replacement procedure"
+      ]
+    },
+    {
+      "id": "dependency-license-policy",
+      "path": "docs/dependency-license-policy.md",
+      "mustContain": [
+        "Runtime dependency rule",
+        "Allowed runtime dependency ledger",
+        "Change rules",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "workflow-cookbook",
+      "path": "docs/workflow-cookbook.md",
+      "mustContain": [
+        "First-run diagnostics and support handoff",
+        "clockifyDiagnostics()",
+        "clk115 doctor --json",
+        "clockify://mcp/doctor",
+        "safeCommandHints",
+        "Daily time tracking",
+        "Work package setup",
+        "Business and admin workflows",
+        "Demo and cleanup",
+        "Recovery pattern"
+      ]
+    },
+    {
+      "id": "acceptance-scenarios",
+      "path": "docs/acceptance-scenarios.md",
+      "mustContain": [
+        "Acceptance Scenarios",
+        "Scenario rules",
+        "Scenario matrix",
+        "Evidence escalation",
+        "Change rule"
+      ]
+    },
+    {
+      "id": "snippet-safety-policy",
+      "path": "docs/snippet-safety-policy.md",
+      "mustContain": [
+        "Snippet rules",
+        "Copy-paste safety checklist",
+        "Allowed placeholders",
+        "Forbidden snippet patterns",
+        "Required receipts"
+      ]
+    },
+    {
+      "id": "data-handling-policy",
+      "path": "docs/data-handling-policy.md",
+      "mustContain": [
+        "Data classes",
+        "Repository rules",
+        "Allowed placeholders",
+        "Prohibited committed evidence",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "path": "docs/troubleshooting.md",
+      "mustContain": [
+        "Troubleshooting",
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "id": "receipt-examples",
+      "path": "docs/receipt-examples.md",
+      "mustContain": [
+        "SDK success receipt",
+        "CLI success receipt",
+        "MCP success receipt",
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "id": "observability-policy",
+      "path": "docs/observability-policy.md",
+      "mustContain": [
+        "Observability is a product surface",
+        "Required observability surfaces",
+        "Telemetry levels",
+        "Redaction rules",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "diagnostics-policy",
+      "path": "docs/diagnostics-policy.md",
+      "mustContain": [
+        "Diagnostics are no-network by default",
+        "Diagnostics are redacted",
+        "SDK: `clockifyDiagnostics()`",
+        "CLI: `clk115 doctor`",
+        "MCP: `clockify://mcp/doctor`",
+        "make diagnostics"
+      ],
+      "forbiddenMarkers": [
+        "TODO",
+        "TBD"
+      ]
+    },
+    {
+      "id": "support-runbook",
+      "path": "docs/support-runbook.md",
+      "mustContain": [
+        "Safe diagnostic bundle",
+        "Never include",
+        "SDK support checklist",
+        "CLI support checklist",
+        "MCP support checklist",
+        "Escalation template"
+      ]
+    },
+    {
+      "id": "issue-intake-policy",
+      "path": "docs/issue-intake-policy.md",
+      "mustContain": [
+        "Intake surfaces",
+        "Required bug evidence",
+        "Required feature evidence",
+        "PR checklist quality",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "release-readiness-checklist",
+      "path": "docs/release-readiness-checklist.md",
+      "mustContain": [
+        "Required evidence",
+        "Publish decision boundary",
+        "Handoff decision boundary",
+        "Final proof closure",
+        "Operator checklist"
+      ]
+    },
+    {
+      "id": "test-data-lifecycle-policy",
+      "path": "docs/test-data-lifecycle-policy.md",
+      "mustContain": [
+        "Prefix ledger",
+        "Lifecycle rules",
+        "Cleanup proof",
+        "Stop conditions",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "maintenance-playbook",
+      "path": "docs/maintenance-playbook.md",
+      "mustContain": [
+        "Maintenance cadence",
+        "Dependency update procedure",
+        "Fern and generator bump procedure",
+        "Clockify API drift response",
+        "Release rehearsal procedure",
+        "Rollback procedure"
+      ]
+    },
+    {
+      "id": "mutation-safety-policy",
+      "path": "docs/mutation-safety-policy.md",
+      "mustContain": [
+        "Mutation classes",
+        "SDK rules",
+        "CLI rules",
+        "MCP rules",
+        "Ambiguous failure recovery",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "examples-matrix",
+      "path": "docs/examples-matrix.md",
+      "mustContain": [
+        "Examples are a product surface",
+        "Coverage matrix",
+        "Mock versus live",
+        "Promotion checklist",
+        "clockify-sdk-ts-115",
+        "confirm_token"
+      ]
+    },
+    {
+      "id": "config-precedence-policy",
+      "path": "docs/config-precedence-policy.md",
+      "mustContain": [
+        "Surface precedence",
+        "Base URL override rule",
+        "Missing configuration errors",
+        "Change rules",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "naming-taxonomy-policy",
+      "path": "docs/naming-taxonomy-policy.md",
+      "mustContain": [
+        "Canonical vocabulary",
+        "Time entries",
+        "Workflows",
+        "Business workflows",
+        "Recovery",
+        "Drift signals"
+      ]
+    },
+    {
+      "id": "operation-coverage-policy",
+      "path": "docs/operation-coverage-policy.md",
+      "mustContain": [
+        "Coverage baseline",
+        "OpenAPI operations",
+        "SDK-named operations",
+        "Required escalation",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "schema-quality-policy",
+      "path": "docs/schema-quality-policy.md",
+      "mustContain": [
+        "Model quality rules",
+        "Evidence rules",
+        "Generated model review checklist",
+        "Proof gates"
+      ]
+    },
+    {
+      "id": "upstream-drift-policy",
+      "path": "docs/upstream-drift-policy.md",
+      "mustContain": [
+        "Drift lifecycle",
+        "Routing rules",
+        "Raw evidence safety",
+        "Required updates after real drift",
+        "Proof gates"
+      ]
+    }
+  ],
+  "supportingContracts": [
+    {
+      "path": "docs/cli-commands.json",
+      "mustContain": [
+        "clk115 status",
+        "clk115 completion"
+      ]
+    },
+    {
+      "path": "docs/mcp-tools.json",
+      "mustContain": [
+        "clockify_status",
+        "clockify_create_work_package"
+      ]
+    },
+    {
+      "path": "docs/version-policy.json",
+      "mustContain": [
+        "installExampleMustContain"
+      ]
+    },
+    {
+      "path": "docs/workflow-cookbook-contract.json",
+      "mustContain": [
+        "time-tracking",
+        "business-workflows",
+        "demo-and-cleanup"
+      ]
+    },
+    {
+      "id": "diagnostics-contract",
+      "path": "docs/diagnostics-contract.json",
+      "mustContain": [
+        "clockifyDiagnostics",
+        "clk115 doctor",
+        "clockify://mcp/doctor"
+      ]
+    },
+    {
+      "id": "quickstart-receipt-contract",
+      "path": "docs/quickstart-receipt-contract.json",
+      "mustContain": [
+        "quickstart-receipt",
+        "clockifyDiagnostics",
+        "clk115 --json status",
+        "clockify_status"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "user-docs",
+    "checker": "scripts/check-user-docs.mjs",
+    "docsIndex": [
+      "user-docs-policy.md",
+      "user-docs-contract.json"
+    ],
+    "qualityGate": "make user-docs",
+    "inventoryId": "user-docs",
+    "auditId": "user-docs"
+  }
+}

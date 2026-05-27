@@ -11,18 +11,20 @@ import { join } from "node:path";
 export interface CliConfig {
     apiKey?: string;
     workspaceId?: string;
+    baseUrl?: string;
 }
 
 export interface GlobalFlags {
     apiKey?: string;
     workspace?: string;
+    baseUrl?: string;
 }
 
 /**
  * Resolve CLI config from (lowest → highest precedence):
  *   1. ~/.clockifyrc.json (or $CLOCKIFY_HOME/clockifyrc.json)
- *   2. CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID env vars
- *   3. --api-key / --workspace command-line flags
+ *   2. CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID / CLOCKIFY_BASE_URL env vars
+ *   3. --api-key / --workspace / --base-url command-line flags
  *
  * Returns the resolved values without throwing — call requireApiKey /
  * requireWorkspaceId at the point of use for the error message that
@@ -33,6 +35,7 @@ export function loadConfig(flags: GlobalFlags = {}, env: NodeJS.ProcessEnv = pro
     return {
         apiKey: flags.apiKey ?? env.CLOCKIFY_API_KEY ?? file.apiKey,
         workspaceId: flags.workspace ?? env.CLOCKIFY_WORKSPACE_ID ?? file.workspaceId,
+        baseUrl: flags.baseUrl ?? env.CLOCKIFY_BASE_URL ?? file.baseUrl,
     };
 }
 
@@ -67,6 +70,7 @@ function loadRcFile(env: NodeJS.ProcessEnv): CliConfig {
             const out: CliConfig = {};
             if (typeof parsed.apiKey === "string") out.apiKey = parsed.apiKey;
             if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
+            if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
             return out;
         } catch (err) {
             const reason = err instanceof Error ? err.message : String(err);

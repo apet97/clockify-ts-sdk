@@ -1,0 +1,52 @@
+# Agent Handoff Policy
+
+This repo is maintained by humans and agents. A follow-on agent should
+be able to recover the repo boundary, generated-path rules, proof
+commands, and temporary goal context without reading chat history.
+
+## Required guidance surfaces
+
+| Surface | Role |
+|---|---|
+| `AGENTS.md` | Canonical contributor and agent contract. It owns repo boundaries, first reads, build chain, critical conventions, and hard stops. |
+| `CLAUDE.md` | Concise Claude Code companion. It must point back to `AGENTS.md`, not replace it. |
+| `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` | Temporary context-retention file for this hardening goal. Keep through evidence capture; remove only after the receipt is complete and immediately before final acceptance. |
+| `docs/final-proof-runbook.md` | Exact proof sequence for turning the temporary context into a final receipt. |
+
+## Handoff rules
+
+- Keep `AGENTS.md` canonical. If another guide disagrees, fix the
+  other guide or explicitly explain why.
+- Keep package names, versions, counts, generated-path boundaries, and
+  root gates aligned across `AGENTS.md`, `CLAUDE.md`, README files,
+  and generated metadata.
+- Never rely on chat memory for open work. Add temporary context for
+  active long-running goals and remove it only after final proof.
+- When a follow-on agent inherits setup, auth, runtime, or support-handoff
+  uncertainty, start with
+  `node scripts/workflow-plan.mjs --workflow first-run-support` and preserve
+  `safeCommandHints` before asking for logs, retrying live calls, mutating
+  Clockify data, or changing release posture.
+- Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
+  `wrapper/src/**`.
+- Future agents should prefer `make perfect-fast`, `make perfect-full`, and `make perfect-live` over memorized package internals.
+
+## Contract-shape rule
+
+Agent-handoff contract shape is part of handoff readiness. The checker
+must fail before scanning guidance files when the JSON contract has
+unsafe repo-relative evidence paths, malformed guidance/supporting
+check entries, duplicate marker lists, malformed guidance scan paths,
+missing stale-marker rules, or missing Make/docs/inventory/audit
+wiring.
+
+## Required receipts
+
+Before claiming agent-handoff readiness, run or cite:
+
+- `make agent-handoff`
+- `node scripts/workflow-plan.mjs --workflow first-run-support`
+- `make docs-index-drift`
+- `make user-docs`
+- `make enterprise-audit`
+- `make final-proof-receipt-check` after removing temporary context and completing the receipt

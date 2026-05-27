@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "purpose": "API documentation generation contract for TypeDoc and generated SDK resource markdown.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-api-docs-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-typedoc-contract",
+    "typed-wrapper-package-contract",
+    "typed-resource-docs-contract",
+    "typed-sync-script-contract",
+    "typed-docs-workflow-contract",
+    "typed-supporting-docs",
+    "typed-generated-api-docs-contract",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/api-docs-policy.md",
+    "mustContain": [
+      "TypeDoc",
+      "wrapper/docs/resources",
+      "clockify-sdk-ts-115",
+      "make api-docs",
+      "npm run docs:resources",
+      "Generated HTML identity",
+      "Contract-shape rule"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "typedoc": {
+    "path": "wrapper/typedoc.json",
+    "mustEqual": {
+      "name": "clockify-sdk-ts-115",
+      "out": "../docs/api",
+      "entryPointStrategy": "expand",
+      "githubPages": true
+    },
+    "mustContainEntryPoints": [
+      "index.ts",
+      "src/api/resources"
+    ],
+    "mustContainNavigationLinks": {
+      "GitHub": "https://github.com/apet97/clockify-ts-sdk",
+      "npm": "https://www.npmjs.com/package/clockify-sdk-ts-115"
+    }
+  },
+  "wrapperPackage": {
+    "path": "wrapper/package.json",
+    "requiredScripts": {
+      "docs": "typedoc",
+      "docs:resources": "tsx scripts/gen-resource-docs.ts",
+      "sync": "bash scripts/sync-sdk.sh"
+    },
+    "requiredDevDependencies": [
+      "typedoc",
+      "tsx"
+    ]
+  },
+  "resourceDocs": {
+    "script": "wrapper/scripts/gen-resource-docs.ts",
+    "directory": "wrapper/docs/resources",
+    "minimumMarkdownFiles": 31,
+    "requiredFiles": [
+      "README.md",
+      "tags.md",
+      "projects.md",
+      "timeEntries.md",
+      "invoices.md"
+    ],
+    "mustContain": [
+      "Auto-generated",
+      "TypeDoc reference",
+      "do not edit by hand"
+    ]
+  },
+  "syncScript": {
+    "path": "wrapper/scripts/sync-sdk.sh",
+    "mustContain": [
+      "npx tsx scripts/gen-resource-docs.ts",
+      "Regenerating per-resource docs"
+    ]
+  },
+  "docsWorkflow": {
+    "path": ".github/workflows/docs.yml",
+    "mustContain": [
+      "npm run docs",
+      "actions/deploy-pages",
+      "docs/api"
+    ]
+  },
+  "supportingDocs": [
+    {
+      "path": "wrapper/README.md",
+      "mustContain": [
+        "Reference docs",
+        "clockify-sdk-ts-115",
+        "docs/resources"
+      ]
+    },
+    {
+      "path": "docs/README.md",
+      "mustContain": [
+        "api/",
+        "Do not hand-edit generated API pages"
+      ]
+    }
+  ],
+  "generatedApiDocs": {
+    "directory": "docs/api",
+    "optionalWhenMissing": true,
+    "representativeFiles": [
+      "index.html",
+      "modules.html"
+    ],
+    "mustContain": [
+      "clockify-sdk-ts-115",
+      "https://www.npmjs.com/package/clockify-sdk-ts-115"
+    ],
+    "forbiddenMarkers": [
+      "clockify-sdk-ts - v",
+      "https://www.npmjs.com/package/clockify-sdk-ts\""
+    ]
+  },
+  "wiring": {
+    "makeTarget": "api-docs",
+    "checker": "scripts/check-api-docs.mjs",
+    "docsIndex": [
+      "api-docs-policy.md",
+      "api-docs-contract.json"
+    ],
+    "qualityGate": "make api-docs",
+    "inventoryId": "api-docs",
+    "auditId": "api-docs"
+  }
+}

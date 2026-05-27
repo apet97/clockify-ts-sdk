@@ -75,7 +75,7 @@ export interface ClockifyClientEnhancements {
     /** Custom underlying `fetch`. Default `globalThis.fetch`. */
     fetch?: typeof fetch;
     /** `User-Agent` header injection. `true` (default): inject the
-     *  default `clockify-sdk-ts/<ver> (Node.js <ver>; <platform> <arch>)`
+     *  default `clockify-sdk-ts-115/<ver> (Node.js <ver>; <platform> <arch>)`
      *  string. `false`: leave the header alone. string: use as-is. */
     userAgent?: boolean | string;
     /** `X-Request-Id` header injection. `true` (default): inject a
@@ -174,7 +174,7 @@ function readEnv(name: string): string | undefined {
  *
  * @example
  * ```ts
- * import { createClockifyClient } from "clockify-sdk-ts/create-client";
+ * import { createClockifyClient } from "clockify-sdk-ts-115/create-client";
  *
  * // Simplest case — env-var driven. Reads CLOCKIFY_API_KEY
  * // (preferred) or CLOCKIFY_ADDON_TOKEN from the environment.
@@ -236,6 +236,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     const hasExplicitAddonToken = "addonToken" in options && options.addonToken != null;
 
     if (hasExplicitApiKey && hasExplicitAddonToken) {
+        // Callers must provide exactly one of `apiKey` or `addonToken`.
         throw new TypeError(
             "createClockifyClient: pass only one of `apiKey` or `addonToken`, not both.",
         );

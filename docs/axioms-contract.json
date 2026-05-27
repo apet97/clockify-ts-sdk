@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Contract for the SDK/CLI/MCP/OpenAPI axioms. Keeps the product rules executable by tying each axiom to concrete gates, contracts, or evidence surfaces.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-axioms-evidence-paths",
+    "typed-axiom-document-contract",
+    "typed-axiom-entries",
+    "typed-supporting-evidence",
+    "typed-wiring-contract",
+    "makefile-audit-wiring"
+  ],
+  "axiomsDocument": {
+    "path": "docs/axioms.md",
+    "contains": [
+      "SDK CLI MCP Axioms",
+      "One truth source beats three clever layers.",
+      "Generated code is a dependency, not the product.",
+      "Every public surface needs a receipt.",
+      "Parity must be visible.",
+      "Docs are generated until proven impossible.",
+      "Tarballs are the real artifact.",
+      "Mock first, live second.",
+      "Writes must be boringly safe.",
+      "Errors are product design.",
+      "Perfect means reproducible by a tired non-coder.",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "not proof",
+      "Add metadata before adding prose.",
+      "Add gates before adding promises.",
+      "Never make a release/readiness claim without a command that proves it."
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "axioms": [
+    {
+      "id": "truth-source",
+      "markers": ["One truth source", "GOCLMCP", "Do not repair generated output by hand"],
+      "evidence": ["canonical-api-truth", "openapi-evidence", "generator-portability"]
+    },
+    {
+      "id": "generated-core-boundary",
+      "markers": ["Generated code is a dependency", "durable SDK wrapper", "public seams stay stable"],
+      "evidence": ["generated-core-boundary", "generator-independence", "sdk-public-api"]
+    },
+    {
+      "id": "public-surface-receipts",
+      "markers": ["Every public surface needs a receipt", "stable JSON and exit codes", "structured content"],
+      "evidence": ["receipts-contract", "cli-contract", "mcp-contract"]
+    },
+    {
+      "id": "visible-parity",
+      "markers": ["Parity must be visible", "SDK and CLI path should be obvious", "gap must be named"],
+      "evidence": ["product-surface", "operation-coverage", "workflow-cookbook"]
+    },
+    {
+      "id": "generated-docs",
+      "markers": ["Docs are generated until proven impossible", "metadata or a checker", "Manual prose is for judgment"],
+      "evidence": ["docs-quality", "readme-tables", "product-surface-drift"]
+    },
+    {
+      "id": "tarball-artifacts",
+      "markers": ["Tarballs are the real artifact", "fresh consumer project", "imports and bins work"],
+      "evidence": ["pack-smoke", "package-contract", "supply-chain"]
+    },
+    {
+      "id": "mock-then-live",
+      "markers": ["Mock first, live second", "Deterministic mock/replay tests", "Live sandbox tests"],
+      "evidence": ["mock-clockify", "live-safety", "test-matrix"]
+    },
+    {
+      "id": "safe-writes",
+      "markers": ["Writes must be boringly safe", "dry-run", "stable cleanup"],
+      "evidence": ["mutation-safety", "cli-write-safety", "mcp-write-safety"]
+    },
+    {
+      "id": "errors-as-product",
+      "markers": ["Errors are product design", "Stable error codes", "recovery hints"],
+      "evidence": ["error-docs-drift", "troubleshooting-drift", "receipts-contract"]
+    },
+    {
+      "id": "non-coder-reproducibility",
+      "markers": [
+        "Perfect means reproducible by a tired non-coder",
+        "make help",
+        "make perfect-fast",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints",
+        "not proof"
+      ],
+      "evidence": [
+        "developer-environment",
+        "operator-onboarding",
+        "first-run-support-workflow",
+        "final-proof-command-contract"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "id": "canonical-api-truth",
+      "path": "docs/decisions/0001-canonical-api-truth.md",
+      "contains": ["GOCLMCP owns canonical Clockify OpenAPI generation", "make perfect-full"]
+    },
+    {
+      "id": "openapi-evidence",
+      "path": "docs/openapi-evidence-policy.md",
+      "contains": ["Evidence ledger contract", "five questions"]
+    },
+    {
+      "id": "generator-portability",
+      "path": "docs/generator-portability-plan.md",
+      "contains": ["without paying for Stainless, Speakeasy, Fern Cloud", "local regeneration"]
+    },
+    {
+      "id": "generated-core-boundary",
+      "path": "docs/decisions/0002-generated-core-boundary.md",
+      "contains": ["Generated code is a dependency", "No ad-hoc postgen scripts"]
+    },
+    {
+      "id": "generator-independence",
+      "path": "docs/generator-independence-contract.json",
+      "contains": ["postgenEscapeHatch", "typed-postgen-escape-hatch-contract"]
+    },
+    {
+      "id": "sdk-public-api",
+      "path": "docs/sdk-public-api.json",
+      "contains": ["publicExports", "subpaths"]
+    },
+    {
+      "id": "receipts-contract",
+      "path": "docs/receipts-contract.json",
+      "contains": ["changed", "recovery", "requestId"]
+    },
+    {
+      "id": "cli-contract",
+      "path": "docs/cli-contract.json",
+      "contains": ["Exit codes", "generated:cli-commands"]
+    },
+    {
+      "id": "mcp-contract",
+      "path": "docs/mcp-contract.json",
+      "contains": ["structuredContent", "clockify://guide/axioms"]
+    },
+    {
+      "id": "product-surface",
+      "path": "docs/product-surface.json",
+      "contains": ["surfaceAvailability", "proofMode", "intentionalGaps"]
+    },
+    {
+      "id": "operation-coverage",
+      "path": "docs/operation-coverage-contract.json",
+      "contains": ["sdkNamed", "tsMcpExact", "goMcpExact"]
+    },
+    {
+      "id": "workflow-cookbook",
+      "path": "docs/workflow-cookbook-contract.json",
+      "contains": ["requiredWorkflowClaimFields", "emptySurfaceRequiresIntentionalGap"]
+    },
+    {
+      "id": "docs-quality",
+      "path": "docs/docs-quality-contract.json",
+      "contains": ["productSurfaceClaims", "typed-product-surface-claim-contract"]
+    },
+    {
+      "id": "readme-tables",
+      "path": "scripts/update-readme-tables.mjs",
+      "contains": ["generated:cli-commands", "generated:mcp-workflow-tools"]
+    },
+    {
+      "id": "product-surface-drift",
+      "path": "scripts/generate-product-surface.mjs",
+      "contains": ["--check", "Product surface drift"]
+    },
+    {
+      "id": "pack-smoke",
+      "path": "Makefile",
+      "contains": ["pack-smoke:", "Install packed SDK/CLI/MCP tarballs into temp consumer projects"]
+    },
+    {
+      "id": "package-contract",
+      "path": "docs/package-contract.json",
+      "contains": ["clockify-sdk-ts-115", "@clockify115/cli", "@clockify115/mcp-server"]
+    },
+    {
+      "id": "supply-chain",
+      "path": "docs/supply-chain-contract.json",
+      "contains": ["npm publish", "prepublishOnly"]
+    },
+    {
+      "id": "mock-clockify",
+      "path": "docs/mock-clockify-contract.json",
+      "contains": ["mock-clockify", "CLOCKIFY_BASE_URL"]
+    },
+    {
+      "id": "live-safety",
+      "path": "docs/live-safety-contract.json",
+      "contains": ["sandbox", "customer workspace"]
+    },
+    {
+      "id": "test-matrix",
+      "path": "docs/test-matrix-contract.json",
+      "contains": ["wrapper", "cli", "mcp"]
+    },
+    {
+      "id": "mutation-safety",
+      "path": "docs/mutation-safety-contract.json",
+      "contains": ["Ambiguous failure recovery", "readinessContext"]
+    },
+    {
+      "id": "cli-write-safety",
+      "path": "docs/cli-write-safety-policy.md",
+      "contains": ["CLI writes stay non-interactive", "Destructive commands must be ID-scoped"]
+    },
+    {
+      "id": "mcp-write-safety",
+      "path": "docs/mcp-write-safety-policy.md",
+      "contains": ["dry_run", "confirm_token"]
+    },
+    {
+      "id": "error-docs-drift",
+      "path": "scripts/generate-error-docs.mjs",
+      "contains": ["error-registry", "--check"]
+    },
+    {
+      "id": "troubleshooting-drift",
+      "path": "scripts/generate-troubleshooting.mjs",
+      "contains": ["troubleshooting", "--check"]
+    },
+    {
+      "id": "developer-environment",
+      "path": "docs/developer-environment-contract.json",
+      "contains": ["make help", "doctor"]
+    },
+    {
+      "id": "operator-onboarding",
+      "path": "docs/operator-onboarding-contract.json",
+      "contains": ["First five minutes", "Readiness boundaries"]
+    },
+    {
+      "id": "first-run-support-workflow",
+      "path": "docs/workflow-cookbook-contract.json",
+      "contains": [
+        "first-run-support",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints"
+      ]
+    },
+    {
+      "id": "final-proof-command-contract",
+      "path": "docs/final-proof-command-contract.json",
+      "contains": ["make perfect-fast", "make perfect-full", "make perfect-live"]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "axioms-contract",
+    "checker": "scripts/check-axioms-contract.mjs",
+    "docsIndex": ["axioms-contract.json"],
+    "qualityGate": "make axioms-contract",
+    "auditId": "axioms"
+  }
+}

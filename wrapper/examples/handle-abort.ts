@@ -11,7 +11,7 @@
  * a stop. Compare to `ClockifyApiTimeoutError`, which IS
  * retryable (request exceeded `timeoutInSeconds`).
  */
-import { createClockifyClient, isAbortError, promoteApiError } from "clockify-sdk-ts";
+import { createClockifyClient, isAbortError, promoteApiError } from "clockify-sdk-ts-115";
 
 async function main(): Promise<void> {
     const client = createClockifyClient();

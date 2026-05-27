@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "purpose": "Local deterministic budgets for package size and startup/import smoke. Ceilings are intentionally explicit so regressions are visible before publish or handoff.",
+  "wiring": {
+    "makeTarget": "performance-budgets",
+    "checker": "scripts/check-performance-budgets.mjs",
+    "enterpriseAuditId": "performance-budgets"
+  },
+  "calibrationPolicy": {
+    "status": "provisional",
+    "finalStatus": "calibrated",
+    "requiredSuccessfulRuns": 3,
+    "receiptPath": "docs/performance-baseline-latest.json",
+    "tighteningRule": "After calibrationPolicy.requiredSuccessfulRuns successful runs on a clean built tree, set each ceiling to the greater of actual * 1.35 or actual + the smallest practical fixed buffer."
+  },
+  "calibrationPlanContract": {
+    "exactFields": {
+      "schemaVersion": 1,
+      "network": "none",
+      "commandsExecuted": [],
+      "envValuesCaptured": false,
+      "reportScope": "performance-calibration-plan",
+      "status": "preflight-only",
+      "trackedRiskId": "performance-budgets-provisional",
+      "budgetPath": "docs/performance-budgets.json",
+      "finalProofMarker": "Budget status: tightened"
+    },
+    "requiresPositiveRequiredSuccessfulRuns": true,
+    "requiredStepIds": [
+      "prepare-built-tree",
+      "record-required-receipts",
+      "tighten-ceilings",
+      "prove-calibrated-state"
+    ],
+    "requiredReceiptStep": {
+      "id": "record-required-receipts",
+      "command": "make performance-receipt"
+    },
+    "requiredReportKeys": [
+      "budgetSchemaVersion",
+      "budgetFingerprint"
+    ],
+    "requiredLatestReceiptKeys": [
+      "path",
+      "status",
+      "successfulReceiptPresent",
+      "measuredAt",
+      "source",
+      "budgetsSchemaVersion",
+      "budgetFingerprint",
+      "calibrationPolicyStatus",
+      "calibrationPolicyFinalStatus",
+      "measurementCount",
+      "failedMeasurementCount",
+      "failureCount",
+      "parseError"
+    ]
+  },
+  "fileSize": [
+    {
+      "path": "wrapper/dist/esm/index.js",
+      "maxBytes": 120000,
+      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application."
+    },
+    {
+      "path": "wrapper/dist/cjs/index.js",
+      "maxBytes": 140000,
+      "rationale": "CJS root import should stay close to ESM size after dual-build emit."
+    },
+    {
+      "path": "cli/dist/index.js",
+      "maxBytes": 180000,
+      "rationale": "CLI startup entrypoint should remain lightweight and command-dispatch oriented."
+    },
+    {
+      "path": "mcp/dist/index.js",
+      "maxBytes": 220000,
+      "rationale": "MCP stdio entrypoint should not absorb generated SDK internals or fixture data."
+    }
+  ],
+  "timing": [
+    {
+      "name": "sdk-esm-import",
+      "maxMs": 1500,
+      "rationale": "A consumer should be able to import the SDK root without expensive runtime setup."
+    },
+    {
+      "name": "cli-version",
+      "maxMs": 1500,
+      "rationale": "The CLI should print version/help quickly before any Clockify network setup."
+    },
+    {
+      "name": "mcp-tools-list",
+      "maxMs": 3000,
+      "rationale": "MCP clients should be able to discover the 105-tool surface quickly on local stdio startup."
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-performance-budget-paths",
+    "typed-calibration-policy",
+    "typed-calibration-plan-contract",
+    "typed-file-size-budgets",
+    "typed-timing-budgets",
+    "makefile-audit-wiring"
+  ]
+}

@@ -6,8 +6,8 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 105 tools: 16 workflow tools plus the
-existing 89 domain tools across Clockify's major resources. It is
+This package now advertises 105 tools: 17 workflow tools plus 88
+domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
 
@@ -29,7 +29,8 @@ npm link
 ## Configure
 
 The server reads `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` from
-its process environment.
+its process environment. `CLOCKIFY_BASE_URL` is optional and should
+only be used for mock/replay gateways or private test environments.
 
 ```json
 {
@@ -47,15 +48,12 @@ its process environment.
 
 ## Workflow Tools
 
-Use these first. They accept IDs returned by earlier calls, but also
-resolve common names so an agent can complete daily Clockify work
-without hand-chaining low-level SDK calls.
-
+<!-- BEGIN generated:mcp-workflow-tools -->
 | Tool | Purpose |
 |---|---|
 | `clockify_status` | Confirm user, workspace, and running timer. |
 | `clockify_tools_guide` | Show workflow groups and when to use domain tools. |
-| `clockify_create_work_package` | Create or reuse client/project/task/tag objects. |
+| `clockify_create_work_package` | Create or reuse client, project, task, and tag objects. |
 | `clockify_log_work` | Log a finished time entry from names or IDs. |
 | `clockify_start_work` | Start a running work timer. |
 | `clockify_stop_work` | Stop the current running timer. |
@@ -70,6 +68,7 @@ without hand-chaining low-level SDK calls.
 | `clockify_setup_webhook` | Create a validated HTTPS webhook subscription. |
 | `clockify_demo_seed` | Create deterministic demo objects. |
 | `clockify_demo_cleanup` | Clean deterministic demo entries and objects by prefix. |
+<!-- END generated:mcp-workflow-tools -->
 
 ## Workflow Examples
 
@@ -196,19 +195,33 @@ Demo fixture helpers:
 { "name": "clockify_demo_cleanup", "arguments": { "run_id": "smoke" } }
 ```
 
+## Resources and Prompts
+
+The server exposes guide resources for agent discovery:
+
+- `clockify://guide/axioms` — product axioms and safety boundaries.
+- `clockify://guide/workflows` — workflow-first guidance and tool sequencing.
+- `clockify://guide/safety` — write-safety rules including dry_run and confirm_token.
+- `clockify://mcp/doctor` — No-network diagnostics checklist for local readiness.
+
+Prompts:
+
+- `clockify-workflow-plan` — interactive workflow plan for time tracking and admin flows.
+
 ## Domain Tools
 
+<!-- BEGIN generated:mcp-domain-tools -->
 | Resource group | Count | Tools |
 |---|---:|---|
-| `clients` | 5 | `list`, `get`, `create`, `update`, `delete` |
-| `projects` | 5 | `list`, `get`, `create`, `update`, `delete` |
-| `tasks` | 5 | `list`, `get`, `create`, `update`, `delete` |
-| `tags` | 5 | `list`, `get`, `create`, `update`, `delete` |
-| `entries` | 5 | `list`, `get`, `log`, `update`, `delete` |
-| `timer` | 2 | `start`, `stop` |
-| `invoices` | 7 | `list`, `get`, `create`, `update`, `delete`, `update_status`, `export` |
-| `expenses` | 8 | expense `list/get/delete`; category CRUD plus archive |
-| `webhooks` | 5 | `list`, `get`, `create`, `update`, `delete` |
+| `clients` | 5 | list, get, create, update, delete |
+| `projects` | 5 | list, get, create, update, delete |
+| `tasks` | 5 | list, get, create, update, delete |
+| `tags` | 5 | list, get, create, update, delete |
+| `entries` | 5 | list, get, log, update, delete |
+| `timer` | 2 | start, stop |
+| `invoices` | 7 | list, get, create, update, delete, update_status, export |
+| `expenses` | 8 | expense list/get/delete; category CRUD plus archive |
+| `webhooks` | 5 | list, get, create, update, delete |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |
 | `scheduling` | 5 | assignments list/create/update/delete |
@@ -216,14 +229,14 @@ Demo fixture helpers:
 | `holidays` | 5 | list/create/update/delete |
 | `approvals` | 3 | list, submit, update state |
 | `audit_log` | 1 | search |
-| `status` | 1 | workspace/user/timer preflight |
-
-Run `tools/list` for the exact input schema of every tool.
+<!-- END generated:mcp-domain-tools -->
 
 ## Result Envelope
 
 Every tool returns JSON in both `content[0].text` and
-`structuredContent`.
+`structuredContent`. Every advertised tool also carries the shared
+output schema for this envelope so MCP clients can validate the shape
+before calling tools.
 
 Success:
 
@@ -299,7 +312,7 @@ const server = buildServer(ctx);
 
 | | `@clockify115/mcp-server` | `go-clockify` |
 |---|---|---|
-| Language | TypeScript / Node 18.18+ | Go |
+| Language | TypeScript / Node 20+ | Go |
 | Transport | stdio | stdio |
 | Tools | 105 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |

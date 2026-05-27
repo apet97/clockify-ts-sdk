@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Cross-surface workflow cookbook contract. Keeps real user jobs obvious across SDK, CLI, and MCP instead of relying only on generated resource lists.",
+  "contractInvariants": [
+    "schema-versioned-workflow-cookbook-contract",
+    "safe-workflow-cookbook-paths",
+    "typed-cookbook-sections-and-markers",
+    "typed-planner-contract",
+    "generated-plan-static-no-network",
+    "product-surface-workflow-coverage",
+    "supporting-docs-marker-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "workflow-cookbook",
+    "checker": "scripts/check-workflow-cookbook.mjs",
+    "enterpriseAuditId": "workflow-cookbook"
+  },
+  "cookbook": {
+    "path": "docs/workflow-cookbook.md",
+    "requiredSections": [
+      "First-run diagnostics and support handoff",
+      "Daily time tracking",
+      "Work package setup",
+      "Business and admin workflows",
+      "Demo and cleanup",
+      "Recovery pattern"
+    ],
+    "contains": [
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "clockifyDiagnostics()",
+      "clk115 doctor --json",
+      "clockify://mcp/doctor",
+      "safeCommandHints",
+      "readinessContext",
+      "make support-bundle",
+      "node scripts/workflow-plan.mjs --workflow time-tracking",
+      "createClockifyClient()",
+      "clk115 start",
+      "clockify_start_work",
+      "clockify_create_work_package",
+      "clockify_invoice_client_work",
+      "dry_run:true",
+      "confirm_token",
+      "clockify_demo_seed",
+      "clockify_demo_cleanup",
+      "classifyClockifyError()"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "planner": {
+    "path": "scripts/workflow-plan.mjs",
+    "makeTarget": "workflow-plan",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This plan is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "first-run-support",
+      "clockifyDiagnostics()",
+      "clk115 doctor --json",
+      "clockify://mcp/doctor",
+      "safeCommandHints",
+      "time-tracking",
+      "work-package",
+      "business-workflows",
+      "demo-and-cleanup",
+      "clockify_start_work",
+      "clockify_create_work_package",
+      "clockify_invoice_client_work",
+      "clockify_demo_cleanup",
+      "classifyClockifyError()"
+    ],
+    "generatedPlan": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "workflow": "all"
+      },
+      "requiredWorkflowIds": [
+        "first-run-support",
+        "time-tracking",
+        "work-package",
+        "business-workflows",
+        "demo-and-cleanup",
+        "recovery"
+      ],
+      "requiredWorkflowArrayFields": [
+        "sdk",
+        "cli",
+        "mcp",
+        "safety"
+      ]
+    }
+  },
+    "productSurface": {
+    "path": "docs/product-surface.json",
+    "workflowIds": ["first-run-support", "time-tracking", "work-package", "business-workflows", "demo-and-cleanup"],
+    "requiredMarkers": [
+      "first-run-support",
+      "clockifyDiagnostics",
+      "clk115 doctor",
+      "clockify://mcp/doctor",
+      "safeCommandHints",
+      "client.timeEntries",
+      "clk115 start",
+      "clockify_start_work",
+      "clockify_create_work_package",
+      "clockify_invoice_client_work",
+      "clockify_demo_cleanup",
+      "surfaceAvailability",
+      "proofMode",
+      "intentionalGaps"
+    ],
+    "requiredWorkflowClaimFields": ["surfaceAvailability", "proofMode", "recovery", "intentionalGaps"],
+    "surfaceAvailabilityFields": ["sdk", "cli", "tsMcp", "goMcp"],
+    "emptySurfaceRequiresIntentionalGap": ["sdk", "cli", "tsMcp", "goMcp"]
+  },
+  "supportingDocs": [
+    {
+      "path": "wrapper/README.md",
+      "contains": ["createClockifyClient", "withResponse", "classifyClockifyError"]
+    },
+    {
+      "path": "docs/quickstart-receipt.md",
+      "contains": ["Copy-paste safety", "clockifyDiagnostics", "clockify://mcp/doctor"]
+    },
+    {
+      "path": "docs/support-bundle-contract.json",
+      "contains": ["readinessContext", "safeCommandHints", "make quickstart-receipt"]
+    },
+    {
+      "path": "cli/README.md",
+      "contains": ["clk115 start", "clk115 log", "clk115 invoices create", "Exit codes"]
+    },
+    {
+      "path": "mcp/README.md",
+      "contains": ["clockify_start_work", "dry_run:true", "confirm_token", "clockify://guide/workflows"]
+    },
+    {
+      "path": "docs/mcp-write-safety-policy.md",
+      "contains": ["High-risk workflow writes require preview confirmation"]
+    },
+    {
+      "path": "docs/cli-write-safety-policy.md",
+      "contains": ["CLI writes stay non-interactive"]
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Generated-core independence contract. Keeps Fern output behind wrapper/package seams so CLI, MCP, examples, and public package exports do not depend on generated internals.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-generator-independence-evidence-paths",
+    "typed-file-inputs",
+    "typed-wrapper-package-boundary",
+    "typed-package-dependency-boundary",
+    "typed-source-scan-contract",
+    "typed-product-surface-policy",
+    "typed-postgen-escape-hatch-contract",
+    "typed-wiring-contract"
+  ],
+  "files": {
+    "wrapperPackage": "wrapper/package.json",
+    "cliPackage": "cli/package.json",
+    "mcpPackage": "mcp/package.json",
+    "productSurface": "docs/product-surface.json",
+    "fernGenerators": "spec/fern/generators.yml",
+    "syncScript": "wrapper/scripts/sync-sdk.sh",
+    "generatedCoreDecision": "docs/decisions/0002-generated-core-boundary.md"
+  },
+  "fern": {
+    "tsOutputMarker": "path: ../../output/ts-sdk"
+  },
+  "wrapperPackage": {
+    "forbiddenFiles": [
+      "src"
+    ],
+    "forbiddenFilePrefixes": [
+      "src/"
+    ],
+    "forbiddenExportMarkers": [
+      "./src/"
+    ]
+  },
+  "packageDependencies": {
+    "sdkPackageName": "clockify-sdk-ts-115",
+    "devDependencyValue": "file:../wrapper",
+    "consumers": [
+      "cli",
+      "mcp"
+    ]
+  },
+  "sourceScan": {
+    "targets": [
+      "cli/src",
+      "mcp/src",
+      "wrapper/examples",
+      "wrapper/tests"
+    ],
+    "extensions": [
+      ".ts",
+      ".mts",
+      ".cts",
+      ".js",
+      ".mjs",
+      ".cjs"
+    ],
+    "forbiddenGeneratedMarker": "output/ts-sdk",
+    "forbiddenWrapperSrcMarker": "wrapper/src",
+    "wrapperSrcAllowedTarget": "wrapper/tests"
+  },
+  "productSurfacePolicy": {
+    "generatedCore": "output/ts-sdk",
+    "handwrittenSdkLayer": "wrapper/*.ts"
+  },
+  "postgenEscapeHatch": {
+    "allowedGeneratedMutationScripts": [
+      "wrapper/scripts/sync-sdk.sh"
+    ],
+    "scannedScriptDirs": [
+      "scripts",
+      "wrapper/scripts",
+      "cli/scripts",
+      "mcp/scripts"
+    ],
+    "forbiddenScriptNameFragments": [
+      "postgen",
+      "post-generation",
+      "fix-generated",
+      "patch-generated",
+      "manual-generated"
+    ],
+    "decisionMarkers": [
+      "Prefer upstream OpenAPI source or generator fixes first.",
+      "Durable wrapper seams are the normal place for product behavior.",
+      "Deterministic post-generation cleanup is an escape hatch, not a product layer.",
+      "Every generated-output mutator must be registered in `docs/generator-independence-contract.json`.",
+      "No ad-hoc postgen scripts."
+    ]
+  },
+  "wiring": {
+    "makeTarget": "generator-independence",
+    "checker": "scripts/check-generator-independence.mjs",
+    "docsIndex": [
+      "generator-independence-contract.json"
+    ],
+    "qualityGate": "make generator-independence",
+    "inventoryId": "generator-independence",
+    "auditId": "generator-independence"
+  }
+}

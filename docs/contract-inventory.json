@@ -1,0 +1,1298 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Inventory of enterprise hardening contracts so policy docs, contract JSON, checker scripts, Make targets, docs index rows, quality-gate rows, and audit evidence stay wired together.",
+  "reportGenerator": {
+    "path": "scripts/contract-inventory-report.mjs",
+    "makeTarget": "contract-inventory-report",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This report is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "docs/contract-inventory.json",
+      "perfectFast",
+      "perfectFull",
+      "reports",
+      "helpers:",
+      "withReports",
+      "toolboxHelperOwnership",
+      "toolboxHelperCommandCoverage",
+      "toolboxHelpersOwned",
+      "toolboxHelperCommandsCovered",
+      "toolboxHelperCommandEntries",
+      "toolboxHelperCommandExtras",
+      "toolboxHelperCommandDuplicates",
+      "inventoryInvariantStatus",
+      "inventoryInvariants",
+      "inventoryInvariantFailures",
+      "requiredDocCoverage",
+      "requiredDocs",
+      "listedRequiredDocs",
+      "unlistedRequiredDocs",
+      "docsIndexCoverage",
+      "docsIndexLinks",
+      "docsIndexLinksPresent",
+      "missingDocsIndexLinks",
+      "qualityGateCoverage",
+      "qualityGateTargets",
+      "qualityGateTargetsPresent",
+      "missingQualityGateTargets",
+      "duplicateEntryIds",
+      "duplicateEntryTargets",
+      "duplicateReportGeneratorMarkers",
+      "duplicateRequiredEntryIds",
+      "duplicateRequiredToolboxHelperScripts",
+      "entryDuplicateLists",
+      "extraCommands",
+      "duplicateCommands",
+      "missingFiles",
+      "structuralInvariantIds",
+      "structuralInvariants",
+      "Structural shape invariants",
+      "inventoryShapeStatus",
+      "Inventory shape status",
+      "schemaIssues",
+      "unsafePaths",
+      "typedListIssues",
+      "booleanIssues",
+      "minimumCountIssues",
+      "invalidEntryShapes",
+      "orderedProofChainCoverage",
+      "Ordered proof chain coverage",
+      "orderedProofChainEntries",
+      "missingOrderedProofChainEntries",
+      "requiredOrderedProofChainEntries",
+      "missingRequiredEntries",
+      "inventory JSON shape checks are clean"
+    ],
+    "generatedReport": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "reportScope": "contract-inventory"
+      },
+      "minimumCounts": {
+        "entries": 1,
+        "withReports": 12,
+        "toolboxHelpers": 14,
+        "toolboxHelpersOwned": 14,
+        "toolboxHelperCommands": 14,
+        "toolboxHelperCommandsCovered": 14,
+        "toolboxHelperCommandEntries": 14,
+        "inventoryInvariants": 9,
+        "orderedProofChainEntries": 3,
+        "requiredDocs": 1,
+        "docsIndexLinks": 1,
+        "qualityGateTargets": 1
+      },
+      "requiredEntryIds": [
+        "release-readiness",
+        "enterprise-goal-status-contract",
+        "final-proof-preflight-contract",
+        "axioms-contract",
+        "workflow-cookbook",
+        "acceptance-scenarios",
+        "quickstart-receipt",
+        "diagnostics-contract",
+        "support-bundle",
+        "change-impact",
+        "operator-onboarding",
+        "operator-toolbox"
+      ],
+      "requiredUnlistedRequiredDocs": [],
+      "requiredMissingDocsIndexLinks": [],
+      "requiredMissingQualityGateTargets": [],
+      "requiredToolboxHelperScripts": [
+        "scripts/repo-doctor.mjs",
+        "scripts/onboarding-plan.mjs",
+        "scripts/enterprise-goal-status.mjs",
+        "scripts/workflow-plan.mjs",
+        "scripts/acceptance-plan.mjs",
+        "scripts/examples-plan.mjs",
+        "scripts/change-impact-plan.mjs",
+        "scripts/maintenance-plan.mjs",
+        "scripts/contract-inventory-report.mjs",
+        "scripts/risk-status-report.mjs",
+        "scripts/release-readiness-report.mjs",
+        "scripts/release-decision-plan.mjs",
+        "scripts/performance-calibration-plan.mjs",
+        "scripts/create-support-bundle.mjs"
+      ],
+      "requiredMissingToolboxHelperOwners": [],
+      "requiredMissingToolboxHelperCommands": [],
+      "requiredExtraToolboxHelperCommands": [],
+      "requiredDuplicateToolboxHelperCommands": [],
+      "requiredInventoryInvariants": [
+        "typed-report-generator-config",
+        "typed-entry-lists",
+        "safe-inventory-paths",
+        "valid-purpose",
+        "valid-schema-version",
+        "unique-entry-ids",
+        "unique-entry-targets",
+        "unique-entry-reports",
+        "unique-entry-policies",
+        "unique-entry-contracts",
+        "unique-entry-audit-ids",
+        "unique-report-generator-markers",
+        "unique-report-generator-required-entry-ids",
+        "unique-report-generator-required-toolbox-helper-scripts",
+        "makefile-audit-wiring"
+      ],
+      "requiredDuplicateEntryIds": [],
+      "requiredDuplicateEntryTargets": [],
+      "requiredDuplicateReportGeneratorMarkers": [],
+      "requiredDuplicateRequiredEntryIds": [],
+      "requiredDuplicateRequiredToolboxHelperScripts": [],
+      "requiredEntryDuplicateLists": [],
+      "requiredOrderedProofChainEntries": [
+        "release-readiness",
+        "enterprise-goal-status-contract",
+        "final-proof-preflight-contract"
+      ],
+      "requiredMissingOrderedProofChainEntries": [],
+      "requiredStructuralInvariants": [
+        "valid-schema-version",
+        "valid-purpose",
+        "safe-inventory-paths",
+        "typed-entry-lists",
+        "typed-report-generator-config"
+      ],
+      "requiredInventoryShapeSchemaIssues": [],
+      "requiredInventoryShapeUnsafePaths": [],
+      "requiredInventoryShapeTypedListIssues": [],
+      "requiredInventoryShapeBooleanIssues": [],
+      "requiredInventoryShapeMinimumCountIssues": [],
+      "requiredInventoryShapeInvalidEntryShapes": []
+    }
+  },
+  "inventoryInvariants": [
+    "typed-report-generator-config",
+    "typed-entry-lists",
+    "safe-inventory-paths",
+    "valid-purpose",
+    "valid-schema-version",
+    "unique-entry-ids",
+    "unique-entry-targets",
+    "unique-entry-reports",
+    "unique-entry-policies",
+    "unique-entry-contracts",
+    "unique-entry-audit-ids",
+    "unique-report-generator-markers",
+    "unique-report-generator-required-entry-ids",
+    "unique-report-generator-required-toolbox-helper-scripts",
+    "makefile-audit-wiring"
+  ],
+  "entries": [
+    {
+      "id": "generated-edit-guard",
+      "target": "generated-edit-check",
+      "checker": "scripts/check-no-generated-edits.mjs",
+      "contracts": [
+        "docs/generated-edit-contract.json"
+      ],
+      "auditIds": [
+        "generated-edit-guard"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "openapi-evidence",
+      "target": "openapi-evidence",
+      "checker": "scripts/check-openapi-evidence.mjs",
+      "policies": [
+        "docs/openapi-evidence-policy.md"
+      ],
+      "contracts": [
+        "docs/openapi-evidence-contract.json"
+      ],
+      "auditIds": [
+        "openapi-evidence-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "schema-quality",
+      "target": "schema-quality",
+      "checker": "scripts/check-schema-quality.mjs",
+      "policies": [
+        "docs/schema-quality-policy.md"
+      ],
+      "contracts": [
+        "docs/schema-quality-contract.json"
+      ],
+      "auditIds": [
+        "schema-quality"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "upstream-drift",
+      "target": "upstream-drift",
+      "checker": "scripts/check-upstream-drift.mjs",
+      "policies": [
+        "docs/upstream-drift-policy.md"
+      ],
+      "contracts": [
+        "docs/upstream-drift-contract.json"
+      ],
+      "auditIds": [
+        "upstream-drift"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "generator-config",
+      "target": "generator-config",
+      "checker": "scripts/check-generator-config.mjs",
+      "contracts": [
+        "docs/generator-config-contract.json"
+      ],
+      "auditIds": [
+        "generator-config"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "generator-independence",
+      "target": "generator-independence",
+      "checker": "scripts/check-generator-independence.mjs",
+      "contracts": [
+        "docs/generator-independence-contract.json"
+      ],
+      "auditIds": [
+        "generator-independence"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "generator-comparison",
+      "target": "generator-comparison",
+      "checker": "scripts/check-generator-comparison.mjs",
+      "contracts": [
+        "docs/generator-comparison-contract.json"
+      ],
+      "auditIds": [
+        "generator-comparison"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "generator-portability",
+      "target": "generator-portability",
+      "checker": "scripts/check-generator-portability.mjs",
+      "policies": [
+        "docs/generator-portability-plan.md"
+      ],
+      "contracts": [
+        "docs/generator-portability-contract.json"
+      ],
+      "auditIds": [
+        "generator-portability"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "package-contract",
+      "target": "package-contract",
+      "checker": "scripts/check-package-contract.mjs",
+      "contracts": [
+        "docs/package-contract.json"
+      ],
+      "auditIds": [
+        "package-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "pack-smoke",
+      "target": "pack-smoke",
+      "checker": "scripts/pack-consumer-smoke.mjs",
+      "contracts": [
+        "docs/pack-consumer-smoke-contract.json"
+      ],
+      "auditIds": [
+        "packed-consumer-proof"
+      ],
+      "perfectFast": false,
+      "perfectFull": true
+    },
+    {
+      "id": "examples-contract",
+      "target": "examples-contract",
+      "checker": "scripts/check-examples-contract.mjs",
+      "contracts": [
+        "docs/examples-contract.json"
+      ],
+      "auditIds": [
+        "examples-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "snippet-safety",
+      "target": "snippet-safety",
+      "checker": "scripts/check-snippet-safety.mjs",
+      "policies": [
+        "docs/snippet-safety-policy.md"
+      ],
+      "contracts": [
+        "docs/snippet-safety-contract.json"
+      ],
+      "auditIds": [
+        "snippet-safety"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "runtime-support",
+      "target": "runtime-support",
+      "checker": "scripts/check-runtime-support.mjs",
+      "contracts": [
+        "docs/runtime-support.json"
+      ],
+      "auditIds": [
+        "runtime-support"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "env-contract",
+      "target": "env-contract",
+      "checker": "scripts/check-env-contract.mjs",
+      "contracts": [
+        "docs/env-contract.json"
+      ],
+      "auditIds": [
+        "env-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "sdk-public-api",
+      "target": "sdk-public-api",
+      "checker": "scripts/check-sdk-public-api.mjs",
+      "contracts": [
+        "docs/sdk-public-api.json"
+      ],
+      "auditIds": [
+        "sdk-public-api"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "sdk-runtime-contract",
+      "target": "sdk-runtime-contract",
+      "checker": "scripts/check-sdk-runtime-contract.mjs",
+      "policies": [
+        "docs/sdk-runtime-policy.md"
+      ],
+      "contracts": [
+        "docs/sdk-runtime-contract.json"
+      ],
+      "auditIds": [
+        "sdk-runtime-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "decision-records",
+      "target": "decision-records",
+      "checker": "scripts/check-decision-records.mjs",
+      "policies": [
+        "docs/decision-records-policy.md"
+      ],
+      "contracts": [
+        "docs/decision-records-contract.json"
+      ],
+      "auditIds": [
+        "decision-records"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "workflow-cookbook",
+      "target": "workflow-cookbook",
+      "checker": "scripts/check-workflow-cookbook.mjs",
+      "reports": [
+        "scripts/workflow-plan.mjs"
+      ],
+      "contracts": [
+        "docs/workflow-cookbook-contract.json"
+      ],
+      "auditIds": [
+        "workflow-cookbook"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "acceptance-scenarios",
+      "target": "acceptance-scenarios",
+      "checker": "scripts/check-acceptance-scenarios.mjs",
+      "reports": [
+        "scripts/acceptance-plan.mjs"
+      ],
+      "policies": [
+        "docs/acceptance-scenarios.md"
+      ],
+      "contracts": [
+        "docs/acceptance-scenarios-contract.json"
+      ],
+      "auditIds": [
+        "acceptance-scenarios"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "change-impact",
+      "target": "change-impact",
+      "checker": "scripts/check-change-impact.mjs",
+      "reports": [
+        "scripts/change-impact-plan.mjs"
+      ],
+      "policies": [
+        "docs/change-impact-policy.md"
+      ],
+      "contracts": [
+        "docs/change-impact-contract.json"
+      ],
+      "auditIds": [
+        "change-impact"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "security-threat-model",
+      "target": "security-threat-model",
+      "checker": "scripts/check-security-threat-model.mjs",
+      "policies": [
+        "docs/security-threat-model.md"
+      ],
+      "contracts": [
+        "docs/security-threat-model-contract.json"
+      ],
+      "auditIds": [
+        "security-threat-model"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "contract-inventory",
+      "target": "contract-inventory",
+      "checker": "scripts/check-contract-inventory.mjs",
+      "reports": [
+        "scripts/contract-inventory-report.mjs"
+      ],
+      "policies": [
+        "docs/contract-inventory-policy.md"
+      ],
+      "contracts": [
+        "docs/contract-inventory.json"
+      ],
+      "auditIds": [
+        "contract-inventory"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "version-policy",
+      "target": "version-policy",
+      "checker": "scripts/check-version-policy.mjs",
+      "contracts": [
+        "docs/version-policy.json"
+      ],
+      "auditIds": [
+        "version-policy"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "secret-hygiene",
+      "target": "secret-hygiene",
+      "checker": "scripts/check-secret-hygiene.mjs",
+      "contracts": [
+        "docs/secret-hygiene.json"
+      ],
+      "auditIds": [
+        "secret-hygiene"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "data-handling",
+      "target": "data-handling",
+      "checker": "scripts/check-data-handling.mjs",
+      "policies": [
+        "docs/data-handling-policy.md"
+      ],
+      "contracts": [
+        "docs/data-handling-contract.json"
+      ],
+      "auditIds": [
+        "data-handling"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "supply-chain",
+      "target": "supply-chain",
+      "checker": "scripts/check-supply-chain.mjs",
+      "policies": [
+        "docs/supply-chain-policy.md"
+      ],
+      "contracts": [
+        "docs/supply-chain-contract.json"
+      ],
+      "auditIds": [
+        "supply-chain"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "dependency-boundary",
+      "target": "dependency-boundary",
+      "checker": "scripts/check-dependency-boundary.mjs",
+      "policies": [
+        "docs/dependency-policy.md"
+      ],
+      "contracts": [
+        "docs/dependency-boundary.json"
+      ],
+      "auditIds": [
+        "dependency-boundary"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "dependency-license",
+      "target": "dependency-license",
+      "checker": "scripts/check-dependency-license.mjs",
+      "policies": [
+        "docs/dependency-license-policy.md"
+      ],
+      "contracts": [
+        "docs/dependency-license-contract.json"
+      ],
+      "auditIds": [
+        "dependency-license"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "compatibility-contract",
+      "target": "compatibility-contract",
+      "checker": "scripts/check-compatibility-contract.mjs",
+      "policies": [
+        "docs/compatibility-policy.md"
+      ],
+      "contracts": [
+        "docs/compatibility-contract.json"
+      ],
+      "auditIds": [
+        "compatibility-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "breaking-change-review",
+      "target": "breaking-change-review",
+      "checker": "scripts/check-breaking-change-review.mjs",
+      "policies": [
+        "docs/breaking-change-review-policy.md"
+      ],
+      "contracts": [
+        "docs/breaking-change-review-contract.json"
+      ],
+      "auditIds": [
+        "breaking-change-review"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "receipts-contract",
+      "target": "receipts-contract",
+      "checker": "scripts/check-receipts-contract.mjs",
+      "policies": [
+        "docs/receipts-policy.md"
+      ],
+      "contracts": [
+        "docs/receipts-contract.json"
+      ],
+      "auditIds": [
+        "receipts-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "observability",
+      "target": "observability",
+      "checker": "scripts/check-observability-contract.mjs",
+      "policies": [
+        "docs/observability-policy.md"
+      ],
+      "contracts": [
+        "docs/observability-contract.json"
+      ],
+      "auditIds": [
+        "observability-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "diagnostics-contract",
+      "target": "diagnostics",
+      "checker": "scripts/check-diagnostics-contract.mjs",
+      "policies": [
+        "docs/diagnostics-policy.md"
+      ],
+      "contracts": [
+        "docs/diagnostics-contract.json"
+      ],
+      "perfectFast": true,
+      "perfectFull": true,
+      "auditIds": [
+        "diagnostics-contract"
+      ]
+    },
+    {
+      "id": "quickstart-receipt",
+      "target": "quickstart-receipt",
+      "checker": "scripts/check-quickstart-receipt.mjs",
+      "policies": [
+        "docs/quickstart-receipt.md"
+      ],
+      "contracts": [
+        "docs/quickstart-receipt-contract.json"
+      ],
+      "perfectFast": true,
+      "perfectFull": true,
+      "auditIds": [
+        "quickstart-receipt"
+      ]
+    },
+    {
+      "id": "receipt-examples",
+      "target": "receipt-examples",
+      "checker": "scripts/check-receipt-examples.mjs",
+      "policies": [
+        "docs/receipt-examples.md"
+      ],
+      "contracts": [
+        "docs/receipt-examples-contract.json"
+      ],
+      "auditIds": [
+        "receipt-examples"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "support-bundle",
+      "target": "support-bundle",
+      "checker": "scripts/check-support-bundle.mjs",
+      "reports": [
+        "scripts/create-support-bundle.mjs"
+      ],
+      "policies": [
+        "docs/support-runbook.md"
+      ],
+      "contracts": [
+        "docs/support-bundle-contract.json"
+      ],
+      "auditIds": [
+        "support-bundle"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "issue-intake",
+      "target": "issue-intake",
+      "checker": "scripts/check-issue-intake.mjs",
+      "policies": [
+        "docs/issue-intake-policy.md"
+      ],
+      "contracts": [
+        "docs/issue-intake-contract.json"
+      ],
+      "auditIds": [
+        "issue-intake"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "release-support-contract",
+      "target": "release-support-contract",
+      "checker": "scripts/check-release-support-contract.mjs",
+      "policies": [
+        "docs/release-support-policy.md"
+      ],
+      "contracts": [
+        "docs/release-support-contract.json"
+      ],
+      "auditIds": [
+        "release-support-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "release-readiness",
+      "target": "release-readiness",
+      "checker": "scripts/check-release-readiness.mjs",
+      "reports": [
+        "scripts/release-readiness-report.mjs",
+        "scripts/release-decision-plan.mjs"
+      ],
+      "policies": [
+        "docs/release-readiness-checklist.md"
+      ],
+      "contracts": [
+        "docs/release-readiness-contract.json"
+      ],
+      "auditIds": [
+        "release-readiness"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "ci-contract",
+      "target": "ci-contract",
+      "checker": "scripts/check-ci-contract.mjs",
+      "policies": [
+        "docs/ci-policy.md"
+      ],
+      "contracts": [
+        "docs/ci-contract.json"
+      ],
+      "auditIds": [
+        "ci-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "live-safety",
+      "target": "live-safety",
+      "checker": "scripts/check-live-safety.mjs",
+      "contracts": [
+        "docs/live-safety-contract.json"
+      ],
+      "auditIds": [
+        "live-safety"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "test-data-lifecycle",
+      "target": "test-data-lifecycle",
+      "checker": "scripts/check-test-data-lifecycle.mjs",
+      "policies": [
+        "docs/test-data-lifecycle-policy.md"
+      ],
+      "contracts": [
+        "docs/test-data-lifecycle-contract.json"
+      ],
+      "auditIds": [
+        "test-data-lifecycle"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "risk-register",
+      "target": "risk-register",
+      "checker": "scripts/check-risk-register.mjs",
+      "reports": [
+        "scripts/risk-status-report.mjs"
+      ],
+      "contracts": [
+        "docs/risk-register.json"
+      ],
+      "auditIds": [
+        "risk-register"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "performance-calibration-plan",
+      "target": "performance-calibration-plan",
+      "checker": "scripts/check-performance-budgets.mjs",
+      "reports": [
+        "scripts/performance-calibration-plan.mjs"
+      ],
+      "contracts": [
+        "docs/performance-budgets.json"
+      ],
+      "auditIds": [
+        "performance-budgets"
+      ],
+      "perfectFast": false,
+      "perfectFull": false
+    },
+    {
+      "id": "user-docs",
+      "target": "user-docs",
+      "checker": "scripts/check-user-docs.mjs",
+      "policies": [
+        "docs/user-docs-policy.md"
+      ],
+      "contracts": [
+        "docs/user-docs-contract.json"
+      ],
+      "auditIds": [
+        "user-docs"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "docs-quality",
+      "target": "docs-quality",
+      "checker": "scripts/check-docs-quality.mjs",
+      "policies": [
+        "docs/docs-quality-policy.md"
+      ],
+      "contracts": [
+        "docs/docs-quality-contract.json"
+      ],
+      "auditIds": [
+        "docs-quality"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "axioms-contract",
+      "target": "axioms-contract",
+      "checker": "scripts/check-axioms-contract.mjs",
+      "policies": [
+        "docs/axioms.md"
+      ],
+      "contracts": [
+        "docs/axioms-contract.json"
+      ],
+      "auditIds": [
+        "axioms"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "docs-drift",
+      "target": "docs-drift",
+      "checker": "scripts/check-docs-drift.mjs",
+      "contracts": [
+        "docs/docs-drift-contract.json"
+      ],
+      "auditIds": [
+        "docs-drift-checker"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "docs-index-drift",
+      "target": "docs-index-drift",
+      "checker": "scripts/check-doc-index.mjs",
+      "contracts": [
+        "docs/docs-index-contract.json"
+      ],
+      "auditIds": [
+        "generated-doc-drift"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "changelog-coverage",
+      "target": "changelog-drift",
+      "checker": "scripts/check-changelog-entry.mjs",
+      "contracts": [
+        "docs/changelog-coverage-contract.json"
+      ],
+      "auditIds": [
+        "changelog-coverage"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "agent-handoff",
+      "target": "agent-handoff",
+      "checker": "scripts/check-agent-handoff.mjs",
+      "policies": [
+        "docs/agent-handoff-policy.md"
+      ],
+      "contracts": [
+        "docs/agent-handoff-contract.json"
+      ],
+      "auditIds": [
+        "agent-handoff"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "developer-environment",
+      "target": "developer-environment",
+      "checker": "scripts/check-developer-environment.mjs",
+      "reports": [
+        "scripts/repo-doctor.mjs"
+      ],
+      "policies": [
+        "docs/developer-environment-policy.md"
+      ],
+      "contracts": [
+        "docs/developer-environment-contract.json"
+      ],
+      "auditIds": [
+        "developer-environment"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "operator-onboarding",
+      "target": "operator-onboarding",
+      "checker": "scripts/check-operator-onboarding.mjs",
+      "reports": [
+        "scripts/onboarding-plan.mjs"
+      ],
+      "policies": [
+        "docs/operator-onboarding.md"
+      ],
+      "contracts": [
+        "docs/operator-onboarding-contract.json"
+      ],
+      "auditIds": [
+        "operator-onboarding"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "operator-toolbox",
+      "target": "operator-toolbox",
+      "checker": "scripts/check-operator-toolbox.mjs",
+      "policies": [
+        "docs/operator-toolbox.md"
+      ],
+      "contracts": [
+        "docs/operator-toolbox-contract.json"
+      ],
+      "auditIds": [
+        "operator-toolbox"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "final-proof-command-contract",
+      "target": "final-proof-command-contract",
+      "checker": "scripts/check-final-proof-command-contract.mjs",
+      "contracts": [
+        "docs/final-proof-command-contract.json"
+      ],
+      "auditIds": [
+        "final-proof-not-run-by-audit"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "enterprise-goal-status-contract",
+      "target": "enterprise-goal-status-contract",
+      "checker": "scripts/check-enterprise-goal-status-contract.mjs",
+      "reports": [
+        "scripts/enterprise-goal-status.mjs"
+      ],
+      "contracts": [
+        "docs/enterprise-goal-status-contract.json"
+      ],
+      "auditIds": [
+        "enterprise-goal-status-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "final-proof-preflight-contract",
+      "target": "final-proof-preflight-contract",
+      "checker": "scripts/check-final-proof-preflight-contract.mjs",
+      "reports": [
+        "scripts/enterprise-goal-status.mjs",
+        "scripts/release-readiness-report.mjs"
+      ],
+      "contracts": [
+        "docs/final-proof-preflight-contract.json"
+      ],
+      "auditIds": [
+        "final-proof-preflight-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "api-docs",
+      "target": "api-docs",
+      "checker": "scripts/check-api-docs.mjs",
+      "policies": [
+        "docs/api-docs-policy.md"
+      ],
+      "contracts": [
+        "docs/api-docs-contract.json"
+      ],
+      "auditIds": [
+        "api-docs"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "mcp-contract",
+      "target": "mcp-contract",
+      "checker": "scripts/check-mcp-contract.mjs",
+      "contracts": [
+        "docs/mcp-contract.json"
+      ],
+      "auditIds": [
+        "mcp-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "mcp-agent-ux",
+      "target": "mcp-agent-ux",
+      "checker": "scripts/check-mcp-agent-ux.mjs",
+      "policies": [
+        "docs/mcp-agent-ux-policy.md"
+      ],
+      "contracts": [
+        "docs/mcp-agent-ux-contract.json"
+      ],
+      "auditIds": [
+        "mcp-agent-ux"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "mcp-write-safety",
+      "target": "mcp-write-safety",
+      "checker": "scripts/check-mcp-write-safety.mjs",
+      "policies": [
+        "docs/mcp-write-safety-policy.md"
+      ],
+      "contracts": [
+        "docs/mcp-write-safety-contract.json"
+      ],
+      "auditIds": [
+        "mcp-write-safety"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "cli-contract",
+      "target": "cli-contract",
+      "checker": "scripts/check-cli-contract.mjs",
+      "contracts": [
+        "docs/cli-contract.json"
+      ],
+      "auditIds": [
+        "cli-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "cli-write-safety",
+      "target": "cli-write-safety",
+      "checker": "scripts/check-cli-write-safety.mjs",
+      "policies": [
+        "docs/cli-write-safety-policy.md"
+      ],
+      "contracts": [
+        "docs/cli-write-safety-contract.json"
+      ],
+      "auditIds": [
+        "cli-write-safety"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "test-matrix",
+      "target": "test-matrix",
+      "checker": "scripts/check-test-matrix-contract.mjs",
+      "contracts": [
+        "docs/test-matrix-contract.json"
+      ],
+      "auditIds": [
+        "test-matrix"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "mock-contract",
+      "target": "mock-contract",
+      "checker": "scripts/check-mock-clockify-contract.mjs",
+      "contracts": [
+        "docs/mock-clockify-contract.json"
+      ],
+      "auditIds": [
+        "mock-contract"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "maintenance-playbook",
+      "target": "maintenance-playbook",
+      "checker": "scripts/check-maintenance-playbook.mjs",
+      "reports": [
+        "scripts/maintenance-plan.mjs"
+      ],
+      "policies": [
+        "docs/maintenance-playbook.md"
+      ],
+      "contracts": [
+        "docs/maintenance-playbook-contract.json"
+      ],
+      "auditIds": [
+        "maintenance-playbook"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "mutation-safety",
+      "target": "mutation-safety",
+      "checker": "scripts/check-mutation-safety.mjs",
+      "policies": [
+        "docs/mutation-safety-policy.md"
+      ],
+      "contracts": [
+        "docs/mutation-safety-contract.json"
+      ],
+      "auditIds": [
+        "mutation-safety"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "examples-matrix",
+      "target": "examples-matrix",
+      "checker": "scripts/check-examples-matrix.mjs",
+      "reports": [
+        "scripts/examples-plan.mjs"
+      ],
+      "policies": [
+        "docs/examples-matrix.md"
+      ],
+      "contracts": [
+        "docs/examples-matrix-contract.json"
+      ],
+      "auditIds": [
+        "examples-matrix"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "config-precedence",
+      "target": "config-precedence",
+      "checker": "scripts/check-config-precedence.mjs",
+      "policies": [
+        "docs/config-precedence-policy.md"
+      ],
+      "contracts": [
+        "docs/config-precedence-contract.json"
+      ],
+      "auditIds": [
+        "config-precedence"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "naming-taxonomy",
+      "target": "naming-taxonomy",
+      "checker": "scripts/check-naming-taxonomy.mjs",
+      "policies": [
+        "docs/naming-taxonomy-policy.md"
+      ],
+      "contracts": [
+        "docs/naming-taxonomy-contract.json"
+      ],
+      "auditIds": [
+        "naming-taxonomy"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "operation-coverage",
+      "target": "operation-coverage",
+      "checker": "scripts/check-operation-coverage.mjs",
+      "policies": [
+        "docs/operation-coverage-policy.md"
+      ],
+      "contracts": [
+        "docs/operation-coverage-contract.json"
+      ],
+      "auditIds": [
+        "operation-coverage"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    }
+  ],
+  "wiring": {
+    "makeTarget": "contract-inventory",
+    "checker": "scripts/check-contract-inventory.mjs",
+    "enterpriseAuditId": "contract-inventory"
+  }
+}

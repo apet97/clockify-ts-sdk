@@ -1,29 +1,38 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "noEmit": false,
-        "declaration": true,
-        "declarationMap": true,
-        "sourceMap": true,
-        "outDir": "./dist/esm",
-        "rootDir": ".",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext"
-    },
-    "include": [
-        "src/**/*.ts",
-        "index.ts",
-        "create-client.ts",
-        "composed-fetch.ts",
-        "iter.ts",
-        "pagination.ts",
-        "webhooks.ts",
-        "webhook-events.ts",
-        "with-response.ts",
-        "scoped-client.ts",
-        "otel-hooks.ts",
-        "health.ts",
-        "rate-limit.ts"
-    ],
-    "exclude": ["node_modules", "dist", "tests"]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist/esm",
+    "rootDir": ".",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
+  "include": [
+    "src/**/*.ts",
+    "index.ts",
+    "create-client.ts",
+    "composed-fetch.ts",
+    "iter.ts",
+    "pagination.ts",
+    "paginated-list.ts",
+    "webhooks.ts",
+    "webhook-events.ts",
+    "with-response.ts",
+    "error-codes.ts",
+    "errors.ts",
+    "deprecation.ts",
+    "scoped-client.ts",
+    "otel-hooks.ts",
+    "health.ts",
+    "diagnostics.ts",
+    "rate-limit.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Runtime dependency and license transparency contract for SDK, CLI, and MCP packages.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-evidence-and-manifest-paths",
+    "typed-policy-document-contract",
+    "typed-package-license-ledger",
+    "typed-runtime-dependency-ledger",
+    "typed-runtime-dependency-ranges",
+    "typed-license-allow-and-deny-lists",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/dependency-license-policy.md",
+    "mustContain": [
+      "Runtime dependency rule",
+      "Contract-shape rule",
+      "Allowed runtime dependency ledger",
+      "Change rules",
+      "make dependency-license"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "packageName": "clockify-sdk-ts-115",
+      "runtimeDependencies": []
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "packageName": "@clockify115/cli",
+      "runtimeDependencies": [
+        {
+          "name": "cli-table3",
+          "range": "^0.6.5",
+          "license": "MIT",
+          "purpose": "Human-readable table output."
+        },
+        {
+          "name": "commander",
+          "range": "^12.1.0",
+          "license": "MIT",
+          "purpose": "CLI command parsing and help."
+        },
+        {
+          "name": "picocolors",
+          "range": "^1.1.1",
+          "license": "ISC",
+          "purpose": "Tiny optional terminal color output."
+        }
+      ]
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "packageName": "@clockify115/mcp-server",
+      "runtimeDependencies": [
+        {
+          "name": "@modelcontextprotocol/sdk",
+          "range": "^1.29.0",
+          "license": "MIT",
+          "purpose": "MCP server protocol implementation."
+        },
+        {
+          "name": "zod",
+          "range": "^3.25.0",
+          "license": "MIT",
+          "purpose": "Runtime schemas for MCP input/output contracts."
+        }
+      ]
+    }
+  ],
+  "allowedLicenses": [
+    "MIT",
+    "ISC"
+  ],
+  "forbiddenRuntimeDependencies": [
+    "axios",
+    "lodash",
+    "moment",
+    "request",
+    "openai",
+    "@anthropic-ai/sdk"
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/dependency-boundary.json",
+      "mustContain": [
+        "runtimeDependencies",
+        "forbiddenRuntimeDependencies"
+      ]
+    },
+    {
+      "path": "docs/supply-chain-policy.md",
+      "mustContain": [
+        "Runtime dependencies stay intentionally small",
+        "make dependency-boundary"
+      ]
+    },
+    {
+      "path": "docs/dependency-policy.md",
+      "mustContain": [
+        "Dependency boundaries",
+        "Security posture",
+        "make dependency-license"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "dependency-license",
+    "docsIndex": [
+      "dependency-license-policy.md",
+      "dependency-license-contract.json"
+    ],
+    "qualityGate": "make dependency-license",
+    "inventoryId": "dependency-license",
+    "auditId": "dependency-license"
+  }
+}

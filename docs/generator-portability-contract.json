@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "purpose": "No-paid-generator and vendor-exit contract for the OpenAPI-to-TypeScript SDK/CLI/MCP generation chain.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-generator-portability-evidence-paths",
+    "typed-plan-contract",
+    "typed-required-targets",
+    "typed-required-docs",
+    "typed-boundaries",
+    "typed-supporting-evidence",
+    "typed-local-reproducibility-contract",
+    "typed-wiring-contract"
+  ],
+  "plan": {
+    "path": "docs/generator-portability-plan.md",
+    "contains": [
+      "Portability principles",
+      "Current local generation chain",
+      "Vendor-exit checklist",
+      "Forbidden portability shortcuts",
+      "Acceptable generator roles",
+      "Replacement procedure",
+      "Account-gated generator failures",
+      "without paying for Stainless, Speakeasy, Fern Cloud"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD", "PASTE TOKEN"]
+  },
+  "requiredTargets": [
+    "generator-portability",
+    "generator-config",
+    "generator-independence",
+    "generator-comparison",
+    "openapi-evidence",
+    "openapi-lint",
+    "sdk-public-api",
+    "sdk-runtime-contract",
+    "dependency-boundary",
+    "pack-smoke"
+  ],
+  "requiredDocs": [
+    "docs/generator-portability-plan.md",
+    "docs/generator-config-contract.json",
+    "docs/dependency-boundary.json",
+    "docs/sdk-public-api.json",
+    "docs/sdk-runtime-contract.json",
+    "docs/openapi-evidence-policy.md",
+    "docs/operation-parity.md",
+    "docs/migration-guide.md"
+  ],
+  "boundaries": [
+    {
+      "id": "canonical-openapi-owned-by-goclmcp",
+      "requiredMarkers": ["GOCLMCP", "canonical API truth", "corrected OpenAPI snapshot"]
+    },
+    {
+      "id": "generated-output-is-replaceable",
+      "requiredMarkers": ["Generated TypeScript is replaceable", "hand-written SDK runtime seams"]
+    },
+    {
+      "id": "no-paid-hosted-generator-required",
+      "requiredMarkers": ["without paying", "paid hosted account", "local regeneration"]
+    },
+    {
+      "id": "cli-mcp-public-boundary",
+      "requiredMarkers": ["CLI and MCP", "public package surfaces", "generated internals"]
+    },
+    {
+      "id": "generator-swap-proof",
+      "requiredMarkers": ["make perfect-full", "make pack-smoke", "operation parity"]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/generator-config-contract.json",
+      "contains": ["5.37.9", "fernapi/fern-typescript-node-sdk", "../corrected/clockify.corrected.openapi.yaml"]
+    },
+    {
+      "path": "scripts/check-generator-independence.mjs",
+      "contains": ["wrapper/src", "output/ts-sdk", "generated output remains behind wrapper seams"]
+    },
+    {
+      "path": "scripts/check-generator-comparison.mjs",
+      "contains": ["generated TypeScript client methods", "OpenAPI SDK method stamps"]
+    },
+    {
+      "path": "docs/dependency-boundary.json",
+      "contains": ["forbiddenImportMarkers", "output/ts-sdk", "wrapper/src"]
+    },
+    {
+      "path": "docs/openapi-evidence-policy.md",
+      "contains": ["Evidence ledger contract", "five questions", "Required receipts"]
+    }
+  ],
+  "localReproducibility": {
+    "planMarkers": [
+      "no API token",
+      "no hosted login",
+      "no paid hosted account",
+      "Upgrade Required",
+      "environment constraint, not an OpenAPI defect",
+      "do not buy or migrate to a paid generator"
+    ],
+    "packageManifestPaths": [
+      "wrapper/package.json",
+      "cli/package.json",
+      "mcp/package.json"
+    ],
+    "forbiddenDependencyNames": [
+      "stainless",
+      "@stainless-api/sdk",
+      "speakeasy",
+      "@speakeasy-api/sdk",
+      "fern-cloud",
+      "@fern-api/cloud"
+    ]
+  },
+  "wiring": {
+    "makeTarget": "generator-portability",
+    "checker": "scripts/check-generator-portability.mjs",
+    "docsIndex": [
+      "generator-portability-plan.md",
+      "generator-portability-contract.json"
+    ],
+    "qualityGate": "make generator-portability",
+    "inventoryId": "generator-portability",
+    "auditId": "generator-portability"
+  }
+}

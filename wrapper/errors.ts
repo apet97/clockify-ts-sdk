@@ -27,6 +27,24 @@
  */
 import type { RawResponse } from "./src/core/index.js";
 import { ClockifyApiError } from "./src/errors/index.js";
+import {
+    CLOCKIFY_ERROR_CODES,
+    errorCodeForMessage,
+    recoveryForCode,
+    retryableForCode,
+    type ClockifyErrorCode,
+} from "./error-codes.js";
+
+export {
+    CLOCKIFY_ERROR_CODES,
+    errorCodeEntry,
+    errorCodeForMessage,
+    errorCodeForStatus,
+    recoveryForCode,
+    retryableForCode,
+    type ClockifyErrorCode,
+    type ClockifyErrorCodeEntry,
+} from "./error-codes.js";
 
 interface SubclassOpts {
     /** HTTP status code. Optional for the non-status-code subclasses
@@ -39,6 +57,21 @@ interface SubclassOpts {
     rawResponse?: RawResponse;
     cause?: unknown;
     message?: string;
+}
+
+export interface ClockifyErrorClassification {
+    /** Stable cross-surface recovery code from `docs/error-codes.json`. */
+    code: ClockifyErrorCode;
+    /** Human/actionable recovery hint for `code`. */
+    recovery: string;
+    /** Whether the failure is generally safe to retry with backoff. */
+    retryable: boolean;
+    /** HTTP status when Clockify returned one. */
+    statusCode?: number;
+    /** Clockify/server-specific body code, when present. */
+    serverCode?: string;
+    /** Error message preserved for logs and user-facing reports. */
+    message: string;
 }
 
 /**
@@ -115,7 +148,7 @@ export class ServiceUnavailableError extends ClockifyApiError {
  *
  * @example
  * ```ts
- * import { isConnectionError, createClockifyClient } from "clockify-sdk-ts";
+ * import { isConnectionError, createClockifyClient } from "clockify-sdk-ts-115";
  *
  * try { await client.tags.list({...}); }
  * catch (err) {
@@ -154,7 +187,7 @@ export class ClockifyConnectionError extends ClockifyApiError {
  *
  * @example
  * ```ts
- * import { isAbortError, createClockifyClient } from "clockify-sdk-ts";
+ * import { isAbortError, createClockifyClient } from "clockify-sdk-ts-115";
  *
  * const controller = new AbortController();
  * setTimeout(() => controller.abort(), 100);
@@ -234,6 +267,70 @@ export function promoteApiError(err: unknown): unknown {
     if (Ctor == null) return err;
     if (err instanceof Ctor) return err;
     return new Ctor({ statusCode, body, rawResponse, cause, message });
+}
+
+/**
+ * Classify a Clockify SDK error into the shared recovery vocabulary
+ * generated from `docs/error-codes.json`.
+ *
+ * This is the SDK counterpart to the CLI JSON errors and MCP recovery
+ * envelopes. It intentionally returns a small receipt instead of
+ * throwing a new error:
+ *
+ * - `code` is the stable, cross-surface code (`rate_limited`,
+ *   `not_found`, `connection_error`, etc.).
+ * - `serverCode` preserves Clockify's body-level code when present
+ *   (`tag_already_exists`, `validation_error`, etc.).
+ * - `recovery` and `retryable` come from the generated registry.
+ *
+ * Non-SDK errors return `undefined`, so callers can rethrow them.
+ */
+export function classifyClockifyError(err: unknown): ClockifyErrorClassification | undefined {
+    const promoted = promoteApiError(err);
+    if (!(promoted instanceof ClockifyApiError)) return undefined;
+
+    const code = stableCodeForClockifyError(promoted);
+    const classification: ClockifyErrorClassification = {
+        code,
+        recovery: recoveryForCode(code),
+        retryable: retryableForCode(code),
+        message: promoted.message,
+    };
+
+    if (promoted.statusCode != null) classification.statusCode = promoted.statusCode;
+
+    const serverCode = getErrorCode(promoted);
+    if (serverCode != null) classification.serverCode = serverCode;
+
+    return classification;
+}
+
+/** Convenience wrapper when only the shared stable code is needed. */
+export function getStableErrorCode(err: unknown): ClockifyErrorCode | undefined {
+    return classifyClockifyError(err)?.code;
+}
+
+function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
+    if (err instanceof ClockifyAbortError || (err.statusCode == null && isAbortCause(err.cause))) {
+        return "aborted";
+    }
+    if (err instanceof ClockifyConnectionError || (err.statusCode == null && err.cause != null)) {
+        return "connection_error";
+    }
+
+    const byStatus = errorCodeForSdkStatus(err.statusCode);
+    if (byStatus != null) return byStatus;
+
+    return errorCodeForMessage(err.message);
+}
+
+function errorCodeForSdkStatus(status: number | undefined): ClockifyErrorCode | undefined {
+    if (status == null) return undefined;
+    return CLOCKIFY_ERROR_CODES.find(
+        (entry) =>
+            (entry.surfaces as readonly string[]).includes("sdk") &&
+            (entry.httpStatus as readonly number[]).includes(status),
+    )?.code;
 }
 
 function isAbortCause(cause: unknown): boolean {
@@ -372,7 +469,7 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
  *
  * @example
  * ```ts
- * import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts";
+ * import { getErrorCode, isClockifyApiError } from "clockify-sdk-ts-115";
  *
  * try { await client.tags.create({ workspaceId, name: "" }); }
  * catch (err) {

@@ -7,7 +7,7 @@
  *
  * Run: `npx tsx examples/retry-custom.ts` (no real API calls).
  */
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 const client = createClockifyClient({
     apiKey: process.env.CLOCKIFY_API_KEY ?? "demo-key",

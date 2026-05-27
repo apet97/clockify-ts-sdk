@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Live Clockify test safety contract for SDK/CLI/MCP proof. Guards sandbox-only language, cleanup scripts, deferral rules, and mock alternatives.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-live-safety-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-live-gate-evidence",
+    "typed-mcp-cleanup-script-contract",
+    "typed-final-proof-deferral-contract",
+    "typed-risk-register-evidence",
+    "typed-docs-index-contract",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/live-tests.md",
+    "mustContain": [
+      "Never run live gates against a customer workspace",
+      "CLOCKIFY_API_KEY",
+      "CLOCKIFY_WORKSPACE_ID",
+      "Contract-shape rule",
+      "make perfect-live",
+      "verify:live-cleanup",
+      "assert-clean-prefixes.mjs",
+      "DEFER_LIVE_REASON",
+      "completed final proof receipt must replace the deferral with live sandbox proof",
+      "make mock-clockify"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "makefile": {
+    "path": "Makefile",
+    "mustContain": [
+      "perfect-live:",
+      "CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are required",
+      "cd mcp && npm run verify:live-cleanup",
+      "cd ../GOCLMCP && $(MAKE) perfect-live"
+    ]
+  },
+  "mcpPackage": {
+    "path": "mcp/package.json",
+    "requiredScript": {
+      "name": "verify:live-cleanup",
+      "mustContain": "node scripts/assert-clean-prefixes.mjs"
+    }
+  },
+  "cleanupScript": {
+    "path": "mcp/scripts/assert-clean-prefixes.mjs",
+    "mustContain": [
+      "sdk-test-",
+      "mcp-sandbox-",
+      "mcp-workflow-",
+      "mcp-log-",
+      "mcp-fix-",
+      "DEMO-",
+      "process.exitCode = total === 0 ? 0 : 1"
+    ]
+  },
+  "finalProof": {
+    "path": "scripts/run-final-proof.mjs",
+    "mustContain": [
+      "--live",
+      "--defer-live",
+      "Live proof status: deferred",
+      "make perfect-live"
+    ]
+  },
+  "riskRegister": {
+    "path": "docs/risk-register.json",
+    "mustContain": [
+      "live-tests-sandbox-only",
+      "customer workspaces"
+    ]
+  },
+  "docsIndex": [
+    "live-tests.md",
+    "live-safety-contract.json"
+  ],
+  "wiring": {
+    "makeTarget": "live-safety",
+    "qualityGate": "make live-safety",
+    "inventoryId": "live-safety",
+    "auditId": "live-safety"
+  }
+}

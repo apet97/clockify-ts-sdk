@@ -19,7 +19,7 @@ if (!liveSandboxAvailable) {
     );
 }
 
-describeLive("clockify-sdk-ts live sandbox", () => {
+describeLive("clockify-sdk-ts-115 live sandbox", () => {
     // createClockifyClient enforces "exactly one of apiKey / addonToken"
     // at construction time, so we can't build the client at the top
     // level of the describe block (vitest evaluates that even under

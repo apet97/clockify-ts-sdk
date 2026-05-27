@@ -6,7 +6,7 @@
  *
  * Run: `npx tsx examples/auth.ts`
  */
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 // (1) Personal API key — server-side scripts, CI, scripts.
 const personal = createClockifyClient({
@@ -36,7 +36,7 @@ function loadFromSecretManager(): string {
 // spec/evidence/discrepancies.md ->
 // fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive
 // is required when you skip the factory.
-import { ClockifyApiClient } from "clockify-sdk-ts";
+import { ClockifyApiClient } from "clockify-sdk-ts-115";
 
 const noAuth = new ClockifyApiClient({
     apiKey: () => "",

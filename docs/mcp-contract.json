@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "purpose": "MCP discoverability contract for the TypeScript Clockify MCP server. Keeps tool counts, guide resources, prompts, structuredContent output-schema expectations, and tests aligned across metadata, implementation, README, and tests.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-mcp-contract-paths",
+    "typed-tools-metadata-reference",
+    "typed-expected-tool-surface",
+    "typed-resource-and-prompt-contracts",
+    "typed-source-evidence",
+    "typed-wiring-contract"
+  ],
+  "toolsMetadata": "docs/mcp-tools.json",
+  "expected": {
+    "totalTools": 105,
+    "workflowTools": 17,
+    "domainTools": 88,
+    "resources": [
+      "clockify://guide/axioms",
+      "clockify://guide/workflows",
+      "clockify://guide/safety",
+      "clockify://mcp/doctor"
+    ],
+    "prompts": [
+      "clockify-workflow-plan"
+    ],
+    "outputSchemaExport": "MCP_RESULT_OUTPUT_SCHEMA"
+  },
+  "sourceEvidence": {
+    "resources": "mcp/src/resources.ts",
+    "prompts": "mcp/src/prompts.ts",
+    "outputSchema": "mcp/src/output-schema.ts",
+    "serverTest": "mcp/tests/server.test.ts",
+    "readme": "mcp/README.md"
+  },
+  "wiring": {
+    "makeTarget": "mcp-contract",
+    "checker": "scripts/check-mcp-contract.mjs",
+    "docsIndexContract": "mcp-contract.json",
+    "qualityGate": "make mcp-contract",
+    "inventoryId": "mcp-contract",
+    "auditId": "mcp-contract"
+  }
+}

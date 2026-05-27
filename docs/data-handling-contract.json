@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Data handling and privacy contract for SDK, CLI, MCP, OpenAPI evidence, support bundles, snippets, tests, live proof, and final receipts.",
+  "wiring": {
+    "makeTarget": "data-handling",
+    "checker": "scripts/check-data-handling.mjs",
+    "enterpriseAuditId": "data-handling"
+  },
+  "policy": {
+    "path": "docs/data-handling-policy.md",
+    "contains": [
+      "Data classes",
+      "Repository rules",
+      "Allowed placeholders",
+      "Prohibited committed evidence",
+      "Proof gates",
+      "Credentials",
+      "Personal data",
+      "Commercial data",
+      "Package-lock metadata",
+      "Raw live evidence",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "PASTE TOKEN"
+    ]
+  },
+  "requiredTargets": [
+    "data-handling",
+    "secret-hygiene",
+    "snippet-safety",
+    "support-bundle",
+    "workflow-cookbook",
+    "live-safety",
+    "receipt-examples",
+    "security-threat-model"
+  ],
+  "requiredDocs": [
+    "docs/data-handling-policy.md",
+    "docs/secret-hygiene.json",
+    "docs/snippet-safety-policy.md",
+    "docs/support-runbook.md",
+    "docs/live-tests.md",
+    "docs/receipt-examples.md",
+    "docs/security-threat-model.md",
+    "spec/evidence/discrepancies.md"
+  ],
+  "dataClasses": [
+    {
+      "id": "credentials",
+      "markers": [
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_ADDON_TOKEN",
+        "NPM_TOKEN",
+        "<redacted>"
+      ]
+    },
+    {
+      "id": "personal-data",
+      "markers": [
+        "User names",
+        "emails",
+        "time-off requests",
+        "mock names"
+      ]
+    },
+    {
+      "id": "work-records",
+      "markers": [
+        "Time-entry descriptions",
+        "scheduling assignments",
+        "customer data"
+      ]
+    },
+    {
+      "id": "commercial-data",
+      "markers": [
+        "Invoice numbers",
+        "invoice lines",
+        "rates",
+        "expenses"
+      ]
+    },
+    {
+      "id": "webhook-data",
+      "markers": [
+        "Delivery URLs",
+        "signature tokens",
+        "shared secrets"
+      ]
+    },
+    {
+      "id": "raw-live-evidence",
+      "markers": [
+        "spec/evidence/probes",
+        "gitignored",
+        "sanitized findings"
+      ]
+    },
+    {
+      "id": "package-lock-metadata",
+      "markers": [
+        "Lockfile version",
+        "package count",
+        "resolved tarball URLs",
+        "integrity hashes"
+      ]
+    }
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/secret-hygiene.json",
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "NPM_TOKEN",
+        "gitleaks"
+      ]
+    },
+    {
+      "path": "docs/snippet-safety-policy.md",
+      "contains": [
+        "Placeholder-only secret guidance",
+        "customer data",
+        "CLOCKIFY_BASE_URL"
+      ]
+    },
+    {
+      "path": "docs/support-runbook.md",
+      "contains": [
+        "Never include",
+        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "safeCommandHints",
+        "Customer workspace names",
+        "Package-lock",
+        "Redaction rules"
+      ]
+    },
+    {
+      "path": "docs/live-tests.md",
+      "contains": [
+        "Never run live gates against a customer workspace",
+        "sacrificial sandbox",
+        "cleanup"
+      ]
+    },
+    {
+      "path": "docs/receipt-examples.md",
+      "contains": [
+        "customer-only workspace data",
+        "requestId",
+        "recovery"
+      ]
+    },
+    {
+      "path": "docs/security-threat-model.md",
+      "contains": [
+        "Credential handling",
+        "First-run support handoff",
+        "Live proof",
+        "Observability receipts"
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-data-handling-paths",
+    "typed-policy-contract",
+    "typed-data-class-markers",
+    "typed-required-docs",
+    "typed-supporting-evidence",
+    "makefile-audit-wiring"
+  ]
+}

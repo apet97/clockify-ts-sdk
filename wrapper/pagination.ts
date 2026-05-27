@@ -25,7 +25,7 @@ export interface PaginateOptions {
  *
  * For the higher-level API that operates directly on bound SDK
  * methods (no `(page, pageSize) => ...` wrapper) see {@link iterAll}
- * and {@link iterPages} in `clockify-sdk-ts/iter`.
+ * and {@link iterPages} in `clockify-sdk-ts-115/iter`.
  *
  * @example
  * ```ts

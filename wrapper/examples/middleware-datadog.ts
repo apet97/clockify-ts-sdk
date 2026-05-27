@@ -7,7 +7,7 @@
  * Run: `npx tsx examples/middleware-datadog.ts` (no API calls
  * unless you also pass valid creds).
  */
-import { createClockifyClient } from "clockify-sdk-ts";
+import { createClockifyClient } from "clockify-sdk-ts-115";
 
 // Pretend these are real Datadog dogstatsd / Honeycomb / etc.
 const metrics = {

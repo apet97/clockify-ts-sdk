@@ -1,0 +1,403 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Release and handoff readiness evidence contract for SDK, CLI, MCP, OpenAPI/Fern, docs, security, performance, live proof, and final receipts.",
+  "wiring": {
+    "makeTarget": "release-readiness",
+    "checker": "scripts/check-release-readiness.mjs",
+    "enterpriseAuditId": "release-readiness"
+  },
+  "checklist": {
+    "path": "docs/release-readiness-checklist.md",
+    "contains": [
+      "Readiness rule",
+      "Required evidence",
+      "make final-proof-preflight",
+      "make enterprise-goal-status",
+      "node scripts/release-readiness-report.mjs",
+      "Publish decision boundary",
+      "Release workflow maintainer decision planner",
+      "node scripts/release-decision-plan.mjs --decision all",
+      "Handoff decision boundary",
+      "Final proof closure",
+      "stays through evidence capture",
+      "receipt records the temporary-context removal",
+      "Operator checklist",
+      "Do not run `npm publish` from a laptop",
+      "finalBlockingSignalIds",
+      "finalBlockingRiskIds",
+      "blockingSignalIds",
+      "blockingRiskIds",
+      "Live proof is completed in a sacrificial sandbox",
+      "failed live proof must be rerun",
+      "deferred live proof is a draft blocker",
+      "deferral is draft-only and must be replaced before final acceptance",
+      "checked after temporary context removal",
+      "Built artifacts are under tightened budgets calibrated from measured receipts",
+      "Budget status: tightened",
+      "make axioms-contract"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "PASTE TOKEN"
+    ]
+  },
+  "requiredTargets": [
+    "release-readiness",
+    "release-readiness-report",
+    "release-decision-plan",
+    "enterprise-goal-status",
+    "enterprise-goal-status-contract",
+    "final-proof-preflight",
+    "axioms-contract",
+    "perfect-fast",
+    "perfect-full",
+    "perfect-live",
+    "pack-smoke",
+    "final-proof-draft",
+    "final-proof-receipt-check",
+    "final-proof-final",
+    "enterprise-audit-final"
+  ],
+  "requiredDocs": [
+    "docs/release-readiness-checklist.md",
+    "docs/final-proof-runbook.md",
+    "docs/final-proof-receipt.template.md",
+    "docs/support-runbook.md",
+    "docs/release-support-policy.md",
+    "docs/supply-chain-policy.md",
+    "docs/risk-register.md",
+    "docs/enterprise-goal-status-contract.json"
+  ],
+  "reportGenerator": {
+    "path": "scripts/release-readiness-report.mjs",
+    "makeTarget": "release-readiness-report",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "releaseReady: false",
+      "preflight-only",
+      "This report is not release proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+      "docs/final-proof-receipt.md",
+      "finalReceiptPresenceStatus",
+      "failed-draft marker",
+      "NOT COMPLETE:",
+      "docs/final-proof-receipt.md exists but contains failed-draft marker",
+      "docs/performance-baseline-latest.json",
+      "performanceReceiptStatus",
+      "readJsonState",
+      "parseError",
+      "not valid receipt JSON",
+      "failedMeasurements",
+      "measurement?.ok !== true",
+      "expectedPerformanceReceiptCalibrationStatus",
+      "embedded calibrationPolicy.status",
+      "has passing measurements but embedded calibrationPolicy.status",
+      "expectedBudgetSchemaVersion",
+      "budgetsSchemaVersion",
+      "has passing measurements but budgetsSchemaVersion",
+      "expectedBudgetFingerprint",
+      "budgetFingerprint",
+      "has passing measurements but budgetFingerprint",
+      "successful latest receipt",
+      "requiredPreflight",
+      "requiredFinalProofCommandOrder",
+      "make axioms-contract",
+      "axioms-contract",
+      "Full final proof order",
+      "finalReceiptHasLiveCleanupProof",
+      "finalReceiptHasFinalLiveProofStatus",
+      "liveProofSection",
+      "liveProofStatus",
+      "finalReceiptHasFailedLiveProof",
+      "cleanupReceiptMarker",
+      "deferredCleanupRequiredMarkers",
+      "live-proof-final-status",
+      "final live completion",
+      "no-live-objects cleanup marker",
+      "failed live proof must be rerun successfully",
+      "finalReceiptHasPerformanceProof",
+      "finalReceiptHasTightenedBudget",
+      "final-receipt-budget-status",
+      "Final receipt Performance receipts section must state Budget status: tightened",
+      "performanceRequiredRunsPolicyValid",
+      "performance-required-runs-policy",
+      "finalReceiptHasFailureMarkers",
+      "final-proof-failure-markers",
+      "finalReceiptHasRequiredSuccessSectionEvidence",
+      "success-section-evidence",
+      "finalReceiptHasFinalAuditCommand",
+      "final-audit-command-evidence",
+      "Final receipt Temporary context cleanup section must include make enterprise-audit-final command evidence",
+      "successSectionRequiredPatterns",
+      "readReceiptSection",
+      "blocking",
+      "finalReceiptHasResidualRiskDecision",
+      "finalReceiptHasFinalResidualRiskStatus",
+      "residual-risk-decision",
+      "residual-risk-final-status",
+      "finalReceiptHasRiskRegisterClear",
+      "risk-register-final-status",
+      "finalReadinessBlocking",
+      "final-blocking open/provisional",
+      "calibrationPolicy.requiredSuccessfulRuns must be a positive integer",
+      "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
+      "noneForbiddenPatterns",
+      "live deferral is draft-only",
+      "blockingDetails",
+      "Resolve blocking file-state signals",
+      "performance-proof",
+      "requiredSuccessfulRuns",
+      "Exit status: 0",
+      "Result: passed",
+      "!tempContextExists",
+      "completedCleanupRequiredPrefixes",
+      "readFirstFencedBlockAfter",
+      "live-cleanup-proof",
+      "Sandbox cleanup receipt:",
+      "\"total\"\\s*:\\s*0",
+      "make enterprise-audit-final",
+      "final-proof-preflight",
+      "enterprise-goal-status",
+      "make final-proof-final",
+      "blockingSignalIds",
+      "blockingRiskIds",
+      "Blocking file-state summary",
+      "Blocking signals",
+      "Blocking risks"
+    ],
+    "generatedReport": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "releaseReady": false,
+        "reportScope": "preflight-only"
+      },
+      "requiredPreflightIds": [
+        "final-proof-preflight"
+      ],
+      "requiredProofIds": [
+        "enterprise-audit",
+        "axioms-contract",
+        "perfect-fast",
+        "performance-receipt",
+        "perfect-full",
+        "perfect-live",
+        "final-proof-draft",
+        "final-proof-receipt-check",
+        "final-proof-final"
+      ],
+      "requiredFinalProofCommandOrder": [
+        "final-proof-preflight",
+        "enterprise-audit",
+        "axioms-contract",
+        "perfect-fast",
+        "performance-receipt",
+        "perfect-full",
+        "perfect-live",
+        "final-proof-draft",
+        "final-proof-receipt-check",
+        "final-proof-final"
+      ],
+      "requiredSignalIds": [
+        "temporary-context",
+        "final-proof-receipt",
+        "final-proof-receipt-filled",
+        "live-cleanup-proof",
+        "live-proof-final-status",
+        "performance-baseline",
+        "performance-budget-calibration",
+        "final-receipt-budget-status",
+        "performance-required-runs-policy",
+        "performance-proof",
+        "final-proof-failure-markers",
+        "success-section-evidence",
+        "final-audit-command-evidence",
+        "residual-risk-decision",
+        "residual-risk-final-status",
+        "risk-register-final-status"
+      ],
+      "warningMustContain": [
+        "does not run proof gates",
+        "must not be used as release approval"
+      ],
+      "requiredBlockingFields": [
+        "blockingSignalIds",
+        "blockingRiskIds"
+      ]
+    }
+  },
+  "decisionPlanner": {
+    "path": "scripts/release-decision-plan.mjs",
+    "contains": [
+      "network",
+      "commandsExecuted",
+      "envValuesCaptured",
+      "legacy-release-workflow-needs-maintainer-decision",
+      "explicitMaintainerApprovalRequired",
+      "local-tarball-handoff",
+      "tag-github-release-only",
+      "npm-via-ci",
+      "retire-legacy-workflow",
+      "This plan is not proof",
+      "readinessContextChecklist",
+      "Required readinessContext fields",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
+      "finalBlockingSignalIds",
+      "blockingSignalIds",
+      "riskRoutingSummary",
+      "orderedProofChainCoverage",
+      "Document non-blocking residual risks in the support packet"
+    ],
+    "generatedReport": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "reportScope": "release-decision-plan",
+        "selectedDecision": "all",
+        "riskId": "legacy-release-workflow-needs-maintainer-decision",
+        "publishPermission": "none",
+        "ciCdChangePermission": "none"
+      },
+      "requiredDecisionIds": [
+        "local-tarball-handoff",
+        "tag-github-release-only",
+        "npm-via-ci",
+        "retire-legacy-workflow"
+      ],
+      "requiredDecisionFlags": {
+        "local-tarball-handoff": {
+          "defaultSafe": true,
+          "explicitMaintainerApprovalRequired": false
+        },
+        "tag-github-release-only": {
+          "defaultSafe": false,
+          "explicitMaintainerApprovalRequired": true
+        },
+        "npm-via-ci": {
+          "defaultSafe": false,
+          "explicitMaintainerApprovalRequired": true
+        },
+        "retire-legacy-workflow": {
+          "defaultSafe": false,
+          "explicitMaintainerApprovalRequired": true
+        }
+      },
+      "warningMustContain": [
+        "not proof",
+        "does not run Git",
+        "npm publish",
+        "CI/CD changes"
+      ],
+      "requiredReadinessContextFields": [
+        "safeCommandHints",
+        "readinessContext",
+        "finalBlockingSignalIds",
+        "blockingSignalIds",
+        "riskRoutingSummary",
+        "orderedProofChainCoverage"
+      ]
+    }
+  },
+  "evidenceAreas": [
+    "Source of truth",
+    "Generated boundary",
+    "SDK package",
+    "CLI package",
+    "MCP package",
+    "Packed consumer",
+    "Public contracts",
+    "Docs",
+    "Changelogs",
+    "Security posture",
+    "Performance",
+    "Live proof",
+    "Final receipt"
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/final-proof-runbook.md",
+      "contains": [
+        "make final-proof-preflight",
+        "make perfect-fast",
+        "make performance-receipt",
+        "make perfect-full",
+        "make perfect-live",
+        "LIVE=1 make final-proof-draft",
+        "make final-proof-receipt-check",
+        "make final-proof-final",
+        "Final blockers",
+        "Blocking file-state summary",
+        "finalBlockingSignalIds",
+        "blockingSignalIds",
+        "stays through evidence capture",
+        "Live proof status: completed",
+        "Residual risk status: none",
+        "not final completion evidence"
+      ]
+    },
+    {
+      "path": "docs/release-support-policy.md",
+      "contains": [
+        "Do not run `npm publish`",
+        "Release readiness checklist",
+        "draft blocker",
+        "completed sandbox live proof"
+      ]
+    },
+    {
+      "path": "docs/supply-chain-policy.md",
+      "contains": [
+        "prepublishOnly",
+        "publishConfig.provenance",
+        "Required receipts"
+      ]
+    },
+    {
+      "path": "docs/support-runbook.md",
+      "contains": [
+        "Safe diagnostic bundle",
+        "Redaction rules",
+        "Escalation template",
+        "draft with a concrete deferral reason",
+        "Deferred live proof is not final readiness"
+      ]
+    },
+    {
+      "path": "docs/risk-register.json",
+      "contains": [
+        "performance-budgets-provisional",
+        "final-proof-pending",
+        "legacy-release-workflow-needs-maintainer-decision",
+        "make final-proof-final passes",
+        "enterprise-goal-status-contract.json"
+      ]
+    },
+    {
+      "path": "docs/enterprise-goal-status-contract.json",
+      "contains": [
+        "finalProofCommands",
+        "final-proof-draft",
+        "final-proof-final"
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-release-readiness-paths",
+    "typed-release-readiness-lists",
+    "typed-generated-report-contracts",
+    "typed-supporting-evidence",
+    "makefile-audit-wiring"
+  ]
+}

@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
     ClockifyAbortError,
     ClockifyConnectionError,
+    classifyClockifyError,
     ConflictError,
     getErrorCode,
+    getStableErrorCode,
     InternalServerError,
     isAbortError,
     isClockifyApiError,
@@ -364,5 +366,56 @@ describe("error code extraction", () => {
             body: { code: "rate_limited", message: "slow down" },
         });
         expect(getErrorCode(err)).toBe("rate_limited");
+    });
+});
+
+describe("stable SDK error classification", () => {
+    it("maps status codes through the generated SDK recovery registry", () => {
+        const err = new ClockifyApiError({
+            statusCode: 404,
+            message: "Not Found",
+            body: { code: "tag_missing", message: "tag missing" },
+        });
+
+        const classification = classifyClockifyError(err);
+        expect(classification).toMatchObject({
+            code: "not_found",
+            retryable: false,
+            statusCode: 404,
+            serverCode: "tag_missing",
+        });
+        expect(classification?.recovery).toContain("returned IDs");
+        expect(getStableErrorCode(err)).toBe("not_found");
+    });
+
+    it("keeps retry guidance for rate limits and upstream errors", () => {
+        const rateLimited = classifyClockifyError(new ClockifyApiError({ statusCode: 429 }));
+        const upstream = classifyClockifyError(new ClockifyApiError({ statusCode: 502 }));
+
+        expect(rateLimited).toMatchObject({ code: "rate_limited", retryable: true });
+        expect(upstream).toMatchObject({ code: "clockify_upstream_error", retryable: true });
+    });
+
+    it("classifies non-status connection and abort failures", () => {
+        const connection = classifyClockifyError(
+            new ClockifyApiError({
+                message: "fetch failed",
+                cause: new TypeError("fetch failed"),
+            }),
+        );
+        const abort = classifyClockifyError(
+            new ClockifyApiError({
+                message: "aborted",
+                cause: new DOMException("aborted", "AbortError"),
+            }),
+        );
+
+        expect(connection).toMatchObject({ code: "connection_error", retryable: true });
+        expect(abort).toMatchObject({ code: "aborted", retryable: false });
+    });
+
+    it("returns undefined for non-SDK errors", () => {
+        expect(classifyClockifyError(new Error("plain"))).toBeUndefined();
+        expect(getStableErrorCode(new Error("plain"))).toBeUndefined();
     });
 });

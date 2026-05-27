@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Contract for MCP agent UX: status-first, workflow-first, receipt-first guidance, risky-write confirmation, recovery, and discoverability.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-mcp-agent-ux-paths",
+    "typed-tools-metadata-reference",
+    "typed-expected-tool-summary",
+    "typed-agent-ux-checks",
+    "typed-wiring-contract"
+  ],
+  "toolsMetadata": "docs/mcp-tools.json",
+  "expectedToolSummary": {
+    "totalTools": 105,
+    "workflowTools": 17,
+    "domainTools": 88,
+    "requiredWorkflowTools": [
+      "clockify_status",
+      "clockify_tools_guide",
+      "clockify_create_work_package",
+      "clockify_log_work",
+      "clockify_review_day",
+      "clockify_fix_entry",
+      "clockify_invoice_client_work",
+      "clockify_demo_cleanup"
+    ]
+  },
+  "checks": [
+    {
+      "id": "policy",
+      "path": "docs/mcp-agent-ux-policy.md",
+      "markers": [
+        "MCP user",
+        "Status first",
+        "Workflow-first",
+        "Receipt-first",
+        "Risky writes use preview",
+        "Domain tools are escape hatches",
+        "MCP success receipt",
+        "MCP recovery receipt",
+        "Contract-shape rule",
+        "make mcp-agent-ux"
+      ]
+    },
+    {
+      "id": "server-instructions",
+      "path": "mcp/src/server.ts",
+      "comment": "Markers cover the MCP serverInstructions string exposed to clients.",
+      "markers": [
+        "Use clockify_status first",
+        "Prefer workflow tools before low-level domain tools",
+        "structured receipts",
+        "dry_run",
+        "confirm_token",
+        "stable error codes",
+        "recovery"
+      ]
+    },
+    {
+      "id": "resources",
+      "path": "mcp/src/resources.ts",
+      "markers": [
+        "clockify://guide/axioms",
+        "clockify://guide/workflows",
+        "clockify://guide/safety",
+        "clockify://mcp/doctor",
+        "workflow tools before low-level domain tools",
+        "ids, changed, warnings, and next",
+        "confirm_token",
+        "cleanup",
+        "no-network diagnostics checklist",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_WORKSPACE_ID"
+      ]
+    },
+    {
+      "id": "prompt",
+      "path": "mcp/src/prompts.ts",
+      "markers": [
+        "clockify-workflow-plan",
+        "argsSchema",
+        "goal: z.string().optional()",
+        "Start with clockify_status",
+        "Prefer workflow tools",
+        "dry_run",
+        "recovery code"
+      ]
+    },
+    {
+      "id": "result-envelope",
+      "path": "mcp/src/result.ts",
+      "markers": [
+        "structuredContent",
+        "changed",
+        "warnings",
+        "next",
+        "recovery"
+      ]
+    },
+    {
+      "id": "output-schema",
+      "path": "mcp/src/output-schema.ts",
+      "markers": [
+        "MCP_RESULT_OUTPUT_SCHEMA",
+        "changed",
+        "warnings",
+        "next",
+        "recovery"
+      ]
+    },
+    {
+      "id": "readme",
+      "path": "mcp/README.md",
+      "markers": [
+        "Workflow Tools",
+        "Resources and Prompts",
+        "Result Envelope",
+        "structuredContent",
+        "dry_run",
+        "confirm_token"
+      ]
+    },
+    {
+      "id": "write-safety",
+      "path": "docs/mcp-write-safety-policy.md",
+      "markers": [
+        "dry_run",
+        "confirm_token",
+        "destructiveHint: true"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "mcp-agent-ux",
+    "checker": "scripts/check-mcp-agent-ux.mjs",
+    "docsIndexPolicy": "mcp-agent-ux-policy.md",
+    "docsIndexContract": "mcp-agent-ux-contract.json",
+    "qualityGate": "make mcp-agent-ux",
+    "inventoryId": "mcp-agent-ux",
+    "auditId": "mcp-agent-ux"
+  }
+}

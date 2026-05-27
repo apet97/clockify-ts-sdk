@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, and curated parity overrides.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-operation-coverage-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-report-inputs",
+    "typed-thresholds",
+    "typed-required-targets",
+    "typed-required-docs",
+    "typed-supporting-evidence",
+    "typed-wiring-contract",
+    "makefile-audit-wiring"
+  ],
+  "policyDocument": {
+    "path": "docs/operation-coverage-policy.md",
+    "contains": [
+      "Coverage baseline",
+      "Contract-shape rule",
+      "OpenAPI operations",
+      "SDK-named operations",
+      "TS MCP exact operation/tool matches",
+      "GOCLMCP exact operation/tool matches",
+      "Curated parity overrides",
+      "Required escalation",
+      "make operation-coverage"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "reportInputs": {
+    "openapiOperations": "docs/openapi-operations.json",
+    "operationParity": "docs/operation-parity.json"
+  },
+  "thresholds": {
+    "operations": 185,
+    "sdkNamed": 170,
+    "tsMcpExact": 69,
+    "goMcpExact": 84,
+    "curated": 29
+  },
+  "requiredTargets": [
+    "operation-coverage",
+    "openapi-lint",
+    "operation-parity-drift",
+    "generator-comparison",
+    "naming-taxonomy"
+  ],
+  "requiredDocs": [
+    "docs/operation-coverage-policy.md",
+    "docs/openapi-operations.json",
+    "docs/operation-parity.json",
+    "docs/operation-parity-overrides.json",
+    "docs/naming-taxonomy-policy.md",
+    "docs/risk-register.md"
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/openapi-operations.json",
+      "contains": [
+        "operationId",
+        "sdkGroup",
+        "sdkMethod"
+      ]
+    },
+    {
+      "path": "docs/operation-parity.json",
+      "contains": [
+        "sdkNamed",
+        "tsMcpExact",
+        "goMcpExact",
+        "curated",
+        "candidateTools"
+      ]
+    },
+    {
+      "path": "docs/operation-parity-overrides.json",
+      "contains": [
+        "Curated operation parity mappings",
+        "reason"
+      ]
+    },
+    {
+      "path": "scripts/generate-operation-parity.mjs",
+      "contains": [
+        "sdkNamed",
+        "tsMcpExact",
+        "goMcpExact",
+        "curated"
+      ]
+    },
+    {
+      "path": "scripts/lint-openapi-contract.mjs",
+      "contains": [
+        "expected at least 169 SDK-named operations",
+        "expected 185 operations"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "operation-coverage",
+    "checker": "scripts/check-operation-coverage.mjs",
+    "docsIndex": [
+      "operation-coverage-policy.md",
+      "operation-coverage-contract.json"
+    ],
+    "qualityGate": "make operation-coverage",
+    "inventoryId": "operation-coverage",
+    "auditId": "operation-coverage"
+  }
+}

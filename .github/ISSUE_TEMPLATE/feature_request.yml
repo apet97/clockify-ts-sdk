@@ -1,58 +1,95 @@
 name: Feature request
-description: Propose a new helper, a new option, or an ergonomic improvement to the wrapper surface
+description: Propose an SDK helper, CLI command, MCP workflow/tool, docs path, mock/live scenario, or generator-contract improvement
 title: "[feature] "
 labels: ["enhancement", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the suggestion. Before you submit:
+        Thanks for the suggestion. Please describe the user job first, then the API you want.
 
-        - **Method missing from the synced SDK?** That's a spec issue — file it against [apet97/go-clockify](https://github.com/apet97/go-clockify) so it lands in the generator.
-        - **Idiomatic CRUDL method names** (`client.tags.list()` instead of `getWorkspacesWorkspaceIdTags`)? Tracked as `fern.x-fern-sdk-method-name.drops-resource-modules` in `spec/evidence/discrepancies.md` — re-evaluated on every Fern CLI bump, no action needed here.
-        - **Bare-array auto-pagination at Fern level**? Tracked as `fern.x-fern-pagination.bare-array-unsupported`. Wrapper-side `iterAll` is the supported workaround.
+        - **Method missing from the synced SDK?** File it against [apet97/go-clockify](https://github.com/apet97/go-clockify) so it lands in the OpenAPI generator.
+        - **Public rename or removal?** Read `docs/breaking-change-review-policy.md`; replacement-first migration evidence is required.
+        - **High-risk write workflow?** Include dry-run, confirmation, receipt, cleanup, and sandbox boundaries.
+
+  - type: dropdown
+    id: target-surface
+    attributes:
+      label: Target surface
+      multiple: true
+      options:
+        - SDK wrapper (`clockify-sdk-ts-115`)
+        - CLI (`@clockify115/cli`)
+        - MCP server (`@clockify115/mcp-server`)
+        - OpenAPI / GOCLMCP / Fern generation contract
+        - Examples / docs
+        - Mock/replay / acceptance scenario
+        - Release/support tooling
+    validations:
+      required: true
 
   - type: textarea
-    id: use-case
+    id: user-job
     attributes:
-      label: Use case
-      description: What are you trying to do? Real-world scenario, not just "I want X."
-      placeholder: "e.g. We have a workflow that fetches all time entries for the past 30 days across 50 users and we keep writing the same iterAll-with-flatten boilerplate..."
+      label: User job
+      description: What real workflow are you trying to make easier?
+      placeholder: "e.g. I need to invoice reviewed time entries and preserve request IDs for support..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-workaround
+    attributes:
+      label: Current workaround
+      description: What existing SDK helper, CLI command, MCP tool, docs path, or generator path did you try first?
     validations:
       required: true
 
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed API
-      description: Sketch the helper / option / change you have in mind. TypeScript snippets welcome.
-      render: typescript
+      label: Proposed API or behavior
+      description: Sketch the helper, option, command, tool, docs path, or generator change.
+      render: text
     validations:
       required: true
 
   - type: textarea
-    id: alternatives-considered
+    id: acceptance-evidence
     attributes:
-      label: Alternatives considered
-      description: What existing wrapper helpers did you try first? Why don't they cover your case?
-      placeholder: "e.g. iterAll handles per-resource pagination but doesn't combine across resources..."
+      label: Acceptance evidence
+      description: Which acceptance scenario, mock/live proof, receipt fields, cleanup behavior, or generated truth surface should prove this works?
+      placeholder: "docs/acceptance-scenarios.md row, mock route, live sandbox cleanup, receipt fields, operation coverage..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: breaking-change-risk
+    attributes:
+      label: Breaking-change risk
+      multiple: false
+      options:
+        - Additive only
+        - Requires alias or deprecation window
+        - Renames or removes a public surface
+        - Not sure
     validations:
       required: true
 
   - type: textarea
-    id: scope-impact
+    id: maintenance-impact
     attributes:
       label: Scope + maintenance impact
-      description: How big is the surface change? Does it conflict with any documented constraint in AGENTS.md? Are you willing to send a PR?
+      description: Docs, changelog, generated metadata, tests, live proof, or support-bundle implications.
 
   - type: checkboxes
     id: agreements
     attributes:
       label: Pre-submission checks
       options:
-        - label: I read [AGENTS.md](https://github.com/apet97/clockify-ts-sdk/blob/main/AGENTS.md) to confirm this isn't out-of-scope.
+        - label: I searched existing issues for similar proposals.
           required: true
-        - label: I searched [existing issues](https://github.com/apet97/clockify-ts-sdk/issues?q=is%3Aissue) for similar proposals.
+        - label: I stated the user job and current workaround, not only the desired API name.
           required: true
-        - label: This is a wrapper-layer change, not a request for a method that's missing upstream in the spec.
+        - label: If this changes a public surface, I considered `docs/breaking-change-review-policy.md`.
           required: true

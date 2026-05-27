@@ -2,6 +2,19 @@
 
 All notable changes to `@clockify115/mcp-server` are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Added `CLOCKIFY_BASE_URL` for mock/replay environments.
+- Added a shared MCP result output schema to every advertised tool.
+- Added MCP guide resources and a workflow-planning prompt.
+- Added deterministic mock Clockify server coverage for `clockify_status`.
+
+### Changed
+
+- MCP recoverable errors now use the shared error-code registry for default recovery hints.
+
 ## [0.3.0] - 2026-05-26
 
 ### Added

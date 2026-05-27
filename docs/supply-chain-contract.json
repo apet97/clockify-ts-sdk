@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Supply-chain, license, provenance, and tarball hygiene contract for SDK, CLI, and MCP packages. Guards npm publish defaults and prepublishOnly script shapes.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-supply-chain-paths",
+    "typed-package-supply-chain-entries",
+    "typed-publish-config-expectations",
+    "typed-pack-file-boundaries",
+    "typed-policy-contract",
+    "typed-supporting-contracts",
+    "makefile-audit-wiring"
+  ],
+  "packages": [
+    {
+      "id": "wrapper",
+      "manifest": "wrapper/package.json",
+      "licenseFile": "wrapper/LICENSE",
+      "name": "clockify-sdk-ts-115",
+      "license": "MIT",
+      "publishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "examples",
+        "docs",
+        "tests"
+      ]
+    },
+    {
+      "id": "cli",
+      "manifest": "cli/package.json",
+      "licenseFile": "cli/LICENSE",
+      "name": "@clockify115/cli",
+      "license": "MIT",
+      "publishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "examples",
+        "docs",
+        "tests"
+      ]
+    },
+    {
+      "id": "mcp",
+      "manifest": "mcp/package.json",
+      "licenseFile": "mcp/LICENSE",
+      "name": "@clockify115/mcp-server",
+      "license": "MIT",
+      "publishConfig": {
+        "access": "public",
+        "provenance": true
+      },
+      "requiredFiles": [
+        "dist",
+        "README.md",
+        "LICENSE"
+      ],
+      "forbiddenFiles": [
+        "src",
+        "node_modules",
+        "examples",
+        "docs",
+        "tests"
+      ]
+    }
+  ],
+  "policyDocument": {
+    "path": "docs/supply-chain-policy.md",
+    "mustContain": [
+      "license: MIT",
+      "publishConfig.provenance: true",
+      "type-check/test/build proof",
+      "make supply-chain",
+      "make dependency-boundary",
+      "make pack-smoke",
+      "make secret-hygiene",
+      "publishConfig.access: public"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "supportingContracts": [
+    {
+      "path": "docs/package-contract.json",
+      "mustContain": [
+        "requirePublishConfig",
+        "expectedPublishConfig",
+        "requirePrepublishOnly",
+        "requiredScripts",
+        "forbiddenFiles"
+      ]
+    },
+    {
+      "path": "docs/dependency-boundary.json",
+      "mustContain": [
+        "forbiddenRuntimeDependencies",
+        "runtimeDependencies"
+      ]
+    },
+    {
+      "path": "docs/release-support-policy.md",
+      "mustContain": [
+        "npm publication is not the default path"
+      ]
+    }
+  ],
+  "wiring": {
+    "makeTarget": "supply-chain",
+    "checker": "scripts/check-supply-chain.mjs",
+    "enterpriseAuditId": "supply-chain"
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable contract for durable hand-written SDK runtime seams around the generated Fern client.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-sdk-runtime-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-runtime-seams",
+    "typed-package-surface-contract",
+    "typed-wiring-contract"
+  ],
+  "policyDocument": {
+    "path": "docs/sdk-runtime-policy.md",
+    "contains": [
+      "The factory is the default entrypoint",
+      "Request behavior must be observable",
+      "Pagination must be ergonomic and bounded",
+      "Errors must be stable and recoverable",
+      "Webhooks must be first-class",
+      "Operational helpers must stay public"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "runtimeSeams": [
+    {
+      "id": "client-factory",
+      "path": "wrapper/create-client.ts",
+      "tests": [
+        "wrapper/tests/create-client.test.ts"
+      ],
+      "contains": [
+        "createClockifyClient",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_ADDON_TOKEN",
+        "composedFetch",
+        "retryPolicy",
+        "workspace(id: string)"
+      ]
+    },
+    {
+      "id": "composed-fetch",
+      "path": "wrapper/composed-fetch.ts",
+      "tests": [
+        "wrapper/tests/composed-fetch.test.ts"
+      ],
+      "contains": [
+        "USER_AGENT_HEADER",
+        "REQUEST_ID_HEADER",
+        "beforeRequest",
+        "afterResponse",
+        "onRetry",
+        "Retry-After",
+        "X-RateLimit-Reset"
+      ]
+    },
+    {
+      "id": "pagination",
+      "path": "wrapper/iter.ts",
+      "tests": [
+        "wrapper/tests/iter.test.ts",
+        "wrapper/tests/pagination.test.ts",
+        "wrapper/tests/paginated-list.test.ts",
+        "wrapper/tests/types/iter.test-d.ts"
+      ],
+      "contains": [
+        "KNOWN_PAGINATED_METHODS",
+        "iterAll",
+        "iterPages",
+        "Last-Page"
+      ]
+    },
+    {
+      "id": "raw-response",
+      "path": "wrapper/with-response.ts",
+      "tests": [
+        "wrapper/tests/with-response.test.ts",
+        "wrapper/tests/types/iter.test-d.ts"
+      ],
+      "contains": [
+        "withResponse",
+        "withRawResponse",
+        "headers",
+        "requestId",
+        "status"
+      ]
+    },
+    {
+      "id": "error-recovery",
+      "path": "wrapper/errors.ts",
+      "tests": [
+        "wrapper/tests/errors.test.ts"
+      ],
+      "contains": [
+        "promoteApiError",
+        "classifyClockifyError",
+        "getStableErrorCode",
+        "ClockifyConnectionError",
+        "ClockifyAbortError",
+        "recoveryForCode",
+        "retryableForCode"
+      ]
+    },
+    {
+      "id": "webhooks",
+      "path": "wrapper/webhooks.ts",
+      "tests": [
+        "wrapper/tests/webhooks.test.ts",
+        "wrapper/tests/webhook-fixtures.test.ts",
+        "wrapper/tests/webhook-events.test.ts"
+      ],
+      "contains": [
+        "verifyClockifyWebhook",
+        "constructEvent",
+        "WebhookSignatureMismatchError",
+        "Clockify-Signature-Token"
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "path": "wrapper/diagnostics.ts",
+      "tests": [
+        "wrapper/tests/diagnostics.test.ts"
+      ],
+      "contains": [
+        "clockifyDiagnostics",
+        "ready_for_health",
+        "configuration_conflict",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_ADDON_TOKEN",
+        "CLOCKIFY_WORKSPACE_ID"
+      ]
+    },
+    {
+      "id": "health",
+      "path": "wrapper/health.ts",
+      "tests": [
+        "wrapper/tests/health.test.ts"
+      ],
+      "contains": [
+        "clockifyHealth",
+        "latencyMs",
+        "serverTime"
+      ]
+    },
+    {
+      "id": "rate-limit",
+      "path": "wrapper/rate-limit.ts",
+      "tests": [
+        "wrapper/tests/rate-limit.test.ts"
+      ],
+      "contains": [
+        "getRateLimit",
+        "getRateLimitFromError",
+        "X-RateLimit-Limit",
+        "retryAfterMs"
+      ]
+    },
+    {
+      "id": "scoped-client",
+      "path": "wrapper/scoped-client.ts",
+      "tests": [
+        "wrapper/tests/scoped-client.test.ts"
+      ],
+      "contains": [
+        "Workspace",
+        "wrapResource",
+        "workspaceId"
+      ]
+    },
+    {
+      "id": "otel-hooks",
+      "path": "wrapper/otel-hooks.ts",
+      "tests": [
+        "wrapper/tests/otel-hooks.test.ts"
+      ],
+      "contains": [
+        "otelHooks",
+        "http.request.method",
+        "server.address"
+      ]
+    },
+    {
+      "id": "deprecation",
+      "path": "wrapper/deprecation.ts",
+      "tests": [
+        "wrapper/tests/deprecation.test.ts"
+      ],
+      "contains": [
+        "warnOnce",
+        "DEPRECATION"
+      ]
+    }
+  ],
+  "packageSurface": {
+    "path": "docs/sdk-public-api.json",
+    "contains": [
+      "createClockifyClient",
+      "composedFetch",
+      "iterAll",
+      "withResponse",
+      "classifyClockifyError",
+      "verifyClockifyWebhook",
+      "clockifyHealth",
+      "getRateLimit",
+      "Workspace",
+      "otelHooks",
+      "warnOnce",
+      "clockifyDiagnostics"
+    ]
+  },
+  "wiring": {
+    "makeTarget": "sdk-runtime-contract",
+    "checker": "scripts/check-sdk-runtime-contract.mjs",
+    "docsIndex": [
+      "sdk-runtime-contract.json"
+    ],
+    "qualityGate": "make sdk-runtime-contract",
+    "inventoryId": "sdk-runtime-contract",
+    "auditId": "sdk-runtime-contract"
+  }
+}

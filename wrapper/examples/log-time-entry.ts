@@ -9,7 +9,7 @@
  * WARNING: writes to your sandbox workspace. Never run against
  * production data.
  */
-import { createClockifyClient, ClockifyApiError } from "clockify-sdk-ts";
+import { createClockifyClient, ClockifyApiError } from "clockify-sdk-ts-115";
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;

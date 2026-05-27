@@ -118,7 +118,7 @@ export interface VerifyClockifyWebhookInput {
  *
  * @example
  * ```ts
- * import { verifyClockifyWebhook } from "clockify-sdk-ts/webhooks";
+ * import { verifyClockifyWebhook } from "clockify-sdk-ts-115/webhooks";
  *
  * app.post("/webhook", (req, res) => {
  *   if (!verifyClockifyWebhook({
@@ -160,7 +160,7 @@ export interface ConstructEventInput {
  *
  * @example
  * ```ts
- * import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts/webhooks";
+ * import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts-115/webhooks";
  *
  * app.post("/webhook", express.text({ type: "*\/*" }), (req, res) => {
  *   try {

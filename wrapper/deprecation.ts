@@ -30,7 +30,7 @@ export function warnOnce(key: string, message: string): void {
     if (seen.has(key)) return;
     seen.add(key);
     if (typeof process !== "undefined" && process.env?.NODE_ENV === "test") return;
-    console.warn(`[clockify-sdk-ts] DEPRECATION: ${message}`);
+    console.warn(`[clockify-sdk-ts-115] DEPRECATION: ${message}`);
 }
 
 /** Reset the dedup state. Test-only helper; not part of the public

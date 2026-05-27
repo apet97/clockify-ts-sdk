@@ -1,5 +1,5 @@
 name: Bug report
-description: Report something that broke (in the wrapper layer, not the upstream Clockify API)
+description: Report a reproducible SDK, CLI, MCP, package, docs, mock/replay, or generator-contract failure
 title: "[bug] "
 labels: ["bug", "needs-triage"]
 body:
@@ -9,52 +9,51 @@ body:
         Thanks for taking the time to file a bug. Before you submit:
 
         - **Security issue?** Follow [SECURITY.md](https://github.com/apet97/clockify-ts-sdk/blob/main/SECURITY.md) — do NOT open a public issue.
-        - **Upstream Clockify API behaviour?** That's a Clockify support ticket. This tracker is for the wrapper surface in `wrapper/` (the hand-written modules + the dual build + pack gates).
+        - **Clockify API server behavior?** Use Clockify support unless this repo's spec, wrapper, CLI, MCP, or docs contract is wrong.
         - **Synced SDK quirk under `wrapper/src/**`?** Raise it upstream in [Fern](https://github.com/fern-api/fern) or [apet97/go-clockify](https://github.com/apet97/go-clockify); the synced tree is regenerated and not editable here.
-
-  - type: input
-    id: sdk-version
-    attributes:
-      label: SDK version
-      description: Output of `npm ls clockify-sdk-ts-115` or `cat node_modules/clockify-sdk-ts-115/package.json | grep version`.
-      placeholder: "e.g. 0.9.0"
-    validations:
-      required: true
-
-  - type: input
-    id: node-version
-    attributes:
-      label: Node version
-      description: Output of `node --version`.
-      placeholder: "e.g. v22.10.0"
-    validations:
-      required: true
+        - **Do not paste secrets or customer data.** Use sanitized receipts and placeholders such as `workspace_123`, `entry_123`, and `<redacted>`.
 
   - type: dropdown
+    id: affected-surface
+    attributes:
+      label: Affected surface
+      multiple: true
+      options:
+        - SDK wrapper (`clockify-sdk-ts-115`)
+        - CLI (`@clockify115/cli`)
+        - MCP server (`@clockify115/mcp-server`)
+        - OpenAPI / GOCLMCP / Fern generation contract
+        - Package install / pack smoke
+        - Mock/replay server
+        - Documentation / examples
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Package and version
+      description: Include the exact package/version, for example `clockify-sdk-ts-115@0.9.0`, `@clockify115/cli@0.1.0`, or `@clockify115/mcp-server@0.3.0`.
+      placeholder: "clockify-sdk-ts-115@0.9.0"
+    validations:
+      required: true
+
+  - type: input
     id: runtime
     attributes:
       label: Runtime
-      multiple: false
-      options:
-        - Node.js
-        - Bun
-        - Deno
-        - Browser
-        - Other (describe below)
+      description: Node/npm version, OS, module system, and whether Docker/Fern was involved.
+      placeholder: "node v22.x, npm 10.x, macOS, ESM, Docker not involved"
     validations:
       required: true
 
-  - type: dropdown
-    id: module-system
+  - type: input
+    id: entrypoint
     attributes:
-      label: Module system in your project
-      multiple: false
-      options:
-        - ESM (import / "type": "module")
-        - CommonJS (require)
-        - TypeScript with NodeNext resolution
-        - TypeScript with classic resolution
-        - Not sure
+      label: Command, tool, import path, or operation
+      description: Exact SDK import/method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
+      placeholder: "clk115 status --json | clockify_status | createClockifyClient() | docs/migration-guide.md"
     validations:
       required: true
 
@@ -62,15 +61,14 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: A clear, concise description of the bug.
-      placeholder: "e.g. createClockifyClient throws TypeError when ..."
+      description: A clear, concise description of the failure.
     validations:
       required: true
 
   - type: textarea
     id: expected
     attributes:
-      label: Expected behaviour
+      label: Expected behavior
       description: What did you expect to happen instead?
     validations:
       required: true
@@ -79,17 +77,53 @@ body:
     id: repro
     attributes:
       label: Minimal reproducer
-      description: A self-contained code snippet (no real API keys / workspace IDs). The shorter, the faster the fix.
-      render: typescript
+      description: Self-contained command, code snippet, MCP call, or docs path. No real API keys, workspace IDs, customer data, or webhook secrets.
+      render: text
     validations:
       required: true
 
   - type: textarea
-    id: stack-trace
+    id: sanitized-receipt
     attributes:
-      label: Stack trace (if any)
-      description: Full stack trace, with `getRequestIdFromError(err)` output if it's a `ClockifyApiError`.
+      label: Sanitized receipt
+      description: Include requestId/status/code/retryable/recovery/changed/next/cleanup-leftover-count when present. Replace secrets with `<redacted>`.
+      render: json
+
+  - type: textarea
+    id: generated-support-bundle
+    attributes:
+      label: Generated support bundle
+      description: If local repo metadata matters, run `node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json`, review the JSON, and paste or attach only the redacted, safe parts. For readiness/proof issues, include the safe `readinessContext` summary fields: `finalBlockingSignalIds`, `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
+      render: json
+
+  - type: textarea
+    id: quickstart-diagnostics-context
+    attributes:
+      label: Quickstart and diagnostics context
+      description: For first-run/setup issues, start with `node scripts/workflow-plan.mjs --workflow first-run-support`, say whether the quickstart receipt was used, which diagnostic surface produced evidence (`clockifyDiagnostics()`, `clk115 doctor --json`, or `clockify://mcp/doctor`), and any safeCommandHints. Do not paste env values.
       render: text
+
+  - type: textarea
+    id: proof-attempted
+    attributes:
+      label: Proof attempted
+      description: Narrowest command or scenario you tried, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
+      render: text
+
+  - type: dropdown
+    id: mock-live-boundary
+    attributes:
+      label: Mock/live boundary
+      multiple: false
+      options:
+        - Mock/replay only
+        - Docs-only
+        - Sacrificial sandbox live workspace
+        - Private gateway
+        - Unknown
+        - Customer workspace (do not use for proof)
+    validations:
+      required: true
 
   - type: textarea
     id: workarounds
@@ -102,9 +136,13 @@ body:
     attributes:
       label: Pre-submission checks
       options:
-        - label: I searched [existing issues](https://github.com/apet97/clockify-ts-sdk/issues?q=is%3Aissue) and didn't find a duplicate.
+        - label: I searched existing issues and did not find a duplicate.
           required: true
-        - label: My repro doesn't include real API keys or workspace IDs.
+        - label: My report does not include real API keys, addon tokens, npm tokens, webhook secrets, customer workspace data, invoice details, or cookies.
           required: true
-        - label: This is a bug in the wrapper layer, not the upstream Clockify API or the synced Fern output.
+        - label: I included the affected surface, package/version, entry point, sanitized receipt, proof attempted, and mock/live boundary when available.
           required: true
+        - label: If I used the generated support bundle, I reviewed it before attaching or pasting any content.
+          required: true
+        - label: For first-run/setup issues, I included the quickstart receipt or diagnostic surface context when available.
+          required: false

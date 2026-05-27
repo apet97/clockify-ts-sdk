@@ -23,6 +23,81 @@ MCP users: see [`mcp/README.md`](./mcp/README.md). This file is for
 contributors and agents working on the spec, SDK, CLI, and MCP
 toolchain.
 
+The default release path is local tarballs (`npm pack`) for sharing inside the project, not public npm publication. Publishing requires explicit maintainer approval.
+
+## One-command gates
+
+The repo now exposes root-level commands for non-coder operation and
+future-agent handoff:
+
+```bash
+make help           # show the available gates
+make perfect-fast   # local deterministic SDK/CLI/MCP package proof
+make perfect-full   # GOCLMCP drift + Fern + packages + packed-consumer smoke
+make perfect-live   # explicit sandbox/live cleanup proof
+```
+
+The gate map lives in [`docs/quality-gates.md`](./docs/quality-gates.md).
+The shared SDK/CLI/MCP metadata surface lives in
+[`docs/product-surface.json`](./docs/product-surface.json), with the
+human-readable table in
+[`docs/product-surface.md`](./docs/product-surface.md). Regenerate both
+with:
+
+```bash
+make product-surface
+```
+
+The shared error/recovery registry lives in
+[`docs/error-codes.json`](./docs/error-codes.json), with generated
+human-readable docs in [`docs/error-codes.md`](./docs/error-codes.md):
+
+```bash
+make error-docs
+```
+
+The OpenAPI operation inventory is generated from the corrected
+snapshot into [`docs/openapi-operations.json`](./docs/openapi-operations.json)
+and [`docs/openapi-operations.md`](./docs/openapi-operations.md):
+
+```bash
+make openapi-operations
+```
+
+The best-effort operation/tool parity join across OpenAPI, SDK naming,
+TS MCP, and GOCLMCP lives in
+[`docs/operation-parity.json`](./docs/operation-parity.json) and
+[`docs/operation-parity.md`](./docs/operation-parity.md):
+
+```bash
+make operation-parity
+```
+
+OpenAPI lint and generator-independence checks are local substitutes
+for paid generator-platform guardrails:
+
+```bash
+make openapi-lint
+make generator-independence
+make generator-comparison
+```
+
+The CLI and MCP README tables are generated from
+[`docs/cli-commands.json`](./docs/cli-commands.json) and
+[`docs/mcp-tools.json`](./docs/mcp-tools.json):
+
+```bash
+make readme-tables
+```
+
+Operator-facing install, migration, dependency, and troubleshooting
+docs live under [`docs/`](./docs/README.md). Troubleshooting is
+generated from the shared error registry:
+
+```bash
+make troubleshooting
+```
+
 ## Layout
 
 ```
@@ -40,8 +115,24 @@ clockify-ts-sdk/
 ├── wrapper/                                         ← packable SDK package layout
 ├── cli/                                             ← packable CLI package layout
 ├── mcp/                                             ← packable stdio MCP package layout
+├── scripts/                                         ← root orchestration/check/generation helpers
+├── Makefile                                         ← one-command local/full/live gates
 └── docs/
-    └── product-north-star.md                        ← final-state quality bar
+    ├── axioms.md                                    ← SDK/CLI/MCP product rules
+    ├── error-codes.{json,md}                        ← shared recovery vocabulary
+    ├── openapi-operations.{json,md}                 ← generated operation inventory
+    ├── operation-parity.{json,md}                   ← generated SDK/MCP parity join
+    ├── operation-parity-overrides.json              ← curated non-mechanical parity joins
+    ├── cli-commands.json + mcp-tools.json           ← generated README table inputs
+    ├── install-personas.md                          ← SDK/CLI/MCP installation paths
+    ├── migration-guide.md                           ← package/import/auth migration notes
+    ├── dependency-policy.md                         ← tooling/runtime update rules
+    ├── troubleshooting.md                           ← generated recovery guide
+    ├── performance-budgets.json                     ← package/startup budget ceilings
+    ├── product-north-star.md                        ← final-state quality bar
+    ├── product-surface.{json,md}                    ← generated parity metadata
+    ├── quality-gates.md                             ← exact commands and evidence map
+    └── README.md                                    ← documentation index
 ```
 
 Each entry in `spec/evidence/discrepancies.md` answers five
@@ -103,7 +194,7 @@ Package surfaces:
 |---|---|
 | `clockify-sdk-ts-115` | v0.9.0; 31 resource modules, 185 live operations, dual ESM/CJS, pagination helpers, webhook verification, typed errors, scoped clients, OTel hooks, health and rate-limit helpers |
 | `@clockify115/cli` | v0.1.0; 21 commands across 15 groups, env/config based auth, JSON output for automation |
-| `@clockify115/mcp-server` | v0.3.0; 105 stdio MCP tools: 16 workflow tools plus 89 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
+| `@clockify115/mcp-server` | v0.3.0; 105 stdio MCP tools: 17 workflow tools plus 88 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
 
 | Surface                                            | Result |
 | -------------------------------------------------- | ------ |

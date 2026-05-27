@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Public compatibility and deprecation contract for SDK, CLI, MCP, and OpenAPI generation surfaces.",
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-compatibility-evidence-paths",
+    "typed-policy-document-contract",
+    "typed-surface-contracts",
+    "typed-deprecation-window-contract",
+    "typed-required-make-targets",
+    "typed-docs-index-contract",
+    "typed-forbidden-policy-markers",
+    "makefile-audit-wiring"
+  ],
+  "policyDocument": {
+    "path": "docs/compatibility-policy.md",
+    "mustContain": [
+      "SDK",
+      "CLI",
+      "MCP",
+      "OpenAPI generation",
+      "Contract-shape rule",
+      "warnOnce",
+      "Compatibility window",
+      "changelog",
+      "migration-guide",
+      "breaking-change review",
+      "make compatibility-contract"
+    ]
+  },
+  "deprecationWindow": {
+    "minimumPolicy": "Keep deprecated public paths until the next major version unless explicit maintainer approval and migration receipt exist.",
+    "policyMustContain": [
+      "Add the replacement first",
+      "Keep the old path until the next major version",
+      "migration-guide",
+      "changelog",
+      "breaking-change review",
+      "final proof stack"
+    ]
+  },
+  "surfaceContracts": [
+    {
+      "surface": "sdk",
+      "paths": [
+        {
+          "path": "docs/sdk-public-api.json",
+          "mustContain": [
+            "rootSymbols",
+            "subpaths",
+            "classifyClockifyError"
+          ]
+        },
+        {
+          "path": "wrapper/deprecation.ts",
+          "mustContain": [
+            "warnOnce",
+            "DEPRECATION",
+            "Remove the symbol entirely in the next major version"
+          ]
+        },
+        {
+          "path": "wrapper/tests/deprecation.test.ts",
+          "mustContain": [
+            "warnOnce",
+            "dedupes by key"
+          ]
+        },
+        {
+          "path": "wrapper/CHANGELOG.md",
+          "mustContain": [
+            "## [Unreleased]"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "cli",
+      "paths": [
+        {
+          "path": "docs/cli-contract.json",
+          "mustContain": [
+            "commandCount",
+            "completionShells",
+            "exitCodes"
+          ]
+        },
+        {
+          "path": "cli/CHANGELOG.md",
+          "mustContain": [
+            "## [Unreleased]"
+          ]
+        },
+        {
+          "path": "docs/migration-guide.md",
+          "mustContain": [
+            "CLI behavior",
+            "0 means success",
+            "2 means command-line usage error"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "mcp",
+      "paths": [
+        {
+          "path": "docs/mcp-contract.json",
+          "mustContain": [
+            "totalTools",
+            "resources",
+            "prompts",
+            "outputSchema"
+          ]
+        },
+        {
+          "path": "mcp/CHANGELOG.md",
+          "mustContain": [
+            "## [Unreleased]"
+          ]
+        },
+        {
+          "path": "docs/migration-guide.md",
+          "mustContain": [
+            "MCP behavior",
+            "structuredContent",
+            "output schema"
+          ]
+        }
+      ]
+    },
+    {
+      "surface": "openapi",
+      "paths": [
+        {
+          "path": "docs/openapi-operations.json",
+          "mustContain": [
+            "operationId"
+          ]
+        },
+        {
+          "path": "docs/operation-parity.json",
+          "mustContain": [
+            "tsMcp",
+            "goMcp"
+          ]
+        },
+        {
+          "path": "spec/evidence/discrepancies.md",
+          "mustContain": [
+            "official",
+            "status"
+          ]
+        }
+      ]
+    }
+  ],
+  "requiredMakeTargets": [
+    "sdk-public-api",
+    "cli-contract",
+    "mcp-contract",
+    "operation-parity-drift",
+    "changelog-drift",
+    "breaking-change-review",
+    "compatibility-contract"
+  ],
+  "docsIndex": [
+    "compatibility-policy.md",
+    "compatibility-contract.json"
+  ],
+  "forbiddenPolicyMarkers": [
+    "TODO",
+    "TBD"
+  ],
+  "wiring": {
+    "makeTarget": "compatibility-contract",
+    "checker": "scripts/check-compatibility-contract.mjs",
+    "enterpriseAuditId": "compatibility-contract"
+  }
+}

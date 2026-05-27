@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Copy-paste snippet safety contract for SDK, CLI, MCP, README, cookbook, first-run support maps, mock/replay, and live-proof examples.",
+  "contractInvariants": [
+    "schema-versioned-snippet-safety-contract",
+    "safe-snippet-safety-paths",
+    "typed-snippet-surfaces",
+    "declared-forbidden-import-markers",
+    "required-target-wiring",
+    "required-doc-evidence",
+    "supporting-evidence-marker-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "snippet-safety",
+    "checker": "scripts/check-snippet-safety.mjs",
+    "enterpriseAuditId": "snippet-safety"
+  },
+  "policy": {
+    "path": "docs/snippet-safety-policy.md",
+    "contains": [
+      "Snippet rules",
+      "Copy-paste safety checklist",
+      "Allowed placeholders",
+      "Forbidden snippet patterns",
+      "Required receipts",
+      "clockify-sdk-ts-115",
+      "CLOCKIFY_BASE_URL",
+      "sacrificial sandbox",
+      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "safeCommandHints",
+      "not proof"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD", "PASTE TOKEN"]
+  },
+  "requiredTargets": [
+    "snippet-safety",
+    "examples-contract",
+    "user-docs",
+    "receipt-examples",
+    "support-bundle",
+    "live-safety",
+    "docs-drift"
+  ],
+  "requiredDocs": [
+    "docs/snippet-safety-policy.md",
+    "docs/examples-contract.json",
+    "docs/user-docs-contract.json",
+    "docs/receipt-examples.md",
+    "docs/support-runbook.md",
+    "docs/live-tests.md",
+    "wrapper/examples/README.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md",
+    "docs/workflow-cookbook.md"
+  ],
+  "expectedSurfaceCount": 5,
+  "requiredSurfaceIds": [
+    "sdk-readme",
+    "sdk-examples",
+    "cli-readme",
+    "mcp-readme",
+    "workflow-cookbook"
+  ],
+  "snippetSurfaces": [
+    {
+      "id": "sdk-readme",
+      "path": "wrapper/README.md",
+      "contains": ["clockify-sdk-ts-115", "CLOCKIFY_API_KEY", "requestId"]
+    },
+    {
+      "id": "sdk-examples",
+      "path": "wrapper/examples/README.md",
+      "contains": ["clockify-sdk-ts-115", "auth.ts", "verify-webhook.ts"]
+    },
+    {
+      "id": "cli-readme",
+      "path": "cli/README.md",
+      "contains": ["CLOCKIFY_API_KEY", "--json", "CLOCKIFY_BASE_URL"]
+    },
+    {
+      "id": "mcp-readme",
+      "path": "mcp/README.md",
+      "contains": ["CLOCKIFY_API_KEY", "structuredContent", "CLOCKIFY_BASE_URL"]
+    },
+    {
+      "id": "workflow-cookbook",
+      "path": "docs/workflow-cookbook.md",
+      "contains": ["public SDK package", "mock", "Recovery pattern"]
+    }
+  ],
+  "forbiddenImportMarkers": [
+    "from '../src",
+    "from \"../src",
+    "output/ts-sdk",
+    "wrapper/src"
+  ],
+  "supportingEvidence": [
+    {
+      "path": "docs/examples-contract.json",
+      "contains": ["clockify-sdk-ts-115", "forbiddenSecretPatterns", "forbiddenImportPrefixes"]
+    },
+    {
+      "path": "scripts/check-docs-drift.mjs",
+      "contains": ["legacy-sdk-package-name", "Documentation drift check passed"]
+    },
+    {
+      "path": "docs/receipt-examples.md",
+      "contains": ["SDK success receipt", "CLI error receipt", "MCP recovery receipt"]
+    },
+    {
+      "path": "docs/support-runbook.md",
+      "contains": ["Never include", "Redaction rules", "Escalation template"]
+    },
+    {
+      "path": "docs/live-tests.md",
+      "contains": ["Never run live gates against a customer workspace", "sacrificial sandbox"]
+    }
+  ]
+}

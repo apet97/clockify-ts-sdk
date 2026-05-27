@@ -1,0 +1,1592 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Machine-readable map from change scope to required gates, docs, changelog posture, and receipts.",
+  "wiring": {
+    "makeTarget": "change-impact",
+    "checker": "scripts/check-change-impact.mjs",
+    "enterpriseAuditId": "change-impact"
+  },
+  "policyDocument": {
+    "path": "docs/change-impact-policy.md",
+    "contains": [
+      "Start from the changed surface",
+      "User-visible changes need documentation and changelog coverage",
+      "Generated and snapshot surfaces remain upstream-first",
+      "Proof can be deferred only when the final receipt says so",
+      "operator helper tooling",
+      "make operator-toolbox",
+      "path-based triage cannot silently stop matching",
+      "First-run support workflow changes route through diagnostics",
+      "Duplicate scope ids, path probes, required targets, required docs, or changed-path entries are contract failures",
+      "node scripts/change-impact-plan.mjs --scope <id>",
+      "node scripts/change-impact-plan.mjs --path <changed-path>"
+    ],
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
+  },
+  "planGenerator": {
+    "path": "scripts/change-impact-plan.mjs",
+    "makeTarget": "change-impact-plan",
+    "contains": [
+      "network: \"none\"",
+      "commandsExecuted: []",
+      "envValuesCaptured: false",
+      "This plan is not proof",
+      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+      "docs/change-impact-contract.json",
+      "--scope list",
+      "--path <changed-path>"
+    ],
+    "generatedPlan": {
+      "exactFields": {
+        "schemaVersion": 1,
+        "network": "none",
+        "commandsExecuted": [],
+        "envValuesCaptured": false,
+        "reportScope": "default",
+        "ok": true
+      },
+      "requiredMatchedScopeIds": [
+        "docs-and-contracts",
+        "axioms-contract",
+        "final-proof",
+        "release-readiness"
+      ],
+      "requiredScopeFields": [
+        "changedPaths",
+        "requiredTargets",
+        "requiredDocs",
+        "notes",
+        "changelogRequired"
+      ]
+    }
+  },
+  "requiredScopeIds": [
+    "docs-and-contracts",
+    "axioms-contract",
+    "release-readiness",
+    "final-proof",
+    "operator-toolbox"
+  ],
+  "matrixInvariants": [
+    "unique-scope-ids",
+    "unique-required-scope-ids",
+    "unique-path-probe-changed-paths",
+    "unique-path-probe-coverage-scope-ids",
+    "unique-scope-requirement-scope-ids",
+    "unique-scope-changed-paths",
+    "unique-scope-required-targets",
+    "unique-scope-required-docs"
+  ],
+  "allowedNonMakeTargets": [
+    "perfect-full",
+    "perfect-live",
+    "pack-smoke",
+    "wrapper-gates",
+    "cli-gates",
+    "mcp-gates",
+    "performance-receipt"
+  ],
+  "pathProbeExpectations": [
+    {
+      "changedPath": "docs/operator-toolbox-contract.json",
+      "requiredScopeIds": [
+        "operator-toolbox"
+      ]
+    },
+    {
+      "changedPath": "scripts/check-operator-toolbox.mjs",
+      "requiredScopeIds": [
+        "operator-toolbox"
+      ]
+    },
+    {
+      "changedPath": "scripts/contract-inventory-report.mjs",
+      "requiredScopeIds": [
+        "operator-toolbox"
+      ]
+    },
+    {
+      "changedPath": "docs/axioms.md",
+      "requiredScopeIds": [
+        "axioms-contract"
+      ],
+      "expectedScopeIds": [
+        "axioms-contract"
+      ]
+    },
+    {
+      "changedPath": "docs/axioms-contract.json",
+      "requiredScopeIds": [
+        "axioms-contract"
+      ],
+      "expectedScopeIds": [
+        "axioms-contract"
+      ]
+    },
+    {
+      "changedPath": "scripts/check-axioms-contract.mjs",
+      "requiredScopeIds": [
+        "axioms-contract"
+      ],
+      "expectedScopeIds": [
+        "axioms-contract"
+      ]
+    },
+    {
+      "changedPath": "scripts/workflow-plan.mjs",
+      "requiredScopeIds": [
+        "first-run-support"
+      ]
+    },
+    {
+      "changedPath": "docs/workflow-cookbook-contract.json",
+      "requiredScopeIds": [
+        "first-run-support"
+      ]
+    },
+    {
+      "changedPath": "scripts/generate-product-surface.mjs",
+      "requiredScopeIds": [
+        "first-run-support"
+      ]
+    },
+    {
+      "changedPath": "docs/operator-toolbox.md",
+      "requiredScopeIds": [
+        "first-run-support"
+      ]
+    },
+    {
+      "changedPath": "docs/operator-onboarding.md",
+      "requiredScopeIds": [
+        "first-run-support"
+      ]
+    }
+  ],
+  "pathProbeCoverageExpectations": [
+    {
+      "scopeId": "operator-toolbox"
+    },
+    {
+      "scopeId": "axioms-contract"
+    },
+    {
+      "scopeId": "first-run-support"
+    }
+  ],
+  "scopeRequirementExpectations": [
+    {
+      "scopeId": "operator-toolbox",
+      "requiredTargets": [
+        "operator-toolbox",
+        "contract-inventory",
+        "change-impact",
+        "docs-index-drift",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/operator-toolbox.md",
+        "docs/operator-toolbox-contract.json",
+        "docs/contract-inventory-policy.md",
+        "docs/contract-inventory.json",
+        "docs/change-impact-policy.md",
+        "docs/change-impact-contract.json"
+      ],
+      "changedPaths": [
+        "docs/operator-toolbox-contract.json",
+        "scripts/check-operator-toolbox.mjs",
+        "scripts/contract-inventory-report.mjs"
+      ]
+    },
+    {
+      "scopeId": "final-proof",
+      "requiredTargets": [
+        "final-proof-preflight",
+        "final-proof-preflight-contract",
+        "final-proof-command-contract",
+        "enterprise-goal-status-contract",
+        "risk-register",
+        "axioms-contract",
+        "release-readiness",
+        "final-proof-draft",
+        "final-proof-receipt-check",
+        "final-proof-final"
+      ],
+      "requiredDocs": [
+        "docs/final-proof-runbook.md",
+        "docs/final-proof-receipt.template.md",
+        "docs/final-proof-receipt-manifest.json",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-command-contract.json",
+        "docs/enterprise-goal-status-contract.json",
+        "docs/release-readiness-contract.json",
+        "docs/release-readiness-checklist.md",
+        "docs/risk-register.json",
+        "docs/risk-register.md"
+      ],
+      "changedPaths": [
+        "docs/final-proof-runbook.md",
+        "docs/final-proof-receipt.template.md",
+        "docs/final-proof-receipt-manifest.json",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-command-contract.json",
+        "docs/release-readiness-checklist.md",
+        "docs/risk-register.json",
+        "docs/risk-register.md",
+        "scripts/risk-status-report.mjs",
+        "scripts/check-risk-register.mjs",
+        "scripts/run-final-proof.mjs",
+        "scripts/check-final-proof-receipt.mjs",
+        "scripts/enterprise-goal-status.mjs",
+        "scripts/release-readiness-report.mjs"
+      ]
+    },
+    {
+      "scopeId": "axioms-contract",
+      "requiredTargets": [
+        "axioms-contract",
+        "docs-quality",
+        "user-docs",
+        "docs-index-drift",
+        "contract-inventory",
+        "change-impact",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "docs/docs-quality-contract.json",
+        "docs/user-docs-contract.json",
+        "docs/docs-index-contract.json",
+        "docs/contract-inventory.json",
+        "docs/change-impact-contract.json"
+      ],
+      "changedPaths": [
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "scripts/check-axioms-contract.mjs"
+      ]
+    },
+    {
+      "scopeId": "first-run-support",
+      "requiredTargets": [
+        "workflow-cookbook",
+        "acceptance-scenarios",
+        "quickstart-receipt",
+        "diagnostics",
+        "support-bundle",
+        "product-surface-drift",
+        "operator-toolbox",
+        "operator-onboarding",
+        "release-readiness",
+        "maintenance-playbook",
+        "snippet-safety",
+        "docs-quality",
+        "axioms-contract",
+        "user-docs",
+        "docs-index-drift",
+        "contract-inventory",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/workflow-cookbook.md",
+        "docs/workflow-cookbook-contract.json",
+        "docs/acceptance-scenarios.md",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/quickstart-receipt.md",
+        "docs/support-runbook.md",
+        "docs/support-bundle-contract.json",
+        "docs/operator-toolbox.md",
+        "docs/operator-onboarding.md",
+        "docs/release-readiness-checklist.md",
+        "docs/maintenance-playbook.md",
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "docs/product-surface.json",
+        "docs/product-surface.md"
+      ],
+      "changedPaths": [
+        "docs/workflow-cookbook.md",
+        "docs/workflow-cookbook-contract.json",
+        "scripts/workflow-plan.mjs",
+        "scripts/generate-product-surface.mjs",
+        "docs/product-surface.json",
+        "docs/product-surface.md",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/user-docs-contract.json",
+        "docs/operator-toolbox.md",
+        "docs/operator-toolbox-contract.json",
+        "docs/operator-onboarding.md",
+        "docs/operator-onboarding-contract.json",
+        "scripts/onboarding-plan.mjs",
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json",
+        "scripts/release-decision-plan.mjs",
+        "docs/maintenance-playbook.md",
+        "docs/maintenance-playbook-contract.json",
+        "scripts/maintenance-plan.mjs",
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "scripts/create-support-bundle.mjs"
+      ]
+    }
+  ],
+  "scopes": [
+    {
+      "id": "first-run-support",
+      "changedPaths": [
+        "docs/workflow-cookbook.md",
+        "docs/workflow-cookbook-contract.json",
+        "scripts/workflow-plan.mjs",
+        "scripts/generate-product-surface.mjs",
+        "docs/product-surface.json",
+        "docs/product-surface.md",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/user-docs-contract.json",
+        "docs/operator-toolbox.md",
+        "docs/operator-toolbox-contract.json",
+        "docs/operator-onboarding.md",
+        "docs/operator-onboarding-contract.json",
+        "scripts/onboarding-plan.mjs",
+        "docs/support-bundle-contract.json",
+        "scripts/create-support-bundle.mjs",
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json",
+        "scripts/release-decision-plan.mjs",
+        "docs/maintenance-playbook.md",
+        "docs/maintenance-playbook-contract.json",
+        "scripts/maintenance-plan.mjs",
+        "docs/agent-handoff-policy.md",
+        "docs/agent-handoff-contract.json",
+        "docs/issue-intake-policy.md",
+        "docs/issue-intake-contract.json",
+        "scripts/check-issue-intake.mjs",
+        "docs/data-handling-policy.md",
+        "docs/data-handling-contract.json",
+        "scripts/check-data-handling.mjs",
+        "docs/security-threat-model.md",
+        "docs/security-threat-model-contract.json",
+        "scripts/check-security-threat-model.mjs",
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        ".github/ISSUE_TEMPLATE/**",
+        ".github/pull_request_template.md"
+      ],
+      "requiredTargets": [
+        "workflow-cookbook",
+        "acceptance-scenarios",
+        "quickstart-receipt",
+        "diagnostics",
+        "support-bundle",
+        "product-surface-drift",
+        "operator-toolbox",
+        "operator-onboarding",
+        "release-readiness",
+        "maintenance-playbook",
+        "agent-handoff",
+        "issue-intake",
+        "data-handling",
+        "security-threat-model",
+        "snippet-safety",
+        "docs-quality",
+        "axioms-contract",
+        "user-docs",
+        "docs-index-drift",
+        "contract-inventory",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/workflow-cookbook.md",
+        "docs/workflow-cookbook-contract.json",
+        "docs/acceptance-scenarios.md",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/quickstart-receipt.md",
+        "docs/support-runbook.md",
+        "docs/support-bundle-contract.json",
+        "docs/operator-toolbox.md",
+        "docs/operator-onboarding.md",
+        "docs/release-readiness-checklist.md",
+        "docs/maintenance-playbook.md",
+        "docs/agent-handoff-policy.md",
+        "docs/agent-handoff-contract.json",
+        "docs/issue-intake-policy.md",
+        "docs/issue-intake-contract.json",
+        "docs/data-handling-policy.md",
+        "docs/data-handling-contract.json",
+        "docs/security-threat-model.md",
+        "docs/security-threat-model-contract.json",
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "docs/product-surface.json",
+        "docs/product-surface.md"
+      ],
+      "changelogRequired": false,
+      "notes": "First-run support workflow changes must preserve no-network diagnostics, quickstart receipts, support-bundle readinessContext, safeCommandHints, workflow discoverability, acceptance coverage, and product-surface parity."
+    },
+    {
+      "id": "openapi-truth",
+      "changedPaths": [
+        "../GOCLMCP/docs/openapi/sources/**",
+        "../GOCLMCP/scripts/gen-clockify-openapi",
+        "spec/fern/**"
+      ],
+      "requiredTargets": [
+        "generated-edit-check",
+        "openapi-evidence",
+        "generator-config",
+        "generator-independence",
+        "generator-comparison",
+        "generator-portability",
+        "openapi-lint",
+        "openapi-operations-drift",
+        "operation-parity-drift",
+        "perfect-full"
+      ],
+      "requiredDocs": [
+        "docs/openapi-evidence-policy.md",
+        "docs/decisions/0001-canonical-api-truth.md",
+        "docs/product-surface.md",
+        "docs/generator-portability-plan.md"
+      ],
+      "changelogRequired": false,
+      "notes": "API truth begins in GOCLMCP; local corrected snapshots and generated output are downstream."
+    },
+    {
+      "id": "schema-quality",
+      "changedPaths": [
+        "docs/schema-quality-policy.md",
+        "docs/schema-quality-contract.json",
+        "scripts/check-schema-quality.mjs",
+        "spec/corrected/**",
+        "spec/evidence/discrepancies.md",
+        "output/ts-sdk/**",
+        "wrapper/src/**"
+      ],
+      "requiredTargets": [
+        "schema-quality",
+        "openapi-lint",
+        "openapi-evidence",
+        "generator-comparison",
+        "sdk-runtime-contract",
+        "operation-coverage",
+        "perfect-full",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/schema-quality-policy.md",
+        "docs/schema-quality-contract.json",
+        "docs/openapi-evidence-policy.md",
+        "spec/evidence/discrepancies.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Schema-quality changes must preserve component model clarity, enum fidelity, loose-object rationale, request/response model ergonomics, evidence ledger entries, and generated TypeScript review."
+    },
+    {
+      "id": "upstream-drift",
+      "changedPaths": [
+        "docs/upstream-drift-policy.md",
+        "docs/upstream-drift-contract.json",
+        "scripts/check-upstream-drift.mjs",
+        "spec/evidence/discrepancies.md",
+        "docs/openapi-operations.json",
+        "docs/operation-parity.json",
+        "docs/product-surface.json",
+        "docs/cli-commands.json",
+        "docs/mcp-tools.json"
+      ],
+      "requiredTargets": [
+        "upstream-drift",
+        "openapi-evidence",
+        "operation-coverage",
+        "openapi-lint",
+        "operation-parity-drift",
+        "generator-comparison",
+        "acceptance-scenarios",
+        "issue-intake",
+        "perfect-full",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/upstream-drift-policy.md",
+        "docs/upstream-drift-contract.json",
+        "docs/openapi-evidence-policy.md",
+        "spec/evidence/discrepancies.md",
+        "docs/operation-coverage-policy.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Upstream-drift changes must preserve Clockify/API/Fern/GOCLMCP routing, sanitized evidence, generated truth-surface refresh, and generator-first remediation."
+    },
+    {
+      "id": "generator-portability",
+      "changedPaths": [
+        "docs/generator-portability-plan.md",
+        "docs/generator-portability-contract.json",
+        "scripts/check-generator-portability.mjs",
+        "spec/fern/**"
+      ],
+      "requiredTargets": [
+        "generator-portability",
+        "generator-config",
+        "generator-independence",
+        "generator-comparison",
+        "openapi-evidence",
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "dependency-boundary",
+        "pack-smoke"
+      ],
+      "requiredDocs": [
+        "docs/generator-portability-plan.md",
+        "docs/generator-portability-contract.json",
+        "docs/generator-config-contract.json",
+        "docs/migration-guide.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Generator portability changes must preserve local regeneration, no-paid-hosted-generator assumptions, generated-output replaceability, and public package boundaries."
+    },
+    {
+      "id": "sdk-runtime",
+      "changedPaths": [
+        "wrapper/*.ts",
+        "wrapper/tests/**",
+        "wrapper/examples/**",
+        "wrapper/README.md"
+      ],
+      "requiredTargets": [
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "examples-contract",
+        "receipts-contract",
+        "wrapper-gates",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/sdk-runtime-policy.md",
+        "docs/workflow-cookbook.md",
+        "wrapper/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Hand-written SDK seams are product code and must stay exported, tested, and documented."
+    },
+    {
+      "id": "cli-surface",
+      "changedPaths": [
+        "cli/src/**",
+        "cli/tests/**",
+        "cli/README.md",
+        "docs/cli-commands.json"
+      ],
+      "requiredTargets": [
+        "cli-contract",
+        "cli-write-safety",
+        "receipts-contract",
+        "workflow-cookbook",
+        "cli-gates",
+        "readme-tables-drift",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/cli-write-safety-policy.md",
+        "docs/workflow-cookbook.md",
+        "cli/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "CLI changes must preserve scriptable JSON, exit codes, and explicit write semantics."
+    },
+    {
+      "id": "mcp-surface",
+      "changedPaths": [
+        "mcp/src/**",
+        "mcp/tests/**",
+        "mcp/README.md",
+        "docs/mcp-tools.json"
+      ],
+      "requiredTargets": [
+        "mcp-contract",
+        "mcp-write-safety",
+        "receipts-contract",
+        "workflow-cookbook",
+        "mcp-gates",
+        "readme-tables-drift",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/mcp-write-safety-policy.md",
+        "docs/workflow-cookbook.md",
+        "mcp/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "MCP changes must preserve output schemas, guide resources, prompts, recovery envelopes, and confirmation tokens."
+    },
+    {
+      "id": "mcp-agent-ux",
+      "changedPaths": [
+        "docs/mcp-agent-ux-policy.md",
+        "docs/mcp-agent-ux-contract.json",
+        "scripts/check-mcp-agent-ux.mjs",
+        "mcp/src/server.ts",
+        "mcp/src/resources.ts",
+        "mcp/src/prompts.ts",
+        "mcp/src/result.ts",
+        "mcp/src/output-schema.ts",
+        "docs/mcp-tools.json",
+        "mcp/README.md"
+      ],
+      "requiredTargets": [
+        "mcp-agent-ux",
+        "mcp-contract",
+        "mcp-write-safety",
+        "observability",
+        "acceptance-scenarios",
+        "mcp-gates",
+        "changelog-drift",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/mcp-agent-ux-policy.md",
+        "docs/mcp-agent-ux-contract.json",
+        "docs/mcp-contract.json",
+        "docs/mcp-write-safety-policy.md",
+        "mcp/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "MCP agent UX changes must preserve status-first and workflow-first instructions, guide resources, prompts, structured receipts, risky-write dry-run guidance, recovery, and README discoverability."
+    },
+    {
+      "id": "docs-and-contracts",
+      "changedPaths": [
+        "docs/**",
+        "README.md",
+        "AGENTS.md",
+        "CLAUDE.md"
+      ],
+      "requiredTargets": [
+        "docs-index-drift",
+        "docs-drift",
+        "contract-inventory",
+        "decision-records",
+        "user-docs",
+        "snippet-safety",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/README.md",
+        "docs/quality-gates.md",
+        "docs/contract-inventory.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Docs-only changes still need link, stale-marker, inventory, and audit coverage."
+    },
+    {
+      "id": "axioms-contract",
+      "changedPaths": [
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "scripts/check-axioms-contract.mjs"
+      ],
+      "requiredTargets": [
+        "axioms-contract",
+        "docs-quality",
+        "user-docs",
+        "docs-index-drift",
+        "contract-inventory",
+        "change-impact",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/axioms.md",
+        "docs/axioms-contract.json",
+        "docs/docs-quality-contract.json",
+        "docs/user-docs-contract.json",
+        "docs/docs-index-contract.json",
+        "docs/contract-inventory.json",
+        "docs/change-impact-contract.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Axioms changes must preserve the executable rulebook, docs-governance wiring, docs index, contract inventory, and enterprise audit evidence."
+    },
+    {
+      "id": "docs-quality",
+      "changedPaths": [
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "scripts/check-docs-quality.mjs",
+        "README.md",
+        "wrapper/README.md",
+        "cli/README.md",
+        "mcp/README.md",
+        "docs/README.md",
+        "docs/user-docs-policy.md",
+        "docs/quality-gates.md"
+      ],
+      "requiredTargets": [
+        "docs-quality",
+        "user-docs",
+        "docs-index-drift",
+        "docs-drift",
+        "readme-tables-drift",
+        "troubleshooting-drift",
+        "contract-inventory",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/docs-quality-policy.md",
+        "docs/docs-quality-contract.json",
+        "docs/user-docs-policy.md",
+        "docs/README.md",
+        "docs/quality-gates.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Documentation-quality changes must preserve evidence-first claims, exact package names, generated truth-surface references, safe snippets, and no unsupported readiness or marketing claims."
+    },
+    {
+      "id": "snippet-safety",
+      "changedPaths": [
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "scripts/check-snippet-safety.mjs",
+        "README.md",
+        "wrapper/README.md",
+        "cli/README.md",
+        "mcp/README.md",
+        "docs/workflow-cookbook.md"
+      ],
+      "requiredTargets": [
+        "snippet-safety",
+        "examples-contract",
+        "user-docs",
+        "receipt-examples",
+        "support-bundle",
+        "live-safety",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/snippet-safety-policy.md",
+        "docs/snippet-safety-contract.json",
+        "docs/examples-contract.json",
+        "docs/user-docs-contract.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Snippet safety changes must preserve public package imports, placeholder-only secrets, mock/live boundaries, and receipt-oriented examples."
+    },
+    {
+      "id": "security-threat-model",
+      "changedPaths": [
+        "docs/security-threat-model.md",
+        "docs/security-threat-model-contract.json",
+        "scripts/check-security-threat-model.mjs",
+        "docs/secret-hygiene.json",
+        "docs/env-contract.json"
+      ],
+      "requiredTargets": [
+        "security-threat-model",
+        "secret-hygiene",
+        "env-contract",
+        "mcp-write-safety",
+        "cli-write-safety",
+        "live-safety",
+        "supply-chain",
+        "receipts-contract"
+      ],
+      "requiredDocs": [
+        "docs/security-threat-model.md",
+        "docs/security-threat-model-contract.json",
+        "docs/secret-hygiene.json",
+        "docs/env-contract.json",
+        "docs/live-tests.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Threat-model changes must preserve credential handling, mock/replay containment, write safety, live-sandbox safety, supply-chain posture, and structured receipts."
+    },
+    {
+      "id": "data-handling",
+      "changedPaths": [
+        "docs/data-handling-policy.md",
+        "docs/data-handling-contract.json",
+        "scripts/check-data-handling.mjs",
+        "docs/support-runbook.md",
+        "docs/live-tests.md",
+        "spec/evidence/discrepancies.md"
+      ],
+      "requiredTargets": [
+        "data-handling",
+        "secret-hygiene",
+        "snippet-safety",
+        "support-bundle",
+        "live-safety",
+        "receipt-examples",
+        "security-threat-model"
+      ],
+      "requiredDocs": [
+        "docs/data-handling-policy.md",
+        "docs/data-handling-contract.json",
+        "docs/support-runbook.md",
+        "docs/live-tests.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Data-handling changes must preserve redaction, synthetic examples, live sandbox boundaries, and sanitized evidence for personal, work, invoice, expense, webhook, and raw probe data."
+    },
+    {
+      "id": "receipt-examples",
+      "changedPaths": [
+        "docs/receipt-examples.md",
+        "docs/receipt-examples-contract.json",
+        "scripts/check-receipt-examples.mjs",
+        "docs/receipts-contract.json"
+      ],
+      "requiredTargets": [
+        "receipt-examples",
+        "receipts-contract",
+        "sdk-runtime-contract",
+        "cli-contract",
+        "mcp-contract",
+        "user-docs"
+      ],
+      "requiredDocs": [
+        "docs/receipt-examples.md",
+        "docs/receipt-examples-contract.json",
+        "docs/receipts-policy.md",
+        "docs/error-codes.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Receipt example changes must preserve success and recovery examples for SDK, CLI, and MCP output shapes."
+    },
+    {
+      "id": "support-bundle",
+      "changedPaths": [
+        "docs/support-runbook.md",
+        "docs/support-bundle-contract.json",
+        "scripts/check-support-bundle.mjs",
+        "docs/troubleshooting.md"
+      ],
+      "requiredTargets": [
+        "support-bundle",
+        "secret-hygiene",
+        "security-threat-model",
+        "receipt-examples",
+        "receipts-contract",
+        "user-docs",
+        "live-safety"
+      ],
+      "requiredDocs": [
+        "docs/support-runbook.md",
+        "docs/support-bundle-contract.json",
+        "docs/troubleshooting.md",
+        "docs/live-tests.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Support-bundle changes must preserve safe redaction, exact diagnostic fields, proof-attempt evidence, and live-proof escalation boundaries."
+    },
+    {
+      "id": "issue-intake",
+      "changedPaths": [
+        "docs/issue-intake-policy.md",
+        "docs/issue-intake-contract.json",
+        "scripts/check-issue-intake.mjs",
+        ".github/ISSUE_TEMPLATE/**",
+        ".github/pull_request_template.md",
+        "docs/support-runbook.md",
+        "SECURITY.md"
+      ],
+      "requiredTargets": [
+        "issue-intake",
+        "support-bundle",
+        "docs-quality",
+        "acceptance-scenarios",
+        "risk-register",
+        "breaking-change-review",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/issue-intake-policy.md",
+        "docs/issue-intake-contract.json",
+        "docs/support-runbook.md",
+        "SECURITY.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Issue-intake changes must preserve multi-surface bug/feature/PR templates, safe receipts, redaction, proof attempted, mock/live boundary, and private security routing."
+    },
+    {
+      "id": "observability",
+      "changedPaths": [
+        "docs/observability-policy.md",
+        "docs/observability-contract.json",
+        "scripts/check-observability-contract.mjs",
+        "wrapper/composed-fetch.ts",
+        "wrapper/with-response.ts",
+        "wrapper/otel-hooks.ts",
+        "cli/src/output.ts",
+        "mcp/src/result.ts",
+        "mcp/src/output-schema.ts",
+        "docs/support-runbook.md"
+      ],
+      "requiredTargets": [
+        "observability",
+        "receipts-contract",
+        "receipt-examples",
+        "support-bundle",
+        "data-handling",
+        "sdk-runtime-contract",
+        "cli-contract",
+        "mcp-contract",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/observability-policy.md",
+        "docs/observability-contract.json",
+        "docs/receipts-policy.md",
+        "docs/support-runbook.md",
+        "docs/data-handling-policy.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Observability changes must preserve request correlation, telemetry hook boundaries, CLI/MCP structured receipts, safe diagnostic bundles, and redaction rules."
+    },
+    {
+      "id": "diagnostics",
+      "changedPaths": [
+        "wrapper/diagnostics.ts",
+        "wrapper/tests/diagnostics.test.ts",
+        "wrapper/package.json",
+        "wrapper/README.md",
+        "cli/src/commands/doctor.ts",
+        "cli/tests/doctor.test.ts",
+        "cli/README.md",
+        "mcp/src/resources.ts",
+        "mcp/tests/server.test.ts",
+        "mcp/README.md",
+        "docs/diagnostics-policy.md",
+        "docs/diagnostics-contract.json",
+        "scripts/check-diagnostics-contract.mjs",
+        "docs/product-surface.json",
+        "docs/product-surface.md"
+      ],
+      "requiredTargets": [
+        "diagnostics",
+        "sdk-public-api",
+        "sdk-runtime-contract",
+        "cli-contract",
+        "mcp-contract",
+        "product-surface-drift",
+        "docs-index-drift",
+        "contract-inventory",
+        "enterprise-audit",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/diagnostics-policy.md",
+        "docs/diagnostics-contract.json",
+        "docs/product-surface.json",
+        "docs/product-surface.md",
+        "wrapper/README.md",
+        "cli/README.md",
+        "mcp/README.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Diagnostics changes must preserve no-network behavior, redaction, receipt-shaped outputs, first-live-probe guidance, SDK/CLI/MCP parity, and product-surface discoverability."
+    },
+    {
+      "id": "quickstart-receipt",
+      "changedPaths": [
+        "docs/quickstart-receipt.md",
+        "docs/quickstart-receipt-contract.json",
+        "scripts/check-quickstart-receipt.mjs",
+        "docs/operator-onboarding.md",
+        "docs/diagnostics-policy.md",
+        "docs/live-tests.md",
+        "docs/product-surface.json",
+        "wrapper/README.md",
+        "cli/README.md",
+        "mcp/README.md"
+      ],
+      "requiredTargets": [
+        "quickstart-receipt",
+        "diagnostics",
+        "user-docs",
+        "operator-onboarding",
+        "live-safety",
+        "mock-contract",
+        "product-surface-drift",
+        "docs-index-drift",
+        "contract-inventory",
+        "enterprise-audit"
+      ],
+      "requiredDocs": [
+        "docs/quickstart-receipt.md",
+        "docs/quickstart-receipt-contract.json",
+        "docs/diagnostics-policy.md",
+        "docs/operator-onboarding.md",
+        "docs/live-tests.md",
+        "docs/product-surface.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Quickstart receipt changes must preserve diagnostics-first local checks, mock/live proof boundaries, redaction expectations, first live probes, and receipt-shaped operator handoff."
+    },
+    {
+      "id": "release-ci-supply-chain",
+      "changedPaths": [
+        ".github/workflows/**",
+        "wrapper/package.json",
+        "cli/package.json",
+        "mcp/package.json",
+        "SECURITY.md"
+      ],
+      "requiredTargets": [
+        "package-contract",
+        "supply-chain",
+        "release-support-contract",
+        "ci-contract",
+        "version-policy",
+        "perfect-full",
+        "pack-smoke",
+        "changelog-drift"
+      ],
+      "requiredDocs": [
+        "docs/supply-chain-policy.md",
+        "docs/release-support-policy.md",
+        "docs/ci-policy.md",
+        "docs/decisions/0003-no-default-npm-publish.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Do not change CI/CD, auth, provenance, or publish behavior without explicit maintainer approval."
+    },
+    {
+      "id": "dependency-license",
+      "changedPaths": [
+        "docs/dependency-license-policy.md",
+        "docs/dependency-license-contract.json",
+        "scripts/check-dependency-license.mjs",
+        "docs/dependency-boundary.json",
+        "docs/dependency-policy.md",
+        "wrapper/package.json",
+        "cli/package.json",
+        "mcp/package.json"
+      ],
+      "requiredTargets": [
+        "dependency-license",
+        "dependency-boundary",
+        "supply-chain",
+        "package-contract",
+        "performance-budgets",
+        "pack-smoke",
+        "changelog-drift",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/dependency-license-policy.md",
+        "docs/dependency-license-contract.json",
+        "docs/dependency-boundary.json",
+        "docs/dependency-policy.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Dependency-license changes must preserve the runtime dependency ledger, license compatibility, purpose map, package manifests, performance posture, and pack smoke evidence."
+    },
+    {
+      "id": "breaking-change-review",
+      "changedPaths": [
+        "docs/breaking-change-review-policy.md",
+        "docs/breaking-change-review-contract.json",
+        "scripts/check-breaking-change-review.mjs",
+        "docs/sdk-public-api.json",
+        "docs/cli-contract.json",
+        "docs/mcp-contract.json",
+        "docs/package-contract.json",
+        "docs/migration-guide.md",
+        "wrapper/CHANGELOG.md",
+        "cli/CHANGELOG.md",
+        "mcp/CHANGELOG.md"
+      ],
+      "requiredTargets": [
+        "breaking-change-review",
+        "compatibility-contract",
+        "sdk-public-api",
+        "cli-contract",
+        "mcp-contract",
+        "package-contract",
+        "operation-coverage",
+        "acceptance-scenarios",
+        "changelog-drift",
+        "pack-smoke",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/breaking-change-review-policy.md",
+        "docs/breaking-change-review-contract.json",
+        "docs/compatibility-policy.md",
+        "docs/migration-guide.md",
+        "docs/release-readiness-checklist.md"
+      ],
+      "changelogRequired": true,
+      "notes": "Breaking-change-review changes must preserve replacement-first public-surface changes, migration notes, changelog coverage, acceptance scenarios, and package/OpenAPI proof."
+    },
+    {
+      "id": "release-readiness",
+      "changedPaths": [
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json",
+        "scripts/check-release-readiness.mjs",
+        "scripts/release-readiness-report.mjs",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-runbook.md"
+      ],
+      "requiredTargets": [
+        "release-readiness",
+        "release-readiness-report",
+        "final-proof-preflight-contract",
+        "release-support-contract",
+        "supply-chain",
+        "pack-smoke",
+        "final-proof-receipt-check",
+        "final-proof-final",
+        "axioms-contract"
+      ],
+      "requiredDocs": [
+        "docs/release-readiness-checklist.md",
+        "docs/release-readiness-contract.json",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-runbook.md",
+        "docs/release-support-policy.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Release-readiness changes must preserve evidence requirements, generated preflight report shape, no-laptop-publish boundary, packed-consumer handoff path, and final-proof closure rules."
+    },
+    {
+      "id": "live-proof",
+      "changedPaths": [
+        "mcp/tests/sandbox.test.ts",
+        "cli/tests/sandbox.test.ts",
+        "wrapper/tests/sandbox.test.ts",
+        "docs/live-tests.md"
+      ],
+      "requiredTargets": [
+        "live-safety",
+        "mock-contract",
+        "perfect-live",
+        "final-proof-receipt-check"
+      ],
+      "requiredDocs": [
+        "docs/live-tests.md",
+        "docs/decisions/0004-sandbox-only-live-proof.md",
+        "docs/risk-register.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Live proof mutates Clockify state and must stay sandbox-only with cleanup receipts."
+    },
+    {
+      "id": "test-data-lifecycle",
+      "changedPaths": [
+        "docs/test-data-lifecycle-policy.md",
+        "docs/test-data-lifecycle-contract.json",
+        "scripts/check-test-data-lifecycle.mjs",
+        "wrapper/tests/sandbox.test.ts",
+        "cli/tests/sandbox.test.ts",
+        "mcp/tests/sandbox.test.ts",
+        "mcp/scripts/assert-clean-prefixes.mjs",
+        "docs/live-tests.md"
+      ],
+      "requiredTargets": [
+        "test-data-lifecycle",
+        "live-safety",
+        "mock-contract",
+        "mutation-safety",
+        "support-bundle",
+        "perfect-live",
+        "final-proof-receipt-check",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/test-data-lifecycle-policy.md",
+        "docs/test-data-lifecycle-contract.json",
+        "docs/live-tests.md",
+        "docs/support-runbook.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Test-data lifecycle changes must preserve sandbox-only prefixes, create/delete pairing, partial-failure cleanup, leftover scans, sanitized IDs, and final proof receipt expectations."
+    },
+    {
+      "id": "performance-calibration",
+      "changedPaths": [
+        "docs/performance-budgets.json",
+        "scripts/check-performance-budgets.mjs",
+        "docs/final-proof-runbook.md"
+      ],
+      "requiredTargets": [
+        "performance-budgets",
+        "performance-receipt",
+        "final-proof-receipt-check"
+      ],
+      "requiredDocs": [
+        "docs/performance-budgets.json",
+        "docs/final-proof-runbook.md",
+        "docs/risk-register.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Budgets remain provisional until receipt-backed calibration is complete."
+    },
+    {
+      "id": "final-proof",
+      "changedPaths": [
+        "docs/final-proof-runbook.md",
+        "docs/final-proof-receipt.template.md",
+        "docs/final-proof-receipt-manifest.json",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-command-contract.json",
+        "docs/enterprise-goal-status-contract.json",
+        "docs/release-readiness-contract.json",
+        "docs/release-readiness-checklist.md",
+        "docs/risk-register.json",
+        "docs/risk-register.md",
+        "scripts/run-final-proof.mjs",
+        "scripts/check-final-proof-receipt.mjs",
+        "scripts/check-final-proof-preflight-contract.mjs",
+        "scripts/check-final-proof-command-contract.mjs",
+        "scripts/check-enterprise-goal-status-contract.mjs",
+        "scripts/check-release-readiness.mjs",
+        "scripts/check-risk-register.mjs",
+        "scripts/enterprise-goal-status.mjs",
+        "scripts/release-readiness-report.mjs",
+        "scripts/risk-status-report.mjs"
+      ],
+      "requiredTargets": [
+        "final-proof-preflight",
+        "final-proof-preflight-contract",
+        "final-proof-command-contract",
+        "enterprise-goal-status-contract",
+        "risk-register",
+        "axioms-contract",
+        "release-readiness",
+        "final-proof-draft",
+        "final-proof-receipt-check",
+        "final-proof-final"
+      ],
+      "requiredDocs": [
+        "docs/final-proof-runbook.md",
+        "docs/final-proof-receipt.template.md",
+        "docs/final-proof-receipt-manifest.json",
+        "docs/final-proof-preflight-contract.json",
+        "docs/final-proof-command-contract.json",
+        "docs/enterprise-goal-status-contract.json",
+        "docs/release-readiness-contract.json",
+        "docs/release-readiness-checklist.md",
+        "docs/risk-register.json",
+        "docs/risk-register.md",
+        "docs/decisions/0005-temporary-context-final-proof.md",
+        "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Final-proof changes must preserve no-network preflight, generated status/readiness report shape, draft/final command split, receipt template guidance, receipt manifest requirements including success-section evidence, and temporary context removal rules. The temporary context file is kept through evidence capture, removed after receipt completion, and absent before final acceptance."
+    },
+    {
+      "id": "maintenance-playbook",
+      "changedPaths": [
+        "docs/maintenance-playbook.md",
+        "docs/maintenance-playbook-contract.json",
+        "scripts/check-maintenance-playbook.mjs",
+        "docs/dependency-policy.md",
+        "docs/generator-portability-plan.md",
+        "docs/release-readiness-checklist.md",
+        "docs/risk-register.md"
+      ],
+      "requiredTargets": [
+        "maintenance-playbook",
+        "change-impact",
+        "dependency-boundary",
+        "generator-config",
+        "generator-portability",
+        "release-readiness",
+        "risk-register",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/maintenance-playbook.md",
+        "docs/maintenance-playbook-contract.json",
+        "docs/change-impact-policy.md",
+        "docs/dependency-policy.md",
+        "docs/release-readiness-checklist.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Maintenance-playbook changes must preserve update cadence, dependency procedure, generator bump discipline, API drift response, release rehearsal, rollback, and receipt rules."
+    },
+    {
+      "id": "mutation-safety",
+      "changedPaths": [
+        "docs/mutation-safety-policy.md",
+        "docs/mutation-safety-contract.json",
+        "scripts/check-mutation-safety.mjs",
+        "wrapper/composed-fetch.ts",
+        "cli/src/**",
+        "mcp/src/**"
+      ],
+      "requiredTargets": [
+        "mutation-safety",
+        "sdk-runtime-contract",
+        "cli-write-safety",
+        "mcp-write-safety",
+        "receipts-contract",
+        "support-bundle",
+        "live-safety",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/mutation-safety-policy.md",
+        "docs/mutation-safety-contract.json",
+        "docs/sdk-runtime-policy.md",
+        "docs/cli-write-safety-policy.md",
+        "docs/mcp-write-safety-policy.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Mutation-safety changes must preserve SDK no-auto-retry create semantics, explicit CLI write targets, MCP preview confirmation, structured receipts, and ambiguous-failure recovery."
+    },
+    {
+      "id": "examples-matrix",
+      "changedPaths": [
+        "docs/examples-matrix.md",
+        "docs/examples-matrix-contract.json",
+        "scripts/check-examples-matrix.mjs",
+        "wrapper/examples/**",
+        "wrapper/examples/README.md",
+        "cli/README.md",
+        "mcp/README.md"
+      ],
+      "requiredTargets": [
+        "examples-matrix",
+        "examples-contract",
+        "snippet-safety",
+        "workflow-cookbook",
+        "mutation-safety",
+        "user-docs",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/examples-matrix.md",
+        "docs/examples-matrix-contract.json",
+        "wrapper/examples/README.md",
+        "docs/workflow-cookbook.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Examples-matrix changes must preserve public SDK imports, CLI/MCP command parity, mock/live boundaries, mutation-safety wording, and receipt expectations."
+    },
+    {
+      "id": "acceptance-scenarios",
+      "changedPaths": [
+        "docs/acceptance-scenarios.md",
+        "docs/acceptance-scenarios-contract.json",
+        "scripts/check-acceptance-scenarios.mjs",
+        "docs/workflow-cookbook.md",
+        "docs/examples-matrix.md",
+        "wrapper/tests/**",
+        "cli/tests/**",
+        "mcp/tests/**",
+        "scripts/mock-clockify-server.mjs"
+      ],
+      "requiredTargets": [
+        "acceptance-scenarios",
+        "workflow-cookbook",
+        "examples-matrix",
+        "mock-contract",
+        "observability",
+        "operation-coverage",
+        "live-safety",
+        "pack-smoke",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/acceptance-scenarios.md",
+        "docs/acceptance-scenarios-contract.json",
+        "docs/workflow-cookbook.md",
+        "docs/examples-matrix.md",
+        "docs/live-tests.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Acceptance-scenario changes must preserve SDK, CLI, MCP paths, proof mode, receipts, cleanup, and OpenAPI truth coverage for real user journeys."
+    },
+    {
+      "id": "config-precedence",
+      "changedPaths": [
+        "docs/config-precedence-policy.md",
+        "docs/config-precedence-contract.json",
+        "scripts/check-config-precedence.mjs",
+        "wrapper/create-client.ts",
+        "cli/src/config.ts",
+        "mcp/src/client.ts",
+        "cli/README.md",
+        "mcp/README.md",
+        "wrapper/README.md"
+      ],
+      "requiredTargets": [
+        "config-precedence",
+        "env-contract",
+        "user-docs",
+        "cli-contract",
+        "mcp-contract",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/config-precedence-policy.md",
+        "docs/config-precedence-contract.json",
+        "docs/env-contract.json",
+        "docs/install-personas.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Configuration precedence changes must preserve SDK explicit/env auth order, CLI flag/env/rc order, MCP env-only startup, and mock/private base URL safety wording."
+    },
+    {
+      "id": "operator-onboarding",
+      "changedPaths": [
+        "docs/operator-onboarding.md",
+        "docs/operator-onboarding-contract.json",
+        "scripts/check-operator-onboarding.mjs",
+        "docs/install-personas.md",
+        "docs/developer-environment-policy.md",
+        "docs/live-tests.md",
+        "docs/final-proof-runbook.md"
+      ],
+      "requiredTargets": [
+        "operator-onboarding",
+        "developer-environment",
+        "runtime-support",
+        "package-contract",
+        "mock-contract",
+        "live-safety",
+        "user-docs",
+        "docs-quality",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/operator-onboarding.md",
+        "docs/operator-onboarding-contract.json",
+        "docs/install-personas.md",
+        "docs/developer-environment-policy.md",
+        "docs/live-tests.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Operator-onboarding changes must preserve non-coder bootstrap, persona selection, package-local setup, mock/live safety, stop conditions, and readiness-boundary wording."
+    },
+    {
+      "id": "operator-toolbox",
+      "changedPaths": [
+        "docs/operator-toolbox.md",
+        "docs/operator-toolbox-contract.json",
+        "scripts/check-operator-toolbox.mjs",
+        "docs/contract-inventory.json",
+        "docs/contract-inventory-policy.md",
+        "scripts/check-contract-inventory.mjs",
+        "scripts/contract-inventory-report.mjs",
+        "docs/quality-gates.md",
+        "docs/README.md"
+      ],
+      "requiredTargets": [
+        "operator-toolbox",
+        "contract-inventory",
+        "contract-inventory-report",
+        "change-impact",
+        "docs-index-drift",
+        "enterprise-audit",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/operator-toolbox.md",
+        "docs/operator-toolbox-contract.json",
+        "docs/contract-inventory-policy.md",
+        "docs/contract-inventory.json",
+        "docs/change-impact-policy.md",
+        "docs/change-impact-contract.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Operator-toolbox changes must preserve no-network helper safety, helper ownership, documented helper command coverage, inventory ownership, docs-index discoverability, and enterprise-audit routing."
+    },
+    {
+      "id": "naming-taxonomy",
+      "changedPaths": [
+        "docs/naming-taxonomy-policy.md",
+        "docs/naming-taxonomy-contract.json",
+        "scripts/check-naming-taxonomy.mjs",
+        "docs/product-surface.json",
+        "docs/operation-parity*.json",
+        "docs/cli-commands.json",
+        "docs/mcp-tools.json",
+        "cli/README.md",
+        "mcp/README.md",
+        "wrapper/README.md"
+      ],
+      "requiredTargets": [
+        "naming-taxonomy",
+        "product-surface-drift",
+        "operation-parity-drift",
+        "readme-tables-drift",
+        "sdk-public-api",
+        "cli-contract",
+        "mcp-contract",
+        "examples-matrix",
+        "workflow-cookbook",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/naming-taxonomy-policy.md",
+        "docs/naming-taxonomy-contract.json",
+        "docs/product-north-star.md",
+        "docs/workflow-cookbook.md"
+      ],
+      "changelogRequired": false,
+      "notes": "Naming-taxonomy changes must preserve one Clockify vocabulary across SDK methods, CLI commands, MCP tools, docs, examples, and OpenAPI parity overrides."
+    },
+    {
+      "id": "operation-coverage",
+      "changedPaths": [
+        "docs/operation-coverage-policy.md",
+        "docs/operation-coverage-contract.json",
+        "scripts/check-operation-coverage.mjs",
+        "docs/openapi-operations.json",
+        "docs/operation-parity.json",
+        "docs/operation-parity-overrides.json",
+        "scripts/generate-operation-parity.mjs"
+      ],
+      "requiredTargets": [
+        "operation-coverage",
+        "openapi-lint",
+        "operation-parity-drift",
+        "generator-comparison",
+        "naming-taxonomy",
+        "docs-drift"
+      ],
+      "requiredDocs": [
+        "docs/operation-coverage-policy.md",
+        "docs/operation-coverage-contract.json",
+        "docs/openapi-operations.json",
+        "docs/operation-parity.json"
+      ],
+      "changelogRequired": false,
+      "notes": "Operation-coverage changes must preserve OpenAPI operation count and no-regression floors for SDK names, TS MCP matches, GOCLMCP matches, and curated overrides."
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-change-impact-file-paths",
+    "typed-policy-document-contract",
+    "typed-plan-generator-contract",
+    "typed-change-impact-matrix",
+    "typed-path-probe-expectations",
+    "typed-scope-requirement-expectations",
+    "declared-non-make-targets",
+    "makefile-audit-wiring"
+  ]
+}

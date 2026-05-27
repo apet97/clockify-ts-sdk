@@ -1,0 +1,5365 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Requirement-to-evidence map for the enterprise SDK/CLI/MCP/OpenAPI hardening objective. This checks artifact coverage; command execution still happens through make perfect-fast/perfect-full/perfect-live.",
+  "requirements": [
+    {
+      "id": "axioms",
+      "requirement": "Provide durable SDK/CLI/MCP/OpenAPI axioms.",
+      "evidence": [
+        {
+          "path": "docs/axioms.md",
+          "contains": [
+            "One truth source",
+            "Generated code is a dependency",
+            "Every public surface needs a receipt",
+            "Perfect means reproducible by a tired non-coder",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "docs/axioms-contract.json",
+          "contains": [
+            "typed-axiom-entries",
+            "truth-source",
+            "generated-core-boundary",
+            "public-surface-receipts",
+            "visible-parity",
+            "tarball-artifacts",
+            "mock-then-live",
+            "safe-writes",
+            "errors-as-product",
+            "non-coder-reproducibility",
+            "first-run-support-workflow",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "scripts/check-axioms-contract.mjs",
+          "contains": [
+            "Axioms contract shape failed",
+            "Axioms contract passed",
+            "supportingEvidence",
+            "perfect-fast",
+            "perfect-full"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "axioms-contract:",
+            "node scripts/check-axioms-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "temporary-context",
+      "requirement": "Keep a temporary context-retention file until final verification, then remove it.",
+      "temporaryPath": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+      "finalReceiptPath": "docs/final-proof-receipt.md",
+      "evidence": [
+        {
+          "path": "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+          "contains": [
+            "Remove this file after",
+            "Do not forget",
+            "Remaining high-impact work"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "one-command-gates",
+      "requirement": "Expose one-command local, full, and live proof gates.",
+      "evidence": [
+        {
+          "path": "Makefile",
+          "contains": [
+            "perfect-fast:",
+            "perfect-full:",
+            "perfect-live:",
+            "wrapper-gates:",
+            "cli-gates:",
+            "mcp-gates:"
+          ]
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": [
+            "make perfect-fast",
+            "make perfect-full",
+            "make perfect-live"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "product-surface",
+      "requirement": "Make package, CLI, MCP, and OpenAPI surface metadata machine-readable and drift-checked.",
+      "evidence": [
+        {
+          "path": "scripts/generate-product-surface.mjs",
+          "contains": [
+            "prepublishOnly",
+            "Last-resort publish gate",
+            "--check",
+            "--write"
+          ]
+        },
+        {
+          "path": "docs/product-surface.json",
+          "contains": [
+            "packages",
+            "prepublishOnly",
+            "mcp"
+          ]
+        },
+        {
+          "path": "docs/product-surface.md",
+          "contains": [
+            "Product Surface",
+            "Last-resort publish gate",
+            "packages"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generated-edit-guard",
+      "requirement": "Guard regenerable or snapshot paths from hand edits.",
+      "evidence": [
+        {
+          "path": "docs/generated-edit-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-generated-edit-prefixes",
+            "typed-guarded-prefixes",
+            "CLOCKIFY_ALLOW_GENERATED_DIFF",
+            "spec/corrected/",
+            "output/ts-sdk/",
+            "wrapper/src/"
+          ]
+        },
+        {
+          "path": "scripts/check-no-generated-edits.mjs",
+          "contains": [
+            "generated edit contract shape failed",
+            "assertContractShape",
+            "spec/corrected",
+            "output/ts-sdk",
+            "wrapper/src"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "generated-edit-check:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "packed-consumer-proof",
+      "requirement": "Test packed SDK, CLI, and MCP artifacts like an external consumer.",
+      "evidence": [
+        {
+          "path": "scripts/pack-consumer-smoke.mjs",
+          "contains": [
+            "npm pack",
+            "clockify-sdk-ts-115",
+            "@clockify115/cli",
+            "@clockify115/mcp-server",
+            "validateContractShape",
+            "safeRelativePath",
+            "pack-consumer-smoke-contract.json",
+            "packageFilesForConsumer",
+            "process.env[contract.keepTempEnv]",
+            "pack consumer smoke contract shape failed",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "pack-smoke",
+            "scripts/pack-consumer-smoke.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "pack-smoke:"
+          ]
+        },
+        {
+          "path": "docs/pack-consumer-smoke-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-package-directories",
+            "required-package-ids",
+            "typed-consumer-contracts",
+            "typed-script-markers",
+            "KEEP_CLOCKIFY_PACK_SMOKE_TEMP",
+            "makefile-audit-wiring",
+            "wiring",
+            "pack-smoke",
+            "scripts/pack-consumer-smoke.mjs",
+            "pack consumer smoke contract shape failed"
+          ]
+        },
+        {
+          "path": "docs/README.md",
+          "contains": [
+            "pack-consumer-smoke-contract.json",
+            "Pack smoke"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mock-replay-foundation",
+      "requirement": "Provide deterministic mock/replay foundations for SDK, CLI, and MCP tests.",
+      "evidence": [
+        {
+          "path": "scripts/mock-clockify-server.mjs",
+          "contains": [
+            "createMockClockifyServer",
+            "/api/v1"
+          ]
+        },
+        {
+          "path": "wrapper/tests/mock-clockify.test.ts",
+          "contains": [
+            "createMockClockifyServer"
+          ]
+        },
+        {
+          "path": "cli/tests/mock-clockify.test.ts",
+          "contains": [
+            "CLOCKIFY_BASE_URL"
+          ]
+        },
+        {
+          "path": "mcp/tests/mock-clockify.test.ts",
+          "contains": [
+            "CLOCKIFY_BASE_URL"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shared-errors",
+      "requirement": "Use a shared error/recovery vocabulary across SDK, CLI, and MCP.",
+      "evidence": [
+        {
+          "path": "docs/error-codes.json",
+          "contains": [
+            "rate_limited",
+            "connection_error",
+            "aborted"
+          ]
+        },
+        {
+          "path": "scripts/generate-error-docs.mjs",
+          "contains": [
+            "wrapper/error-codes.ts",
+            "cli/src/error-codes.ts",
+            "mcp/src/error-codes.ts"
+          ]
+        },
+        {
+          "path": "wrapper/errors.ts",
+          "contains": [
+            "classifyClockifyError",
+            "getStableErrorCode"
+          ]
+        },
+        {
+          "path": "cli/src/output.ts",
+          "contains": [
+            "errorCodeForMessage"
+          ]
+        },
+        {
+          "path": "mcp/src/result.ts",
+          "contains": [
+            "recoveryForCode"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "openapi-inventory-and-parity",
+      "requirement": "Inventory corrected OpenAPI operations and map them to SDK/CLI/MCP surfaces.",
+      "evidence": [
+        {
+          "path": "scripts/generate-openapi-operations.mjs",
+          "contains": [
+            "operationId",
+            "--check"
+          ]
+        },
+        {
+          "path": "scripts/generate-operation-parity.mjs",
+          "contains": [
+            "operation-parity-overrides"
+          ]
+        },
+        {
+          "path": "docs/openapi-operations.json",
+          "contains": [
+            "operationId"
+          ]
+        },
+        {
+          "path": "docs/operation-parity.json",
+          "contains": [
+            "tsMcp",
+            "goMcp"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "openapi-evidence-contract",
+      "requirement": "Keep manual OpenAPI corrections and generator decisions backed by an explicit discrepancy/evidence ledger contract.",
+      "evidence": [
+        {
+          "path": "docs/openapi-evidence-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "OpenAPI-evidence contract shape is part of evidence readiness",
+            "malformed ledger finding/status lists",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/openapi-evidence-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-openapi-evidence-paths",
+            "typed-ledger-contract",
+            "typed-supporting-evidence",
+            "typed-required-make-targets",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-openapi-evidence.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "OpenAPI evidence contract shape failed",
+            "typed-ledger-contract",
+            "requiredStatusMarkers"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "openapi-evidence:",
+            "node scripts/check-openapi-evidence.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "schema-quality",
+      "requirement": "Govern corrected OpenAPI component schemas, enums, loose objects, request/response models, and generated TypeScript model ergonomics.",
+      "evidence": [
+        {
+          "path": "docs/schema-quality-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Schema-quality contract shape is part of model readiness",
+            "missing threshold values",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/schema-quality-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-schema-quality-evidence-paths",
+            "typed-corrected-spec-contract",
+            "typed-generated-sdk-evidence",
+            "typed-schema-thresholds",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-schema-quality.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Schema quality contract shape failed",
+            "minimumEnumBlocks",
+            "minimumSdkMethodStamps"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "schema-quality:",
+            "node scripts/check-schema-quality.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upstream-drift",
+      "requirement": "Define and gate the Clockify API, GOCLMCP, Fern, SDK, CLI, MCP, and docs drift lifecycle from detection through proof.",
+      "evidence": [
+        {
+          "path": "docs/upstream-drift-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Upstream-drift contract shape is part of drift readiness",
+            "generated-truth surface paths",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/upstream-drift-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-upstream-drift-evidence-paths",
+            "typed-lifecycle-evidence",
+            "typed-generated-truth-surfaces",
+            "typed-required-make-targets",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-upstream-drift.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Upstream drift contract shape failed",
+            "typed-generated-truth-surfaces",
+            "generatedTruthSurfaces"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "upstream-drift:",
+            "node scripts/check-upstream-drift.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generator-independence",
+      "requirement": "Keep Fern-generated output replaceable and behind explicit wrapper seams.",
+      "evidence": [
+        {
+          "path": "scripts/lint-openapi-contract.mjs",
+          "contains": [
+            "SDK-named",
+            "Last-Page"
+          ]
+        },
+        {
+          "path": "scripts/check-generator-comparison.mjs",
+          "contains": [
+            "generated TypeScript client methods"
+          ]
+        },
+        {
+          "path": "docs/generator-independence-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-generator-independence-evidence-paths",
+            "typed-wrapper-package-boundary",
+            "typed-package-dependency-boundary",
+            "typed-source-scan-contract",
+            "typed-product-surface-policy",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-generator-independence.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "generator independence contract shape failed",
+            "forbiddenGeneratedMarker",
+            "forbiddenWrapperSrcMarker"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "generator-independence:",
+            "node scripts/check-generator-independence.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generator-config",
+      "requirement": "Keep Fern CLI/generator pins, active corrected OpenAPI snapshot, and generated output paths intentional.",
+      "evidence": [
+        {
+          "path": "docs/generator-config-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-generator-config-evidence-paths",
+            "typed-fern-config-contract",
+            "typed-generators-contract",
+            "typed-required-docs",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-generator-config.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "fernRelativePath",
+            "generator config contract shape failed",
+            "typed-generators-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "generator-config:",
+            "node scripts/check-generator-config.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generator-comparison",
+      "requirement": "Keep corrected OpenAPI SDK method stamps aligned with generated TypeScript client methods.",
+      "evidence": [
+        {
+          "path": "docs/generator-comparison-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-generator-comparison-evidence-paths",
+            "typed-operation-inventory-contract",
+            "typed-generated-root-contract",
+            "typed-client-scan-contract",
+            "typed-thresholds",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-generator-comparison.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "generator comparison contract shape failed",
+            "minimumStampedOperations",
+            "minimumGeneratedMethods"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "generator-comparison:",
+            "node scripts/check-generator-comparison.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generator-portability",
+      "requirement": "Keep OpenAPI-to-TypeScript generation independent from paid hosted SDK generator platforms and preserve a vendor-exit path.",
+      "evidence": [
+        {
+          "path": "docs/generator-portability-plan.md",
+          "markers": [
+            "Portability principles",
+            "Vendor-exit checklist",
+            "Account-gated generator failures",
+            "without paying for Stainless, Speakeasy, Fern Cloud"
+          ]
+        },
+        {
+          "path": "docs/generator-portability-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-generator-portability-evidence-paths",
+            "typed-plan-contract",
+            "typed-boundaries",
+            "typed-supporting-evidence",
+            "typed-local-reproducibility-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-generator-portability.mjs",
+          "markers": [
+            "validateContractShape",
+            "validateLocalReproducibility",
+            "safeRelativePath",
+            "Generator portability contract shape failed",
+            "typed-boundaries",
+            "typed-supporting-evidence",
+            "forbiddenDependencyNames"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "generator-portability:",
+            "node scripts/check-generator-portability.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generated-doc-drift",
+      "requirement": "Reduce manual docs drift through generated README tables, troubleshooting, and docs index gates.",
+      "evidence": [
+        {
+          "path": "scripts/update-readme-tables.mjs",
+          "contains": [
+            "generated:cli-commands",
+            "generated:mcp-workflow-tools"
+          ]
+        },
+        {
+          "path": "scripts/generate-troubleshooting.mjs",
+          "contains": [
+            "docs/troubleshooting.md"
+          ]
+        },
+        {
+          "path": "scripts/check-doc-index.mjs",
+          "contains": [
+            "docs index contract shape failed",
+            "assertContractShape",
+            "docs/README.md"
+          ]
+        },
+        {
+          "path": "docs/docs-index-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-docs-index-paths",
+            "typed-required-links",
+            "all-index-links-resolve",
+            "docs-index-drift",
+            "generated-doc-drift"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cli-command-metadata-contract",
+      "requirement": "Harden CLI exit codes, JSON error receipts, and shell completion.",
+      "evidence": [
+        {
+          "path": "cli/src/completions.ts",
+          "contains": [
+            "zsh",
+            "bash",
+            "fish"
+          ]
+        },
+        {
+          "path": "cli/tests/exit-contract.test.ts",
+          "contains": [
+            "toBe(2)",
+            "--json"
+          ]
+        },
+        {
+          "path": "cli/tests/completions.test.ts",
+          "contains": [
+            "completion"
+          ]
+        },
+        {
+          "path": "docs/cli-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-cli-contract-paths",
+            "typed-metadata-reference",
+            "typed-expected-command-surface",
+            "typed-exit-codes",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-cli-contract.mjs",
+          "contains": [
+            "validateContractShape",
+            "safeRelativePath",
+            "CLI contract shape failed",
+            "typed-expected-command-surface",
+            "typed-wiring-contract"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cli-write-safety",
+      "requirement": "Guard CLI write/delete behavior with an explicit non-interactive, ID-scoped, receipt-oriented contract.",
+      "evidence": [
+        {
+          "path": "docs/cli-write-safety-policy.md",
+          "contains": [
+            "CLI writes stay non-interactive",
+            "Destructive commands must be ID-scoped",
+            "Create commands must return identifiers",
+            "Errors must stay machine-readable",
+            "Contract-shape rule",
+            "CLI write-safety contract shape is part of deterministic operator safety",
+            "unsafe repo-relative evidence paths",
+            "malformed write-command markers"
+          ]
+        },
+        {
+          "path": "docs/cli-write-safety-contract.json",
+          "contains": [
+            "entries delete",
+            "webhooks delete",
+            "invoices create",
+            "scheduling create",
+            "contractInvariants",
+            "safe-cli-write-evidence-paths",
+            "typed-required-file-evidence",
+            "typed-write-command-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-cli-write-safety.mjs",
+          "contains": [
+            "CLI write-safety contract passed",
+            "writeCommands",
+            "explicit <id> argument",
+            "deleted-resource success receipt",
+            "validateContractShape",
+            "safeRelativePath",
+            "CLI write-safety contract shape failed",
+            "typed-write-command-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "cli-write-safety:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp-agent-contract",
+      "requirement": "Make MCP tools agent-ready with output schemas, resources, and prompts.",
+      "evidence": [
+        {
+          "path": "mcp/src/output-schema.ts",
+          "contains": [
+            "MCP_RESULT_OUTPUT_SCHEMA"
+          ]
+        },
+        {
+          "path": "mcp/src/resources.ts",
+          "contains": [
+            "clockify://guide/axioms",
+            "clockify://guide/workflows",
+            "clockify://guide/safety"
+          ]
+        },
+        {
+          "path": "mcp/src/prompts.ts",
+          "contains": [
+            "clockify-workflow-plan",
+            "argsSchema",
+            "goal: z.string().optional()"
+          ]
+        },
+        {
+          "path": "mcp/tests/server.test.ts",
+          "contains": [
+            "outputSchema",
+            "listResources",
+            "listPrompts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operator-docs",
+      "requirement": "Add operator-quality docs for install personas, migration, dependency policy, troubleshooting, and quality gates.",
+      "evidence": [
+        {
+          "path": "docs/install-personas.md",
+          "contains": [
+            "Persona"
+          ]
+        },
+        {
+          "path": "docs/migration-guide.md",
+          "contains": [
+            "Migration"
+          ]
+        },
+        {
+          "path": "docs/dependency-policy.md",
+          "contains": [
+            "Dependency"
+          ]
+        },
+        {
+          "path": "docs/troubleshooting.md",
+          "contains": [
+            "Troubleshooting"
+          ]
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": [
+            "Quality Gates"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "performance-budgets",
+      "requirement": "Track performance and package-size budgets with receipt-based calibration.",
+      "evidence": [
+        {
+          "path": "docs/performance-budgets.json",
+          "contains": [
+            "calibrationPolicy",
+            "calibrationPlanContract",
+            "requiredSuccessfulRuns",
+            "requiresPositiveRequiredSuccessfulRuns",
+            "requiredStepIds",
+            "requiredReceiptStep",
+            "requiredReportKeys",
+            "requiredLatestReceiptKeys",
+            "record-required-receipts",
+            "receiptPath",
+            "budgetSchemaVersion",
+            "budgetFingerprint",
+            "calibrationPolicyStatus",
+            "calibrationPolicyFinalStatus",
+            "contractInvariants",
+            "safe-performance-budget-paths",
+            "typed-calibration-policy",
+            "typed-calibration-plan-contract",
+            "typed-file-size-budgets",
+            "typed-timing-budgets",
+            "makefile-audit-wiring"
+          ]
+        },
+        {
+          "path": "scripts/check-performance-budgets.mjs",
+          "contains": [
+            "performance budgets contract shape failed",
+            "--write-receipt",
+            "buildPerformanceCalibrationPlan",
+            "./budget-fingerprint.mjs",
+            "budgetFingerprint",
+            "calibrationPlanContract",
+            "requiredSuccessfulRuns must be a positive integer from calibrationPolicy",
+            "latestReceipt.path must mirror calibrationPolicy.receiptPath",
+            "createRequire",
+            "mcp/package.json",
+            "@modelcontextprotocol/sdk/client/index.js",
+            "@modelcontextprotocol/sdk/inMemory.js",
+            "receipt step must contain",
+            "measurements",
+            "performance receipt",
+            "validateBudgetsShape",
+            "budgetRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertPositiveInteger",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "safe-performance-budget-paths",
+            "typed-calibration-policy",
+            "typed-calibration-plan-contract",
+            "typed-file-size-budgets",
+            "typed-timing-budgets",
+            "calibrationPlanContract.requiredReceiptStep",
+            "fileSize[",
+            "timing[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "requiredReportKeys",
+            "budgetSchemaVersion must mirror performance-budgets schemaVersion",
+            "budgetFingerprint must mirror current performance-budgets content fingerprint"
+          ]
+        },
+        {
+          "path": "scripts/performance-calibration-plan.mjs",
+          "contains": [
+            "performance-budgets-provisional",
+            "export async function buildReport",
+            "./budget-fingerprint.mjs",
+            "budgetFingerprint",
+            "calibrationPolicyStatus",
+            "calibrationPolicyFinalStatus",
+            "latestReceipt",
+            "Latest receipt readiness",
+            "Fix docs/performance-budgets.json calibrationPolicy.requiredSuccessfulRuns",
+            "successfulReceiptPresent",
+            "requiredSuccessfulRuns",
+            "requiredSuccessfulRuns} successful receipt(s)",
+            "Budget status: tightened",
+            "immediately before final-proof-final",
+            "Embedded calibration status",
+            "Embedded calibration final status",
+            "Run make performance-receipt again after calibration",
+            "budgetSchemaVersion",
+            "Budget schema version",
+            "Latest receipt budget schema version",
+            "Budget fingerprint",
+            "Latest receipt budget fingerprint",
+            "embeds the current budgetFingerprint"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "performance-receipt:",
+            "performance-calibration-plan:"
+          ]
+        },
+        {
+          "path": "scripts/budget-fingerprint.mjs",
+          "contains": [
+            "createHash",
+            "export function stableJson",
+            "export function budgetFingerprint",
+            "sha256"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "changelog-coverage",
+      "requirement": "Require package changelog coverage for touched public package scopes.",
+      "evidence": [
+        {
+          "path": "docs/changelog-coverage-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-changelog-coverage-paths",
+            "typed-package-scope-entries",
+            "wrapper/CHANGELOG.md",
+            "cli/CHANGELOG.md",
+            "mcp/CHANGELOG.md"
+          ]
+        },
+        {
+          "path": "scripts/check-changelog-entry.mjs",
+          "contains": [
+            "changelog coverage contract shape failed",
+            "assertContractShape",
+            "wrapper/CHANGELOG.md",
+            "cli/CHANGELOG.md",
+            "mcp/CHANGELOG.md"
+          ]
+        },
+        {
+          "path": "wrapper/CHANGELOG.md",
+          "contains": [
+            "[Unreleased]"
+          ]
+        },
+        {
+          "path": "cli/CHANGELOG.md",
+          "contains": [
+            "[Unreleased]"
+          ]
+        },
+        {
+          "path": "mcp/CHANGELOG.md",
+          "contains": [
+            "[Unreleased]"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "package-contract",
+      "requirement": "Snapshot and check public SDK/CLI/MCP package names, bins, exports, pack files, and publish-safety rails.",
+      "evidence": [
+        {
+          "path": "docs/package-contract.json",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "@clockify115/cli",
+            "@clockify115/mcp-server",
+            "requiredScripts",
+            "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke",
+            "npm run type-check && npm test && npm run build",
+            "clockify115-mcp",
+            "makefile-audit-wiring",
+            "wiring",
+            "package-contract",
+            "scripts/check-package-contract.mjs",
+            "typed-package-metadata",
+            "expectedRepositoryUrl",
+            "expectedNodeEngine",
+            "expectedSideEffects",
+            "expectedPublishConfig",
+            "provenance",
+            "public"
+          ],
+          "mustContain": [
+            "contractInvariants",
+            "safe-package-manifest-paths",
+            "typed-package-contracts",
+            "typed-pack-file-lists",
+            "typed-required-scripts",
+            "typed-publish-safety-flags"
+          ]
+        },
+        {
+          "path": "scripts/check-package-contract.mjs",
+          "contains": [
+            "publishConfig",
+            "prepublishOnly",
+            "scripts.",
+            "package contract passed",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "package-contract",
+            "scripts/check-package-contract.mjs",
+            "repository.type must be git",
+            "description must be specific enough for package consumers",
+            "expected sideEffects",
+            "expected publishConfig.access",
+            "expected publishConfig.provenance",
+            "publishConfig is required so future publishing inherits explicit behavior"
+          ],
+          "mustContain": [
+            "validateContractShape",
+            "safeRelativePath",
+            "must be a repo-relative path without parent traversal",
+            "must point to a package.json manifest",
+            "typed-publish-safety-flags"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "package-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "examples-contract",
+      "requirement": "Keep runnable SDK examples catalogued, package-name-correct, public-surface-only, and secret-safe.",
+      "evidence": [
+        {
+          "path": "wrapper/examples/README.md",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "auth.ts",
+            "verify-webhook.ts"
+          ]
+        },
+        {
+          "path": "docs/examples-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-examples-evidence-paths",
+            "typed-example-inventory",
+            "typed-secret-regexes",
+            "typed-supporting-contracts",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-examples-contract.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "examples contract shape failed",
+            "typed-secret-regexes",
+            "supportingContracts"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "examples-contract:",
+            "node scripts/check-examples-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snippet-safety",
+      "requirement": "Keep SDK, CLI, MCP, README, and cookbook copy-paste snippets safe for non-coder users by avoiding secrets, generated internals, and unsafe live defaults.",
+      "evidence": [
+        {
+          "path": "docs/snippet-safety-policy.md",
+          "contains": [
+            "Snippet rules",
+            "Copy-paste safety checklist",
+            "Forbidden snippet patterns",
+            "Required receipts",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "docs/snippet-safety-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-snippet-safety-paths",
+            "typed-snippet-surfaces",
+            "declared-forbidden-import-markers",
+            "forbiddenImportMarkers",
+            "snippetSurfaces",
+            "sdk-readme",
+            "cli-readme",
+            "mcp-readme",
+            "workflow-cookbook",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "scripts/check-snippet-safety.mjs",
+          "contains": [
+            "Snippet safety contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Snippet safety contract passed",
+            "snippetSurfaces",
+            "forbidden generated/internal import marker"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "snippet-safety:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "runtime-support",
+      "requirement": "Keep SDK/CLI/MCP package runtime floors and docs aligned so users do not hit engine traps.",
+      "evidence": [
+        {
+          "path": "docs/runtime-support.json",
+          "contains": [
+            "contractInvariants",
+            "safe-runtime-support-paths",
+            "typed-runtime-package-entries",
+            "package-engines-match-node-floor",
+            "runtime-docs-mention-node-floor",
+            "makefile-audit-wiring",
+            "nodeFloor",
+            ">=20",
+            "@clockify115/mcp-server",
+            "wiring"
+          ]
+        },
+        {
+          "path": "scripts/check-runtime-support.mjs",
+          "contains": [
+            "runtime support contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "engines.node",
+            "runtime support contract passed"
+          ]
+        },
+        {
+          "path": "docs/dependency-policy.md",
+          "contains": [
+            ">=20",
+            "install-time trap"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "runtime-support:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "env-contract",
+      "requirement": "Keep SDK/CLI/MCP environment variables, mock/replay base URL behavior, and secret-hygiene docs aligned.",
+      "evidence": [
+        {
+          "path": "docs/env-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-env-evidence-paths",
+            "typed-variable-entries",
+            "typed-required-safety-markers",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-env-contract.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "environment contract shape failed",
+            "typed-variable-entries",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "env-contract:",
+            "node scripts/check-env-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sdk-public-api",
+      "requirement": "Keep SDK root symbols, package subpaths, and dual-build smoke expectations governed by a machine-readable public API contract.",
+      "evidence": [
+        {
+          "path": "wrapper/tsconfig.json",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "clockify-sdk-ts-115/create-client",
+            "clockify-sdk-ts-115/rate-limit"
+          ]
+        },
+        {
+          "path": "docs/sdk-public-api.json",
+          "markers": [
+            "contractInvariants",
+            "safe-sdk-public-api-evidence-paths",
+            "typed-wrapper-file-inputs",
+            "typed-root-symbols",
+            "typed-subpath-symbols",
+            "typed-tsconfig-aliases",
+            "typed-package-marker-scan",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-sdk-public-api.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "safePackageRelativePath",
+            "SDK public API contract shape failed",
+            "typed-subpath-symbols"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "sdk-public-api:",
+            "node scripts/check-sdk-public-api.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sdk-runtime-contract",
+      "requirement": "Guard durable hand-written SDK runtime seams around the generated Fern client.",
+      "evidence": [
+        {
+          "path": "docs/sdk-runtime-policy.md",
+          "contains": [
+            "The factory is the default entrypoint",
+            "Request behavior must be observable",
+            "Pagination must be ergonomic and bounded",
+            "Errors must be stable and recoverable",
+            "Webhooks must be first-class",
+            "Operational helpers must stay public"
+          ]
+        },
+        {
+          "path": "docs/sdk-runtime-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-sdk-runtime-evidence-paths",
+            "typed-policy-document-contract",
+            "typed-runtime-seams",
+            "typed-package-surface-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-sdk-runtime-contract.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "SDK runtime contract shape failed",
+            "typed-runtime-seams",
+            "typed-package-surface-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "sdk-runtime-contract:",
+            "node scripts/check-sdk-runtime-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "workflow-cookbook",
+      "requirement": "Keep common user workflows obvious and aligned across SDK, CLI, MCP, product-surface metadata, and safety contracts.",
+      "evidence": [
+        {
+          "path": "docs/workflow-cookbook.md",
+          "contains": [
+            "First-run diagnostics and support handoff",
+            "Daily time tracking",
+            "clockify://mcp/doctor",
+            "make support-bundle",
+            "Work package setup",
+            "Business and admin workflows",
+            "Demo and cleanup",
+            "Recovery pattern"
+          ]
+        },
+        {
+          "path": "docs/workflow-cookbook-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-workflow-cookbook-paths",
+            "typed-cookbook-sections-and-markers",
+            "typed-planner-contract",
+            "generated-plan-static-no-network",
+            "product-surface-workflow-coverage",
+            "supporting-docs-marker-contract",
+            "makefile-audit-wiring",
+            "first-run-support",
+            "clockify://mcp/doctor",
+            "safeCommandHints",
+            "time-tracking",
+            "generatedPlan",
+            "requiredWorkflowIds",
+            "requiredWorkflowClaimFields",
+            "surfaceAvailability",
+            "proofMode",
+            "intentionalGaps",
+            "work-package",
+            "business-workflows",
+            "demo-and-cleanup",
+            "dry_run:true",
+            "confirm_token"
+          ]
+        },
+        {
+          "path": "scripts/check-workflow-cookbook.mjs",
+          "contains": [
+            "Workflow cookbook contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Workflow cookbook contract passed",
+            "buildPlan",
+            "first-run-support",
+            "planner.generatedPlan",
+            "productSurface",
+            "assertProductSurfaceWorkflowClaims",
+            "emptySurfaceRequiresIntentionalGap",
+            "supportingDocs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "workflow-cookbook:"
+          ]
+        },
+        {
+          "path": "docs/contract-inventory.json",
+          "contains": [
+            "workflow-cookbook",
+            "scripts/workflow-plan.mjs",
+            "scripts/check-workflow-cookbook.mjs",
+            "makefile-audit-wiring",
+            "wiring",
+            "contract-inventory",
+            "scripts/check-contract-inventory.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acceptance-scenarios",
+      "requirement": "Define and gate end-to-end SDK/CLI/MCP acceptance scenarios with mock/live proof mode, receipts, cleanup, and OpenAPI truth coverage.",
+      "evidence": [
+        {
+          "path": "docs/acceptance-scenarios.md",
+          "markers": [
+            "Contract-shape rule",
+            "Acceptance-scenarios contract shape is part of readiness",
+            "malformed planner expectations",
+            "Make/docs/inventory/audit wiring",
+            "First-run diagnostics and support handoff",
+            "safeCommandHints"
+          ]
+        },
+        {
+          "path": "docs/acceptance-scenarios-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-acceptance-evidence-paths",
+            "typed-planner-contract",
+            "typed-generated-plan-contract",
+            "typed-scenarios",
+            "typed-supporting-evidence",
+            "typed-wiring-contract",
+            "first-run-diagnostics-support",
+            "clockify://mcp/doctor",
+            "make quickstart-receipt"
+          ]
+        },
+        {
+          "path": "scripts/acceptance-plan.mjs",
+          "markers": [
+            "first-run-diagnostics-support",
+            "clockifyDiagnostics()",
+            "clk115 doctor --json",
+            "clockify://mcp/doctor",
+            "make quickstart-receipt",
+            "safeCommandHints"
+          ]
+        },
+        {
+          "path": "scripts/check-acceptance-scenarios.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Acceptance scenarios contract shape failed",
+            "typed-generated-plan-contract",
+            "typed-scenarios"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "acceptance-scenarios:",
+            "node scripts/check-acceptance-scenarios.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "change-impact",
+      "requirement": "Map common change scopes to required gates, docs, changelog posture, and proof receipts so future SDK/CLI/MCP/OpenAPI work updates the right surfaces together.",
+      "evidence": [
+        {
+          "path": "docs/change-impact-policy.md",
+          "contains": [
+            "Start from the changed surface",
+            "User-visible changes need documentation and changelog coverage",
+            "Generated and snapshot surfaces remain upstream-first",
+            "operator helper tooling",
+            "make operator-toolbox",
+            "First-run support workflow changes route through diagnostics",
+            "Duplicate scope ids, path probes, required targets, required docs, or changed-path entries are contract failures",
+            "shape-checks the generated",
+            "Proof can be deferred only when the final receipt says so",
+            "Change-impact contract shape is part of routing correctness",
+            "safe repo-relative file paths",
+            "Path-pattern fields such as `../GOCLMCP/**` remain routing patterns"
+          ]
+        },
+        {
+          "path": "docs/change-impact-contract.json",
+          "contains": [
+            "openapi-truth",
+            "sdk-runtime",
+            "cli-surface",
+            "mcp-surface",
+            "operator-toolbox",
+            "generatedPlan",
+            "requiredMatchedScopeIds",
+            "requiredScopeIds",
+            "matrixInvariants",
+            "pathProbeExpectations",
+            "pathProbeCoverageExpectations",
+            "scopeRequirementExpectations",
+            "release-ci-supply-chain",
+            "final-proof-receipt.template.md",
+            "success-section evidence",
+            "final-proof-preflight-contract",
+            "final-proof-command-contract",
+            "final-proof",
+            "contractInvariants",
+            "safe-change-impact-file-paths",
+            "typed-policy-document-contract",
+            "typed-plan-generator-contract",
+            "typed-change-impact-matrix",
+            "typed-path-probe-expectations",
+            "typed-scope-requirement-expectations",
+            "declared-non-make-targets",
+            "makefile-audit-wiring",
+            "allowedNonMakeTargets",
+            "axioms-contract",
+            "docs/axioms-contract.json",
+            "scripts/check-axioms-contract.mjs",
+            "first-run-support",
+            "scripts/workflow-plan.mjs",
+            "scripts/generate-product-surface.mjs",
+            "safeCommandHints",
+            "readinessContext"
+          ]
+        },
+        {
+          "path": "scripts/check-change-impact.mjs",
+          "contains": [
+            "Change impact contract shape failed",
+            "Change impact contract passed",
+            "buildPlan",
+            "planGenerator.generatedPlan",
+            "requiredScopeIds",
+            "matrixInvariants",
+            "pathProbeExpectations",
+            "pathProbeCoverageExpectations",
+            "scopeRequirementExpectations",
+            "changelogRequired",
+            "change-impact target",
+            "validateContractShape",
+            "validateGeneratedPlanContract",
+            "changeImpactFilePath",
+            "repo-relative file path without parent traversal",
+            "assertNonEmptyString",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "safe-change-impact-file-paths",
+            "typed-plan-generator-contract",
+            "typed-change-impact-matrix",
+            "typed-path-probe-expectations",
+            "typed-scope-requirement-expectations",
+            "pathProbeExpectations[",
+            "scopeRequirementExpectations[",
+            "changelogRequired must be a boolean",
+            "scope must be an object",
+            "must be a non-empty array",
+            "contains non-string or empty entry"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "change-impact:"
+          ]
+        },
+        {
+          "path": "docs/contract-inventory.json",
+          "contains": [
+            "change-impact",
+            "scripts/change-impact-plan.mjs",
+            "scripts/check-change-impact.mjs",
+            "makefile-audit-wiring",
+            "wiring",
+            "contract-inventory",
+            "scripts/check-contract-inventory.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decision-records",
+      "requirement": "Keep durable architectural and operations decision records for non-obvious SDK/CLI/MCP/OpenAPI proof and release boundaries.",
+      "evidence": [
+        {
+          "path": "docs/decision-records-policy.md",
+          "contains": [
+            "Record decisions that change where work belongs",
+            "Keep each record operational",
+            "Do not hide residual risk",
+            "Do not use decision records to bypass proof",
+            "after removing the"
+          ]
+        },
+        {
+          "path": "docs/decision-records-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-decision-record-paths",
+            "typed-decision-record-entries",
+            "required-heading-contract",
+            "zero-padded-decision-numbering",
+            "makefile-audit-wiring",
+            "canonical-api-truth",
+            "generated-core-boundary",
+            "no-default-npm-publish",
+            "sandbox-only-live-proof",
+            "temporary-context-final-proof"
+          ]
+        },
+        {
+          "path": "docs/decisions/0001-canonical-api-truth.md",
+          "contains": [
+            "GOCLMCP owns canonical Clockify OpenAPI generation",
+            "make perfect-full"
+          ]
+        },
+        {
+          "path": "docs/decisions/0002-generated-core-boundary.md",
+          "contains": [
+            "Generated code is a dependency",
+            "make generator-independence"
+          ]
+        },
+        {
+          "path": "docs/decisions/0003-no-default-npm-publish.md",
+          "contains": [
+            "Do not publish by default",
+            "make supply-chain"
+          ]
+        },
+        {
+          "path": "docs/decisions/0004-sandbox-only-live-proof.md",
+          "contains": [
+            "Live proof mutates Clockify state",
+            "make perfect-live"
+          ]
+        },
+        {
+          "path": "docs/decisions/0005-temporary-context-final-proof.md",
+          "contains": [
+            "temporary context file is intentionally temporary",
+            "make enterprise-audit-final"
+          ]
+        },
+        {
+          "path": "scripts/check-decision-records.mjs",
+          "contains": [
+            "Decision records contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Decision records contract passed",
+            "requiredHeadings"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "decision-records:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "contract-inventory",
+      "requirement": "Keep the enterprise hardening contract stack discoverable and fully wired across docs, scripts, Make targets, quality gates, and audit evidence.",
+      "evidence": [
+        {
+          "path": "docs/contract-inventory-policy.md",
+          "contains": [
+            "Every durable contract needs an inventory entry",
+            "Every focused contract must be discoverable",
+            "Every `docs/*-contract.json` and `docs/*-policy.md` file must appear in",
+            "report script",
+            "Inventory reports must be shape-checked",
+            "Inventory routing must stay unambiguous",
+            "Perfect gates must include required contracts",
+            "Inventory is not proof by itself",
+            "Structural inventory invariants",
+            "schema version",
+            "typed report-generator",
+            "Inventory shape status",
+            "unsafe paths",
+            "typed-list failures",
+            "minimum-count",
+            "Ordered proof-chain coverage"
+          ]
+        },
+        {
+          "path": "docs/contract-inventory.json",
+          "contains": [
+            "openapi-evidence",
+            "generatedReport",
+            "minimumCounts",
+            "requiredEntryIds",
+            "reports",
+            "inventoryInvariants",
+            "helpers:",
+            "withReports",
+            "toolboxHelperOwnership",
+            "toolboxHelperCommandCoverage",
+            "toolboxHelpersOwned",
+            "toolboxHelperCommandsCovered",
+            "toolboxHelperCommandEntries",
+            "inventoryInvariantStatus",
+            "inventoryInvariantFailures",
+            "requiredDocCoverage",
+            "unlistedRequiredDocs",
+            "docsIndexCoverage",
+            "missingDocsIndexLinks",
+            "qualityGateCoverage",
+            "missingQualityGateTargets",
+            "duplicateEntryIds",
+            "entryDuplicateLists",
+            "extraCommands",
+            "duplicateCommands",
+            "sdk-runtime-contract",
+            "decision-records",
+            "axioms-contract",
+            "workflow-cookbook",
+            "acceptance-scenarios",
+            "quickstart-receipt",
+            "diagnostics-contract",
+            "support-bundle",
+            "change-impact",
+            "operator-onboarding",
+            "operator-toolbox",
+            "scripts/check-axioms-contract.mjs",
+            "mcp-write-safety",
+            "cli-write-safety",
+            "mock-contract",
+            "requiredStructuralInvariants",
+            "structuralInvariants",
+            "Structural shape invariants",
+            "requiredInventoryShapeSchemaIssues",
+            "requiredInventoryShapeUnsafePaths",
+            "requiredInventoryShapeTypedListIssues",
+            "requiredInventoryShapeBooleanIssues",
+            "requiredInventoryShapeMinimumCountIssues",
+            "requiredInventoryShapeInvalidEntryShapes",
+            "Inventory shape status",
+            "orderedProofChainCoverage",
+            "Ordered proof chain coverage",
+            "orderedProofChainEntries",
+            "missingOrderedProofChainEntries",
+            "requiredOrderedProofChainEntries",
+            "missingRequiredEntries",
+            "pack-smoke",
+            "scripts/pack-consumer-smoke.mjs",
+            "docs/pack-consumer-smoke-contract.json",
+            "packed-consumer-proof",
+            "makefile-audit-wiring",
+            "wiring",
+            "contract-inventory",
+            "scripts/check-contract-inventory.mjs"
+          ]
+        },
+        {
+          "path": "scripts/contract-inventory-report.mjs",
+          "contains": [
+            "structuralInvariantIds",
+            "structuralInvariants",
+            "Structural shape invariants",
+            "collectInventoryShapeStatus",
+            "inventoryShapeStatus",
+            "Inventory shape status",
+            "schemaIssues",
+            "unsafePaths",
+            "typedListIssues",
+            "booleanIssues",
+            "minimumCountIssues",
+            "invalidEntryShapes",
+            "orderedProofChainCoverage",
+            "orderedProofChainEntries",
+            "missingOrderedProofChainEntries"
+          ]
+        },
+        {
+          "path": "scripts/check-contract-inventory.mjs",
+          "contains": [
+            "Contract inventory passed",
+            "entry.reports",
+            "buildReport",
+            "inventoryInvariants",
+            "inventoryInvariantStatus",
+            "requiredDocCoverage",
+            "docsIndexCoverage",
+            "qualityGateCoverage",
+            "assertUnique",
+            "toolboxHelperOwnership",
+            "toolboxHelperCommandCoverage",
+            "extraCommands",
+            "duplicateCommands",
+            "generatedReport.minimumCounts",
+            "generatedReport.entries",
+            "perfect-fast missing",
+            "enterprise audit missing id",
+            "required contract/policy document not listed",
+            "validateInventoryShape",
+            "schemaVersion",
+            "safe-inventory-paths",
+            "typed-entry-lists",
+            "typed-report-generator-config",
+            "inventoryRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "assertOptionalBoolean",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "reportGenerator.generatedReport.requiredInventoryInvariants",
+            "must be a non-negative integer",
+            "must be an object",
+            "requiredStructuralInvariants",
+            "inventoryInvariantStatus.structuralInvariants",
+            "requiredInventoryShapeSchemaIssues",
+            "requiredInventoryShapeUnsafePaths",
+            "requiredInventoryShapeTypedListIssues",
+            "requiredInventoryShapeBooleanIssues",
+            "requiredInventoryShapeMinimumCountIssues",
+            "requiredInventoryShapeInvalidEntryShapes",
+            "inventoryShapeStatus.schemaIssues",
+            "inventoryShapeStatus.unsafePaths",
+            "inventoryShapeStatus.invalidEntryShapes",
+            "reportGenerator.generatedReport.orderedProofChainCoverage.entries",
+            "reportGenerator.generatedReport.orderedProofChainCoverage.missingRequiredEntries",
+            "Contract inventory shape failed",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "contract-inventory",
+            "scripts/check-contract-inventory.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "contract-inventory:"
+          ]
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": [
+            "make contract-inventory"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "version-policy",
+      "requirement": "Keep package names, versions, changelog anchors, generated product-surface metadata, install examples, and last-resort prepublish gates aligned.",
+      "evidence": [
+        {
+          "path": "docs/version-policy.json",
+          "contains": [
+            "contractInvariants",
+            "safe-version-policy-paths",
+            "typed-version-package-entries",
+            "product-surface-fields-explicit",
+            "package-field-maps-to-manifest-name",
+            "productSurfacePath",
+            "wrapper/package.json",
+            "productSurfaceMustMatchManifest",
+            "prepublishOnly",
+            "cli/CHANGELOG.md",
+            "installExampleMustContain"
+          ]
+        },
+        {
+          "path": "scripts/check-version-policy.mjs",
+          "contains": [
+            "version policy contract shape failed",
+            "assertPolicyShape",
+            "assertSafeRelativePath",
+            "manifestValue",
+            "version policy passed",
+            "productSurfacePackage",
+            "product surface"
+          ]
+        },
+        {
+          "path": "cli/CHANGELOG.md",
+          "contains": [
+            "## [0.1.0]"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "version-policy:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "secret-hygiene",
+      "requirement": "Scan committed source and docs for common token-shaped secrets and preserve secret-handling guidance.",
+      "evidence": [
+        {
+          "path": "docs/secret-hygiene.json",
+          "contains": [
+            "CLOCKIFY_API_KEY",
+            "NPM_TOKEN",
+            "gitleaks",
+            "contractInvariants",
+            "typed-scan-extensions",
+            "safe-secret-hygiene-paths",
+            "typed-ignore-lists",
+            "typed-secret-patterns",
+            "valid-secret-pattern-regexes",
+            "typed-required-doc-markers",
+            "makefile-audit-wiring"
+          ]
+        },
+        {
+          "path": "scripts/check-secret-hygiene.mjs",
+          "contains": [
+            "secret hygiene contract shape failed",
+            "secret hygiene passed",
+            "ignoredDirectories",
+            "validatePolicyShape",
+            "secretRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "typed-scan-extensions",
+            "safe-secret-hygiene-paths",
+            "typed-secret-patterns",
+            "valid-secret-pattern-regexes",
+            "typed-required-doc-markers",
+            "extension must start with dot",
+            "invalid regex",
+            "requiredDocs[",
+            "patterns[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "secret-hygiene:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-handling",
+      "requirement": "Keep Clockify workspace data, personal data, commercial records, webhook payloads, raw live evidence, and support receipts governed by explicit redaction and handling rules.",
+      "evidence": [
+        {
+          "path": "docs/data-handling-policy.md",
+          "contains": [
+            "Data classes",
+            "Personal data",
+            "Commercial data",
+            "Package-lock metadata",
+            "Raw live evidence",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "Prohibited committed evidence",
+            "Data-handling contract shape is part of privacy readiness",
+            "safe repo-relative paths",
+            "typed data-class marker lists",
+            "supporting-evidence marker lists"
+          ]
+        },
+        {
+          "path": "docs/data-handling-contract.json",
+          "contains": [
+            "dataClasses",
+            "credentials",
+            "commercial-data",
+            "package-lock-metadata",
+            "raw-live-evidence",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "contractInvariants",
+            "safe-data-handling-paths",
+            "typed-policy-contract",
+            "typed-data-class-markers",
+            "typed-required-docs",
+            "typed-supporting-evidence",
+            "makefile-audit-wiring"
+          ]
+        },
+        {
+          "path": "scripts/check-data-handling.mjs",
+          "contains": [
+            "Data handling contract shape failed",
+            "Data handling contract passed",
+            "dataClasses",
+            "supportingEvidence",
+            "validateContractShape",
+            "dataHandlingRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "safe-data-handling-paths",
+            "typed-policy-contract",
+            "typed-data-class-markers",
+            "typed-required-docs",
+            "typed-supporting-evidence",
+            "data class must be an object",
+            "supportingEvidence[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "data-handling:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "supply-chain",
+      "requirement": "Keep package license, provenance, tarball contents, publish safety, and dependency-supporting contracts explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/supply-chain-policy.md",
+          "contains": [
+            "Package supply-chain rules",
+            "publishConfig.provenance: true",
+            "type-check/test/build proof",
+            "Required receipts",
+            "publishConfig.access: public"
+          ],
+          "mustContain": [
+            "Contract-shape rule",
+            "Supply-chain contract shape is part of publish safety",
+            "unsafe repo-relative paths",
+            "untyped package entries"
+          ]
+        },
+        {
+          "path": "docs/supply-chain-contract.json",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "@clockify115/cli",
+            "@clockify115/mcp-server",
+            "requiredScripts",
+            "provenance",
+            "makefile-audit-wiring",
+            "wiring",
+            "supply-chain",
+            "scripts/check-supply-chain.mjs",
+            "expectedPublishConfig",
+            "publishConfig.access: public"
+          ],
+          "mustContain": [
+            "contractInvariants",
+            "safe-supply-chain-paths",
+            "typed-package-supply-chain-entries",
+            "typed-publish-config-expectations",
+            "typed-pack-file-boundaries"
+          ]
+        },
+        {
+          "path": "scripts/check-supply-chain.mjs",
+          "contains": [
+            "supply-chain contract passed",
+            "prepublishOnly",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "supply-chain",
+            "scripts/check-supply-chain.mjs"
+          ],
+          "mustContain": [
+            "validateContractShape",
+            "supplyRelativePath",
+            "must be a repo-relative path without parent traversal",
+            "publishConfig.provenance",
+            "requiredFiles",
+            "forbiddenFiles"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "supply-chain:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dependency-boundary",
+      "requirement": "Keep package runtime dependencies intentional, CLI/MCP SDK peer/dev boundaries intact, and generated core imports out of product code.",
+      "evidence": [
+        {
+          "path": "docs/dependency-boundary.json",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "forbiddenRuntimeDependencies",
+            "forbiddenImportMarkers",
+            "makefile-audit-wiring",
+            "wiring",
+            "dependency-boundary",
+            "scripts/check-dependency-boundary.mjs",
+            "typed-package-lockfiles",
+            "package-lock.json",
+            "lockfileVersion"
+          ],
+          "mustContain": [
+            "contractInvariants",
+            "safe-package-manifest-paths",
+            "safe-source-roots",
+            "typed-package-dependency-contracts",
+            "typed-runtime-dependency-lists",
+            "typed-forbidden-import-markers",
+            "sourceRoots"
+          ]
+        },
+        {
+          "path": "scripts/check-dependency-boundary.mjs",
+          "contains": [
+            "dependency boundary passed",
+            "runtime dependency drift",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "dependency-boundary",
+            "scripts/check-dependency-boundary.mjs",
+            "must point to a package-lock.json lockfile",
+            "lockfileVersion",
+            "does not match manifest"
+          ],
+          "mustContain": [
+            "validateContractShape",
+            "safeRelativePath",
+            "must be a repo-relative path without parent traversal",
+            "typed-peer-and-dev-dependency-maps",
+            "sourceFiles(contract.sourceRoots"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "dependency-boundary:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dependency-license",
+      "requirement": "Keep SDK, CLI, and MCP runtime dependency licenses, purposes, package manifests, and forbidden dependency boundaries transparent and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/dependency-license-policy.md",
+          "contains": [
+            "Allowed runtime dependency ledger",
+            "make dependency-license",
+            "Contract-shape rule",
+            "Dependency-license contract shape is part of license readiness",
+            "unsafe manifest/evidence paths",
+            "malformed Make/docs/audit wiring",
+            "Manifest range",
+            "^1.29.0",
+            "^3.25.0"
+          ]
+        },
+        {
+          "path": "docs/dependency-license-contract.json",
+          "contains": [
+            "cli-table3",
+            "commander",
+            "@modelcontextprotocol/sdk",
+            "zod",
+            "contractInvariants",
+            "safe-evidence-and-manifest-paths",
+            "typed-package-license-ledger",
+            "typed-runtime-dependency-ledger",
+            "typed-license-allow-and-deny-lists",
+            "typed-wiring-contract",
+            "typed-runtime-dependency-ranges",
+            "\"range\": \"^1.29.0\"",
+            "\"range\": \"^3.25.0\""
+          ]
+        },
+        {
+          "path": "scripts/check-dependency-license.mjs",
+          "contains": [
+            "Dependency license contract passed",
+            "allowedLicenses",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateEvidenceEntry",
+            "typed-runtime-dependency-ledger",
+            "typed-wiring-contract",
+            "range drift",
+            "dependency.range",
+            "manifest.dependencies?.[dependency.name]"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "dependency-license:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "compatibility-contract",
+      "requirement": "Keep public SDK, CLI, MCP, and OpenAPI generation compatibility rules explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/compatibility-policy.md",
+          "contains": [
+            "Compatibility rules",
+            "Deprecation pattern",
+            "Required receipts",
+            "Contract-shape rule",
+            "Compatibility contract shape is part of breaking-change safety",
+            "unsafe repo-relative evidence paths",
+            "malformed surface/path marker lists",
+            "Compatibility window",
+            "Keep deprecated public paths until the next major version",
+            "make breaking-change-review"
+          ]
+        },
+        {
+          "path": "docs/compatibility-contract.json",
+          "contains": [
+            "sdk",
+            "cli",
+            "mcp",
+            "openapi",
+            "contractInvariants",
+            "safe-compatibility-evidence-paths",
+            "typed-policy-document-contract",
+            "typed-surface-contracts",
+            "typed-required-make-targets",
+            "typed-docs-index-contract",
+            "makefile-audit-wiring",
+            "wiring",
+            "compatibility-contract",
+            "scripts/check-compatibility-contract.mjs",
+            "typed-deprecation-window-contract",
+            "deprecationWindow",
+            "breaking-change-review"
+          ]
+        },
+        {
+          "path": "scripts/check-compatibility-contract.mjs",
+          "contains": [
+            "compatibility contract passed",
+            "Makefile missing target",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "compatibility contract shape failed",
+            "contract.docsIndex",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "compatibility-contract",
+            "scripts/check-compatibility-contract.mjs",
+            "deprecationWindow.minimumPolicy",
+            "deprecation-window marker",
+            "typed-deprecation-window-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "compatibility-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "breaking-change-review",
+      "requirement": "Prevent silent public-surface breakage by requiring replacement-first review evidence for SDK, CLI, MCP, OpenAPI, package, docs, changelog, and migration changes.",
+      "evidence": [
+        {
+          "path": "docs/breaking-change-review-policy.md",
+          "contains": [
+            "No silent removals",
+            "Replacement-first rule",
+            "make breaking-change-review",
+            "Contract-shape rule",
+            "Breaking-change review contract shape is part of public-surface safety",
+            "unsafe repo-relative evidence paths",
+            "malformed surface/migration/changelog evidence",
+            "Version/package identity",
+            "What version-policy outcome applies",
+            "make version-policy"
+          ]
+        },
+        {
+          "path": "docs/breaking-change-review-contract.json",
+          "contains": [
+            "sdk-public-surface",
+            "cli-public-surface",
+            "mcp-public-surface",
+            "openapi-truth-surface",
+            "contractInvariants",
+            "safe-breaking-change-evidence-paths",
+            "typed-surface-contracts",
+            "typed-migration-evidence",
+            "typed-changelog-evidence",
+            "typed-wiring-contract",
+            "version-and-release-surface",
+            "typed-version-policy-evidence",
+            "docs/version-policy.json",
+            "version-policy"
+          ]
+        },
+        {
+          "path": "scripts/check-breaking-change-review.mjs",
+          "contains": [
+            "Breaking-change review contract passed",
+            "surfaceContracts",
+            "migrationEvidence",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "Breaking-change review contract shape failed",
+            "typed-wiring-contract",
+            "typed-version-policy-evidence"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "breaking-change-review:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "receipts-contract",
+      "requirement": "Keep SDK request correlation, response metadata, observability hooks, CLI JSON errors, and MCP structured receipts explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/receipts-policy.md",
+          "contains": [
+            "Cross-surface receipt rules",
+            "SDK correlation",
+            "Agent receipts",
+            "Contract-shape rule",
+            "Receipt contract shape is part of observability readiness",
+            "unsafe repo-relative evidence paths",
+            "malformed SDK/CLI/MCP receipt evidence"
+          ]
+        },
+        {
+          "path": "docs/receipts-contract.json",
+          "contains": [
+            "X-Request-Id",
+            "structuredContent",
+            "retryable",
+            "contractInvariants",
+            "safe-receipt-evidence-paths",
+            "typed-sdk-receipt-evidence",
+            "typed-cli-receipt-evidence",
+            "typed-mcp-receipt-evidence",
+            "typed-docs-index-contract",
+            "makefile-audit-wiring",
+            "wiring",
+            "receipts-contract",
+            "scripts/check-receipts-contract.mjs"
+          ]
+        },
+        {
+          "path": "scripts/check-receipts-contract.mjs",
+          "contains": [
+            "receipts contract passed",
+            "supportingContracts",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "receipts contract shape failed",
+            "contract.requiredMakeTargets",
+            "contract.docsIndex",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "receipts-contract",
+            "scripts/check-receipts-contract.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "receipts-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "observability-contract",
+      "requirement": "Govern request correlation, telemetry hooks, structured receipts, redaction, and support-bundle observability across SDK, CLI, and MCP.",
+      "evidence": [
+        {
+          "path": "docs/observability-policy.md",
+          "contains": [
+            "Observability is a product surface",
+            "prepublish gate metadata",
+            "package-lock metadata",
+            "Telemetry levels",
+            "Redaction rules",
+            "make observability",
+            "Contract-shape rule",
+            "Observability contract shape is part of support readiness",
+            "unsafe repo-relative evidence paths",
+            "malformed SDK/CLI/MCP/support evidence",
+            "Use `<redacted>`",
+            "role placeholders",
+            "Do not jump from correlation to raw payload logging"
+          ]
+        },
+        {
+          "path": "docs/observability-contract.json",
+          "contains": [
+            "wrapper/composed-fetch.ts",
+            "cli/src/output.ts",
+            "mcp/src/result.ts",
+            "Prepublish gate",
+            "Package-lock",
+            "docs/support-runbook.md",
+            "contractInvariants",
+            "safe-observability-evidence-paths",
+            "typed-sdk-observability-evidence",
+            "typed-cli-observability-evidence",
+            "typed-mcp-observability-evidence",
+            "typed-support-observability-evidence",
+            "typed-wiring-contract",
+            "typed-redaction-observability-evidence",
+            "typed-required-make-targets",
+            "\"redaction\"",
+            "support-bundle"
+          ]
+        },
+        {
+          "path": "scripts/check-observability-contract.mjs",
+          "contains": [
+            "Observability contract passed",
+            "perfect-fast",
+            "perfect-full",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "Observability contract shape failed",
+            "typed-wiring-contract",
+            "typed-redaction-observability-evidence",
+            "requiredMakeTargets",
+            "\"redaction\""
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "observability:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "diagnostics-contract",
+      "requirement": "Keep SDK, CLI, and MCP diagnostics no-network, redacted, receipt-shaped, recoverable, and discoverable before first live Clockify probes.",
+      "evidence": [
+        {
+          "path": "docs/diagnostics-policy.md",
+          "contains": [
+            "Diagnostics are no-network by default",
+            "Diagnostics are redacted",
+            "make diagnostics",
+            "Contract-shape rule",
+            "Diagnostics contract shape is part of local-readiness safety",
+            "unsafe repo-relative evidence paths",
+            "malformed diagnostic surface/file marker lists",
+            "No-network proof",
+            "Diagnostics code must not construct API clients",
+            "those are next steps, not work performed by diagnostics"
+          ]
+        },
+        {
+          "path": "docs/diagnostics-contract.json",
+          "contains": [
+            "clockifyDiagnostics",
+            "clk115 doctor",
+            "clockify://mcp/doctor",
+            "contractInvariants",
+            "safe-diagnostics-evidence-paths",
+            "typed-policy-document-contract",
+            "typed-surface-contracts",
+            "typed-diagnostic-surface-files",
+            "typed-forbidden-secret-patterns",
+            "typed-wiring-contract",
+            "typed-no-network-diagnostics-evidence",
+            "noNetworkEvidence",
+            "forbiddenContains",
+            "new ClockifyApiClient"
+          ]
+        },
+        {
+          "path": "scripts/check-diagnostics-contract.mjs",
+          "contains": [
+            "Diagnostics contract passed",
+            "validateContractShape",
+            "safeRelativePath",
+            "Diagnostics contract shape failed",
+            "typed-diagnostic-surface-files",
+            "typed-wiring-contract",
+            "typed-no-network-diagnostics-evidence",
+            "noNetworkEvidence",
+            "forbidden network/client marker"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "diagnostics:",
+            "node scripts/check-diagnostics-contract.mjs"
+          ]
+        },
+        {
+          "path": "wrapper/diagnostics.ts",
+          "contains": [
+            "clockifyDiagnostics",
+            "configured (redacted)",
+            "CLOCKIFY_API_KEY"
+          ]
+        },
+        {
+          "path": "cli/src/commands/doctor.ts",
+          "contains": [
+            "doctor",
+            "without contacting Clockify",
+            "configured (redacted)"
+          ]
+        },
+        {
+          "path": "mcp/src/resources.ts",
+          "contains": [
+            "clockify://mcp/doctor",
+            "no-network diagnostics checklist"
+          ]
+        },
+        {
+          "path": "docs/product-surface.json",
+          "contains": [
+            "clockifyDiagnostics",
+            "clk115 doctor",
+            "clockify://mcp/doctor"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quickstart-receipt",
+      "requirement": "Provide a diagnostics-first operator quickstart receipt that separates local readiness, mock proof, first live probes, redaction, and final proof boundaries across SDK, CLI, and MCP.",
+      "evidence": [
+        {
+          "path": "docs/quickstart-receipt.md",
+          "contains": [
+            "Local diagnostics, no network",
+            "Quickstart Receipt",
+            "Stop conditions",
+            "Contract-shape rule",
+            "Quickstart receipt contract shape is part of operator-readiness safety",
+            "unsafe repo-relative evidence paths",
+            "malformed supporting-surface marker lists",
+            "draft blocker",
+            "deferred live proof as final readiness",
+            "Copy-paste safety",
+            "Surface used: SDK | CLI | MCP",
+            "Raw secrets printed: no",
+            "Live workspace type: sacrificial sandbox | not run"
+          ]
+        },
+        {
+          "path": "docs/quickstart-receipt-contract.json",
+          "contains": [
+            "clockifyDiagnostics",
+            "node dist/index.js --json doctor",
+            "clockify://mcp/doctor",
+            "contractInvariants",
+            "safe-quickstart-evidence-paths",
+            "typed-document-contract",
+            "typed-supporting-surfaces",
+            "typed-wiring-contract",
+            "draft blocker",
+            "deferred live proof as final readiness",
+            "typed-receipt-template-contract",
+            "receiptTemplate",
+            "forbiddenMarkers",
+            "npm publish"
+          ]
+        },
+        {
+          "path": "scripts/check-quickstart-receipt.mjs",
+          "contains": [
+            "Quickstart receipt contract passed",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "Quickstart receipt contract shape failed",
+            "typed-wiring-contract",
+            "typed-receipt-template-contract",
+            "receiptTemplate.requiredFields",
+            "forbidden quickstart marker"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "quickstart-receipt:",
+            "node scripts/check-quickstart-receipt.mjs"
+          ]
+        },
+        {
+          "path": "docs/diagnostics-policy.md",
+          "contains": [
+            "Diagnostics are no-network by default",
+            "local readiness from live proof"
+          ]
+        },
+        {
+          "path": "docs/live-tests.md",
+          "contains": [
+            "sacrificial Clockify sandbox",
+            "Mock/replay proof never replaces live sandbox proof"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "release-support-contract",
+      "requirement": "Keep release readiness, support windows, security reporting, and no-default-publish guidance explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/release-support-policy.md",
+          "contains": [
+            "Public packages",
+            "Release readiness checklist",
+            "Do not run `npm publish`",
+            "Contract-shape rule",
+            "Release/support contract shape is part of publish-readiness safety",
+            "immediately before",
+            "unsafe repo-relative evidence paths",
+            "malformed security regex deny-list entries",
+            "draft blocker",
+            "completed sandbox live proof"
+          ]
+        },
+        {
+          "path": "docs/release-support-contract.json",
+          "contains": [
+            "SECURITY.md",
+            "release-support-contract",
+            "packageNamesMustAppearInPolicy",
+            "requiredMarkers",
+            "prepublishOnly",
+            "contractInvariants",
+            "safe-release-support-evidence-paths",
+            "typed-policy-document-contract",
+            "typed-security-document-contract",
+            "typed-package-contract-reference",
+            "typed-wiring-contract",
+            "draft blocker",
+            "completed sandbox live proof"
+          ]
+        },
+        {
+          "path": "SECURITY.md",
+          "contains": [
+            "clockify-sdk-ts-115",
+            "@clockify115/cli",
+            "@clockify115/mcp-server"
+          ]
+        },
+        {
+          "path": "scripts/check-release-support-contract.mjs",
+          "contains": [
+            "release/support contract passed",
+            "requiredMarkers",
+            "forbidden pattern",
+            "validateContractShape",
+            "safeRelativePath",
+            "release/support contract shape failed",
+            "securityDocument.forbiddenRegex",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "release-support-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "release-readiness",
+      "requirement": "Keep release and handoff readiness evidence explicit before any tag, package handoff, final readiness claim, or future publish decision.",
+      "evidence": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "contains": [
+            "Required evidence",
+            "make final-proof-preflight",
+            "make enterprise-goal-status",
+            "Publish decision boundary",
+            "Release workflow maintainer decision planner",
+            "Handoff decision boundary",
+            "Final proof closure",
+            "stays through evidence capture",
+            "receipt records the temporary-context removal",
+            "Operator checklist",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "blockingSignalIds",
+            "blockingRiskIds",
+            "readinessContext",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "Live proof is completed in a sacrificial sandbox",
+            "failed live proof must be rerun",
+            "deferred live proof is a draft blocker",
+            "deferral is draft-only and must be replaced before final acceptance",
+            "checked after temporary context removal",
+            "Built artifacts are under tightened budgets calibrated from measured receipts",
+            "Budget status: tightened",
+            "make axioms-contract"
+          ]
+        },
+        {
+          "path": "docs/release-readiness-contract.json",
+          "contains": [
+            "evidenceAreas",
+            "decisionPlanner",
+            "requiredDecisionFlags",
+            "generatedReport",
+            "requiredProofIds",
+            "requiredFinalProofCommandOrder",
+            "Full final proof order",
+            "perfect-live",
+            "performance-receipt",
+            "envValuesCaptured",
+            "enterprise-goal-status-contract.json",
+            "requiredPreflight",
+            "live-cleanup-proof",
+            "Source of truth",
+            "Packed consumer",
+            "Final receipt",
+            "contractInvariants",
+            "safe-release-readiness-paths",
+            "typed-release-readiness-lists",
+            "typed-generated-report-contracts",
+            "typed-supporting-evidence",
+            "makefile-audit-wiring",
+            "requiredBlockingFields",
+            "blockingSignalIds",
+            "blockingRiskIds",
+            "Blocking file-state summary",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "Live proof is completed in a sacrificial sandbox",
+            "failed live proof must be rerun",
+            "deferred live proof is a draft blocker",
+            "Built artifacts are under tightened budgets calibrated from measured receipts",
+            "Budget status: tightened",
+            "performance-baseline",
+            "performance-budget-calibration",
+            "measurement?.ok !== true",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint",
+            "requiredReadinessContextFields",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "make axioms-contract",
+            "axioms-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-release-readiness.mjs",
+          "contains": [
+            "Release readiness contract shape failed",
+            "Release readiness contract passed",
+            "buildReport",
+            "generatedReport.requiredProof",
+            "requiredFinalProofCommandOrder",
+            "generatedReport.signals",
+            "decisionPlanner.generatedReport",
+            "decisionPlanner",
+            "evidenceAreas",
+            "supportingEvidence",
+            "validateContractShape",
+            "contractInvariants",
+            "releaseRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "assertUnique",
+            "validateGeneratedReportContract",
+            "typed-generated-report-contracts",
+            "typed-supporting-evidence",
+            "supportingEvidence[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "requiredBlockingFields",
+            "requiredReadinessContextFields",
+            "decisionPlanner.generatedReport.readinessContextChecklist.requiredFields",
+            "assertArrayContains",
+            "reportGenerator.generatedReport.blockingSignalIds",
+            "must be an array"
+          ]
+        },
+        {
+          "path": "scripts/release-readiness-report.mjs",
+          "contains": [
+            "requiredPreflight",
+            "requiredFinalProofCommandOrder",
+            "Full final proof order",
+            "export async function buildReport",
+            "envValuesCaptured: false",
+            "finalReceiptHasLiveCleanupProof",
+            "finalReceiptHasFinalLiveProofStatus",
+            "liveProofSection",
+            "liveProofStatus",
+            "finalReceiptHasFailedLiveProof",
+            "cleanupReceiptMarker",
+            "deferredCleanupRequiredMarkers",
+            "live-proof-final-status",
+            "final live completion",
+            "performanceReceiptStatus",
+            "failedMeasurements",
+            "successful latest receipt",
+            "no-live-objects cleanup marker",
+            "failed live proof must be rerun successfully",
+            "finalReceiptHasPerformanceProof",
+            "finalReceiptHasTightenedBudget",
+            "final-receipt-budget-status",
+            "Final receipt Performance receipts section must state Budget status: tightened",
+            "performanceRequiredRunsPolicyValid",
+            "performance-required-runs-policy",
+            "calibrationPolicy.requiredSuccessfulRuns must be a positive integer",
+            "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
+            "finalReceiptHasFailureMarkers",
+            "final-proof-failure-markers",
+            "finalReceiptHasRequiredSuccessSectionEvidence",
+            "success-section-evidence",
+            "finalReceiptHasFinalAuditCommand",
+            "final-audit-command-evidence",
+            "Final receipt Temporary context cleanup section must include make enterprise-audit-final command evidence",
+            "successSectionRequiredPatterns",
+            "readReceiptSection",
+            "blocking",
+            "finalReceiptHasResidualRiskDecision",
+            "finalReceiptHasFinalResidualRiskStatus",
+            "residual-risk-decision",
+            "residual-risk-final-status",
+            "finalReceiptHasRiskRegisterClear",
+            "risk-register-final-status",
+            "finalReadinessBlocking",
+            "final-blocking open/provisional",
+            "noneForbiddenPatterns",
+            "live deferral is draft-only",
+            "perfect-live",
+            "blockingDetails",
+            "Resolve blocking file-state signals",
+            "performance-proof",
+            "requiredSuccessfulRuns",
+            "!tempContextExists",
+            "completedCleanupRequiredPrefixes",
+            "readFirstFencedBlockAfter",
+            "live-cleanup-proof",
+            "final-proof-preflight",
+            "enterprise-goal-status",
+            "make final-proof-preflight",
+            "blockingSignalIds",
+            "blockingRiskIds",
+            "Blocking file-state summary",
+            "Blocking signals",
+            "Blocking risks",
+            "finalReceiptPresenceStatus",
+            "failed-draft marker",
+            "NOT COMPLETE:",
+            "docs/final-proof-receipt.md exists but contains failed-draft marker",
+            "measurement?.ok !== true",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint",
+            "make axioms-contract",
+            "axioms-contract"
+          ]
+        },
+        {
+          "path": "scripts/release-decision-plan.mjs",
+          "contains": [
+            "legacy-release-workflow-needs-maintainer-decision",
+            "export function buildReport",
+            "publishPermission: \"none\"",
+            "ciCdChangePermission: \"none\"",
+            "readinessContextChecklist",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "finalBlockingSignalIds",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "local-tarball-handoff",
+            "Document non-blocking residual risks in the support packet",
+            "npm-via-ci",
+            "retire-legacy-workflow"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "release-readiness:",
+            "release-decision-plan:",
+            "final-proof-preflight:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ci-contract",
+      "requirement": "Keep GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary explicit and drift-checked without changing CI/CD behavior.",
+      "evidence": [
+        {
+          "path": "docs/ci-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "CI contract shape is part of workflow readiness",
+            "malformed workflow/supporting-doc entries",
+            "does not authorize changing CI/CD behavior"
+          ]
+        },
+        {
+          "path": "docs/ci-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-ci-evidence-paths",
+            "typed-workflow-entries",
+            "typed-supporting-doc-entries",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-ci-contract.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "CI contract shape failed",
+            "typed-workflow-entries",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "ci-contract:",
+            "node scripts/check-ci-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "live-safety",
+      "requirement": "Keep live Clockify proof sandbox-only, cleanup-oriented, deferrable only with explicit reason, and backed by a mock alternative.",
+      "evidence": [
+        {
+          "path": "docs/live-tests.md",
+          "contains": [
+            "Never run live gates against a customer workspace",
+            "verify:live-cleanup",
+            "DEFER_LIVE_REASON",
+            "Contract-shape rule",
+            "completed final proof receipt must replace the deferral with live sandbox proof",
+            "Live-safety contract shape is part of sandbox safety",
+            "unsafe repo-relative evidence paths",
+            "malformed policy/live-gate/cleanup/final-proof marker lists"
+          ]
+        },
+        {
+          "path": "docs/live-safety-contract.json",
+          "contains": [
+            "CLOCKIFY_API_KEY",
+            "assert-clean-prefixes.mjs",
+            "make mock-clockify",
+            "contractInvariants",
+            "safe-live-safety-evidence-paths",
+            "typed-live-gate-evidence",
+            "typed-mcp-cleanup-script-contract",
+            "typed-final-proof-deferral-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-live-safety.mjs",
+          "contains": [
+            "live safety contract passed",
+            "requiredScript",
+            "validateContractShape",
+            "safeRelativePath",
+            "live safety contract shape failed",
+            "typed-mcp-cleanup-script-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "live-safety:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "test-data-lifecycle",
+      "requirement": "Govern live sandbox test-data prefixes, create/delete pairing, cleanup scans, leftover counts, and sanitized final proof receipts across SDK, CLI, and MCP.",
+      "evidence": [
+        {
+          "path": "docs/test-data-lifecycle-policy.md",
+          "contains": [
+            "Prefix ledger",
+            "Cleanup proof",
+            "make test-data-lifecycle",
+            "Contract-shape rule",
+            "Test-data lifecycle contract shape is part of cleanup safety",
+            "unsafe repo-relative evidence paths",
+            "malformed prefix lists"
+          ]
+        },
+        {
+          "path": "docs/test-data-lifecycle-contract.json",
+          "contains": [
+            "sdk-test-",
+            "mcp-sandbox-",
+            "assert-clean-prefixes.mjs",
+            "contractInvariants",
+            "safe-test-data-evidence-paths",
+            "typed-prefix-ledger",
+            "typed-cleanup-script-contract",
+            "typed-live-test-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-test-data-lifecycle.mjs",
+          "contains": [
+            "Test data lifecycle contract passed",
+            "prefixes",
+            "validateContractShape",
+            "safeRelativePath",
+            "Test data lifecycle contract shape failed",
+            "typed-prefix-ledger",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "test-data-lifecycle:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risk-register",
+      "requirement": "Keep known limitations, accepted risks, provisional states, upstream blockers, evidence, and closure gates explicit.",
+      "evidence": [
+        {
+          "path": "docs/risk-register.json",
+          "contains": [
+            "fern-bare-array-pagination",
+            "performance-budgets-provisional",
+            "final-proof-pending",
+            "legacy-release-workflow-needs-maintainer-decision",
+            "make final-proof-final passes",
+            "generatedReport",
+            "requiredFileSignalKeys",
+            "finalReadinessBlocking",
+            "Final-readiness blocking",
+            "readinessBlockingRiskIds",
+            "nonBlockingOpenOrProvisionalRiskIds",
+            "requiredRiskRoutingSummaryKeys",
+            "riskRoutingSummary",
+            "finalReadinessRiskStatus",
+            "readinessBlockingRiskCount",
+            "nonBlockingOpenOrProvisionalRiskCount",
+            "performanceBudgets.calibrationPolicy?.status === \\\"calibrated\\\"",
+            "liveProofSection",
+            "liveProofStatus",
+            "allowedLiveProofStatuses",
+            "failed",
+            "readListField",
+            "finalProofManifest.liveProof?.sectionStart",
+            "liveProofStatusDetail",
+            "failed live proof; rerun make perfect-live successfully",
+            "deferral is draft-only",
+            "Visible non-blocking open/provisional risks",
+            "enterprise-goal-status-contract.json",
+            "contractInvariants",
+            "typed-risk-entries",
+            "safe-risk-evidence-paths",
+            "typed-risk-report-generator",
+            "typed-generated-risk-report-contract",
+            "typed-allowed-risk-statuses",
+            "makefile-audit-wiring",
+            "allowedStatuses",
+            "performanceReceiptStatus",
+            "failedMeasurements",
+            "successful latest receipt",
+            "fileSignalDetails",
+            "finalReceiptPresenceStatus",
+            "failed-draft marker",
+            "NOT COMPLETE:",
+            "docs/final-proof-receipt.md exists but contains failed-draft marker",
+            "requiredFileSignalDetailKeys",
+            "finalProofReceipt",
+            "performanceBaselineLatest",
+            "finalReceiptLiveStatus",
+            "requiredFileSignalDetailKeysAreNonEmpty",
+            "measurement?.ok !== true",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint"
+          ]
+        },
+        {
+          "path": "docs/risk-register.md",
+          "contains": [
+            "Risk Register",
+            "Status meanings",
+            "performance-calibration-plan.mjs",
+            "release-decision-plan.mjs",
+            "make enterprise-goal-status",
+            "shape-checks the generated report",
+            "Final-readiness blocking",
+            "Final-readiness risk routing",
+            "riskRoutingSummary",
+            "finalReadinessRiskStatus",
+            "Blocking risk count",
+            "Operator rule",
+            "Risk register shape is part of readiness",
+            "safe repo-relative evidence paths",
+            "generated-report contract fields",
+            "failed latest receipt is reported as",
+            "blocking",
+            "failed draft receipt",
+            "failed command output or placeholders",
+            "generated file-state signal keys",
+            "generated `fileSignalDetails` keys",
+            "final live-status recovery",
+            "non-empty detail strings",
+            "malformed receipt JSON",
+            "blocking invalid receipt JSON",
+            "final receipt live-status signal preserves",
+            "`completed`, `failed`, and `deferred`"
+          ]
+        },
+        {
+          "path": "scripts/check-risk-register.mjs",
+          "contains": [
+            "risk register contract shape failed",
+            "risk register passed",
+            "buildReport",
+            "reportGenerator.generatedReport",
+            "finalReadinessBlocking must be boolean",
+            "readinessBlockingRiskIds",
+            "nonBlockingOpenOrProvisionalRiskIds",
+            "closure gate",
+            "validateRegisterShape",
+            "validateReportGeneratorShape",
+            "contractInvariants",
+            "riskRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "typed-risk-entries",
+            "safe-risk-evidence-paths",
+            "typed-risk-report-generator",
+            "typed-generated-risk-report-contract",
+            "reportGenerator.generatedReport.requiredRiskIds",
+            "risk entry must be an object",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "requiredFileSignalDetailKeys",
+            "reportGenerator.generatedReport.fileSignalDetails",
+            "reportGenerator.generatedReport.riskRoutingSummary",
+            "assertNonEmptyDetailValues",
+            "requiredFileSignalDetailKeysAreNonEmpty",
+            "must be a non-empty detail string"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "risk-register:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "user-docs",
+      "requirement": "Keep user-facing root, SDK, CLI, MCP, install, migration, and troubleshooting documentation complete enough for onboarding and future-agent handoff.",
+      "evidence": [
+        {
+          "path": "docs/user-docs-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "User-docs contract shape is part of documentation readiness",
+            "duplicate document ids",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/user-docs-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-user-docs-evidence-paths",
+            "typed-document-entries",
+            "axioms-contract",
+            "non-coder-reproducibility",
+            "First-run diagnostics and support handoff",
+            "safeCommandHints",
+            "typed-supporting-contract-entries",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-user-docs.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "user docs contract shape failed",
+            "typed-document-entries",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "user-docs:",
+            "node scripts/check-user-docs.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docs-quality",
+      "requirement": "Keep SDK/CLI/MCP/OpenAPI documentation evidence-first, exact, non-hype, generated-surface aware, and readable for non-coder operators.",
+      "evidence": [
+        {
+          "path": "docs/docs-quality-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Generated claim backing",
+            "Documentation-quality contract shape is part of docs readiness",
+            "malformed product-surface claim requirements",
+            "invalid unsupported-claim regexes",
+            "Make/docs/inventory/audit wiring",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "docs/docs-quality-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-docs-quality-evidence-paths",
+            "typed-generated-truth-surfaces",
+            "typed-product-surface-claim-contract",
+            "typed-axiom-entries",
+            "axioms-contract",
+            "typed-scan-paths",
+            "typed-unsupported-claim-regexes",
+            "typed-wiring-contract",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "not proof"
+          ]
+        },
+        {
+          "path": "scripts/check-docs-quality.mjs",
+          "markers": [
+            "validateContractShape",
+            "validateProductSurfaceClaims",
+            "safeRelativePath",
+            "Documentation quality contract shape failed",
+            "checkProductSurfaceClaims",
+            "typed-unsupported-claim-regexes",
+            "new RegExp(pattern, \"i\")"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "docs-quality:",
+            "node scripts/check-docs-quality.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-handoff",
+      "requirement": "Keep canonical agent guidance, generated-path rules, temporary context lifecycle, and stale-count prevention explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/agent-handoff-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Agent-handoff contract shape is part of handoff readiness",
+            "immediately before final acceptance",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "malformed guidance scan paths",
+            "Make/docs/inventory/audit"
+          ]
+        },
+        {
+          "path": "docs/agent-handoff-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-agent-handoff-evidence-paths",
+            "typed-guidance-entries",
+            "typed-guidance-scan-paths",
+            "typed-forbidden-guidance-markers",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-agent-handoff.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "agent handoff contract shape failed",
+            "typed-guidance-scan-paths",
+            "contract.guidanceScanPaths"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "agent-handoff:",
+            "node scripts/check-agent-handoff.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "developer-environment",
+      "requirement": "Keep local Node/npm/Fern/Docker/GOCLMCP bootstrap rules, package-local lockfiles/scripts, and no-root-workspace boundary explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/developer-environment-policy.md",
+          "contains": [
+            "Local runtime",
+            "Setup recipes",
+            "exact `prepublishOnly` command shapes",
+            "repo-doctor report in memory",
+            "Required receipts",
+            "Developer environment contract shape is part of readiness",
+            "safe repo-relative paths",
+            "repo-doctor generated-report metadata"
+          ]
+        },
+        {
+          "path": "docs/developer-environment-contract.json",
+          "contains": [
+            "package-lock.json",
+            "requiredScriptValues",
+            "generatedReport",
+            "wrapper.script.prepublishOnly.command",
+            "spec/fern/fern.config.json",
+            "../GOCLMCP",
+            "contractInvariants",
+            "safe-developer-environment-paths",
+            "typed-policy-document-contract",
+            "typed-root-boundary",
+            "typed-repo-doctor-contract",
+            "typed-package-contracts",
+            "typed-fern-contract",
+            "typed-supporting-doc-contracts",
+            "makefile-audit-wiring",
+            "wiring",
+            "developer-environment",
+            "scripts/check-developer-environment.mjs"
+          ]
+        },
+        {
+          "path": "scripts/check-developer-environment.mjs",
+          "contains": [
+            "developer environment contract passed",
+            "requiredScriptValues",
+            "buildReport",
+            "assertFalseFields",
+            "expected shape",
+            "forbiddenFiles",
+            "validateContractShape",
+            "environmentRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "safe-developer-environment-paths",
+            "typed-policy-document-contract",
+            "typed-root-boundary",
+            "typed-repo-doctor-contract",
+            "typed-package-contracts",
+            "typed-fern-contract",
+            "typed-supporting-doc-contracts",
+            "repoDoctor.generatedReport.requiredCheckIds",
+            "requiredScriptValues must be an object",
+            "package contract must be an object",
+            "supportingDocs[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "developer environment contract shape failed",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "developer-environment",
+            "scripts/check-developer-environment.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "developer-environment:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operator-onboarding",
+      "requirement": "Provide and gate a non-coder operator onboarding path for bootstrap, SDK/CLI/MCP persona selection, mock/live safety, stop conditions, and readiness boundaries.",
+      "evidence": [
+        {
+          "path": "docs/operator-onboarding.md",
+          "markers": [
+            "Contract-shape rule",
+            "Operator-onboarding contract shape is part of onboarding readiness",
+            "completed live sandbox proof",
+            "no blocking residual risks",
+            "Readiness context",
+            "readinessContext",
+            "finalBlockingSignalIds",
+            "blockingSignalIds",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "malformed plan-generator expectations",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/operator-onboarding-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-operator-onboarding-evidence-paths",
+            "typed-plan-generator-contract",
+            "typed-required-make-targets",
+            "typed-wiring-contract",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "deferral is draft-only",
+            "requiredGoalTextMarkers"
+          ]
+        },
+        {
+          "path": "scripts/check-operator-onboarding.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Operator onboarding contract shape failed",
+            "typed-plan-generator-contract",
+            "typed-required-make-targets",
+            "requiredGoalTextMarkers",
+            "assertGoalTextMarkers"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "operator-onboarding:",
+            "node scripts/check-operator-onboarding.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operator-toolbox",
+      "requirement": "Keep no-network operator helper commands discoverable, preflight-only, and separated from proof gates for workflow, maintenance, release, risk, performance, and support planning.",
+      "evidence": [
+        {
+          "path": "docs/operator-toolbox.md",
+          "contains": [
+            "Operator Toolbox",
+            "No command in this toolbox runs Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+            "make final-proof-preflight",
+            "make enterprise-goal-status",
+            "make enterprise-audit",
+            "make perfect-fast",
+            "make performance-receipt",
+            "make perfect-full",
+            "make perfect-live",
+            "make axioms-contract",
+            "final-proof evidence sequence",
+            "final-proof-draft",
+            "final-proof-receipt-check",
+            "Every helper in this toolbox has an owner in `docs/contract-inventory.json`",
+            "node scripts/release-decision-plan.mjs --decision all",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "node scripts/performance-calibration-plan.mjs",
+            "Inventory shape status",
+            "structural invariants",
+            "safe repo-relative paths",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "blockingSignalIds",
+            "blockingRiskIds"
+          ]
+        },
+        {
+          "path": "docs/operator-toolbox-contract.json",
+          "contains": [
+            "helperScripts",
+            "listInvariants",
+            "helperCommandCoverage",
+            "helperCommandCoverageInvariants",
+            "helperOwnership",
+            "supportingDocMarkers",
+            "makeHelpMustContain",
+            "final-proof-preflight",
+            "make enterprise-goal-status",
+            "make performance-receipt",
+            "make perfect-live",
+            "make axioms-contract",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "final-proof evidence sequence",
+            "final-proof-receipt-check",
+            "release-decision-plan.mjs",
+            "performance-calibration-plan.mjs",
+            "valid-schema-version",
+            "valid-purpose",
+            "safe-toolbox-paths",
+            "typed-helper-lists",
+            "typed-helper-command-coverage",
+            "makefile-audit-wiring",
+            "Inventory shape status",
+            "contractInvariants",
+            "typed-helper-ownership-contract",
+            "typed-supporting-doc-markers",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "blockingSignalIds",
+            "blockingRiskIds"
+          ]
+        },
+        {
+          "path": "scripts/check-operator-toolbox.mjs",
+          "contains": [
+            "Operator toolbox contract shape failed",
+            "Operator toolbox contract passed",
+            "helperScripts",
+            "listInvariants",
+            "helperCommandCoverage",
+            "helperCommandCoverageInvariants",
+            "helperOwnership",
+            "supportingDocMarkers",
+            "validateContractShape",
+            "schemaVersion",
+            "toolboxRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "valid-schema-version",
+            "safe-toolbox-paths",
+            "typed-helper-command-coverage",
+            "helperCommandCoverage[",
+            "supportingDocMarkers[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "contractInvariants",
+            "typed-helper-ownership-contract",
+            "typed-supporting-doc-markers",
+            "makefile-audit-wiring"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "operator-toolbox:",
+            "Check no-network helper catalogue and inventory ownership",
+            "enterprise-goal-status:",
+            "final-proof-preflight:",
+            "release-decision-plan:",
+            "performance-calibration-plan:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api-docs",
+      "requirement": "Keep TypeDoc configuration, generated SDK resource docs, sync wiring, Pages workflow, and docs package identity explicit and drift-checked.",
+      "evidence": [
+        {
+          "path": "docs/api-docs-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "API-docs contract shape is part of documentation readiness",
+            "unsafe repo-relative evidence paths",
+            "malformed TypeDoc/package/resource-docs expectations"
+          ]
+        },
+        {
+          "path": "docs/api-docs-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-api-docs-evidence-paths",
+            "typed-typedoc-contract",
+            "typed-resource-docs-contract",
+            "typed-generated-api-docs-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-api-docs.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "API docs contract shape failed",
+            "typed-generated-api-docs-contract",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "api-docs:",
+            "node scripts/check-api-docs.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp-contract",
+      "requirement": "Keep TS MCP tool counts, guide resources, prompts, output schema, README, and server tests aligned.",
+      "evidence": [
+        {
+          "path": "docs/mcp-contract.json",
+          "contains": [
+            "totalTools",
+            "clockify://guide/workflows",
+            "clockify-workflow-plan",
+            "MCP_RESULT_OUTPUT_SCHEMA",
+            "contractInvariants",
+            "safe-mcp-contract-paths",
+            "typed-tools-metadata-reference",
+            "typed-expected-tool-surface",
+            "typed-resource-and-prompt-contracts",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-mcp-contract.mjs",
+          "contains": [
+            "MCP contract passed",
+            "domainGroups counts",
+            "validateContractShape",
+            "safeRelativePath",
+            "MCP contract shape failed",
+            "typed-expected-tool-surface",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "mcp-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp-agent-ux",
+      "requirement": "Govern MCP agent UX through server instructions, workflow-first guidance, guide resources, prompts, structured receipts, risky-write safety, and README discoverability.",
+      "evidence": [
+        {
+          "path": "docs/mcp-agent-ux-policy.md",
+          "contains": [
+            "Agent UX rules",
+            "workflow-first",
+            "make mcp-agent-ux",
+            "Contract-shape rule",
+            "MCP agent UX contract shape is part of agent usability safety",
+            "unsafe repo-relative paths",
+            "malformed UX marker checks"
+          ]
+        },
+        {
+          "path": "docs/mcp-agent-ux-contract.json",
+          "contains": [
+            "serverInstructions",
+            "clockify-workflow-plan",
+            "argsSchema",
+            "goal: z.string().optional()",
+            "structuredContent",
+            "contractInvariants",
+            "safe-mcp-agent-ux-paths",
+            "typed-tools-metadata-reference",
+            "typed-expected-tool-summary",
+            "typed-agent-ux-checks",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-mcp-agent-ux.mjs",
+          "contains": [
+            "MCP agent UX contract passed",
+            "workflowTools",
+            "validateContractShape",
+            "safeRelativePath",
+            "MCP agent UX contract shape failed",
+            "typed-expected-tool-summary",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "mcp/src/server.ts",
+          "contains": [
+            "Prefer workflow tools before low-level domain tools",
+            "structuredContent"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mcp-write-safety",
+      "requirement": "Guard MCP destructive-write behavior with an explicit confirmation, hint, and receipt contract.",
+      "evidence": [
+        {
+          "path": "docs/mcp-write-safety-policy.md",
+          "contains": [
+            "High-risk workflow writes require preview confirmation",
+            "destructiveHint: true",
+            "dry_run",
+            "confirm_token",
+            "changed",
+            "recovery",
+            "Contract-shape rule",
+            "MCP write-safety contract shape is part of agent write safety",
+            "unsafe repo-relative evidence paths",
+            "malformed workflow tool lists"
+          ]
+        },
+        {
+          "path": "docs/mcp-write-safety-contract.json",
+          "contains": [
+            "clockify_invoice_client_work",
+            "clockify_record_expense",
+            "clockify_request_time_off",
+            "minimumDestructiveToolCount",
+            "contractInvariants",
+            "safe-mcp-write-evidence-paths",
+            "typed-destructive-tool-threshold",
+            "typed-workflow-tool-lists",
+            "typed-workflow-marker-contracts",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-mcp-write-safety.mjs",
+          "contains": [
+            "MCP write-safety contract passed",
+            "discoverDestructiveTools",
+            "maybeConfirm",
+            "destructiveHint",
+            "validateContractShape",
+            "safeRelativePath",
+            "MCP write-safety contract shape failed",
+            "typed-workflow-tool-lists",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "mcp-write-safety:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cli-contract",
+      "requirement": "Keep CLI command metadata, README table, global flags, completion shells, binaries, and exit-code tests aligned.",
+      "evidence": [
+        {
+          "path": "docs/cli-contract.json",
+          "contains": [
+            "commandCount",
+            "completionShells",
+            "exitCodes"
+          ]
+        },
+        {
+          "path": "scripts/check-cli-contract.mjs",
+          "contains": [
+            "CLI contract passed",
+            "exit contract test"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "cli-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "test-matrix",
+      "requirement": "Keep SDK/CLI/MCP package test/build scripts, exact last-resort package gate commands, and required unit/mock/live test files present.",
+      "evidence": [
+        {
+          "path": "docs/test-matrix-contract.json",
+          "markers": [
+            "contractInvariants",
+            "typed-package-test-matrix",
+            "safe-test-matrix-evidence-paths",
+            "typed-root-gate-targets",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-test-matrix-contract.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "test matrix contract shape failed",
+            "typed-package-test-matrix",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "test-matrix:",
+            "node scripts/check-test-matrix-contract.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mock-contract",
+      "requirement": "Keep deterministic mock Clockify routes, headers, docs, and SDK/CLI/MCP mock-backed tests aligned.",
+      "evidence": [
+        {
+          "path": "docs/mock-clockify-contract.json",
+          "contains": [
+            "GET /user",
+            "CLOCKIFY_BASE_URL",
+            "wrapper/tests/mock-clockify.test.ts",
+            "contractInvariants",
+            "safe-mock-evidence-paths",
+            "typed-route-contracts",
+            "typed-mock-test-evidence",
+            "typed-doc-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-mock-clockify-contract.mjs",
+          "contains": [
+            "mock Clockify contract passed",
+            "requiredRoutes",
+            "validateContractShape",
+            "safeRelativePath",
+            "mock Clockify contract shape failed",
+            "typed-route-contracts",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "mock-contract:"
+          ]
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": [
+            "Contract-shape rule",
+            "safe repo-relative evidence paths",
+            "Make/docs/audit wiring"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "final-proof-not-run-by-audit",
+      "requirement": "Final completion still requires actual gate execution and temporary context removal.",
+      "evidence": [
+        {
+          "path": "docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md",
+          "contains": [
+            "make final-proof-preflight",
+            "make enterprise-audit",
+            "make perfect-fast",
+            "make performance-receipt",
+            "make perfect-full",
+            "make perfect-live",
+            "LIVE=1 make final-proof-draft",
+            "rm docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+            "temporary-context cleanup section",
+            "exact final audit command/output",
+            "Draft receipt: Live proof status: completed | deferred",
+            "Final receipt: Live proof status: completed"
+          ]
+        },
+        {
+          "path": "docs/final-proof-runbook.md",
+          "contains": [
+            "make enterprise-audit",
+            "make perfect-fast",
+            "make perfect-full",
+            "make perfect-live",
+            "make final-proof-final",
+            "make final-proof-receipt-check",
+            "docs/final-proof-receipt.md",
+            "### Receipt N",
+            "duplicate that block until the number of successful performance receipts matches",
+            "Final blockers",
+            "Blocking file-state summary",
+            "finalBlockingSignalIds",
+            "blockingSignalIds",
+            "Live proof status: completed",
+            "Residual risk status: none",
+            "Draft receipts may use",
+            "Live proof status: failed",
+            "make final-proof-receipt-check` passes after temporary context removal",
+            "not final completion evidence",
+            "calibrationPolicy.receiptPath",
+            "failed measurements",
+            "calibrationPolicy.status: calibrated",
+            "After setting calibrated budgets, run",
+            "embedded `calibrationPolicy.status` other than `calibrated`",
+            "budgetsSchemaVersion",
+            "current performance-budget",
+            "budget fingerprint",
+            "budgetFingerprint"
+          ]
+        },
+        {
+          "path": "docs/final-proof-receipt-manifest.json",
+          "contains": [
+            "requiredSections",
+            "orderedSections",
+            "requiredCommands",
+            "commandSections",
+            "successSections",
+            "successSectionRequiredPatterns",
+            "successSectionFailureForbiddenPatterns",
+            "## No-network preflight",
+            "make final-proof-preflight",
+            "requiredCalibrationStatus",
+            "receiptHeadingPattern",
+            "receiptPassPattern",
+            "receiptExitZeroPattern",
+            "allowedStatuses",
+            "cleanupReceiptMarker",
+            "cleanupReceiptBlock",
+            "cleanupReceiptJsonShape",
+            "completedCleanupRequiredPatterns",
+            "completedSuccessRequiredPatterns",
+            "completedCleanupRequiredPrefixes",
+            "completedFailureForbiddenPatterns",
+            "completedSectionForbiddenMarkers",
+            "completedCleanupForbiddenMarkers",
+            "failedRequiredPatterns",
+            "deferredRequiredMarkers",
+            "deferredCleanupRequiredMarkers",
+            "PASTE CLEANUP RECEIPT HERE",
+            "mustBeAbsentOnDisk",
+            "riskRegisterPath",
+            "riskRegister",
+            "blockingStatuses",
+            "nonBlockingOverrideField",
+            "residualRisk",
+            "Residual risk status:",
+            "finalRequiredStatus",
+            "noneForbiddenPatterns",
+            "Closure gate:",
+            "contractInvariants",
+            "safe-final-proof-receipt-paths",
+            "typed-required-receipt-contracts",
+            "typed-live-proof-contract",
+            "typed-residual-risk-contract",
+            "typed-budget-receipt-contract",
+            "typed-temporary-context-removal",
+            "typed-risk-register-contract",
+            "makefile-audit-wiring",
+            "wiring",
+            "final-proof-receipt-check",
+            "scripts/check-final-proof-receipt.mjs",
+            "\"latestReceipt\"",
+            "\"pathSource\": \"calibrationPolicy.receiptPath\"",
+            "\"mustBeJsonObject\": true",
+            "\"requireMeasurements\": true",
+            "\"forbidFailures\": true",
+            "\"forbidFailedMeasurements\": true",
+            "\"calibrationStatusPath\": \"calibrationPolicy.status\"",
+            "\"mustMatchBudgetRequiredCalibrationStatus\": true",
+            "\"budgetSchemaVersionField\": \"budgetsSchemaVersion\"",
+            "\"mustMatchBudgetSchemaVersion\": true",
+            "\"budgetFingerprintField\": \"budgetFingerprint\"",
+            "\"mustMatchBudgetFingerprint\": true"
+          ]
+        },
+        {
+          "path": "docs/final-proof-receipt.template.md",
+          "contains": [
+            "docs/final-proof-receipt-manifest.json",
+            "Exit status: 0",
+            "Result: passed",
+            "prose success summaries are not enough",
+            "calibrationPolicy.requiredSuccessfulRuns",
+            "repeat this numbered receipt block until the configured count is met",
+            "### Receipt N",
+            "PASTE OUTPUT HERE",
+            "PASTE CLEANUP RECEIPT HERE",
+            "calibrationPolicy.receiptPath",
+            "no failed measurement entries",
+            "Pasted output",
+            "calibrationPolicy.status: calibrated",
+            "Run make performance-receipt again after calibration",
+            "budgetsSchemaVersion",
+            "current budgetsSchemaVersion",
+            "budgetFingerprint"
+          ]
+        },
+        {
+          "path": "docs/final-proof-command-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-final-proof-command-paths",
+            "typed-required-receipt-contracts",
+            "typed-ambiguous-reference-policy",
+            "makefile-audit-wiring",
+            "final-proof-preflight",
+            "final-proof-draft",
+            "final-proof-final",
+            "Exit status: 0",
+            "Result: passed",
+            "Live proof status: failed",
+            "failedRequiredPatterns",
+            "performance_args=\\\"\\\"",
+            "Optional: PERFORMANCE_RUNS=<count>; omitted uses docs/performance-budgets.json requiredSuccessfulRuns.",
+            "mustNotContain",
+            "### Receipt 3",
+            "successPattern",
+            "completedPassPattern",
+            "docs/operator-toolbox.md",
+            "docs/README.md",
+            "requiredReceiptContracts",
+            "finalRequiredStatus",
+            "finalReceiptHasRequiredSuccessSectionEvidence",
+            "success-section-evidence",
+            "successSectionRequiredPatterns",
+            "mustBeAbsentOnDisk",
+            "receipt invariants",
+            "ambiguousReferencePolicy",
+            "budget.calibrationPolicy.receiptPath",
+            "latest performance receipt",
+            "failed measurement entries",
+            "\\\"latestReceipt\\\"",
+            "\\\"pathSource\\\": \\\"calibrationPolicy.receiptPath\\\"",
+            "manifest.budget.latestReceipt.pathSource",
+            "manifest.budget.latestReceipt.forbidFailedMeasurements",
+            "calibrationPolicy.receiptPath",
+            "no failed measurement entries",
+            "Pasted output",
+            "\\\"calibrationStatusPath\\\": \\\"calibrationPolicy.status\\\"",
+            "\\\"mustMatchBudgetRequiredCalibrationStatus\\\": true",
+            "readDottedField",
+            "latest performance receipt calibrationPolicy.status must be",
+            "\\\"budgetSchemaVersionField\\\": \\\"budgetsSchemaVersion\\\"",
+            "\\\"mustMatchBudgetSchemaVersion\\\": true",
+            "latest performance receipt budgetsSchemaVersion must match",
+            "\\\"budgetFingerprintField\\\": \\\"budgetFingerprint\\\"",
+            "\\\"mustMatchBudgetFingerprint\\\": true",
+            "latest performance receipt budgetFingerprint must match"
+          ]
+        },
+        {
+          "path": "scripts/check-final-proof-receipt.mjs",
+          "contains": [
+            "final-proof-receipt-manifest.json",
+            "manifestRelativePath",
+            "manifest.receiptPath",
+            "manifest.budgetPath",
+            "manifest.riskRegisterPath",
+            "manifest.temporaryContextPath",
+            "manifest.temporaryContextRemoval.pathPattern",
+            "manifest.temporaryContextPath must match manifest.temporaryContextRemoval.pathPattern",
+            "manifestTemporaryRemovalPath",
+            "if (!fs.existsSync(receiptPath))",
+            "Manifest structural validation runs before the final receipt file",
+            "path.isAbsolute",
+            "repo-relative path without parent traversal",
+            "readJsonFile",
+            "could not be read as JSON",
+            "manifest.schemaVersion must be 1",
+            "manifest.requiredCommands",
+            "manifest.requiredSections",
+            "manifest.orderedSections",
+            "manifest required section is not assigned to orderedSections",
+            "manifest ordered section is not listed in requiredSections",
+            "manifest success section is not listed in requiredSections",
+            "manifest command section is not listed in requiredSections",
+            "assertUnique",
+            "manifest.successSections",
+            "manifest.commandSections[].section",
+            "manifest.commandSections[].commands",
+            "assertNonEmptyString",
+            "must be a non-empty string",
+            "assertNonEmptyArray",
+            "must be a non-empty array",
+            "assertPositiveInteger",
+            "must be a positive integer",
+            "assertBoolean",
+            "must be a boolean",
+            "assertNonEmptyStrings",
+            "assertRegexPatterns",
+            "contains non-string or empty entry",
+            "contains invalid regex pattern",
+            "manifest.forbiddenPlaceholders",
+            "manifest.liveProof.completedCleanupRequiredPrefixes",
+            "manifest.liveProof.completedSectionForbiddenMarkers",
+            "manifest.liveProof.failedRequiredPatterns",
+            "manifest.liveProof.deferredRequiredMarkers",
+            "manifest.residualRisk.noneForbiddenPatterns",
+            "manifest.residualRisk.carriedRequiredPatterns",
+            "manifest.budget.field",
+            "manifest.liveProof.field",
+            "manifest.liveProof.minDeferralReasonLength",
+            "manifest.liveProof.allowedStatuses",
+            "manifest.liveProof.finalRequiredStatus must be listed in manifest.liveProof.allowedStatuses",
+            "manifest.temporaryContextRemoval.section",
+            "manifest.temporaryContextRemoval.mustBeAbsentOnDisk",
+            "manifest.residualRisk.statusField",
+            "manifest.residualRisk.allowedStatuses",
+            "manifest.residualRisk.finalRequiredStatus must be listed in manifest.residualRisk.allowedStatuses",
+            "manifest.riskRegister.blockingStatuses",
+            "manifest.riskRegister.nonBlockingOverrideField",
+            "manifest.riskRegister.acceptedNonBlockingStatuses",
+            "manifest command section is missing a section name",
+            "manifest command section has no commands",
+            "manifest.successSectionRequiredPatterns",
+            "manifest.successSectionFailureForbiddenPatterns",
+            "manifest.budget receipt patterns",
+            "manifest.liveProof completed patterns",
+            "contains duplicate entry",
+            "manifest.commandSections",
+            "requiredCommands",
+            "sectionScopedCommands",
+            "manifest required command is not assigned to a command section",
+            "manifest command section includes command not listed in requiredCommands",
+            "required success pattern",
+            "successSectionFailureForbiddenPatterns",
+            "const liveSection = readSection(text, manifest.liveProof.sectionStart, manifest.liveProof.sectionEnd)",
+            "readListField(liveSection, manifest.liveProof.field)",
+            "readListField(liveSection, manifest.liveProof.deferralReasonField)",
+            "readListField(performanceSection, manifest.budget.field)",
+            "completedSuccessRequiredPatterns",
+            "completedSectionForbiddenMarkers",
+            "live section contains forbidden marker",
+            "live section is missing required success pattern",
+            "requiredSuccessfulRuns",
+            "countPattern",
+            "deferredRequiredMarkers",
+            "deferredCleanupRequiredMarkers",
+            "cleanupReceiptMarker",
+            "readFirstFencedBlockAfter",
+            "parseJsonObject",
+            "completedCleanupRequiredPatterns",
+            "completedCleanupRequiredPrefixes",
+            "completedFailureForbiddenPatterns",
+            "completedCleanupForbiddenMarkers",
+            "still exists on disk",
+            "temporaryContextSection",
+            "temporary context removal section must record the removed temporary context path",
+            "temporary context path appears outside the removal receipt section",
+            "manifest.residualRisk",
+            "residual risk status",
+            "finalRequiredStatus",
+            "noneForbiddenPatterns",
+            "readReceiptSection",
+            "live proof status must be",
+            "printSuggestedNextActions",
+            "Suggested next actions",
+            "final proof receipt is complete",
+            "final proof receipt manifest shape failed",
+            "manifest.contractInvariants",
+            "safe-final-proof-receipt-paths",
+            "typed-required-receipt-contracts",
+            "makefile-audit-wiring",
+            "manifest.wiring.makeTarget",
+            "manifest.wiring.checker",
+            "final-proof-receipt-check",
+            "scripts/check-final-proof-receipt.mjs",
+            "assertSuccessfulPerformanceReceipt",
+            "budget.calibrationPolicy.receiptPath",
+            "latest performance receipt",
+            "failed measurement entries",
+            "assertTrue",
+            "must be true",
+            "manifest.budget.latestReceipt.pathSource",
+            "manifest.budget.latestReceipt.pathSource must be calibrationPolicy.receiptPath",
+            "manifest.budget.latestReceipt.mustBeJsonObject",
+            "manifest.budget.latestReceipt.requireMeasurements",
+            "manifest.budget.latestReceipt.forbidFailures",
+            "manifest.budget.latestReceipt.forbidFailedMeasurements",
+            "readDottedField",
+            "manifest.budget.latestReceipt.calibrationStatusPath",
+            "manifest.budget.latestReceipt.calibrationStatusPath must be calibrationPolicy.status",
+            "manifest.budget.latestReceipt.mustMatchBudgetRequiredCalibrationStatus",
+            "latest performance receipt calibrationPolicy.status must be",
+            "manifest.budget.latestReceipt.budgetSchemaVersionField",
+            "manifest.budget.latestReceipt.budgetSchemaVersionField must be budgetsSchemaVersion",
+            "manifest.budget.latestReceipt.mustMatchBudgetSchemaVersion",
+            "latest performance receipt budgetsSchemaVersion must match",
+            "budgetFingerprint",
+            "manifest.budget.latestReceipt.budgetFingerprintField",
+            "manifest.budget.latestReceipt.budgetFingerprintField must be budgetFingerprint",
+            "manifest.budget.latestReceipt.mustMatchBudgetFingerprint",
+            "latest performance receipt budgetFingerprint must match",
+            "./budget-fingerprint.mjs"
+          ]
+        },
+        {
+          "path": "scripts/run-final-proof.mjs",
+          "contains": [
+            "final-proof-receipt-manifest.json",
+            "final-proof-preflight",
+            "extractCleanupReceipt",
+            "missingPrefixes",
+            "liveProofStatus = \"failed\"",
+            "live proof cannot be marked completed",
+            "requestedPerformanceRuns",
+            "requiredSuccessfulRuns",
+            "defaults to docs/performance-budgets.json requiredSuccessfulRuns",
+            "--performance-runs must be at least",
+            "calibrationPolicy.requiredSuccessfulRuns must be a positive integer",
+            "assert-clean-prefixes cleanup JSON",
+            "carriedRiskLine",
+            "manifest.residualRisk.statusField",
+            "--live",
+            "--defer-live",
+            "final proof receipt written"
+          ]
+        },
+        {
+          "path": "scripts/check-final-proof-command-contract.mjs",
+          "contains": [
+            "Final proof command contract shape failed",
+            "ambiguous make final-proof reference",
+            "requiredReceiptContracts",
+            "excludesAll",
+            "script.mustNotContain",
+            "receiptContract.mustNotContain",
+            "Final proof command contract passed",
+            "validateContractShape",
+            "contract.schemaVersion",
+            "contractRelativePath",
+            "contract.requiredReceiptContracts",
+            "contract.ambiguousReferencePolicy.scanRoots"
+          ]
+        },
+        {
+          "path": "scripts/check-enterprise-hardening.mjs",
+          "contains": [
+            "audit.schemaVersion",
+            "audit.purpose",
+            "audit.requirements",
+            "auditRelativePath",
+            "repo-relative path without parent traversal",
+            "audit.requirements[].id",
+            "contains duplicate entry",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            ".temporaryPath",
+            ".finalReceiptPath",
+            ".evidence[].path",
+            ".evidence[",
+            ".contains",
+            "enterprise hardening audit shape failed",
+            "audit.contractInvariants",
+            "safe-audit-evidence-paths",
+            "typed-requirement-contracts",
+            "typed-evidence-markers",
+            "typed-temporary-context-contract",
+            "makefile-audit-wiring",
+            "audit.wiring.makeTarget",
+            "audit.wiring.finalMakeTarget",
+            "audit.wiring.checker",
+            "evidenceMarkerContract",
+            "markers",
+            "contains"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "final-proof:",
+            "final-proof-draft:",
+            "final-proof-final:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "enterprise-goal-status-contract",
+      "requirement": "Keep the no-network active-goal status report honest about proof blockers, final-proof commands, temporary context, performance calibration, and risk state.",
+      "evidence": [
+        {
+          "path": "docs/enterprise-goal-status-contract.json",
+          "contains": [
+            "network: \\\"none\\\"",
+            "commandsExecuted: []",
+            "generatedReport",
+            "requiredSignalIds",
+            "warningMustContain",
+            "formatModes",
+            "mustNotContain",
+            "finalProofCommandOrder",
+            "finalProofCommands",
+            "requiredFinalProofCommandOrder",
+            "make final-proof-preflight",
+            "make enterprise-audit",
+            "make perfect-fast",
+            "make performance-receipt",
+            "make perfect-full",
+            "make perfect-live",
+            "final-proof-preflight-command",
+            "enterprise-audit-command",
+            "perfect-fast-command",
+            "performance-receipt-command",
+            "perfect-full-command",
+            "perfect-live-command",
+            "live-cleanup-proof",
+            "final-proof-receipt-check",
+            "contractInvariants",
+            "safe-enterprise-goal-status-paths",
+            "typed-status-script-contract",
+            "typed-generated-report-contract",
+            "typed-doc-marker-contracts",
+            "makefile-audit-wiring",
+            "requiredFinalBlockingFields",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "Final blockers",
+            "Blocking risks",
+            "performance-baseline",
+            "performance-calibration",
+            "measurement?.ok !== true",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint",
+            "make axioms-contract",
+            "axioms-contract-command",
+            "axiomsContract"
+          ]
+        },
+        {
+          "path": "scripts/check-enterprise-goal-status-contract.mjs",
+          "contains": [
+            "Enterprise goal status contract shape failed",
+            "Enterprise goal status contract passed",
+            "buildReport",
+            "generatedReport.finalProofCommands",
+            "generatedReport.signals",
+            "forbidden marker",
+            "enterprise-goal-status-contract.json",
+            "validateContractShape",
+            "validateGeneratedReportContract",
+            "contractInvariants",
+            "goalStatusRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "assertUnique",
+            "requiredFinalProofCommands",
+            "requiredFinalProofCommandOrder",
+            "generatedReport.finalProofCommandOrder",
+            "typed-generated-report-contract",
+            "typed-doc-marker-contracts",
+            "docs[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "requiredFinalBlockingFields",
+            "generatedReport.finalBlockingSignalIds",
+            "must be an array"
+          ]
+        },
+        {
+          "path": "scripts/enterprise-goal-status.mjs",
+          "contains": [
+            "This report is not proof",
+            "export async function buildReport",
+            "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+            "performanceReceiptStatus",
+            "failedMeasurements",
+            "successful latest receipt",
+            "finalReceiptHasLiveCleanupProof",
+            "finalReceiptHasFinalLiveProofStatus",
+            "liveProofSection",
+            "liveProofStatus",
+            "finalReceiptHasFailedLiveProof",
+            "cleanupReceiptMarker",
+            "deferredCleanupRequiredMarkers",
+            "live-proof-final-status",
+            "final live completed status",
+            "no-live-objects cleanup marker",
+            "failed live proof must be rerun successfully",
+            "finalReceiptHasPerformanceProof",
+            "finalReceiptHasTightenedBudget",
+            "final-receipt-budget-status",
+            "Final receipt Performance receipts section must state Budget status: tightened",
+            "performanceRequiredRunsPolicyValid",
+            "performance-required-runs-policy",
+            "calibrationPolicy.requiredSuccessfulRuns must be a positive integer",
+            "finalReceiptHasFailureMarkers",
+            "final-proof-failure-markers",
+            "finalReceiptHasRequiredSuccessSectionEvidence",
+            "success-section-evidence",
+            "successSectionRequiredPatterns",
+            "readReceiptSection",
+            "blocking",
+            "finalReceiptHasResidualRiskDecision",
+            "finalReceiptHasFinalResidualRiskStatus",
+            "residual-risk-decision",
+            "residual-risk-final-status",
+            "finalReceiptHasRiskRegisterClear",
+            "risk-register-final-status",
+            "finalReadinessBlocking",
+            "final-blocking open/provisional",
+            "noneForbiddenPatterns",
+            "Replace failed or deferred live proof",
+            "Rerun make perfect-live successfully",
+            "live deferral is draft-only",
+            "requiredSuccessfulRuns successful performance receipts",
+            "Resolve carried residual risks",
+            "Run make final-proof-preflight, make enterprise-audit, make perfect-fast, make performance-receipt, make perfect-full, make perfect-live",
+            "performance-proof",
+            "requiredSuccessfulRuns",
+            "!tempContextExists",
+            "completedCleanupRequiredPrefixes",
+            "readFirstFencedBlockAfter",
+            "live-cleanup-proof",
+            "finalProofCommands",
+            "finalProofCommandOrder",
+            "make final-proof-preflight",
+            "make enterprise-audit",
+            "make perfect-fast",
+            "make performance-receipt",
+            "make perfect-full",
+            "make perfect-live",
+            "final-proof-preflight-command",
+            "enterprise-audit-command",
+            "perfect-fast-command",
+            "performance-receipt-command",
+            "perfect-full-command",
+            "perfect-live-command",
+            "finalBlockingSignalIds",
+            "finalBlockingRiskIds",
+            "Final blockers",
+            "Blocking signals",
+            "Blocking risks",
+            "finalReceiptPresenceStatus",
+            "failed-draft marker",
+            "NOT COMPLETE:",
+            "docs/final-proof-receipt.md exists but contains failed-draft marker",
+            "measurement?.ok !== true",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint",
+            "make axioms-contract",
+            "axioms-contract-command",
+            "axiomsContract",
+            "Axioms contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "enterprise-goal-status:",
+            "enterprise-goal-status-contract:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "final-proof-preflight-contract",
+      "requirement": "Keep the combined final-proof preflight target no-network, report-only, and clearly separate from proof gates.",
+      "evidence": [
+        {
+          "path": "docs/final-proof-preflight-contract.json",
+          "contains": [
+            "node scripts/enterprise-goal-status.mjs",
+            "node scripts/release-readiness-report.mjs",
+            "scripts/run-final-proof.mjs",
+            "generatedReports",
+            "requiredOrderedArrays",
+            "finalProofCommandOrder",
+            "requiredFinalProofCommandOrder",
+            "final-proof-failure-markers",
+            "success-section-evidence",
+            "envValuesCaptured",
+            "make final-proof-preflight",
+            "forbiddenInTarget",
+            "contractInvariants",
+            "safe-final-proof-preflight-paths",
+            "typed-makefile-contract",
+            "typed-doc-marker-contracts",
+            "typed-generated-report-contracts",
+            "typed-runner-and-support-contracts",
+            "makefile-audit-wiring",
+            "requiredBlockingFields",
+            "Final blockers",
+            "Blocking file-state summary",
+            "Live proof status: completed",
+            "not final completion evidence"
+          ]
+        },
+        {
+          "path": "scripts/check-final-proof-preflight-contract.mjs",
+          "contains": [
+            "Final proof preflight contract shape failed",
+            "Final proof preflight contract passed",
+            "buildEnterpriseGoalStatusReport",
+            "buildReleaseReadinessReport",
+            "generatedReports",
+            "assertExactFields",
+            "contract.runner",
+            "forbidden marker",
+            "validateContractShape",
+            "validateGeneratedReportContract",
+            "assertOrderedArrays",
+            "contractInvariants",
+            "axiomsContract",
+            "axioms-contract",
+            "preflightRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertStringArray",
+            "assertUnique",
+            "safe-final-proof-preflight-paths",
+            "typed-generated-report-contracts",
+            "typed-runner-and-support-contracts",
+            "supportingContracts[",
+            "generatedReports[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "requiredBlockingFields",
+            "requiredOrderedArrays",
+            "blockingSignalIds",
+            "finalBlockingSignalIds",
+            "must be an array"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "final-proof-preflight:",
+            "final-proof-preflight-contract:"
+          ]
+        },
+        {
+          "path": "docs/final-proof-runbook.md",
+          "contains": [
+            "make final-proof-preflight",
+            "it is not proof",
+            "Final blockers",
+            "Blocking file-state summary",
+            "finalBlockingSignalIds",
+            "blockingSignalIds",
+            "Live proof status: completed",
+            "Residual risk status: none",
+            "Draft receipts may use",
+            "not final completion evidence",
+            "calibrationPolicy.receiptPath",
+            "failed measurements",
+            "calibrationPolicy.status: calibrated",
+            "After setting calibrated budgets, run",
+            "embedded `calibrationPolicy.status` other than `calibrated`",
+            "budgetsSchemaVersion",
+            "current performance-budget",
+            "budget fingerprint",
+            "budgetFingerprint"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docs-drift-checker",
+      "requirement": "Use an explicit allowlisted documentation drift checker that catches stale public package/tool markers without failing on intentional migration or contract metadata.",
+      "evidence": [
+        {
+          "path": "docs/docs-drift-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-docs-drift-paths",
+            "typed-scan-rules",
+            "declared-allowlists",
+            "legacy-sdk-package-name",
+            "placeholder-marker",
+            "docs-drift-checker",
+            "docs/final-proof-receipt-manifest.json"
+          ]
+        },
+        {
+          "path": "scripts/check-docs-drift.mjs",
+          "contains": [
+            "Documentation drift contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "legacy-sdk-package-name",
+            "wrapper/CHANGELOG.md",
+            "cli/CHANGELOG.md",
+            "mcp/CHANGELOG.md",
+            "docs/migration-guide.md",
+            "wrapper/tsconfig.json",
+            "Documentation drift check passed"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "docs-drift:",
+            "node scripts/check-docs-drift.mjs"
+          ]
+        },
+        {
+          "path": "CLAUDE.md",
+          "contains": [
+            "make docs-drift"
+          ]
+        },
+        {
+          "path": "docs/quality-gates.md",
+          "contains": [
+            "allowlisted docs drift is checked"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security-threat-model",
+      "requirement": "Keep SDK, CLI, MCP, OpenAPI generation, mock/replay, live proof, and release risks mapped to mitigations and proof gates.",
+      "evidence": [
+        {
+          "path": "docs/security-threat-model.md",
+          "contains": [
+            "Credential handling",
+            "Mock/replay base URL",
+            "MCP write safety",
+            "CLI write safety",
+            "Webhook verification",
+            "Live proof",
+            "OpenAPI truth chain",
+            "Supply chain and release",
+            "Support-bundle package metadata",
+            "First-run support handoff",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "Observability receipts",
+            "final acceptance requires completed sandbox live proof",
+            "not final readiness"
+          ]
+        },
+        {
+          "path": "docs/security-threat-model-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-security-threat-model-paths",
+            "typed-risk-surfaces",
+            "declared-non-make-proof-targets",
+            "allowedNonMakeProofTargets",
+            "credential-handling",
+            "mock-replay-base-url",
+            "agent-write-safety",
+            "generated-code-trust-boundary",
+            "support-bundle-package-metadata",
+            "first-run-support-handoff",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "supply-chain-release",
+            "final acceptance requires completed sandbox live proof",
+            "not final readiness"
+          ]
+        },
+        {
+          "path": "scripts/check-security-threat-model.mjs",
+          "contains": [
+            "Security threat model contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Security threat model contract passed",
+            "riskSurfaces",
+            "supportingEvidence"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "security-threat-model:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "receipt-examples",
+      "requirement": "Keep golden SDK, CLI, and MCP success/error receipt examples available for operators and future agents.",
+      "evidence": [
+        {
+          "path": "docs/receipt-examples.md",
+          "contains": [
+            "SDK success receipt",
+            "CLI error receipt",
+            "MCP recovery receipt",
+            "retryable",
+            "recovery",
+            "Contract-shape rule",
+            "Receipt examples contract shape is part of output-shape safety",
+            "unsafe repo-relative evidence paths",
+            "malformed supporting-evidence markers"
+          ]
+        },
+        {
+          "path": "docs/receipt-examples-contract.json",
+          "contains": [
+            "sdk-success",
+            "cli-error",
+            "mcp-recovery",
+            "supportingEvidence",
+            "contractInvariants",
+            "safe-receipt-example-evidence-paths",
+            "typed-examples-document-contract",
+            "typed-receipt-examples",
+            "typed-supporting-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-receipt-examples.mjs",
+          "contains": [
+            "Receipt examples contract passed",
+            "examplesDocument",
+            "supportingEvidence",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "Receipt examples contract shape failed",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "receipt-examples:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "support-bundle",
+      "requirement": "Provide a safe support/escalation bundle so SDK, CLI, MCP, OpenAPI, mock/replay, and live-proof issues can be triaged without leaking secrets or guessing.",
+      "evidence": [
+        {
+          "path": "docs/support-runbook.md",
+          "contains": [
+            "Safe diagnostic bundle",
+            "Never include",
+            "Prepublish gate",
+            "Package-lock",
+            "final-readiness blocker",
+            "risk routing",
+            "ordered proof-chain coverage",
+            "readinessContext",
+            "SDK support checklist",
+            "MCP support checklist",
+            "OpenAPI and generator support checklist",
+            "Escalation template",
+            "draft with a concrete deferral reason",
+            "Deferred live proof is not final readiness",
+            "Quickstart and diagnostics handoff",
+            "make quickstart-receipt",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "clockifyDiagnostics()"
+          ]
+        },
+        {
+          "path": "docs/support-bundle-contract.json",
+          "contains": [
+            "bundleFields",
+            "supportingEvidence",
+            "Prepublish gate",
+            "Package-lock",
+            "lockfileSummary",
+            "generatedBundleShape",
+            "redactionFalseFields",
+            "readinessContext",
+            "requiredReadinessContextFields",
+            "requiredReadinessReports",
+            "reportsCaptured",
+            "enterpriseGoalStatus",
+            "releaseReadiness",
+            "riskStatus",
+            "contractInventory",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "Live workspace type",
+            "What must not be retried automatically",
+            "contractInvariants",
+            "safe-support-bundle-paths",
+            "typed-runbook-contract",
+            "typed-generator-contract",
+            "typed-lockfile-summary-contract",
+            "typed-generated-bundle-shape",
+            "typed-supporting-evidence",
+            "makefile-audit-wiring",
+            "draft with a concrete deferral reason",
+            "Deferred live proof is not final readiness",
+            "typed-diagnostics-and-quickstart-summary",
+            "requiredDiagnosticSurfaces",
+            "requiredSafeCommandHints",
+            "make quickstart-receipt",
+            "node scripts/workflow-plan.mjs --workflow first-run-support"
+          ]
+        },
+        {
+          "path": "scripts/check-support-bundle.mjs",
+          "contains": [
+            "Support bundle contract shape failed",
+            "Support bundle contract passed",
+            "buildBundle",
+            "assertOnlyAllowedFields",
+            "assertFalseFields",
+            "readinessContext",
+            "requiredReadinessContextFields",
+            "requiredReadinessReports",
+            "reportsCaptured",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "bundleFields",
+            "prepublishOnly",
+            "lockfileVersion",
+            "forbidden generator marker",
+            "supportingEvidence",
+            "validateContractShape",
+            "supportRelativePath",
+            "repo-relative path without parent traversal",
+            "assertNonEmptyString",
+            "assertNonEmptyArray",
+            "assertStringArray",
+            "assertUnique",
+            "contractInvariants",
+            "safe-support-bundle-paths",
+            "typed-runbook-contract",
+            "typed-generator-contract",
+            "typed-lockfile-summary-contract",
+            "typed-generated-bundle-shape",
+            "typed-supporting-evidence",
+            "generatedBundleShape.packageCount",
+            "supportingEvidence[",
+            "must be a non-empty array",
+            "contains non-string or empty entry",
+            "must be an object",
+            "typed-diagnostics-and-quickstart-summary",
+            "generated bundle diagnostics",
+            "generated bundle safeCommandHints",
+            "node scripts/workflow-plan.mjs --workflow first-run-support"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "support-bundle:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "issue-intake",
+      "requirement": "Keep bug, feature, PR, support, and security intake templates multi-surface, reproducible, receipt-oriented, redacted, and correctly routed.",
+      "evidence": [
+        {
+          "path": "docs/issue-intake-policy.md",
+          "contains": [
+            "Required bug evidence",
+            "Required feature evidence",
+            "make issue-intake",
+            "readinessContext",
+            "finalBlockingSignalIds",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "Contract-shape rule",
+            "Issue-intake contract shape is part of supportability safety",
+            "unsafe repo-relative evidence paths",
+            "malformed template markers",
+            "quickstart receipt",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "diagnostic surface",
+            "safeCommandHints"
+          ]
+        },
+        {
+          "path": "docs/issue-intake-contract.json",
+          "contains": [
+            "bug_report.yml",
+            "feature_request.yml",
+            "pull_request_template.md",
+            "contractInvariants",
+            "safe-issue-intake-evidence-paths",
+            "typed-policy-document-contract",
+            "typed-template-contracts",
+            "typed-supporting-evidence",
+            "typed-wiring-contract",
+            "readinessContextFields",
+            "typed-quickstart-diagnostics-intake",
+            "quickstartDiagnosticsFields",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "clockify://mcp/doctor"
+          ]
+        },
+        {
+          "path": "scripts/check-issue-intake.mjs",
+          "contains": [
+            "Issue intake contract passed",
+            "templates",
+            "validateContractShape",
+            "safeRelativePath",
+            "validateMarkerEntry",
+            "Issue intake contract shape failed",
+            "typed-wiring-contract",
+            "readinessContextFields",
+            "typed-quickstart-diagnostics-intake",
+            "quickstartDiagnosticsFields",
+            "pathWithQuickstartDiagnostics"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "issue-intake:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "maintenance-playbook",
+      "requirement": "Provide a maintainer playbook for routine upkeep, dependency updates, generator bumps, Clockify API drift, release rehearsal, rollback, and maintenance receipts.",
+      "evidence": [
+        {
+          "path": "docs/maintenance-playbook.md",
+          "markers": [
+            "Contract-shape rule",
+            "Maintenance-playbook contract shape is part of maintenance readiness",
+            "Readiness context maintenance rule",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "readinessContext",
+            "finalBlockingSignalIds",
+            "blockingSignalIds",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "malformed planner expectations",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/maintenance-playbook-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-maintenance-evidence-paths",
+            "typed-planner-contract",
+            "typed-procedures",
+            "typed-supporting-evidence",
+            "typed-wiring-contract",
+            "Routine maintenance may leave budgets provisional",
+            "final readiness requires measured tightening",
+            "deferral is draft-only",
+            "requiredCadenceTextMarkers",
+            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "safeCommandHints",
+            "readinessContext",
+            "finalBlockingSignalIds",
+            "riskRoutingSummary",
+            "orderedProofChainCoverage",
+            "immediately before final-proof-final"
+          ]
+        },
+        {
+          "path": "scripts/check-maintenance-playbook.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Maintenance playbook contract shape failed",
+            "typed-planner-contract",
+            "typed-supporting-evidence",
+            "requiredCadenceTextMarkers",
+            "assertCadenceTextMarkers"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "maintenance-playbook:",
+            "node scripts/check-maintenance-playbook.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mutation-safety",
+      "requirement": "Define and gate cross-surface mutation and idempotency semantics for SDK retries, CLI writes, MCP confirmation flow, receipts, and ambiguous failure recovery.",
+      "evidence": [
+        {
+          "path": "docs/mutation-safety-policy.md",
+          "contains": [
+            "Mutation classes",
+            "SDK rules",
+            "CLI rules",
+            "MCP rules",
+            "Ambiguous failure recovery",
+            "Proof gates",
+            "Contract-shape rule",
+            "Mutation-safety contract shape is part of write-safety",
+            "unsafe repo-relative evidence paths",
+            "malformed mutation class markers"
+          ]
+        },
+        {
+          "path": "docs/mutation-safety-contract.json",
+          "contains": [
+            "read-only",
+            "idempotent-update",
+            "non-idempotent-create",
+            "destructive-delete",
+            "external-side-effect",
+            "contractInvariants",
+            "safe-mutation-safety-evidence-paths",
+            "typed-mutation-classes",
+            "typed-supporting-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-mutation-safety.mjs",
+          "contains": [
+            "Mutation safety contract passed",
+            "mutationClasses",
+            "supportingEvidence",
+            "validateContractShape",
+            "safeRelativePath",
+            "Mutation safety contract shape failed",
+            "typed-mutation-classes",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "mutation-safety:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "examples-matrix",
+      "requirement": "Provide a cross-surface examples matrix so SDK starter scripts, CLI commands, MCP workflows, mock/live boundaries, and receipts line up with real user jobs.",
+      "evidence": [
+        {
+          "path": "docs/examples-matrix.md",
+          "contains": [
+            "Examples are a product surface",
+            "shape-checks the generated",
+            "Coverage matrix",
+            "Mock versus live",
+            "Promotion checklist"
+          ]
+        },
+        {
+          "path": "docs/examples-matrix-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-examples-matrix-paths",
+            "typed-example-rows",
+            "generated-plan-static-no-network",
+            "required-target-wiring",
+            "required-doc-evidence",
+            "supporting-evidence-marker-contract",
+            "makefile-audit-wiring",
+            "auth-status",
+            "generatedPlan",
+            "requiredExampleIds",
+            "pagination",
+            "time-entry",
+            "business-admin",
+            "retry-idempotency",
+            "demo-cleanup"
+          ]
+        },
+        {
+          "path": "scripts/check-examples-matrix.mjs",
+          "contains": [
+            "Examples matrix contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Examples matrix contract passed",
+            "buildPlan",
+            "planner.generatedPlan",
+            "rows",
+            "supportingEvidence"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "examples-matrix:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "config-precedence",
+      "requirement": "Define and gate deterministic SDK/CLI/MCP configuration precedence for auth, workspace, base URL overrides, rc files, env vars, flags, and missing-config recovery wording.",
+      "evidence": [
+        {
+          "path": "docs/config-precedence-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Configuration-precedence contract shape is part of configuration readiness",
+            "duplicate surface ids",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/config-precedence-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-config-precedence-evidence-paths",
+            "typed-surface-evidence",
+            "typed-supporting-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "scripts/check-config-precedence.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Configuration precedence contract shape failed",
+            "typed-surface-evidence",
+            "typed-wiring-contract"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "config-precedence:",
+            "node scripts/check-config-precedence.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "naming-taxonomy",
+      "requirement": "Govern one Clockify vocabulary across SDK methods, CLI commands, MCP tools, docs, examples, generated metadata, and OpenAPI operation parity.",
+      "evidence": [
+        {
+          "path": "docs/naming-taxonomy-policy.md",
+          "contains": [
+            "Canonical vocabulary",
+            "One Clockify vocabulary",
+            "Drift signals",
+            "make naming-taxonomy"
+          ]
+        },
+        {
+          "path": "docs/naming-taxonomy-contract.json",
+          "contains": [
+            "contractInvariants",
+            "safe-naming-taxonomy-paths",
+            "typed-vocabulary-groups",
+            "combined-vocabulary-evidence",
+            "supporting-evidence-marker-contract",
+            "combinedVocabularyDocs",
+            "package-names",
+            "time-entry-surface",
+            "workflow-verbs",
+            "business-workflows",
+            "receipt-language"
+          ]
+        },
+        {
+          "path": "scripts/check-naming-taxonomy.mjs",
+          "contains": [
+            "Naming taxonomy contract shape failed",
+            "assertContractShape",
+            "assertSafeRelativePath",
+            "Naming taxonomy contract passed",
+            "vocabulary",
+            "supportingEvidence"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "naming-taxonomy:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operation-coverage",
+      "requirement": "Guard no-regression operation coverage thresholds across corrected OpenAPI, SDK method stamps, TS MCP exact matches, GOCLMCP exact matches, and curated parity overrides.",
+      "evidence": [
+        {
+          "path": "docs/operation-coverage-policy.md",
+          "markers": [
+            "Contract-shape rule",
+            "Operation-coverage contract shape is part of parity readiness",
+            "missing threshold values",
+            "Make/docs/inventory/audit wiring"
+          ]
+        },
+        {
+          "path": "docs/operation-coverage-contract.json",
+          "markers": [
+            "contractInvariants",
+            "safe-operation-coverage-evidence-paths",
+            "typed-report-inputs",
+            "typed-thresholds",
+            "typed-supporting-evidence",
+            "typed-wiring-contract",
+            "makefile-audit-wiring",
+            "wiring",
+            "operation-coverage",
+            "scripts/check-operation-coverage.mjs"
+          ]
+        },
+        {
+          "path": "scripts/check-operation-coverage.mjs",
+          "markers": [
+            "validateContractShape",
+            "safeRelativePath",
+            "Operation coverage contract shape failed",
+            "reportInputs.operationParity",
+            "typed-thresholds",
+            "makefile-audit-wiring",
+            "wiring.makeTarget",
+            "wiring.checker",
+            "wiring.qualityGate",
+            "wiring.inventoryId",
+            "wiring.auditId",
+            "operation-coverage",
+            "scripts/check-operation-coverage.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "operation-coverage:",
+            "node scripts/check-operation-coverage.mjs"
+          ]
+        }
+      ]
+    }
+  ],
+  "contractInvariants": [
+    "valid-schema-version",
+    "valid-purpose",
+    "safe-audit-evidence-paths",
+    "typed-requirement-contracts",
+    "typed-evidence-markers",
+    "typed-temporary-context-contract",
+    "makefile-audit-wiring"
+  ],
+  "wiring": {
+    "makeTarget": "enterprise-audit",
+    "finalMakeTarget": "enterprise-audit-final",
+    "checker": "scripts/check-enterprise-hardening.mjs"
+  }
+}

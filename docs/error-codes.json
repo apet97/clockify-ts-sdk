@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Shared recovery/error vocabulary for SDK helpers, CLI JSON, MCP envelopes, and docs. Each entry exposes a retryable hint (via the retry field) and a recovery sentence.",
+  "codes": [
+    {
+      "code": "invalid_request",
+      "httpStatus": [400],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "The request is malformed, missing required fields, or locally invalid before Clockify accepts it.",
+      "recovery": "Fix the request fields, IDs, dates, pagination values, or enum values, then retry."
+    },
+    {
+      "code": "auth_or_permission",
+      "httpStatus": [401, 403],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "The token is missing, invalid, expired, pointed at the wrong workspace, or lacks permission for the operation.",
+      "recovery": "Check CLOCKIFY_API_KEY or addon token, workspace ID, and the user's Clockify role or plan permissions."
+    },
+    {
+      "code": "feature_unavailable",
+      "httpStatus": [402],
+      "retry": false,
+      "surfaces": ["cli", "mcp"],
+      "meaning": "The endpoint exists but the workspace plan or feature configuration does not expose it.",
+      "recovery": "Use a supported workspace plan, skip the gated workflow, or fall back to a lower-level read operation."
+    },
+    {
+      "code": "not_found",
+      "httpStatus": [404],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "The requested object does not exist, is archived/deleted, or is outside the active workspace.",
+      "recovery": "List the resource again, use returned IDs instead of names, and confirm the workspace ID."
+    },
+    {
+      "code": "conflict",
+      "httpStatus": [409],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Clockify rejected the write because it conflicts with existing state, uniqueness, or a concurrent update.",
+      "recovery": "Fetch current state, reuse the existing object when appropriate, or retry with a different name or payload."
+    },
+    {
+      "code": "rate_limited",
+      "httpStatus": [429],
+      "retry": true,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Clockify rate-limited the caller.",
+      "recovery": "Wait for Retry-After or X-RateLimit-Reset when present; otherwise retry with exponential backoff."
+    },
+    {
+      "code": "clockify_upstream_error",
+      "httpStatus": [500, 502, 503, 504],
+      "retry": true,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Clockify returned a server-side or temporary upstream failure.",
+      "recovery": "Retry idempotent reads/writes with backoff; preserve request IDs for support/debugging."
+    },
+    {
+      "code": "connection_error",
+      "httpStatus": [],
+      "retry": true,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "The process could not reach Clockify before receiving an HTTP response.",
+      "recovery": "Check network, proxy, DNS, TLS, base URL, and retry with backoff."
+    },
+    {
+      "code": "aborted",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "The caller cancelled the operation with an AbortSignal or equivalent stop request.",
+      "recovery": "Do not retry automatically; surface cancellation to the caller."
+    },
+    {
+      "code": "error",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["cli", "mcp"],
+      "meaning": "Unknown local/runtime failure that does not fit a more specific code yet.",
+      "recovery": "Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior."
+    }
+  ]
+}

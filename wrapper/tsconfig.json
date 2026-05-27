@@ -1,54 +1,99 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "lib": ["ES2023", "DOM", "DOM.Iterable"],
-        "types": ["node"],
-        "noEmit": true,
-        "baseUrl": ".",
-        "paths": {
-            "clockify-sdk-ts": ["./index.ts"],
-            "clockify-sdk-ts/create-client": ["./create-client.ts"],
-            "clockify-sdk-ts/composed-fetch": ["./composed-fetch.ts"],
-            "clockify-sdk-ts/iter": ["./iter.ts"],
-            "clockify-sdk-ts/webhooks": ["./webhooks.ts"],
-            "clockify-sdk-ts/webhook-events": ["./webhook-events.ts"],
-            "clockify-sdk-ts/pagination": ["./pagination.ts"],
-            "clockify-sdk-ts/paginated-list": ["./paginated-list.ts"],
-            "clockify-sdk-ts/with-response": ["./with-response.ts"],
-            "clockify-sdk-ts/errors": ["./errors.ts"],
-            "clockify-sdk-ts/deprecation": ["./deprecation.ts"],
-            "clockify-sdk-ts/scoped-client": ["./scoped-client.ts"],
-            "clockify-sdk-ts/otel-hooks": ["./otel-hooks.ts"],
-            "clockify-sdk-ts/health": ["./health.ts"],
-            "clockify-sdk-ts/rate-limit": ["./rate-limit.ts"]
-        }
-    },
-    "include": [
-        "src/**/*.ts",
-        "index.ts",
-        "create-client.ts",
-        "composed-fetch.ts",
-        "iter.ts",
-        "pagination.ts",
-        "paginated-list.ts",
-        "webhooks.ts",
-        "webhook-events.ts",
-        "with-response.ts",
-        "errors.ts",
-        "deprecation.ts",
-        "scoped-client.ts",
-        "otel-hooks.ts",
-        "health.ts",
-        "rate-limit.ts",
-        "tests/**/*.ts",
-        "examples/**/*.ts",
-        "scripts/**/*.ts"
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
     ],
-    "exclude": ["node_modules", "dist", "scripts/deno-smoke.ts"]
+    "types": [
+      "node"
+    ],
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "clockify-sdk-ts-115": [
+        "./index.ts"
+      ],
+      "clockify-sdk-ts-115/create-client": [
+        "./create-client.ts"
+      ],
+      "clockify-sdk-ts-115/composed-fetch": [
+        "./composed-fetch.ts"
+      ],
+      "clockify-sdk-ts-115/iter": [
+        "./iter.ts"
+      ],
+      "clockify-sdk-ts-115/webhooks": [
+        "./webhooks.ts"
+      ],
+      "clockify-sdk-ts-115/webhook-events": [
+        "./webhook-events.ts"
+      ],
+      "clockify-sdk-ts-115/pagination": [
+        "./pagination.ts"
+      ],
+      "clockify-sdk-ts-115/paginated-list": [
+        "./paginated-list.ts"
+      ],
+      "clockify-sdk-ts-115/with-response": [
+        "./with-response.ts"
+      ],
+      "clockify-sdk-ts-115/errors": [
+        "./errors.ts"
+      ],
+      "clockify-sdk-ts-115/deprecation": [
+        "./deprecation.ts"
+      ],
+      "clockify-sdk-ts-115/scoped-client": [
+        "./scoped-client.ts"
+      ],
+      "clockify-sdk-ts-115/otel-hooks": [
+        "./otel-hooks.ts"
+      ],
+      "clockify-sdk-ts-115/health": [
+        "./health.ts"
+      ],
+      "clockify-sdk-ts-115/rate-limit": [
+        "./rate-limit.ts"
+      ],
+      "clockify-sdk-ts-115/diagnostics": [
+        "./diagnostics.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "index.ts",
+    "create-client.ts",
+    "composed-fetch.ts",
+    "iter.ts",
+    "pagination.ts",
+    "paginated-list.ts",
+    "webhooks.ts",
+    "webhook-events.ts",
+    "with-response.ts",
+    "error-codes.ts",
+    "errors.ts",
+    "deprecation.ts",
+    "scoped-client.ts",
+    "otel-hooks.ts",
+    "health.ts",
+    "diagnostics.ts",
+    "rate-limit.ts",
+    "tests/**/*.ts",
+    "examples/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts/deno-smoke.ts"
+  ]
 }
