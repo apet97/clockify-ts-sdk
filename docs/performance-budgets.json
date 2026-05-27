@@ -7,7 +7,7 @@
     "enterpriseAuditId": "performance-budgets"
   },
   "calibrationPolicy": {
-    "status": "provisional",
+    "status": "calibrated",
     "finalStatus": "calibrated",
     "requiredSuccessfulRuns": 3,
     "receiptPath": "docs/performance-baseline-latest.json",
@@ -59,40 +59,40 @@
   "fileSize": [
     {
       "path": "wrapper/dist/esm/index.js",
-      "maxBytes": 120000,
-      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application."
+      "maxBytes": 3500,
+      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application. Calibrated from measured baseline of 2501 bytes (max(actual*1.35, actual+500))."
     },
     {
       "path": "wrapper/dist/cjs/index.js",
-      "maxBytes": 140000,
-      "rationale": "CJS root import should stay close to ESM size after dual-build emit."
+      "maxBytes": 16000,
+      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Calibrated from measured baseline of 11693 bytes."
     },
     {
       "path": "cli/dist/index.js",
-      "maxBytes": 180000,
-      "rationale": "CLI startup entrypoint should remain lightweight and command-dispatch oriented."
+      "maxBytes": 8000,
+      "rationale": "CLI startup entrypoint should remain lightweight and command-dispatch oriented. Calibrated from measured baseline of 5776 bytes."
     },
     {
       "path": "mcp/dist/index.js",
-      "maxBytes": 220000,
-      "rationale": "MCP stdio entrypoint should not absorb generated SDK internals or fixture data."
+      "maxBytes": 1700,
+      "rationale": "MCP stdio entrypoint should not absorb generated SDK internals or fixture data. Calibrated from measured baseline of 1110 bytes."
     }
   ],
   "timing": [
     {
       "name": "sdk-esm-import",
-      "maxMs": 1500,
-      "rationale": "A consumer should be able to import the SDK root without expensive runtime setup."
+      "maxMs": 600,
+      "rationale": "A consumer should be able to import the SDK root without expensive runtime setup. Calibrated from measured baseline ~240ms."
     },
     {
       "name": "cli-version",
-      "maxMs": 1500,
-      "rationale": "The CLI should print version/help quickly before any Clockify network setup."
+      "maxMs": 600,
+      "rationale": "The CLI should print version/help quickly before any Clockify network setup. Calibrated from measured baseline ~185ms."
     },
     {
       "name": "mcp-tools-list",
-      "maxMs": 3000,
-      "rationale": "MCP clients should be able to discover the 105-tool surface quickly on local stdio startup."
+      "maxMs": 1200,
+      "rationale": "MCP clients should be able to discover the 105-tool surface quickly on local stdio startup. Calibrated from measured baseline ~440ms."
     }
   ],
   "contractInvariants": [

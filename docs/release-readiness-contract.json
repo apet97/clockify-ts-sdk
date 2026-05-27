@@ -145,7 +145,6 @@
     {
       "path": "docs/risk-register.json",
       "contains": [
-        "performance-budgets-provisional",
         "legacy-release-workflow-needs-maintainer-decision"
       ]
     }
