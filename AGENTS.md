@@ -23,8 +23,9 @@ subdirectory:
   Fern-generated + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **21 commands** across 15 groups.
-  Local build artefact: `cli/dist/`.
+  interface on top of the SDK. **16 commands** including `doctor`,
+  `completion`, and the workflow shortcuts. Local build
+  artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
   server, sibling to the Go MCP in GOCLMCP. **105 tools**: 17
   workflow tools plus 88 domain tools across 16 resource groups.
@@ -170,11 +171,11 @@ output/ts-sdk/**  (Fern emits ~708 TS files; --force WIPES the tree)
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check    (tsc --noEmit; covers src/**, hand-written *.ts, tests/**)
-        │  npm test              (vitest; 214 tests, with live sandbox flows gated by
+        │  npm test              (vitest; 227 tests, with live sandbox flows gated by
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 46 names + 14 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 47 names + 16 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -301,7 +302,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (46 names, 14 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (47 names, 16 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
@@ -315,7 +316,7 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; CI diffs on every PR
-├── tests/                    (18 files, ~214 tests including env-gated live flows @ v0.9.0)
+├── tests/                    (20 files, 227 tests including env-gated live flows @ v0.9.0)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
 │   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
@@ -345,7 +346,7 @@ whitelists what `npm pack` includes. Do not add without a
 pack/readiness review. `CHANGELOG.md` is intentionally omitted to
 keep the tarball lean.
 
-Fourteen subpaths in `package.json` `exports` at v0.9.0, each
+Sixteen subpaths in `package.json` `exports` at v0.9.0, each
 with `import` + `require` conditions (modern dual-tier shape:
 `{ types, default }` per condition so TS resolves ESM vs CJS
 types correctly):
