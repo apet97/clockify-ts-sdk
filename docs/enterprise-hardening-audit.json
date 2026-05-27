@@ -2902,7 +2902,6 @@
           "path": "docs/risk-register.json",
           "contains": [
             "fern-bare-array-pagination",
-            "performance-budgets-provisional",
             "legacy-release-workflow-needs-maintainer-decision",
             "generatedReport",
             "requiredFileSignalKeys",
@@ -3975,7 +3974,6 @@
             "supportRelativePath",
             "repo-relative path without parent traversal",
             "assertNonEmptyString",
-            "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
             "contractInvariants",

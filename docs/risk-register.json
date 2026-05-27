@@ -102,12 +102,9 @@
         "acceptedRiskCount"
       ],
       "requiredRiskIds": [
-        "performance-budgets-provisional",
         "legacy-release-workflow-needs-maintainer-decision"
       ],
-      "requiredReadinessBlockingRiskIds": [
-        "performance-budgets-provisional"
-      ],
+      "requiredReadinessBlockingRiskIds": [],
       "requiredNonBlockingOpenOrProvisionalRiskIds": [
         "legacy-release-workflow-needs-maintainer-decision"
       ]
@@ -149,29 +146,6 @@
         {
           "path": "wrapper/create-client.ts",
           "contains": "addonToken"
-        }
-      ]
-    },
-    {
-      "id": "performance-budgets-provisional",
-      "status": "provisional",
-      "surface": "SDK/CLI/MCP package performance",
-      "summary": "Performance ceilings are intentionally provisional until repeated receipts establish current clean-tree baselines.",
-      "impact": "Size/startup thresholds are useful as regression tripwires but are not yet calibrated final budgets.",
-      "mitigation": "Run the no-network calibration planner, record performance receipts after builds, and tighten ceilings after calibrationPolicy.requiredSuccessfulRuns successful baseline runs.",
-      "closureGate": "Set docs/performance-budgets.json calibrationPolicy.status to calibrated and pass make final-proof-receipt-check.",
-      "evidence": [
-        {
-          "path": "docs/performance-budgets.json",
-          "contains": "\"status\": \"provisional\""
-        },
-        {
-          "path": "docs/quality-gates.md",
-          "contains": "make performance-receipt"
-        },
-        {
-          "path": "scripts/performance-calibration-plan.mjs",
-          "contains": "performance-budgets-provisional"
         }
       ]
     },

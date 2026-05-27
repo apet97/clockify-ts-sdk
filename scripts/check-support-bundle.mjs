@@ -50,12 +50,6 @@ function assertNonEmptyString(label, value) {
     }
 }
 
-function assertNonEmptyArray(label, values) {
-    if (!Array.isArray(values) || values.length === 0) {
-        fail(label, "must be a non-empty array");
-    }
-}
-
 function assertStringArray(label, values, { allowEmpty = true } = {}) {
     if (!Array.isArray(values)) {
         fail(label, "must be an array");

@@ -233,7 +233,6 @@ try {
     for (const packageId of ["wrapper", "cli", "mcp"]) {
         tgzByPackageId.set(packageId, pack(packageContract(packageId).packageDir));
     }
-    const wrapperTgz = tgzByPackageId.get("wrapper");
 
     const sdkConsumer = tempProject("sdk");
     install(sdkConsumer, packageFilesForConsumer("sdk", tgzByPackageId));
