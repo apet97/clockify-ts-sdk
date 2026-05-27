@@ -9,8 +9,8 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 46 public names; 14 subpaths |
-| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 21 commands |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 47 public names; 16 subpaths |
+| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 16 commands incl. `doctor` |
 | `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 105 tools |
 
 The `-115` / `115` suffix is intentional trademark distance. Default
@@ -37,10 +37,17 @@ that snapshot by hand.
 Preferred root gates:
 
 ```bash
-make perfect-fast   # local deterministic SDK/CLI/MCP package proof
+make perfect-fast   # local deterministic SDK/CLI/MCP package proof (~76 sub-gates)
 make perfect-full   # GOCLMCP drift + Fern + package gates + packed-consumer smoke
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
+
+No-network operator helpers go through `scripts/plan.mjs <topic>` or the
+individual planner scripts in `scripts/`:
+`acceptance`, `change-impact`, `examples`, `maintenance`, `onboarding`,
+`workflow`, `performance-calibration`, `release-decision`,
+`contract-inventory`, `risk-status`. These print plans/reports; they
+never run proof gates.
 
 Focused package gates:
 
@@ -117,15 +124,18 @@ make docs-drift
 - `make changelog-drift` checks that touched package scopes update
   their package changelog.
 - `make performance-budgets` checks built package file-size and
-  startup/import budgets after package build gates.
+  startup/import budgets after package build gates. Budgets are
+  calibrated (status: calibrated in `docs/performance-budgets.json`);
+  ceilings are ~1.35x measured actuals. Recalibrate with
+  `make performance-receipt` after material runtime changes.
 - `make docs-index-drift` checks `docs/README.md` links and required
   generated surfaces.
 - `docs/install-personas.md`, `docs/migration-guide.md`, and
   `docs/dependency-policy.md` are operator-facing hand-written docs.
 - `docs/troubleshooting.md` is generated from `docs/error-codes.json`;
   run `make troubleshooting` after error registry changes.
-- `make agent-handoff` checks `AGENTS.md`, this file, temporary context
-  lifecycle, generated-path boundaries, and stale package/tool counts.
+- `make agent-handoff` checks `AGENTS.md`, this file, generated-path
+  boundaries, and stale package/tool counts.
 - Release-please currently needs repository Actions permission to
   create PRs; do not solve that by changing release auth casually.
 
