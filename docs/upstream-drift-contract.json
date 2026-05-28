@@ -1,21 +1,10 @@
 {
   "schemaVersion": 1,
   "purpose": "Upstream Clockify API, GOCLMCP generator, Fern, SDK, CLI, MCP, and docs drift lifecycle contract.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-upstream-drift-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-lifecycle-evidence",
-    "typed-generated-truth-surfaces",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/upstream-drift-policy.md",
     "mustContain": [
       "Drift lifecycle",
-      "Contract-shape rule",
       "Routing rules",
       "Raw evidence safety",
       "Required updates after real drift",

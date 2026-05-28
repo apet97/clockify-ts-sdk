@@ -1,17 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Cross-surface diagnostics contract for SDK clockifyDiagnostics, CLI doctor, MCP doctor resource, redaction, no-network behavior, and product-surface discoverability.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-diagnostics-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-surface-contracts",
-    "typed-diagnostic-surface-files",
-    "typed-no-network-diagnostics-evidence",
-    "typed-forbidden-secret-patterns",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/diagnostics-policy.md",
     "contains": [
@@ -20,7 +9,6 @@
       "Diagnostics return receipts",
       "local readiness from live proof",
       "No-network proof",
-      "Contract-shape rule",
       "make diagnostics",
       "source attribution"
     ],

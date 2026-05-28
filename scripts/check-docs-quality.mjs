@@ -140,22 +140,6 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, { min: 1 });
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-docs-quality-evidence-paths",
-        "typed-policy-document-contract",
-        "typed-key-document-entries",
-        "typed-supporting-evidence-entries",
-        "typed-generated-truth-surfaces",
-        "typed-product-surface-claim-contract",
-        "typed-scan-paths",
-        "typed-unsupported-claim-regexes",
-        "typed-wiring-contract",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     validateEntryShape("policyDocument", contract.policyDocument);
     validateEntryCollection("keyDocuments", contract.keyDocuments, { requireId: true });

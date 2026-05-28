@@ -101,25 +101,6 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-receipt-evidence-paths",
-        "typed-policy-document-contract",
-        "typed-sdk-receipt-evidence",
-        "typed-cli-receipt-evidence",
-        "typed-mcp-receipt-evidence",
-        "typed-supporting-contracts",
-        "typed-required-make-targets",
-        "typed-docs-index-contract",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     if (assertObject("wiring", contract.wiring)) {
         assertNonEmptyString("wiring.makeTarget", contract.wiring.makeTarget);

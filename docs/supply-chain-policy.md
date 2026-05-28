@@ -14,16 +14,6 @@ small, licensed, and provenance-ready.
 | Runtime dependencies stay intentionally small and are checked by `make dependency-boundary`. | Avoid accidental framework, AI SDK, HTTP client, or utility-library sprawl. |
 | `prepublishOnly` remains present on every public package and includes type-check/test/build proof where the package has tests. | A future publish path inherits a local last-resort package gate instead of only emitting JavaScript. |
 | Packages must not include `src`, tests, `node_modules`, examples, or generated docs in `files`. | Tarballs should contain built artifacts plus essential docs only. |
-
-## Contract-shape rule
-
-Supply-chain contract shape is part of publish safety. `make supply-chain`
-must fail before reading package manifests when
-`docs/supply-chain-contract.json` has an invalid schema version, missing
-purpose, missing explicit invariants, unsafe repo-relative paths, untyped
-package entries, malformed `publishConfig` expectations, malformed pack-file
-allow/deny lists, or untyped policy/supporting-contract marker lists.
-
 ## Required receipts
 
 Before claiming supply-chain readiness, run or cite:

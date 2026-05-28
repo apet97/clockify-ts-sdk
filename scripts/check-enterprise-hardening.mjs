@@ -79,21 +79,6 @@ assertUnique(
     requirements.map((requirement) => requirement?.id).filter((id) => typeof id === "string" && id.length > 0),
 );
 
-const auditInvariants = assertStringArray("audit.contractInvariants", audit.contractInvariants, {
-    allowEmpty: false,
-});
-assertUnique("audit.contractInvariants", auditInvariants);
-for (const invariant of [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-audit-evidence-paths",
-    "typed-requirement-contracts",
-    "typed-evidence-markers",
-    "typed-temporary-context-contract",
-    "makefile-audit-wiring",
-]) {
-    if (!auditInvariants.includes(invariant)) fail("audit.contractInvariants", `missing invariant ${invariant}`);
-}
 
 if (audit.wiring == null || typeof audit.wiring !== "object" || Array.isArray(audit.wiring)) {
     fail("audit.wiring", "must be an object");

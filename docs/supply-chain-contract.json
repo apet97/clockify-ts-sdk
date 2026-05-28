@@ -1,17 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Supply-chain, license, provenance, and tarball hygiene contract for SDK, CLI, and MCP packages. Guards npm publish defaults and prepublishOnly script shapes.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-supply-chain-paths",
-    "typed-package-supply-chain-entries",
-    "typed-publish-config-expectations",
-    "typed-pack-file-boundaries",
-    "typed-policy-contract",
-    "typed-supporting-contracts",
-    "makefile-audit-wiring"
-  ],
   "packages": [
     {
       "id": "wrapper",

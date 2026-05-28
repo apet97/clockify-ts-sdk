@@ -176,15 +176,5 @@
         "inventory ownership for operators"
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-toolbox-paths",
-    "typed-helper-lists",
-    "typed-helper-command-coverage",
-    "typed-helper-ownership-contract",
-    "typed-supporting-doc-markers",
-    "makefile-audit-wiring"
   ]
 }

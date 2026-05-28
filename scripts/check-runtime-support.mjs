@@ -98,18 +98,6 @@ function assertContractShape(value) {
         failShape(`moduleType must be module, got ${value.moduleType ?? "(missing)"}`);
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-runtime-support-paths",
-        "typed-runtime-package-entries",
-        "package-engines-match-node-floor",
-        "runtime-docs-mention-node-floor",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     const requiredDocsMarkers = assertStringArray(value.requiredDocsMarkers, "requiredDocsMarkers");
     if (isNonEmptyString(value.nodeFloor) && !requiredDocsMarkers.includes(value.nodeFloor)) {

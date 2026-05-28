@@ -1,25 +1,12 @@
 {
   "schemaVersion": 1,
   "purpose": "Release, support, and security documentation contract for the SDK/CLI/MCP platform.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-release-support-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-security-document-contract",
-    "typed-package-contract-reference",
-    "typed-required-make-targets",
-    "typed-docs-index-contract",
-    "typed-forbidden-policy-markers",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/release-support-policy.md",
     "mustContain": [
       "clockify-sdk-ts-115",
       "@clockify115/cli",
       "@clockify115/mcp-server",
-      "Contract-shape rule",
       "make perfect-fast",
       "make perfect-full",
       "make pack-smoke",

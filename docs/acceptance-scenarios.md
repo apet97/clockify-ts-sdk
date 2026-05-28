@@ -20,11 +20,6 @@ live sandbox boundary, receipts, and OpenAPI truth surfaces.
 - OpenAPI/generator scenarios must preserve the upstream-first rule: GOCLMCP is
   canonical, local snapshots are downstream, and generated output is not edited
   by hand.
-
-## Contract-shape rule
-
-Acceptance-scenarios contract shape is part of readiness. The checker must fail before reading scenario docs, supporting evidence, or generated planner output when the JSON contract has unsafe repo-relative evidence paths, malformed planner expectations, malformed scenario entries, duplicate scenario ids, malformed supporting evidence, or missing Make/docs/inventory/audit wiring.
-
 ## Scenario matrix
 
 For a no-network proof plan by scenario, run:

@@ -111,20 +111,6 @@ function assertContractShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-naming-taxonomy-paths",
-        "typed-vocabulary-groups",
-        "required-target-wiring",
-        "required-doc-evidence",
-        "combined-vocabulary-evidence",
-        "supporting-evidence-marker-contract",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     if (!isPlainObject(value.policyDocument)) {
         failShape("policyDocument must be an object");

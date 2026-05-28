@@ -1,19 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Dependency boundary contract for SDK, CLI, and MCP packages. Keeps runtime dependencies intentional and prevents generated SDK internals from leaking into sibling packages.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-package-manifest-paths",
-    "safe-source-roots",
-    "typed-package-dependency-contracts",
-    "typed-package-lockfiles",
-    "typed-runtime-dependency-lists",
-    "typed-peer-and-dev-dependency-maps",
-    "typed-forbidden-runtime-dependencies",
-    "typed-forbidden-import-markers",
-    "makefile-audit-wiring"
-  ],
   "sourceRoots": [
     "cli/src",
     "cli/tests",

@@ -156,22 +156,6 @@ function validateReportGeneratorShape() {
 function validateRegisterShape() {
     if (register.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", register.purpose);
-    const invariants = assertStringArray("contractInvariants", register.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "typed-risk-entries",
-        "safe-risk-evidence-paths",
-        "typed-risk-report-generator",
-        "typed-generated-risk-report-contract",
-        "typed-allowed-risk-statuses",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     const allowedStatuses = assertStringArray("allowedStatuses", register.allowedStatuses, { allowEmpty: false });
     assertUnique("allowedStatuses", allowedStatuses);

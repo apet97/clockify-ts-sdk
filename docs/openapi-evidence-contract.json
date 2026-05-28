@@ -1,27 +1,19 @@
 {
   "schemaVersion": 1,
   "purpose": "Contract for the OpenAPI discrepancy/evidence ledger that backs manual Clockify spec corrections and generator decisions.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-openapi-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-ledger-contract",
-    "typed-supporting-evidence",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/openapi-evidence-policy.md",
     "mustContain": [
       "spec/evidence/discrepancies.md",
       "five questions",
-      "Contract-shape rule",
       "make openapi-evidence",
       "make openapi-lint",
       "Generated TypeScript is an output"
     ],
-    "forbiddenMarkers": ["TODO", "TBD"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
   },
   "ledger": {
     "path": "spec/evidence/discrepancies.md",

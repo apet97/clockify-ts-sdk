@@ -1,17 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Machine-readable MCP write-safety contract. High-risk workflow writes must require dry-run confirmation; low-level destructive tools must advertise destructive semantics and return receipts.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-mcp-write-evidence-paths",
-    "typed-destructive-tool-threshold",
-    "typed-workflow-tool-lists",
-    "typed-required-file-evidence",
-    "typed-workflow-marker-contracts",
-    "typed-forbidden-policy-markers",
-    "typed-wiring-contract"
-  ],
   "minimumDestructiveToolCount": 20,
   "highRiskWorkflowTools": [
     "clockify_invoice_client_work",
@@ -31,7 +20,6 @@
         "destructiveHint: true",
         "dry_run",
         "confirm_token",
-        "Contract-shape rule",
         "changed",
         "recovery"
       ]

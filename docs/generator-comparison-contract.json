@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "OpenAPI SDK-stamp to generated TypeScript method comparison contract. Keeps generated SDK method names aligned with corrected OpenAPI x-fern SDK metadata.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-generator-comparison-evidence-paths",
-    "typed-operation-inventory-contract",
-    "typed-generated-root-contract",
-    "typed-client-scan-contract",
-    "typed-thresholds",
-    "typed-wiring-contract"
-  ],
   "operationInventory": {
     "path": "docs/openapi-operations.json",
     "arrayField": "operations",

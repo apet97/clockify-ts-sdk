@@ -163,15 +163,5 @@
         "Observability receipts"
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-data-handling-paths",
-    "typed-policy-contract",
-    "typed-data-class-markers",
-    "typed-required-docs",
-    "typed-supporting-evidence",
-    "makefile-audit-wiring"
   ]
 }

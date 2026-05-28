@@ -1,24 +1,11 @@
 {
   "schemaVersion": 1,
   "purpose": "Breaking-change review contract for SDK exports, CLI commands, MCP tools, OpenAPI generation, packages, docs, changelogs, migration notes, and proof gates.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-breaking-change-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-surface-contracts",
-    "typed-migration-evidence",
-    "typed-changelog-evidence",
-    "typed-version-policy-evidence",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/breaking-change-review-policy.md",
     "mustContain": [
       "No silent removals",
       "Replacement-first rule",
-      "Contract-shape rule",
       "Review record",
       "Forbidden shortcuts",
       "make breaking-change-review"
@@ -74,7 +61,6 @@
       "path": "docs/version-policy.json",
       "mustContain": [
         "productSurfaceMustMatchManifest",
-        "changelog-anchors-required",
         "version-policy"
       ]
     },
@@ -124,15 +110,21 @@
   "changelogs": [
     {
       "path": "wrapper/CHANGELOG.md",
-      "mustContain": ["## [Unreleased]"]
+      "mustContain": [
+        "## [Unreleased]"
+      ]
     },
     {
       "path": "cli/CHANGELOG.md",
-      "mustContain": ["## [Unreleased]"]
+      "mustContain": [
+        "## [Unreleased]"
+      ]
     },
     {
       "path": "mcp/CHANGELOG.md",
-      "mustContain": ["## [Unreleased]"]
+      "mustContain": [
+        "## [Unreleased]"
+      ]
     }
   ],
   "requiredMakeTargets": [

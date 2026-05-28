@@ -122,20 +122,6 @@ function validateContractShape() {
     assertNonEmptyString("packageName", contract.packageName);
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, { min: 1 });
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-sdk-public-api-evidence-paths",
-        "typed-wrapper-file-inputs",
-        "typed-root-symbols",
-        "typed-subpath-symbols",
-        "typed-tsconfig-aliases",
-        "typed-package-marker-scan",
-        "typed-wiring-contract",
-    ]) {
-        if (!invariants.includes(invariant)) fail(`contractInvariants: missing invariant ${invariant}`);
-    }
 
     if (assertObject("files", contract.files)) {
         for (const key of ["wrapperPackage", "wrapperTsconfig", "dualBuildSmoke"]) {

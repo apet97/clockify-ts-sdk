@@ -1,18 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Cross-surface mutation and idempotency safety contract for SDK retries, CLI writes, MCP confirmation flow, receipts, and ambiguous failure recovery.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-mutation-safety-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-required-targets",
-    "typed-required-docs",
-    "typed-mutation-classes",
-    "typed-supporting-evidence",
-    "typed-readiness-context-contract",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/mutation-safety-policy.md",
     "contains": [
@@ -22,13 +10,16 @@
       "MCP rules",
       "Ambiguous failure recovery",
       "Readiness-context handoff",
-      "Contract-shape rule",
       "Proof gates",
       "POST and PATCH are excluded",
       "dry_run",
       "confirm_token"
     ],
-    "forbiddenMarkers": ["TODO", "TBD", "retry all writes"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "retry all writes"
+    ]
   },
   "requiredTargets": [
     "mutation-safety",
@@ -49,11 +40,46 @@
     "docs/live-tests.md"
   ],
   "mutationClasses": [
-    { "id": "read-only", "markers": ["Read-only", "Retryable with backoff", "pagination/rate-limit hints"] },
-    { "id": "idempotent-update", "markers": ["Idempotent update", "duplicate-safe semantics", "changed fields"] },
-    { "id": "non-idempotent-create", "markers": ["Non-idempotent create", "Do not auto-retry by default", "created IDs"] },
-    { "id": "destructive-delete", "markers": ["Destructive delete/remove", "explicit ID", "deleted/removed IDs"] },
-    { "id": "external-side-effect", "markers": ["External side effect", "dry run plus confirmation token", "risk class"] }
+    {
+      "id": "read-only",
+      "markers": [
+        "Read-only",
+        "Retryable with backoff",
+        "pagination/rate-limit hints"
+      ]
+    },
+    {
+      "id": "idempotent-update",
+      "markers": [
+        "Idempotent update",
+        "duplicate-safe semantics",
+        "changed fields"
+      ]
+    },
+    {
+      "id": "non-idempotent-create",
+      "markers": [
+        "Non-idempotent create",
+        "Do not auto-retry by default",
+        "created IDs"
+      ]
+    },
+    {
+      "id": "destructive-delete",
+      "markers": [
+        "Destructive delete/remove",
+        "explicit ID",
+        "deleted/removed IDs"
+      ]
+    },
+    {
+      "id": "external-side-effect",
+      "markers": [
+        "External side effect",
+        "dry run plus confirmation token",
+        "risk class"
+      ]
+    }
   ],
   "supportingEvidence": [
     {
@@ -67,23 +93,43 @@
     },
     {
       "path": "docs/sdk-runtime-policy.md",
-      "contains": ["Request behavior must be observable", "wrapper retry policy", "Errors must be stable and recoverable"]
+      "contains": [
+        "Request behavior must be observable",
+        "wrapper retry policy",
+        "Errors must be stable and recoverable"
+      ]
     },
     {
       "path": "docs/cli-write-safety-policy.md",
-      "contains": ["CLI writes stay non-interactive", "Destructive commands must be ID-scoped", "Errors must stay machine-readable"]
+      "contains": [
+        "CLI writes stay non-interactive",
+        "Destructive commands must be ID-scoped",
+        "Errors must stay machine-readable"
+      ]
     },
     {
       "path": "docs/mcp-write-safety-policy.md",
-      "contains": ["High-risk workflow writes require preview confirmation", "Confirmation tokens are scoped and one-use", "destructiveHint: true"]
+      "contains": [
+        "High-risk workflow writes require preview confirmation",
+        "Confirmation tokens are scoped and one-use",
+        "destructiveHint: true"
+      ]
     },
     {
       "path": "docs/receipts-policy.md",
-      "contains": ["changed", "recovery", "requestId"]
+      "contains": [
+        "changed",
+        "recovery",
+        "requestId"
+      ]
     },
     {
       "path": "docs/support-runbook.md",
-      "contains": ["Safe diagnostic bundle", "request IDs", "What must not be retried automatically"]
+      "contains": [
+        "Safe diagnostic bundle",
+        "request IDs",
+        "What must not be retried automatically"
+      ]
     },
     {
       "path": "scripts/create-support-bundle.mjs",

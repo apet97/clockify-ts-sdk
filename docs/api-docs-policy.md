@@ -21,11 +21,6 @@ itself.
 | Published docs | GitHub Pages workflow builds TypeDoc with `npm run docs`; generated `docs/api/` is not a source-of-truth input. |
 | Package docs | `wrapper/README.md` should link users to reference docs and resource docs without contradicting package names. |
 | Generated HTML identity | If `docs/api/` exists in the checkout, its TypeDoc title, package name, and npm navigation link must match `clockify-sdk-ts-115`; stale `clockify-sdk-ts` pages must be regenerated, not hand-edited. |
-
-## Contract-shape rule
-
-API-docs contract shape is part of documentation readiness. The checker must fail before reading TypeDoc, package manifests, resource docs, or workflow files when the JSON contract has unsafe repo-relative evidence paths, malformed TypeDoc/package/resource-docs expectations, duplicate marker lists, or missing Make/docs/inventory/audit wiring.
-
 ## Required receipts
 
 Before claiming API-doc readiness, run or cite:

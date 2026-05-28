@@ -1,14 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Machine-readable contract for durable architecture and operations decision records.",
-  "contractInvariants": [
-    "schema-versioned-decision-records-contract",
-    "safe-decision-record-paths",
-    "typed-decision-record-entries",
-    "required-heading-contract",
-    "zero-padded-decision-numbering",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "decision-records",
     "checker": "scripts/check-decision-records.mjs",
@@ -23,7 +15,10 @@
       "Do not use decision records to bypass proof",
       "after removing the"
     ],
-    "forbiddenMarkers": ["TODO", "TBD"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
   },
   "requiredHeadings": [
     "Status",

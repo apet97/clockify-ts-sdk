@@ -30,18 +30,6 @@ The SDK helper lives in `wrapper/deprecation.ts`; tests live in
 ## Compatibility window
 
 Keep deprecated public paths until the next major version unless explicit maintainer approval and migration receipt exist. Add the replacement first, then keep changelog and migration-guide notes current while the old path exists. The breaking-change review must state what remains temporarily supported and which final proof stack closes the removal.
-
-## Contract-shape rule
-
-Compatibility contract shape is part of breaking-change safety.
-`make compatibility-contract` must fail before trusting policy, changelog,
-migration, SDK, CLI, MCP, or OpenAPI evidence when
-`docs/compatibility-contract.json` has an invalid schema version, missing
-purpose, missing explicit invariants, unsafe repo-relative evidence paths,
-untyped policy markers, malformed surface/path marker lists, malformed required
-Make targets, malformed docs-index entries, or malformed forbidden policy
-markers.
-
 ## Required receipts
 
 Before claiming compatibility-safe readiness, run or cite:

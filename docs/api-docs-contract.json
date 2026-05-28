@@ -1,20 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "API documentation generation contract for TypeDoc and generated SDK resource markdown.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-api-docs-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-typedoc-contract",
-    "typed-wrapper-package-contract",
-    "typed-resource-docs-contract",
-    "typed-sync-script-contract",
-    "typed-docs-workflow-contract",
-    "typed-supporting-docs",
-    "typed-generated-api-docs-contract",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/api-docs-policy.md",
     "mustContain": [
@@ -23,8 +9,7 @@
       "clockify-sdk-ts-115",
       "make api-docs",
       "npm run docs:resources",
-      "Generated HTML identity",
-      "Contract-shape rule"
+      "Generated HTML identity"
     ],
     "forbiddenMarkers": [
       "TODO",

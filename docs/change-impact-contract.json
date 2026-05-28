@@ -1463,17 +1463,5 @@
       "changelogRequired": false,
       "notes": "Operation-coverage changes must preserve OpenAPI operation count and no-regression floors for SDK names, TS MCP matches, GOCLMCP matches, and curated overrides."
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-change-impact-file-paths",
-    "typed-policy-document-contract",
-    "typed-plan-generator-contract",
-    "typed-change-impact-matrix",
-    "typed-path-probe-expectations",
-    "typed-scope-requirement-expectations",
-    "declared-non-make-targets",
-    "makefile-audit-wiring"
   ]
 }

@@ -27,15 +27,6 @@ local package gates without becoming the source of product truth.
 - Treat local `make perfect-fast`, `make perfect-full`, and
   `make perfect-live` as the operator proof surface; CI is a parallel
   safety net.
-
-## Contract-shape rule
-
-CI contract shape is part of workflow readiness. The checker must fail
-before reading workflow files when the JSON contract has unsafe
-repo-relative evidence paths, malformed workflow/supporting-doc entries,
-duplicate marker lists, or missing Make/docs/inventory/audit wiring.
-This rule does not authorize changing CI/CD behavior.
-
 ## Release workflow decision packet
 
 Before any tag, GitHub release, npm publication, or release workflow

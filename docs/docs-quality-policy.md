@@ -66,16 +66,6 @@ or operator docs. They sound confident while hiding evidence.
 Operator docs should answer what to run, what it proves, what it does not prove,
 and what risk remains. If a page requires source-code knowledge to use safely,
 add a checklist, table, or exact command before calling it complete.
-
-## Contract-shape rule
-
-Documentation-quality contract shape is part of docs readiness. The checker
-must fail before scanning product docs when the JSON contract has unsafe
-repo-relative evidence paths, duplicate document ids or paths, malformed
-generated truth surface paths, malformed product-surface claim requirements,
-malformed scan paths, invalid unsupported-claim regexes, or missing
-Make/docs/inventory/audit wiring.
-
 ## Required proof
 
 Before claiming documentation quality readiness, run or cite:

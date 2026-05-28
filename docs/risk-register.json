@@ -234,15 +234,5 @@
         }
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "typed-risk-entries",
-    "safe-risk-evidence-paths",
-    "typed-risk-report-generator",
-    "typed-generated-risk-report-contract",
-    "typed-allowed-risk-statuses",
-    "makefile-audit-wiring"
   ]
 }

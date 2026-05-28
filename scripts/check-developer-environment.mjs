@@ -101,24 +101,6 @@ function assertFalseFields(value, fields, label) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-developer-environment-paths",
-        "typed-policy-document-contract",
-        "typed-root-boundary",
-        "typed-repo-doctor-contract",
-        "typed-package-contracts",
-        "typed-fern-contract",
-        "typed-supporting-doc-contracts",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     environmentRelativePath("policyDocument.path", contract.policyDocument?.path);
     const policyMarkers = assertStringArray("policyDocument.mustContain", contract.policyDocument?.mustContain, {

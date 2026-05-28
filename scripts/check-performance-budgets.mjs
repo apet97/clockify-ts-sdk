@@ -100,22 +100,6 @@ function assertKeys(object, keys, label) {
 function validateBudgetsShape() {
     if (budgets.schemaVersion !== 2) fail("schemaVersion: must be 2");
     assertNonEmptyString("purpose", budgets.purpose);
-    const invariants = assertStringArray("contractInvariants", budgets.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-performance-budget-paths",
-        "typed-calibration-policy",
-        "typed-calibration-plan-contract",
-        "typed-file-size-budgets",
-        "typed-timing-budgets",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail(`contractInvariants: missing invariant ${invariant}`);
-    }
 
     if (budgets.wiring == null || typeof budgets.wiring !== "object" || Array.isArray(budgets.wiring)) {
         fail("wiring: must be an object");

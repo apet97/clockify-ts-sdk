@@ -2,17 +2,6 @@
   "schemaVersion": 1,
   "packageName": "clockify-sdk-ts-115",
   "purpose": "Intentional SDK public API contract (publicExports). Keep this in sync with wrapper/index.ts, wrapper/package.json exports, wrapper/tsconfig.json package self-reference aliases, and wrapper/scripts/verify-dual-build.sh whenever a public symbol or subpath changes.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-sdk-public-api-evidence-paths",
-    "typed-wrapper-file-inputs",
-    "typed-root-symbols",
-    "typed-subpath-symbols",
-    "typed-tsconfig-aliases",
-    "typed-package-marker-scan",
-    "typed-wiring-contract"
-  ],
   "files": {
     "wrapperPackage": "wrapper/package.json",
     "wrapperTsconfig": "wrapper/tsconfig.json",

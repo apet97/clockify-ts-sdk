@@ -1,19 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Cross-surface receipt and observability contract for SDK, CLI, and MCP behavior.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-receipt-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-sdk-receipt-evidence",
-    "typed-cli-receipt-evidence",
-    "typed-mcp-receipt-evidence",
-    "typed-supporting-contracts",
-    "typed-required-make-targets",
-    "typed-docs-index-contract",
-    "makefile-audit-wiring"
-  ],
   "policyDocument": {
     "path": "docs/receipts-policy.md",
     "mustContain": [
@@ -21,7 +8,6 @@
       "withResponse",
       "structuredContent",
       "retryable",
-      "Contract-shape rule",
       "make receipts-contract"
     ],
     "forbiddenMarkers": [

@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Runnable SDK examples contract. Examples must import the public package name, stay catalogued in wrapper/examples/README.md, and avoid local source imports or committed secrets.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-examples-evidence-paths",
-    "typed-example-inventory",
-    "typed-forbidden-marker-lists",
-    "typed-secret-regexes",
-    "typed-supporting-contracts",
-    "typed-wiring-contract"
-  ],
   "packageName": "clockify-sdk-ts-115",
   "directory": "wrapper/examples",
   "readme": "wrapper/examples/README.md",

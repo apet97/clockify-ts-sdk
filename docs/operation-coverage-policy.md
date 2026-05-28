@@ -20,16 +20,6 @@ uses the current parity summary as a no-regression floor:
 These numbers are not marketing claims. They are tripwires. If coverage falls,
 the change must either restore coverage or update the contract with a deliberate
 rationale, risk-register note, and migration/support wording.
-
-## Contract-shape rule
-
-Operation-coverage contract shape is part of parity readiness. The checker must
-fail before reading operation inventory, parity reports, policy docs, or
-supporting evidence when the JSON contract has unsafe repo-relative evidence
-paths, malformed report input paths, missing threshold values, malformed
-required docs/targets, duplicate supporting evidence paths, or missing
-Make/docs/inventory/audit wiring.
-
 ## Rules
 
 - `docs/openapi-operations.json` remains the operation inventory truth for this repo.

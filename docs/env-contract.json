@@ -1,20 +1,22 @@
 {
   "schemaVersion": 1,
   "purpose": "Environment/configuration contract for SDK, CLI, and MCP. Keeps auth, workspace, mock base URL, and secret-hygiene docs aligned across surfaces.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-env-evidence-paths",
-    "typed-variable-entries",
-    "typed-required-safety-markers",
-    "typed-wiring-contract"
-  ],
   "variables": [
     {
       "name": "CLOCKIFY_API_KEY",
-      "surfaces": ["sdk", "cli", "mcp", "examples", "live-tests"],
+      "surfaces": [
+        "sdk",
+        "cli",
+        "mcp",
+        "examples",
+        "live-tests"
+      ],
       "secret": true,
-      "requiredFor": ["cli live/API calls", "mcp startup", "live examples"],
+      "requiredFor": [
+        "cli live/API calls",
+        "mcp startup",
+        "live examples"
+      ],
       "evidence": [
         "wrapper/create-client.ts",
         "cli/src/config.ts",
@@ -27,16 +29,32 @@
     },
     {
       "name": "CLOCKIFY_ADDON_TOKEN",
-      "surfaces": ["sdk"],
+      "surfaces": [
+        "sdk"
+      ],
       "secret": true,
-      "requiredFor": ["SDK addon-token auth"],
-      "evidence": ["wrapper/create-client.ts", "wrapper/README.md"]
+      "requiredFor": [
+        "SDK addon-token auth"
+      ],
+      "evidence": [
+        "wrapper/create-client.ts",
+        "wrapper/README.md"
+      ]
     },
     {
       "name": "CLOCKIFY_WORKSPACE_ID",
-      "surfaces": ["cli", "mcp", "examples", "live-tests"],
+      "surfaces": [
+        "cli",
+        "mcp",
+        "examples",
+        "live-tests"
+      ],
       "secret": false,
-      "requiredFor": ["CLI workspace-scoped commands", "MCP startup", "live examples"],
+      "requiredFor": [
+        "CLI workspace-scoped commands",
+        "MCP startup",
+        "live examples"
+      ],
       "evidence": [
         "cli/src/config.ts",
         "mcp/src/client.ts",
@@ -48,9 +66,15 @@
     },
     {
       "name": "CLOCKIFY_BASE_URL",
-      "surfaces": ["cli", "mcp", "mock-replay"],
+      "surfaces": [
+        "cli",
+        "mcp",
+        "mock-replay"
+      ],
       "secret": false,
-      "requiredFor": ["mock/replay/private gateway tests only"],
+      "requiredFor": [
+        "mock/replay/private gateway tests only"
+      ],
       "evidence": [
         "cli/src/config.ts",
         "mcp/src/client.ts",
@@ -63,17 +87,30 @@
     },
     {
       "name": "CLOCKIFY_HOME",
-      "surfaces": ["cli"],
+      "surfaces": [
+        "cli"
+      ],
       "secret": false,
-      "requiredFor": ["alternate CLI rc-file directory"],
-      "evidence": ["cli/src/config.ts", "cli/README.md"]
+      "requiredFor": [
+        "alternate CLI rc-file directory"
+      ],
+      "evidence": [
+        "cli/src/config.ts",
+        "cli/README.md"
+      ]
     },
     {
       "name": "CLOCKIFY_WEBHOOK_TOKEN",
-      "surfaces": ["examples"],
+      "surfaces": [
+        "examples"
+      ],
       "secret": true,
-      "requiredFor": ["webhook verification examples"],
-      "evidence": ["wrapper/examples/verify-webhook.ts"]
+      "requiredFor": [
+        "webhook verification examples"
+      ],
+      "evidence": [
+        "wrapper/examples/verify-webhook.ts"
+      ]
     }
   ],
   "requiredSafetyMarkers": [

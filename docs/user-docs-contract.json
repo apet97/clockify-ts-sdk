@@ -1,21 +1,11 @@
 {
   "schemaVersion": 1,
   "purpose": "User-facing documentation contract for SDK, CLI, MCP, install, migration, workflow cookbook, and troubleshooting surfaces.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-user-docs-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-document-entries",
-    "typed-supporting-contract-entries",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/user-docs-policy.md",
     "mustContain": [
       "Documentation roles",
       "Required style",
-      "Contract-shape rule",
       "make user-docs",
       "readme-tables-drift",
       "troubleshooting-drift"
@@ -54,8 +44,6 @@
       "id": "axioms-contract",
       "path": "docs/axioms-contract.json",
       "mustContain": [
-        "typed-axiom-entries",
-        "makefile-audit-wiring",
         "truth-source",
         "generated-core-boundary",
         "non-coder-reproducibility"
@@ -152,7 +140,6 @@
       "id": "mcp-agent-ux-policy",
       "path": "docs/mcp-agent-ux-policy.md",
       "mustContain": [
-        "Agent UX rules",
         "Required agent-facing surfaces",
         "Server instructions",
         "Tool metadata",

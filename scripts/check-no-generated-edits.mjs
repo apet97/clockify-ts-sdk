@@ -85,18 +85,6 @@ function assertContractShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-generated-edit-prefixes",
-        "typed-guarded-prefixes",
-        "explicit-bypass-env",
-        "regenerate-chain-guidance",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     const guardedPrefixes = assertStringArray(value.guardedPrefixes, "guardedPrefixes");
     for (const [index, guardedPrefix] of guardedPrefixes.entries()) {

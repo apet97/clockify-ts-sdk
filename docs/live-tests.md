@@ -69,7 +69,3 @@ make mock-clockify
 
 Mock/replay proof never replaces live sandbox proof for broad release
 or readiness claims.
-
-## Contract-shape rule
-
-Live-safety contract shape is part of sandbox safety. `make live-safety` must fail before trusting live proof, cleanup, deferral, mock-alternative, risk, or docs-index evidence when `docs/live-safety-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed policy/live-gate/cleanup/final-proof marker lists, malformed MCP cleanup script expectations, malformed docs-index entries, or malformed Make/quality-gate/inventory/audit wiring. A completed final proof receipt must replace the deferral with live sandbox proof before claiming readiness.

@@ -20,11 +20,6 @@ same five questions:
 Every entry should also carry a status. Use explicit statuses such as
 `fixed-in-canonical-generator`, `compensated-in-corrected-spec`,
 `compensated-in-tool-layer`, `blocked-upstream`, `open`, or `wontfix`.
-
-## Contract-shape rule
-
-OpenAPI-evidence contract shape is part of evidence readiness. The checker must fail before reading the policy, discrepancy ledger, or supporting evidence when the JSON contract has unsafe repo-relative evidence paths, malformed ledger finding/status lists, duplicate supporting evidence paths, missing required Make targets, or missing Make/docs/inventory/audit wiring.
-
 ## What belongs in the ledger
 
 Add an entry when any of these are true:

@@ -63,23 +63,6 @@ function assertUnique(label, values) {
 function validatePolicyShape() {
     if (policy.schemaVersion !== 1) fail("schemaVersion: must be 1");
     assertNonEmptyString("purpose", policy.purpose);
-    const invariants = assertStringArray("contractInvariants", policy.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "typed-scan-extensions",
-        "safe-secret-hygiene-paths",
-        "typed-ignore-lists",
-        "typed-secret-patterns",
-        "valid-secret-pattern-regexes",
-        "typed-required-doc-markers",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail(`contractInvariants: missing invariant ${invariant}`);
-    }
 
     const scanExtensions = assertStringArray("scanExtensions", policy.scanExtensions, { allowEmpty: false });
     assertUnique("scanExtensions", scanExtensions);

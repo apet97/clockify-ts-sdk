@@ -1,15 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Machine-readable contract for durable hand-written SDK runtime seams around the generated Fern client.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-sdk-runtime-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-runtime-seams",
-    "typed-package-surface-contract",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/sdk-runtime-policy.md",
     "contains": [

@@ -18,16 +18,6 @@ enums can make a generated SDK feel unfinished even when every route exists.
   clients do not blur literal and parameterized endpoints.
 - Generated TypeScript request interfaces should remain readable product inputs,
   not `Type_42`-style artifacts or duplicate-member traps.
-
-## Contract-shape rule
-
-Schema-quality contract shape is part of model readiness. The checker must fail
-before reading the corrected OpenAPI snapshot, discrepancy ledger, generated SDK
-files, or supporting evidence when the JSON contract has unsafe repo-relative
-evidence paths, malformed marker lists, missing threshold values, duplicate
-evidence paths, missing required Make targets, or missing
-Make/docs/inventory/audit wiring.
-
 ## Evidence rules
 
 When schema shape changes because of live behavior, record the finding in

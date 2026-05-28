@@ -38,11 +38,6 @@ reason about from `tools/list` alone.
    The README, guide resources, prompts, and output schema must keep
    the same terms: `dry_run`, `confirm_token`, `changed`, `warnings`,
    `next`, and `recovery`.
-
-## Contract-shape rule
-
-MCP write-safety contract shape is part of agent write safety. `make mcp-write-safety` must fail before trusting MCP README, resources, prompts, output schema, workflow registrations, destructive tool discovery, or policy evidence when `docs/mcp-write-safety-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed destructive-tool thresholds, malformed workflow tool lists, malformed required-file markers, malformed workflow marker contracts, malformed forbidden policy markers, or malformed Make/docs/inventory/audit wiring.
-
 ## Required proof
 
 - `make mcp-write-safety` checks the contract in this file.

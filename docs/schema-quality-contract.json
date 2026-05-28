@@ -1,26 +1,12 @@
 {
   "schemaVersion": 1,
   "purpose": "Schema and generated model quality contract for corrected OpenAPI components, enums, request/response models, loose objects, and TypeScript SDK ergonomics.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-schema-quality-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-corrected-spec-contract",
-    "typed-evidence-ledger-contract",
-    "typed-generated-sdk-evidence",
-    "typed-supporting-evidence",
-    "typed-schema-thresholds",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/schema-quality-policy.md",
     "mustContain": [
       "Model quality rules",
       "additionalProperties: true",
       "Generated model review checklist",
-      "Contract-shape rule",
       "make schema-quality"
     ],
     "forbiddenMarkers": [

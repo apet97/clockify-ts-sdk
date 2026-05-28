@@ -1,22 +1,10 @@
 {
   "schemaVersion": 1,
   "purpose": "Runtime dependency and license transparency contract for SDK, CLI, and MCP packages.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-evidence-and-manifest-paths",
-    "typed-policy-document-contract",
-    "typed-package-license-ledger",
-    "typed-runtime-dependency-ledger",
-    "typed-runtime-dependency-ranges",
-    "typed-license-allow-and-deny-lists",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/dependency-license-policy.md",
     "mustContain": [
       "Runtime dependency rule",
-      "Contract-shape rule",
       "Allowed runtime dependency ledger",
       "Change rules",
       "make dependency-license"

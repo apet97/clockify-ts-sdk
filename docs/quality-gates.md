@@ -143,10 +143,3 @@ for normal Clockify use.
 2. If package gates fail, fix the package that failed before widening scope.
 3. If product surface drift fails, run `make product-surface` and inspect the generated diff.
 4. If live cleanup leaves objects behind, do not claim readiness until cleanup is proven.
-
-## Contract-shape rule
-
-Contract checkers must validate schema version, purpose, explicit invariants,
-safe repo-relative evidence paths, typed marker lists, and Make/docs/audit wiring
-before trusting policy docs, generated reports, package manifests, mock servers,
-or live-proof evidence.

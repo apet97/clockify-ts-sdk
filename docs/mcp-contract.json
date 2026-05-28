@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "MCP discoverability contract for the TypeScript Clockify MCP server. Keeps tool counts, guide resources, prompts, structuredContent output-schema expectations, and tests aligned across metadata, implementation, README, and tests.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-mcp-contract-paths",
-    "typed-tools-metadata-reference",
-    "typed-expected-tool-surface",
-    "typed-resource-and-prompt-contracts",
-    "typed-source-evidence",
-    "typed-wiring-contract"
-  ],
   "toolsMetadata": "docs/mcp-tools.json",
   "expected": {
     "totalTools": 105,

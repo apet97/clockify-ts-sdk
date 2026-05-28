@@ -46,16 +46,6 @@ such as `workspace_123`, `entry_123`, `invoice_123`, and `req_123` for examples.
   update the MCP contract, receipt examples, and support runbook.
 - If support bundles ask for new fields, prove they are sanitized and useful in
   `docs/support-runbook.md` before adding them to a checklist.
-
-## Contract-shape rule
-
-Observability contract shape is part of support readiness. `make observability`
-must fail before trusting SDK, CLI, MCP, support, or policy evidence when
-`docs/observability-contract.json` has an invalid schema version, missing
-purpose, missing explicit invariants, unsafe repo-relative evidence paths,
-untyped policy markers, malformed SDK/CLI/MCP/support evidence, or malformed
-Make/docs/inventory/audit wiring.
-
 ## Proof gates
 
 Before claiming observability readiness, run or cite:

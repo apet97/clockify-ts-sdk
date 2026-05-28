@@ -1,15 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Package version, identity, and publish-gate contract. Keeps manifests, generated product-surface metadata, changelog anchors, README install examples, and last-resort prepublish gates aligned before any pack or release claim.",
-  "contractInvariants": [
-    "schema-versioned-version-policy",
-    "safe-version-policy-paths",
-    "typed-version-package-entries",
-    "product-surface-fields-explicit",
-    "package-field-maps-to-manifest-name",
-    "changelog-anchors-required",
-    "makefile-audit-wiring"
-  ],
   "productSurfacePath": "docs/product-surface.json",
   "productSurfaceMustMatchManifest": [
     "package",

@@ -55,11 +55,6 @@ point users to `clk115 status`, and the MCP doctor resource may point agents to
 - MCP: `clockify://mcp/doctor` advertised as a resource, not a tool.
 - Product metadata: `docs/product-surface.json` and `docs/product-surface.md`
   should list diagnostics in the status/readiness workflow.
-
-## Contract-shape rule
-
-Diagnostics contract shape is part of local-readiness safety. `make diagnostics` must fail before trusting SDK, CLI, MCP, product-surface, policy, or docs-index evidence when `docs/diagnostics-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, untyped policy markers, malformed diagnostic surface/file marker lists, malformed forbidden secret patterns, or malformed Make/docs/audit wiring.
-
 ## Gate
 
 Run `make diagnostics` after changing SDK diagnostics, CLI doctor behavior,

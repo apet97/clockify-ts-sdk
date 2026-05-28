@@ -1,14 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Generated and snapshot edit guard contract for paths that must only change through the GOCLMCP -> Fern -> wrapper sync chain.",
-  "contractInvariants": [
-    "schema-versioned-generated-edit-contract",
-    "safe-generated-edit-prefixes",
-    "typed-guarded-prefixes",
-    "explicit-bypass-env",
-    "regenerate-chain-guidance",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "generated-edit-check",
     "checker": "scripts/check-no-generated-edits.mjs",

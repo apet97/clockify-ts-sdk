@@ -97,23 +97,6 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-mock-evidence-paths",
-        "typed-server-contract",
-        "typed-route-contracts",
-        "typed-header-contracts",
-        "typed-mock-test-evidence",
-        "typed-doc-evidence",
-        "typed-wiring-contract",
-    ]) {
-        if (!invariants.includes(invariant)) fail(`contractInvariants missing ${invariant}`);
-    }
 
     safeRelativePath("server", contract.server);
     assertNonEmptyString("defaultWorkspaceId", contract.defaultWorkspaceId);

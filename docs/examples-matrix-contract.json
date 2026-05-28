@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Cross-surface examples matrix contract tying SDK starter scripts, CLI commands, MCP workflows, mock/live boundaries, and receipt expectations to real user jobs.",
-  "contractInvariants": [
-    "schema-versioned-examples-matrix-contract",
-    "safe-examples-matrix-paths",
-    "typed-example-rows",
-    "generated-plan-static-no-network",
-    "required-target-wiring",
-    "required-doc-evidence",
-    "supporting-evidence-marker-contract",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "examples-matrix",
     "checker": "scripts/check-examples-matrix.mjs",
@@ -31,7 +21,10 @@
       "confirm_token",
       "Non-idempotent creates are not auto-retried by default"
     ],
-    "forbiddenMarkers": ["TODO", "TBD"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
   },
   "requiredTargets": [
     "examples-plan",
@@ -63,13 +56,62 @@
     "demo-cleanup"
   ],
   "rows": [
-    { "id": "auth-status", "markers": ["auth.ts", "clk115 status", "clockify_status"] },
-    { "id": "pagination", "markers": ["paginate-all.ts", "paginated-list-basic.ts", "clk115 projects list --json"] },
-    { "id": "time-entry", "markers": ["log-time-entry.ts", "clk115 log", "clockify_log_work"] },
-    { "id": "business-admin", "markers": ["invoices create", "clockify_invoice_client_work", "dry_run:true"] },
-    { "id": "retry-idempotency", "markers": ["retry-custom.ts", "idempotency.ts", "Non-idempotent creates are not auto-retried by default"] },
-    { "id": "observability", "markers": ["structured-logging.ts", "middleware-datadog.ts", "structuredContent"] },
-    { "id": "demo-cleanup", "markers": ["clockify_demo_seed", "clockify_demo_cleanup", "leftover count"] }
+    {
+      "id": "auth-status",
+      "markers": [
+        "auth.ts",
+        "clk115 status",
+        "clockify_status"
+      ]
+    },
+    {
+      "id": "pagination",
+      "markers": [
+        "paginate-all.ts",
+        "paginated-list-basic.ts",
+        "clk115 projects list --json"
+      ]
+    },
+    {
+      "id": "time-entry",
+      "markers": [
+        "log-time-entry.ts",
+        "clk115 log",
+        "clockify_log_work"
+      ]
+    },
+    {
+      "id": "business-admin",
+      "markers": [
+        "invoices create",
+        "clockify_invoice_client_work",
+        "dry_run:true"
+      ]
+    },
+    {
+      "id": "retry-idempotency",
+      "markers": [
+        "retry-custom.ts",
+        "idempotency.ts",
+        "Non-idempotent creates are not auto-retried by default"
+      ]
+    },
+    {
+      "id": "observability",
+      "markers": [
+        "structured-logging.ts",
+        "middleware-datadog.ts",
+        "structuredContent"
+      ]
+    },
+    {
+      "id": "demo-cleanup",
+      "markers": [
+        "clockify_demo_seed",
+        "clockify_demo_cleanup",
+        "leftover count"
+      ]
+    }
   ],
   "planner": {
     "path": "scripts/examples-plan.mjs",
@@ -121,23 +163,45 @@
   "supportingEvidence": [
     {
       "path": "docs/examples-contract.json",
-      "contains": ["clockify-sdk-ts-115", "forbiddenImportPrefixes", "forbiddenSecretPatterns"]
+      "contains": [
+        "clockify-sdk-ts-115",
+        "forbiddenImportPrefixes",
+        "forbiddenSecretPatterns"
+      ]
     },
     {
       "path": "wrapper/examples/README.md",
-      "contains": ["Catalogue", "sandbox workspace", "idempotency.ts", "structured-logging.ts"]
+      "contains": [
+        "Catalogue",
+        "sandbox workspace",
+        "idempotency.ts",
+        "structured-logging.ts"
+      ]
     },
     {
       "path": "docs/workflow-cookbook.md",
-      "contains": ["Daily time tracking", "Business and admin workflows", "Recovery pattern"]
+      "contains": [
+        "Daily time tracking",
+        "Business and admin workflows",
+        "Recovery pattern"
+      ]
     },
     {
       "path": "docs/mutation-safety-policy.md",
-      "contains": ["Mutation classes", "Non-idempotent create", "Ambiguous failure recovery"]
+      "contains": [
+        "Mutation classes",
+        "Non-idempotent create",
+        "Ambiguous failure recovery"
+      ]
     },
     {
       "path": "docs/product-surface.json",
-      "contains": ["time-tracking", "work-package", "business-workflows", "demo-and-cleanup"]
+      "contains": [
+        "time-tracking",
+        "work-package",
+        "business-workflows",
+        "demo-and-cleanup"
+      ]
     }
   ]
 }

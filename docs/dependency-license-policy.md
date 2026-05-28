@@ -20,16 +20,6 @@ Any new runtime dependency must answer:
 3. Is the license compatible with MIT redistribution?
 4. Does it affect package size, startup time, or browser/server runtime support?
 5. Which gates prove the dependency did not break install, pack, or smoke paths?
-
-## Contract-shape rule
-
-Dependency-license contract shape is part of license readiness.
-`make dependency-license` must fail before trusting manifest or policy evidence
-when `docs/dependency-license-contract.json` has an invalid schema version,
-missing purpose, missing explicit invariants, unsafe manifest/evidence paths,
-untyped policy markers, untyped package or runtime dependency ledger entries,
-malformed license allow/deny lists, or malformed Make/docs/audit wiring.
-
 ## Allowed runtime dependency ledger
 
 | Dependency | Manifest range | Used by | License | Why it exists |

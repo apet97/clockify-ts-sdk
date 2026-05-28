@@ -45,15 +45,6 @@ weaker agent to continue:
 If those fields are missing, treat the support packet as incomplete. Do not
 replace them with a prose summary; the point is to preserve machine-readable
 blockers and proof-order ownership.
-
-## Contract-shape rule
-
-Operator-onboarding contract shape is part of onboarding readiness. The checker
-must fail before reading onboarding docs or generating the local plan when the
-JSON contract has unsafe repo-relative evidence paths, malformed supporting doc
-entries, malformed plan-generator expectations, missing required Make targets,
-or missing Make/docs/inventory/audit wiring.
-
 ## Generate a local plan
 
 For a goal-specific path, run:

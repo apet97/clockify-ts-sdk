@@ -45,11 +45,6 @@ Before a maintainer intentionally ships or hands off artifacts:
 Do not run `npm publish` from a developer laptop without explicit
 maintainer approval. Do not change CI/CD, provenance, auth, or release
 workflow triggers as part of routine SDK polish.
-
-## Contract-shape rule
-
-Release/support contract shape is part of publish-readiness safety. `make release-support-contract` must fail before trusting release, security, or package-contract evidence when `docs/release-support-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed policy/security markers, malformed security regex deny-list entries, malformed package-contract references, malformed required Make targets, malformed docs-index entries, or malformed Make/quality-gate/inventory/audit wiring.
-
 ## Security support
 
 Security intake is documented in `SECURITY.md`. Security fixes use the

@@ -1,18 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Generated-core independence contract. Keeps Fern output behind wrapper/package seams so CLI, MCP, examples, and public package exports do not depend on generated internals.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-generator-independence-evidence-paths",
-    "typed-file-inputs",
-    "typed-wrapper-package-boundary",
-    "typed-package-dependency-boundary",
-    "typed-source-scan-contract",
-    "typed-product-surface-policy",
-    "typed-postgen-escape-hatch-contract",
-    "typed-wiring-contract"
-  ],
   "files": {
     "wrapperPackage": "wrapper/package.json",
     "cliPackage": "cli/package.json",
