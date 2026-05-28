@@ -60,10 +60,13 @@ If packed/published, the `mcp/` package includes:
 
 Doesn't ship on npm (but lives here for reproducibility):
 - `spec/` — Fern config + corrected OpenAPI snapshot + evidence ledger
-- `output/ts-sdk/` — raw Fern generator output (regenerable from `spec/`)
+- `output/ts-sdk/` — raw Fern generator output, **gitignored**; regenerable
+  from `spec/` by running `(cd spec/fern && fern generate --group ts --local --force)`.
+  Docker is required for that command.
 - `wrapper/{src,dist,node_modules}/` — gitignored; recreated by the build chain
 - `cli/{dist,node_modules}/` — gitignored
 - `mcp/{dist,node_modules}/` — gitignored
+- `node_modules/` (workspace root) — gitignored
 - `.github/workflows/` — CI + release pipelines
 - `spec/evidence/probes/*.{json,hdr}` — gitignored live API captures
 
@@ -459,10 +462,10 @@ resolves (Fern issue acknowledged or workaround discovered).
 - Conventional prefixes: `feat:`, `fix:`, `chore:`, `docs:`,
   `refactor:`, `test:`, `ci:`. One logical change per commit.
 - Subject line ≤ 72 chars. Wrap body at 72.
-- Generated code (under `output/ts-sdk/`) is committed for CI's
-  `npm run sync` step. When the generator change touches many files,
-  describe the *change to the generator*, not the diff to the
-  generated files — the diff is implied. Example:
+- Generated code (under `output/ts-sdk/`) is **gitignored**; you regenerate
+  it locally with Docker before running SDK package gates. When a generator
+  change touches many files, describe the *change to the generator*, not the
+  diff to the generated files. Example:
   > `feat(gen): stamp page+page-size on 18 list endpoints`
 - Never push to `main` from a feature branch via PR-merge UI without
   CI green on the PR head. Direct pushes to `main` are reserved for

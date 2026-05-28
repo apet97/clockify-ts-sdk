@@ -7,8 +7,9 @@ and `@clockify115/mcp-server` from `mcp/dist/`. Everything else is the
 toolchain that produces and proves those packages: a Fern workspace
 (`spec/fern/`), a snapshot of the canonical Clockify OpenAPI
 (`spec/corrected/`), an evidence ledger for spec-vs-live deltas
-(`spec/evidence/discrepancies.md`), the raw generator output
-(`output/ts-sdk/`), and docs that keep humans and agents aligned.
+(`spec/evidence/discrepancies.md`), the regenerable raw generator
+output (`output/ts-sdk/`, gitignored), and docs that keep humans
+and agents aligned.
 
 The canonical OpenAPI is **not** in this repo. It lives in the
 sister project `apet97/go-clockify` (cloned conventionally as

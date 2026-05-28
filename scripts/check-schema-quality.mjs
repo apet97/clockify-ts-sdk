@@ -169,7 +169,17 @@ if (failures.length > 0) {
 checkEntry(contract.policyDocument);
 const specText = checkEntry(contract.correctedSpec);
 checkEntry(contract.evidenceLedger);
-for (const entry of contract.generatedSdkEvidence ?? []) checkEntry(entry);
+// wrapper/src is gitignored and populated by `(cd wrapper && npm run sync)`
+// from the Fern output. If it's absent, skip the generated evidence checks
+// with a warning so perfect-fast can still run on non-SDK workflows.
+if (fs.existsSync(path.join(root, "wrapper/src"))) {
+    for (const entry of contract.generatedSdkEvidence ?? []) checkEntry(entry);
+} else {
+    console.warn(
+        "Skipped generatedSdkEvidence: wrapper/src is not populated. " +
+        "Run `(cd spec/fern && fern generate --group ts --local --force)` + `(cd wrapper && npm run sync)` first.",
+    );
+}
 for (const entry of contract.supportingEvidence ?? []) checkEntry(entry);
 
 const additionalPropertiesCount = (specText.match(/additionalProperties:/g) ?? []).length;
