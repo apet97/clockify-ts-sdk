@@ -61,11 +61,6 @@ MCP behavior should be boring and recoverable:
 - Use stable error codes for known failures and include concrete recovery
   instructions.
 - Make plan-gated features explicit in receipts and docs.
-
-## Contract-shape rule
-
-MCP agent UX contract shape is part of agent usability safety. `make mcp-agent-ux` must fail before trusting MCP instructions, guide resources, prompts, receipts, output schemas, README, write-safety docs, or tool metadata when `docs/mcp-agent-ux-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative paths, malformed tool metadata references, malformed tool summary expectations, malformed UX marker checks, or malformed Make/docs/inventory/audit wiring. Agent UX rules require status-first guidance.
-
 ## MCP success receipt
 
 A good MCP success receipt includes enough information for the next step without

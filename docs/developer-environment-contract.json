@@ -151,18 +151,6 @@
       ]
     }
   ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-developer-environment-paths",
-    "typed-policy-document-contract",
-    "typed-root-boundary",
-    "typed-repo-doctor-contract",
-    "typed-package-contracts",
-    "typed-fern-contract",
-    "typed-supporting-doc-contracts",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "developer-environment",
     "checker": "scripts/check-developer-environment.mjs",

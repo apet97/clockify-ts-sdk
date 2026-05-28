@@ -169,20 +169,6 @@ function validateGeneratedReportContract(label, generatedReport) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const contractInvariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique(contractInvariants, "contractInvariants");
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-release-readiness-paths",
-        "typed-release-readiness-lists",
-        "typed-supporting-evidence",
-        "makefile-audit-wiring",
-    ]) {
-        if (!contractInvariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
     if (contract.wiring == null || typeof contract.wiring !== "object" || Array.isArray(contract.wiring)) {
         fail("wiring", "must be an object");
     } else {

@@ -15,15 +15,6 @@ local, explicit lifecycle.
 | Regenerate | Change GOCLMCP sources/generator data first, then copy the corrected snapshot and run Fern/sync through the documented chain. | GOCLMCP canonical OpenAPI and `spec/fern`. |
 | Reconcile | Refresh operation inventory, operation parity, product surface, README tables, naming taxonomy, and affected SDK/CLI/MCP docs. | Generated truth surfaces under `docs/`. |
 | Prove | Run the narrow drift gates, package gates, pack smoke, and live proof when runtime behavior changed. | `make upstream-drift`, `make perfect-full`, and `make perfect-live` when safe. |
-
-## Contract-shape rule
-
-Upstream-drift contract shape is part of drift readiness. The checker must fail
-before reading lifecycle evidence or generated truth surfaces when the JSON
-contract has unsafe repo-relative evidence paths, malformed lifecycle evidence,
-malformed generated-truth surface paths, missing required Make targets, or
-missing Make/docs/inventory/audit wiring.
-
 ## Routing rules
 
 - Clockify server behavior belongs to Clockify support unless this repo's

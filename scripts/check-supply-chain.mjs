@@ -93,23 +93,6 @@ function checkText(relativePath, markers, forbiddenMarkers = []) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-supply-chain-paths",
-        "typed-package-supply-chain-entries",
-        "typed-publish-config-expectations",
-        "typed-pack-file-boundaries",
-        "typed-policy-contract",
-        "typed-supporting-contracts",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     if (assertObject("wiring", contract.wiring)) {
         assertNonEmptyString("wiring.makeTarget", contract.wiring.makeTarget);

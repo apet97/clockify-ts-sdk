@@ -63,11 +63,6 @@ Do not commit:
   hashes, or `node_modules` entries in support bundles or handoff docs.
 - Raw output from the first-run support workflow if an operator added env values,
   tokens, workspace IDs, raw logs, or customer data around it.
-
-## Contract-shape rule
-
-Data-handling contract shape is part of privacy readiness. The checker validates schema version, purpose, safe repo-relative paths, typed data-class marker lists, required-doc lists, and supporting-evidence marker lists before trusting policy evidence. A malformed privacy contract is a blocker even if the prose looks reasonable.
-
 ## Proof gates
 
 Data handling is guarded by:

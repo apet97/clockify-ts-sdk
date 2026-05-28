@@ -80,11 +80,6 @@ headers, or npm publication commands into a quickstart receipt. Use environment
 variables and record only whether secrets were redacted. If a copied command
 would mutate Clockify, publish a package, or use a customer workspace, it does
 not belong in this quickstart.
-
-## Contract-shape rule
-
-Quickstart receipt contract shape is part of operator-readiness safety. `make quickstart-receipt` must fail before trusting quickstart or supporting surface evidence when `docs/quickstart-receipt-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed quickstart marker lists, malformed supporting-surface marker lists, or malformed Make/docs/audit wiring.
-
 ## Step 4: Quickstart receipt template
 
 ```markdown

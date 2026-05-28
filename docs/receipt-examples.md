@@ -16,11 +16,6 @@ codes and recovery, and agent-facing writes say whether anything changed.
 Receipts must not include raw `CLOCKIFY_API_KEY`, `CLOCKIFY_ADDON_TOKEN`,
 `NPM_TOKEN`, or customer-only workspace data. Use IDs only when the user or
 workspace already authorized the operation.
-
-## Contract-shape rule
-
-Receipt examples contract shape is part of output-shape safety. `make receipt-examples` must fail before trusting golden receipt examples or supporting runtime evidence when `docs/receipt-examples-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed example marker lists, malformed supporting-evidence markers, malformed required targets, or malformed Make/docs/inventory/audit wiring.
-
 ## SDK success receipt
 
 ```json

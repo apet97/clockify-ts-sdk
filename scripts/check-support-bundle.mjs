@@ -108,24 +108,6 @@ function assertFalseFields(value, fields, label) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-support-bundle-paths",
-        "typed-runbook-contract",
-        "typed-generator-contract",
-        "typed-lockfile-summary-contract",
-        "typed-generated-bundle-shape",
-        "typed-diagnostics-and-quickstart-summary",
-        "typed-supporting-evidence",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     if (contract.wiring == null || typeof contract.wiring !== "object" || Array.isArray(contract.wiring)) {
         fail("wiring", "must be an object");

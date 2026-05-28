@@ -71,11 +71,6 @@ routing, PRs should mention whether `readinessContext.finalBlockingSignalIds`,
 - Route synced SDK shape issues to GOCLMCP/Fern unless the public wrapper seam is
   the actual defect.
 - Route security-sensitive issues to private disclosure through `SECURITY.md`.
-
-## Contract-shape rule
-
-Issue-intake contract shape is part of supportability safety. `make issue-intake` must fail before trusting GitHub templates, support docs, security docs, or intake policy evidence when `docs/issue-intake-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed policy markers, malformed template markers, malformed supporting-evidence markers, or malformed Make/docs/inventory/audit wiring. Operators should attach a quickstart receipt before opening a ticket.
-
 ## Proof gates
 
 Before claiming intake quality readiness, run or cite:

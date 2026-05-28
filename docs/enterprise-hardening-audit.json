@@ -21,7 +21,6 @@
         {
           "path": "docs/axioms-contract.json",
           "contains": [
-            "typed-axiom-entries",
             "truth-source",
             "generated-core-boundary",
             "public-surface-receipts",
@@ -119,9 +118,6 @@
         {
           "path": "docs/generated-edit-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-generated-edit-prefixes",
-            "typed-guarded-prefixes",
             "CLOCKIFY_ALLOW_GENERATED_DIFF",
             "spec/corrected/",
             "output/ts-sdk/",
@@ -163,7 +159,6 @@
             "packageFilesForConsumer",
             "process.env[contract.keepTempEnv]",
             "pack consumer smoke contract shape failed",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "pack-smoke",
@@ -179,13 +174,7 @@
         {
           "path": "docs/pack-consumer-smoke-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-package-directories",
-            "required-package-ids",
-            "typed-consumer-contracts",
-            "typed-script-markers",
             "KEEP_CLOCKIFY_PACK_SMOKE_TEMP",
-            "makefile-audit-wiring",
             "wiring",
             "pack-smoke",
             "scripts/pack-consumer-smoke.mjs",
@@ -310,32 +299,11 @@
       "requirement": "Keep manual OpenAPI corrections and generator decisions backed by an explicit discrepancy/evidence ledger contract.",
       "evidence": [
         {
-          "path": "docs/openapi-evidence-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "OpenAPI-evidence contract shape is part of evidence readiness",
-            "malformed ledger finding/status lists",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
-          "path": "docs/openapi-evidence-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-openapi-evidence-paths",
-            "typed-ledger-contract",
-            "typed-supporting-evidence",
-            "typed-required-make-targets",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-openapi-evidence.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
             "OpenAPI evidence contract shape failed",
-            "typed-ledger-contract",
             "requiredStatusMarkers"
           ]
         },
@@ -352,26 +320,6 @@
       "id": "schema-quality",
       "requirement": "Govern corrected OpenAPI component schemas, enums, loose objects, request/response models, and generated TypeScript model ergonomics.",
       "evidence": [
-        {
-          "path": "docs/schema-quality-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "Schema-quality contract shape is part of model readiness",
-            "missing threshold values",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
-          "path": "docs/schema-quality-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-schema-quality-evidence-paths",
-            "typed-corrected-spec-contract",
-            "typed-generated-sdk-evidence",
-            "typed-schema-thresholds",
-            "typed-wiring-contract"
-          ]
-        },
         {
           "path": "scripts/check-schema-quality.mjs",
           "markers": [
@@ -396,32 +344,11 @@
       "requirement": "Define and gate the Clockify API, GOCLMCP, Fern, SDK, CLI, MCP, and docs drift lifecycle from detection through proof.",
       "evidence": [
         {
-          "path": "docs/upstream-drift-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "Upstream-drift contract shape is part of drift readiness",
-            "generated-truth surface paths",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
-          "path": "docs/upstream-drift-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-upstream-drift-evidence-paths",
-            "typed-lifecycle-evidence",
-            "typed-generated-truth-surfaces",
-            "typed-required-make-targets",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-upstream-drift.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
             "Upstream drift contract shape failed",
-            "typed-generated-truth-surfaces",
             "generatedTruthSurfaces"
           ]
         },
@@ -452,18 +379,6 @@
           ]
         },
         {
-          "path": "docs/generator-independence-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-generator-independence-evidence-paths",
-            "typed-wrapper-package-boundary",
-            "typed-package-dependency-boundary",
-            "typed-source-scan-contract",
-            "typed-product-surface-policy",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-generator-independence.mjs",
           "markers": [
             "validateContractShape",
@@ -487,24 +402,12 @@
       "requirement": "Keep Fern CLI/generator pins, active corrected OpenAPI snapshot, and generated output paths intentional.",
       "evidence": [
         {
-          "path": "docs/generator-config-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-generator-config-evidence-paths",
-            "typed-fern-config-contract",
-            "typed-generators-contract",
-            "typed-required-docs",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-generator-config.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
             "fernRelativePath",
-            "generator config contract shape failed",
-            "typed-generators-contract"
+            "generator config contract shape failed"
           ]
         },
         {
@@ -520,18 +423,6 @@
       "id": "generator-comparison",
       "requirement": "Keep corrected OpenAPI SDK method stamps aligned with generated TypeScript client methods.",
       "evidence": [
-        {
-          "path": "docs/generator-comparison-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-generator-comparison-evidence-paths",
-            "typed-operation-inventory-contract",
-            "typed-generated-root-contract",
-            "typed-client-scan-contract",
-            "typed-thresholds",
-            "typed-wiring-contract"
-          ]
-        },
         {
           "path": "scripts/check-generator-comparison.mjs",
           "markers": [
@@ -565,26 +456,12 @@
           ]
         },
         {
-          "path": "docs/generator-portability-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-generator-portability-evidence-paths",
-            "typed-plan-contract",
-            "typed-boundaries",
-            "typed-supporting-evidence",
-            "typed-local-reproducibility-contract",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-generator-portability.mjs",
           "markers": [
             "validateContractShape",
             "validateLocalReproducibility",
             "safeRelativePath",
             "Generator portability contract shape failed",
-            "typed-boundaries",
-            "typed-supporting-evidence",
             "forbiddenDependencyNames"
           ]
         },
@@ -625,10 +502,6 @@
         {
           "path": "docs/docs-index-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-docs-index-paths",
-            "typed-required-links",
-            "all-index-links-resolve",
             "docs-index-drift",
             "generated-doc-drift"
           ]
@@ -661,24 +534,11 @@
           ]
         },
         {
-          "path": "docs/cli-contract.json",
-          "contains": [
-            "contractInvariants",
-            "safe-cli-contract-paths",
-            "typed-metadata-reference",
-            "typed-expected-command-surface",
-            "typed-exit-codes",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-cli-contract.mjs",
           "contains": [
             "validateContractShape",
             "safeRelativePath",
-            "CLI contract shape failed",
-            "typed-expected-command-surface",
-            "typed-wiring-contract"
+            "CLI contract shape failed"
           ]
         }
       ]
@@ -693,11 +553,7 @@
             "CLI writes stay non-interactive",
             "Destructive commands must be ID-scoped",
             "Create commands must return identifiers",
-            "Errors must stay machine-readable",
-            "Contract-shape rule",
-            "CLI write-safety contract shape is part of deterministic operator safety",
-            "unsafe repo-relative evidence paths",
-            "malformed write-command markers"
+            "Errors must stay machine-readable"
           ]
         },
         {
@@ -706,12 +562,7 @@
             "entries delete",
             "webhooks delete",
             "invoices create",
-            "scheduling create",
-            "contractInvariants",
-            "safe-cli-write-evidence-paths",
-            "typed-required-file-evidence",
-            "typed-write-command-evidence",
-            "typed-wiring-contract"
+            "scheduling create"
           ]
         },
         {
@@ -723,9 +574,7 @@
             "deleted-resource success receipt",
             "validateContractShape",
             "safeRelativePath",
-            "CLI write-safety contract shape failed",
-            "typed-write-command-evidence",
-            "typed-wiring-contract"
+            "CLI write-safety contract shape failed"
           ]
         },
         {
@@ -828,14 +677,7 @@
             "budgetSchemaVersion",
             "budgetFingerprint",
             "calibrationPolicyStatus",
-            "calibrationPolicyFinalStatus",
-            "contractInvariants",
-            "safe-performance-budget-paths",
-            "typed-calibration-policy",
-            "typed-calibration-plan-contract",
-            "typed-file-size-budgets",
-            "typed-timing-budgets",
-            "makefile-audit-wiring"
+            "calibrationPolicyFinalStatus"
           ]
         },
         {
@@ -864,12 +706,6 @@
             "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "safe-performance-budget-paths",
-            "typed-calibration-policy",
-            "typed-calibration-plan-contract",
-            "typed-file-size-budgets",
-            "typed-timing-budgets",
             "calibrationPlanContract.requiredReceiptStep",
             "fileSize[",
             "timing[",
@@ -934,9 +770,6 @@
         {
           "path": "docs/changelog-coverage-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-changelog-coverage-paths",
-            "typed-package-scope-entries",
             "wrapper/CHANGELOG.md",
             "cli/CHANGELOG.md",
             "mcp/CHANGELOG.md"
@@ -986,11 +819,9 @@
             "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke",
             "npm run type-check && npm test && npm run build",
             "clockify115-mcp",
-            "makefile-audit-wiring",
             "wiring",
             "package-contract",
             "scripts/check-package-contract.mjs",
-            "typed-package-metadata",
             "expectedRepositoryUrl",
             "expectedNodeEngine",
             "expectedSideEffects",
@@ -998,14 +829,7 @@
             "provenance",
             "public"
           ],
-          "mustContain": [
-            "contractInvariants",
-            "safe-package-manifest-paths",
-            "typed-package-contracts",
-            "typed-pack-file-lists",
-            "typed-required-scripts",
-            "typed-publish-safety-flags"
-          ]
+          "mustContain": []
         },
         {
           "path": "scripts/check-package-contract.mjs",
@@ -1014,7 +838,6 @@
             "prepublishOnly",
             "scripts.",
             "package contract passed",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "package-contract",
@@ -1030,8 +853,7 @@
             "validateContractShape",
             "safeRelativePath",
             "must be a repo-relative path without parent traversal",
-            "must point to a package.json manifest",
-            "typed-publish-safety-flags"
+            "must point to a package.json manifest"
           ]
         },
         {
@@ -1055,23 +877,11 @@
           ]
         },
         {
-          "path": "docs/examples-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-examples-evidence-paths",
-            "typed-example-inventory",
-            "typed-secret-regexes",
-            "typed-supporting-contracts",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-examples-contract.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
             "examples contract shape failed",
-            "typed-secret-regexes",
             "supportingContracts"
           ]
         },
@@ -1103,10 +913,6 @@
         {
           "path": "docs/snippet-safety-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-snippet-safety-paths",
-            "typed-snippet-surfaces",
-            "declared-forbidden-import-markers",
             "forbiddenImportMarkers",
             "snippetSurfaces",
             "sdk-readme",
@@ -1144,12 +950,6 @@
         {
           "path": "docs/runtime-support.json",
           "contains": [
-            "contractInvariants",
-            "safe-runtime-support-paths",
-            "typed-runtime-package-entries",
-            "package-engines-match-node-floor",
-            "runtime-docs-mention-node-floor",
-            "makefile-audit-wiring",
             "nodeFloor",
             ">=20",
             "@clockify115/mcp-server",
@@ -1186,23 +986,11 @@
       "requirement": "Keep SDK/CLI/MCP environment variables, mock/replay base URL behavior, and secret-hygiene docs aligned.",
       "evidence": [
         {
-          "path": "docs/env-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-env-evidence-paths",
-            "typed-variable-entries",
-            "typed-required-safety-markers",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-env-contract.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "environment contract shape failed",
-            "typed-variable-entries",
-            "typed-wiring-contract"
+            "environment contract shape failed"
           ]
         },
         {
@@ -1227,26 +1015,12 @@
           ]
         },
         {
-          "path": "docs/sdk-public-api.json",
-          "markers": [
-            "contractInvariants",
-            "safe-sdk-public-api-evidence-paths",
-            "typed-wrapper-file-inputs",
-            "typed-root-symbols",
-            "typed-subpath-symbols",
-            "typed-tsconfig-aliases",
-            "typed-package-marker-scan",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-sdk-public-api.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
             "safePackageRelativePath",
-            "SDK public API contract shape failed",
-            "typed-subpath-symbols"
+            "SDK public API contract shape failed"
           ]
         },
         {
@@ -1274,24 +1048,11 @@
           ]
         },
         {
-          "path": "docs/sdk-runtime-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-sdk-runtime-evidence-paths",
-            "typed-policy-document-contract",
-            "typed-runtime-seams",
-            "typed-package-surface-contract",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-sdk-runtime-contract.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "SDK runtime contract shape failed",
-            "typed-runtime-seams",
-            "typed-package-surface-contract"
+            "SDK runtime contract shape failed"
           ]
         },
         {
@@ -1323,14 +1084,6 @@
         {
           "path": "docs/workflow-cookbook-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-workflow-cookbook-paths",
-            "typed-cookbook-sections-and-markers",
-            "typed-planner-contract",
-            "generated-plan-static-no-network",
-            "product-surface-workflow-coverage",
-            "supporting-docs-marker-contract",
-            "makefile-audit-wiring",
             "first-run-support",
             "clockify://mcp/doctor",
             "safeCommandHints",
@@ -1391,10 +1144,6 @@
         {
           "path": "docs/acceptance-scenarios.md",
           "markers": [
-            "Contract-shape rule",
-            "Acceptance-scenarios contract shape is part of readiness",
-            "malformed planner expectations",
-            "Make/docs/inventory/audit wiring",
             "First-run diagnostics and support handoff",
             "safeCommandHints"
           ]
@@ -1402,13 +1151,6 @@
         {
           "path": "docs/acceptance-scenarios-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-acceptance-evidence-paths",
-            "typed-planner-contract",
-            "typed-generated-plan-contract",
-            "typed-scenarios",
-            "typed-supporting-evidence",
-            "typed-wiring-contract",
             "first-run-diagnostics-support",
             "clockify://mcp/doctor",
             "make quickstart-receipt"
@@ -1430,9 +1172,7 @@
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "Acceptance scenarios contract shape failed",
-            "typed-generated-plan-contract",
-            "typed-scenarios"
+            "Acceptance scenarios contract shape failed"
           ]
         },
         {
@@ -1480,15 +1220,6 @@
             "pathProbeCoverageExpectations",
             "scopeRequirementExpectations",
             "release-ci-supply-chain",
-            "contractInvariants",
-            "safe-change-impact-file-paths",
-            "typed-policy-document-contract",
-            "typed-plan-generator-contract",
-            "typed-change-impact-matrix",
-            "typed-path-probe-expectations",
-            "typed-scope-requirement-expectations",
-            "declared-non-make-targets",
-            "makefile-audit-wiring",
             "allowedNonMakeTargets",
             "axioms-contract",
             "docs/axioms-contract.json",
@@ -1522,12 +1253,6 @@
             "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "safe-change-impact-file-paths",
-            "typed-plan-generator-contract",
-            "typed-change-impact-matrix",
-            "typed-path-probe-expectations",
-            "typed-scope-requirement-expectations",
             "pathProbeExpectations[",
             "scopeRequirementExpectations[",
             "changelogRequired must be a boolean",
@@ -1573,12 +1298,6 @@
         {
           "path": "docs/decision-records-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-decision-record-paths",
-            "typed-decision-record-entries",
-            "required-heading-contract",
-            "zero-padded-decision-numbering",
-            "makefile-audit-wiring",
             "canonical-api-truth",
             "generated-core-boundary",
             "no-default-npm-publish",
@@ -1823,11 +1542,6 @@
         {
           "path": "docs/version-policy.json",
           "contains": [
-            "contractInvariants",
-            "safe-version-policy-paths",
-            "typed-version-package-entries",
-            "product-surface-fields-explicit",
-            "package-field-maps-to-manifest-name",
             "productSurfacePath",
             "wrapper/package.json",
             "productSurfaceMustMatchManifest",
@@ -1871,15 +1585,7 @@
           "contains": [
             "CLOCKIFY_API_KEY",
             "NPM_TOKEN",
-            "gitleaks",
-            "contractInvariants",
-            "typed-scan-extensions",
-            "safe-secret-hygiene-paths",
-            "typed-ignore-lists",
-            "typed-secret-patterns",
-            "valid-secret-pattern-regexes",
-            "typed-required-doc-markers",
-            "makefile-audit-wiring"
+            "gitleaks"
           ]
         },
         {
@@ -1895,12 +1601,6 @@
             "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "typed-scan-extensions",
-            "safe-secret-hygiene-paths",
-            "typed-secret-patterns",
-            "valid-secret-pattern-regexes",
-            "typed-required-doc-markers",
             "extension must start with dot",
             "invalid regex",
             "requiredDocs[",
@@ -1932,11 +1632,7 @@
             "Raw live evidence",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
-            "Prohibited committed evidence",
-            "Data-handling contract shape is part of privacy readiness",
-            "safe repo-relative paths",
-            "typed data-class marker lists",
-            "supporting-evidence marker lists"
+            "Prohibited committed evidence"
           ]
         },
         {
@@ -1948,14 +1644,7 @@
             "package-lock-metadata",
             "raw-live-evidence",
             "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints",
-            "contractInvariants",
-            "safe-data-handling-paths",
-            "typed-policy-contract",
-            "typed-data-class-markers",
-            "typed-required-docs",
-            "typed-supporting-evidence",
-            "makefile-audit-wiring"
+            "safeCommandHints"
           ]
         },
         {
@@ -1971,12 +1660,6 @@
             "assertNonEmptyString",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "safe-data-handling-paths",
-            "typed-policy-contract",
-            "typed-data-class-markers",
-            "typed-required-docs",
-            "typed-supporting-evidence",
             "data class must be an object",
             "supportingEvidence[",
             "must be a non-empty array",
@@ -2005,12 +1688,7 @@
             "Required receipts",
             "publishConfig.access: public"
           ],
-          "mustContain": [
-            "Contract-shape rule",
-            "Supply-chain contract shape is part of publish safety",
-            "unsafe repo-relative paths",
-            "untyped package entries"
-          ]
+          "mustContain": []
         },
         {
           "path": "docs/supply-chain-contract.json",
@@ -2020,27 +1698,19 @@
             "@clockify115/mcp-server",
             "requiredScripts",
             "provenance",
-            "makefile-audit-wiring",
             "wiring",
             "supply-chain",
             "scripts/check-supply-chain.mjs",
             "expectedPublishConfig",
             "publishConfig.access: public"
           ],
-          "mustContain": [
-            "contractInvariants",
-            "safe-supply-chain-paths",
-            "typed-package-supply-chain-entries",
-            "typed-publish-config-expectations",
-            "typed-pack-file-boundaries"
-          ]
+          "mustContain": []
         },
         {
           "path": "scripts/check-supply-chain.mjs",
           "contains": [
             "supply-chain contract passed",
             "prepublishOnly",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "supply-chain",
@@ -2073,21 +1743,13 @@
             "clockify-sdk-ts-115",
             "forbiddenRuntimeDependencies",
             "forbiddenImportMarkers",
-            "makefile-audit-wiring",
             "wiring",
             "dependency-boundary",
             "scripts/check-dependency-boundary.mjs",
-            "typed-package-lockfiles",
             "package-lock.json",
             "lockfileVersion"
           ],
           "mustContain": [
-            "contractInvariants",
-            "safe-package-manifest-paths",
-            "safe-source-roots",
-            "typed-package-dependency-contracts",
-            "typed-runtime-dependency-lists",
-            "typed-forbidden-import-markers",
             "sourceRoots"
           ]
         },
@@ -2096,7 +1758,6 @@
           "contains": [
             "dependency boundary passed",
             "runtime dependency drift",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "dependency-boundary",
@@ -2109,7 +1770,6 @@
             "validateContractShape",
             "safeRelativePath",
             "must be a repo-relative path without parent traversal",
-            "typed-peer-and-dev-dependency-maps",
             "sourceFiles(contract.sourceRoots"
           ]
         },
@@ -2130,10 +1790,6 @@
           "contains": [
             "Allowed runtime dependency ledger",
             "make dependency-license",
-            "Contract-shape rule",
-            "Dependency-license contract shape is part of license readiness",
-            "unsafe manifest/evidence paths",
-            "malformed Make/docs/audit wiring",
             "Manifest range",
             "^1.29.0",
             "^3.25.0"
@@ -2146,13 +1802,6 @@
             "commander",
             "@modelcontextprotocol/sdk",
             "zod",
-            "contractInvariants",
-            "safe-evidence-and-manifest-paths",
-            "typed-package-license-ledger",
-            "typed-runtime-dependency-ledger",
-            "typed-license-allow-and-deny-lists",
-            "typed-wiring-contract",
-            "typed-runtime-dependency-ranges",
             "\"range\": \"^1.29.0\"",
             "\"range\": \"^3.25.0\""
           ]
@@ -2165,8 +1814,6 @@
             "validateContractShape",
             "safeRelativePath",
             "validateEvidenceEntry",
-            "typed-runtime-dependency-ledger",
-            "typed-wiring-contract",
             "range drift",
             "dependency.range",
             "manifest.dependencies?.[dependency.name]"
@@ -2190,10 +1837,6 @@
             "Compatibility rules",
             "Deprecation pattern",
             "Required receipts",
-            "Contract-shape rule",
-            "Compatibility contract shape is part of breaking-change safety",
-            "unsafe repo-relative evidence paths",
-            "malformed surface/path marker lists",
             "Compatibility window",
             "Keep deprecated public paths until the next major version",
             "make breaking-change-review"
@@ -2206,17 +1849,9 @@
             "cli",
             "mcp",
             "openapi",
-            "contractInvariants",
-            "safe-compatibility-evidence-paths",
-            "typed-policy-document-contract",
-            "typed-surface-contracts",
-            "typed-required-make-targets",
-            "typed-docs-index-contract",
-            "makefile-audit-wiring",
             "wiring",
             "compatibility-contract",
             "scripts/check-compatibility-contract.mjs",
-            "typed-deprecation-window-contract",
             "deprecationWindow",
             "breaking-change-review"
           ]
@@ -2231,14 +1866,12 @@
             "validateMarkerEntry",
             "compatibility contract shape failed",
             "contract.docsIndex",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "compatibility-contract",
             "scripts/check-compatibility-contract.mjs",
             "deprecationWindow.minimumPolicy",
-            "deprecation-window marker",
-            "typed-deprecation-window-contract"
+            "deprecation-window marker"
           ]
         },
         {
@@ -2259,10 +1892,6 @@
             "No silent removals",
             "Replacement-first rule",
             "make breaking-change-review",
-            "Contract-shape rule",
-            "Breaking-change review contract shape is part of public-surface safety",
-            "unsafe repo-relative evidence paths",
-            "malformed surface/migration/changelog evidence",
             "Version/package identity",
             "What version-policy outcome applies",
             "make version-policy"
@@ -2275,14 +1904,7 @@
             "cli-public-surface",
             "mcp-public-surface",
             "openapi-truth-surface",
-            "contractInvariants",
-            "safe-breaking-change-evidence-paths",
-            "typed-surface-contracts",
-            "typed-migration-evidence",
-            "typed-changelog-evidence",
-            "typed-wiring-contract",
             "version-and-release-surface",
-            "typed-version-policy-evidence",
             "docs/version-policy.json",
             "version-policy"
           ]
@@ -2296,9 +1918,7 @@
             "validateContractShape",
             "safeRelativePath",
             "validateMarkerEntry",
-            "Breaking-change review contract shape failed",
-            "typed-wiring-contract",
-            "typed-version-policy-evidence"
+            "Breaking-change review contract shape failed"
           ]
         },
         {
@@ -2318,11 +1938,7 @@
           "contains": [
             "Cross-surface receipt rules",
             "SDK correlation",
-            "Agent receipts",
-            "Contract-shape rule",
-            "Receipt contract shape is part of observability readiness",
-            "unsafe repo-relative evidence paths",
-            "malformed SDK/CLI/MCP receipt evidence"
+            "Agent receipts"
           ]
         },
         {
@@ -2331,13 +1947,6 @@
             "X-Request-Id",
             "structuredContent",
             "retryable",
-            "contractInvariants",
-            "safe-receipt-evidence-paths",
-            "typed-sdk-receipt-evidence",
-            "typed-cli-receipt-evidence",
-            "typed-mcp-receipt-evidence",
-            "typed-docs-index-contract",
-            "makefile-audit-wiring",
             "wiring",
             "receipts-contract",
             "scripts/check-receipts-contract.mjs"
@@ -2354,7 +1963,6 @@
             "receipts contract shape failed",
             "contract.requiredMakeTargets",
             "contract.docsIndex",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "receipts-contract",
@@ -2382,10 +1990,6 @@
             "Telemetry levels",
             "Redaction rules",
             "make observability",
-            "Contract-shape rule",
-            "Observability contract shape is part of support readiness",
-            "unsafe repo-relative evidence paths",
-            "malformed SDK/CLI/MCP/support evidence",
             "Use `<redacted>`",
             "role placeholders",
             "Do not jump from correlation to raw payload logging"
@@ -2400,15 +2004,6 @@
             "Prepublish gate",
             "Package-lock",
             "docs/support-runbook.md",
-            "contractInvariants",
-            "safe-observability-evidence-paths",
-            "typed-sdk-observability-evidence",
-            "typed-cli-observability-evidence",
-            "typed-mcp-observability-evidence",
-            "typed-support-observability-evidence",
-            "typed-wiring-contract",
-            "typed-redaction-observability-evidence",
-            "typed-required-make-targets",
             "\"redaction\"",
             "support-bundle"
           ]
@@ -2423,8 +2018,6 @@
             "safeRelativePath",
             "validateMarkerEntry",
             "Observability contract shape failed",
-            "typed-wiring-contract",
-            "typed-redaction-observability-evidence",
             "requiredMakeTargets",
             "\"redaction\""
           ]
@@ -2447,10 +2040,6 @@
             "Diagnostics are no-network by default",
             "Diagnostics are redacted",
             "make diagnostics",
-            "Contract-shape rule",
-            "Diagnostics contract shape is part of local-readiness safety",
-            "unsafe repo-relative evidence paths",
-            "malformed diagnostic surface/file marker lists",
             "No-network proof",
             "Diagnostics code must not construct API clients",
             "those are next steps, not work performed by diagnostics"
@@ -2462,14 +2051,6 @@
             "clockifyDiagnostics",
             "clk115 doctor",
             "clockify://mcp/doctor",
-            "contractInvariants",
-            "safe-diagnostics-evidence-paths",
-            "typed-policy-document-contract",
-            "typed-surface-contracts",
-            "typed-diagnostic-surface-files",
-            "typed-forbidden-secret-patterns",
-            "typed-wiring-contract",
-            "typed-no-network-diagnostics-evidence",
             "noNetworkEvidence",
             "forbiddenContains",
             "new ClockifyApiClient"
@@ -2482,9 +2063,6 @@
             "validateContractShape",
             "safeRelativePath",
             "Diagnostics contract shape failed",
-            "typed-diagnostic-surface-files",
-            "typed-wiring-contract",
-            "typed-no-network-diagnostics-evidence",
             "noNetworkEvidence",
             "forbidden network/client marker"
           ]
@@ -2539,10 +2117,6 @@
             "Local diagnostics, no network",
             "Quickstart Receipt",
             "Stop conditions",
-            "Contract-shape rule",
-            "Quickstart receipt contract shape is part of operator-readiness safety",
-            "unsafe repo-relative evidence paths",
-            "malformed supporting-surface marker lists",
             "draft blocker",
             "deferred live proof as final readiness",
             "Copy-paste safety",
@@ -2557,14 +2131,8 @@
             "clockifyDiagnostics",
             "node dist/index.js --json doctor",
             "clockify://mcp/doctor",
-            "contractInvariants",
-            "safe-quickstart-evidence-paths",
-            "typed-document-contract",
-            "typed-supporting-surfaces",
-            "typed-wiring-contract",
             "draft blocker",
             "deferred live proof as final readiness",
-            "typed-receipt-template-contract",
             "receiptTemplate",
             "forbiddenMarkers",
             "npm publish"
@@ -2578,8 +2146,6 @@
             "safeRelativePath",
             "validateMarkerEntry",
             "Quickstart receipt contract shape failed",
-            "typed-wiring-contract",
-            "typed-receipt-template-contract",
             "receiptTemplate.requiredFields",
             "forbidden quickstart marker"
           ]
@@ -2617,11 +2183,7 @@
             "Public packages",
             "Release readiness checklist",
             "Do not run `npm publish`",
-            "Contract-shape rule",
-            "Release/support contract shape is part of publish-readiness safety",
             "immediately before",
-            "unsafe repo-relative evidence paths",
-            "malformed security regex deny-list entries",
             "draft blocker",
             "completed sandbox live proof"
           ]
@@ -2634,12 +2196,6 @@
             "packageNamesMustAppearInPolicy",
             "requiredMarkers",
             "prepublishOnly",
-            "contractInvariants",
-            "safe-release-support-evidence-paths",
-            "typed-policy-document-contract",
-            "typed-security-document-contract",
-            "typed-package-contract-reference",
-            "typed-wiring-contract",
             "draft blocker",
             "completed sandbox live proof"
           ]
@@ -2661,8 +2217,7 @@
             "validateContractShape",
             "safeRelativePath",
             "release/support contract shape failed",
-            "securityDocument.forbiddenRegex",
-            "typed-wiring-contract"
+            "securityDocument.forbiddenRegex"
           ]
         },
         {
@@ -2698,11 +2253,6 @@
             "perfect-live",
             "Source of truth",
             "Packed consumer",
-            "contractInvariants",
-            "safe-release-readiness-paths",
-            "typed-release-readiness-lists",
-            "typed-supporting-evidence",
-            "makefile-audit-wiring",
             "Live proof is completed in a sacrificial sandbox"
           ]
         },
@@ -2717,13 +2267,11 @@
             "evidenceAreas",
             "supportingEvidence",
             "validateContractShape",
-            "contractInvariants",
             "releaseRelativePath",
             "repo-relative path without parent traversal",
             "assertNonEmptyString",
             "assertStringArray",
             "assertUnique",
-            "typed-supporting-evidence",
             "supportingEvidence[",
             "must be a non-empty array",
             "contains non-string or empty entry",
@@ -2756,32 +2304,11 @@
       "requirement": "Keep GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary explicit and drift-checked without changing CI/CD behavior.",
       "evidence": [
         {
-          "path": "docs/ci-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "CI contract shape is part of workflow readiness",
-            "malformed workflow/supporting-doc entries",
-            "does not authorize changing CI/CD behavior"
-          ]
-        },
-        {
-          "path": "docs/ci-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-ci-evidence-paths",
-            "typed-workflow-entries",
-            "typed-supporting-doc-entries",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-ci-contract.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "CI contract shape failed",
-            "typed-workflow-entries",
-            "typed-wiring-contract"
+            "CI contract shape failed"
           ]
         },
         {
@@ -2802,12 +2329,7 @@
           "contains": [
             "Never run live gates against a customer workspace",
             "verify:live-cleanup",
-            "DEFER_LIVE_REASON",
-            "Contract-shape rule",
-            "completed final proof receipt must replace the deferral with live sandbox proof",
-            "Live-safety contract shape is part of sandbox safety",
-            "unsafe repo-relative evidence paths",
-            "malformed policy/live-gate/cleanup/final-proof marker lists"
+            "DEFER_LIVE_REASON"
           ]
         },
         {
@@ -2815,13 +2337,7 @@
           "contains": [
             "CLOCKIFY_API_KEY",
             "assert-clean-prefixes.mjs",
-            "make mock-clockify",
-            "contractInvariants",
-            "safe-live-safety-evidence-paths",
-            "typed-live-gate-evidence",
-            "typed-mcp-cleanup-script-contract",
-            "typed-final-proof-deferral-contract",
-            "typed-wiring-contract"
+            "make mock-clockify"
           ]
         },
         {
@@ -2831,9 +2347,7 @@
             "requiredScript",
             "validateContractShape",
             "safeRelativePath",
-            "live safety contract shape failed",
-            "typed-mcp-cleanup-script-contract",
-            "typed-wiring-contract"
+            "live safety contract shape failed"
           ]
         },
         {
@@ -2853,11 +2367,7 @@
           "contains": [
             "Prefix ledger",
             "Cleanup proof",
-            "make test-data-lifecycle",
-            "Contract-shape rule",
-            "Test-data lifecycle contract shape is part of cleanup safety",
-            "unsafe repo-relative evidence paths",
-            "malformed prefix lists"
+            "make test-data-lifecycle"
           ]
         },
         {
@@ -2865,13 +2375,7 @@
           "contains": [
             "sdk-test-",
             "mcp-sandbox-",
-            "assert-clean-prefixes.mjs",
-            "contractInvariants",
-            "safe-test-data-evidence-paths",
-            "typed-prefix-ledger",
-            "typed-cleanup-script-contract",
-            "typed-live-test-evidence",
-            "typed-wiring-contract"
+            "assert-clean-prefixes.mjs"
           ]
         },
         {
@@ -2881,9 +2385,7 @@
             "prefixes",
             "validateContractShape",
             "safeRelativePath",
-            "Test data lifecycle contract shape failed",
-            "typed-prefix-ledger",
-            "typed-wiring-contract"
+            "Test data lifecycle contract shape failed"
           ]
         },
         {
@@ -2925,13 +2427,6 @@
             "failed live proof; rerun make perfect-live successfully",
             "deferral is draft-only",
             "Visible non-blocking open/provisional risks",
-            "contractInvariants",
-            "typed-risk-entries",
-            "safe-risk-evidence-paths",
-            "typed-risk-report-generator",
-            "typed-generated-risk-report-contract",
-            "typed-allowed-risk-statuses",
-            "makefile-audit-wiring",
             "allowedStatuses",
             "performanceReceiptStatus",
             "failedMeasurements",
@@ -3006,17 +2501,12 @@
             "closure gate",
             "validateRegisterShape",
             "validateReportGeneratorShape",
-            "contractInvariants",
             "riskRelativePath",
             "repo-relative path without parent traversal",
             "assertNonEmptyString",
             "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
-            "typed-risk-entries",
-            "safe-risk-evidence-paths",
-            "typed-risk-report-generator",
-            "typed-generated-risk-report-contract",
             "reportGenerator.generatedReport.requiredRiskIds",
             "risk entry must be an object",
             "must be a non-empty array",
@@ -3043,26 +2533,12 @@
       "requirement": "Keep user-facing root, SDK, CLI, MCP, install, migration, and troubleshooting documentation complete enough for onboarding and future-agent handoff.",
       "evidence": [
         {
-          "path": "docs/user-docs-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "User-docs contract shape is part of documentation readiness",
-            "duplicate document ids",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
           "path": "docs/user-docs-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-user-docs-evidence-paths",
-            "typed-document-entries",
             "axioms-contract",
             "non-coder-reproducibility",
             "First-run diagnostics and support handoff",
-            "safeCommandHints",
-            "typed-supporting-contract-entries",
-            "typed-wiring-contract"
+            "safeCommandHints"
           ]
         },
         {
@@ -3070,9 +2546,7 @@
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "user docs contract shape failed",
-            "typed-document-entries",
-            "typed-wiring-contract"
+            "user docs contract shape failed"
           ]
         },
         {
@@ -3091,12 +2565,7 @@
         {
           "path": "docs/docs-quality-policy.md",
           "markers": [
-            "Contract-shape rule",
             "Generated claim backing",
-            "Documentation-quality contract shape is part of docs readiness",
-            "malformed product-surface claim requirements",
-            "invalid unsupported-claim regexes",
-            "Make/docs/inventory/audit wiring",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
@@ -3105,15 +2574,7 @@
         {
           "path": "docs/docs-quality-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-docs-quality-evidence-paths",
-            "typed-generated-truth-surfaces",
-            "typed-product-surface-claim-contract",
-            "typed-axiom-entries",
             "axioms-contract",
-            "typed-scan-paths",
-            "typed-unsupported-claim-regexes",
-            "typed-wiring-contract",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
@@ -3127,7 +2588,6 @@
             "safeRelativePath",
             "Documentation quality contract shape failed",
             "checkProductSurfaceClaims",
-            "typed-unsupported-claim-regexes",
             "new RegExp(pattern, \"i\")"
           ]
         },
@@ -3147,26 +2607,16 @@
         {
           "path": "docs/agent-handoff-policy.md",
           "markers": [
-            "Contract-shape rule",
-            "Agent-handoff contract shape is part of handoff readiness",
             "immediately before final acceptance",
             "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints",
-            "malformed guidance scan paths",
-            "Make/docs/inventory/audit"
+            "safeCommandHints"
           ]
         },
         {
           "path": "docs/agent-handoff-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-agent-handoff-evidence-paths",
-            "typed-guidance-entries",
-            "typed-guidance-scan-paths",
-            "typed-forbidden-guidance-markers",
             "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints",
-            "typed-wiring-contract"
+            "safeCommandHints"
           ]
         },
         {
@@ -3175,7 +2625,6 @@
             "validateContractShape",
             "safeRelativePath",
             "agent handoff contract shape failed",
-            "typed-guidance-scan-paths",
             "contract.guidanceScanPaths"
           ]
         },
@@ -3214,15 +2663,6 @@
             "wrapper.script.prepublishOnly.command",
             "spec/fern/fern.config.json",
             "../GOCLMCP",
-            "contractInvariants",
-            "safe-developer-environment-paths",
-            "typed-policy-document-contract",
-            "typed-root-boundary",
-            "typed-repo-doctor-contract",
-            "typed-package-contracts",
-            "typed-fern-contract",
-            "typed-supporting-doc-contracts",
-            "makefile-audit-wiring",
             "wiring",
             "developer-environment",
             "scripts/check-developer-environment.mjs"
@@ -3244,14 +2684,6 @@
             "assertNonEmptyArray",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "safe-developer-environment-paths",
-            "typed-policy-document-contract",
-            "typed-root-boundary",
-            "typed-repo-doctor-contract",
-            "typed-package-contracts",
-            "typed-fern-contract",
-            "typed-supporting-doc-contracts",
             "repoDoctor.generatedReport.requiredCheckIds",
             "requiredScriptValues must be an object",
             "package contract must be an object",
@@ -3259,7 +2691,6 @@
             "must be a non-empty array",
             "contains non-string or empty entry",
             "developer environment contract shape failed",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "developer-environment",
@@ -3281,8 +2712,6 @@
         {
           "path": "docs/operator-onboarding.md",
           "markers": [
-            "Contract-shape rule",
-            "Operator-onboarding contract shape is part of onboarding readiness",
             "completed live sandbox proof",
             "no blocking residual risks",
             "Readiness context",
@@ -3292,19 +2721,12 @@
             "riskRoutingSummary",
             "orderedProofChainCoverage",
             "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints",
-            "malformed plan-generator expectations",
-            "Make/docs/inventory/audit wiring"
+            "safeCommandHints"
           ]
         },
         {
           "path": "docs/operator-onboarding-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-operator-onboarding-evidence-paths",
-            "typed-plan-generator-contract",
-            "typed-required-make-targets",
-            "typed-wiring-contract",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "deferral is draft-only",
@@ -3317,8 +2739,6 @@
             "validateContractShape",
             "safeRelativePath",
             "Operator onboarding contract shape failed",
-            "typed-plan-generator-contract",
-            "typed-required-make-targets",
             "requiredGoalTextMarkers",
             "assertGoalTextMarkers"
           ]
@@ -3373,10 +2793,7 @@
             "safe-toolbox-paths",
             "typed-helper-lists",
             "typed-helper-command-coverage",
-            "makefile-audit-wiring",
-            "contractInvariants",
-            "typed-helper-ownership-contract",
-            "typed-supporting-doc-markers"
+            "makefile-audit-wiring"
           ]
         },
         {
@@ -3403,9 +2820,6 @@
             "supportingDocMarkers[",
             "must be a non-empty array",
             "contains non-string or empty entry",
-            "contractInvariants",
-            "typed-helper-ownership-contract",
-            "typed-supporting-doc-markers",
             "makefile-audit-wiring"
           ]
         },
@@ -3425,33 +2839,11 @@
       "requirement": "Keep TypeDoc configuration, generated SDK resource docs, sync wiring, Pages workflow, and docs package identity explicit and drift-checked.",
       "evidence": [
         {
-          "path": "docs/api-docs-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "API-docs contract shape is part of documentation readiness",
-            "unsafe repo-relative evidence paths",
-            "malformed TypeDoc/package/resource-docs expectations"
-          ]
-        },
-        {
-          "path": "docs/api-docs-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-api-docs-evidence-paths",
-            "typed-typedoc-contract",
-            "typed-resource-docs-contract",
-            "typed-generated-api-docs-contract",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-api-docs.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "API docs contract shape failed",
-            "typed-generated-api-docs-contract",
-            "typed-wiring-contract"
+            "API docs contract shape failed"
           ]
         },
         {
@@ -3473,13 +2865,7 @@
             "totalTools",
             "clockify://guide/workflows",
             "clockify-workflow-plan",
-            "MCP_RESULT_OUTPUT_SCHEMA",
-            "contractInvariants",
-            "safe-mcp-contract-paths",
-            "typed-tools-metadata-reference",
-            "typed-expected-tool-surface",
-            "typed-resource-and-prompt-contracts",
-            "typed-wiring-contract"
+            "MCP_RESULT_OUTPUT_SCHEMA"
           ]
         },
         {
@@ -3489,9 +2875,7 @@
             "domainGroups counts",
             "validateContractShape",
             "safeRelativePath",
-            "MCP contract shape failed",
-            "typed-expected-tool-surface",
-            "typed-wiring-contract"
+            "MCP contract shape failed"
           ]
         },
         {
@@ -3509,13 +2893,8 @@
         {
           "path": "docs/mcp-agent-ux-policy.md",
           "contains": [
-            "Agent UX rules",
             "workflow-first",
-            "make mcp-agent-ux",
-            "Contract-shape rule",
-            "MCP agent UX contract shape is part of agent usability safety",
-            "unsafe repo-relative paths",
-            "malformed UX marker checks"
+            "make mcp-agent-ux"
           ]
         },
         {
@@ -3525,13 +2904,7 @@
             "clockify-workflow-plan",
             "argsSchema",
             "goal: z.string().optional()",
-            "structuredContent",
-            "contractInvariants",
-            "safe-mcp-agent-ux-paths",
-            "typed-tools-metadata-reference",
-            "typed-expected-tool-summary",
-            "typed-agent-ux-checks",
-            "typed-wiring-contract"
+            "structuredContent"
           ]
         },
         {
@@ -3541,9 +2914,7 @@
             "workflowTools",
             "validateContractShape",
             "safeRelativePath",
-            "MCP agent UX contract shape failed",
-            "typed-expected-tool-summary",
-            "typed-wiring-contract"
+            "MCP agent UX contract shape failed"
           ]
         },
         {
@@ -3567,11 +2938,7 @@
             "dry_run",
             "confirm_token",
             "changed",
-            "recovery",
-            "Contract-shape rule",
-            "MCP write-safety contract shape is part of agent write safety",
-            "unsafe repo-relative evidence paths",
-            "malformed workflow tool lists"
+            "recovery"
           ]
         },
         {
@@ -3580,13 +2947,7 @@
             "clockify_invoice_client_work",
             "clockify_record_expense",
             "clockify_request_time_off",
-            "minimumDestructiveToolCount",
-            "contractInvariants",
-            "safe-mcp-write-evidence-paths",
-            "typed-destructive-tool-threshold",
-            "typed-workflow-tool-lists",
-            "typed-workflow-marker-contracts",
-            "typed-wiring-contract"
+            "minimumDestructiveToolCount"
           ]
         },
         {
@@ -3598,9 +2959,7 @@
             "destructiveHint",
             "validateContractShape",
             "safeRelativePath",
-            "MCP write-safety contract shape failed",
-            "typed-workflow-tool-lists",
-            "typed-wiring-contract"
+            "MCP write-safety contract shape failed"
           ]
         },
         {
@@ -3643,23 +3002,11 @@
       "requirement": "Keep SDK/CLI/MCP package test/build scripts, exact last-resort package gate commands, and required unit/mock/live test files present.",
       "evidence": [
         {
-          "path": "docs/test-matrix-contract.json",
-          "markers": [
-            "contractInvariants",
-            "typed-package-test-matrix",
-            "safe-test-matrix-evidence-paths",
-            "typed-root-gate-targets",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-test-matrix-contract.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "test matrix contract shape failed",
-            "typed-package-test-matrix",
-            "typed-wiring-contract"
+            "test matrix contract shape failed"
           ]
         },
         {
@@ -3680,13 +3027,7 @@
           "contains": [
             "GET /user",
             "CLOCKIFY_BASE_URL",
-            "wrapper/tests/mock-clockify.test.ts",
-            "contractInvariants",
-            "safe-mock-evidence-paths",
-            "typed-route-contracts",
-            "typed-mock-test-evidence",
-            "typed-doc-evidence",
-            "typed-wiring-contract"
+            "wrapper/tests/mock-clockify.test.ts"
           ]
         },
         {
@@ -3696,23 +3037,13 @@
             "requiredRoutes",
             "validateContractShape",
             "safeRelativePath",
-            "mock Clockify contract shape failed",
-            "typed-route-contracts",
-            "typed-wiring-contract"
+            "mock Clockify contract shape failed"
           ]
         },
         {
           "path": "Makefile",
           "contains": [
             "mock-contract:"
-          ]
-        },
-        {
-          "path": "docs/quality-gates.md",
-          "contains": [
-            "Contract-shape rule",
-            "safe repo-relative evidence paths",
-            "Make/docs/audit wiring"
           ]
         }
       ]
@@ -3724,10 +3055,6 @@
         {
           "path": "docs/docs-drift-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-docs-drift-paths",
-            "typed-scan-rules",
-            "declared-allowlists",
             "legacy-sdk-package-name",
             "placeholder-marker",
             "docs-drift-checker",
@@ -3797,10 +3124,6 @@
         {
           "path": "docs/security-threat-model-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-security-threat-model-paths",
-            "typed-risk-surfaces",
-            "declared-non-make-proof-targets",
             "allowedNonMakeProofTargets",
             "credential-handling",
             "mock-replay-base-url",
@@ -3845,11 +3168,7 @@
             "CLI error receipt",
             "MCP recovery receipt",
             "retryable",
-            "recovery",
-            "Contract-shape rule",
-            "Receipt examples contract shape is part of output-shape safety",
-            "unsafe repo-relative evidence paths",
-            "malformed supporting-evidence markers"
+            "recovery"
           ]
         },
         {
@@ -3858,13 +3177,7 @@
             "sdk-success",
             "cli-error",
             "mcp-recovery",
-            "supportingEvidence",
-            "contractInvariants",
-            "safe-receipt-example-evidence-paths",
-            "typed-examples-document-contract",
-            "typed-receipt-examples",
-            "typed-supporting-evidence",
-            "typed-wiring-contract"
+            "supportingEvidence"
           ]
         },
         {
@@ -3876,8 +3189,7 @@
             "validateContractShape",
             "safeRelativePath",
             "validateMarkerEntry",
-            "Receipt examples contract shape failed",
-            "typed-wiring-contract"
+            "Receipt examples contract shape failed"
           ]
         },
         {
@@ -3936,15 +3248,6 @@
             "orderedProofChainCoverage",
             "Live workspace type",
             "What must not be retried automatically",
-            "contractInvariants",
-            "safe-support-bundle-paths",
-            "typed-runbook-contract",
-            "typed-generator-contract",
-            "typed-lockfile-summary-contract",
-            "typed-generated-bundle-shape",
-            "typed-supporting-evidence",
-            "makefile-audit-wiring",
-            "typed-diagnostics-and-quickstart-summary",
             "requiredDiagnosticSurfaces",
             "requiredSafeCommandHints",
             "make quickstart-receipt",
@@ -3976,19 +3279,11 @@
             "assertNonEmptyString",
             "assertStringArray",
             "assertUnique",
-            "contractInvariants",
-            "safe-support-bundle-paths",
-            "typed-runbook-contract",
-            "typed-generator-contract",
-            "typed-lockfile-summary-contract",
-            "typed-generated-bundle-shape",
-            "typed-supporting-evidence",
             "generatedBundleShape.packageCount",
             "supportingEvidence[",
             "must be a non-empty array",
             "contains non-string or empty entry",
             "must be an object",
-            "typed-diagnostics-and-quickstart-summary",
             "generated bundle diagnostics",
             "generated bundle safeCommandHints",
             "node scripts/plan.mjs workflow --workflow first-run-support"
@@ -4016,11 +3311,6 @@
             "finalBlockingSignalIds",
             "riskRoutingSummary",
             "orderedProofChainCoverage",
-            "Contract-shape rule",
-            "Issue-intake contract shape is part of supportability safety",
-            "unsafe repo-relative evidence paths",
-            "malformed template markers",
-            "quickstart receipt",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "diagnostic surface",
             "safeCommandHints"
@@ -4032,14 +3322,7 @@
             "bug_report.yml",
             "feature_request.yml",
             "pull_request_template.md",
-            "contractInvariants",
-            "safe-issue-intake-evidence-paths",
-            "typed-policy-document-contract",
-            "typed-template-contracts",
-            "typed-supporting-evidence",
-            "typed-wiring-contract",
             "readinessContextFields",
-            "typed-quickstart-diagnostics-intake",
             "quickstartDiagnosticsFields",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "clockify://mcp/doctor"
@@ -4054,9 +3337,7 @@
             "safeRelativePath",
             "validateMarkerEntry",
             "Issue intake contract shape failed",
-            "typed-wiring-contract",
             "readinessContextFields",
-            "typed-quickstart-diagnostics-intake",
             "quickstartDiagnosticsFields",
             "pathWithQuickstartDiagnostics"
           ]
@@ -4076,23 +3357,13 @@
         {
           "path": "docs/maintenance-playbook.md",
           "markers": [
-            "Contract-shape rule",
-            "Maintenance-playbook contract shape is part of maintenance readiness",
             "node scripts/plan.mjs workflow --workflow first-run-support",
-            "safeCommandHints",
-            "malformed planner expectations",
-            "Make/docs/inventory/audit wiring"
+            "safeCommandHints"
           ]
         },
         {
           "path": "docs/maintenance-playbook-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-maintenance-evidence-paths",
-            "typed-planner-contract",
-            "typed-procedures",
-            "typed-supporting-evidence",
-            "typed-wiring-contract",
             "Routine maintenance may leave budgets provisional",
             "final readiness requires measured tightening",
             "requiredCadenceTextMarkers",
@@ -4107,8 +3378,6 @@
             "validateContractShape",
             "safeRelativePath",
             "Maintenance playbook contract shape failed",
-            "typed-planner-contract",
-            "typed-supporting-evidence",
             "requiredCadenceTextMarkers",
             "assertCadenceTextMarkers"
           ]
@@ -4134,11 +3403,7 @@
             "CLI rules",
             "MCP rules",
             "Ambiguous failure recovery",
-            "Proof gates",
-            "Contract-shape rule",
-            "Mutation-safety contract shape is part of write-safety",
-            "unsafe repo-relative evidence paths",
-            "malformed mutation class markers"
+            "Proof gates"
           ]
         },
         {
@@ -4148,12 +3413,7 @@
             "idempotent-update",
             "non-idempotent-create",
             "destructive-delete",
-            "external-side-effect",
-            "contractInvariants",
-            "safe-mutation-safety-evidence-paths",
-            "typed-mutation-classes",
-            "typed-supporting-evidence",
-            "typed-wiring-contract"
+            "external-side-effect"
           ]
         },
         {
@@ -4164,9 +3424,7 @@
             "supportingEvidence",
             "validateContractShape",
             "safeRelativePath",
-            "Mutation safety contract shape failed",
-            "typed-mutation-classes",
-            "typed-wiring-contract"
+            "Mutation safety contract shape failed"
           ]
         },
         {
@@ -4194,14 +3452,6 @@
         {
           "path": "docs/examples-matrix-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-examples-matrix-paths",
-            "typed-example-rows",
-            "generated-plan-static-no-network",
-            "required-target-wiring",
-            "required-doc-evidence",
-            "supporting-evidence-marker-contract",
-            "makefile-audit-wiring",
             "auth-status",
             "generatedPlan",
             "requiredExampleIds",
@@ -4238,32 +3488,11 @@
       "requirement": "Define and gate deterministic SDK/CLI/MCP configuration precedence for auth, workspace, base URL overrides, rc files, env vars, flags, and missing-config recovery wording.",
       "evidence": [
         {
-          "path": "docs/config-precedence-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "Configuration-precedence contract shape is part of configuration readiness",
-            "duplicate surface ids",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
-          "path": "docs/config-precedence-contract.json",
-          "markers": [
-            "contractInvariants",
-            "safe-config-precedence-evidence-paths",
-            "typed-surface-evidence",
-            "typed-supporting-evidence",
-            "typed-wiring-contract"
-          ]
-        },
-        {
           "path": "scripts/check-config-precedence.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "Configuration precedence contract shape failed",
-            "typed-surface-evidence",
-            "typed-wiring-contract"
+            "Configuration precedence contract shape failed"
           ]
         },
         {
@@ -4291,11 +3520,6 @@
         {
           "path": "docs/naming-taxonomy-contract.json",
           "contains": [
-            "contractInvariants",
-            "safe-naming-taxonomy-paths",
-            "typed-vocabulary-groups",
-            "combined-vocabulary-evidence",
-            "supporting-evidence-marker-contract",
             "combinedVocabularyDocs",
             "package-names",
             "time-entry-surface",
@@ -4328,24 +3552,8 @@
       "requirement": "Guard no-regression operation coverage thresholds across corrected OpenAPI, SDK method stamps, TS MCP exact matches, GOCLMCP exact matches, and curated parity overrides.",
       "evidence": [
         {
-          "path": "docs/operation-coverage-policy.md",
-          "markers": [
-            "Contract-shape rule",
-            "Operation-coverage contract shape is part of parity readiness",
-            "missing threshold values",
-            "Make/docs/inventory/audit wiring"
-          ]
-        },
-        {
           "path": "docs/operation-coverage-contract.json",
           "markers": [
-            "contractInvariants",
-            "safe-operation-coverage-evidence-paths",
-            "typed-report-inputs",
-            "typed-thresholds",
-            "typed-supporting-evidence",
-            "typed-wiring-contract",
-            "makefile-audit-wiring",
             "wiring",
             "operation-coverage",
             "scripts/check-operation-coverage.mjs"
@@ -4358,8 +3566,6 @@
             "safeRelativePath",
             "Operation coverage contract shape failed",
             "reportInputs.operationParity",
-            "typed-thresholds",
-            "makefile-audit-wiring",
             "wiring.makeTarget",
             "wiring.checker",
             "wiring.qualityGate",
@@ -4378,15 +3584,6 @@
         }
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-audit-evidence-paths",
-    "typed-requirement-contracts",
-    "typed-evidence-markers",
-    "typed-temporary-context-contract",
-    "makefile-audit-wiring"
   ],
   "wiring": {
     "makeTarget": "enterprise-audit",

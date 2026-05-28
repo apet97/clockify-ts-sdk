@@ -1,18 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Maintainer maintenance and upgrade playbook contract for dependency updates, Fern/generator bumps, Clockify API drift, release rehearsal, rollback, and receipt discipline.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-maintenance-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-planner-contract",
-    "typed-required-targets",
-    "typed-required-docs",
-    "typed-procedures",
-    "typed-supporting-evidence",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/maintenance-playbook.md",
     "contains": [

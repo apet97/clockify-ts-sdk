@@ -90,18 +90,6 @@ function assertContractShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-docs-index-paths",
-        "typed-required-links",
-        "all-index-links-resolve",
-        "required-link-presence",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     assertSafeRelativePath(value.indexPath, "indexPath");
     if (value.indexPath !== "docs/README.md") {

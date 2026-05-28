@@ -1,25 +1,12 @@
 {
   "schemaVersion": 1,
   "purpose": "Live sandbox test data lifecycle contract for SDK, CLI, MCP, prefixes, cleanup, leftover scans, and safe final proof receipts.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-test-data-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-prefix-ledger",
-    "typed-cleanup-script-contract",
-    "typed-live-test-evidence",
-    "typed-supporting-evidence",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/test-data-lifecycle-policy.md",
     "mustContain": [
       "Prefix ledger",
       "Lifecycle rules",
       "Cleanup proof",
-      "Contract-shape rule",
       "Stop conditions",
       "make test-data-lifecycle"
     ],

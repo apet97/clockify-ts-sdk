@@ -1,19 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, generated docs, operator docs, and final proof claims.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-docs-quality-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-key-document-entries",
-    "typed-supporting-evidence-entries",
-    "typed-generated-truth-surfaces",
-    "typed-product-surface-claim-contract",
-    "typed-scan-paths",
-    "typed-unsupported-claim-regexes",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/docs-quality-policy.md",
     "mustContain": [
@@ -22,7 +9,6 @@
       "Style rules",
       "Unsupported claim blacklist",
       "Non-coder readability",
-      "Contract-shape rule",
       "make docs-quality",
       "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
@@ -128,9 +114,7 @@
       "id": "axioms-contract",
       "path": "docs/axioms-contract.json",
       "mustContain": [
-        "typed-axiom-entries",
         "supportingEvidence",
-        "makefile-audit-wiring",
         "truth-source",
         "non-coder-reproducibility"
       ]

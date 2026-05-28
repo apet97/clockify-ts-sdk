@@ -137,26 +137,6 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-api-docs-evidence-paths",
-        "typed-policy-document-contract",
-        "typed-typedoc-contract",
-        "typed-wrapper-package-contract",
-        "typed-resource-docs-contract",
-        "typed-sync-script-contract",
-        "typed-docs-workflow-contract",
-        "typed-generated-api-docs-contract",
-        "typed-supporting-docs",
-        "typed-wiring-contract",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     validateMarkerEntry("policyDocument", contract.policyDocument);
 

@@ -1,26 +1,12 @@
 {
   "schemaVersion": 1,
   "purpose": "Cross-surface observability contract for request correlation, telemetry hooks, structured receipts, and safe support bundles.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-observability-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-sdk-observability-evidence",
-    "typed-cli-observability-evidence",
-    "typed-mcp-observability-evidence",
-    "typed-support-observability-evidence",
-    "typed-redaction-observability-evidence",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/observability-policy.md",
     "mustContain": [
       "Observability is a product surface",
       "X-Request-Id",
       "Telemetry levels",
-      "Contract-shape rule",
       "prepublish gate metadata",
       "package-lock metadata",
       "Redaction rules",

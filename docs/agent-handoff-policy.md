@@ -30,16 +30,6 @@ commands, and temporary goal context without reading chat history.
 - Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`.
 - Future agents should prefer `make perfect-fast`, `make perfect-full`, and `make perfect-live` over memorized package internals.
-
-## Contract-shape rule
-
-Agent-handoff contract shape is part of handoff readiness. The checker
-must fail before scanning guidance files when the JSON contract has
-unsafe repo-relative evidence paths, malformed guidance/supporting
-check entries, duplicate marker lists, malformed guidance scan paths,
-missing stale-marker rules, or missing Make/docs/inventory/audit
-wiring.
-
 ## Required receipts
 
 Before claiming agent-handoff readiness, run or cite:

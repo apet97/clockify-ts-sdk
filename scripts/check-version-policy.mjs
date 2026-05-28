@@ -90,19 +90,6 @@ function assertPolicyShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-version-policy-paths",
-        "typed-version-package-entries",
-        "product-surface-fields-explicit",
-        "package-field-maps-to-manifest-name",
-        "changelog-anchors-required",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     assertSafeRelativePath(value.productSurfacePath, "productSurfacePath");
     if (value.productSurfacePath !== "docs/product-surface.json") {

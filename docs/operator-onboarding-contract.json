@@ -1,22 +1,11 @@
 {
   "schemaVersion": 1,
   "purpose": "Operator onboarding contract for non-coder bootstrap, SDK/CLI/MCP path selection, mock/live safety, stop conditions, and readiness boundaries.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-operator-onboarding-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-supporting-doc-entries",
-    "typed-plan-generator-contract",
-    "typed-required-make-targets",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/operator-onboarding.md",
     "mustContain": [
       "First five minutes",
       "Choose the path",
-      "Contract-shape rule",
       "Generate a local plan",
       "Safe bootstrap sequence",
       "Mock versus live",

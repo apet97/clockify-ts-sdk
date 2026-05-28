@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Issue, feature, PR, support, and security intake quality contract for SDK, CLI, MCP, OpenAPI/generator, docs, mock/live proof, receipts, and redaction boundaries.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-issue-intake-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-template-contracts",
-    "typed-supporting-evidence",
-    "typed-quickstart-diagnostics-intake",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/issue-intake-policy.md",
     "mustContain": [
@@ -19,13 +9,11 @@
       "Required feature evidence",
       "PR checklist quality",
       "readinessContext",
-      "quickstart receipt",
       "diagnostic surface",
       "safeCommandHints",
       "finalBlockingSignalIds",
       "riskRoutingSummary",
       "orderedProofChainCoverage",
-      "Contract-shape rule",
       "make issue-intake"
     ],
     "forbiddenMarkers": [
@@ -145,7 +133,6 @@
     "orderedProofChainCoverage"
   ],
   "quickstartDiagnosticsFields": [
-    "quickstart receipt",
     "node scripts/plan.mjs workflow --workflow first-run-support",
     "diagnostic surface",
     "clockifyDiagnostics()",

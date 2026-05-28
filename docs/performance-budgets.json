@@ -94,15 +94,5 @@
       "maxMs": 1200,
       "rationale": "MCP clients should be able to discover the 105-tool surface quickly on local stdio startup. Calibrated from measured baseline ~440ms."
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-performance-budget-paths",
-    "typed-calibration-policy",
-    "typed-calibration-plan-contract",
-    "typed-file-size-budgets",
-    "typed-timing-budgets",
-    "makefile-audit-wiring"
   ]
 }

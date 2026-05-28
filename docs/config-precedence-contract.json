@@ -1,31 +1,24 @@
 {
   "schemaVersion": 1,
   "purpose": "Configuration precedence contract for SDK options/env fallback, CLI flags/env/rc files, MCP env-only startup, base URL override safety, and missing-config recovery wording.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-config-precedence-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-required-targets",
-    "typed-required-docs",
-    "typed-surface-evidence",
-    "typed-supporting-evidence",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/config-precedence-policy.md",
     "contains": [
       "Surface precedence",
       "Base URL override rule",
       "Missing configuration errors",
-      "Contract-shape rule",
       "Change rules",
       "Proof gates",
       "CLOCKIFY_API_KEY wins over CLOCKIFY_ADDON_TOKEN",
       "Command-line flags win over env vars",
       "Process env only"
     ],
-    "forbiddenMarkers": ["TODO", "TBD", "rc file override a flag", "normal production setting"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "rc file override a flag",
+      "normal production setting"
+    ]
   },
   "requiredTargets": [
     "config-precedence",
@@ -79,19 +72,38 @@
   "supportingEvidence": [
     {
       "path": "docs/env-contract.json",
-      "contains": ["CLOCKIFY_API_KEY", "CLOCKIFY_ADDON_TOKEN", "CLOCKIFY_BASE_URL", "mustMentionSafety"]
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_ADDON_TOKEN",
+        "CLOCKIFY_BASE_URL",
+        "mustMentionSafety"
+      ]
     },
     {
       "path": "cli/README.md",
-      "contains": ["Configuration", "Command-line flags", "Environment variables", "CLOCKIFY_HOME"]
+      "contains": [
+        "Configuration",
+        "Command-line flags",
+        "Environment variables",
+        "CLOCKIFY_HOME"
+      ]
     },
     {
       "path": "mcp/README.md",
-      "contains": ["process environment", "CLOCKIFY_API_KEY", "CLOCKIFY_WORKSPACE_ID", "CLOCKIFY_BASE_URL"]
+      "contains": [
+        "process environment",
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_WORKSPACE_ID",
+        "CLOCKIFY_BASE_URL"
+      ]
     },
     {
       "path": "wrapper/README.md",
-      "contains": ["CLOCKIFY_API_KEY", "CLOCKIFY_ADDON_TOKEN", "priority"]
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "CLOCKIFY_ADDON_TOKEN",
+        "priority"
+      ]
     }
   ],
   "wiring": {

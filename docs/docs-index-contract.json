@@ -1,14 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Documentation index contract for docs/README.md links, required generated surfaces, contracts, policies, and checker wiring.",
-  "contractInvariants": [
-    "schema-versioned-docs-index-contract",
-    "safe-docs-index-paths",
-    "typed-required-links",
-    "all-index-links-resolve",
-    "required-link-presence",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "docs-index-drift",
     "checker": "scripts/check-doc-index.mjs",

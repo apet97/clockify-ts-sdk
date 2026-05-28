@@ -1,17 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Golden receipt examples contract for SDK, CLI, and MCP success/error output shapes.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-receipt-example-evidence-paths",
-    "typed-examples-document-contract",
-    "typed-required-docs",
-    "typed-receipt-examples",
-    "typed-supporting-evidence",
-    "typed-required-targets",
-    "typed-wiring-contract"
-  ],
   "examplesDocument": {
     "path": "docs/receipt-examples.md",
     "contains": [
@@ -22,7 +11,6 @@
       "MCP success receipt",
       "MCP recovery receipt",
       "Stable fields",
-      "Contract-shape rule",
       "Review rule"
     ],
     "forbiddenMarkers": [

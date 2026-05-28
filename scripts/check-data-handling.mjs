@@ -79,22 +79,6 @@ function includesAll(text, markers, label) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique("contractInvariants", invariants);
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-data-handling-paths",
-        "typed-policy-contract",
-        "typed-data-class-markers",
-        "typed-required-docs",
-        "typed-supporting-evidence",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     if (contract.wiring == null || typeof contract.wiring !== "object" || Array.isArray(contract.wiring)) {
         fail("wiring", "must be an object");

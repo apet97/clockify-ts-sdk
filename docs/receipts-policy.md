@@ -28,11 +28,6 @@ MCP and CLI outputs are part of the product, not debug noise. Do not
 replace structured envelopes with prose-only responses. Add fields
 carefully and keep existing meanings stable unless the compatibility
 policy and migration guide are updated.
-
-## Contract-shape rule
-
-Receipt contract shape is part of observability readiness. `make receipts-contract` must fail before trusting SDK, CLI, MCP, or supporting-contract evidence when `docs/receipts-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, untyped policy markers, malformed SDK/CLI/MCP receipt evidence, malformed supporting-contract markers, malformed required Make targets, or malformed docs-index entries.
-
 ## Required receipts
 
 Before claiming receipt/observability readiness, run or cite:

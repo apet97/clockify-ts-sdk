@@ -26,16 +26,6 @@ manifests, generated output, or agent memory to get started safely.
 - Do not duplicate generated tables by hand; regenerate them.
 - Keep readiness claims evidence-first: exact command, generated surface, receipt, or explicit residual risk.
 - Avoid unsupported marketing claims; use `docs/docs-quality-policy.md` as the style contract.
-
-## Contract-shape rule
-
-User-docs contract shape is part of documentation readiness. The
-checker must fail before scanning README, changelog, policy, cookbook,
-or troubleshooting surfaces when the JSON contract has unsafe
-repo-relative evidence paths, duplicate document ids, duplicate
-document paths, malformed marker lists, or missing
-Make/docs/inventory/audit wiring.
-
 ## Required receipts
 
 Before claiming user-doc readiness, run or cite:

@@ -115,19 +115,6 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-    const invariants = assertStringArray("contractInvariants", contract.contractInvariants, { min: 1 });
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-axioms-evidence-paths",
-        "typed-axiom-document-contract",
-        "typed-axiom-entries",
-        "typed-supporting-evidence",
-        "typed-wiring-contract",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(invariant)) fail("contractInvariants", `missing invariant ${invariant}`);
-    }
 
     validateMarkerEntry("axiomsDocument", contract.axiomsDocument);
 

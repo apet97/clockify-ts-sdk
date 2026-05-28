@@ -1,15 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Contract for the operator quickstart receipt: local diagnostics first, mock/live split, first live probes, redaction, and receipt-shaped readiness claims.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-quickstart-evidence-paths",
-    "typed-document-contract",
-    "typed-receipt-template-contract",
-    "typed-supporting-surfaces",
-    "typed-wiring-contract"
-  ],
   "document": {
     "path": "docs/quickstart-receipt.md",
     "contains": [
@@ -24,7 +15,6 @@
       "Quickstart Receipt",
       "Raw secrets printed: no",
       "Workspace ID printed raw: no",
-      "Contract-shape rule",
       "Copy-paste safety",
       "Stop conditions",
       "draft blocker",

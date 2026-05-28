@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Allowlisted documentation drift contract for stale public package, version, placeholder, and tool-count markers across hand-written docs and package surfaces.",
-  "contractInvariants": [
-    "schema-versioned-docs-drift-contract",
-    "safe-docs-drift-paths",
-    "typed-scan-roots",
-    "typed-excluded-dirs",
-    "typed-scan-rules",
-    "declared-allowlists",
-    "wrapper-scan-boundary",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "docs-drift",
     "checker": "scripts/check-docs-drift.mjs",

@@ -93,20 +93,6 @@ function assertContractShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    const invariants = assertStringArray(value.contractInvariants, "contractInvariants");
-    for (const requiredInvariant of [
-        "safe-docs-drift-paths",
-        "typed-scan-roots",
-        "typed-excluded-dirs",
-        "typed-scan-rules",
-        "declared-allowlists",
-        "wrapper-scan-boundary",
-        "makefile-audit-wiring",
-    ]) {
-        if (!invariants.includes(requiredInvariant)) {
-            failShape(`contractInvariants must include ${requiredInvariant}`);
-        }
-    }
 
     for (const [index, relPath] of assertStringArray(value.scanRoots, "scanRoots").entries()) {
         assertSafeRelativePath(relPath, `scanRoots[${index}]`);

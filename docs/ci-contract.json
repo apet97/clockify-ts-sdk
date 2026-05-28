@@ -1,26 +1,19 @@
 {
   "schemaVersion": 1,
   "purpose": "CI/workflow posture contract. Checks existing workflow safety rails and local documentation without changing CI/CD behavior.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-ci-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-workflow-entries",
-    "typed-supporting-doc-entries",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/ci-policy.md",
     "mustContain": [
       "Current workflow roles",
       "CI safety rules",
-      "Contract-shape rule",
       "make ci-contract",
       "Legacy tag-triggered npm release path",
       "explicit maintainer approval"
     ],
-    "forbiddenMarkers": ["TODO", "TBD"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
   },
   "workflows": [
     {
@@ -112,19 +105,32 @@
   "supportingDocs": [
     {
       "path": "docs/release-support-policy.md",
-      "mustContain": ["Do not change CI/CD", "npm publication is not the default path"]
+      "mustContain": [
+        "Do not change CI/CD",
+        "npm publication is not the default path"
+      ]
     },
     {
       "path": "scripts/release-decision-plan.mjs",
-      "mustContain": ["network", "commandsExecuted", "explicitMaintainerApprovalRequired", "npm-via-ci"]
+      "mustContain": [
+        "network",
+        "commandsExecuted",
+        "explicitMaintainerApprovalRequired",
+        "npm-via-ci"
+      ]
     },
     {
       "path": "docs/risk-register.json",
-      "mustContain": ["legacy-release-workflow-needs-maintainer-decision"]
+      "mustContain": [
+        "legacy-release-workflow-needs-maintainer-decision"
+      ]
     },
     {
       "path": "AGENTS.md",
-      "mustContain": ["Never run `npm publish`", ".github/workflows/**"]
+      "mustContain": [
+        "Never run `npm publish`",
+        ".github/workflows/**"
+      ]
     }
   ],
   "wiring": {

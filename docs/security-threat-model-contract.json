@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Machine-readable threat model contract for SDK, CLI, MCP, OpenAPI generation, mock/replay, live proof, and release safety.",
-  "contractInvariants": [
-    "schema-versioned-security-threat-model-contract",
-    "safe-security-threat-model-paths",
-    "typed-risk-surfaces",
-    "typed-supporting-evidence",
-    "declared-non-make-proof-targets",
-    "required-target-wiring",
-    "required-doc-evidence",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "security-threat-model",
     "checker": "scripts/check-security-threat-model.mjs",

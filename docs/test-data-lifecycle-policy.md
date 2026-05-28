@@ -45,18 +45,6 @@ Stop instead of widening live proof when:
 - A cleanup scan returns leftovers that are not understood.
 - The proof would expose customer names, user emails, invoice lines, expense
   receipts, webhook secrets, or token values.
-
-## Contract-shape rule
-
-Test-data lifecycle contract shape is part of cleanup safety.
-`make test-data-lifecycle` must fail before trusting prefix, live-test,
-cleanup, leftover-scan, support, or final-proof evidence when
-`docs/test-data-lifecycle-contract.json` has an invalid schema version, missing
-purpose, missing explicit invariants, unsafe repo-relative evidence paths,
-malformed policy markers, malformed prefix lists, malformed cleanup script
-markers, malformed live-test/supporting evidence markers, malformed required
-Make targets, or malformed Make/docs/inventory/audit wiring.
-
 ## Proof gates
 
 Before claiming test-data lifecycle readiness, run or cite:

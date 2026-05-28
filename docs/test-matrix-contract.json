@@ -1,19 +1,17 @@
 {
   "schemaVersion": 1,
   "purpose": "Structural test-matrix contract for SDK, CLI, and MCP. This does not execute tests; it verifies the expected test files and package scripts remain present, and that last-resort package gates keep the expected command shape, so the real gates have something meaningful to run.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "typed-package-test-matrix",
-    "safe-test-matrix-evidence-paths",
-    "typed-root-gate-targets",
-    "typed-wiring-contract"
-  ],
   "packages": [
     {
       "id": "wrapper",
       "manifest": "wrapper/package.json",
-      "requiredScripts": ["type-check", "test", "build", "build:smoke", "prepublishOnly"],
+      "requiredScripts": [
+        "type-check",
+        "test",
+        "build",
+        "build:smoke",
+        "prepublishOnly"
+      ],
       "requiredScriptValues": {
         "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
       },
@@ -32,12 +30,22 @@
         "wrapper/tests/webhooks.test.ts",
         "wrapper/tests/with-response.test.ts"
       ],
-      "forbiddenSkipPatterns": ["it.skip", "test.skip", "xit", "xdescribe"]
+      "forbiddenSkipPatterns": [
+        "it.skip",
+        "test.skip",
+        "xit",
+        "xdescribe"
+      ]
     },
     {
       "id": "cli",
       "manifest": "cli/package.json",
-      "requiredScripts": ["type-check", "test", "build", "prepublishOnly"],
+      "requiredScripts": [
+        "type-check",
+        "test",
+        "build",
+        "prepublishOnly"
+      ],
       "requiredScriptValues": {
         "prepublishOnly": "npm run type-check && npm test && npm run build"
       },
@@ -54,7 +62,13 @@
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
-      "requiredScripts": ["type-check", "test", "build", "verify:live-cleanup", "prepublishOnly"],
+      "requiredScripts": [
+        "type-check",
+        "test",
+        "build",
+        "verify:live-cleanup",
+        "prepublishOnly"
+      ],
       "requiredScriptValues": {
         "prepublishOnly": "npm run type-check && npm test && npm run build"
       },
@@ -68,7 +82,13 @@
       ]
     }
   ],
-  "rootGateTargets": ["wrapper-gates", "cli-gates", "mcp-gates", "perfect-fast", "perfect-full"],
+  "rootGateTargets": [
+    "wrapper-gates",
+    "cli-gates",
+    "mcp-gates",
+    "perfect-fast",
+    "perfect-full"
+  ],
   "wiring": {
     "makeTarget": "test-matrix",
     "checker": "scripts/check-test-matrix-contract.mjs",

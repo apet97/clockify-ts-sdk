@@ -1,15 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Fern/OpenAPI generator configuration contract. Keeps local generator pins, active OpenAPI snapshot, and generated output paths intentional and reviewable.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-generator-config-evidence-paths",
-    "typed-fern-config-contract",
-    "typed-generators-contract",
-    "typed-required-docs",
-    "typed-wiring-contract"
-  ],
   "fernConfig": {
     "path": "spec/fern/fern.config.json",
     "organization": "clockify",

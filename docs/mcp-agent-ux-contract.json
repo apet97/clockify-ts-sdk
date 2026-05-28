@@ -1,15 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Contract for MCP agent UX: status-first, workflow-first, receipt-first guidance, risky-write confirmation, recovery, and discoverability.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-mcp-agent-ux-paths",
-    "typed-tools-metadata-reference",
-    "typed-expected-tool-summary",
-    "typed-agent-ux-checks",
-    "typed-wiring-contract"
-  ],
   "toolsMetadata": "docs/mcp-tools.json",
   "expectedToolSummary": {
     "totalTools": 105,
@@ -39,7 +30,6 @@
         "Domain tools are escape hatches",
         "MCP success receipt",
         "MCP recovery receipt",
-        "Contract-shape rule",
         "make mcp-agent-ux"
       ]
     },

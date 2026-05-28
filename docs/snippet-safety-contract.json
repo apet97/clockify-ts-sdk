@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Copy-paste snippet safety contract for SDK, CLI, MCP, README, cookbook, first-run support maps, mock/replay, and live-proof examples.",
-  "contractInvariants": [
-    "schema-versioned-snippet-safety-contract",
-    "safe-snippet-safety-paths",
-    "typed-snippet-surfaces",
-    "declared-forbidden-import-markers",
-    "required-target-wiring",
-    "required-doc-evidence",
-    "supporting-evidence-marker-contract",
-    "makefile-audit-wiring"
-  ],
   "wiring": {
     "makeTarget": "snippet-safety",
     "checker": "scripts/check-snippet-safety.mjs",
@@ -31,7 +21,11 @@
       "safeCommandHints",
       "not proof"
     ],
-    "forbiddenMarkers": ["TODO", "TBD", "PASTE TOKEN"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD",
+      "PASTE TOKEN"
+    ]
   },
   "requiredTargets": [
     "snippet-safety",
@@ -67,27 +61,47 @@
     {
       "id": "sdk-readme",
       "path": "wrapper/README.md",
-      "contains": ["clockify-sdk-ts-115", "CLOCKIFY_API_KEY", "requestId"]
+      "contains": [
+        "clockify-sdk-ts-115",
+        "CLOCKIFY_API_KEY",
+        "requestId"
+      ]
     },
     {
       "id": "sdk-examples",
       "path": "wrapper/examples/README.md",
-      "contains": ["clockify-sdk-ts-115", "auth.ts", "verify-webhook.ts"]
+      "contains": [
+        "clockify-sdk-ts-115",
+        "auth.ts",
+        "verify-webhook.ts"
+      ]
     },
     {
       "id": "cli-readme",
       "path": "cli/README.md",
-      "contains": ["CLOCKIFY_API_KEY", "--json", "CLOCKIFY_BASE_URL"]
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "--json",
+        "CLOCKIFY_BASE_URL"
+      ]
     },
     {
       "id": "mcp-readme",
       "path": "mcp/README.md",
-      "contains": ["CLOCKIFY_API_KEY", "structuredContent", "CLOCKIFY_BASE_URL"]
+      "contains": [
+        "CLOCKIFY_API_KEY",
+        "structuredContent",
+        "CLOCKIFY_BASE_URL"
+      ]
     },
     {
       "id": "workflow-cookbook",
       "path": "docs/workflow-cookbook.md",
-      "contains": ["public SDK package", "mock", "Recovery pattern"]
+      "contains": [
+        "public SDK package",
+        "mock",
+        "Recovery pattern"
+      ]
     }
   ],
   "forbiddenImportMarkers": [
@@ -99,23 +113,41 @@
   "supportingEvidence": [
     {
       "path": "docs/examples-contract.json",
-      "contains": ["clockify-sdk-ts-115", "forbiddenSecretPatterns", "forbiddenImportPrefixes"]
+      "contains": [
+        "clockify-sdk-ts-115",
+        "forbiddenSecretPatterns",
+        "forbiddenImportPrefixes"
+      ]
     },
     {
       "path": "scripts/check-docs-drift.mjs",
-      "contains": ["legacy-sdk-package-name", "Documentation drift check passed"]
+      "contains": [
+        "legacy-sdk-package-name",
+        "Documentation drift check passed"
+      ]
     },
     {
       "path": "docs/receipt-examples.md",
-      "contains": ["SDK success receipt", "CLI error receipt", "MCP recovery receipt"]
+      "contains": [
+        "SDK success receipt",
+        "CLI error receipt",
+        "MCP recovery receipt"
+      ]
     },
     {
       "path": "docs/support-runbook.md",
-      "contains": ["Never include", "Redaction rules", "Escalation template"]
+      "contains": [
+        "Never include",
+        "Redaction rules",
+        "Escalation template"
+      ]
     },
     {
       "path": "docs/live-tests.md",
-      "contains": ["Never run live gates against a customer workspace", "sacrificial sandbox"]
+      "contains": [
+        "Never run live gates against a customer workspace",
+        "sacrificial sandbox"
+      ]
     }
   ]
 }

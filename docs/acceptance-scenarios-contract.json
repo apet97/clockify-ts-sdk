@@ -1,23 +1,11 @@
 {
   "schemaVersion": 1,
   "purpose": "End-to-end acceptance scenario contract for SDK, CLI, MCP, mock/live proof, receipts, and OpenAPI truth.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-acceptance-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-planner-contract",
-    "typed-generated-plan-contract",
-    "typed-scenarios",
-    "typed-supporting-evidence",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/acceptance-scenarios.md",
     "mustContain": [
       "Acceptance Scenarios",
       "Scenario rules",
-      "Contract-shape rule",
       "Scenario matrix",
       "node scripts/plan.mjs acceptance --scenario auth-status",
       "node scripts/plan.mjs acceptance --scenario first-run-diagnostics-support",

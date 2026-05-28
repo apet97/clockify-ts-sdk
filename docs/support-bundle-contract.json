@@ -222,17 +222,5 @@
         "recovery"
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-support-bundle-paths",
-    "typed-runbook-contract",
-    "typed-generator-contract",
-    "typed-lockfile-summary-contract",
-    "typed-generated-bundle-shape",
-    "typed-supporting-evidence",
-    "makefile-audit-wiring",
-    "typed-diagnostics-and-quickstart-summary"
   ]
 }

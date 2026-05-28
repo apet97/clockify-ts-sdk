@@ -1,17 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Agent handoff contract for canonical guidance, generated-path boundaries, root gates, temporary context lifecycle, and stale-count prevention.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-agent-handoff-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-guidance-entries",
-    "typed-supporting-check-entries",
-    "typed-guidance-scan-paths",
-    "typed-forbidden-guidance-markers",
-    "typed-wiring-contract"
-  ],
   "policyDocument": {
     "path": "docs/agent-handoff-policy.md",
     "mustContain": [
@@ -24,7 +13,10 @@
       "make perfect-full",
       "make perfect-live"
     ],
-    "forbiddenMarkers": ["TODO", "TBD"]
+    "forbiddenMarkers": [
+      "TODO",
+      "TBD"
+    ]
   },
   "guidance": [
     {
@@ -73,15 +65,26 @@
   "supportingChecks": [
     {
       "path": "scripts/check-no-generated-edits.mjs",
-      "mustContain": ["spec/corrected/", "output/ts-sdk/", "wrapper/src/"]
+      "mustContain": [
+        "spec/corrected/",
+        "output/ts-sdk/",
+        "wrapper/src/"
+      ]
     },
     {
       "path": "scripts/check-generator-independence.mjs",
-      "mustContain": ["generated core is isolated", "file:../wrapper"]
+      "mustContain": [
+        "generated core is isolated",
+        "file:../wrapper"
+      ]
     },
     {
       "path": "docs/user-docs-contract.json",
-      "mustContain": ["root-readme", "sdk-readme", "mcp-readme"]
+      "mustContain": [
+        "root-readme",
+        "sdk-readme",
+        "mcp-readme"
+      ]
     }
   ],
   "guidanceScanPaths": [

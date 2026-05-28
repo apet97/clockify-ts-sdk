@@ -13,16 +13,6 @@ API drift, release rehearsals, and rollback.
 | Weekly when active | Refresh product-surface, README tables, troubleshooting, operation parity, and risk register decisions if code moved. | `make perfect-fast` when verification is allowed. |
 | Monthly | Review dependency pins, Node runtime floor, Fern CLI/generator pins, GOCLMCP drift, mock/replay coverage, risk register, and performance-budget calibration. | `make dependency-boundary`, `make generator-config`, `make risk-register`. |
 | Before release or handoff | Run packed-consumer proof, release readiness, final proof receipt, and final audit. | `make perfect-full`, `make pack-smoke`, `make release-readiness`. |
-
-## Contract-shape rule
-
-Maintenance-playbook contract shape is part of maintenance readiness. The
-checker must fail before reading policy docs, planner output, supporting
-evidence, or generated reports when the JSON contract has unsafe
-repo-relative evidence paths, malformed planner expectations, missing
-required targets/docs, duplicate procedure ids, malformed supporting
-evidence, or missing Make/docs/inventory/audit wiring.
-
 ## No-network maintenance planner
 
 Use `node scripts/plan.mjs maintenance --cadence all` when an operator needs a

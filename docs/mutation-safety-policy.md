@@ -57,11 +57,6 @@ When a write might have reached Clockify but the local process cannot prove the
 final state, emit or carry an `ambiguousMutationSignalIds` list so support can
 connect the event to retry, reuse, or cleanup without re-running a
 non-idempotent mutation.
-
-## Contract-shape rule
-
-Mutation-safety contract shape is part of write-safety. `make mutation-safety` must fail before trusting retry, write, confirmation, receipt, live-safety, or support evidence when `docs/mutation-safety-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed policy markers, malformed required target/doc lists, malformed mutation class markers, malformed supporting-evidence markers, malformed readiness-context markers, or malformed Make/docs/inventory/audit wiring.
-
 ## Proof gates
 
 - `make mutation-safety` checks this policy and the SDK/CLI/MCP supporting contracts.

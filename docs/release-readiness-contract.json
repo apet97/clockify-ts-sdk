@@ -148,13 +148,5 @@
         "legacy-release-workflow-needs-maintainer-decision"
       ]
     }
-  ],
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-release-readiness-paths",
-    "typed-release-readiness-lists",
-    "typed-supporting-evidence",
-    "makefile-audit-wiring"
   ]
 }

@@ -35,11 +35,6 @@ codes, and receipts that can be logged by automation.
 
    `--json` errors must include stable error codes and recovery hints.
    Usage errors must keep the documented exit-code contract.
-
-## Contract-shape rule
-
-CLI write-safety contract shape is part of deterministic operator safety. `make cli-write-safety` must fail before trusting CLI README, command source, output handling, or policy evidence when `docs/cli-write-safety-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, malformed required-file markers, malformed write-command markers, malformed forbidden policy markers, or malformed Make/docs/inventory/audit wiring.
-
 ## Required proof
 
 - `make cli-write-safety` checks the contract in this file.

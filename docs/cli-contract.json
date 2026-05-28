@@ -1,16 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "CLI public contract for @clockify115/cli. Keeps command metadata, README tables (generated:cli-commands block), binary aliases, global flags, completion support, and Exit codes contract tests aligned.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-cli-contract-paths",
-    "typed-metadata-reference",
-    "typed-expected-command-surface",
-    "typed-exit-codes",
-    "typed-source-evidence",
-    "typed-wiring-contract"
-  ],
   "metadata": "docs/cli-commands.json",
   "expected": {
     "commandCount": 28,

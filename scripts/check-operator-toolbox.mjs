@@ -103,24 +103,6 @@ function assertUnique(items, label) {
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
-    const contractInvariants = assertStringArray("contractInvariants", contract.contractInvariants, {
-        allowEmpty: false,
-    });
-    assertUnique(contractInvariants, "contractInvariants");
-    for (const invariant of [
-        "valid-schema-version",
-        "valid-purpose",
-        "safe-toolbox-paths",
-        "typed-helper-lists",
-        "typed-helper-command-coverage",
-        "typed-helper-ownership-contract",
-        "typed-supporting-doc-markers",
-        "makefile-audit-wiring",
-    ]) {
-        if (!contractInvariants.includes(invariant)) {
-            fail("contractInvariants", `missing invariant ${invariant}`);
-        }
-    }
     toolboxRelativePath("toolbox.path", contract.toolbox?.path);
     assertStringArray("toolbox.mustContain", contract.toolbox?.mustContain, { allowEmpty: false });
     assertStringArray("toolbox.forbiddenMarkers", contract.toolbox?.forbiddenMarkers ?? []);

@@ -1,24 +1,10 @@
 {
   "schemaVersion": 1,
   "purpose": "No-regression operation coverage baseline across corrected OpenAPI operations, SDK method stamps, TS MCP exact tool matches, GOCLMCP exact tool matches, and curated parity overrides.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-operation-coverage-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-report-inputs",
-    "typed-thresholds",
-    "typed-required-targets",
-    "typed-required-docs",
-    "typed-supporting-evidence",
-    "typed-wiring-contract",
-    "makefile-audit-wiring"
-  ],
   "policyDocument": {
     "path": "docs/operation-coverage-policy.md",
     "contains": [
       "Coverage baseline",
-      "Contract-shape rule",
       "OpenAPI operations",
       "SDK-named operations",
       "TS MCP exact operation/tool matches",

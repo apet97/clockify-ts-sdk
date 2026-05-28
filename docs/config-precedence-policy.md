@@ -28,15 +28,6 @@ override is introduced.
 - MCP startup errors must name the missing env var and explain the one-workspace pin.
 - JSON or MCP error receipts should preserve stable recovery guidance instead of
   leaking secret values.
-
-## Contract-shape rule
-
-Configuration-precedence contract shape is part of configuration readiness. The
-checker must fail before reading SDK, CLI, MCP, docs, or support evidence when
-the JSON contract has unsafe repo-relative evidence paths, malformed surface
-entries, duplicate surface ids, duplicate evidence paths, malformed required
-docs/targets, or missing Make/docs/inventory/audit wiring.
-
 ## Change rules
 
 - Do not add a new configuration source without documenting its precedence.

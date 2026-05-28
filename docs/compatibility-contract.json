@@ -1,18 +1,6 @@
 {
   "schemaVersion": 1,
   "purpose": "Public compatibility and deprecation contract for SDK, CLI, MCP, and OpenAPI generation surfaces.",
-  "contractInvariants": [
-    "valid-schema-version",
-    "valid-purpose",
-    "safe-compatibility-evidence-paths",
-    "typed-policy-document-contract",
-    "typed-surface-contracts",
-    "typed-deprecation-window-contract",
-    "typed-required-make-targets",
-    "typed-docs-index-contract",
-    "typed-forbidden-policy-markers",
-    "makefile-audit-wiring"
-  ],
   "policyDocument": {
     "path": "docs/compatibility-policy.md",
     "mustContain": [
@@ -20,7 +8,6 @@
       "CLI",
       "MCP",
       "OpenAPI generation",
-      "Contract-shape rule",
       "warnOnce",
       "Compatibility window",
       "changelog",

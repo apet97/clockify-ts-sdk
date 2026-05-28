@@ -53,11 +53,6 @@ note, or handoff packet:
 - Do not use pre-`1.0.0` status as permission for silent breakage.
 - Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or `wrapper/src/**`
   to keep a breaking change quiet.
-
-## Contract-shape rule
-
-Breaking-change review contract shape is part of public-surface safety. `make breaking-change-review` must fail before trusting review evidence when `docs/breaking-change-review-contract.json` has an invalid schema version, missing purpose, missing explicit invariants, unsafe repo-relative evidence paths, untyped policy markers, malformed surface/migration/changelog evidence, malformed version-policy evidence, malformed required Make targets, or malformed Make/docs/inventory/audit wiring.
-
 ## Proof gates
 
 Before claiming a breaking change is reviewed, run or cite:
