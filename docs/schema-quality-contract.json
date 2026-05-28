@@ -40,7 +40,7 @@
   },
   "generatedSdkEvidence": [
     {
-      "path": "output/ts-sdk/api/resources/tags/client/requests/TagCreate.ts",
+      "path": "wrapper/src/api/resources/tags/client/requests/TagCreate.ts",
       "mustContain": [
         "export interface TagCreate",
         "name"
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "path": "output/ts-sdk/api/resources/timeOff/client/requests/SubmitTimeOffRequest.ts",
+      "path": "wrapper/src/api/resources/timeOff/client/requests/SubmitTimeOffRequest.ts",
       "mustContain": [
         "export interface SubmitTimeOffRequest"
       ]
