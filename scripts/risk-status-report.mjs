@@ -1,48 +1,14 @@
-#!/usr/bin/env node
+// Planner module: risk status report.
+// Invoked via `node scripts/plan.mjs risk-status [--status <open|provisional|blocked-upstream|accepted|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { budgetFingerprint } from "./budget-fingerprint.mjs";
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(scriptDir, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function usage() {
-    return [
-        "Usage: node scripts/risk-status-report.mjs [--format <markdown|json>] [--status <open|provisional|blocked-upstream|accepted|all>]",
-        "",
-        "Prints a no-network risk status report from docs/risk-register.json.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This report is not proof; it summarizes current risk metadata and file-state signals.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { format: "markdown", status: "all" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--status") {
-            options.status = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) throw new Error(`Unknown format: ${options.format}`);
-    if (!["open", "provisional", "blocked-upstream", "accepted", "all"].includes(options.status)) {
-        throw new Error(`Unknown status: ${options.status}`);
-    }
-    return options;
-}
+const VALID_STATUSES = new Set(["open", "provisional", "blocked-upstream", "accepted", "all"]);
 
 async function exists(relPath) {
     try {
@@ -227,11 +193,12 @@ function liveProofStatusDetail(liveProofStatus) {
 }
 
 export async function buildReport(options = { status: "all" }) {
+    const status = options.status ?? "all";
+    if (!VALID_STATUSES.has(status)) {
+        throw new Error(`Unknown status: ${status}`);
+    }
     const register = await readJson("docs/risk-register.json");
-    const risks =
-        options.status === "all"
-            ? register.risks
-            : register.risks.filter((risk) => risk.status === options.status);
+    const risks = status === "all" ? register.risks : register.risks.filter((risk) => risk.status === status);
 
     const performanceBudgets = await readJsonOptional("docs/performance-budgets.json", {});
     const finalProofManifest = await readJsonOptional("docs/final-proof-receipt-manifest.json", {});
@@ -310,7 +277,7 @@ export async function buildReport(options = { status: "all" }) {
         network: "none",
         commandsExecuted: [],
         envValuesCaptured: false,
-        reportScope: options.status,
+        reportScope: status,
         warning: "This report is not proof. Run closure gates before changing risk status or claiming readiness.",
         counts: countByStatus(register.risks),
         fileSignals,
@@ -332,7 +299,7 @@ export async function buildReport(options = { status: "all" }) {
     };
 }
 
-function renderMarkdown(report) {
+export function renderMarkdown(report) {
     const lines = ["# Risk Status Report", ""];
     lines.push("This report is not proof. It does not run commands.");
     lines.push("");
@@ -388,20 +355,3 @@ function renderMarkdown(report) {
     return `${lines.join("\n")}\n`;
 }
 
-async function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const report = await buildReport(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(report, null, 2));
-    } else {
-        console.log(renderMarkdown(report));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    main().catch((error) => {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    });
-}

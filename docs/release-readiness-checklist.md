@@ -61,7 +61,7 @@ or tag workflow. The presence of `publishConfig.provenance` and
 
 Run `node scripts/release-readiness-report.mjs` first for a no-network preflight of the readiness signals listed above.
 
-Use `node scripts/release-decision-plan.mjs --decision all` before any tag,
+Use `node scripts/plan.mjs release-decision --decision all` before any tag,
 GitHub release, npm publication, or release-workflow change. The planner is a
 static no-network decision packet. `make release-readiness` shape-checks the
 generated decision plan so it preserves no publish permission, no CI/CD change
@@ -74,7 +74,7 @@ Before treating any release decision as safe, generate and review the support
 bundle readiness context:
 
 ```bash
-node scripts/workflow-plan.mjs --workflow first-run-support
+node scripts/plan.mjs workflow --workflow first-run-support
 node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json
 ```
 

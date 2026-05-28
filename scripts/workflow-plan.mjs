@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+// Planner module: SDK/CLI/MCP workflow plan.
+// Invoked via `node scripts/plan.mjs workflow [--workflow <id|list|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const workflows = {
     "first-run-support": {
         title: "First-run diagnostics and support handoff",
@@ -153,43 +152,6 @@ const workflows = {
     },
 };
 
-function usage() {
-    return [
-        "Usage: node scripts/workflow-plan.mjs [--workflow <id|list|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network SDK/CLI/MCP workflow plan.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This plan is not proof; run make workflow-cookbook and surface-specific gates for proof.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { workflow: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--workflow") {
-            options.workflow = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (![...Object.keys(workflows), "all", "list"].includes(options.workflow)) {
-        throw new Error(`Unknown workflow: ${options.workflow}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) throw new Error(`Unknown format: ${options.format}`);
-    return options;
-}
-
 function selectedWorkflows(id) {
     if (id === "list") return [];
     const ids = id === "all" ? Object.keys(workflows) : [id];
@@ -197,20 +159,24 @@ function selectedWorkflows(id) {
 }
 
 export function buildPlan(options = { workflow: "all" }) {
+    const workflow = options.workflow ?? "all";
+    if (![...Object.keys(workflows), "all", "list"].includes(workflow)) {
+        throw new Error(`Unknown workflow: ${workflow}`);
+    }
     return {
         schemaVersion: 1,
         generatedAt: new Date().toISOString(),
         network: "none",
         commandsExecuted: [],
         envValuesCaptured: false,
-        workflow: options.workflow,
-        availableWorkflows: options.workflow === "list" ? Object.keys(workflows) : undefined,
-        workflows: selectedWorkflows(options.workflow),
+        workflow,
+        availableWorkflows: workflow === "list" ? Object.keys(workflows) : undefined,
+        workflows: selectedWorkflows(workflow),
         warning: "This plan is not proof. Run make workflow-cookbook and surface-specific gates before claiming readiness.",
     };
 }
 
-function renderMarkdown(plan) {
+export function renderMarkdown(plan) {
     if (plan.availableWorkflows) {
         return `# Workflow IDs\n\n${plan.availableWorkflows.map((id) => `- \`${id}\``).join("\n")}\n`;
     }
@@ -239,22 +205,3 @@ function renderMarkdown(plan) {
     return `${lines.join("\n")}\n`;
 }
 
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const plan = buildPlan(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(plan, null, 2));
-    } else {
-        console.log(renderMarkdown(plan));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
-}

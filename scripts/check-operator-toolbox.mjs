@@ -74,6 +74,24 @@ function includesAll(text, markers, label) {
     }
 }
 
+// Planner scripts are reached through scripts/plan.mjs; derive the topic from the basename.
+const PLANNER_TOPIC_BY_SCRIPT = {
+    "scripts/onboarding-plan.mjs": "onboarding",
+    "scripts/workflow-plan.mjs": "workflow",
+    "scripts/acceptance-plan.mjs": "acceptance",
+    "scripts/examples-plan.mjs": "examples",
+    "scripts/change-impact-plan.mjs": "change-impact",
+    "scripts/maintenance-plan.mjs": "maintenance",
+    "scripts/performance-calibration-plan.mjs": "performance-calibration",
+    "scripts/release-decision-plan.mjs": "release-decision",
+    "scripts/contract-inventory-report.mjs": "contract-inventory",
+    "scripts/risk-status-report.mjs": "risk-status",
+};
+
+function plannerTopicFor(scriptPath) {
+    return PLANNER_TOPIC_BY_SCRIPT[scriptPath] ?? null;
+}
+
 function assertUnique(items, label) {
     const seen = new Set();
     for (const item of items ?? []) {
@@ -231,7 +249,16 @@ if (contract.helperCommandCoverage) {
             fail("helperCommandCoverage", `${entry.script} has duplicate documented command coverage`);
         }
         coveredScripts.add(entry.script);
-        if (!entry.documentedCommand?.includes(entry.script)) {
+        const plannerTopic = plannerTopicFor(entry.script);
+        if (plannerTopic) {
+            const expectedPrefix = `node scripts/plan.mjs ${plannerTopic}`;
+            if (!entry.documentedCommand?.startsWith(expectedPrefix)) {
+                fail(
+                    "helperCommandCoverage",
+                    `${entry.script} documented command must start with ${JSON.stringify(expectedPrefix)}`,
+                );
+            }
+        } else if (!entry.documentedCommand?.includes(entry.script)) {
             fail("helperCommandCoverage", `${entry.script} documented command does not include script path`);
         }
         if (!toolbox.includes(entry.documentedCommand)) {

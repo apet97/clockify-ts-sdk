@@ -24,7 +24,7 @@
       "Non-coder readability",
       "Contract-shape rule",
       "make docs-quality",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "not proof"
     ],

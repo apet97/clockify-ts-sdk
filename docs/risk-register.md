@@ -19,9 +19,9 @@ gate.
 For a no-network status view, run:
 
 ```bash
-node scripts/risk-status-report.mjs
-node scripts/risk-status-report.mjs --status open
-node scripts/risk-status-report.mjs --format json
+node scripts/plan.mjs risk-status
+node scripts/plan.mjs risk-status --status open
+node scripts/plan.mjs risk-status --format json
 ```
 
 The report is a static operator view over `docs/risk-register.json` plus
@@ -35,13 +35,13 @@ Git, npm, Docker, Fern, tests, builds, or Clockify API calls, and it is not
 proof by itself.
 
 For the open legacy release-workflow risk, run
-`node scripts/release-decision-plan.mjs --decision all` before any tag,
+`node scripts/plan.mjs release-decision --decision all` before any tag,
 GitHub release, npm publication, or release workflow change. The planner
 does not grant publish permission; it turns the maintainer decision into a
 receipt-ready checklist.
 
 For the provisional performance-budget risk, run
-`node scripts/performance-calibration-plan.mjs` before final proof. The
+`node scripts/plan.mjs performance-calibration` before final proof. The
 planner is no-network and does not measure anything; it explains the three
 successful receipt requirement and the budget-tightening rule.
 

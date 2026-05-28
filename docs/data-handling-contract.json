@@ -19,7 +19,7 @@
       "Commercial data",
       "Package-lock metadata",
       "Raw live evidence",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints"
     ],
     "forbiddenMarkers": [
@@ -131,7 +131,7 @@
       "path": "docs/support-runbook.md",
       "contains": [
         "Never include",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints",
         "Customer workspace names",
         "Package-lock",

@@ -17,7 +17,7 @@
     "mustContain": [
       "AGENTS.md",
       "CLAUDE.md",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "make agent-handoff",
       "make perfect-fast",
@@ -65,7 +65,7 @@
       "path": "docs/workflow-cookbook.md",
       "mustContain": [
         "First-run diagnostics and support handoff",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints"
       ]
     }

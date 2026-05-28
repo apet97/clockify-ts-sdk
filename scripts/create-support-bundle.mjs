@@ -22,7 +22,7 @@ const knownEnvNames = [
 ];
 
 const safeCommandHints = [
-    "node scripts/workflow-plan.mjs --workflow first-run-support",
+    "node scripts/plan.mjs workflow --workflow first-run-support",
     "make diagnostics",
     "make quickstart-receipt",
     "make support-bundle",

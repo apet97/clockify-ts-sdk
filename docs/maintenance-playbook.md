@@ -25,7 +25,7 @@ evidence, or missing Make/docs/inventory/audit wiring.
 
 ## No-network maintenance planner
 
-Use `node scripts/maintenance-plan.mjs --cadence all` when an operator needs a
+Use `node scripts/plan.mjs maintenance --cadence all` when an operator needs a
 concrete upkeep path before running proof gates. It prints safe-start helpers,
 required targets, docs to inspect, receipts to leave, and stop conditions for:
 
@@ -104,7 +104,7 @@ For release rehearsal, rollback, handoff, or final-readiness maintenance, create
 or refresh the support bundle:
 
 ```bash
-node scripts/workflow-plan.mjs --workflow first-run-support
+node scripts/plan.mjs workflow --workflow first-run-support
 node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json
 ```
 

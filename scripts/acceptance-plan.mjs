@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+// Planner module: acceptance scenario proof plan.
+// Invoked via `node scripts/plan.mjs acceptance [--scenario <id|list|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const scenarios = {
     "auth-status": {
         title: "Auth and status",
@@ -139,43 +138,6 @@ const scenarios = {
     },
 };
 
-function usage() {
-    return [
-        "Usage: node scripts/acceptance-plan.mjs [--scenario <id|list|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network acceptance scenario proof plan.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This plan is not proof; run make acceptance-scenarios and scenario-specific gates for proof.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { scenario: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--scenario") {
-            options.scenario = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (![...Object.keys(scenarios), "all", "list"].includes(options.scenario)) {
-        throw new Error(`Unknown scenario: ${options.scenario}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) throw new Error(`Unknown format: ${options.format}`);
-    return options;
-}
-
 function selectedScenarios(id) {
     if (id === "list") return [];
     const ids = id === "all" ? Object.keys(scenarios) : [id];
@@ -183,21 +145,25 @@ function selectedScenarios(id) {
 }
 
 export function buildPlan(options = { scenario: "all" }) {
+    const scenario = options.scenario ?? "all";
+    if (![...Object.keys(scenarios), "all", "list"].includes(scenario)) {
+        throw new Error(`Unknown scenario: ${scenario}`);
+    }
     return {
         schemaVersion: 1,
         generatedAt: new Date().toISOString(),
         network: "none",
         commandsExecuted: [],
         envValuesCaptured: false,
-        scenario: options.scenario,
-        availableScenarios: options.scenario === "list" ? Object.keys(scenarios) : undefined,
-        scenarios: selectedScenarios(options.scenario),
+        scenario,
+        availableScenarios: scenario === "list" ? Object.keys(scenarios) : undefined,
+        scenarios: selectedScenarios(scenario),
         warning:
             "This plan is not proof. Run make acceptance-scenarios and scenario-specific gates before claiming readiness.",
     };
 }
 
-function renderMarkdown(plan) {
+export function renderMarkdown(plan) {
     if (plan.availableScenarios) {
         return `# Acceptance Scenario IDs\n\n${plan.availableScenarios.map((id) => `- \`${id}\``).join("\n")}\n`;
     }
@@ -228,22 +194,3 @@ function renderMarkdown(plan) {
     return `${lines.join("\n")}\n`;
 }
 
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const plan = buildPlan(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(plan, null, 2));
-    } else {
-        console.log(renderMarkdown(plan));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
-}

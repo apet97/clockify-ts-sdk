@@ -24,7 +24,7 @@ commands, and temporary goal context without reading chat history.
   active long-running goals and remove it only after final proof.
 - When a follow-on agent inherits setup, auth, runtime, or support-handoff
   uncertainty, start with
-  `node scripts/workflow-plan.mjs --workflow first-run-support` and preserve
+  `node scripts/plan.mjs workflow --workflow first-run-support` and preserve
   `safeCommandHints` before asking for logs, retrying live calls, mutating
   Clockify data, or changing release posture.
 - Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
@@ -45,7 +45,7 @@ wiring.
 Before claiming agent-handoff readiness, run or cite:
 
 - `make agent-handoff`
-- `node scripts/workflow-plan.mjs --workflow first-run-support`
+- `node scripts/plan.mjs workflow --workflow first-run-support`
 - `make docs-index-drift`
 - `make user-docs`
 - `make enterprise-audit`

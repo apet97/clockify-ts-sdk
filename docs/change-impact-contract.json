@@ -18,8 +18,8 @@
       "path-based triage cannot silently stop matching",
       "First-run support workflow changes route through diagnostics",
       "Duplicate scope ids, path probes, required targets, required docs, or changed-path entries are contract failures",
-      "node scripts/change-impact-plan.mjs --scope <id>",
-      "node scripts/change-impact-plan.mjs --path <changed-path>"
+      "node scripts/plan.mjs change-impact --scope <id>",
+      "node scripts/plan.mjs change-impact --path <changed-path>"
     ],
     "forbiddenMarkers": [
       "TODO",

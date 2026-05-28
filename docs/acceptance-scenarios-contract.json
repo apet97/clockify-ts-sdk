@@ -19,8 +19,8 @@
       "Scenario rules",
       "Contract-shape rule",
       "Scenario matrix",
-      "node scripts/acceptance-plan.mjs --scenario auth-status",
-      "node scripts/acceptance-plan.mjs --scenario first-run-diagnostics-support",
+      "node scripts/plan.mjs acceptance --scenario auth-status",
+      "node scripts/plan.mjs acceptance --scenario first-run-diagnostics-support",
       "Evidence escalation",
       "make acceptance-scenarios"
     ],

@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+// Planner module: maintenance plan for SDK/CLI/MCP/OpenAPI upkeep.
+// Invoked via `node scripts/plan.mjs maintenance [--cadence <id|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const cadences = [
     {
         id: "weekly",
@@ -9,8 +8,8 @@ const cadences = [
         when: "Use when code, docs, generated metadata, or operator guidance moved during the week.",
         safeStart: [
             "node scripts/repo-doctor.mjs",
-            "node scripts/contract-inventory-report.mjs",
-            "node scripts/risk-status-report.mjs --status all",
+            "node scripts/plan.mjs contract-inventory",
+            "node scripts/plan.mjs risk-status --status all",
         ],
         proofTargets: [
             "make product-surface",
@@ -41,8 +40,8 @@ const cadences = [
         title: "Monthly dependency, runtime, and drift hygiene",
         when: "Use for scheduled dependency-pin, runtime-floor, generator-portability, mock, and budget review.",
         safeStart: [
-            "node scripts/change-impact-plan.mjs --scope docs-and-contracts",
-            "node scripts/risk-status-report.mjs --status all",
+            "node scripts/plan.mjs change-impact --scope docs-and-contracts",
+            "node scripts/plan.mjs risk-status --status all",
         ],
         proofTargets: [
             "make dependency-boundary",
@@ -76,9 +75,9 @@ const cadences = [
         title: "Dependency update plan",
         when: "Use before changing package manifests, lockfiles, engines, or tooling dependencies.",
         safeStart: [
-            "node scripts/change-impact-plan.mjs --path wrapper/package.json",
-            "node scripts/change-impact-plan.mjs --path cli/package.json",
-            "node scripts/change-impact-plan.mjs --path mcp/package.json",
+            "node scripts/plan.mjs change-impact --path wrapper/package.json",
+            "node scripts/plan.mjs change-impact --path cli/package.json",
+            "node scripts/plan.mjs change-impact --path mcp/package.json",
         ],
         proofTargets: [
             "make dependency-boundary",
@@ -109,9 +108,9 @@ const cadences = [
         title: "Fern and OpenAPI generator bump plan",
         when: "Use before changing Fern CLI, Fern generator image, GOCLMCP generator data, or OpenAPI source shape.",
         safeStart: [
-            "node scripts/change-impact-plan.mjs --scope openapi-truth",
-            "node scripts/change-impact-plan.mjs --scope generated-core",
-            "node scripts/risk-status-report.mjs --status all",
+            "node scripts/plan.mjs change-impact --scope openapi-truth",
+            "node scripts/plan.mjs change-impact --scope generated-core",
+            "node scripts/plan.mjs risk-status --status all",
         ],
         proofTargets: [
             "cd ../GOCLMCP && make gen-openapi",
@@ -150,9 +149,9 @@ const cadences = [
         title: "Clockify API drift response plan",
         when: "Use when live Clockify behavior, official docs, GOCLMCP output, TS SDK, CLI, MCP, or README claims disagree.",
         safeStart: [
-            "node scripts/change-impact-plan.mjs --scope openapi-truth",
-            "node scripts/contract-inventory-report.mjs",
-            "node scripts/risk-status-report.mjs --status open",
+            "node scripts/plan.mjs change-impact --scope openapi-truth",
+            "node scripts/plan.mjs contract-inventory",
+            "node scripts/plan.mjs risk-status --status open",
         ],
         proofTargets: [
             "make openapi-evidence",
@@ -186,9 +185,9 @@ const cadences = [
         title: "Release or handoff rehearsal",
         when: "Use before claiming a package or handoff is ready.",
         safeStart: [
-            "node scripts/release-decision-plan.mjs --decision all",
-            "node scripts/risk-status-report.mjs --status all",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs release-decision --decision all",
+            "node scripts/plan.mjs risk-status --status all",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
         ],
         proofTargets: [
@@ -219,10 +218,10 @@ const cadences = [
         title: "Rollback and recovery plan",
         when: "Use after a dependency, generator, package, CLI, MCP, docs, live, or final-proof attempt fails.",
         safeStart: [
-            "node scripts/change-impact-plan.mjs --scope docs-and-contracts",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs change-impact --scope docs-and-contracts",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
-            "node scripts/risk-status-report.mjs --status all",
+            "node scripts/plan.mjs risk-status --status all",
         ],
         proofTargets: [
             "make change-impact",
@@ -251,50 +250,12 @@ const cadences = [
 
 const validCadences = new Set([...cadences.map((cadence) => cadence.id), "all"]);
 
-function usage() {
-    return [
-        "Usage: node scripts/maintenance-plan.mjs [--cadence <weekly|monthly|dependency|generator|drift|release|rollback|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network maintenance plan for SDK/CLI/MCP/OpenAPI upkeep.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This plan is not proof; run the listed targets and capture receipts before claiming readiness.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { cadence: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--cadence") {
-            options.cadence = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (!validCadences.has(options.cadence)) {
-        throw new Error(`Unknown cadence: ${options.cadence}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) {
-        throw new Error(`Unknown format: ${options.format}`);
-    }
-    return options;
-}
-
 export function buildReport(options = { cadence: "all" }) {
-    const selected =
-        options.cadence === "all"
-            ? cadences
-            : cadences.filter((cadence) => cadence.id === options.cadence);
+    const cadence = options.cadence ?? "all";
+    if (!validCadences.has(cadence)) {
+        throw new Error(`Unknown cadence: ${cadence}`);
+    }
+    const selected = cadence === "all" ? cadences : cadences.filter((entry) => entry.id === cadence);
 
     return {
         schemaVersion: 1,
@@ -303,7 +264,7 @@ export function buildReport(options = { cadence: "all" }) {
         commandsExecuted: [],
         envValuesCaptured: false,
         reportScope: "maintenance-plan",
-        selectedCadence: options.cadence,
+        selectedCadence: cadence,
         warning:
             "This plan is not proof. It does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
         cadences: selected,
@@ -328,7 +289,7 @@ function renderTextList(lines, label, items) {
     lines.push("");
 }
 
-function renderMarkdown(report) {
+export function renderMarkdown(report) {
     const lines = ["# Maintenance Plan", ""];
     lines.push("This plan is not proof. It does not run commands.");
     lines.push("");
@@ -352,24 +313,4 @@ function renderMarkdown(report) {
     lines.push("");
     for (const item of report.next) lines.push(`- ${item}`);
     return `${lines.join("\n")}\n`;
-}
-
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const report = buildReport(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(report, null, 2));
-    } else {
-        console.log(renderMarkdown(report));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
 }

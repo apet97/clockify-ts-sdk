@@ -25,7 +25,7 @@ copying customer data into source control or agent handoff artifacts.
 - Support bundles must include receipts, IDs, status, `requestId`, `changed`,
   `retryable`, and `recovery`, not raw API bodies with customer content.
 - First-run support handoffs must start from
-  `node scripts/workflow-plan.mjs --workflow first-run-support`; preserve only
+  `node scripts/plan.mjs workflow --workflow first-run-support`; preserve only
   safe `safeCommandHints`, not shell output containing env values, tokens,
   workspace IDs, raw logs, or customer data.
 - Support bundles may include package-lock summary metadata, but only lockfile

@@ -43,7 +43,7 @@ These are the rules for making this repo feel like a serious SDK product without
 10. Perfect means reproducible by a tired non-coder.
 
     The repo is not perfect until `make help` explains what to run, `make perfect-fast` proves local safety, `make perfect-full` proves generation and package readiness, and `make perfect-live` is explicitly sandbox-gated.
-    First-run confusion starts with `node scripts/workflow-plan.mjs --workflow first-run-support` and `safeCommandHints`; that workflow is a map, not proof.
+    First-run confusion starts with `node scripts/plan.mjs workflow --workflow first-run-support` and `safeCommandHints`; that workflow is a map, not proof.
 
 ## Consequences
 

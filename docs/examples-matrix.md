@@ -19,10 +19,10 @@ and workflow cookbook.
 For a no-network examples plan, run:
 
 ```bash
-node scripts/examples-plan.mjs --example auth-status
-node scripts/examples-plan.mjs --example pagination
-node scripts/examples-plan.mjs --example business-admin
-node scripts/examples-plan.mjs --example demo-cleanup
+node scripts/plan.mjs examples --example auth-status
+node scripts/plan.mjs examples --example pagination
+node scripts/plan.mjs examples --example business-admin
+node scripts/plan.mjs examples --example demo-cleanup
 ```
 
 Use `--example list` to print available IDs or `--format json` for

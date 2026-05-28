@@ -21,7 +21,7 @@
     "contains": [
       "Examples are a product surface",
       "Coverage matrix",
-      "node scripts/examples-plan.mjs --example auth-status",
+      "node scripts/plan.mjs examples --example auth-status",
       "Mock versus live",
       "Promotion checklist",
       "clockify-sdk-ts-115",

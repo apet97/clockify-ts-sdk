@@ -25,7 +25,7 @@
       "Writes must be boringly safe.",
       "Errors are product design.",
       "Perfect means reproducible by a tired non-coder.",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "not proof",
       "Add metadata before adding prose.",
@@ -86,7 +86,7 @@
         "Perfect means reproducible by a tired non-coder",
         "make help",
         "make perfect-fast",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints",
         "not proof"
       ],
@@ -243,7 +243,7 @@
       "path": "docs/workflow-cookbook-contract.json",
       "contains": [
         "first-run-support",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints"
       ]
     }

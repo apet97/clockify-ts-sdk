@@ -18,7 +18,7 @@ explicit residual risk. Prefer this shape:
 Do not claim broad readiness from a narrow check. For example, `npm test` is not
 release readiness; it is one input to package proof.
 
-`node scripts/workflow-plan.mjs --workflow first-run-support` is a no-network
+`node scripts/plan.mjs workflow --workflow first-run-support` is a no-network
 operator support map, not proof. Documentation may cite it to orient a
 non-coder user, but readiness claims still need the relevant gate, receipt, or
 residual-risk note. If the page mentions first-run support, preserve

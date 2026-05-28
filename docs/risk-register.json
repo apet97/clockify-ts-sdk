@@ -211,7 +211,7 @@
         },
         {
           "path": "docs/release-readiness-checklist.md",
-          "contains": "node scripts/release-decision-plan.mjs --decision all"
+          "contains": "node scripts/plan.mjs release-decision --decision all"
         }
       ]
     },

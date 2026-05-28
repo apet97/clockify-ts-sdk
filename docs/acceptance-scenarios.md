@@ -30,11 +30,11 @@ Acceptance-scenarios contract shape is part of readiness. The checker must fail 
 For a no-network proof plan by scenario, run:
 
 ```bash
-node scripts/acceptance-plan.mjs --scenario auth-status
-node scripts/acceptance-plan.mjs --scenario first-run-diagnostics-support
-node scripts/acceptance-plan.mjs --scenario time-entry-mutation-cleanup
-node scripts/acceptance-plan.mjs --scenario business-admin-guarded-write
-node scripts/acceptance-plan.mjs --scenario package-consumer-install-smoke
+node scripts/plan.mjs acceptance --scenario auth-status
+node scripts/plan.mjs acceptance --scenario first-run-diagnostics-support
+node scripts/plan.mjs acceptance --scenario time-entry-mutation-cleanup
+node scripts/plan.mjs acceptance --scenario business-admin-guarded-write
+node scripts/plan.mjs acceptance --scenario package-consumer-install-smoke
 ```
 
 Use `--scenario list` to print available IDs or `--format json` for

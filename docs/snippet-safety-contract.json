@@ -27,7 +27,7 @@
       "clockify-sdk-ts-115",
       "CLOCKIFY_BASE_URL",
       "sacrificial sandbox",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "not proof"
     ],

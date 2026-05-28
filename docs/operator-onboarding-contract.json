@@ -28,7 +28,7 @@
       "blockingSignalIds",
       "riskRoutingSummary",
       "orderedProofChainCoverage",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "Exit status: 0",
       "Result: passed",
@@ -94,7 +94,7 @@
       "commandsExecuted: []",
       "envValuesCaptured: false",
       "node scripts/repo-doctor.mjs",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
       "readinessContext",
       "safeCommandHints",
@@ -138,7 +138,7 @@
           "make perfect-live"
         ],
         "support": [
-          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "node scripts/plan.mjs workflow --workflow first-run-support",
           "readinessContext",
           "safeCommandHints",
           "riskRoutingSummary"

@@ -202,7 +202,7 @@ examples-matrix:
 	node scripts/check-examples-matrix.mjs
 
 examples-plan:
-	node scripts/examples-plan.mjs
+	node scripts/plan.mjs examples
 
 snippet-safety:
 	node scripts/check-snippet-safety.mjs
@@ -229,19 +229,19 @@ contract-inventory:
 	node scripts/check-contract-inventory.mjs
 
 contract-inventory-report:
-	node scripts/contract-inventory-report.mjs
+	node scripts/plan.mjs contract-inventory
 
 workflow-cookbook:
 	node scripts/check-workflow-cookbook.mjs
 
 workflow-plan:
-	node scripts/workflow-plan.mjs
+	node scripts/plan.mjs workflow
 
 acceptance-scenarios:
 	node scripts/check-acceptance-scenarios.mjs
 
 acceptance-plan:
-	node scripts/acceptance-plan.mjs
+	node scripts/plan.mjs acceptance
 
 naming-taxonomy:
 	node scripts/check-naming-taxonomy.mjs
@@ -250,7 +250,7 @@ change-impact:
 	node scripts/check-change-impact.mjs
 
 change-impact-plan:
-	node scripts/change-impact-plan.mjs
+	node scripts/plan.mjs change-impact
 
 version-policy:
 	node scripts/check-version-policy.mjs
@@ -307,7 +307,7 @@ release-readiness:
 	node scripts/check-release-readiness.mjs
 
 release-decision-plan:
-	node scripts/release-decision-plan.mjs --decision all
+	node scripts/plan.mjs release-decision --decision all
 
 ci-contract:
 	node scripts/check-ci-contract.mjs
@@ -322,7 +322,7 @@ risk-register:
 	node scripts/check-risk-register.mjs
 
 risk-status-report:
-	node scripts/risk-status-report.mjs
+	node scripts/plan.mjs risk-status
 
 user-docs:
 	node scripts/check-user-docs.mjs
@@ -343,7 +343,7 @@ repo-doctor:
 	node scripts/repo-doctor.mjs
 
 onboarding-plan:
-	node scripts/onboarding-plan.mjs --goal all
+	node scripts/plan.mjs onboarding --goal all
 
 operator-toolbox:
 	node scripts/check-operator-toolbox.mjs
@@ -379,7 +379,7 @@ maintenance-playbook:
 	node scripts/check-maintenance-playbook.mjs
 
 maintenance-plan:
-	node scripts/maintenance-plan.mjs --cadence all
+	node scripts/plan.mjs maintenance --cadence all
 
 mutation-safety:
 	node scripts/check-mutation-safety.mjs
@@ -406,7 +406,7 @@ performance-receipt:
 	node scripts/check-performance-budgets.mjs --write-receipt
 
 performance-calibration-plan:
-	node scripts/performance-calibration-plan.mjs
+	node scripts/plan.mjs performance-calibration
 
 generated-edit-check:
 	node scripts/check-no-generated-edits.mjs

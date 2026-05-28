@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-support-bundle: validates the safe diagnostic bundle contract,
 // including prepublishOnly posture and the redaction surface advertised by
-// `node scripts/workflow-plan.mjs --workflow first-run-support`.
+// `node scripts/plan.mjs workflow --workflow first-run-support`.
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildBundle } from "./create-support-bundle.mjs";

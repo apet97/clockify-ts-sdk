@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+// Planner module: SDK/CLI/MCP examples plan.
+// Invoked via `node scripts/plan.mjs examples [--example <id|list|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const examples = {
     "auth-status": {
         job: "Authenticate and construct a client",
@@ -81,43 +80,6 @@ const examples = {
     },
 };
 
-function usage() {
-    return [
-        "Usage: node scripts/examples-plan.mjs [--example <id|list|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network SDK/CLI/MCP examples plan.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This plan is not proof; run make examples-matrix and surface-specific gates for proof.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { example: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--example") {
-            options.example = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (![...Object.keys(examples), "all", "list"].includes(options.example)) {
-        throw new Error(`Unknown example: ${options.example}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) throw new Error(`Unknown format: ${options.format}`);
-    return options;
-}
-
 function selectedExamples(id) {
     if (id === "list") return [];
     const ids = id === "all" ? Object.keys(examples) : [id];
@@ -125,20 +87,24 @@ function selectedExamples(id) {
 }
 
 export function buildPlan(options = { example: "all" }) {
+    const example = options.example ?? "all";
+    if (![...Object.keys(examples), "all", "list"].includes(example)) {
+        throw new Error(`Unknown example: ${example}`);
+    }
     return {
         schemaVersion: 1,
         generatedAt: new Date().toISOString(),
         network: "none",
         commandsExecuted: [],
         envValuesCaptured: false,
-        example: options.example,
-        availableExamples: options.example === "list" ? Object.keys(examples) : undefined,
-        examples: selectedExamples(options.example),
+        example,
+        availableExamples: example === "list" ? Object.keys(examples) : undefined,
+        examples: selectedExamples(example),
         warning: "This plan is not proof. Run make examples-matrix and surface-specific gates before claiming readiness.",
     };
 }
 
-function renderMarkdown(plan) {
+export function renderMarkdown(plan) {
     if (plan.availableExamples) {
         return `# Example IDs\n\n${plan.availableExamples.map((id) => `- \`${id}\``).join("\n")}\n`;
     }
@@ -168,22 +134,3 @@ function renderMarkdown(plan) {
     return `${lines.join("\n")}\n`;
 }
 
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const plan = buildPlan(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(plan, null, 2));
-    } else {
-        console.log(renderMarkdown(plan));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
-}
