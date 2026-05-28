@@ -105,9 +105,7 @@
         "legacy-release-workflow-needs-maintainer-decision"
       ],
       "requiredReadinessBlockingRiskIds": [],
-      "requiredNonBlockingOpenOrProvisionalRiskIds": [
-        "legacy-release-workflow-needs-maintainer-decision"
-      ]
+      "requiredNonBlockingOpenOrProvisionalRiskIds": []
     }
   },
   "risks": [
@@ -189,17 +187,21 @@
     },
     {
       "id": "legacy-release-workflow-needs-maintainer-decision",
-      "status": "open",
+      "status": "accepted",
       "finalReadinessBlocking": false,
       "surface": "CI/CD release automation",
-      "summary": "A legacy tag-triggered npm release workflow still exists, but this hardening goal must not change CI/CD, auth, provenance, or release triggers without explicit maintainer approval.",
-      "impact": "Release automation may need a dedicated maintainer decision before any future publish attempt; local packable readiness is not the same as permission to publish.",
-      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release decision planner visible; do not run or modify release automation casually.",
-      "closureGate": "Explicit maintainer approval plus a dedicated release-workflow update/review that aligns package names, smoke install commands, provenance, and support policy.",
+      "summary": "A legacy tag-triggered npm release workflow exists; the maintainer reviewed it and accepted the current shape (release-please files the version-bump PR; release.yml publishes on a tag whose version matches wrapper/package.json).",
+      "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
+      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
+      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28 and accepted the current shape; the legacy aspect of the workflow is its tag-triggered single-package publish design, which the maintainer has chosen to keep.",
       "evidence": [
         {
           "path": ".github/workflows/release.yml",
           "contains": "Release to npm"
+        },
+        {
+          "path": ".github/workflows/release-please.yml",
+          "contains": "release-please-action"
         },
         {
           "path": "docs/release-support-policy.md",
