@@ -129,7 +129,7 @@
     {
       "path": "AGENTS.md",
       "mustContain": [
-        "They are not yet npm workspaces",
+        "wired as npm workspaces",
         "../GOCLMCP",
         "Local Docker daemon required"
       ]

@@ -10,7 +10,7 @@ This standalone repo ships three sibling packages:
 | Folder | Package | Current surface |
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 47 public names; 16 subpaths |
-| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 16 commands incl. `doctor` |
+| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 28 commands incl. `doctor` and `completion` |
 | `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 105 tools |
 
 The `-115` / `115` suffix is intentional trademark distance. Default
@@ -42,34 +42,40 @@ make perfect-full   # GOCLMCP drift + Fern + package gates + packed-consumer smo
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
-No-network operator helpers go through `scripts/plan.mjs <topic>` or the
-individual planner scripts in `scripts/`:
-`acceptance`, `change-impact`, `examples`, `maintenance`, `onboarding`,
-`workflow`, `performance-calibration`, `release-decision`,
-`contract-inventory`, `risk-status`. These print plans/reports; they
-never run proof gates.
-
-Focused package gates:
+No-network operator helpers all route through `scripts/plan.mjs`:
 
 ```bash
-cd wrapper
-npm run type-check
-npm test
-npm run build
-npm run build:smoke
-npm pack --dry-run
+node scripts/plan.mjs <topic>            # default: markdown to stdout
+node scripts/plan.mjs <topic> --format json
+```
 
-cd ../cli
-npm run type-check
-npm test
-npm run build
-npm pack --dry-run
+Topics: `acceptance`, `change-impact`, `examples`, `maintenance`,
+`onboarding`, `workflow`, `performance-calibration`,
+`release-decision`, `contract-inventory`, `risk-status`. The
+individual `scripts/<topic>-plan.mjs` / `<topic>-report.mjs` modules
+are libraries now (no standalone CLI). These print plans/reports;
+they never run proof gates.
 
-cd ../mcp
-npm run type-check
-npm test
-npm run build
-npm pack --dry-run
+Focused package gates (npm workspaces — root install once, then run
+each workspace's scripts):
+
+```bash
+npm ci                                                       # root install all 3 workspaces
+
+cd spec/fern && fern generate --group ts --local --force     # Docker required
+cd ../../wrapper && npm run sync                             # populate wrapper/src/
+
+cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke && npm pack --dry-run
+cd ../cli   && npm run type-check && npm test && npm run build && npm pack --dry-run
+cd ../mcp   && npm run type-check && npm test && npm run build && npm pack --dry-run
+```
+
+Or from the repo root, equivalently:
+
+```bash
+npm run type-check -w clockify-sdk-ts-115
+npm test -w @clockify115/cli
+npm run build -w @clockify115/mcp-server
 ```
 
 For live MCP sandbox cleanup proof, run from the repo root so the
@@ -87,6 +93,15 @@ make docs-drift
 
 ## Current Gotchas
 
+- The repo is wired as **npm workspaces** from a root `package.json`
+  (`workspaces: ["wrapper", "cli", "mcp"]`) with a single root
+  `package-lock.json`. Run `npm ci` at the root, then per-package
+  scripts work from either the root (`-w <name>`) or the package dir.
+- `output/ts-sdk/**` is **gitignored**. A fresh clone needs Docker:
+  `(cd spec/fern && fern generate --group ts --local --force)` then
+  `(cd wrapper && npm run sync)` before SDK package gates can pass.
+  Validators (schema-quality, generator-comparison) skip gracefully
+  with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
 - `mcp/src/tools/workflows.ts` is the workflow-first MCP surface.
 - MCP receipts should include useful `ids`, `changed`, `warnings`,
@@ -136,8 +151,11 @@ make docs-drift
   run `make troubleshooting` after error registry changes.
 - `make agent-handoff` checks `AGENTS.md`, this file, generated-path
   boundaries, and stale package/tool counts.
-- Release-please currently needs repository Actions permission to
-  create PRs; do not solve that by changing release auth casually.
+- Release-please now files Unreleased→version-bump PRs (the
+  `can_approve_pull_request_reviews` repo setting was flipped on
+  2026-05-28). `release.yml` still publishes only on a pushed tag
+  whose version matches `wrapper/package.json`; that guard is
+  load-bearing.
 
 ## Where To Change Things
 

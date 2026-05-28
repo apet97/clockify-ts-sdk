@@ -59,8 +59,6 @@ or tag workflow. The presence of `publishConfig.provenance` and
 
 ## Release workflow maintainer decision planner
 
-Run `node scripts/release-readiness-report.mjs` first for a no-network preflight of the readiness signals listed above.
-
 Use `node scripts/plan.mjs release-decision --decision all` before any tag,
 GitHub release, npm publication, or release-workflow change. The planner is a
 static no-network decision packet. `make release-readiness` shape-checks the

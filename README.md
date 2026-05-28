@@ -26,6 +26,39 @@ toolchain.
 
 The default release path is local tarballs (`npm pack`) for sharing inside the project, not public npm publication. Publishing requires explicit maintainer approval.
 
+## Getting started (fresh clone)
+
+The three packages are wired as **npm workspaces** from a root
+`package.json`, so a single `npm ci` at the root populates all of
+them. `output/ts-sdk/` is gitignored, so SDK package gates need
+Fern + Docker before they can run:
+
+```bash
+git clone https://github.com/apet97/clockify-ts-sdk.git
+cd clockify-ts-sdk
+npm ci                                                      # install all 3 workspaces
+
+# SDK source comes from Fern → wrapper/src via sync. Docker required.
+npm install -g fern-api@5.37.9
+(cd spec/fern && fern generate --group ts --local --force)
+(cd wrapper && npm run sync)
+
+make perfect-fast                                           # 76 sub-gates, ~317 tests
+```
+
+If you only touch CLI or MCP code, you still need the wrapper built
+once because cli + mcp resolve `clockify-sdk-ts-115` through the
+workspace symlink. After the first `fern generate` + `npm run sync`
++ `npm run build -w clockify-sdk-ts-115`, subsequent
+`cd cli && npm test` (or `cd mcp && npm test`) cycles are fast.
+
+For agents and operators who can't run Docker but want to read or
+plan: the validators that depend on `wrapper/src/**` skip with a
+clear "run fern generate first" warning instead of failing, so
+`make perfect-fast` still completes on non-SDK workflows. Use
+`node scripts/plan.mjs <topic>` for no-network planning surfaces
+(see [`docs/operator-toolbox.md`](./docs/operator-toolbox.md)).
+
 ## One-command gates
 
 The repo now exposes root-level commands for non-coder operation and
@@ -112,7 +145,7 @@ clockify-ts-sdk/
 │       ├── fern-issues/                             ← drafted upstream issues (internal evidence)
 │       ├── fixtures/                                ← curated golden response shapes
 │       └── probes/                                  ← raw live API captures (gitignored)
-├── output/{ts-sdk,py-sdk,postman}/                  ← generator outputs (gitignored except ts-sdk)
+├── output/{ts-sdk,py-sdk,postman}/                  ← generator outputs, all gitignored; ts-sdk regenerable via Fern + Docker
 ├── wrapper/                                         ← packable SDK package layout
 ├── cli/                                             ← packable CLI package layout
 ├── mcp/                                             ← packable stdio MCP package layout
@@ -194,7 +227,7 @@ Package surfaces:
 | Package | Current surface |
 |---|---|
 | `clockify-sdk-ts-115` | v0.9.0; 31 resource modules, 185 live operations, dual ESM/CJS, pagination helpers, webhook verification, typed errors, scoped clients, OTel hooks, health and rate-limit helpers |
-| `@clockify115/cli` | v0.1.0; 21 commands across 15 groups, env/config based auth, JSON output for automation |
+| `@clockify115/cli` | v0.1.0; 28 commands across 16 groups, env/config based auth, JSON output for automation |
 | `@clockify115/mcp-server` | v0.3.0; 105 stdio MCP tools: 17 workflow tools plus 88 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
 
 | Surface                                            | Result |

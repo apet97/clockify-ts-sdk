@@ -188,7 +188,6 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | Issue intake | `make issue-intake` | Check bug, feature, PR, support, and security intake templates collect reproducible sanitized evidence. |
 | Release/support contract | `make release-support-contract` | Check release support policy, `SECURITY.md`, package names, and proof targets stay aligned. |
 | Release readiness | `make release-readiness` | Check release/handoff evidence checklist, generated preflight report shape, final proof closure, and publish decision boundary. |
-| Release readiness report | `make release-readiness-report` | Print no-network final-readiness preflight signals without claiming proof. |
 | Release decision plan | `make release-decision-plan` | Print no-network release workflow decision options without granting publish permission. |
 | CI contract | `make ci-contract` | Check GitHub workflow posture, package workflow gates, docs/release workflow safety rails, and release decision boundary. |
 | Live safety | `make live-safety` | Check sandbox-only live-test docs, env gates, cleanup prefixes, and mock alternative. |

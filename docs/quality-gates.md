@@ -62,7 +62,6 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check issue intake | `make issue-intake` | Bug, feature, PR, support, and security intake templates collect surface, version, receipt, proof, risk, and redaction evidence. |
 | Check release/support contract | `make release-support-contract` | Release support policy, `SECURITY.md`, package names, proof targets, and no-default-publish guidance stay aligned. |
 | Check release readiness | `make release-readiness` | Release/handoff evidence checklist, generated preflight report shape, final proof closure, and publish decision boundary stay explicit. |
-| Print release readiness preflight | `make release-readiness-report` | Static no-network report of required proof commands and current final-proof file-state signals. |
 | Print release workflow decision plan | `make release-decision-plan` | Static no-network decision packet for local tarball, tag-only, npm-via-CI, or legacy-workflow retirement paths. |
 | Check CI contract | `make ci-contract` | GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary stay explicit. |
 | Check live safety | `make live-safety` | Sandbox-only live-test policy, env gates, cleanup prefixes, final-proof deferral rules, and mock alternative stay aligned. |
