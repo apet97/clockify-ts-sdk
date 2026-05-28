@@ -176,20 +176,23 @@ for (const pkgContract of contract.packages ?? []) {
     }
 
     const lockfile = JSON.parse(fs.readFileSync(lockfilePath, "utf8"));
-    const lockfileRoot = lockfile.packages?.[""] ?? {};
+    // With npm workspaces, lockfile.packages[""] is the root and each
+    // workspace lives under its repo-relative directory key (e.g., "wrapper").
+    const workspaceKey = path.dirname(safeManifest);
+    const workspaceEntry = lockfile.packages?.[workspaceKey] ?? lockfile.packages?.[""] ?? {};
     if (lockfile.lockfileVersion !== pkgContract.lockfileVersion) {
         fail(
             pkgContract.id,
             `expected ${pkgContract.lockfile} lockfileVersion ${pkgContract.lockfileVersion}, got ${lockfile.lockfileVersion}`,
         );
     }
-    if (lockfileRoot.name !== manifest.name) {
-        fail(pkgContract.id, `${pkgContract.lockfile} root name ${lockfileRoot.name} does not match manifest ${manifest.name}`);
+    if (workspaceEntry.name !== manifest.name) {
+        fail(pkgContract.id, `${pkgContract.lockfile} entry ${workspaceKey} name ${workspaceEntry.name} does not match manifest ${manifest.name}`);
     }
-    if (lockfileRoot.version !== manifest.version) {
+    if (workspaceEntry.version !== manifest.version) {
         fail(
             pkgContract.id,
-            `${pkgContract.lockfile} root version ${lockfileRoot.version} does not match manifest ${manifest.version}`,
+            `${pkgContract.lockfile} entry ${workspaceKey} version ${workspaceEntry.version} does not match manifest ${manifest.version}`,
         );
     }
 

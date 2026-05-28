@@ -1721,8 +1721,7 @@
             "supplyRelativePath",
             "must be a repo-relative path without parent traversal",
             "publishConfig.provenance",
-            "requiredFiles",
-            "forbiddenFiles"
+            "requiredFiles"
           ]
         },
         {
@@ -2676,7 +2675,7 @@
             "buildReport",
             "assertFalseFields",
             "expected shape",
-            "forbiddenFiles",
+            "requiredFiles",
             "validateContractShape",
             "environmentRelativePath",
             "repo-relative path without parent traversal",

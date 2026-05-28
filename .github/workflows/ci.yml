@@ -26,9 +26,6 @@ jobs:
       fail-fast: false
       matrix:
         node-version: ["20", "22"]
-    defaults:
-      run:
-        working-directory: wrapper
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,15 +37,17 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: wrapper/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install workspaces (root)
         run: npm ci
 
       - name: Sync SDK from generator output
+        working-directory: wrapper
         run: npm run sync
 
       - name: Drift check (sync output sanity)
+        working-directory: wrapper
         run: |
           file_count=$(find src -name '*.ts' | wc -l | tr -d ' ')
           if [ "$file_count" -lt 700 ] || [ "$file_count" -gt 800 ]; then
@@ -58,15 +57,19 @@ jobs:
           echo "Sync OK: $file_count TS files in wrapper/src/"
 
       - name: Type-check
+        working-directory: wrapper
         run: npm run type-check
 
       - name: Build (dist/esm/ + dist/cjs/)
+        working-directory: wrapper
         run: npm run build
 
       - name: Verify dual build (ESM + CJS surface)
+        working-directory: wrapper
         run: npm run build:smoke
 
       - name: Run tests
+        working-directory: wrapper
         run: npm test
         # The sandbox-flow tests in tests/sandbox.test.ts skip cleanly
         # when CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent.
@@ -76,6 +79,7 @@ jobs:
         # Locks the public type surface against regressions when the
         # generator changes. Skipped by default `npm test`; opt-in via
         # the dedicated script.
+        working-directory: wrapper
         run: npm run test:types
 
       - name: Pack snapshot verification
@@ -83,6 +87,7 @@ jobs:
         # node-version invariant; duplicating across matrix entries adds
         # only flaky duplicate failure modes.
         if: matrix.node-version == '22'
+        working-directory: wrapper
         run: |
           npm pack --dry-run --json \
             | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{console.log(JSON.parse(s)[0].files.map(f=>f.path).sort().join('\n'));})" \
@@ -99,9 +104,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: wrapper
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,18 +115,21 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: wrapper/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install workspaces (root)
         run: npm ci
 
       - name: Sync SDK from generator output
+        working-directory: wrapper
         run: npm run sync
 
       - name: Build
+        working-directory: wrapper
         run: npm run build
 
       - name: Size check
+        working-directory: wrapper
         run: npm run size
 
   lint:
@@ -133,9 +138,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: wrapper
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -147,18 +149,20 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: wrapper/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install workspaces (root)
         run: npm ci
 
       - name: Sync SDK from generator output
         # Needed because type-aware lint follows imports into src/.
         # src/ is gitignored / wiped on every sync; lint config ignores
         # src/** itself but the parser still needs the files on disk.
+        working-directory: wrapper
         run: npm run sync
 
       - name: Lint
+        working-directory: wrapper
         run: npm run lint
 
   spec-check:
@@ -191,9 +195,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: wrapper
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -210,15 +211,17 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: wrapper/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies via npm (lockfile-pinned)
+      - name: Install workspaces via npm (lockfile-pinned)
         run: npm ci
 
       - name: Sync SDK from generator output
+        working-directory: wrapper
         run: npm run sync
 
       - name: Run unit tests under Bun (no live API)
+        working-directory: wrapper
         run: bun run vitest run tests/pagination.test.ts tests/create-client.test.ts tests/iter.test.ts tests/webhooks.test.ts tests/composed-fetch.test.ts
         env:
           CLOCKIFY_API_KEY: ""
@@ -230,9 +233,6 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-    defaults:
-      run:
-        working-directory: wrapper
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -249,13 +249,14 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: wrapper/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies + build dist/esm
+      - name: Install workspaces + sync + build wrapper
         run: |
           npm ci
-          npm run sync
-          npm run build
+          npm run sync -w clockify-sdk-ts-115
+          npm run build -w clockify-sdk-ts-115
 
       - name: Run Deno smoke (import + name resolution)
+        working-directory: wrapper
         run: deno run --allow-env --allow-read --allow-write --node-modules-dir=auto scripts/deno-smoke.ts

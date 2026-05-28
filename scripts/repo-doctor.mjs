@@ -19,7 +19,7 @@ const packages = [
     {
         id: "wrapper",
         manifest: "wrapper/package.json",
-        lockfile: "wrapper/package-lock.json",
+        lockfile: "package-lock.json",
         engine: ">=20",
         requiredScripts: ["sync", "type-check", "build", "build:smoke", "test", "prepublishOnly"],
         requiredScriptValues: {
@@ -29,7 +29,7 @@ const packages = [
     {
         id: "cli",
         manifest: "cli/package.json",
-        lockfile: "cli/package-lock.json",
+        lockfile: "package-lock.json",
         engine: ">=20",
         requiredScripts: ["type-check", "build", "test", "prepublishOnly"],
         requiredScriptValues: {
@@ -39,7 +39,7 @@ const packages = [
     {
         id: "mcp",
         manifest: "mcp/package.json",
-        lockfile: "mcp/package-lock.json",
+        lockfile: "package-lock.json",
         engine: ">=20",
         requiredScripts: ["type-check", "build", "test", "verify:live-cleanup", "prepublishOnly"],
         requiredScriptValues: {

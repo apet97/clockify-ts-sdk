@@ -100,10 +100,10 @@ async function readJson(relPath) {
     }
 }
 
-function lockfileSummary(result, relDir) {
+function lockfileSummary(result) {
     if (!result.ok) {
         return {
-            path: `${relDir}/package-lock.json`,
+            path: "package-lock.json",
             available: false,
             error: result.error,
         };
@@ -112,7 +112,7 @@ function lockfileSummary(result, relDir) {
     const lockfile = result.data;
     const packages = lockfile.packages && typeof lockfile.packages === "object" ? lockfile.packages : {};
     return {
-        path: `${relDir}/package-lock.json`,
+        path: "package-lock.json",
         available: true,
         lockfileVersion: lockfile.lockfileVersion ?? null,
         packageCount: Object.keys(packages).length,
@@ -125,7 +125,7 @@ function packageSummary(result, lockfileResult, relDir) {
             path: `${relDir}/package.json`,
             available: false,
             error: result.error,
-            lockfile: lockfileSummary(lockfileResult, relDir),
+            lockfile: lockfileSummary(lockfileResult),
         };
     }
 
@@ -148,7 +148,7 @@ function packageSummary(result, lockfileResult, relDir) {
                 ? pkg.scripts.prepublishOnly
                 : null,
         publishConfigPresent: Boolean(pkg.publishConfig),
-        lockfile: lockfileSummary(lockfileResult, relDir),
+        lockfile: lockfileSummary(lockfileResult),
     };
 }
 
@@ -202,9 +202,7 @@ export async function buildBundle() {
         wrapperPkg,
         cliPkg,
         mcpPkg,
-        wrapperLockfile,
-        cliLockfile,
-        mcpLockfile,
+        rootLockfile,
         productSurface,
         contract,
         envContract,
@@ -216,9 +214,7 @@ export async function buildBundle() {
             readJson("wrapper/package.json"),
             readJson("cli/package.json"),
             readJson("mcp/package.json"),
-            readJson("wrapper/package-lock.json"),
-            readJson("cli/package-lock.json"),
-            readJson("mcp/package-lock.json"),
+            readJson("package-lock.json"),
             readJson("docs/product-surface.json"),
             readJson("docs/support-bundle-contract.json"),
             readJson("docs/env-contract.json"),
@@ -247,9 +243,9 @@ export async function buildBundle() {
                 process.cwd() === root || path.relative(root, process.cwd()).startsWith("..") === false,
         },
         packages: [
-            packageSummary(wrapperPkg, wrapperLockfile, "wrapper"),
-            packageSummary(cliPkg, cliLockfile, "cli"),
-            packageSummary(mcpPkg, mcpLockfile, "mcp"),
+            packageSummary(wrapperPkg, rootLockfile, "wrapper"),
+            packageSummary(cliPkg, rootLockfile, "cli"),
+            packageSummary(mcpPkg, rootLockfile, "mcp"),
         ],
         productSurface: summarizeProductSurface(productSurface),
         diagnostics: diagnosticsSurfaces,

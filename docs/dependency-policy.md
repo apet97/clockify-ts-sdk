@@ -37,11 +37,12 @@ dependency change.
 | Package | Runtime dependencies | SDK relationship |
 |---|---|---|
 | `clockify-sdk-ts-115` | None | Owns the generated SDK wrapper seam. |
-| `@clockify115/cli` | `cli-table3`, `commander`, `picocolors` | Uses `clockify-sdk-ts-115` as a peer dependency and `file:../wrapper` as the local dev dependency. |
-| `@clockify115/mcp-server` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency and `file:../wrapper` as the local dev dependency. |
+| `@clockify115/cli` | `cli-table3`, `commander`, `picocolors` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
+| `@clockify115/mcp-server` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
 
-Each package keeps its own `package-lock.json` next to its manifest.
-`make dependency-boundary` checks that every lockfile uses npm lockfile
+The three packages are wired as npm workspaces from the repo-root
+`package.json`; a single root `package-lock.json` covers all of them.
+`make dependency-boundary` checks that the root lockfile uses npm lockfile
 version 3 and that the lockfile root package name/version matches the
 corresponding `package.json`. Dependency changes should therefore update
 the manifest and lockfile together, using the package-local npm install

@@ -17,6 +17,7 @@ All notable changes to `@clockify115/cli` are documented here.
 
 - Commander usage errors now return exit code `2`, matching the documented CLI contract.
 - Added `exports` field to the package manifest so consumers can use the package self-reference; only `./dist/index.js` is exposed.
+- Migrated the SDK dev dependency from `file:../wrapper` to a workspace link (`"*"`). The peer dependency `clockify-sdk-ts-115 >=0.9.0` is unchanged for published consumers.
 
 ## [0.1.0] - 2026-05-26
 
