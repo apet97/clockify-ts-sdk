@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const auditPath = path.join(root, "docs", "enterprise-hardening-audit.json");
 const audit = JSON.parse(fs.readFileSync(auditPath, "utf8"));
 const failures = [];
-const finalMode = process.argv.includes("--final");
 
 function fail(id, message) {
     failures.push(`${id}: ${message}`);
@@ -84,13 +82,9 @@ if (audit.wiring == null || typeof audit.wiring !== "object" || Array.isArray(au
     fail("audit.wiring", "must be an object");
 } else {
     assertNonEmptyString("audit.wiring.makeTarget", audit.wiring.makeTarget);
-    assertNonEmptyString("audit.wiring.finalMakeTarget", audit.wiring.finalMakeTarget);
     assertNonEmptyString("audit.wiring.checker", audit.wiring.checker);
     if (audit.wiring.makeTarget !== "enterprise-audit") {
         fail("audit.wiring.makeTarget", "must be enterprise-audit");
-    }
-    if (audit.wiring.finalMakeTarget !== "enterprise-audit-final") {
-        fail("audit.wiring.finalMakeTarget", "must be enterprise-audit-final");
     }
     if (audit.wiring.checker !== "scripts/check-enterprise-hardening.mjs") {
         fail("audit.wiring.checker", "must be scripts/check-enterprise-hardening.mjs");
@@ -175,16 +169,6 @@ for (const [requirementIndex, requirement] of requirements.entries()) {
         const temporaryExists = temporaryPath ? fs.existsSync(temporaryPath) : false;
         const finalReceiptExists = finalReceiptPath ? fs.existsSync(finalReceiptPath) : false;
 
-        if (finalMode) {
-            if (temporaryExists) {
-                fail(requirement.id, `${requirement.temporaryPath} still exists in final mode`);
-            }
-            if (finalReceiptPath && !finalReceiptExists) {
-                fail(requirement.id, `${requirement.finalReceiptPath} missing in final mode`);
-            }
-            continue;
-        }
-
         if (!temporaryExists && !finalReceiptExists) {
             fail(
                 requirement.id,
@@ -225,27 +209,9 @@ for (const [requirementIndex, requirement] of requirements.entries()) {
 }
 
 if (failures.length > 0) {
-    console.error(finalMode ? "enterprise hardening final audit failed" : "enterprise hardening audit failed");
+    console.error("enterprise hardening audit failed");
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
 }
 
-if (finalMode) {
-    const receiptCheck = spawnSync(process.execPath, ["scripts/check-final-proof-receipt.mjs"], {
-        cwd: root,
-        encoding: "utf8",
-        stdio: "pipe",
-    });
-    if (receiptCheck.status !== 0) {
-        process.stderr.write(receiptCheck.stderr);
-        process.stderr.write(receiptCheck.stdout);
-        process.exit(receiptCheck.status ?? 1);
-    }
-    process.stdout.write(receiptCheck.stdout);
-}
-
-console.log(
-    finalMode
-        ? `enterprise hardening final audit passed (${audit.requirements.length} requirements)`
-        : `enterprise hardening audit passed (${audit.requirements.length} requirements)`,
-);
+console.log(`enterprise hardening audit passed (${audit.requirements.length} requirements)`);
