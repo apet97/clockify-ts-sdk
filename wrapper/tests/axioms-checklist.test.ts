@@ -1,13 +1,10 @@
 /**
- * Axioms checklist — one assertion per item from
- * /Users/15x/Downloads/sdkxioms.txt §16 ("Final SDK checklist").
+ * Axioms checklist — one assertion per row of `docs/axioms.md`.
  *
- * This file is a regression gate: if a future change removes a
- * checklist-bearing export, breaks the dual-build, or regresses
- * a feature, the relevant assertion fails.
- *
- * Each test is a single `it(...)`. Comments name the axioms-doc
- * row it covers.
+ * Regression gate: if a future change removes a checklist-bearing
+ * export, breaks the dual-build, or regresses a feature, the
+ * relevant assertion fails. Each test is a single `it(...)`; the
+ * comment names the axioms-doc row it covers.
  */
 import { describe, expect, it } from "vitest";
 
