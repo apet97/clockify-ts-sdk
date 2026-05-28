@@ -15,6 +15,7 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 - MCP recoverable errors now use the shared error-code registry for default recovery hints.
 - Migrated the SDK dev dependency from `file:../wrapper` to a workspace link (`"*"`). The peer dependency `clockify-sdk-ts-115 >=0.9.0` is unchanged for published consumers.
+- Regenerated the shared error-code module to drop an unnecessary non-null assertion flagged by `typescript-eslint/no-unnecessary-type-assertion`.
 
 ## [0.3.0] - 2026-05-26
 

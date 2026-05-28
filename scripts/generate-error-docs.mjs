@@ -79,7 +79,7 @@ export function errorCodeForMessage(message: string): ClockifyErrorCode {
 }
 
 export function errorCodeEntry(code: ClockifyErrorCode): ClockifyErrorCodeEntry {
-    return CLOCKIFY_ERROR_CODES.find((entry) => entry.code === code) ?? CLOCKIFY_ERROR_CODES[0]!;
+    return CLOCKIFY_ERROR_CODES.find((entry) => entry.code === code) ?? CLOCKIFY_ERROR_CODES[0];
 }
 
 export function recoveryForCode(code: ClockifyErrorCode): string {

@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { createMockClockifyServer, type MockClockifyServer } from "../../scripts/mock-clockify-server.mjs";
 import { createClockifyClient } from "../create-client.js";
 import { iterAll } from "../iter.js";
-import { createMockClockifyServer, type MockClockifyServer } from "../../scripts/mock-clockify-server.mjs";
 
 let mock: MockClockifyServer;
 let baseUrl: string;

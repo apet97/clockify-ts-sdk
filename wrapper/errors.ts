@@ -25,8 +25,6 @@
  * `catch (err) { if (err instanceof ClockifyApiError) ... }` patterns
  * keep working unchanged.
  */
-import type { RawResponse } from "./src/core/index.js";
-import { ClockifyApiError } from "./src/errors/index.js";
 import {
     CLOCKIFY_ERROR_CODES,
     errorCodeForMessage,
@@ -34,6 +32,8 @@ import {
     retryableForCode,
     type ClockifyErrorCode,
 } from "./error-codes.js";
+import type { RawResponse } from "./src/core/index.js";
+import { ClockifyApiError } from "./src/errors/index.js";
 
 export {
     CLOCKIFY_ERROR_CODES,
