@@ -2,7 +2,7 @@
 // check-generator-independence: ensures generated output remains behind wrapper seams.
 // Forbids CLI/MCP imports from output/ts-sdk/** and wrapper/src/** and pins the
 // generator allowlist so SDK product behavior stays in hand-written wrappers.
-// CLI/MCP local development uses `file:../wrapper` only via devDependencies; the
+// CLI/MCP local development uses the npm workspace link (devDependency: "*"); the
 // runtime peer dependency is the published SDK package name.
 import fs from "node:fs";
 import path from "node:path";

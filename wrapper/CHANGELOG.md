@@ -17,6 +17,7 @@ once v1.0.0 ships.
 ### Changed
 
 - Expanded the dual-build smoke surface to include generated error-code helpers, SDK classification helpers, and the diagnostics helper.
+- Migrated to an npm workspaces layout. The wrapper, CLI, and MCP packages now share a single root `package-lock.json`; `wrapper/package-lock.json` is gone. No change to the published `clockify-sdk-ts-115` tarball contents.
 
 ## [0.9.0] — 2026-05-25
 

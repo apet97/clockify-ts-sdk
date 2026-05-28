@@ -1,0 +1,18 @@
+{
+  "name": "clockify-ts-sdk-workspace",
+  "private": true,
+  "description": "npm workspaces root for clockify-sdk-ts-115 (SDK), @clockify115/cli, and @clockify115/mcp-server. Not published.",
+  "workspaces": [
+    "wrapper",
+    "cli",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @clockify115/cli && npm run type-check -w @clockify115/mcp-server",
+    "build": "npm run build -w clockify-sdk-ts-115 && npm run build -w @clockify115/cli && npm run build -w @clockify115/mcp-server",
+    "test": "npm test -w clockify-sdk-ts-115 && npm test -w @clockify115/cli && npm test -w @clockify115/mcp-server"
+  }
+}

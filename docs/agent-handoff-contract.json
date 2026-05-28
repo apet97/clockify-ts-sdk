@@ -75,7 +75,7 @@
       "path": "scripts/check-generator-independence.mjs",
       "mustContain": [
         "generated core is isolated",
-        "file:../wrapper"
+        "workspace link"
       ]
     },
     {

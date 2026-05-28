@@ -6,12 +6,16 @@ on:
     paths:
       - "mcp/**"
       - "wrapper/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/ci-mcp.yml"
   pull_request:
     branches: [main]
     paths:
       - "mcp/**"
       - "wrapper/**"
+      - "package.json"
+      - "package-lock.json"
       - ".github/workflows/ci-mcp.yml"
 
 env:
@@ -39,24 +43,19 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          cache-dependency-path: |
-            wrapper/package-lock.json
-            mcp/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      # mcp/package.json carries `"clockify-sdk-ts": "file:../wrapper"`
-      # as a dev dep. Same rationale as ci-cli.yml: sync + build the
-      # wrapper first or the MCP server's type-check sees an empty
-      # surface.
-      - name: Install + sync + build wrapper
+      - name: Install workspaces (root)
+        run: npm ci
+
+      # mcp depends on clockify-sdk-ts-115 via the npm workspace link.
+      # Sync + build wrapper first or the MCP server's type-check sees
+      # an empty surface.
+      - name: Sync + build wrapper
         working-directory: wrapper
         run: |
-          npm ci
           npm run sync
           npm run build
-
-      - name: Install MCP dependencies
-        working-directory: mcp
-        run: npm ci
 
       - name: Type-check
         working-directory: mcp

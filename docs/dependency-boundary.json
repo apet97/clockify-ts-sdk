@@ -12,7 +12,7 @@
     {
       "id": "wrapper",
       "manifest": "wrapper/package.json",
-      "lockfile": "wrapper/package-lock.json",
+      "lockfile": "package-lock.json",
       "lockfileVersion": 3,
       "runtimeDependencies": [],
       "peerDependencies": {},
@@ -25,7 +25,7 @@
     {
       "id": "cli",
       "manifest": "cli/package.json",
-      "lockfile": "cli/package-lock.json",
+      "lockfile": "package-lock.json",
       "lockfileVersion": 3,
       "runtimeDependencies": [
         "cli-table3",
@@ -36,7 +36,7 @@
         "clockify-sdk-ts-115": ">=0.9.0"
       },
       "devDependencies": {
-        "clockify-sdk-ts-115": "file:../wrapper"
+        "clockify-sdk-ts-115": "*"
       },
       "requiredDevDependencies": [
         "typescript",
@@ -47,7 +47,7 @@
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
-      "lockfile": "mcp/package-lock.json",
+      "lockfile": "package-lock.json",
       "lockfileVersion": 3,
       "runtimeDependencies": [
         "@modelcontextprotocol/sdk",
@@ -57,7 +57,7 @@
         "clockify-sdk-ts-115": ">=0.9.0"
       },
       "devDependencies": {
-        "clockify-sdk-ts-115": "file:../wrapper"
+        "clockify-sdk-ts-115": "*"
       },
       "requiredDevDependencies": [
         "typescript",

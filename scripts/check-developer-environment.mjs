@@ -112,13 +112,17 @@ function validateContractShape() {
         assertStringArray("policyDocument.forbiddenMarkers", contract.policyDocument?.forbiddenMarkers ?? []),
     );
 
-    const forbiddenFiles = assertStringArray("root.forbiddenFiles", contract.root?.forbiddenFiles, {
+    const requiredFiles = assertStringArray("root.requiredFiles", contract.root?.requiredFiles, {
         allowEmpty: false,
     });
-    assertUnique("root.forbiddenFiles", forbiddenFiles);
-    for (const [index, forbiddenFile] of forbiddenFiles.entries()) {
-        environmentRelativePath(`root.forbiddenFiles[${index}]`, forbiddenFile);
+    assertUnique("root.requiredFiles", requiredFiles);
+    for (const [index, requiredFile] of requiredFiles.entries()) {
+        environmentRelativePath(`root.requiredFiles[${index}]`, requiredFile);
     }
+    const workspaces = assertStringArray("root.workspacesField", contract.root?.workspacesField, {
+        allowEmpty: false,
+    });
+    assertUnique("root.workspacesField", workspaces);
 
     if (contract.repoDoctor == null || typeof contract.repoDoctor !== "object" || Array.isArray(contract.repoDoctor)) {
         fail("repoDoctor", "must be an object");
@@ -241,8 +245,20 @@ checkText(
     contract.policyDocument.forbiddenMarkers,
 );
 
-for (const forbidden of contract.root?.forbiddenFiles ?? []) {
-    if (fs.existsSync(path.join(root, forbidden))) fail("root", `${forbidden} must not exist in this non-workspace repo`);
+for (const required of contract.root?.requiredFiles ?? []) {
+    if (!fs.existsSync(path.join(root, required))) fail("root", `${required} must exist at the workspace root`);
+}
+if (Array.isArray(contract.root?.workspacesField)) {
+    const rootPath = path.join(root, "package.json");
+    if (fs.existsSync(rootPath)) {
+        const rootManifest = JSON.parse(fs.readFileSync(rootPath, "utf8"));
+        const declared = Array.isArray(rootManifest.workspaces) ? rootManifest.workspaces : [];
+        for (const expected of contract.root.workspacesField) {
+            if (!declared.includes(expected)) {
+                fail("root", `package.json workspaces must include "${expected}"`);
+            }
+        }
+    }
 }
 
 if (contract.repoDoctor) {

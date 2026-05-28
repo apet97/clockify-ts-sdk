@@ -1,77 +1,77 @@
 {
-    "name": "@clockify115/mcp-server",
-    "version": "0.3.0",
-    "description": "Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
-    "license": "MIT",
-    "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
-    "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/apet97/clockify-ts-sdk.git",
-        "directory": "mcp"
+  "name": "@clockify115/mcp-server",
+  "version": "0.3.0",
+  "description": "Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
+  "license": "MIT",
+  "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
+  "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apet97/clockify-ts-sdk.git",
+    "directory": "mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/apet97/clockify-ts-sdk/issues"
+  },
+  "keywords": [
+    "clockify",
+    "mcp",
+    "model-context-protocol",
+    "ai-tools",
+    "anthropic",
+    "claude"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
-    "bugs": {
-        "url": "https://github.com/apet97/clockify-ts-sdk/issues"
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
     },
-    "keywords": [
-        "clockify",
-        "mcp",
-        "model-context-protocol",
-        "ai-tools",
-        "anthropic",
-        "claude"
-    ],
-    "type": "module",
-    "engines": {
-        "node": ">=20"
-    },
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "default": "./dist/index.js"
-        },
-        "./server": {
-            "types": "./dist/server.d.ts",
-            "default": "./dist/server.js"
-        },
-        "./client": {
-            "types": "./dist/client.d.ts",
-            "default": "./dist/client.js"
-        }
-    },
-    "bin": {
-        "clockify115-mcp": "./dist/index.js"
-    },
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
-    "scripts": {
-        "build": "tsc -p tsconfig.json",
-        "dev": "tsx src/index.ts",
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "type-check": "tsc --noEmit",
-        "verify:live-cleanup": "npm run build && node scripts/assert-clean-prefixes.mjs",
-        "prepublishOnly": "npm run type-check && npm test && npm run build"
-    },
-    "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.29.0",
-        "zod": "^3.25.0"
-    },
-    "peerDependencies": {
-        "clockify-sdk-ts-115": ">=0.9.0"
-    },
-    "devDependencies": {
-        "@types/node": "^22.10.0",
-        "clockify-sdk-ts-115": "file:../wrapper",
-        "tsx": "^4.19.2",
-        "typescript": "^5.7.0",
-        "vitest": "^2.1.0"
-    },
-    "publishConfig": {
-        "access": "public",
-        "provenance": true
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
     }
+  },
+  "bin": {
+    "clockify115-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
+    "verify:live-cleanup": "npm run build && node scripts/assert-clean-prefixes.mjs",
+    "prepublishOnly": "npm run type-check && npm test && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.0"
+  },
+  "peerDependencies": {
+    "clockify-sdk-ts-115": ">=0.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "clockify-sdk-ts-115": "*",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
 }
