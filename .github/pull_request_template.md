@@ -44,7 +44,7 @@ Do not paste secrets, customer data, raw live probe captures, or private tokens.
 ## Diagnostics and support bundle
 
 - [ ] Quickstart receipt impact considered (run `make quickstart-receipt` and review the quickstart receipt artifacts).
-- [ ] First-run support workflow impact considered: `node scripts/workflow-plan.mjs --workflow first-run-support`.
+- [ ] First-run support workflow impact considered: `node scripts/plan.mjs workflow --workflow first-run-support`.
 - [ ] SDK diagnostics impact considered: `clockifyDiagnostics()`.
 - [ ] CLI diagnostics impact considered: `clk115 doctor --json`.
 - [ ] MCP diagnostics impact considered: `clockify://mcp/doctor`.

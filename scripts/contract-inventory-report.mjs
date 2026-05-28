@@ -1,38 +1,31 @@
-#!/usr/bin/env node
+// Planner module: contract inventory report.
+// Invoked via `node scripts/plan.mjs contract-inventory`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(scriptDir, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function usage() {
-    return [
-        "Usage: node scripts/contract-inventory-report.mjs [--format <markdown|json>]",
-        "",
-        "Prints a no-network contract inventory report.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-        "This report is not proof; run make contract-inventory and target-specific gates for proof.",
-    ].join("\n");
-}
+// Planner scripts are reached through scripts/plan.mjs; map basename to dispatcher topic.
+const PLANNER_TOPIC_BY_SCRIPT = {
+    "scripts/onboarding-plan.mjs": "onboarding",
+    "scripts/workflow-plan.mjs": "workflow",
+    "scripts/acceptance-plan.mjs": "acceptance",
+    "scripts/examples-plan.mjs": "examples",
+    "scripts/change-impact-plan.mjs": "change-impact",
+    "scripts/maintenance-plan.mjs": "maintenance",
+    "scripts/performance-calibration-plan.mjs": "performance-calibration",
+    "scripts/release-decision-plan.mjs": "release-decision",
+    "scripts/contract-inventory-report.mjs": "contract-inventory",
+    "scripts/risk-status-report.mjs": "risk-status",
+};
 
-function parseArgs(argv) {
-    const options = { format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) throw new Error(`Unknown format: ${options.format}`);
-    return options;
+function commandReferencesScript(documentedCommand, scriptPath) {
+    if (!documentedCommand) return false;
+    const topic = PLANNER_TOPIC_BY_SCRIPT[scriptPath];
+    if (topic) return documentedCommand.startsWith(`node scripts/plan.mjs ${topic}`);
+    return documentedCommand.includes(scriptPath);
 }
 
 async function exists(relPath) {
@@ -234,7 +227,11 @@ export async function buildReport() {
         .map(([helperPath]) => helperPath);
     const missingToolboxHelperCommands = toolboxHelperScripts.filter((helperPath) => {
         const documentedCommand = commandCoverageByScript.get(helperPath);
-        return !documentedCommand || !documentedCommand.includes(helperPath) || !toolboxText.includes(documentedCommand);
+        return (
+            !documentedCommand ||
+            !commandReferencesScript(documentedCommand, helperPath) ||
+            !toolboxText.includes(documentedCommand)
+        );
     });
     const entryDuplicateLists = [];
     for (const entry of entries) {
@@ -382,7 +379,7 @@ export async function buildReport() {
                     documentedCommand,
                     covered:
                         Boolean(documentedCommand) &&
-                        documentedCommand.includes(helperPath) &&
+                        commandReferencesScript(documentedCommand, helperPath) &&
                         toolboxText.includes(documentedCommand),
                 };
             }),
@@ -410,7 +407,7 @@ export async function buildReport() {
     };
 }
 
-function renderMarkdown(report) {
+export function renderMarkdown(report) {
     const lines = ["# Contract Inventory Report", ""];
     lines.push("This report is not proof. It does not run commands.");
     lines.push("");
@@ -555,20 +552,3 @@ function renderMarkdown(report) {
     return `${lines.join("\n")}\n`;
 }
 
-async function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const report = await buildReport();
-    if (options.format === "json") {
-        console.log(JSON.stringify(report, null, 2));
-    } else {
-        console.log(renderMarkdown(report));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    main().catch((error) => {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    });
-}

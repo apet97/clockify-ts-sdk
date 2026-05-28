@@ -18,7 +18,7 @@
     "contains": [
       "Maintenance cadence",
       "No-network maintenance planner",
-      "node scripts/maintenance-plan.mjs --cadence all",
+      "node scripts/plan.mjs maintenance --cadence all",
       "Dependency update procedure",
       "Fern and generator bump procedure",
       "Clockify API drift response",
@@ -77,13 +77,13 @@
       ],
       "requiredCadenceTextMarkers": {
         "release": [
-          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "node scripts/plan.mjs workflow --workflow first-run-support",
           "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
           "safeCommandHints",
           "riskRoutingSummary"
         ],
         "rollback": [
-          "node scripts/workflow-plan.mjs --workflow first-run-support",
+          "node scripts/plan.mjs workflow --workflow first-run-support",
           "safeCommandHints"
         ]
       }

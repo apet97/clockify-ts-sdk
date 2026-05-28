@@ -39,9 +39,9 @@ that scope.
 
 - `make change-impact` checks this matrix and shape-checks the generated
   default plan.
-- `node scripts/change-impact-plan.mjs --scope <id>` prints the exact
+- `node scripts/plan.mjs change-impact --scope <id>` prints the exact
   proof plan for one change scope without running commands.
-- `node scripts/change-impact-plan.mjs --path <changed-path>` maps a path
+- `node scripts/plan.mjs change-impact --path <changed-path>` maps a path
   to matching change scopes for quick triage.
 - Operator helper changes route through both `make operator-toolbox` and
   `make contract-inventory` so no-network helper ownership and documented

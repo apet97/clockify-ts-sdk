@@ -104,11 +104,10 @@ async function main() {
         console.log(JSON.stringify(report, null, 2));
         return;
     }
-    if (typeof planner.renderMarkdown === "function") {
-        console.log(planner.renderMarkdown(report));
-        return;
+    if (typeof planner.renderMarkdown !== "function") {
+        throw new Error(`Planner ${topic} does not export renderMarkdown`);
     }
-    console.log(JSON.stringify(report, null, 2));
+    console.log(planner.renderMarkdown(report));
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

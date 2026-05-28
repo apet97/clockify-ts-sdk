@@ -6,12 +6,12 @@ easy in MCP, the related SDK and CLI path should also be obvious.
 For a no-network workflow plan, run:
 
 ```bash
-node scripts/workflow-plan.mjs --workflow first-run-support
-node scripts/workflow-plan.mjs --workflow time-tracking
-node scripts/workflow-plan.mjs --workflow work-package
-node scripts/workflow-plan.mjs --workflow business-workflows
-node scripts/workflow-plan.mjs --workflow demo-and-cleanup
-node scripts/workflow-plan.mjs --workflow recovery
+node scripts/plan.mjs workflow --workflow first-run-support
+node scripts/plan.mjs workflow --workflow time-tracking
+node scripts/plan.mjs workflow --workflow work-package
+node scripts/plan.mjs workflow --workflow business-workflows
+node scripts/plan.mjs workflow --workflow demo-and-cleanup
+node scripts/plan.mjs workflow --workflow recovery
 ```
 
 Use `--workflow list` to print available IDs or `--format json` for

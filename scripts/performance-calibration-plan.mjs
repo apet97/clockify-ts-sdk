@@ -1,11 +1,12 @@
-#!/usr/bin/env node
+// Planner module: performance budget calibration plan.
+// Invoked via `node scripts/plan.mjs performance-calibration`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { budgetFingerprint } from "./budget-fingerprint.mjs";
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const root = path.resolve(scriptDir, "..");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function calibrationSteps(requiredSuccessfulRuns) {
     return [
@@ -75,37 +76,6 @@ function calibrationSteps(requiredSuccessfulRuns) {
         ],
     },
 ];
-}
-
-function usage() {
-    return [
-        "Usage: node scripts/performance-calibration-plan.mjs [--format <markdown|json>]",
-        "",
-        "Prints a no-network performance budget calibration plan.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, Clockify API calls, or performance measurements.",
-        "This plan is not proof and does not calibrate budgets by itself.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) {
-        throw new Error(`Unknown format: ${options.format}`);
-    }
-    return options;
 }
 
 async function readBudgets() {
@@ -277,7 +247,7 @@ function addTextList(lines, label, items) {
     lines.push("");
 }
 
-function renderMarkdown(report) {
+export function renderMarkdown(report) {
     const lines = ["# Performance Calibration Plan", ""];
     lines.push("This plan is not proof and does not calibrate budgets by itself.");
     lines.push("");
@@ -318,20 +288,3 @@ function renderMarkdown(report) {
     return `${lines.join("\n")}\n`;
 }
 
-async function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const report = await buildReport();
-    if (options.format === "json") {
-        console.log(JSON.stringify(report, null, 2));
-    } else {
-        console.log(renderMarkdown(report));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    main().catch((error) => {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    });
-}

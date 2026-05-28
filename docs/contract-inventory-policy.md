@@ -54,7 +54,7 @@ becoming a pile of disconnected files.
 
 - `make contract-inventory` checks this policy and the generated inventory
   report shape; the report script runs in-process without spawning commands.
-- `node scripts/contract-inventory-report.mjs` prints a static operator
+- `node scripts/plan.mjs contract-inventory` prints a static operator
   report of contract entries, Make targets, checker ownership,
   generated report/helper ownership, perfect-gate coverage, and
   missing-file signals, including every no-network toolbox helper's

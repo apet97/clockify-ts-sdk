@@ -29,7 +29,7 @@
       "Supply chain and release",
       "Support-bundle package metadata",
       "First-run support handoff",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "Observability receipts",
       "Required receipts",
@@ -132,7 +132,7 @@
       "contains": [
         "lockfileSummary",
         "forbiddenFields",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints",
         "integrity",
         "node_modules"
@@ -143,7 +143,7 @@
       "path": "docs/workflow-cookbook.md",
       "contains": [
         "First-run diagnostics and support handoff",
-        "node scripts/workflow-plan.mjs --workflow first-run-support",
+        "node scripts/plan.mjs workflow --workflow first-run-support",
         "safeCommandHints"
       ]
     },

@@ -13,7 +13,7 @@
             "Generated code is a dependency",
             "Every public surface needs a receipt",
             "Perfect means reproducible by a tired non-coder",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -32,7 +32,7 @@
             "errors-as-product",
             "non-coder-reproducibility",
             "first-run-support-workflow",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -1095,7 +1095,7 @@
             "Copy-paste safety checklist",
             "Forbidden snippet patterns",
             "Required receipts",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -1113,7 +1113,7 @@
             "cli-readme",
             "mcp-readme",
             "workflow-cookbook",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -1930,7 +1930,7 @@
             "Commercial data",
             "Package-lock metadata",
             "Raw live evidence",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "Prohibited committed evidence",
             "Data-handling contract shape is part of privacy readiness",
@@ -1947,7 +1947,7 @@
             "commercial-data",
             "package-lock-metadata",
             "raw-live-evidence",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "contractInvariants",
             "safe-data-handling-paths",
@@ -2966,8 +2966,8 @@
           "contains": [
             "Risk Register",
             "Status meanings",
-            "performance-calibration-plan.mjs",
-            "release-decision-plan.mjs",
+            "plan.mjs performance-calibration",
+            "plan.mjs release-decision",
             "make enterprise-goal-status",
             "shape-checks the generated report",
             "Final-readiness blocking",
@@ -3097,7 +3097,7 @@
             "malformed product-surface claim requirements",
             "invalid unsupported-claim regexes",
             "Make/docs/inventory/audit wiring",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -3114,7 +3114,7 @@
             "typed-scan-paths",
             "typed-unsupported-claim-regexes",
             "typed-wiring-contract",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "not proof"
           ]
@@ -3150,7 +3150,7 @@
             "Contract-shape rule",
             "Agent-handoff contract shape is part of handoff readiness",
             "immediately before final acceptance",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "malformed guidance scan paths",
             "Make/docs/inventory/audit"
@@ -3164,7 +3164,7 @@
             "typed-guidance-entries",
             "typed-guidance-scan-paths",
             "typed-forbidden-guidance-markers",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "typed-wiring-contract"
           ]
@@ -3291,7 +3291,7 @@
             "blockingSignalIds",
             "riskRoutingSummary",
             "orderedProofChainCoverage",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "malformed plan-generator expectations",
             "Make/docs/inventory/audit wiring"
@@ -3305,7 +3305,7 @@
             "typed-plan-generator-contract",
             "typed-required-make-targets",
             "typed-wiring-contract",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "deferral is draft-only",
             "requiredGoalTextMarkers"
@@ -3347,10 +3347,10 @@
             "make perfect-full",
             "make perfect-live",
             "make axioms-contract",
-            "node scripts/release-decision-plan.mjs --decision all",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs release-decision --decision all",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
-            "node scripts/performance-calibration-plan.mjs"
+            "node scripts/plan.mjs performance-calibration"
           ]
         },
         {
@@ -3365,7 +3365,7 @@
             "makeHelpMustContain",
             "make perfect-live",
             "make axioms-contract",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "release-decision-plan.mjs",
             "performance-calibration-plan.mjs",
             "valid-schema-version",
@@ -3787,7 +3787,7 @@
             "Supply chain and release",
             "Support-bundle package metadata",
             "First-run support handoff",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "Observability receipts",
             "final acceptance requires completed sandbox live proof",
@@ -3808,7 +3808,7 @@
             "generated-code-trust-boundary",
             "support-bundle-package-metadata",
             "first-run-support-handoff",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "supply-chain-release",
             "final acceptance requires completed sandbox live proof",
@@ -3911,7 +3911,7 @@
             "Deferred live proof is not final readiness",
             "Quickstart and diagnostics handoff",
             "make quickstart-receipt",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "clockifyDiagnostics()"
           ]
@@ -3948,7 +3948,7 @@
             "requiredDiagnosticSurfaces",
             "requiredSafeCommandHints",
             "make quickstart-receipt",
-            "node scripts/workflow-plan.mjs --workflow first-run-support"
+            "node scripts/plan.mjs workflow --workflow first-run-support"
           ]
         },
         {
@@ -3991,7 +3991,7 @@
             "typed-diagnostics-and-quickstart-summary",
             "generated bundle diagnostics",
             "generated bundle safeCommandHints",
-            "node scripts/workflow-plan.mjs --workflow first-run-support"
+            "node scripts/plan.mjs workflow --workflow first-run-support"
           ]
         },
         {
@@ -4021,7 +4021,7 @@
             "unsafe repo-relative evidence paths",
             "malformed template markers",
             "quickstart receipt",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "diagnostic surface",
             "safeCommandHints"
           ]
@@ -4041,7 +4041,7 @@
             "readinessContextFields",
             "typed-quickstart-diagnostics-intake",
             "quickstartDiagnosticsFields",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "clockify://mcp/doctor"
           ]
         },
@@ -4078,7 +4078,7 @@
           "markers": [
             "Contract-shape rule",
             "Maintenance-playbook contract shape is part of maintenance readiness",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "malformed planner expectations",
             "Make/docs/inventory/audit wiring"
@@ -4096,7 +4096,7 @@
             "Routine maintenance may leave budgets provisional",
             "final readiness requires measured tightening",
             "requiredCadenceTextMarkers",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "riskRoutingSummary"
           ]

@@ -31,7 +31,7 @@ Bug reports should include:
   `blockingSignalIds`, `riskRoutingSummary`, and `orderedProofChainCoverage`.
 - Quickstart receipt and diagnostic surface: for first-run, setup, or support
   issues, start with
-  `node scripts/workflow-plan.mjs --workflow first-run-support`, say whether
+  `node scripts/plan.mjs workflow --workflow first-run-support`, say whether
   `make quickstart-receipt` was used, and name which diagnostic surface produced
   evidence: `clockifyDiagnostics()`, `clk115 doctor --json`, or
   `clockify://mcp/doctor`. Include only safe `safeCommandHints`, never env
@@ -53,7 +53,7 @@ review checklist should point to root gates and contracts, then allow package
 maintainers to add exact output in the PR body or final proof receipt.
 Supportability changes should include diagnostics or support-bundle impact so
 reviewers know whether `clockifyDiagnostics()`, `clk115 doctor`,
-`clockify://mcp/doctor`, `node scripts/workflow-plan.mjs --workflow
+`clockify://mcp/doctor`, `node scripts/plan.mjs workflow --workflow
 first-run-support`, or `scripts/create-support-bundle.mjs` changed. If a
 change can affect final readiness, support bundles, release handoff, or proof
 routing, PRs should mention whether `readinessContext.finalBlockingSignalIds`,

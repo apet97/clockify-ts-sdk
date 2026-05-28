@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
+// Planner module: operator onboarding plan.
+// Invoked via `node scripts/plan.mjs onboarding [--goal <sdk|cli|mcp|mock|live|full|support|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const goals = {
     sdk: {
         title: "SDK user",
@@ -124,7 +123,7 @@ const goals = {
         ],
         safeStart: [
             "node scripts/repo-doctor.mjs",
-            "node scripts/workflow-plan.mjs --workflow first-run-support",
+            "node scripts/plan.mjs workflow --workflow first-run-support",
             "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
             "Review /tmp/clockify-support-bundle.json before attaching or pasting anything.",
         ],
@@ -147,50 +146,12 @@ const goals = {
     },
 };
 
-function usage() {
-    return [
-        "Usage: node scripts/onboarding-plan.mjs [--goal <sdk|cli|mcp|mock|live|full|support|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network onboarding plan. Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { goal: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--goal") {
-            options.goal = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-
-    if (![...Object.keys(goals), "all"].includes(options.goal)) {
-        throw new Error(`Unknown goal: ${options.goal}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) {
-        throw new Error(`Unknown format: ${options.format}`);
-    }
-    return options;
-}
-
 function selectedGoals(goal) {
     const ids = goal === "all" ? Object.keys(goals) : [goal];
     return ids.map((id) => ({ id, ...goals[id] }));
 }
 
-function renderMarkdown(plan) {
+export function renderMarkdown(plan) {
     const lines = ["# Operator Onboarding Plan", ""];
     lines.push(`Generated mode: ${plan.goal}`);
     lines.push("");
@@ -219,34 +180,18 @@ function renderMarkdown(plan) {
 }
 
 export function buildPlan(goal = "all") {
+    const value = goal ?? "all";
+    if (![...Object.keys(goals), "all"].includes(value)) {
+        throw new Error(`Unknown goal: ${value}`);
+    }
     return {
         schemaVersion: 1,
-        goal,
+        goal: value,
         network: "none",
         commandsExecuted: [],
         envValuesCaptured: false,
         secretsCaptured: false,
         workspaceIdsCaptured: false,
-        goals: selectedGoals(goal),
+        goals: selectedGoals(value),
     };
-}
-
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const plan = buildPlan(options.goal);
-    if (options.format === "json") {
-        console.log(JSON.stringify(plan, null, 2));
-    } else {
-        console.log(renderMarkdown(plan));
-    }
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
 }

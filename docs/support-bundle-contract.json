@@ -23,7 +23,7 @@
       "Deferred live proof is not final readiness",
       "Quickstart and diagnostics handoff",
       "make quickstart-receipt",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "clockifyDiagnostics()"
     ],
@@ -59,7 +59,7 @@
       "GITHUB_TOKEN",
       "diagnosticsSurfaces",
       "safeCommandHints",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "make quickstart-receipt"
     ],
     "forbiddenMarkers": [

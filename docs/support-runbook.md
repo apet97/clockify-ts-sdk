@@ -70,7 +70,7 @@ sandbox proof without reading source code. Deferred live proof is not final read
 For setup, auth, runtime, or support handoff uncertainty, start with:
 
 ```bash
-node scripts/workflow-plan.mjs --workflow first-run-support
+node scripts/plan.mjs workflow --workflow first-run-support
 ```
 
 That workflow is a map, not proof. It keeps the support path no-network, points

@@ -13,7 +13,7 @@
       "Required evidence",
       "Publish decision boundary",
       "Release workflow maintainer decision planner",
-      "node scripts/release-decision-plan.mjs --decision all",
+      "node scripts/plan.mjs release-decision --decision all",
       "Handoff decision boundary",
       "Operator checklist",
       "Do not run `npm publish` from a laptop",

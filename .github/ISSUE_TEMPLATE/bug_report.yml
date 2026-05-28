@@ -100,7 +100,7 @@ body:
     id: quickstart-diagnostics-context
     attributes:
       label: Quickstart and diagnostics context
-      description: For first-run/setup issues, start with `node scripts/workflow-plan.mjs --workflow first-run-support`, say whether the quickstart receipt was used, which diagnostic surface produced evidence (`clockifyDiagnostics()`, `clk115 doctor --json`, or `clockify://mcp/doctor`), and any safeCommandHints. Do not paste env values.
+      description: For first-run/setup issues, start with `node scripts/plan.mjs workflow --workflow first-run-support`, say whether the quickstart receipt was used, which diagnostic surface produced evidence (`clockifyDiagnostics()`, `clk115 doctor --json`, or `clockify://mcp/doctor`), and any safeCommandHints. Do not paste env values.
       render: text
 
   - type: textarea

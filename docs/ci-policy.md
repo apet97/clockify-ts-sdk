@@ -42,7 +42,7 @@ Before any tag, GitHub release, npm publication, or release workflow
 change, run:
 
 ```bash
-node scripts/release-decision-plan.mjs --decision all
+node scripts/plan.mjs release-decision --decision all
 ```
 
 The planner is no-network and preflight-only. It does not run Git, npm,

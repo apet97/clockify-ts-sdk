@@ -1,7 +1,6 @@
-#!/usr/bin/env node
-import path from "node:path";
-import { pathToFileURL } from "node:url";
-
+// Planner module: release workflow decision plan.
+// Invoked via `node scripts/plan.mjs release-decision [--decision <id|all>]`.
+// Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls.
 const decisions = [
     {
         id: "local-tarball-handoff",
@@ -123,7 +122,7 @@ const decisions = [
 
 const validDecisions = new Set([...decisions.map((decision) => decision.id), "all"]);
 const readinessContextChecklist = {
-    workflowCommand: "node scripts/workflow-plan.mjs --workflow first-run-support",
+    workflowCommand: "node scripts/plan.mjs workflow --workflow first-run-support",
     sourceCommand: "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
     requiredFields: [
         "safeCommandHints",
@@ -137,50 +136,12 @@ const readinessContextChecklist = {
         "Review the first-run support workflow and support-bundle readinessContext before tag, npm, CI/CD, release-workflow, or handoff decisions.",
 };
 
-function usage() {
-    return [
-        "Usage: node scripts/release-decision-plan.mjs [--decision <local-tarball-handoff|tag-github-release-only|npm-via-ci|retire-legacy-workflow|all>] [--format <markdown|json>]",
-        "",
-        "Prints a no-network release workflow decision plan.",
-        "Does not run Git, npm, Docker, Fern, tests, builds, Clockify API calls, npm publish, or CI/CD changes.",
-        "This plan is not release proof and does not grant publish permission.",
-    ].join("\n");
-}
-
-function parseArgs(argv) {
-    const options = { decision: "all", format: "markdown" };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--help" || arg === "-h") {
-            console.log(usage());
-            process.exit(0);
-        }
-        if (arg === "--decision") {
-            options.decision = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        if (arg === "--format") {
-            options.format = argv[i + 1] ?? "";
-            i += 1;
-            continue;
-        }
-        throw new Error(`Unknown argument: ${arg}`);
-    }
-    if (!validDecisions.has(options.decision)) {
-        throw new Error(`Unknown decision: ${options.decision}`);
-    }
-    if (!["markdown", "json"].includes(options.format)) {
-        throw new Error(`Unknown format: ${options.format}`);
-    }
-    return options;
-}
-
 export function buildReport(options = { decision: "all" }) {
-    const selected =
-        options.decision === "all"
-            ? decisions
-            : decisions.filter((decision) => decision.id === options.decision);
+    const decision = options.decision ?? "all";
+    if (!validDecisions.has(decision)) {
+        throw new Error(`Unknown decision: ${decision}`);
+    }
+    const selected = decision === "all" ? decisions : decisions.filter((entry) => entry.id === decision);
 
     return {
         schemaVersion: 1,
@@ -189,7 +150,7 @@ export function buildReport(options = { decision: "all" }) {
         commandsExecuted: [],
         envValuesCaptured: false,
         reportScope: "release-decision-plan",
-        selectedDecision: options.decision,
+        selectedDecision: decision,
         riskId: "legacy-release-workflow-needs-maintainer-decision",
         warning:
             "This plan is not proof. It does not run Git, npm, Docker, Fern, tests, builds, Clockify API calls, npm publish, or CI/CD changes.",
@@ -219,7 +180,7 @@ function addTextList(lines, label, items) {
     lines.push("");
 }
 
-function renderMarkdown(report) {
+export function renderMarkdown(report) {
     const lines = ["# Release Decision Plan", ""];
     lines.push("This plan is not release proof and does not grant publish permission.");
     lines.push("");
@@ -260,22 +221,3 @@ function renderMarkdown(report) {
     return `${lines.join("\n")}\n`;
 }
 
-function main(argv = process.argv.slice(2)) {
-    const options = parseArgs(argv);
-    const report = buildReport(options);
-    if (options.format === "json") {
-        console.log(JSON.stringify(report, null, 2));
-    } else {
-        console.log(renderMarkdown(report));
-    }
-}
-
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
-    try {
-        main();
-    } catch (error) {
-        console.error(error instanceof Error ? error.message : String(error));
-        console.error(usage());
-        process.exit(2);
-    }
-}

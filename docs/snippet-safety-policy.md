@@ -17,7 +17,7 @@ triaged without guessing.
   such as `your_key_here`, `<redacted>`, `workspace_123`, and `entry_123`.
 - `CLOCKIFY_BASE_URL` appears only as mock/replay or private test guidance, not
   normal production setup.
-- `node scripts/workflow-plan.mjs --workflow first-run-support` is a no-network
+- `node scripts/plan.mjs workflow --workflow first-run-support` is a no-network
   support map, not proof. Any snippet that cites it must preserve
   `safeCommandHints`, avoid raw `.env` values and copied logs, and point to the
   real proof gate separately.

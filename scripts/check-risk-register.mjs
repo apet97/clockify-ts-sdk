@@ -302,7 +302,7 @@ if (register.reportGenerator) {
             if (!generator.includes(marker)) fail("reportGenerator", `missing marker ${marker}`);
         }
     }
-    if (!markdown.includes("node scripts/risk-status-report.mjs")) {
+    if (!markdown.includes("node scripts/plan.mjs risk-status")) {
         fail("docs/risk-register.md", "missing risk status report command");
     }
 

@@ -27,14 +27,14 @@
       "Recovery pattern"
     ],
     "contains": [
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "clockifyDiagnostics()",
       "clk115 doctor --json",
       "clockify://mcp/doctor",
       "safeCommandHints",
       "readinessContext",
       "make support-bundle",
-      "node scripts/workflow-plan.mjs --workflow time-tracking",
+      "node scripts/plan.mjs workflow --workflow time-tracking",
       "createClockifyClient()",
       "clk115 start",
       "clockify_start_work",

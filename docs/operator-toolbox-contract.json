@@ -12,18 +12,18 @@
       "Operator Toolbox",
       "No command in this toolbox runs Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
       "node scripts/repo-doctor.mjs",
-      "node scripts/onboarding-plan.mjs --goal all",
-      "node scripts/workflow-plan.mjs --workflow first-run-support",
+      "node scripts/plan.mjs onboarding --goal all",
+      "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
-      "node scripts/workflow-plan.mjs --workflow all",
-      "node scripts/acceptance-plan.mjs --scenario all",
-      "node scripts/examples-plan.mjs --example all",
-      "node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md",
-      "node scripts/maintenance-plan.mjs --cadence all",
-      "node scripts/contract-inventory-report.mjs",
-      "node scripts/risk-status-report.mjs --status all",
-      "node scripts/release-decision-plan.mjs --decision all",
-      "node scripts/performance-calibration-plan.mjs",
+      "node scripts/plan.mjs workflow --workflow all",
+      "node scripts/plan.mjs acceptance --scenario all",
+      "node scripts/plan.mjs examples --example all",
+      "node scripts/plan.mjs change-impact --path docs/workflow-cookbook.md",
+      "node scripts/plan.mjs maintenance --cadence all",
+      "node scripts/plan.mjs contract-inventory",
+      "node scripts/plan.mjs risk-status --status all",
+      "node scripts/plan.mjs release-decision --decision all",
+      "node scripts/plan.mjs performance-calibration",
       "node scripts/create-support-bundle.mjs --output /tmp/clockify-support-bundle.json",
       "make axioms-contract",
       "make enterprise-audit",
@@ -69,43 +69,43 @@
     },
     {
       "script": "scripts/onboarding-plan.mjs",
-      "documentedCommand": "node scripts/onboarding-plan.mjs --goal all"
+      "documentedCommand": "node scripts/plan.mjs onboarding --goal all"
     },
     {
       "script": "scripts/workflow-plan.mjs",
-      "documentedCommand": "node scripts/workflow-plan.mjs --workflow all"
+      "documentedCommand": "node scripts/plan.mjs workflow --workflow all"
     },
     {
       "script": "scripts/acceptance-plan.mjs",
-      "documentedCommand": "node scripts/acceptance-plan.mjs --scenario all"
+      "documentedCommand": "node scripts/plan.mjs acceptance --scenario all"
     },
     {
       "script": "scripts/examples-plan.mjs",
-      "documentedCommand": "node scripts/examples-plan.mjs --example all"
+      "documentedCommand": "node scripts/plan.mjs examples --example all"
     },
     {
       "script": "scripts/change-impact-plan.mjs",
-      "documentedCommand": "node scripts/change-impact-plan.mjs --path docs/workflow-cookbook.md"
+      "documentedCommand": "node scripts/plan.mjs change-impact --path docs/workflow-cookbook.md"
     },
     {
       "script": "scripts/maintenance-plan.mjs",
-      "documentedCommand": "node scripts/maintenance-plan.mjs --cadence all"
+      "documentedCommand": "node scripts/plan.mjs maintenance --cadence all"
     },
     {
       "script": "scripts/contract-inventory-report.mjs",
-      "documentedCommand": "node scripts/contract-inventory-report.mjs"
+      "documentedCommand": "node scripts/plan.mjs contract-inventory"
     },
     {
       "script": "scripts/risk-status-report.mjs",
-      "documentedCommand": "node scripts/risk-status-report.mjs --status all"
+      "documentedCommand": "node scripts/plan.mjs risk-status --status all"
     },
     {
       "script": "scripts/release-decision-plan.mjs",
-      "documentedCommand": "node scripts/release-decision-plan.mjs --decision all"
+      "documentedCommand": "node scripts/plan.mjs release-decision --decision all"
     },
     {
       "script": "scripts/performance-calibration-plan.mjs",
-      "documentedCommand": "node scripts/performance-calibration-plan.mjs"
+      "documentedCommand": "node scripts/plan.mjs performance-calibration"
     },
     {
       "script": "scripts/create-support-bundle.mjs",
