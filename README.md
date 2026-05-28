@@ -237,7 +237,7 @@ Package surfaces:
 | `tsc -p tsconfig.json --noEmit` (wrapper)          | package gate; run from `wrapper/` before SDK changes |
 | `vitest run` (wrapper)                             | unit coverage plus env-gated live sandbox flows |
 | `npm pack --dry-run` (wrapper, v0.9.0)             | checked by package gates |
-| `npm test` (mcp, v0.3.0 with live sandbox env)     | 42 tests, including 11 live sandbox flows |
+| `npm test` (mcp, v0.3.0 with live sandbox env)     | 45 tests, including 11 live sandbox flows |
 
 The full release log is in [`wrapper/CHANGELOG.md`](./wrapper/CHANGELOG.md);
 per-divergence evidence is in

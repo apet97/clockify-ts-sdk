@@ -229,6 +229,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check documentation index links | `make docs-index-drift` |
 | Check package size/startup budgets | `make performance-budgets` |
 | Check future-agent guidance parity | `make agent-handoff` |
+| Print a no-network operator plan/report | `node scripts/plan.mjs <topic>` — topics: `acceptance`, `change-impact`, `contract-inventory`, `examples`, `maintenance`, `onboarding`, `performance-calibration`, `release-decision`, `risk-status`, `workflow`. Per-topic modules under `scripts/<topic>-plan.mjs` / `<topic>-report.mjs` are libraries — do not add a new standalone CLI; add a topic to `plan.mjs` instead. |
 
 | Change scope | Run |
 |---|---|
@@ -238,7 +239,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | `spec/fern/{generators.yml, fern.config.json}` | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
 | `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify file count is sensible (currently 708) |
-| `wrapper/{index.ts, create-client.ts, composed-fetch.ts, iter.ts, webhooks.ts, pagination.ts, with-response.ts}` (hand-written) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `scripts/verify-dual-build.sh`. |
+| `wrapper/*.ts` root files (hand-written; currently 17, all of `composed-fetch.ts`, `create-client.ts`, `deprecation.ts`, `diagnostics.ts`, `error-codes.ts`, `errors.ts`, `health.ts`, `index.ts`, `iter.ts`, `otel-hooks.ts`, `paginated-list.ts`, `pagination.ts`, `rate-limit.ts`, `scoped-client.ts`, `webhook-events.ts`, `webhooks.ts`, `with-response.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
@@ -349,9 +350,11 @@ wrapper/
 │   ├── otel-hooks.test.ts        ← OTel semantic-convention span attrs (zero @otel/api dep)
 │   ├── health.test.ts            ← client.health() preflight + latency + serverTime
 │   ├── rate-limit.test.ts        ← X-RateLimit-* header parser + getRateLimitFromError
-│   ├── axioms-checklist.test.ts  ← regression gate: every §16 row of /sdkxioms.txt
+│   ├── axioms-checklist.test.ts  ← regression gate: one assertion per row of `docs/axioms.md`
 │   ├── deprecation.test.ts       ← warnOnce convention
+│   ├── diagnostics.test.ts       ← no-network `clockifyDiagnostics` redaction + readiness
 │   ├── dual-build.test.ts        ← ESM + CJS surface assertion
+│   ├── mock-clockify.test.ts     ← scripts/mock-clockify-server.mjs–backed deterministic flows
 │   └── sandbox.test.ts           ← 7 live (round-trip + paginate + iterAll + withResponse + …);
 │                                    describe.skip without env creds
 ├── src/                      ← gitignored; populated by sync-sdk.sh
@@ -383,6 +386,7 @@ types correctly):
 - `clockify-sdk-ts-115/otel-hooks` → OTel-typed `ComposedFetchHooks`
 - `clockify-sdk-ts-115/health` → `clockifyHealth()` preflight
 - `clockify-sdk-ts-115/rate-limit` → `getRateLimit` / `getRateLimitFromError`
+- `clockify-sdk-ts-115/diagnostics` → `clockifyDiagnostics()` no-network preflight
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` for the legacy release path. Because that would
