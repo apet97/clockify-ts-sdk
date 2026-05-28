@@ -51,6 +51,13 @@ jobs:
       - name: Install workspaces (root)
         run: npm ci
 
+      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
+        run: npm install -g fern-api@5.37.9
+
+      - name: Generate TS SDK (Fern, Docker)
+        working-directory: spec/fern
+        run: fern generate --group ts --local --force
+
       # cli depends on clockify-sdk-ts-115 via the npm workspace link,
       # but cli's type-check + tests need the wrapper's built dist/.
       # Sync + build wrapper first or the CLI's type-check sees a
