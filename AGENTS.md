@@ -23,8 +23,11 @@ subdirectory:
   Fern-generated + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **16 commands** including `doctor`,
-  `completion`, and the workflow shortcuts. Local build
+  interface on top of the SDK. **28 commands** across 16 top-level
+  groups including `doctor`, `completion`, and the workflow
+  shortcuts (`start`, `stop`, `log`, `switch`, `entries`,
+  `projects`, `clients`, `tasks`, `tags`, `webhooks`, `invoices`,
+  `expenses`, `timeoff`, `scheduling`, `audit-log`). Local build
   artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
   server, sibling to the Go MCP in GOCLMCP. **105 tools**: 17
@@ -42,9 +45,14 @@ who decides otherwise inherits the right gates. MCP tool prefixes
 (`clockify_status`, etc.) stay because they mirror the Clockify API
 and are validated by `../GOCLMCP/` drift gates.
 
-Each package owns its own `package.json`, `tsconfig.json`, build
-chain, and tests. They are not yet npm workspaces; each is built /
-tested independently with `npm` commands run from its directory.
+The three packages are wired as npm workspaces from a root
+`package.json` (`workspaces: ["wrapper", "cli", "mcp"]`). A single
+root `package-lock.json` covers all three; the per-package
+lockfiles are gone. Each package keeps its own `package.json`,
+`tsconfig.json`, build chain, and tests; you run them either via
+`npm run <script> -w <package-name>` from the root or via
+`cd <pkg> && npm run <script>` (the latter still works because the
+workspace symlinks satisfy local resolutions).
 
 If packed/published, the `wrapper/` package includes:
 - `wrapper/dist/**` (built from `wrapper/src/**` via twin tsc)
@@ -162,10 +170,11 @@ GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 185 ops, 9 quarantined s
         ▼
 spec/corrected/clockify.corrected.openapi.yaml  (frozen snapshot)
         │
+        │  npm ci                                                   ← from repo root, installs all 3 workspaces
         │  (cd spec/fern && fern check --warnings --from-openapi)   ← All checks passed
         │  (cd spec/fern && fern generate --group ts --local --force)
         ▼
-output/ts-sdk/**  (Fern emits ~708 TS files; --force WIPES the tree)
+output/ts-sdk/**  (Fern emits ~708 TS files; gitignored; --force WIPES the tree)
         │
         │  cd wrapper && npm run sync   (rsync into wrapper/src/, skipping Fern's
         │                                smoke-test scaffold files; also regens
@@ -190,7 +199,12 @@ clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default pat
 ```
 
 `fern generate` runs in Docker (`fernapi/fern-typescript-node-sdk:3.71.2`).
-Local Docker daemon required; CI uses the same container.
+Local Docker daemon required; CI uses the same container. Because
+`output/ts-sdk/**` is gitignored, a fresh clone needs `fern generate`
+before any SDK package gate can run; the validators that depend on
+`wrapper/src/**` (schema-quality, generator-comparison) skip with a
+clear "run fern generate first" warning when the tree is absent so
+non-SDK workflows can still run perfect-fast.
 
 ## 4. Verify gates (run before every commit)
 
