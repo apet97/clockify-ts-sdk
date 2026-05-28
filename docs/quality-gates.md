@@ -90,16 +90,6 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check changelog coverage | `make changelog-drift` | Touched package scopes include a changelog entry. |
 | Check docs index | `make docs-index-drift` | `docs/README.md` links and required generated surface references are current. |
 | Check enterprise hardening audit | `make enterprise-audit` | The hardening objective's artifact-level requirements are mapped to concrete current-state evidence. |
-| Check final hardening audit | `make enterprise-audit-final` | Verifies the final receipt exists and the temporary context file has been removed. |
-| Print enterprise goal status | `make enterprise-goal-status` | Static no-network report of remaining final-proof, performance, temporary-context, and risk-register signals. |
-| Check enterprise goal status contract | `make enterprise-goal-status-contract` | Guards the generated no-network active-goal status report shape, final-proof command split, proof disclaimer, and no-secret/no-command posture. |
-| Print final proof preflight | `make final-proof-preflight` | Prints active-goal status and release-readiness reports without running proof gates. |
-| Check final proof preflight contract | `make final-proof-preflight-contract` | Guards the combined preflight target and generated reports so they stay no-network, report-only, and proof-free. |
-| Check final proof command split and receipt invariants | `make final-proof-command-contract` | Guards `final-proof-draft`, draft alias, `final-proof-final`, and final receipt acceptance requirements from drifting. |
-| Run final proof draft flow | `LIVE=1 make final-proof-draft` | Runs the proof sequence and writes a draft `docs/final-proof-receipt.md` from real command output. |
-| Back-compatible final proof draft alias | `LIVE=1 make final-proof` | Alias for `make final-proof-draft`; still draft-only. |
-| Run final proof acceptance gate | `make final-proof-final` | Runs `make final-proof-receipt-check` and `make enterprise-audit-final` after manual receipt completion. |
-| Check final proof receipt | `make final-proof-receipt-check` | Verifies `docs/final-proof-receipt.md` is filled with real command evidence, not template placeholders. |
 | Check performance budgets | `make performance-budgets` | Built SDK/CLI/MCP artifacts stay under size/startup ceilings, and the generated calibration plan mirrors budget policy. |
 | Record performance receipt | `make performance-receipt` | Writes `docs/performance-baseline-latest.json` with measured sizes/timings for budget tightening. |
 | Print performance calibration plan | `make performance-calibration-plan` | Static no-network plan from budget policy for baseline receipts, budget tightening, and final proof markers. |

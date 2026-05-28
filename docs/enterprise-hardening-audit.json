@@ -3586,7 +3586,6 @@
   ],
   "wiring": {
     "makeTarget": "enterprise-audit",
-    "finalMakeTarget": "enterprise-audit-final",
     "checker": "scripts/check-enterprise-hardening.mjs"
   }
 }
