@@ -43,6 +43,8 @@ console.log('OK: CJS exposes', surface.length, 'expected names');
 "
 
 echo "==> CJS subpath smoke"
+SUBPATH_COUNT=$(grep -cE "require\('\\./dist/cjs/" "$0")
+export SUBPATH_COUNT
 node -e "
 const cf = require('./dist/cjs/composed-fetch.js');
 const cc = require('./dist/cjs/create-client.js');
@@ -83,7 +85,7 @@ if (typeof dg.clockifyDiagnostics !== 'function') { console.error('CJS subpath d
 const rl = require('./dist/cjs/rate-limit.js');
 if (typeof rl.getRateLimit !== 'function') { console.error('CJS subpath rate-limit.getRateLimit broken'); process.exit(1); }
 if (typeof rl.getRateLimitFromError !== 'function') { console.error('CJS subpath rate-limit.getRateLimitFromError broken'); process.exit(1); }
-console.log('OK: All 15 CJS subpaths resolve');
+console.log('OK: All ' + process.env.SUBPATH_COUNT + ' CJS subpaths resolve');
 "
 
 echo "==> Dual-build smoke PASSED"
