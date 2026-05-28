@@ -143,8 +143,10 @@ function validateReportGeneratorShape() {
         "requiredNonBlockingOpenOrProvisionalRiskIds",
         "requiredRiskRoutingSummaryKeys",
     ]) {
+        // requiredNonBlockingOpenOrProvisionalRiskIds collapses to [] when the
+        // last open/provisional non-blocker is accepted; allow it.
         const values = assertStringArray(`reportGenerator.generatedReport.${field}`, generatedReport[field], {
-            allowEmpty: field !== "requiredNonBlockingOpenOrProvisionalRiskIds",
+            allowEmpty: true,
         });
         assertUnique(`reportGenerator.generatedReport.${field}`, values);
     }
