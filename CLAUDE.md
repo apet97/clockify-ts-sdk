@@ -140,8 +140,10 @@ make docs-drift
   their package changelog.
 - `make performance-budgets` checks built package file-size and
   startup/import budgets after package build gates. Budgets are
-  calibrated (status: calibrated in `docs/performance-budgets.json`);
-  ceilings are ~1.35x measured actuals. Recalibrate with
+  marked `calibrated` in `docs/performance-budgets.json`. File-size
+  ceilings sit ~1.35x measured actuals; startup-time ceilings carry
+  more headroom (~3x measured) on purpose because shared CI runners
+  show meaningful per-run variance. Recalibrate with
   `make performance-receipt` after material runtime changes.
 - `make docs-index-drift` checks `docs/README.md` links and required
   generated surfaces.
@@ -156,6 +158,17 @@ make docs-drift
   2026-05-28). `release.yml` still publishes only on a pushed tag
   whose version matches `wrapper/package.json`; that guard is
   load-bearing.
+- The `final-proof` / `enterprise-audit-final` / `enterprise-goal-status`
+  make-target family was retired on 2026-05-28; only `make enterprise-audit`
+  remains. `scripts/check-enterprise-hardening.mjs` lost its `--final`
+  mode and the `audit.wiring.finalMakeTarget` assertion in the same pass.
+  References still appear in `docs/risk-register.md`,
+  `docs/release-readiness-checklist.md`, `docs/maintenance-playbook.md`,
+  the `scripts/*-plan.mjs` plan emitters, and the historical
+  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` —
+  one audit JSON marker pins the literal in `risk-register.md`, so
+  surgery there needs to land alongside an audit-contract update.
+  Restoring or fully retiring the workflow is a maintainer call.
 
 ## Where To Change Things
 

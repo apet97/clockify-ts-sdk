@@ -494,6 +494,17 @@ resolves (Fern issue acknowledged or workaround discovered).
 
 ## 11. Doc maintenance
 
+- The `final-proof` / `enterprise-audit-final` / `enterprise-goal-status`
+  family of make targets was retired on 2026-05-28. `make enterprise-audit`
+  remains; `scripts/check-enterprise-hardening.mjs` no longer carries a
+  `--final` mode or asserts `audit.wiring.finalMakeTarget`. Stray text
+  references in `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
+  `docs/maintenance-playbook.md`, `scripts/*-plan.mjs` emitters, and the
+  historical `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md`
+  describe the (retired) intent; one is pinned by an audit JSON marker on
+  `risk-register.md`, so deleting the literal there needs an audit-contract
+  update in the same change. Restoring or fully retiring the workflow is a
+  maintainer call — do not invent the targets back without one.
 - Every spec-shape change ships with a `spec/evidence/discrepancies.md`
   entry using the five-question format. An entry is not a substitute
   for fixing the issue; it's a trail that lets the next agent
