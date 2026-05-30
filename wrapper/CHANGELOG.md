@@ -21,6 +21,7 @@ once v1.0.0 ships.
 - Bumped the `errors` subpath size-limit ceiling to 5 kB (was 3.5 kB) to accommodate the inlined error-code registry; measured size is 3.91 kB brotlied.
 - Cleaned up three eslint diagnostics flagged on the hand-written surface (one unnecessary non-null assertion in the error-code template, two import-order fixes in `errors.ts` and `tests/mock-clockify.test.ts`).
 - Rewrote the `tests/axioms-checklist.test.ts` header comment to point at `docs/axioms.md` (the canonical axioms doc) instead of a contributor's machine-local path.
+- Documented `composedFetch`'s retry mutation-safety model: the default `retryableMethods` retries idempotent methods only (`GET`/`HEAD`/`OPTIONS`/`PUT`/`DELETE`); `POST`/`PATCH` stay excluded because a 5xx or transport timeout on a write can land server-side mid-mutation, so a blind retry could double-apply it. JSDoc-only clarification plus regression tests pinning the no-retry-on-transport-timeout guarantee for `POST`/`PATCH`; behavior unchanged.
 
 ## [0.9.0] — 2026-05-25
 

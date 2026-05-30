@@ -46,8 +46,14 @@ export const REQUEST_ID_HEADER = "X-Request-Id" as const;
 export const USER_AGENT_HEADER = "User-Agent" as const;
 
 /** Default retry behavior mirrors Fern's `requestWithRetries.ts`:
- *  408/429/5xx retryable, exponential backoff with 20% jitter,
- *  honors `Retry-After` and `X-RateLimit-Reset`, max delay 60s. */
+ *  408/429/5xx retryable on idempotent methods only, exponential
+ *  backoff with 20% jitter, honors `Retry-After` and
+ *  `X-RateLimit-Reset`, max delay 60s.
+ *
+ *  Mutation-safety model: only safe/idempotent methods are retried by
+ *  default. GET/HEAD/OPTIONS/PUT/DELETE are retryable; POST and PATCH
+ *  are NOT, because a 5xx or transport timeout on a write may land
+ *  server-side mid-mutation and a blind retry could double-apply it. */
 const DEFAULT_RETRY_POLICY: Required<Omit<RetryPolicy, "computeDelay">> = {
     maxRetries: 2,
     initialDelayMs: 1000,
@@ -72,7 +78,10 @@ export interface RetryPolicy {
     retryableStatusCodes?: readonly number[];
     /** HTTP methods that may be retried. Default idempotent methods only
      *  (`GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`). POST/PATCH excluded
-     *  by default because they're not idempotent on the server side. */
+     *  by default because they're not idempotent on the server side.
+     *  ⚠️ Only add `POST`/`PATCH` here if the specific operation is
+     *  guaranteed idempotent and safe to retry on a 5xx / transport
+     *  error — a server error can occur after the write was applied. */
     retryableMethods?: readonly string[];
     /** Custom delay calculator. Receives 0-indexed attempt + optional
      *  response (undefined on network errors). Return the wait time in
