@@ -227,6 +227,93 @@ describe("composedFetch — retry policy", () => {
         expect(calls).toBe(1);
     });
 
+    it("excludes POST and PATCH from default retryableMethods (mutation safety)", async () => {
+        // Mutation safety regression: a 5xx on a non-idempotent method must
+        // never trigger an auto-retry by default, because the server may have
+        // already applied the write before failing the response.
+        for (const method of ["POST", "PATCH"] as const) {
+            let calls = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    calls++;
+                    return new Response("server", { status: 503 });
+                }) as typeof fetch,
+                retryPolicy: { maxRetries: 5, initialDelayMs: 1, jitter: 0 },
+            });
+            const res = await f("https://example.test/x", { method });
+            expect(res.status).toBe(503);
+            expect(calls).toBe(1);
+        }
+    });
+
+    it("does not retry a POST after a transport timeout (mutation safety)", async () => {
+        // A transport-level failure (timeout / dropped connection) is the most
+        // dangerous case to retry on a write: the request may have reached the
+        // server and mutated state even though the client saw no response.
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                throw new Error("ETIMEDOUT");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 5, initialDelayMs: 1, jitter: 0 },
+        });
+        await expect(f("https://example.test/x", { method: "POST" })).rejects.toThrow("ETIMEDOUT");
+        expect(calls).toBe(1);
+    });
+
+    it("does not retry a PATCH after a transport timeout (mutation safety)", async () => {
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                throw new Error("ECONNRESET");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 5, initialDelayMs: 1, jitter: 0 },
+        });
+        await expect(f("https://example.test/x", { method: "PATCH" })).rejects.toThrow(
+            "ECONNRESET",
+        );
+        expect(calls).toBe(1);
+    });
+
+    it("retries an idempotent GET after a transport timeout", async () => {
+        // Counterpart to the POST/PATCH transport-timeout cases: a safe method
+        // SHOULD recover via retry when the policy allows it.
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                if (calls < 3) throw new Error("ETIMEDOUT");
+                return new Response("ok", { status: 200 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 5, initialDelayMs: 1, jitter: 0 },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(200);
+        expect(calls).toBe(3);
+    });
+
+    it("retries PATCH only when explicitly opted in as idempotent", async () => {
+        // Callers who know an operation is idempotent can opt POST/PATCH back
+        // into the retryable set; this proves the opt-in path works for PATCH.
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return new Response("server", { status: 503 });
+            }) as typeof fetch,
+            retryPolicy: {
+                maxRetries: 2,
+                initialDelayMs: 1,
+                jitter: 0,
+                retryableMethods: ["GET", "PATCH"],
+            },
+        });
+        await f("https://example.test/x", { method: "PATCH" });
+        expect(calls).toBe(3);
+    });
+
     it("retries POST when retryableMethods includes it", async () => {
         let calls = 0;
         const f = composedFetch({
