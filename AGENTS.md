@@ -37,6 +37,14 @@ subdirectory:
   and demo seed/cleanup. Domain tools provide broad CRUDL coverage;
   reports and raw API fallback remain the Go MCP's niche. Local build
   artefact: `mcp/dist/`.
+  MCP write-safety is part of this product contract: high-risk
+  workflow writes and destructive domain deletes share the
+  `dry_run` -> `confirm_token` guard in
+  `mcp/src/orchestration/confirm-guard.ts`, while
+  `clockify_setup_webhook` validates callback URLs through
+  `mcp/src/orchestration/webhook-url.ts` before either preview or
+  creation. That webhook guard is intentionally offline and covers
+  literal URL/host/IP risks, not DNS rebinding.
 
 The `-115` / `115` suffix is intentional trademark distance from
 Clockify. We do not plan to publish any of these to npm; the
