@@ -106,6 +106,18 @@ make docs-drift
 - `mcp/src/tools/workflows.ts` is the workflow-first MCP surface.
 - MCP receipts should include useful `ids`, `changed`, `warnings`,
   `next`, stable error codes, and recovery hints.
+- `mcp/src/orchestration/confirm-guard.ts` is the shared
+  `dry_run` -> `confirm_token` handshake for high-risk workflow
+  writes and destructive domain deletes (`entries`, `projects`,
+  `clients`, `tags`, `tasks`, `webhooks`). If semantics change,
+  update `docs/mcp-write-safety-contract.json`,
+  `scripts/check-mcp-write-safety.mjs`, tests, and `mcp/README.md`
+  together.
+- `clockify_setup_webhook` validates callback URLs through
+  `mcp/src/orchestration/webhook-url.ts` before dry-run preview or
+  creation. The guard is offline: it rejects non-HTTPS, embedded
+  credentials, private/loopback/link-local/CGNAT/metadata IPs, and
+  localhost-ish hostnames, but not DNS rebinding.
 - Client/project archive cleanup uses different generated SDK shapes:
   clients update with nested `body`; projects update with top-level
   fields. See `spec/evidence/discrepancies.md`.
