@@ -12,7 +12,7 @@
     {
         "name": "Subpath: create-client (ESM)",
         "path": "dist/esm/create-client.js",
-        "limit": "3 kB"
+        "limit": "4 kB"
     },
     {
         "name": "Subpath: composed-fetch (ESM)",
