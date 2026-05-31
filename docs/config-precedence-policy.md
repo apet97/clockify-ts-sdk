@@ -21,6 +21,27 @@ mock/replay, private gateways, and controlled tests. They are not normal user
 configuration for Clockify production. Documentation must say this wherever the
 override is introduced.
 
+### Host allowlist
+
+The override is not unrestricted. `createClockifyClient` (and through it the CLI
+`buildClient` and the MCP `loadContext`) enforces a host allowlist on any
+resolved base URL via `validateClockifyBaseUrl`:
+
+- Allowed without opt-in: the official Clockify API hosts — `api.clockify.me`,
+  `reports.api.clockify.me`, `auditlog.api.clockify.me`, `pto.api.clockify.me`,
+  `developer.clockify.me` — plus loopback hosts (`localhost`, `127.0.0.1`,
+  `::1`) for local mock/replay. Loopback may use plain `http://`; every other
+  host must use `https://`.
+- Rejected: any other host, and plain `http://` on a non-loopback host
+  (always, regardless of opt-in). This blocks an API-key exfiltration path
+  where a tampered `CLOCKIFY_BASE_URL`/`environment` would redirect the
+  `X-Api-Key` / `X-Addon-Token` header to an attacker-controlled endpoint.
+- Opt-in: the SDK option `allowInsecureBaseUrl: true` (surfaced on the MCP as
+  `LoadContextOptions.allowInsecureBaseUrl`) downgrades a rejected
+  *non-Clockify HTTPS* host to a `console.warn` instead of throwing. The CLI
+  keeps this off. There is no env var for the opt-in; it is a deliberate,
+  code-level decision for a trusted Clockify-compatible proxy.
+
 ## Missing configuration errors
 
 - SDK missing auth errors must name `CLOCKIFY_API_KEY` and `CLOCKIFY_ADDON_TOKEN`.
