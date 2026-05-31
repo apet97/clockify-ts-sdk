@@ -135,6 +135,12 @@ const text = fs.readFileSync(indexPath, "utf8");
 
 for (const match of text.matchAll(/\]\(\.\/([^)#]+)(?:#[^)]+)?\)/g)) {
     const relative = match[1];
+    // docs/api/* is generated typedoc output: gitignored, produced by the docs
+    // build, and absent on a fresh build-free checkout (e.g. the offline
+    // contract-gates CI job). Skip its existence check so the doc-index gate
+    // does not depend on a docs build; the requiredLinks check below still
+    // verifies docs/README.md keeps linking to the generated API reference.
+    if (relative.startsWith("api/")) continue;
     const absolute = path.join(root, "docs", relative);
     if (!fs.existsSync(absolute)) failures.push(`docs/README.md links missing file: docs/${relative}`);
 }
