@@ -67,25 +67,19 @@ or Clockify API calls. Treat it as a map, not proof.
 
 ## Safe bootstrap sequence
 
-The repo is intentionally package-local, not an npm workspace. Do not add a root
-`package.json` to make commands look simpler.
+The repo uses npm workspaces from the root `package.json`. Install once from
+the root, generate the SDK once, then run the package gates that match your
+work.
 
 ```bash
-cd wrapper
 npm ci
-npm run sync
-npm run build
-
-cd ../cli
-npm ci
-npm run build
-
-cd ../mcp
-npm ci
-npm run build
+make sdk-codegen
+npm run build -w clockify-sdk-ts-115
+npm run build -w @clockify115/cli
+npm run build -w @clockify115/mcp-server
 ```
 
-Only run Fern generation when Docker is available and the GOCLMCP sibling repo
+Only regenerate the canonical OpenAPI snapshot when the GOCLMCP sibling repo
 exists at `../GOCLMCP` or an explicitly documented equivalent path.
 
 ## Mock versus live

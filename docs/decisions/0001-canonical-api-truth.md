@@ -14,8 +14,8 @@ not own the canonical Clockify OpenAPI generator. GOCLMCP owns canonical Clockif
 ## Decision
 
 API truth changes start in GOCLMCP sources or generator data. This repo
-consumes the corrected snapshot, validates Fern config, syncs generated
-output, and adds product seams above the generated core.
+consumes the corrected snapshot, runs local SDK codegen, syncs generated output,
+and adds product seams above the generated core.
 
 ## Consequences
 

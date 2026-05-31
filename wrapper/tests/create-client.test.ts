@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient, type CreateClockifyClientOptions } from "../create-client.js";
+import { BadRequestError } from "../src/api/errors/index.js";
 import { ClockifyApiClient } from "../src/index.js";
 
 describe("createClockifyClient", () => {
@@ -40,6 +41,83 @@ describe("createClockifyClient", () => {
             maxRetries: 0,
         });
         expect(client).toBeInstanceOf(ClockifyApiClient);
+    });
+
+    it("serializes generated scalar query params, including page-size", async () => {
+        let capturedUrl: string | undefined;
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            capturedUrl =
+                typeof input === "string"
+                    ? input
+                    : input instanceof URL
+                      ? input.toString()
+                      : input.url;
+            return new Response("[]", {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        });
+
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
+        await client.tags.list({
+            workspaceId: "ws-1",
+            archived: false,
+            page: 1,
+            "page-size": 5,
+        });
+
+        expect(capturedUrl).toBeDefined();
+        const url = new URL(capturedUrl!);
+        expect(url.searchParams.get("archived")).toBe("false");
+        expect(url.searchParams.get("page")).toBe("1");
+        expect(url.searchParams.get("page-size")).toBe("5");
+    });
+
+    it("serializes generated request body envelopes without dropping write fields", async () => {
+        let capturedBody: string | null | undefined;
+        const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+            capturedBody = init?.body?.toString();
+            return new Response(JSON.stringify({ id: "client-1", name: "Acme" }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        });
+
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
+        await client.clients.create({
+            workspaceId: "ws-1",
+            body: { name: "Acme" },
+        });
+
+        expect(capturedBody).toBe(JSON.stringify({ name: "Acme" }));
+    });
+
+    it("throws generated status-specific API errors", async () => {
+        const fetchMock = vi.fn(
+            async () =>
+                new Response(JSON.stringify({ message: "invalid request" }), {
+                    status: 400,
+                    headers: { "content-type": "application/json" },
+                }),
+        );
+
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
+
+        await expect(client.tags.list({ workspaceId: "ws-1" })).rejects.toBeInstanceOf(
+            BadRequestError,
+        );
     });
 
     it("accepts a Supplier function for apiKey", () => {

@@ -42,23 +42,15 @@ jobs:
       - name: Install workspaces (root)
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
-      - name: Sync SDK from generator output
-        working-directory: wrapper
-        run: npm run sync
+      - name: Generate + sync TS SDK (local generator)
+        run: make sdk-codegen
 
       - name: Drift check (sync output sanity)
         working-directory: wrapper
         run: |
           file_count=$(find src -name '*.ts' | wc -l | tr -d ' ')
-          if [ "$file_count" -lt 700 ] || [ "$file_count" -gt 800 ]; then
-            echo "::error::wrapper/src/ TS file count $file_count outside expected range [700,800]. Possible drift in the synced SDK; investigate before merging."
+          if [ "$file_count" -lt 650 ] || [ "$file_count" -gt 750 ]; then
+            echo "::error::wrapper/src/ TS file count $file_count outside expected range [650,750]. Possible drift in the synced SDK; investigate before merging."
             exit 1
           fi
           echo "Sync OK: $file_count TS files in wrapper/src/"
@@ -129,7 +121,7 @@ jobs:
 
       # Runs the deterministic, network-free contract/doc/drift suite
       # (`make contract-gates`) that previously only ran locally via
-      # `make perfect-fast`. No Fern/Docker: the src-dependent checks
+      # `make perfect-fast`. No hosted generator or live API: the src-dependent checks
       # (schema-quality, generator-comparison) skip their generated-TS
       # portions with a clear warning when wrapper/src is absent. The
       # package build/test gates stay in build-and-test / ci-cli / ci-mcp.
@@ -158,16 +150,8 @@ jobs:
       - name: Install workspaces (root)
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
-      - name: Sync SDK from generator output
-        working-directory: wrapper
-        run: npm run sync
+      - name: Generate + sync TS SDK (local generator)
+        run: make sdk-codegen
 
       - name: Build
         working-directory: wrapper
@@ -199,26 +183,18 @@ jobs:
       - name: Install workspaces (root)
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
-      - name: Sync SDK from generator output
+      - name: Generate + sync TS SDK (local generator)
         # Needed because type-aware lint follows imports into src/.
         # src/ is gitignored / wiped on every sync; lint config ignores
         # src/** itself but the parser still needs the files on disk.
-        working-directory: wrapper
-        run: npm run sync
+        run: make sdk-codegen
 
       - name: Lint
         working-directory: wrapper
         run: npm run lint
 
   spec-check:
-    name: Spec check (corrected snapshot stays clean)
+    name: Spec + generator check (corrected snapshot stays clean)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -233,13 +209,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
+      - name: Install workspaces (root)
+        run: npm ci
 
-      - name: fern check --warnings --from-openapi
-        working-directory: spec/fern
-        run: fern check --warnings --from-openapi
+      - name: Check OpenAPI contract invariants
+        run: make openapi-lint
+
+      - name: Generate + sync TS SDK (local generator)
+        run: make sdk-codegen
+
+      - name: Check local SDK codegen reproducibility
+        run: make sdk-codegen-drift
 
   bun-smoke:
     name: Bun smoke (vitest under Bun)
@@ -268,16 +251,8 @@ jobs:
       - name: Install workspaces via npm (lockfile-pinned)
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
-      - name: Sync SDK from generator output
-        working-directory: wrapper
-        run: npm run sync
+      - name: Generate + sync TS SDK (local generator)
+        run: make sdk-codegen
 
       - name: Run unit tests under Bun (no live API)
         working-directory: wrapper
@@ -313,16 +288,9 @@ jobs:
       - name: Install workspaces (root)
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
       - name: Sync + build wrapper
         run: |
-          npm run sync -w clockify-sdk-ts-115
+          make sdk-codegen
           npm run build -w clockify-sdk-ts-115
 
       - name: Run Deno smoke (import + name resolution)

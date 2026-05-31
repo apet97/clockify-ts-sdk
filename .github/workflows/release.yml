@@ -41,17 +41,12 @@ jobs:
         working-directory: .
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
+      - name: Generate + sync TS SDK (local generator)
         working-directory: .
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
+        run: make sdk-codegen
 
       - name: Sync, type-check, build (ESM + CJS), verify dual build
         run: |
-          npm run sync
           npm run type-check
           npm run build
           npm run build:smoke
@@ -110,9 +105,9 @@ jobs:
             set -euo pipefail
             mkdir -p /tmp/smoke && cd /tmp/smoke
             npm init -y --silent > /dev/null
-            npm install --silent "clockify-sdk-ts@${VERSION}" > /dev/null
+            npm install --silent "clockify-sdk-ts-115@${VERSION}" > /dev/null
             node --input-type=module -e "
-              import(\"clockify-sdk-ts\").then(m => {
+              import(\"clockify-sdk-ts-115\").then(m => {
                 const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
                 const missing = names.filter(n => typeof m[n] !== \"function\");
                 if (missing.length) { console.error(\"Post-publish smoke FAILED (ESM):\", missing); process.exit(1); }
@@ -120,7 +115,7 @@ jobs:
               });
             "
             node -e "
-              const m = require(\"clockify-sdk-ts\");
+              const m = require(\"clockify-sdk-ts-115\");
               const names = [\"ClockifyApiClient\",\"createClockifyClient\",\"composedFetch\",\"iterAll\",\"iterPages\",\"paginate\",\"verifyClockifyWebhook\",\"constructEvent\"];
               const missing = names.filter(n => typeof m[n] !== \"function\");
               if (missing.length) { console.error(\"Post-publish smoke FAILED (CJS):\", missing); process.exit(1); }

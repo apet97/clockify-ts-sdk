@@ -10,9 +10,13 @@
   "engines": {
     "node": ">=20"
   },
+  "devDependencies": {
+    "yaml": "^2.9.0"
+  },
   "scripts": {
     "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @clockify115/cli && npm run type-check -w @clockify115/mcp-server",
     "build": "npm run build -w clockify-sdk-ts-115 && npm run build -w @clockify115/cli && npm run build -w @clockify115/mcp-server",
-    "test": "npm test -w clockify-sdk-ts-115 && npm test -w @clockify115/cli && npm test -w @clockify115/mcp-server"
+    "test": "npm test -w clockify-sdk-ts-115 && npm test -w @clockify115/cli && npm test -w @clockify115/mcp-server",
+    "test:codegen": "node --test scripts/sdk-codegen/test-generate-sdk-from-openapi.mjs"
   }
 }

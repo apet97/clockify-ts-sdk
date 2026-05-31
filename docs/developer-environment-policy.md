@@ -1,18 +1,18 @@
 # Developer Environment Policy
 
-This repo is intentionally package-local, not an npm workspace. Setup
-should be boring and explicit: install the package you are working on,
-build its dependencies, and run root gates when you need platform proof.
+This repo uses npm workspaces from the root `package.json`. Setup should be
+boring and explicit: install once from the root, build the package you are
+working on, and run root gates when you need platform proof.
 
 ## Local runtime
 
 | Requirement | Policy |
 |---|---|
 | Node.js | Use Node `>=20`. CI also exercises Node 20 and 22. |
-| Package manager | Use `npm` with each package's checked-in `package-lock.json`. |
-| Root package | There is no root `package.json`; do not add one casually or turn this into a workspace without an explicit architecture decision. |
-| Fern | Fern CLI is pinned by `spec/fern/fern.config.json`; generators are pinned by `spec/fern/generators.yml`. |
-| Docker | Required for `fern generate`, because Fern runs generator containers locally. |
+| Package manager | Use `npm` with the root `package-lock.json`. |
+| Root package | The root `package.json` owns the `wrapper`, `cli`, and `mcp` npm workspaces. |
+| Local SDK generator | `scripts/generate-sdk-from-openapi.mjs` reads the corrected OpenAPI snapshot and emits `output/ts-sdk/**`. |
+| Docker | Not required for TypeScript SDK codegen. Only use Docker for unrelated tooling that explicitly needs it. |
 | GOCLMCP sibling | Required for canonical OpenAPI regeneration and full drift proof. The conventional path is `../GOCLMCP`. |
 
 Package scripts are part of the environment contract, not incidental
@@ -25,35 +25,36 @@ cannot silently drop type-check or test proof.
 SDK:
 
 ```bash
-cd wrapper
 npm ci
-npm run sync
-npm run build
+make sdk-codegen
+npm run build -w clockify-sdk-ts-115
 ```
 
 CLI:
 
 ```bash
-cd wrapper && npm ci && npm run sync && npm run build
-cd ../cli && npm ci && npm run build
+npm ci
+make sdk-codegen
+npm run build -w clockify-sdk-ts-115
+npm run build -w @clockify115/cli
 ```
 
 MCP:
 
 ```bash
-cd wrapper && npm ci && npm run sync && npm run build
-cd ../mcp && npm ci && npm run build
+npm ci
+make sdk-codegen
+npm run build -w clockify-sdk-ts-115
+npm run build -w @clockify115/mcp-server
 ```
 
-OpenAPI/Fern:
+OpenAPI/local SDK generation:
 
 ```bash
 (cd ../GOCLMCP && make gen-openapi)
 cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml \
    spec/corrected/clockify.corrected.openapi.yaml
-cd spec/fern
-fern check --warnings --from-openapi
-fern generate --group ts --local --force
+make sdk-codegen
 ```
 
 ## Required receipts
@@ -71,9 +72,9 @@ Do not confuse environment readiness with final product readiness.
 Final product readiness still requires the final proof runbook.
 
 `scripts/repo-doctor.mjs` is intentionally no-network and read-only. It checks
-repo shape, Node floor, package manifests, package-local lockfiles, required
-scripts including exact `prepublishOnly` command shapes, Fern pins, generated directory presence, and the conventional
-`../GOCLMCP` sibling without running Git, npm, Docker, Fern, tests, builds, or
+repo shape, Node floor, workspace manifests, the root lockfile, required
+scripts including exact `prepublishOnly` command shapes, local generator wiring, generated directory presence, and the conventional
+`../GOCLMCP` sibling without running Git, npm, codegen, tests, builds, or
 Clockify API calls.
 
-`make developer-environment` also builds the repo-doctor report in memory and checks its generated shape: `network: "none"`, empty `commandsExecuted`, false environment capture flags, and required check IDs for root, package script, Fern, and GOCLMCP coverage. Developer environment contract shape is part of readiness too: schema version, purpose, safe repo-relative paths, package contracts, Fern paths, repo-doctor generated-report metadata, and supporting doc marker lists are checked before environment metadata is trusted.
+`make developer-environment` also builds the repo-doctor report in memory and checks its generated shape: `network: "none"`, empty `commandsExecuted`, false environment capture flags, and required check IDs for root workspaces, package scripts, local codegen, and GOCLMCP coverage. Developer environment contract shape is part of readiness too: schema version, purpose, safe repo-relative paths, package contracts, local generator paths, repo-doctor generated-report metadata, and supporting doc marker lists are checked before environment metadata is trusted.

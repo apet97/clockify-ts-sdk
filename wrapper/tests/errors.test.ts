@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    BadRequestError,
     ClockifyAbortError,
     ClockifyConnectionError,
     classifyClockifyError,
@@ -134,6 +135,16 @@ describe("ConflictError / InternalServerError / ServiceUnavailableError", () => 
         expect(c).toBeInstanceOf(ClockifyApiError);
         expect(i).toBeInstanceOf(ClockifyApiError);
         expect(s).toBeInstanceOf(ClockifyApiError);
+    });
+});
+
+describe("generated status error exports", () => {
+    it("re-exports generated status-specific classes from the errors subpath", () => {
+        const err = new BadRequestError({ message: "bad request" });
+        expect(err).toBeInstanceOf(ClockifyApiError);
+        expect(err).toBeInstanceOf(BadRequestError);
+        expect(err.statusCode).toBe(400);
+        expect(err.body).toEqual({ message: "bad request" });
     });
 });
 
@@ -303,10 +314,10 @@ describe("promoteApiError — non-status-code errors", () => {
             message: "Not Found",
         });
         const promoted = promoteApiError(base);
-        // 404 is handled by Fern's own NotFoundError emission — the
-        // wrapper's promoteApiError only fills 409/429/500/503 +
-        // the new non-status-code branches. 404 with no Ctor entry
-        // returns the original.
+        // 404 is handled by the generated NotFoundError emission. The
+        // wrapper's promoteApiError only fills 409/429/500/503 plus
+        // the non-status-code branches. 404 with no Ctor entry returns
+        // the original.
         expect(promoted).toBe(base);
     });
 

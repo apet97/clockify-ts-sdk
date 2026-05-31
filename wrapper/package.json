@@ -1,7 +1,7 @@
 {
   "name": "clockify-sdk-ts-115",
   "version": "0.9.0",
-  "description": "TypeScript SDK for the Clockify API — generated from the canonical OpenAPI by Fern, wrapped with a publishable package layout.",
+  "description": "TypeScript SDK for the Clockify API, generated locally from the canonical OpenAPI and wrapped with a publishable package layout.",
   "license": "MIT",
   "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
   "homepage": "https://github.com/apet97/clockify-ts-sdk",
@@ -18,7 +18,7 @@
     "typescript",
     "api-client",
     "time-tracking",
-    "fern",
+    "local-generator",
     "openapi"
   ],
   "type": "module",
@@ -203,7 +203,7 @@
   "scripts": {
     "sync": "bash scripts/sync-sdk.sh",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
+        "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
     "build:smoke": "bash scripts/verify-dual-build.sh",
     "docs": "typedoc",
     "docs:resources": "tsx scripts/gen-resource-docs.ts",

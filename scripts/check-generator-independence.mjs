@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-generator-independence: ensures generated output remains behind wrapper seams.
 // Forbids CLI/MCP imports from output/ts-sdk/** and wrapper/src/** and pins the
-// generator allowlist so SDK product behavior stays in hand-written wrappers.
+// local-generator allowlist so SDK product behavior stays in hand-written wrappers.
 // CLI/MCP local development uses the npm workspace link (devDependency: "*"); the
 // runtime peer dependency is the published SDK package name.
 import fs from "node:fs";
@@ -104,7 +104,7 @@ function validateFileInputs() {
         "cliPackage",
         "mcpPackage",
         "productSurface",
-        "fernGenerators",
+        "localGenerator",
         "syncScript",
         "generatedCoreDecision",
     ]) {
@@ -145,8 +145,9 @@ function validateContractShape() {
 
     validateFileInputs();
 
-    if (assertObject("fern", contract.fern)) {
-        assertNonEmptyString("fern.tsOutputMarker", contract.fern.tsOutputMarker);
+    if (assertObject("localGenerator", contract.localGenerator)) {
+        safeRelativePath("localGenerator.inputOpenApi", contract.localGenerator.inputOpenApi);
+        safeRelativePath("localGenerator.outputPath", contract.localGenerator.outputPath);
     }
 
     if (assertObject("wrapperPackage", contract.wrapperPackage)) {
@@ -230,9 +231,11 @@ const packageManifests = {
     mcp: readJson(contract.files.mcpPackage, "files.mcpPackage") ?? {},
 };
 const productSurface = readJson(contract.files.productSurface, "files.productSurface") ?? {};
-const fernGenerators = read(contract.files.fernGenerators, "files.fernGenerators");
+const localGenerator = read(contract.files.localGenerator, "files.localGenerator");
 
-if (!fernGenerators.includes(contract.fern.tsOutputMarker)) fail("Fern TS output must remain in output/ts-sdk");
+for (const marker of [contract.localGenerator.inputOpenApi, contract.localGenerator.outputPath]) {
+    if (!localGenerator.includes(marker)) fail(`local generator must reference ${marker}`);
+}
 if (!fs.existsSync(path.join(root, contract.files.syncScript))) fail(`${contract.files.syncScript} is missing`);
 
 for (const file of wrapperPkg.files ?? []) {

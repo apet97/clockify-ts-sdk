@@ -164,12 +164,12 @@ const generatedRoot = contract.generatedRoots.candidates
 
 if (!generatedRoot) {
     // output/ts-sdk and wrapper/src are both gitignored. On a fresh
-    // clone without Docker + fern generate, neither candidate exists;
-    // skip the comparison rather than failing so non-SDK workflows
-    // (cli/mcp, docs) can still run perfect-fast.
+    // clone without local SDK codegen, neither candidate exists; skip
+    // the comparison rather than failing so non-SDK workflows (cli/mcp,
+    // docs) can still run perfect-fast.
     console.warn(
         `Skipped: no generated TypeScript SDK root at ${contract.generatedRoots.candidates.join(" or ")}. ` +
-        "Run `(cd spec/fern && fern generate --group ts --local --force)` + `(cd wrapper && npm run sync)` to populate it.",
+        "Run `make sdk-codegen` to populate it.",
     );
 } else {
     const methodsByGroup = new Map();

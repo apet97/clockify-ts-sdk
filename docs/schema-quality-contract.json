@@ -82,7 +82,7 @@
     {
       "path": "docs/sdk-runtime-policy.md",
       "mustContain": [
-        "Fern-generated SDK is the transport layer",
+        "local generated SDK is the transport layer",
         "hand-written seams"
       ]
     }

@@ -54,6 +54,6 @@ changes from weakening the boring safety rails that matter.
 - `make perfect-fast` includes the threat-model contract without requiring live
   credentials.
 - `make perfect-full` includes the threat-model contract plus generator,
-  Fern, package, and packed-consumer proof.
+  local SDK codegen, package, and packed-consumer proof.
 - `make perfect-live` remains the only accepted path for live Clockify cleanup
   proof.

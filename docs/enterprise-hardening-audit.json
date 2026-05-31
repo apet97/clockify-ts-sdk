@@ -363,7 +363,7 @@
     },
     {
       "id": "generator-independence",
-      "requirement": "Keep Fern-generated output replaceable and behind explicit wrapper seams.",
+      "requirement": "Keep local generated output replaceable and behind explicit wrapper seams.",
       "evidence": [
         {
           "path": "scripts/lint-openapi-contract.mjs",
@@ -399,14 +399,14 @@
     },
     {
       "id": "generator-config",
-      "requirement": "Keep Fern CLI/generator pins, active corrected OpenAPI snapshot, and generated output paths intentional.",
+      "requirement": "Keep local generator wiring, active corrected OpenAPI snapshot, and generated output paths intentional.",
       "evidence": [
         {
           "path": "scripts/check-generator-config.mjs",
           "markers": [
             "validateContractShape",
             "safeRelativePath",
-            "fernRelativePath",
+            "localGenerator",
             "generator config contract shape failed"
           ]
         },
@@ -450,7 +450,7 @@
           "path": "docs/generator-portability-plan.md",
           "markers": [
             "Portability principles",
-            "Vendor-exit checklist",
+            "Local-generator proof checklist",
             "Account-gated generator failures",
             "without paying for Stainless, Speakeasy, Fern Cloud"
           ]
@@ -1034,7 +1034,7 @@
     },
     {
       "id": "sdk-runtime-contract",
-      "requirement": "Guard durable hand-written SDK runtime seams around the generated Fern client.",
+      "requirement": "Guard durable hand-written SDK runtime seams around the local generated client.",
       "evidence": [
         {
           "path": "docs/sdk-runtime-policy.md",
@@ -2638,7 +2638,7 @@
     },
     {
       "id": "developer-environment",
-      "requirement": "Keep local Node/npm/Fern/Docker/GOCLMCP bootstrap rules, package-local lockfiles/scripts, and no-root-workspace boundary explicit and drift-checked.",
+      "requirement": "Keep local Node/npm/local-generator/GOCLMCP bootstrap rules, package-local lockfiles/scripts, and workspace boundary explicit and drift-checked.",
       "evidence": [
         {
           "path": "docs/developer-environment-policy.md",
@@ -2660,7 +2660,7 @@
             "requiredScriptValues",
             "generatedReport",
             "wrapper.script.prepublishOnly.command",
-            "spec/fern/fern.config.json",
+            "scripts/generate-sdk-from-openapi.mjs",
             "../GOCLMCP",
             "wiring",
             "developer-environment",

@@ -10,7 +10,7 @@ body:
 
         - **Security issue?** Follow [SECURITY.md](https://github.com/apet97/clockify-ts-sdk/blob/main/SECURITY.md) — do NOT open a public issue.
         - **Clockify API server behavior?** Use Clockify support unless this repo's spec, wrapper, CLI, MCP, or docs contract is wrong.
-        - **Synced SDK quirk under `wrapper/src/**`?** Raise it upstream in [Fern](https://github.com/fern-api/fern) or [apet97/go-clockify](https://github.com/apet97/go-clockify); the synced tree is regenerated and not editable here.
+        - **Synced SDK quirk under `wrapper/src/**`?** Fix the local generator or raise it upstream in [apet97/go-clockify](https://github.com/apet97/go-clockify); the synced tree is regenerated and not editable here.
         - **Do not paste secrets or customer data.** Use sanitized receipts and placeholders such as `workspace_123`, `entry_123`, and `<redacted>`.
 
   - type: dropdown
@@ -22,7 +22,7 @@ body:
         - SDK wrapper (`clockify-sdk-ts-115`)
         - CLI (`@clockify115/cli`)
         - MCP server (`@clockify115/mcp-server`)
-        - OpenAPI / GOCLMCP / Fern generation contract
+        - OpenAPI / GOCLMCP / local generation contract
         - Package install / pack smoke
         - Mock/replay server
         - Documentation / examples
@@ -43,8 +43,8 @@ body:
     id: runtime
     attributes:
       label: Runtime
-      description: Node/npm version, OS, module system, and whether Docker/Fern was involved.
-      placeholder: "node v22.x, npm 10.x, macOS, ESM, Docker not involved"
+      description: Node/npm version, OS, module system, and whether local codegen was involved.
+      placeholder: "node v22.x, npm 10.x, macOS, ESM, local codegen involved"
     validations:
       required: true
 

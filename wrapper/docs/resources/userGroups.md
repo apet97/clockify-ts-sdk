@@ -8,14 +8,6 @@
 
 ### `list`
 
-**Example:**
-
-```typescript
-    await client.userGroups.list({
-        workspaceId: "workspaceId"
-    })
-```
-
 **Request fields** (`ListUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
@@ -24,32 +16,15 @@
 
 ### `create`
 
-**Example:**
-
-```typescript
-    await client.userGroups.create({
-        workspaceId: "workspaceId",
-        body: {
-            name: "development_team"
-        }
-    })
-```
-
-**Request fields** (`CreateUserGroupsRequest`):
+**Request fields** (`UserGroupRequest`):
 
 - `workspaceId` (`string`, required)
-- `body` (`ClockifyApi.UserGroupRequest`, required)
+- `name` (`string`, required) — Represents a user group name.
+- `workspaceId` (`string`, required)
+- `body` (`UserGroupRequestBody`, required)
+- `name` (`string`, required) — Represents a user group name.
 
 ### `get`
-
-**Example:**
-
-```typescript
-    await client.userGroups.get({
-        workspaceId: "workspaceId",
-        groupId: "groupId"
-    })
-```
 
 **Request fields** (`GetUserGroupsRequest`):
 
@@ -58,34 +33,17 @@
 
 ### `update`
 
-**Example:**
-
-```typescript
-    await client.userGroups.update({
-        workspaceId: "workspaceId",
-        groupId: "groupId",
-        body: {
-            name: "development_team"
-        }
-    })
-```
-
 **Request fields** (`UpdateUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
-- `body` (`ClockifyApi.UserGroupRequest`, required)
+- `name` (`string`, required) — Represents a user group name.
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+- `body` (`UpdateUserGroupsRequestBody`, required)
+- `name` (`string`, required) — Represents a user group name.
 
 ### `delete`
-
-**Example:**
-
-```typescript
-    await client.userGroups.delete({
-        workspaceId: "workspaceId",
-        groupId: "groupId"
-    })
-```
 
 **Request fields** (`DeleteUserGroupsRequest`):
 
@@ -94,15 +52,6 @@
 
 ### `listMembers`
 
-**Example:**
-
-```typescript
-    await client.userGroups.listMembers({
-        workspaceId: "workspaceId",
-        groupId: "groupId"
-    })
-```
-
 **Request fields** (`ListMembersUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
@@ -110,33 +59,17 @@
 
 ### `addMembers`
 
-**Example:**
-
-```typescript
-    await client.userGroups.addMembers({
-        workspaceId: "workspaceId",
-        groupId: "groupId",
-        userId: "5a0ab5acb07987125438b60f"
-    })
-```
-
-**Request fields** (`AddUserToGroupRequest`):
+**Request fields** (`AddMembersUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)
 - `userId` (`string`, required) — Represents a user identifier across the system.
+- `workspaceId` (`string`, required)
+- `groupId` (`string`, required)
+- `body` (`AddMembersUserGroupsRequestBody`, required)
+- `userId` (`string`, required) — Represents a user identifier across the system.
 
 ### `removeMember`
-
-**Example:**
-
-```typescript
-    await client.userGroups.removeMember({
-        workspaceId: "workspaceId",
-        groupId: "groupId",
-        userId: "userId"
-    })
-```
 
 **Request fields** (`RemoveMemberUserGroupsRequest`):
 

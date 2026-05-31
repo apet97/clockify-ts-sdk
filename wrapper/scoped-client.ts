@@ -75,11 +75,11 @@ export class Workspace {
     }
 
     // -----------------------------------------------------------------------
-    // Resource accessors — each returns a Proxy-wrapped Fern resource client
+    // Resource accessors — each returns a Proxy-wrapped generated resource client
     // with workspaceId auto-injected. Cached per call so identity is stable
     // across repeat accesses (`ws.tags === ws.tags`).
     // All names match the getters on ClockifyApiClient exactly.
-    // Types mirror the Fern-generated client types so callers get full IDE
+    // Types mirror the generated client types so callers get full IDE
     // completion — the Proxy is transparent at the type level.
     // -----------------------------------------------------------------------
 
@@ -185,7 +185,7 @@ export class Workspace {
 
         const target = (this.client as unknown as Record<string, unknown>)[name];
         if (target == null || typeof target !== "object") {
-            // Fern doesn't have this resource — return the raw value (null/undefined).
+            // The generated client does not have this resource; return the raw value.
             // This is defensive; in practice every name above maps to a real
             // resource client.
             return target;
@@ -197,7 +197,7 @@ export class Workspace {
     }
 }
 
-/** Build a Proxy over a Fern resource client that auto-injects
+/** Build a Proxy over a generated resource client that auto-injects
  *  `workspaceId` into the first argument of every method call.
  *
  *  - The first argument is checked for an existing `workspaceId` key.

@@ -17,7 +17,7 @@ Every helper in this toolbox has an owner in `docs/contract-inventory.json`.
 
 | Need | Command | Output |
 |---|---|---|
-| Check repo shape before setup | `node scripts/repo-doctor.mjs` | JSON repo-shape report for Node floor, package-local manifests, lockfiles, Fern pins, generated directories, and `../GOCLMCP` presence. |
+| Check repo shape before setup | `node scripts/repo-doctor.mjs` | JSON repo-shape report for Node floor, root workspace manifests, lockfile, local generator wiring, generated directories, and `../GOCLMCP` presence. |
 | Choose SDK, CLI, MCP, mock, live, full, or support path | `node scripts/plan.mjs onboarding --goal all` | Shape-checked Markdown or JSON onboarding plan with first reads, safe-start commands, proof gates, and stop conditions. |
 
 ## Product path commands

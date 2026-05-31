@@ -95,7 +95,7 @@ const cadences = [
             "docs/supply-chain-policy.md",
         ],
         receipts: [
-            "Lockfile changes are package-local.",
+            "Root package-lock changes match the touched workspace manifest.",
             "Changelog entries exist when install, runtime, command, export, or behavior changes.",
         ],
         stopConditions: [
@@ -105,8 +105,8 @@ const cadences = [
     },
     {
         id: "generator",
-        title: "Fern and OpenAPI generator bump plan",
-        when: "Use before changing Fern CLI, Fern generator image, GOCLMCP generator data, or OpenAPI source shape.",
+        title: "Local SDK and OpenAPI generator bump plan",
+        when: "Use before changing the local TypeScript SDK generator, GOCLMCP generator data, or OpenAPI source shape.",
         safeStart: [
             "node scripts/plan.mjs change-impact --scope openapi-truth",
             "node scripts/plan.mjs change-impact --scope generated-core",
@@ -116,8 +116,8 @@ const cadences = [
             "cd ../GOCLMCP && make gen-openapi",
             "cd ../GOCLMCP && make openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift",
             "cd ../GOCLMCP && go test ./internal/tools/...",
-            "cd spec/fern && fern check --warnings --from-openapi",
-            "cd spec/fern && fern generate --group ts --local --force",
+            "make sdk-codegen",
+            "make sdk-codegen-drift",
             "make openapi-operations",
             "make operation-parity",
             "make openapi-lint",
@@ -141,7 +141,7 @@ const cadences = [
         ],
         stopConditions: [
             "The proposed edit touches GOCLMCP merge/dedup logic without explicit approval.",
-            "Fern output changes but generator/source evidence is missing.",
+            "Generated output changes but generator/source evidence is missing.",
         ],
     },
     {

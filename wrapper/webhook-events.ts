@@ -29,8 +29,8 @@
  *
  * Ported from the reference catalog at
  * `clockify-typescript-sdk/src/webhook-payloads.ts`, adapted to use
- * Fern-generated types from `./src/api/types/`. Types not cleanly emitted
- * by Fern (e.g., approval/time-off status shapes, invoice line items,
+ * locally generated types from `./src/api/types/`. Types not cleanly emitted
+ * by the generator (e.g., approval/time-off status shapes, invoice line items,
  * rate-change payloads) are inline-defined here.
  */
 
@@ -38,8 +38,8 @@
 
 /**
  * Compact time interval as delivered inside webhook payloads.
- * Fern emits `TimeIntervalDto` with many optional fields — the webhook
- * payload carries a narrower shape: start (always present), end and
+ * The generated `TimeIntervalDto` has many optional fields. Webhook
+ * payloads carry a narrower shape: start (always present), end and
  * duration may be null (for a running timer).
  */
 export interface ClockifyWebhookTimeInterval {
@@ -50,7 +50,7 @@ export interface ClockifyWebhookTimeInterval {
 
 /**
  * Custom-field value as delivered inside time-entry webhook payloads.
- * Fern emits `CustomFieldValueDto` with all-optional fields; webhook
+ * The generated `CustomFieldValueDto` has all-optional fields; webhook
  * payloads have required `customFieldId` and `value`.
  */
 export interface ClockifyWebhookCustomFieldValue {
@@ -62,7 +62,7 @@ export interface ClockifyWebhookCustomFieldValue {
 
 /**
  * Approval request owner shape in webhook payloads.
- * Not matching Fern's `ApprovalRequestOwnerDtoV1` (which has optional
+ * Not matching generated `ApprovalRequestOwnerDtoV1` (which has optional
  * fields and a `DayOfWeek` enum for `startOfWeek`); webhook sends plain
  * strings.
  */
@@ -75,7 +75,7 @@ export interface ClockifyWebhookApprovalOwner {
 
 /**
  * Approval request status shape in webhook payloads.
- * Fern's `ApprovalRequestStatusDtoV1` uses an enum for `state`; webhook
+ * Generated `ApprovalRequestStatusDtoV1` uses an enum for `state`; webhook
  * delivers a plain string.
  */
 export interface ClockifyWebhookApprovalStatus {
@@ -88,7 +88,7 @@ export interface ClockifyWebhookApprovalStatus {
 
 /**
  * Time-off request status shape in webhook payloads.
- * Fern's `TimeOffRequestStatus` uses an enum for `statusType`; webhook
+ * Generated `TimeOffRequestStatus` uses an enum for `statusType`; webhook
  * delivers a plain string and nullable fields.
  */
 export interface ClockifyWebhookTimeOffStatus {
@@ -265,7 +265,7 @@ export interface WebhookEventClientDeleted extends WebhookPayloadClient {
 
 // ===== Tag (3 events) =====
 
-/** Tag webhook payload. Matches Fern's `Tag` / `TagDto` shape. */
+/** Tag webhook payload. Matches the generated `Tag` / `TagDto` shape. */
 export interface WebhookPayloadTag {
     id?: string | undefined;
     name?: string | undefined;
@@ -298,7 +298,7 @@ export interface WebhookInvoiceItem {
     timeEntryIds: string[];
 }
 
-/** Invoice webhook payload. Fern's `InvoiceDtoV1` / `InvoiceDtoFull`
+/** Invoice webhook payload. Generated `InvoiceDtoV1` / `InvoiceDtoFull`
  *  use many optional fields; webhook delivers a concrete required shape. */
 export interface WebhookPayloadInvoice {
     id: string;

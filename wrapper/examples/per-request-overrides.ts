@@ -28,7 +28,7 @@ if (!apiKey || !workspaceId) {
     process.exit(1);
 }
 
-// Client defaults: 60s timeout (Fern default), 2 retries on 408/429/5xx.
+// Client defaults: 60s timeout, 2 retries on 408/429/5xx.
 const client = createClockifyClient({ apiKey });
 
 // (1) Tight timeout for a quick health check. Throws

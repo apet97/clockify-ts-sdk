@@ -15,7 +15,7 @@ Collect these items before escalating an issue:
 - Prepublish gate: the exact `prepublishOnly` command when packaging,
   tarball, or publish-readiness behavior is relevant.
 - Runtime: Node version, package-lock version/package count, operating system,
-  and whether Docker was involved for Fern generation. The generated support
+  and whether local SDK codegen was involved. The generated support
   bundle does not run `npm --version`; add a sanitized npm version manually only
   when it is relevant.
 - Command or API path: the exact command, import path, MCP tool name, or
@@ -26,7 +26,7 @@ Collect these items before escalating an issue:
   `CLOCKIFY_ADDON_TOKEN`.
 - Proof attempted: the narrowest relevant command, such as
   `make receipt-examples`, `make troubleshooting`, `make mock-contract`, or a
-  package-local test command.
+  package test command.
 
 ## Generated support bundle command
 
@@ -129,7 +129,7 @@ handoff files:
 ## OpenAPI and generator support checklist
 
 1. Identify whether the issue belongs in GOCLMCP source generation,
-   `spec/fern`, wrapper ergonomics, CLI behavior, or MCP behavior.
+   the local SDK generator, wrapper ergonomics, CLI behavior, or MCP behavior.
 2. Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
    `wrapper/src/**` to work around the issue.
 3. Link the relevant discrepancy entry from `spec/evidence/discrepancies.md` or
@@ -137,15 +137,15 @@ handoff files:
 4. For generator issues, include the OpenAPI operation ID, tag, path, method,
    SDK method stamp, and whether `make openapi-lint` or
    `make generator-comparison` was attempted.
-5. For Fern generation issues, include Fern CLI version, generator container
-   version, Docker availability, and sanitized error text.
+5. For local generator issues, include the generator command, Node version,
+   OpenAPI operation ID, and sanitized error text.
 
 ## Live proof escalation
 
 Live proof can mutate Clockify state. Escalate live failures with:
 
 - Confirmation that the workspace is sacrificial, not a customer workspace.
-- The command that ran, such as `make perfect-live` or package-local live
+- The command that ran, such as `make perfect-live` or package live
   cleanup verification.
 - Cleanup prefix, leftover count, and sanitized IDs.
 - Whether live proof is completed, or whether the current receipt is still a

@@ -1,7 +1,7 @@
 # Upstream API Drift Policy
 
-Clockify's public API, published documentation, live behavior, Fern diagnostics,
-and GOCLMCP generator output can drift independently. This repo does not pay a
+Clockify's public API, published documentation, live behavior, local generator
+diagnostics, and GOCLMCP generator output can drift independently. This repo does not pay a
 hosted SDK vendor to notice or normalize that drift, so drift response must be a
 local, explicit lifecycle.
 
@@ -9,10 +9,10 @@ local, explicit lifecycle.
 
 | Step | Action | Source of truth |
 |---|---|---|
-| Detect | Notice a mismatch from a user report, live sandbox probe, Fern warning, OpenAPI inventory diff, operation coverage drop, or package test failure. | Issue intake, support bundle, live tests, and generated drift surfaces. |
-| Classify | Decide whether the issue belongs to Clockify API behavior, GOCLMCP source generation, Fern limitations, wrapper ergonomics, CLI behavior, MCP behavior, or docs. | `docs/change-impact-contract.json` and `docs/issue-intake-policy.md`. |
+| Detect | Notice a mismatch from a user report, live sandbox probe, local generator warning, OpenAPI inventory diff, operation coverage drop, or package test failure. | Issue intake, support bundle, live tests, and generated drift surfaces. |
+| Classify | Decide whether the issue belongs to Clockify API behavior, GOCLMCP source generation, local generator limitations, wrapper ergonomics, CLI behavior, MCP behavior, or docs. | `docs/change-impact-contract.json` and `docs/issue-intake-policy.md`. |
 | Record | Promote durable findings into `spec/evidence/discrepancies.md`; keep raw probe files out of git. | OpenAPI evidence ledger and data-handling policy. |
-| Regenerate | Change GOCLMCP sources/generator data first, then copy the corrected snapshot and run Fern/sync through the documented chain. | GOCLMCP canonical OpenAPI and `spec/fern`. |
+| Regenerate | Change GOCLMCP sources/generator data first, then copy the corrected snapshot and run `make sdk-codegen`. | GOCLMCP canonical OpenAPI and the local SDK generator. |
 | Reconcile | Refresh operation inventory, operation parity, product surface, README tables, naming taxonomy, and affected SDK/CLI/MCP docs. | Generated truth surfaces under `docs/`. |
 | Prove | Run the narrow drift gates, package gates, pack smoke, and live proof when runtime behavior changed. | `make upstream-drift`, `make perfect-full`, and `make perfect-live` when safe. |
 ## Routing rules
@@ -22,8 +22,8 @@ local, explicit lifecycle.
 - Missing endpoints, wrong generated shapes, SDK method stamps, pagination
   stamps, Last-Page markers, and phantom route quarantine belong in GOCLMCP
   first.
-- Fern parser/emitter limitations belong in the evidence ledger and risk
-  register until the pin changes or the workaround is removed.
+- Local generator limitations belong in the evidence ledger and risk register
+  until the generator is fixed or the workaround is removed.
 - SDK/CLI/MCP ergonomics belong locally only after the canonical API truth is
   understood.
 - Documentation-only drift belongs in generated truth surfaces or docs-quality

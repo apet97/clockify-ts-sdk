@@ -8,14 +8,6 @@
 
 ### `list`
 
-**Example:**
-
-```typescript
-    await client.clients.list({
-        workspaceId: "workspaceId"
-    })
-```
-
 **Request fields** (`ListClientsRequest`):
 
 - `workspaceId` (`string`, required)
@@ -23,39 +15,30 @@
 - `archived` (`boolean`, optional)
 - `address` (`string`, optional)
 - `note` (`string`, optional)
-- `sort-column` (`ClockifyApi.ListClientsRequestSortColumn`, optional)
-- `sort-order` (`ClockifyApi.ListClientsRequestSortOrder`, optional)
+- `sort-column` (`"NAME" \| "EMAIL" \| "NOTE"`, optional)
+- `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional)
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
 ### `create`
 
-**Example:**
-
-```typescript
-    await client.clients.create({
-        workspaceId: "workspaceId",
-        body: {
-            name: "name"
-        }
-    })
-```
-
-**Request fields** (`CreateClientsRequest`):
+**Request fields** (`ClientCreate`):
 
 - `workspaceId` (`string`, required)
-- `body` (`ClockifyApi.ClientCreate`, required)
+- `address` (`string`, optional)
+- `currencyCode` (`ClockifyApi.Currency`, optional)
+- `email` (`string`, optional)
+- `name` (`string`, required)
+- `note` (`string`, optional)
+- `workspaceId` (`string`, required)
+- `body` (`ClientCreateBody`, required)
+- `address` (`string`, optional)
+- `currencyCode` (`ClockifyApi.Currency`, optional)
+- `email` (`string`, optional)
+- `name` (`string`, required)
+- `note` (`string`, optional)
 
 ### `get`
-
-**Example:**
-
-```typescript
-    await client.clients.get({
-        workspaceId: "workspaceId",
-        clientId: "clientId"
-    })
-```
 
 **Request fields** (`GetClientsRequest`):
 
@@ -64,34 +47,25 @@
 
 ### `update`
 
-**Example:**
-
-```typescript
-    await client.clients.update({
-        workspaceId: "workspaceId",
-        clientId: "clientId",
-        body: {
-            name: "name"
-        }
-    })
-```
-
 **Request fields** (`UpdateClientsRequest`):
 
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
-- `body` (`ClockifyApi.ClientUpdate`, required)
+- `address` (`string`, optional)
+- `currencyCode` (`ClockifyApi.Currency`, optional)
+- `email` (`string`, optional)
+- `name` (`string`, required)
+- `note` (`string`, optional)
+- `workspaceId` (`string`, required)
+- `clientId` (`string`, required)
+- `body` (`UpdateClientsRequestBody`, required)
+- `address` (`string`, optional)
+- `currencyCode` (`ClockifyApi.Currency`, optional)
+- `email` (`string`, optional)
+- `name` (`string`, required)
+- `note` (`string`, optional)
 
 ### `delete`
-
-**Example:**
-
-```typescript
-    await client.clients.delete({
-        workspaceId: "workspaceId",
-        clientId: "clientId"
-    })
-```
 
 **Request fields** (`DeleteClientsRequest`):
 
@@ -100,18 +74,13 @@
 
 ### `archive`
 
-**Example:**
-
-```typescript
-    await client.clients.archive({
-        workspaceId: "workspaceId",
-        clientId: "clientId"
-    })
-```
-
 **Request fields** (`ArchiveClientsRequest`):
 
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
+- `archived` (`boolean`, optional)
+- `workspaceId` (`string`, required)
+- `clientId` (`string`, required)
+- `body` (`ArchiveClientsRequestBody`, required)
 - `archived` (`boolean`, optional)
 

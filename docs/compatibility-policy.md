@@ -11,7 +11,7 @@ changes still need a receipt.
 | SDK | Package root exports, documented subpaths, auth factory behavior, error classes, pagination helpers, webhook helpers, request hooks, and generated resource client naming. | Do not remove or rename a public export without a changelog entry, migration note, and major-version plan. Prefer adding a wrapper seam over exposing generated internals. |
 | CLI | Binary names, command names, global flags, JSON envelope shape, and exit codes. | Do not change command names, exit-code meanings, or JSON field meanings without a migration note and changelog entry. Add aliases before removals. |
 | MCP | Tool names, output envelope fields, output schemas, guide resources, prompts, and confirmation flow. | Do not remove tools or envelope fields without a migration note and changelog entry. Add replacement tools first and preserve recovery fields. |
-| OpenAPI generation | GOCLMCP canonical source, corrected snapshot, Fern config, SDK method stamps, pagination stamps, and discrepancy ledger. | Do not hand-edit generated/snapshot surfaces. Change GOCLMCP sources or generator data first, then regenerate and run drift gates. |
+| OpenAPI generation | GOCLMCP canonical source, corrected snapshot, local SDK generator, SDK method stamps, pagination stamps, and discrepancy ledger. | Do not hand-edit generated/snapshot surfaces. Change GOCLMCP sources or generator data first, then regenerate and run drift gates. |
 
 ## Deprecation pattern
 

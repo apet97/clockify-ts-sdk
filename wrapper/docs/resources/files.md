@@ -8,16 +8,9 @@
 
 ### `uploadImage`
 
-**Example:**
+**Request fields** (`UploadImageFilesRequest`):
 
-```typescript
-    import { createReadStream } from "fs";
-    await client.files.uploadImage({
-        file: fs.createReadStream("/path/to/your/file")
-    })
-```
-
-**Request fields** (`UploadImageRequest`):
-
-- `file` (`core.file.Uploadable`, required) — Image to be uploaded
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required) — Image to be uploaded
+- `body` (`UploadImageFilesRequestBody`, required)
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required) — Image to be uploaded
 

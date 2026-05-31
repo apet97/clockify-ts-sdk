@@ -41,7 +41,7 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-and-quality
           # Scope the analysis to the hand-written wrapper surface
-          # + workflow files. wrapper/src/** is the synced Fern
+          # + workflow files. wrapper/src/** is locally generated
           # output (regenerated); any finding there belongs
           # upstream in GOCLMCP, not in this repo's security tab.
           config: |

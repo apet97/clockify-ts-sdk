@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "purpose": "No-paid-generator and vendor-exit contract for the OpenAPI-to-TypeScript SDK/CLI/MCP generation chain.",
+  "purpose": "Repo-owned local-generator and no-paid-generator contract for the OpenAPI-to-TypeScript SDK/CLI/MCP generation chain.",
   "plan": {
     "path": "docs/generator-portability-plan.md",
     "contains": [
       "Portability principles",
-      "Current local generation chain",
-      "Vendor-exit checklist",
+      "Repo-owned local generator chain",
+      "Local-generator proof checklist",
       "Forbidden portability shortcuts",
       "Acceptable generator roles",
       "Replacement procedure",
@@ -24,6 +24,8 @@
     "generator-config",
     "generator-independence",
     "generator-comparison",
+    "sdk-codegen",
+    "sdk-codegen-drift",
     "openapi-evidence",
     "openapi-lint",
     "sdk-public-api",
@@ -86,9 +88,9 @@
     {
       "path": "docs/generator-config-contract.json",
       "contains": [
-        "5.37.9",
-        "fernapi/fern-typescript-node-sdk",
-        "../corrected/clockify.corrected.openapi.yaml"
+        "scripts/generate-sdk-from-openapi.mjs",
+        "spec/corrected/clockify.corrected.openapi.yaml",
+        "output/ts-sdk"
       ]
     },
     {
@@ -133,6 +135,7 @@
       "do not buy or migrate to a paid generator"
     ],
     "packageManifestPaths": [
+      "package.json",
       "wrapper/package.json",
       "cli/package.json",
       "mcp/package.json"
@@ -142,6 +145,9 @@
       "@stainless-api/sdk",
       "speakeasy",
       "@speakeasy-api/sdk",
+      "fern-api",
+      "@fern-api/cli",
+      "@fern-api/core",
       "fern-cloud",
       "@fern-api/cloud"
     ]

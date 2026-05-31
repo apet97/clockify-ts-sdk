@@ -17,11 +17,10 @@ spec/evidence/probes/*.hdr
 **/node_modules/
 **/*.tsbuildinfo
 
-# Raw Fern generator output. Regenerable from spec/corrected/ via
-#   (cd spec/fern && fern generate --group ts --local --force)
-# which needs Docker. Contributors who only touch hand-written
-# wrapper/cli/mcp surfaces still need Docker now — see AGENTS.md §3
-# for the regen chain.
+# Local TypeScript generator output. Regenerable from spec/corrected/ via
+#   make sdk-codegen
+# without Docker or a hosted SDK generator. See AGENTS.md §3 for the
+# repo-owned generation chain.
 /output/ts-sdk/
 
 # TypeDoc output for the public API reference (Phase 3.3) lands

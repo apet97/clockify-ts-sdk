@@ -9,7 +9,7 @@
  * future-ready and so observability stacks (CDNs, edge proxies,
  * client-side dedup) can use it.
  *
- * Pattern: pass `headers` in Fern's per-call `RequestOptions`.
+ * Pattern: pass `headers` in the generated client's per-call `RequestOptions`.
  *
  * If/when Clockify adds server-side idempotency support, the same
  * call sites continue to work without code changes — the header

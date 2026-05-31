@@ -44,9 +44,9 @@
     {
       "path": "docs/developer-environment-policy.md",
       "mustContain": [
-        "package-local",
-        "There is no root `package.json`",
-        "Docker",
+        "npm workspaces",
+        "root `package.json`",
+        "make sdk-codegen",
         "../GOCLMCP",
         "Do not confuse environment readiness with final product readiness"
       ]

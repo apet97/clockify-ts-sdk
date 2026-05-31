@@ -2,14 +2,27 @@
 
 This repo does not buy generator-platform guarantees, so dependency changes need explicit local proof.
 
-## Pinned generator stack
+## Repo-owned local TypeScript generator
 
-| Tool | Current pin | Change rule |
+The default SDK generator is `scripts/generate-sdk-from-openapi.mjs`.
+It reads `spec/corrected/clockify.corrected.openapi.yaml`, writes
+`output/ts-sdk/**`, and is wired through `make sdk-codegen` before
+`wrapper/scripts/sync-sdk.sh` refreshes `wrapper/src/**`.
+
+This generator must remain reproducible without Docker, hosted generator
+accounts, API tokens, or paid SDK-platform entitlements. Hosted generator
+packages such as Fern, Stainless, and Speakeasy are forbidden dependency
+shortcuts unless a maintainer explicitly reopens the generator strategy with
+full `make perfect-full` proof.
+
+## Historical generator stack
+
+| Tool | Archived pin | Change rule |
 |---|---:|---|
-| Fern CLI | `5.37.9` | Do not change without full `make perfect-full` proof. |
-| Fern TypeScript generator | `fernapi/fern-typescript-node-sdk:3.71.2` | Do not change without full `make perfect-full` proof and SDK surface diff review. |
-| Fern Python generator | `fernapi/fern-python-sdk:5.14.3` | Treat as secondary spec-smoke tooling. |
-| Fern Postman generator | `fernapi/fern-postman:0.6.1` | Treat as secondary visual/spec-smoke tooling. |
+| Fern CLI | `5.37.9` | Historical evidence only; do not restore as a required SDK generation path without maintainer approval and full `make perfect-full` proof. |
+| Fern TypeScript generator | `fernapi/fern-typescript-node-sdk:3.71.2` | Historical evidence only; do not restore as a required SDK generation path without maintainer approval and SDK surface diff review. |
+| Fern Python generator | `fernapi/fern-python-sdk:5.14.3` | Historical evidence only; not part of the required TS SDK proof path. |
+| Fern Postman generator | `fernapi/fern-postman:0.6.1` | Historical evidence only; not part of the required TS SDK proof path. |
 
 ## Package runtime floors
 
@@ -45,8 +58,7 @@ The three packages are wired as npm workspaces from the repo-root
 `make dependency-boundary` checks that the root lockfile uses npm lockfile
 version 3 and that the lockfile root package name/version matches the
 corresponding `package.json`. Dependency changes should therefore update
-the manifest and lockfile together, using the package-local npm install
-workflow instead of hand-editing only one side.
+the manifest and root lockfile together instead of hand-editing only one side.
 
 Do not import from `output/ts-sdk`, `wrapper/src`, or any other
 generated-core path in CLI/MCP product code. Those paths are build
@@ -57,7 +69,7 @@ inputs, not stable public dependencies.
 - Do not change CI/CD, auth, provenance, or npm publish behavior casually.
 - Run package gates for the package whose dependencies changed.
 - Run `make pack-smoke` after changes that affect package exports, bins, files, or build output.
-- Run `make generator-comparison` after Fern, OpenAPI, or sync changes.
+- Run `make generator-comparison` after local generator, OpenAPI, or sync changes.
 - Run `make performance-budgets` after dependency changes that can affect startup or package size.
 - Add a changelog entry for user-visible package behavior changes.
 

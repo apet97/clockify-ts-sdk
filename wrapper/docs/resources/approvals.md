@@ -8,14 +8,6 @@
 
 ### `list`
 
-**Example:**
-
-```typescript
-    await client.approvals.list({
-        workspaceId: "64a687e29ae1f428e7ebe303"
-    })
-```
-
 **Request fields** (`ListApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
@@ -26,101 +18,67 @@
 
 ### `submit`
 
-**Example:**
-
-```typescript
-    await client.approvals.submit({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        body: {
-            period: "MONTHLY",
-            periodStart: "2020-01-01T00:00:00.000Z"
-        }
-    })
-```
-
 **Request fields** (`SubmitApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
-
-### `resubmit`
-
-**Example:**
-
-```typescript
-    await client.approvals.resubmit({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        body: {
-            period: "MONTHLY",
-            periodStart: "2020-01-01T00:00:00.000Z"
-        }
-    })
-```
-
-**Request fields** (`ResubmitApprovalsRequest`):
-
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
-
-### `submitForUser`
-
-**Example:**
-
-```typescript
-    await client.approvals.submitForUser({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        userId: "5a0ab5acb07987125438b60f",
-        body: {
-            period: "MONTHLY",
-            periodStart: "2020-01-01T00:00:00.000Z"
-        }
-    })
-```
-
-**Request fields** (`SubmitForUserApprovalsRequest`):
-
-- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `userId` (`string`, required) — Represents a user identifier across the system.
-- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
-
-### `resubmitForUser`
-
-**Example:**
-
-```typescript
-    await client.approvals.resubmitForUser({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        userId: "5a0ab5acb07987125438b60f",
-        body: {
-            period: "MONTHLY",
-            periodStart: "2020-01-01T00:00:00.000Z"
-        }
-    })
-```
-
-**Request fields** (`ResubmitForUserApprovalsRequest`):
-
-- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
-- `userId` (`string`, required) — Represents a user identifier across the system.
-- `body` (`ClockifyApi.SubmitApprovalRequestRequest`, required)
+- `body` (`SubmitApprovalsRequestBody`, required)
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
 
 ### `updateStatus`
 
-**Example:**
-
-```typescript
-    await client.approvals.updateStatus({
-        workspaceId: "64a687e29ae1f428e7ebe303",
-        approvalRequestId: "940ab5acb07987125438b65y",
-        note: "Approved after review.",
-        state: "APPROVED"
-    })
-```
-
-**Request fields** (`UpdateApprovalRequestRequest`):
+**Request fields** (`UpdateStatusApprovalsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `approvalRequestId` (`string`, required) — Represents an approval request identifier across the system.
 - `note` (`string`, optional) — Additional notes for the approval request.
 - `state` (`ClockifyApi.ApprovalRequestState`, required)
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `approvalRequestId` (`string`, required) — Represents an approval request identifier across the system.
+- `body` (`UpdateStatusApprovalsRequestBody`, required)
+- `note` (`string`, optional) — Additional notes for the approval request.
+- `state` (`ClockifyApi.ApprovalRequestState`, required)
+
+### `resubmit`
+
+**Request fields** (`ResubmitApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `body` (`ResubmitApprovalsRequestBody`, required)
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+
+### `submitForUser`
+
+**Request fields** (`SubmitForUserApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `body` (`SubmitForUserApprovalsRequestBody`, required)
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+
+### `resubmitForUser`
+
+**Request fields** (`ResubmitForUserApprovalsRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `body` (`ResubmitForUserApprovalsRequestBody`, required)
+- `period` (`ClockifyApi.ApprovalPeriod`, required)
+- `periodStart` (`string`, required) — Approval period start date in yyyy-MM-ddThh:mm:ssZ format.
 

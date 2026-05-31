@@ -111,12 +111,12 @@
   "risks": [
     {
       "id": "fern-bare-array-pagination",
-      "status": "blocked-upstream",
+      "status": "accepted",
       "surface": "SDK generation",
-      "summary": "Fern CLI currently rejects bare-array response pagination metadata, so wrapper pagination helpers remain the supported public pagination surface.",
-      "impact": "Generated SDK pagination annotations cannot fully replace hand-written iterAll, iterPages, and paginate helpers yet.",
-      "mitigation": "Keep pagination wrappers tested and keep generated operation parity/drift checks active.",
-      "closureGate": "Re-test on Fern CLI/generator bump, remove the workaround only after generated pagination passes wrapper tests and pack smoke.",
+      "summary": "Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface.",
+      "impact": "No active generator blocker. Generated list methods still need to preserve page/page-size request shapes consumed by iterAll, iterPages, and paginate.",
+      "mitigation": "Keep pagination wrappers tested and keep local generator comparison/drift checks active.",
+      "closureGate": "No closure planned; keep as historical evidence unless the pagination helper surface is intentionally redesigned.",
       "evidence": [
         {
           "path": "spec/evidence/discrepancies.md",
@@ -130,12 +130,12 @@
     },
     {
       "id": "fern-addon-token-type-workaround",
-      "status": "blocked-upstream",
+      "status": "accepted",
       "surface": "SDK auth",
-      "summary": "Fern types apiKey and addonToken as both required even though Clockify accepts exactly one token mode.",
-      "impact": "The SDK factory must hide an internal addonToken type cast until the upstream type issue is resolved.",
-      "mitigation": "Keep createClockifyClient as the recommended entrypoint and keep the raw cast isolated.",
-      "closureGate": "Remove the cast only after Fern emits mutually-exclusive auth types and SDK auth tests pass.",
+      "summary": "The historical Fern addon-token workaround is retired; local generated auth types now model exactly one token mode.",
+      "impact": "A regression could reintroduce workaround casts or allow callers to send both Clockify auth headers.",
+      "mitigation": "Keep generated HeaderAuthProvider auth options mutually exclusive and keep createClockifyClient auth tests active.",
+      "closureGate": "No closure planned; keep discrepancy evidence and SDK auth tests as regression coverage.",
       "evidence": [
         {
           "path": "spec/evidence/discrepancies.md",
@@ -143,7 +143,7 @@
         },
         {
           "path": "wrapper/create-client.ts",
-          "contains": "addonToken"
+          "contains": "exactly-one auth"
         }
       ]
     },
@@ -220,7 +220,7 @@
     {
       "id": "generated-core-is-not-product",
       "status": "accepted",
-      "surface": "OpenAPI/Fern generation",
+      "surface": "OpenAPI/local generation",
       "summary": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
       "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
       "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",

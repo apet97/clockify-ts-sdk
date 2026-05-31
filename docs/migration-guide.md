@@ -28,7 +28,7 @@ import { verifyClockifyWebhook } from "clockify-sdk-ts-115/webhooks";
 
 ## Auth
 
-Prefer `createClockifyClient()` over constructing the generated `ClockifyApiClient` directly. The factory enforces Clockify's exactly-one-token behavior and hides Fern's current addon-token type workaround.
+Prefer `createClockifyClient()` over constructing the generated `ClockifyApiClient` directly. The factory enforces Clockify's exactly-one-token behavior and adds env fallback, request IDs, user-agent headers, hooks, and retry configuration.
 
 ```typescript
 const client = createClockifyClient({ apiKey: process.env.CLOCKIFY_API_KEY! });
@@ -42,7 +42,29 @@ Do not edit these by hand:
 - `output/ts-sdk/**`
 - `wrapper/src/**`
 
-Change API shape in GOCLMCP first, regenerate the snapshot, run Fern, then sync the wrapper.
+Change API shape in GOCLMCP first, regenerate the snapshot, then run `make sdk-codegen` to refresh local generated output and sync the wrapper.
+
+## From Fern-generated core to local generated core
+
+Older repo guidance described `spec/fern/**`, `fern check`, `fern generate`,
+Docker, and a Fern TypeScript generator image as the required SDK generation
+path. That is now historical context only.
+
+Use the repo-owned local generator instead:
+
+```bash
+npm ci
+make sdk-codegen
+make sdk-codegen-drift
+make sdk-codegen-test
+```
+
+The public package surface is intended to stay stable across the migration:
+`ClockifyApiClient`, `createClockifyClient`, `withRawResponse()`, typed status
+errors, pagination helpers, webhooks, scoped clients, diagnostics, health, rate
+limit helpers, OTel hooks, and the documented subpaths remain the supported
+entry points. Code that imported from `wrapper/src/**`, `output/ts-sdk/**`, or
+Fern-generated internals should migrate to `clockify-sdk-ts-115` package exports.
 
 ## CLI behavior
 

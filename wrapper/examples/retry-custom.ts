@@ -1,8 +1,8 @@
 /**
  * Custom retry policy with manual `computeDelay` (full-jitter
  * exponential backoff) and a wider retryable-status-code set.
- * Disables Fern's internal retry by default — the factory sets
- * `maxRetries: 0` on Fern when `retryPolicy` is supplied to
+ * Disables the generated client's retry layer by default — the factory sets
+ * `maxRetries: 0` on that layer when `retryPolicy` is supplied to
  * avoid nested retry loops.
  *
  * Run: `npx tsx examples/retry-custom.ts` (no real API calls).
@@ -33,4 +33,4 @@ const client = createClockifyClient({
 });
 
 console.log("Client constructed with custom retry policy:", typeof client.tags);
-console.log("Fern internal retry is automatically disabled (maxRetries: 0).");
+console.log("The generated client retry loop is automatically disabled (maxRetries: 0).");

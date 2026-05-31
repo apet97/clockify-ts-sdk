@@ -1,52 +1,59 @@
 {
   "schemaVersion": 1,
-  "purpose": "Fern/OpenAPI generator configuration contract. Keeps local generator pins, active OpenAPI snapshot, and generated output paths intentional and reviewable.",
-  "fernConfig": {
-    "path": "spec/fern/fern.config.json",
-    "organization": "clockify",
-    "cliVersion": "5.37.9"
+  "purpose": "Repo-owned local TypeScript generator configuration contract. Keeps the corrected OpenAPI input, generated output path, wrapper sync boundary, and offline command path intentional and reviewable.",
+  "localGenerator": {
+    "script": "scripts/generate-sdk-from-openapi.mjs",
+    "writeCommand": "node scripts/generate-sdk-from-openapi.mjs --write",
+    "checkCommand": "node scripts/generate-sdk-from-openapi.mjs --check",
+    "testCommand": "npm run test:codegen",
+    "inputOpenApi": "spec/corrected/clockify.corrected.openapi.yaml",
+    "outputPath": "output/ts-sdk",
+    "syncScript": "wrapper/scripts/sync-sdk.sh",
+    "generatedWrapperPath": "wrapper/src"
   },
-  "generators": {
-    "path": "spec/fern/generators.yml",
-    "defaultGroup": "ts",
-    "activeOpenApiPath": "../corrected/clockify.corrected.openapi.yaml",
-    "groups": {
-      "ts": {
-        "name": "fernapi/fern-typescript-node-sdk",
-        "version": "3.71.2",
-        "outputPath": "../../output/ts-sdk"
-      },
-      "py": {
-        "name": "fernapi/fern-python-sdk",
-        "version": "5.14.3",
-        "outputPath": "../../output/py-sdk"
-      },
-      "postman": {
-        "name": "fernapi/fern-postman",
-        "version": "0.6.1",
-        "outputPath": "../../output/postman"
-      }
-    }
+  "offlineReproducibility": {
+    "requiresDocker": false,
+    "requiresHostedLogin": false,
+    "requiresApiToken": false,
+    "forbiddenCommandMarkers": [
+      "fern ",
+      "docker ",
+      "stainless",
+      "speakeasy"
+    ]
   },
   "requiredDocs": [
     {
-      "path": "AGENTS.md",
+      "path": "docs/dependency-policy.md",
       "contains": [
-        "Fern CLI pinned to",
-        "fernapi/fern-typescript-node-sdk:3.71.2"
+        "Repo-owned local TypeScript generator",
+        "scripts/generate-sdk-from-openapi.mjs",
+        "make sdk-codegen"
       ]
     },
     {
-      "path": "docs/dependency-policy.md",
+      "path": "docs/generator-portability-plan.md",
       "contains": [
-        "Fern CLI",
-        "fernapi/fern-typescript-node-sdk:3.71.2"
+        "Repo-owned local generator chain",
+        "scripts/generate-sdk-from-openapi.mjs",
+        "output/ts-sdk"
+      ]
+    },
+    {
+      "path": "docs/decisions/0005-local-typescript-generator.md",
+      "contains": [
+        "repo-owned local TypeScript generator",
+        "spec/corrected/clockify.corrected.openapi.yaml",
+        "make sdk-codegen"
       ]
     }
   ],
   "wiring": {
     "makeTarget": "generator-config",
     "checker": "scripts/check-generator-config.mjs",
+    "codegenTarget": "sdk-codegen",
+    "codegenDriftTarget": "sdk-codegen-drift",
+    "codegenTestTarget": "sdk-codegen-test",
     "docsIndex": [
       "generator-config-contract.json"
     ],

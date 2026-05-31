@@ -8,14 +8,6 @@
 
 ### `list`
 
-**Example:**
-
-```typescript
-    await client.policies.list({
-        workspaceId: "workspaceId"
-    })
-```
-
 **Request fields** (`ListPoliciesRequest`):
 
 - `workspaceId` (`string`, required)
@@ -23,30 +15,48 @@
 
 ### `create`
 
-**Example:**
-
-```typescript
-    await client.policies.create({
-        workspaceId: "workspaceId",
-        body: {}
-    })
-```
-
-**Request fields** (`CreatePoliciesRequest`):
+**Request fields** (`TimeOffPolicy`):
 
 - `workspaceId` (`string`, required)
-- `body` (`ClockifyApi.TimeOffPolicy`, required)
+- `accountingPeriod` (`Record<string, unknown> \| null`, optional)
+- `allowHalfDay` (`boolean`, optional)
+- `allowNegativeBalance` (`boolean`, optional)
+- `amount` (`number`, optional)
+- `approve` (`Record<string, unknown>`, optional)
+- `archived` (`boolean`, optional)
+- `automaticAccrual` (`Record<string, unknown> \| null`, optional)
+- `carryOver` (`Record<string, unknown> \| null`, optional)
+- `color` (`string`, optional)
+- `everyoneIncludingNew` (`boolean`, optional)
+- `id` (`string`, optional)
+- `name` (`string`, optional)
+- `negativeBalance` (`Record<string, unknown> \| null`, optional)
+- `timeUnit` (`"DAYS" \| "HOURS"`, optional)
+- `userAllowanceType` (`string \| null`, optional)
+- `userGroups` (`Record<string, unknown>`, optional)
+- `users` (`Record<string, unknown>`, optional)
+- `workspaceId` (`string`, required)
+- `body` (`TimeOffPolicyBody`, required)
+- `accountingPeriod` (`Record<string, unknown> \| null`, optional)
+- `allowHalfDay` (`boolean`, optional)
+- `allowNegativeBalance` (`boolean`, optional)
+- `amount` (`number`, optional)
+- `approve` (`Record<string, unknown>`, optional)
+- `archived` (`boolean`, optional)
+- `automaticAccrual` (`Record<string, unknown> \| null`, optional)
+- `carryOver` (`Record<string, unknown> \| null`, optional)
+- `color` (`string`, optional)
+- `everyoneIncludingNew` (`boolean`, optional)
+- `id` (`string`, optional)
+- `name` (`string`, optional)
+- `negativeBalance` (`Record<string, unknown> \| null`, optional)
+- `timeUnit` (`"DAYS" \| "HOURS"`, optional)
+- `userAllowanceType` (`string \| null`, optional)
+- `userGroups` (`Record<string, unknown>`, optional)
+- `users` (`Record<string, unknown>`, optional)
+- `workspaceId` (`string`, optional)
 
 ### `get`
-
-**Example:**
-
-```typescript
-    await client.policies.get({
-        workspaceId: "workspaceId",
-        policyId: "policyId"
-    })
-```
 
 **Request fields** (`GetPoliciesRequest`):
 
@@ -55,32 +65,50 @@
 
 ### `update`
 
-**Example:**
-
-```typescript
-    await client.policies.update({
-        workspaceId: "workspaceId",
-        policyId: "policyId",
-        body: {}
-    })
-```
-
 **Request fields** (`UpdatePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
-- `body` (`ClockifyApi.TimeOffPolicy`, required)
+- `accountingPeriod` (`Record<string, unknown> \| null`, optional)
+- `allowHalfDay` (`boolean`, optional)
+- `allowNegativeBalance` (`boolean`, optional)
+- `amount` (`number`, optional)
+- `approve` (`Record<string, unknown>`, optional)
+- `archived` (`boolean`, optional)
+- `automaticAccrual` (`Record<string, unknown> \| null`, optional)
+- `carryOver` (`Record<string, unknown> \| null`, optional)
+- `color` (`string`, optional)
+- `everyoneIncludingNew` (`boolean`, optional)
+- `id` (`string`, optional)
+- `name` (`string`, optional)
+- `negativeBalance` (`Record<string, unknown> \| null`, optional)
+- `timeUnit` (`"DAYS" \| "HOURS"`, optional)
+- `userAllowanceType` (`string \| null`, optional)
+- `userGroups` (`Record<string, unknown>`, optional)
+- `users` (`Record<string, unknown>`, optional)
+- `workspaceId` (`string`, required)
+- `policyId` (`string`, required)
+- `body` (`UpdatePoliciesRequestBody`, required)
+- `accountingPeriod` (`Record<string, unknown> \| null`, optional)
+- `allowHalfDay` (`boolean`, optional)
+- `allowNegativeBalance` (`boolean`, optional)
+- `amount` (`number`, optional)
+- `approve` (`Record<string, unknown>`, optional)
+- `archived` (`boolean`, optional)
+- `automaticAccrual` (`Record<string, unknown> \| null`, optional)
+- `carryOver` (`Record<string, unknown> \| null`, optional)
+- `color` (`string`, optional)
+- `everyoneIncludingNew` (`boolean`, optional)
+- `id` (`string`, optional)
+- `name` (`string`, optional)
+- `negativeBalance` (`Record<string, unknown> \| null`, optional)
+- `timeUnit` (`"DAYS" \| "HOURS"`, optional)
+- `userAllowanceType` (`string \| null`, optional)
+- `userGroups` (`Record<string, unknown>`, optional)
+- `users` (`Record<string, unknown>`, optional)
+- `workspaceId` (`string`, optional)
 
 ### `delete`
-
-**Example:**
-
-```typescript
-    await client.policies.delete({
-        workspaceId: "workspaceId",
-        policyId: "policyId"
-    })
-```
 
 **Request fields** (`DeletePoliciesRequest`):
 
@@ -89,18 +117,13 @@
 
 ### `archive`
 
-**Example:**
-
-```typescript
-    await client.policies.archive({
-        workspaceId: "workspaceId",
-        policyId: "policyId"
-    })
-```
-
 **Request fields** (`ArchivePoliciesRequest`):
 
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
+- `archived` (`boolean`, optional)
+- `workspaceId` (`string`, required)
+- `policyId` (`string`, required)
+- `body` (`ArchivePoliciesRequestBody`, required)
 - `archived` (`boolean`, optional)
 

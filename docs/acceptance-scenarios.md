@@ -48,7 +48,7 @@ calls. It is a map, not proof.
 | Work-package setup | clients, projects, tasks, and tags resource clients | `clients create`, `projects create`, `tasks list`, and `tags create` | `clockify_create_work_package` | Reuse/created receipts, explicit IDs, and workflow-cookbook parity. |
 | Business/admin guarded write | invoices, expenses, time off, scheduling, and webhook clients | explicit non-interactive create/delete commands | `clockify_invoice_client_work`, `clockify_record_expense`, `clockify_request_time_off`, `clockify_schedule_work`, `clockify_setup_webhook` | MCP `dry_run:true` plus `confirm_token`; CLI write-safety; SDK no blind retry for non-idempotent creates. |
 | Recovery and observability | typed errors, stable codes, rate-limit helpers, OTel hooks, and `withResponse()` | `--json` error receipts with `code`, `retryable`, and `recovery` | `structuredContent` error envelope with `recovery` and `next` | Receipt examples, observability contract, support bundle, and data-handling redaction. |
-| OpenAPI truth and generated core | generated SDK methods behind durable wrapper seams | CLI uses wrapper semantics instead of inventing API truth | MCP uses wrapper semantics and parity metadata | GOCLMCP drift gates, Fern check/generate, operation coverage, generator comparison, and generated-edit guard. |
+| OpenAPI truth and generated core | generated SDK methods behind durable wrapper seams | CLI uses wrapper semantics instead of inventing API truth | MCP uses wrapper semantics and parity metadata | GOCLMCP drift gates, local codegen drift, operation coverage, generator comparison, and generated-edit guard. |
 | Package-consumer install smoke | packed SDK tarball imports ESM/CJS and subpaths | packed CLI exposes `clockify115` and `clk115` | packed MCP exposes `clockify115-mcp` | `make pack-smoke`, package contract, runtime support, dependency boundary, and supply-chain contract. |
 
 ## Evidence escalation
@@ -64,8 +64,8 @@ Use the narrowest proof that matches the claim:
    packet before live readiness claims.
 4. Package proof: package gates and `make pack-smoke` prove installed artifact
    behavior.
-5. Full generation proof: `make perfect-full` proves GOCLMCP, Fern, package,
-   and packed-consumer alignment.
+5. Full generation proof: `make perfect-full` proves GOCLMCP, local SDK
+   codegen, package, and packed-consumer alignment.
 6. Live proof: `make perfect-live` proves real Clockify sandbox behavior and
    cleanup. Do not use customer workspaces.
 

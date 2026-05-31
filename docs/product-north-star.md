@@ -15,7 +15,7 @@ release gates, and examples that survive contact with a real account.
 - **One trusted API truth.** GOCLMCP owns canonical OpenAPI generation,
   live probes, discrepancy evidence, and drift gates. This repo consumes
   that truth; it does not hand-edit snapshots to make a local build pass.
-- **Generated core, durable public layer.** Fern output stays
+- **Generated core, durable public layer.** Local generator output stays
   replaceable. Public convenience APIs live in small wrapper files with
   focused tests and stable exports.
 - **One Clockify vocabulary.** SDK, CLI, MCP, docs, changelog, examples,
@@ -42,7 +42,7 @@ release gates, and examples that survive contact with a real account.
 
 | Package | Role | Product bar |
 |---|---|---|
-| `wrapper/` / `clockify-sdk-ts-115` | Core TypeScript SDK | Idiomatic imports, dual ESM/CJS, typed errors, pagination helpers, webhooks, observability hooks, and narrow public seams over Fern output. |
+| `wrapper/` / `clockify-sdk-ts-115` | Core TypeScript SDK | Idiomatic imports, dual ESM/CJS, typed errors, pagination helpers, webhooks, observability hooks, and narrow public seams over generated output. |
 | `cli/` / `@clockify115/cli` | Human and automation CLI | Predictable command groups, JSON output, config/env precedence, useful error messages, and parity with SDK/MCP concepts. |
 | `mcp/` / `@clockify115/mcp-server` | Agent-facing Clockify workflows | Workflow-first tools, 105 advertised tools, rich result envelopes, recovery hints, dry-run confirmation tokens, and clean live sandbox cleanup. |
 | `spec/` + `output/` | Reproducible generation inputs/outputs | Immutable snapshot discipline, no hand edits to generated surfaces, and explicit discrepancy evidence. |
@@ -57,9 +57,9 @@ release gates, and examples that survive contact with a real account.
      `docs/api-parity-matrix.md`, `docs/agent-cookbook.md`, and live
      test docs.
 
-2. **Fern generated core**
+2. **Local generated core**
    - Generated from `spec/corrected/clockify.corrected.openapi.yaml`.
-   - May be inspected, synced, and committed as reproducible output.
+   - May be inspected and synced as reproducible output.
    - Must not be edited directly.
 
 3. **Durable SDK wrapper**
@@ -134,9 +134,9 @@ release gates, and examples that survive contact with a real account.
   types, and shared references. The local equivalent is pinned generator
   versions, diff review, discrepancy evidence, and no silent snapshot
   surgery.
-- Fern's TypeScript SDK docs center the source OpenAPI/Fern workspace,
-  validation, generation, and publishing flow. The local equivalent is
-  `spec/fern`, `fern check --warnings --from-openapi`, `fern generate`,
+- Fern's TypeScript SDK docs center source inputs, validation,
+  generation, and publishing flow. The local equivalent is the corrected
+  OpenAPI snapshot, `make sdk-codegen`, `make sdk-codegen-drift`,
   `wrapper npm run sync`, and package-specific publish gates.
 
 Do not cargo-cult any vendor. Use these as quality signals, then keep

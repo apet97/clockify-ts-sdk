@@ -1,7 +1,7 @@
 /**
  * Per-resource auto-pagination for the Clockify SDK.
  *
- * Fern-generated list methods accept `page` + `"page-size"` query
+ * Generated list methods accept `page` + `"page-size"` query
  * parameters and return bare-array responses (no envelope). This
  * module walks those pages for you and yields each record as it's
  * fetched, so memory stays bounded.
@@ -175,7 +175,7 @@ export async function* iterAll<TRequest, TItem>(
  * ```
  */
 /** Internal: minimum shape we need to extract Last-Page from a
- *  Fern-generated method's return value. Matches `HttpResponsePromise<T>`
+ *  generated method's return value. Matches `HttpResponsePromise<T>`
  *  produced by every method on the synced SDK; structural type so the
  *  helper works with any compatible thenable. */
 interface RawResponseAware<T> extends PromiseLike<T> {
@@ -240,8 +240,8 @@ export async function* iterPages<TRequest, TItem>(
         // signal — more robust than the legacy
         // `items.length === pageSize` heuristic, which fails when a
         // final page coincidentally fills. We feature-detect
-        // `withRawResponse` on the fetcher return; the Fern-generated
-        // SDK methods always have it, but a custom fetcher passed by
+        // `withRawResponse` on the fetcher return; the generated SDK
+        // methods always have it, but a custom fetcher passed by
         // a test or a Speakeasy/Stainless variant might not.
         const result = fetcher(request);
         let items: readonly TItem[];

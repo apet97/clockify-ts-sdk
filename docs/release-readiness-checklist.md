@@ -35,7 +35,7 @@ or risk-register item to close next.
 
 | Area | Evidence | Gate or file |
 |---|---|---|
-| Source of truth | GOCLMCP OpenAPI drift gates and Fern generation path are green. | `make perfect-full` |
+| Source of truth | GOCLMCP OpenAPI drift gates and local SDK generation path are green. | `make perfect-full` |
 | Generated boundary | No hand edits landed in `spec/corrected/**`, `output/ts-sdk/**`, or `wrapper/src/**`. | `make generated-edit-check` |
 | SDK package | Type-check, tests, build, dual-build smoke, and dry-run pack pass. | `make wrapper-gates` |
 | CLI package | Type-check, tests, build, and dry-run pack pass. | `make cli-gates` |
@@ -126,7 +126,7 @@ Commit or tree state:
 SDK evidence:
 CLI evidence:
 MCP evidence:
-OpenAPI/Fern evidence:
+OpenAPI/local-generator evidence:
 Packed-consumer evidence:
 Docs evidence:
 Security evidence:

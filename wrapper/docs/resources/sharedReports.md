@@ -11,17 +11,9 @@
 **Request fields** (`ViewSharedReportsRequest`):
 
 - `sharedReportId` (`string`, required)
-- `exportType` (`ClockifyApi.ViewSharedReportsRequestExportType`, optional)
+- `exportType` (`"JSON_V1" \| "JSON" \| "CSV" \| "XLSX" \| "PDF"`, optional)
 
 ### `list`
-
-**Example:**
-
-```typescript
-    await client.sharedReports.list({
-        workspaceId: "workspaceId"
-    })
-```
 
 **Request fields** (`ListSharedReportsRequest`):
 
@@ -29,64 +21,39 @@
 
 ### `create`
 
-**Example:**
-
-```typescript
-    await client.sharedReports.create({
-        workspaceId: "workspaceId",
-        body: {
-            filter: {
-                dateRangeEnd: "2024-01-15T09:30:00Z",
-                dateRangeStart: "2024-01-15T09:30:00Z",
-                exportType: "JSON_V1"
-            },
-            name: "name",
-            type: "SUMMARY"
-        }
-    })
-```
-
-**Request fields** (`CreateSharedReportsRequest`):
+**Request fields** (`SharedReportCreate`):
 
 - `workspaceId` (`string`, required)
-- `body` (`ClockifyApi.SharedReportCreate`, required)
+- `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `name` (`string`, required)
+- `public` (`boolean`, optional)
+- `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
+- `workspaceId` (`string`, required)
+- `body` (`SharedReportCreateBody`, required)
+- `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `name` (`string`, required)
+- `public` (`boolean`, optional)
+- `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 
 ### `update`
-
-**Example:**
-
-```typescript
-    await client.sharedReports.update({
-        workspaceId: "workspaceId",
-        sharedReportId: "sharedReportId",
-        body: {
-            filter: {
-                dateRangeEnd: "2024-01-15T09:30:00Z",
-                dateRangeStart: "2024-01-15T09:30:00Z",
-                exportType: "JSON_V1"
-            },
-            name: "name",
-            type: "SUMMARY"
-        }
-    })
-```
 
 **Request fields** (`UpdateSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
 - `sharedReportId` (`string`, required)
-- `body` (`ClockifyApi.SharedReportCreate`, required)
+- `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `name` (`string`, required)
+- `public` (`boolean`, optional)
+- `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
+- `workspaceId` (`string`, required)
+- `sharedReportId` (`string`, required)
+- `body` (`UpdateSharedReportsRequestBody`, required)
+- `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `name` (`string`, required)
+- `public` (`boolean`, optional)
+- `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 
 ### `delete`
-
-**Example:**
-
-```typescript
-    await client.sharedReports.delete({
-        workspaceId: "workspaceId",
-        sharedReportId: "sharedReportId"
-    })
-```
 
 **Request fields** (`DeleteSharedReportsRequest`):
 

@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: Clockify codegen golden fixture
+  version: 1.0.0
+paths:
+  /workspaces/{workspaceId}/tags:
+    parameters:
+      - name: workspaceId
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: createTag
+      tags: [Tags]
+      x-fern-sdk-group-name: tags
+      x-fern-sdk-method-name: create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+    get:
+      operationId: listTags
+      tags: [Tags]
+      x-fern-sdk-group-name: tags
+      x-fern-sdk-method-name: list
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page-size
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+  /workspaces/{workspaceId}/reports/export:
+    get:
+      operationId: exportReport
+      tags: [Reports]
+      x-fern-sdk-group-name: reports
+      x-fern-sdk-method-name: export
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Binary export
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /workspaces/{workspaceId}/file/image:
+    post:
+      operationId: uploadImage
+      tags: [Files]
+      x-fern-sdk-group-name: files
+      x-fern-sdk-method-name: uploadImage
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Uploaded file metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileMetadata"
+components:
+  schemas:
+    AuditLogEntry:
+      type: object
+      properties:
+        content:
+          type: string
+          nullable: true
+    CustomFieldValue:
+      nullable: true
+      oneOf:
+        - type: string
+        - type: number
+        - type: boolean
+        - type: array
+          items:
+            type: string
+        - type: object
+          additionalProperties: true
+    FileMetadata:
+      type: object
+      properties:
+        id:
+          type: string
+    OpenapiInvoiceExportFields:
+      type: object
+      properties:
+        RTL:
+          type: boolean
+        rtl:
+          type: boolean
+    Tag:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    TagCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string

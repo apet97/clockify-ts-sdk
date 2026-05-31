@@ -8,72 +8,45 @@
 
 ### `list`
 
-**Example:**
-
-```typescript
-    await client.expenseCategories.list({
-        workspaceId: "workspaceId"
-    })
-```
-
 **Request fields** (`ListExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 
 ### `create`
 
-**Example:**
-
-```typescript
-    await client.expenseCategories.create({
-        workspaceId: "workspaceId",
-        body: {
-            hasUnitPrice: false,
-            name: "Procurement",
-            priceInCents: 1000,
-            unit: "piece"
-        }
-    })
-```
-
-**Request fields** (`CreateExpenseCategoriesRequest`):
+**Request fields** (`ExpenseCategoryRequest`):
 
 - `workspaceId` (`string`, required)
-- `body` (`ClockifyApi.ExpenseCategoryRequest`, required)
+- `hasUnitPrice` (`boolean`, optional) — Flag whether expense category has unit price or none.
+- `name` (`string`, required) — Represents a valid expense category name.
+- `priceInCents` (`number`, optional) — Represents price in cents as integer.
+- `unit` (`string`, optional) — Represents a valid expense category unit.
+- `workspaceId` (`string`, required)
+- `body` (`ExpenseCategoryRequestBody`, required)
+- `hasUnitPrice` (`boolean`, optional) — Flag whether expense category has unit price or none.
+- `name` (`string`, required) — Represents a valid expense category name.
+- `priceInCents` (`number`, optional) — Represents price in cents as integer.
+- `unit` (`string`, optional) — Represents a valid expense category unit.
 
 ### `update`
-
-**Example:**
-
-```typescript
-    await client.expenseCategories.update({
-        workspaceId: "workspaceId",
-        categoryId: "categoryId",
-        body: {
-            hasUnitPrice: false,
-            name: "Procurement",
-            priceInCents: 1000,
-            unit: "piece"
-        }
-    })
-```
 
 **Request fields** (`UpdateExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `categoryId` (`string`, required)
-- `body` (`ClockifyApi.ExpenseCategoryRequest`, required)
+- `hasUnitPrice` (`boolean`, optional) — Flag whether expense category has unit price or none.
+- `name` (`string`, required) — Represents a valid expense category name.
+- `priceInCents` (`number`, optional) — Represents price in cents as integer.
+- `unit` (`string`, optional) — Represents a valid expense category unit.
+- `workspaceId` (`string`, required)
+- `categoryId` (`string`, required)
+- `body` (`UpdateExpenseCategoriesRequestBody`, required)
+- `hasUnitPrice` (`boolean`, optional) — Flag whether expense category has unit price or none.
+- `name` (`string`, required) — Represents a valid expense category name.
+- `priceInCents` (`number`, optional) — Represents price in cents as integer.
+- `unit` (`string`, optional) — Represents a valid expense category unit.
 
 ### `delete`
-
-**Example:**
-
-```typescript
-    await client.expenseCategories.delete({
-        workspaceId: "workspaceId",
-        categoryId: "categoryId"
-    })
-```
 
 **Request fields** (`DeleteExpenseCategoriesRequest`):
 
@@ -82,19 +55,13 @@
 
 ### `archive`
 
-**Example:**
-
-```typescript
-    await client.expenseCategories.archive({
-        workspaceId: "workspaceId",
-        categoryId: "categoryId",
-        archived: false
-    })
-```
-
-**Request fields** (`ExpenseCategoryStatusRequest`):
+**Request fields** (`ArchiveExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
 - `categoryId` (`string`, required)
+- `archived` (`boolean`, required) — Flag whether to archive the expense category or not.
+- `workspaceId` (`string`, required)
+- `categoryId` (`string`, required)
+- `body` (`ArchiveExpenseCategoriesRequestBody`, required)
 - `archived` (`boolean`, required) — Flag whether to archive the expense category or not.
 

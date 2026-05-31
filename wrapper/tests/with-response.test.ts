@@ -13,7 +13,7 @@ interface FakeRawResponse {
 }
 
 /** Mock a `ResponseAwarePromise<T>` (the shape every
- *  Fern-generated SDK method returns).  */
+ *  generated SDK method returns).  */
 function fakeResponsePromise<T>(data: T, raw: FakeRawResponse) {
     return Object.assign(Promise.resolve(data), {
         async withRawResponse() {

@@ -1,6 +1,6 @@
 # SDK Runtime Policy
 
-The Fern-generated SDK is the transport layer. The product SDK lives in
+The local generated SDK is the transport layer. The product SDK lives in
 small hand-written seams that make common production use predictable:
 auth, request correlation, retries, pagination, raw responses, webhooks,
 no-network diagnostics, health checks, rate limits, scoped workspaces,
@@ -10,15 +10,15 @@ deprecation rails, and stable error recovery.
 
 1. The factory is the default entrypoint.
 
-   `createClockifyClient` must hide Fern auth quirks, support API-key
-   and addon-token modes, read documented environment variables, and
-   install the composed fetch wrapper by default.
+   `createClockifyClient` must support API-key and addon-token modes,
+   read documented environment variables, and install the composed fetch
+   wrapper by default.
 
 2. Request behavior must be observable.
 
    The composed fetch layer must provide User-Agent and request-ID
    headers, lifecycle hooks, and a wrapper retry policy that disables
-   nested Fern retries when enabled.
+   nested generated-client retries when enabled.
 
 3. Pagination must be ergonomic and bounded.
 
@@ -29,7 +29,7 @@ deprecation rails, and stable error recovery.
 4. Raw responses must stay easy to inspect.
 
    `withResponse` must preserve data, headers, status, and request ID
-   without making users depend on Fern internals.
+   without making users depend on generated-client internals.
 
 5. Errors must be stable and recoverable.
 

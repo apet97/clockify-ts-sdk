@@ -52,16 +52,9 @@ jobs:
         working-directory: .
         run: npm ci
 
-      - name: Install fern-api (CLI pinned to spec/fern/fern.config.json)
+      - name: Generate + sync TS SDK (local generator)
         working-directory: .
-        run: npm install -g fern-api@5.37.9
-
-      - name: Generate TS SDK (Fern, Docker)
-        working-directory: spec/fern
-        run: fern generate --group ts --local --force
-
-      - name: Sync SDK from generator output
-        run: npm run sync
+        run: make sdk-codegen
 
       - name: Build TypeDoc site
         run: npm run docs

@@ -1,5 +1,5 @@
 /**
- * Package root entry for `clockify-sdk-ts-115`. Re-exports the Fern-
+ * Package root entry for `clockify-sdk-ts-115`. Re-exports the locally
  * generated SDK surface (from `./src/index.js`) plus the
  * hand-written ergonomic helpers that live alongside it.
  *
