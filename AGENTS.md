@@ -20,7 +20,7 @@ This repo ships three sibling npm packages, each from its own
 subdirectory:
 
 - **`wrapper/`** → `clockify-sdk-ts-115` — the core TypeScript SDK,
-  Fern-generated + hand-written ergonomics. The original product.
+  local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
   interface on top of the SDK. **28 commands** across 16 top-level
@@ -75,10 +75,11 @@ If packed/published, the `mcp/` package includes:
 - `mcp/README.md`, `mcp/LICENSE`, `mcp/package.json`
 
 Doesn't ship on npm (but lives here for reproducibility):
-- `spec/` — Fern config + corrected OpenAPI snapshot + evidence ledger
-- `output/ts-sdk/` — raw Fern generator output, **gitignored**; regenerable
-  from `spec/` by running `(cd spec/fern && fern generate --group ts --local --force)`.
-  Docker is required for that command.
+- `spec/` — corrected OpenAPI snapshot, historical Fern config, and evidence ledger
+- `output/ts-sdk/` — local TypeScript generator output, **gitignored**;
+  regenerable by running `make sdk-codegen`, which invokes
+  `scripts/generate-sdk-from-openapi.mjs` against the corrected OpenAPI
+  snapshot and then syncs `wrapper/src/**`.
 - `wrapper/{src,dist,node_modules}/` — gitignored; recreated by the build chain
 - `cli/{dist,node_modules}/` — gitignored
 - `mcp/{dist,node_modules}/` — gitignored
@@ -121,11 +122,10 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `PHANTOM_PATHS` + `phantom_path?` — 9 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
      plus bare `/balance` × 2 and `/scheduling/capacity` × 1)
-7. `spec/fern/{fern.config.json,generators.yml}` — Fern workspace.
-   `organization: clockify` drives the emitted class name
-   `ClockifyApiClient`. Generator pinned to
-   `fernapi/fern-typescript-node-sdk:3.71.2`; Fern CLI pinned to
-   `5.37.9`.
+7. `spec/fern/{fern.config.json,generators.yml}` — historical Fern
+   workspace. It is retained for evidence and fallback context only;
+   the active TypeScript SDK emitter is
+   `scripts/generate-sdk-from-openapi.mjs`.
 
 ## 2a. Product north star
 
@@ -179,13 +179,14 @@ GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 185 ops, 9 quarantined s
 spec/corrected/clockify.corrected.openapi.yaml  (frozen snapshot)
         │
         │  npm ci                                                   ← from repo root, installs all 3 workspaces
-        │  (cd spec/fern && fern check --warnings --from-openapi)   ← All checks passed
-        │  (cd spec/fern && fern generate --group ts --local --force)
+        │  make sdk-codegen                                         ← local generator + wrapper sync
+        │  make sdk-codegen-drift                                   ← reproducibility check
+        │  make sdk-codegen-test                                    ← fixture/golden generator behavior
         ▼
-output/ts-sdk/**  (Fern emits ~708 TS files; gitignored; --force WIPES the tree)
+output/ts-sdk/**  (local generator emits TS files + codegen receipt; gitignored; regen WIPES the tree)
         │
-        │  cd wrapper && npm run sync   (rsync into wrapper/src/, skipping Fern's
-        │                                smoke-test scaffold files; also regens
+        │  cd wrapper && npm run sync   (rsync into wrapper/src/, skipping local
+        │                                package scaffold files; also regens
         │                                wrapper/docs/resources/*.md)
         ▼
 wrapper/src/**  (gitignored; populated by sync)
@@ -206,13 +207,13 @@ wrapper/dist/**  (the packable artefact)
 clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default path)
 ```
 
-`fern generate` runs in Docker (`fernapi/fern-typescript-node-sdk:3.71.2`).
-Local Docker daemon required; CI uses the same container. Because
-`output/ts-sdk/**` is gitignored, a fresh clone needs `fern generate`
-before any SDK package gate can run; the validators that depend on
-`wrapper/src/**` (schema-quality, generator-comparison) skip with a
-clear "run fern generate first" warning when the tree is absent so
-non-SDK workflows can still run perfect-fast.
+`make sdk-codegen` runs `scripts/generate-sdk-from-openapi.mjs`
+locally. It does not require Docker, a hosted SDK-generator account,
+or Clockify credentials. Because `output/ts-sdk/**` is gitignored, a
+fresh clone needs `make sdk-codegen` before SDK package gates can run;
+the validators that depend on `wrapper/src/**` (schema-quality,
+generator-comparison) skip with a clear generated-tree warning when
+the tree is absent so non-SDK workflows can still run perfect-fast.
 
 ## 4. Verify gates (run before every commit)
 
@@ -222,7 +223,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 |---|---|
 | See available gates | `make help` |
 | Fast deterministic local proof | `make perfect-fast` |
-| Full GOCLMCP + Fern + package + packed-consumer proof | `make perfect-full` |
+| Full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
 | Explicit sandbox/live cleanup proof | `make perfect-live` |
 | Refresh SDK/CLI/MCP product metadata | `make product-surface` |
 | Refresh shared error/recovery docs | `make error-docs` |
@@ -230,6 +231,9 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Refresh corrected OpenAPI operation inventory | `make openapi-operations` |
 | Refresh OpenAPI/SDK/MCP operation parity | `make operation-parity` |
 | Check corrected OpenAPI contract invariants | `make openapi-lint` |
+| Regenerate local TypeScript SDK output | `make sdk-codegen` |
+| Check local TypeScript SDK generation drift | `make sdk-codegen-drift` |
+| Run local generator fixture/golden tests | `make sdk-codegen-test` |
 | Check generated-core replaceability boundaries | `make generator-independence` |
 | Compare OpenAPI SDK stamps to generated TS methods | `make generator-comparison` |
 | Refresh generated CLI/MCP README tables | `make readme-tables` |
@@ -244,9 +248,10 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Generator (`../GOCLMCP/scripts/gen-clockify-openapi`) | `make gen-openapi` + all 4 drift gates + `go test ./internal/tools/...` |
 | Upstream sources (`GOCLMCP/docs/openapi/sources/`) | same as generator |
 | `spec/corrected/` snapshot only | never — see §5 |
-| `spec/fern/{generators.yml, fern.config.json}` | `fern check --warnings --from-openapi` + `fern generate --group ts --local --force` |
+| `scripts/generate-sdk-from-openapi.mjs` | `make sdk-codegen` + `make sdk-codegen-drift` + `make sdk-codegen-test` + `make generator-comparison` + `cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke` |
+| `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
-| `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify file count is sensible (currently 708) |
+| `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify file count is sensible (currently 691) |
 | `wrapper/*.ts` root files (hand-written; currently 17, all of `composed-fetch.ts`, `create-client.ts`, `deprecation.ts`, `diagnostics.ts`, `error-codes.ts`, `errors.ts`, `health.ts`, `index.ts`, `iter.ts`, `otel-hooks.ts`, `paginated-list.ts`, `pagination.ts`, `rate-limit.ts`, `scoped-client.ts`, `webhook-events.ts`, `webhooks.ts`, `with-response.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
@@ -265,7 +270,7 @@ end-to-end and green before push. Drift gates are non-negotiable.
 1. **Never edit `spec/corrected/clockify.corrected.openapi.yaml`.**
    It's a regenerable snapshot. Edits land in upstream sources
    (`GOCLMCP/docs/openapi/sources/**`) or in the generator script.
-2. **Never edit `output/ts-sdk/**`.** `fern generate --force` wipes
+2. **Never edit `output/ts-sdk/**`.** `make sdk-codegen` wipes
    the tree on every regen. Hand-written code lives in `wrapper/`.
 3. **Never edit `wrapper/src/**`.** `npm run sync` wipes + repopulates
    from `output/ts-sdk/`. The sync script intentionally skips
@@ -308,16 +313,16 @@ wrapper/
 ├── CHANGELOG.md              ← Keep-a-Changelog. NOT in package.json "files" — discoverable via repo URL.
 ├── LICENSE                   ← MIT
 ├── index.ts                  ← package root — re-exports synced SDK + hand-written helpers
-├── create-client.ts          ← createClockifyClient() factory. Hides the addonToken cast behind a
+├── create-client.ts          ← createClockifyClient() factory. Enforces exactly-one auth via a
 │                                discriminated-union API; reads CLOCKIFY_API_KEY / CLOCKIFY_ADDON_TOKEN
 │                                from env when both options omitted; auto-wraps fetch with composedFetch.
 ├── composed-fetch.ts         ← fetch wrapper: User-Agent + X-Request-Id injection, lifecycle hooks,
 │                                configurable retry policy (Retry-After / X-RateLimit-Reset aware).
-│                                When retryPolicy is set the factory passes maxRetries:0 to Fern to
-│                                avoid nested retry loops.
+│                                When retryPolicy is set the factory passes maxRetries:0 to the
+│                                generated client to avoid nested retry loops.
 ├── iter.ts                   ← iterAll + iterPages per-resource pagination. Consumes the Last-Page
 │                                response header on the 15 endpoints that emit it (via the rawResponse
-│                                shape from Fern's HttpResponsePromise); KnownPaginatedMethod union +
+│                                shape from the generated HttpResponsePromise); KnownPaginatedMethod union +
 │                                19-entry KNOWN_PAGINATED_METHODS drift assertion catches upstream renames.
 ├── webhooks.ts               ← verifyClockifyWebhook + constructEvent for the Clockify-Signature-Token
 │                                header (simple shared-secret scheme, not HMAC).
@@ -401,14 +406,10 @@ provenance: true }` for the legacy release path. Because that would
 publish publicly with sigstore provenance, do not trigger it without
 explicit maintainer approval.
 
-The `addonToken: (() => undefined) as unknown as () => string` cast
-is a known workaround for a Fern typing limitation
-(`spec/evidence/discrepancies.md` →
-`fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`).
-`createClockifyClient` hides it for the 99% case. The raw cast
-still lives inside the factory and in `tests/sandbox.test.ts`
-(which exercises `ClockifyApiClient` directly). Remove only after
-the upstream Fern type is fixed.
+The local generator models `apiKey` and `addonToken` as mutually
+exclusive. Do not reintroduce the historical
+`addonToken: (() => undefined) as unknown as () => string` workaround;
+that belongs only to the archived Fern discrepancy notes.
 
 ## 7. Live tests (env-gated; sandbox-only)
 
@@ -457,9 +458,10 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    `spec/evidence/fern-issues/bare-array-pagination-results-path.md`
    (internal evidence only — not filed).
 2. `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
-   — Fern types both `apiKey` and `addonToken` as required;
-   Clockify accepts exactly one. Workaround in
-   `createClockifyClient`; cast removal gated on upstream fix.
+   — historical Fern limitation where both `apiKey` and `addonToken`
+   were typed as required even though Clockify accepts exactly one.
+   The local generator now emits mutually-exclusive auth options; keep
+   the discrepancy entry as migration evidence only.
    Issue drafted at
    `spec/evidence/fern-issues/addonToken-or-security-required-fields.md`
    (internal evidence only — not filed).
@@ -469,8 +471,8 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    91.4% of the 185-op live surface. The other ~16 ops are
    already-clean operationIds or per-module domain edge cases.
 
-Re-attempt items 1-2 only after the upstream gating concern
-resolves (Fern issue acknowledged or workaround discovered).
+Re-attempt item 1 only after the upstream gating concern resolves
+(Fern issue acknowledged or workaround discovered).
 
 ## 9. Secret hygiene
 
@@ -489,7 +491,7 @@ resolves (Fern issue acknowledged or workaround discovered).
   `refactor:`, `test:`, `ci:`. One logical change per commit.
 - Subject line ≤ 72 chars. Wrap body at 72.
 - Generated code (under `output/ts-sdk/`) is **gitignored**; you regenerate
-  it locally with Docker before running SDK package gates. When a generator
+  it locally with `make sdk-codegen` before running SDK package gates. When a generator
   change touches many files, describe the *change to the generator*, not the
   diff to the generated files. Example:
   > `feat(gen): stamp page+page-size on 18 list endpoints`
@@ -550,15 +552,13 @@ request and stop:
    is fine — those are data-only.
 2. Renaming the npm package (`clockify-sdk-ts-115`). The repo's git
    name (`clockify-ts-sdk`) and the npm name diverged intentionally.
-3. Changing the Fern CLI version (`spec/fern/fern.config.json`'s
-   `version: "5.37.9"`) or generator container version
-   (`spec/fern/generators.yml`'s
-   `fernapi/fern-typescript-node-sdk:3.71.2`). Bumps require a full
-   regression cycle.
-4. Removing the `addonToken` workaround cast in `wrapper/`.
-   It pretends to satisfy Fern's typing while sending the right
-   header at runtime — removing it without an upstream Fern fix
-   breaks auth.
+3. Restoring Fern, Speakeasy, Stainless, or another hosted/paid SDK
+   generator as the active TypeScript generation path. That needs a
+   maintainer decision and a full regression cycle.
+4. Removing the `addonToken` workaround cast in `wrapper/` before the
+   replacement auth typing is proven end-to-end. It currently protects
+   runtime auth compatibility while the wrapper hides generated auth
+   details from most users.
 5. Anything that affects a customer workspace (running tests
    against a non-sandbox API key, posting to a production webhook,
    etc.).

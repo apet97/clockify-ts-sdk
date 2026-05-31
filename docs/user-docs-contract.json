@@ -218,7 +218,7 @@
       "path": "docs/generator-portability-plan.md",
       "mustContain": [
         "Portability principles",
-        "Vendor-exit checklist",
+        "Local-generator proof checklist",
         "Forbidden portability shortcuts",
         "Replacement procedure"
       ]
@@ -380,7 +380,7 @@
       "mustContain": [
         "Maintenance cadence",
         "Dependency update procedure",
-        "Fern and generator bump procedure",
+        "Local SDK and OpenAPI generator bump procedure",
         "Clockify API drift response",
         "Release rehearsal procedure",
         "Rollback procedure"

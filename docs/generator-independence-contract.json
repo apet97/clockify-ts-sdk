@@ -1,17 +1,18 @@
 {
   "schemaVersion": 1,
-  "purpose": "Generated-core independence contract. Keeps Fern output behind wrapper/package seams so CLI, MCP, examples, and public package exports do not depend on generated internals.",
+  "purpose": "Generated-core independence contract. Keeps local-generator output behind wrapper/package seams so CLI, MCP, examples, and public package exports do not depend on generated internals.",
   "files": {
     "wrapperPackage": "wrapper/package.json",
     "cliPackage": "cli/package.json",
     "mcpPackage": "mcp/package.json",
     "productSurface": "docs/product-surface.json",
-    "fernGenerators": "spec/fern/generators.yml",
+    "localGenerator": "scripts/generate-sdk-from-openapi.mjs",
     "syncScript": "wrapper/scripts/sync-sdk.sh",
     "generatedCoreDecision": "docs/decisions/0002-generated-core-boundary.md"
   },
-  "fern": {
-    "tsOutputMarker": "path: ../../output/ts-sdk"
+  "localGenerator": {
+    "inputOpenApi": "spec/corrected/clockify.corrected.openapi.yaml",
+    "outputPath": "output/ts-sdk"
   },
   "wrapperPackage": {
     "forbiddenFiles": [
@@ -73,7 +74,7 @@
       "manual-generated"
     ],
     "decisionMarkers": [
-      "Prefer upstream OpenAPI source or generator fixes first.",
+      "Prefer upstream OpenAPI source or local generator fixes first.",
       "Durable wrapper seams are the normal place for product behavior.",
       "Deterministic post-generation cleanup is an escape hatch, not a product layer.",
       "Every generated-output mutator must be registered in `docs/generator-independence-contract.json`.",

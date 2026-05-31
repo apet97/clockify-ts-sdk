@@ -9,23 +9,21 @@ too. Skim it before opening a non-trivial PR.
 
 ```bash
 git clone https://github.com/apet97/clockify-ts-sdk.git
-cd clockify-ts-sdk/wrapper
+cd clockify-ts-sdk
 
 npm ci
 
-# Sync the Fern-generated SDK into wrapper/src/. Reads from
-# ../output/ts-sdk/, which is the most recent generator output
-# committed in this repo.
-npm run sync
+# Generate the local SDK core into output/ts-sdk/ and sync wrapper/src/.
+make sdk-codegen
 
 # Type-check + dual build + verify ESM + CJS surface
-npm run type-check
-npm run build
-npm run build:smoke
+npm run type-check -w clockify-sdk-ts-115
+npm run build -w clockify-sdk-ts-115
+npm run build:smoke -w clockify-sdk-ts-115
 
 # Test (unit tests + live sandbox flows; live ones skip if
 # CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent)
-npm test
+npm test -w clockify-sdk-ts-115
 ```
 
 For the full build chain (regenerating from the canonical
@@ -37,9 +35,10 @@ OpenAPI), see [AGENTS.md §3](./AGENTS.md#3-the-build-chain-top-to-bottom).
   `create-client.ts`, `composed-fetch.ts`, `iter.ts`, `webhooks.ts`,
   `pagination.ts`) — edit freely; tests in `wrapper/tests/` cover them.
 - ❌ **Synced SDK** under `wrapper/src/**` — wiped on every
-  `npm run sync`. Don't edit; raise issues with the synced output
-  upstream in [Fern](https://github.com/fern-api/fern) or the
-  spec-generator at [apet97/go-clockify](https://github.com/apet97/go-clockify).
+  `make sdk-codegen`. Don't edit; fix generated shape in the local
+  generator (`scripts/generate-sdk-from-openapi.mjs`) or fix API truth
+  in the spec-generator at
+  [apet97/go-clockify](https://github.com/apet97/go-clockify).
 - ❌ **OpenAPI snapshot** at `spec/corrected/clockify.corrected.openapi.yaml`
   — regenerable; edits land in the upstream sources at
   `../GOCLMCP/docs/openapi/sources/**` or in the generator script.
@@ -47,7 +46,7 @@ OpenAPI), see [AGENTS.md §3](./AGENTS.md#3-the-build-chain-top-to-bottom).
 ## Local-API testing
 
 The live test suite in `wrapper/tests/sandbox.test.ts` exercises
-5 flows against the real Clockify API. **Never run it against a
+flows against the real Clockify API. **Never run it against a
 production workspace** — CRUD round-trips create + delete real
 records.
 
@@ -59,8 +58,8 @@ export CLOCKIFY_WORKSPACE_ID="..."   # the sandbox workspace ID
 npm test
 ```
 
-Without these, the live tests skip cleanly and only the 88 unit
-tests run.
+Without these, the live tests skip cleanly and only the deterministic
+unit tests run.
 
 ## Conventions
 

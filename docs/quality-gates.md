@@ -8,7 +8,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 |---|---|---|
 | See available gates | `make help` | The repo exposes a one-screen command menu. |
 | Fast deterministic proof | `make perfect-fast` | Guarded generated paths are clean, product surface metadata is current, allowlisted docs drift is checked, and SDK/CLI/MCP package gates pass. |
-| Full generation proof | `make perfect-full` | GOCLMCP drift gates, Fern validation/generation, all package gates, and packed-consumer smoke pass. |
+| Full generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, and packed-consumer smoke pass. |
 | Live sandbox proof | `make perfect-live` | TS MCP live cleanup and GOCLMCP sacrificial-workspace live proof run with explicit live env. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
@@ -18,10 +18,10 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check OpenAPI contract lint | `make openapi-lint` | Corrected OpenAPI operation count, operation IDs, tags, responses, SDK naming coverage, pagination, and Last-Page stamps stay within expected bounds. |
 | Check schema quality | `make schema-quality` | Corrected OpenAPI schemas, enums, loose objects, request/response models, evidence ledger, and generated TypeScript model ergonomics stay governed. |
 | Check OpenAPI evidence contract | `make openapi-evidence` | Discrepancy ledger policy, required finding markers, support evidence, and OpenAPI proof targets stay explicit. |
-| Check upstream drift lifecycle | `make upstream-drift` | Clockify/API/Fern/GOCLMCP drift detection, classification, evidence, regeneration, reconciliation, and proof rules stay explicit. |
+| Check upstream drift lifecycle | `make upstream-drift` | Clockify/API/GOCLMCP/SDK drift detection, classification, evidence, regeneration, reconciliation, and proof rules stay explicit. |
 | Check operation coverage | `make operation-coverage` | OpenAPI operation count plus SDK, TS MCP, GOCLMCP, and curated parity coverage floors do not regress. |
-| Check generator config | `make generator-config` | Fern CLI/generator pins, active corrected OpenAPI snapshot, and output paths stay intentional. |
-| Check generator independence | `make generator-independence` | Generated Fern output remains behind the wrapper package seam and is not imported by CLI/MCP as product code. |
+| Check generator config | `make generator-config` | Local TypeScript generator input, output, command, and wrapper sync paths stay intentional. |
+| Check generator independence | `make generator-independence` | Generated local SDK output remains behind the wrapper package seam and is not imported by CLI/MCP as product code. |
 | Check generator comparison | `make generator-comparison` | Corrected OpenAPI SDK method stamps still exist in generated TypeScript client files. |
 | Check generator portability | `make generator-portability` | No-paid-generator, local-regeneration, and vendor-exit boundaries stay explicit. |
 | Check package contract | `make package-contract` | SDK/CLI/MCP manifests keep the expected public package names, bins, exports, pack files, and publish-safety rails. |
@@ -33,7 +33,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check env/config contract | `make env-contract` | SDK/CLI/MCP environment variables, mock base URL behavior, and secret-hygiene docs stay aligned. |
 | Check config precedence | `make config-precedence` | SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety stay aligned. |
 | Check SDK public API contract | `make sdk-public-api` | SDK root symbols, package subpaths, and dual-build smoke expectations agree. |
-| Check SDK runtime contract | `make sdk-runtime-contract` | Hand-written SDK runtime seams around the generated Fern core stay durable, exported, and tested. |
+| Check SDK runtime contract | `make sdk-runtime-contract` | Hand-written SDK runtime seams around the generated core stay durable, exported, and tested. |
 | Check decision records | `make decision-records` | Durable architectural and operations decisions remain documented with context, consequences, and proof. |
 | Check contract inventory | `make contract-inventory` | Policy docs, contract JSON, checker scripts, Make targets, generated inventory report shape, toolbox helper ownership and command coverage, docs index rows, quality-gate rows, and audit evidence stay wired together. |
 | Print contract inventory report | `make contract-inventory-report` | Static no-network report of contract entries, checker ownership, generated report/helper ownership, toolbox helper ownership and command coverage, perfect-gate coverage, and missing-file signals. |
@@ -72,7 +72,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
 | Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, generated-path rules, temporary-context lifecycle, and stale-count markers stay aligned. |
-| Check developer environment | `make developer-environment` | Package-local lockfiles/scripts, exact `prepublishOnly` command shape, repo-doctor generated report shape, Node floor, Fern pins, Docker/GOCLMCP setup docs, and no-root-workspace boundary stay aligned. |
+| Check developer environment | `make developer-environment` | Root workspace lockfile/scripts, exact `prepublishOnly` command shape, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundaries stay aligned. |
 | Check operator toolbox | `make operator-toolbox` | No-network helper command catalogue stays safe, discoverable, inventory-owned, and clearly separated from proof gates. |
 | Check operator onboarding | `make operator-onboarding` | Non-coder bootstrap, generated onboarding-plan shape, SDK/CLI/MCP path choice, mock/live boundaries, stop conditions, and readiness levels stay aligned. |
 | Check API docs | `make api-docs` | TypeDoc configuration, generated resource docs, sync wiring, Pages workflow, and docs package identity stay aligned. |
@@ -116,8 +116,9 @@ for normal Clockify use.
 |---|---|---|
 | GOCLMCP OpenAPI truth | `cd ../GOCLMCP && make openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift` | Canonical OpenAPI and generated Go MCP docs/assets are current. |
 | GOCLMCP tool parser | `cd ../GOCLMCP && go test ./internal/tools/...` | The Go MCP tool layer still parses and consumes the canonical spec. |
-| Fern validation | `cd spec/fern && fern check --warnings --from-openapi` | The local snapshot is coherent enough for Fern. |
-| Fern TypeScript output | `cd spec/fern && fern generate --group ts --local --force` | The generated TypeScript core can be reproduced. |
+| Local TypeScript generator | `make sdk-codegen` | The corrected OpenAPI snapshot can reproduce `output/ts-sdk/**` and refresh `wrapper/src/**`. |
+| Local generator drift check | `make sdk-codegen-drift` | The local generator output is reproducible without writing files. |
+| Local generator fixture tests | `make sdk-codegen-test` | Fixture specs prove nullable fields, simple unions, `RTL`/`rtl`, path/query/body splitting, binary responses, multipart upload, naming hints, deterministic ordering, and JSON diagnostic receipts. |
 
 ## Live safety rules
 

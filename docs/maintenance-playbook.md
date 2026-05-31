@@ -11,7 +11,7 @@ API drift, release rehearsals, and rollback.
 |---|---|---|
 | Every local change | Run the smallest change-scope gates from `docs/change-impact-policy.md`. | `make change-impact` plus the listed target set. |
 | Weekly when active | Refresh product-surface, README tables, troubleshooting, operation parity, and risk register decisions if code moved. | `make perfect-fast` when verification is allowed. |
-| Monthly | Review dependency pins, Node runtime floor, Fern CLI/generator pins, GOCLMCP drift, mock/replay coverage, risk register, and performance-budget calibration. | `make dependency-boundary`, `make generator-config`, `make risk-register`. |
+| Monthly | Review dependency pins, Node runtime floor, local SDK generator wiring, GOCLMCP drift, mock/replay coverage, risk register, and performance-budget calibration. | `make dependency-boundary`, `make generator-config`, `make risk-register`. |
 | Before release or handoff | Run packed-consumer proof, release readiness, final proof receipt, and final audit. | `make perfect-full`, `make pack-smoke`, `make release-readiness`. |
 ## No-network maintenance planner
 
@@ -22,7 +22,7 @@ required targets, docs to inspect, receipts to leave, and stop conditions for:
 - weekly upkeep,
 - monthly hygiene,
 - dependency updates,
-- Fern and OpenAPI generator bumps,
+- local SDK and OpenAPI generator bumps,
 - Clockify API drift response,
 - release or final-readiness rehearsal,
 - rollback and recovery.
@@ -36,7 +36,7 @@ needs to consume the same plan.
 
 ## Dependency update procedure
 
-1. Identify the package surface: SDK wrapper, CLI, MCP, root scripts, Fern config,
+1. Identify the package surface: SDK wrapper, CLI, MCP, root scripts, local generator,
    GOCLMCP, or documentation-only.
 2. Read `docs/dependency-policy.md`, `docs/runtime-support.json`, and
    `docs/dependency-boundary.json` before changing versions.
@@ -47,17 +47,18 @@ needs to consume the same plan.
 6. Use the change-impact contract to choose proof gates. Do not widen to live
    proof unless live Clockify behavior changed and sandbox credentials are known.
 
-## Fern and generator bump procedure
+## Local SDK and OpenAPI generator bump procedure
 
-Fern CLI and generator container versions are release-critical pins. A bump is
-not a routine dependency update.
+The local TypeScript SDK generator and the GOCLMCP OpenAPI generator are
+release-critical pins. A bump is not a routine dependency update.
 
 1. Record the reason for the bump in a decision record or risk-register note.
 2. Run the GOCLMCP canonical chain first: `make gen-openapi`, all four drift
    gates, and `go test ./internal/tools/...` from `../GOCLMCP` when allowed.
 3. Copy only the regenerated OpenAPI snapshot from GOCLMCP; never hand-edit
    `spec/corrected/clockify.corrected.openapi.yaml`.
-4. Run Fern validation/generation and wrapper sync only as the documented chain.
+4. Run `make sdk-codegen` and `make sdk-codegen-drift`; never patch
+   `output/ts-sdk/**` or `wrapper/src/**` directly.
 5. Compare generated method stamps, operation parity, SDK public API, wrapper
    runtime seams, CLI/MCP contracts, and packed-consumer proof.
 6. Close or update related risk-register entries only after receipt-backed proof.

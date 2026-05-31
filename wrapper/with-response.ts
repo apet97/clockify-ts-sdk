@@ -47,7 +47,7 @@ export interface WithResponseResult<T> {
     status: number;
 }
 
-/** Shape compatible with what every Fern-generated SDK method
+/** Shape compatible with what every generated SDK method
  *  returns: a thenable that resolves to T and also exposes
  *  `.withRawResponse()`. */
 export interface ResponseAwarePromise<T> extends PromiseLike<T> {

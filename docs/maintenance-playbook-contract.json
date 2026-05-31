@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Maintainer maintenance and upgrade playbook contract for dependency updates, Fern/generator bumps, Clockify API drift, release rehearsal, rollback, and receipt discipline.",
+  "purpose": "Maintainer maintenance and upgrade playbook contract for dependency updates, local SDK/OpenAPI generator bumps, Clockify API drift, release rehearsal, rollback, and receipt discipline.",
   "policyDocument": {
     "path": "docs/maintenance-playbook.md",
     "contains": [
@@ -8,7 +8,7 @@
       "No-network maintenance planner",
       "node scripts/plan.mjs maintenance --cadence all",
       "Dependency update procedure",
-      "Fern and generator bump procedure",
+      "Local SDK and OpenAPI generator bump procedure",
       "Clockify API drift response",
       "Release rehearsal procedure",
       "Rollback procedure",
@@ -106,7 +106,7 @@
       ]
     },
     {
-      "id": "fern-generator-bump",
+      "id": "local-sdk-generator-bump",
       "markers": [
         "release-critical pins",
         "GOCLMCP canonical chain",
@@ -158,7 +158,7 @@
       "path": "docs/generator-portability-plan.md",
       "contains": [
         "without paying for Stainless, Speakeasy, Fern Cloud",
-        "Vendor-exit checklist"
+        "Local-generator proof checklist"
       ]
     },
     {

@@ -2,18 +2,14 @@
  * Recommended factory for `ClockifyApiClient`.
  *
  * Clockify exposes two mutually-exclusive auth schemes (`X-Api-Key`
- * and `X-Addon-Token`). The Fern-generated `BaseClientOptions`
- * types both fields as required even though the OpenAPI security
- * block is an OR — sending both headers makes Clockify respond
- * `HTTP 401 "Multiple or none auth tokens present"`. Tracked as
- * `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`
- * in `spec/evidence/discrepancies.md`.
+ * and `X-Addon-Token`). The generated `BaseClientOptions` models
+ * that as exactly-one auth; sending both headers makes Clockify
+ * respond `HTTP 401 "Multiple or none auth tokens present"`.
  *
  * This factory accepts exactly one of `apiKey` or `addonToken`
- * (enforced at both compile time and runtime), nulls the other
- * field via the documented supplier-returns-undefined pattern, and
- * always wraps the underlying `fetch` with {@link composedFetch} so
- * every constructed client gets a `User-Agent` and `X-Request-Id`
+ * (enforced at both compile time and runtime), falls back to env vars
+ * when both are omitted, and always wraps the underlying `fetch` with
+ * {@link composedFetch} so every constructed client gets a `User-Agent` and `X-Request-Id`
  * header by default. Opt-out + advanced configuration flow through
  * the same options object — see {@link CreateClockifyClientOptions}.
  */
@@ -88,12 +84,12 @@ export interface ClockifyClientEnhancements {
      *  `console.warn` but never block the request. */
     hooks?: ComposedFetchHooks;
     /** Override the retry policy. When set (truthy), the wrapper's
-     *  retry loop replaces Fern's internal retry — the factory
-     *  automatically passes `maxRetries: 0` to Fern. Pass `false` to
-     *  disable retries entirely. Omit to keep Fern's default retry
+     *  retry loop replaces the generated client's retry layer — the
+     *  factory automatically passes `maxRetries: 0` to that layer.
+     *  Pass `false` to disable retries entirely. Omit to keep generated retry
      *  behavior (1s initial / 60s max / 20% jitter / 408+429+5xx). */
     retryPolicy?: RetryPolicy | false;
-    /** Fern's internal retry attempts (effective only when
+    /** Generated-client retry attempts (effective only when
      *  `retryPolicy` is omitted; ignored otherwise to avoid nested
      *  retry loops). Default `2`. */
     maxRetries?: number;
@@ -167,8 +163,6 @@ export type CreateClockifyClientOptions =
               apiKey?: never;
               addonToken?: never;
           });
-
-const NULL_SUPPLIER = (() => undefined) as unknown as () => string;
 
 /** Env-var names the factory reads when neither auth option is
  *  passed explicitly. The naming mirrors Clockify's own documented
@@ -462,9 +456,9 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     });
 
     // When the user supplies a retry policy, our composed-fetch is
-    // the retry layer — disable Fern's internal retry to avoid
-    // nested loops. Otherwise honor whatever maxRetries the user
-    // passed (or Fern's default of 2).
+    // the retry layer — disable the generated client's retry layer to
+    // avoid nested loops. Otherwise honor whatever maxRetries the user
+    // passed (or the generated client's default of 2).
     const effectiveMaxRetries = retryPolicy !== undefined ? 0 : maxRetries;
 
     const base = {
@@ -479,7 +473,6 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
                 new ClockifyApiClient({
                     ...base,
                     apiKey: effectiveApiKey,
-                    addonToken: NULL_SUPPLIER,
                 }),
             ),
         );
@@ -490,7 +483,6 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
             new ClockifyApiClient({
                 ...base,
                 addonToken: effectiveAddonToken!,
-                apiKey: NULL_SUPPLIER,
             }),
         ),
     );

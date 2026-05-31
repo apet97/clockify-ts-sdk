@@ -21,7 +21,7 @@ body:
         - SDK wrapper (`clockify-sdk-ts-115`)
         - CLI (`@clockify115/cli`)
         - MCP server (`@clockify115/mcp-server`)
-        - OpenAPI / GOCLMCP / Fern generation contract
+        - OpenAPI / GOCLMCP / local generation contract
         - Examples / docs
         - Mock/replay / acceptance scenario
         - Release/support tooling

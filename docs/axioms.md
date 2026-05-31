@@ -10,7 +10,7 @@ These are the rules for making this repo feel like a serious SDK product without
 
 2. Generated code is a dependency, not the product.
 
-   Users should touch the durable SDK wrapper, CLI commands, and MCP tools. Fern output can be replaced if the public seams stay stable.
+   Users should touch the durable SDK wrapper, CLI commands, and MCP tools. Local generated output can be replaced if the public seams stay stable.
 
 3. Every public surface needs a receipt.
 

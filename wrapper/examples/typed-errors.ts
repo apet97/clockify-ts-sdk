@@ -33,8 +33,8 @@ if (!apiKey || !workspaceId) {
 
 const client = createClockifyClient({ apiKey });
 
-// (1) Trigger a 404 by reading a tag that doesn't exist. The Fern
-// spec documents 401 + 404 for this endpoint, so NotFoundError is
+// (1) Trigger a 404 by reading a tag that doesn't exist. The local
+// generator emits the documented 401 + 404 classes, so NotFoundError is
 // thrown directly (no `promoteApiError` needed).
 try {
     await client.tags.get({ workspaceId, tagId: "deliberately-missing-tag-id" });

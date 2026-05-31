@@ -5,10 +5,10 @@
     "path": "docs/developer-environment-policy.md",
     "mustContain": [
       "Node `>=20`",
-      "package-lock.json",
-      "There is no root `package.json`",
+      "npm workspaces",
+      "root `package.json`",
       "exact `prepublishOnly` command shapes",
-      "Docker",
+      "scripts/generate-sdk-from-openapi.mjs",
       "../GOCLMCP",
       "node scripts/repo-doctor.mjs",
       "make developer-environment"
@@ -40,13 +40,15 @@
       "NPM_TOKEN",
       "GITHUB_TOKEN",
       "../GOCLMCP",
-      "fernapi/fern-typescript-node-sdk",
+      "scripts/generate-sdk-from-openapi.mjs",
       "requiredScriptValues",
       "wrapper/src",
       "output/ts-sdk"
     ],
     "generatedReport": {
       "network": "none",
+      "packageModel": "npm-workspaces",
+      "rootPackageJsonAllowed": true,
       "environmentShapeFalseFields": [
         "envValuesCaptured",
         "secretsCaptured",
@@ -54,13 +56,17 @@
       ],
       "requiredCheckIds": [
         "node.floor",
-        "root.no-package-json",
-        "root.no-package-lock",
+        "root.package-json",
+        "root.package-lock",
+        "root.workspace.wrapper",
+        "root.workspace.cli",
+        "root.workspace.mcp",
         "wrapper.script.prepublishOnly.command",
         "cli.script.prepublishOnly.command",
         "mcp.script.prepublishOnly.command",
-        "fern.cli-pin",
-        "fern.generator-pin",
+        "codegen.local-generator",
+        "codegen.input-openapi",
+        "codegen.sync-script",
         "goclmcp.sibling"
       ]
     }
@@ -115,14 +121,11 @@
       "engine": ">=20"
     }
   ],
-  "fern": {
-    "config": "spec/fern/fern.config.json",
-    "generators": "spec/fern/generators.yml",
+  "localGenerator": {
+    "script": "scripts/generate-sdk-from-openapi.mjs",
     "mustContain": [
-      "\"version\": \"5.37.9\"",
-      "fernapi/fern-typescript-node-sdk",
-      "version: 3.71.2",
-      "path: ../../output/ts-sdk"
+      "spec/corrected/clockify.corrected.openapi.yaml",
+      "output/ts-sdk"
     ]
   },
   "supportingDocs": [
@@ -131,14 +134,14 @@
       "mustContain": [
         "wired as npm workspaces",
         "../GOCLMCP",
-        "Local Docker daemon required"
+        "scripts/generate-sdk-from-openapi.mjs"
       ]
     },
     {
       "path": "docs/dependency-policy.md",
       "mustContain": [
         "Package runtime floors",
-        "Fern CLI"
+        "Repo-owned local TypeScript generator"
       ]
     },
     {
@@ -151,8 +154,8 @@
     {
       "path": "docs/generator-config-contract.json",
       "mustContain": [
-        "5.37.9",
-        "3.71.2"
+        "scripts/generate-sdk-from-openapi.mjs",
+        "spec/corrected/clockify.corrected.openapi.yaml"
       ]
     }
   ],

@@ -5,7 +5,7 @@
  * structured fields like `retryAfterMs`, instead of digging into
  * `err.statusCode === 429 && err.rawResponse.headers.get("retry-after")`.
  *
- * The Fern-generated client throws the base `ClockifyApiError` for any
+ * The generated client throws the base `ClockifyApiError` for any
  * status code that isn't documented in the OpenAPI spec for that
  * endpoint. To get the typed subclass, call `promoteApiError(err)` at
  * the catch site:
@@ -35,6 +35,13 @@ import {
 import type { RawResponse } from "./src/core/index.js";
 import { ClockifyApiError } from "./src/errors/index.js";
 
+export {
+    BadRequestError,
+    ForbiddenError,
+    MethodNotAllowedError,
+    NotFoundError,
+    UnauthorizedError,
+} from "./src/api/errors/index.js";
 export {
     CLOCKIFY_ERROR_CODES,
     errorCodeEntry,
@@ -139,7 +146,7 @@ export class ServiceUnavailableError extends ClockifyApiError {
  * reset, TLS handshake failure, `TypeError: fetch failed` in
  * Node's built-in fetch).
  *
- * The Fern-generated client wraps these as a base
+ * The generated client wraps these as a base
  * `ClockifyApiError` with `statusCode == null` and `cause` set to
  * the underlying `TypeError` / `Error`. `promoteApiError(err)`
  * detects this shape and returns a `ClockifyConnectionError` so
@@ -173,7 +180,7 @@ export class ClockifyConnectionError extends ClockifyApiError {
  * `AbortSignal` (caller-initiated cancellation, not server-side
  * timeout).
  *
- * The Fern-generated client wraps these as a base
+ * The generated client wraps these as a base
  * `ClockifyApiError` with `statusCode == null` and `cause.name`
  * set to `"AbortError"` (DOMException convention).
  * `promoteApiError(err)` detects this shape and returns a
@@ -224,7 +231,7 @@ const STATUS_TO_CTOR = new Map<number, new (o: SubclassOpts) => ClockifyApiError
  * known subclass, return a new instance of that subclass (preserving
  * `body`, `rawResponse`, `cause`). Otherwise return `err` unchanged.
  *
- * The Fern-generated client already throws typed subclasses for status
+ * The generated client already throws typed subclasses for status
  * codes documented in the OpenAPI spec (e.g., 400 BadRequestError,
  * 401 UnauthorizedError). This helper fills the gaps for codes the
  * spec didn't document — currently 409, 429, 500, 503 — plus the
@@ -249,10 +256,8 @@ export function promoteApiError(err: unknown): unknown {
 
     // Non-status-code branch: inspect `cause` to differentiate
     // AbortSignal cancellations from generic network failures.
-    // Fern's `handleNonStatusCodeError` wraps the underlying
-    // `TypeError: fetch failed` / `DOMException("…", "AbortError")`
-    // as `ClockifyApiError({ cause, statusCode: undefined })` —
-    // see `src/errors/handleNonStatusCodeError.ts` case "unknown".
+    // The generated runtime wraps underlying fetch failures as
+    // `ClockifyApiError({ cause, statusCode: undefined })`.
     if (statusCode == null) {
         if (isAbortCause(cause)) {
             return new ClockifyAbortError({ statusCode, body, rawResponse, cause, message });

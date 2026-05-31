@@ -31,20 +31,6 @@ function safeRelativePath(label, relativePath) {
     return normalized;
 }
 
-function fernRelativePath(label, relativePath) {
-    if (typeof relativePath !== "string" || relativePath.trim() === "") {
-        fail(`${label}: must be a non-empty Fern-relative path`);
-        return "";
-    }
-
-    if (path.isAbsolute(relativePath)) {
-        fail(`${label}: must not be absolute: ${relativePath}`);
-        return "";
-    }
-
-    return path.normalize(relativePath).replace(/\\/g, "/");
-}
-
 function readRelative(relativePath, label = relativePath) {
     const safePath = safeRelativePath(label, relativePath);
     if (safePath === "") return "";
@@ -78,6 +64,10 @@ function assertObject(label, value) {
     return true;
 }
 
+function assertBoolean(label, value) {
+    if (typeof value !== "boolean") fail(`${label}: must be a boolean`);
+}
+
 function assertNonEmptyString(label, value) {
     if (typeof value !== "string" || value.trim() === "") {
         fail(`${label}: must be a non-empty string`);
@@ -91,8 +81,7 @@ function assertUnique(label, values) {
     if (duplicates.length > 0) fail(`${label}: must be unique; duplicates: ${[...new Set(duplicates)].join(", ")}`);
 }
 
-function assertStringArray(label, values, { required = true, min = 0 } = {}) {
-    if (values == null && !required) return [];
+function assertStringArray(label, values, { min = 0 } = {}) {
     if (!Array.isArray(values)) {
         fail(`${label}: must be an array`);
         return [];
@@ -114,33 +103,26 @@ function validateRequiredDoc(index, doc) {
     assertStringArray(`${label}.contains`, doc.contains, { min: 1 });
 }
 
-function validateGeneratorGroup(label, group) {
-    if (!assertObject(label, group)) return;
-    assertNonEmptyString(`${label}.name`, group.name);
-    assertNonEmptyString(`${label}.version`, group.version);
-    fernRelativePath(`${label}.outputPath`, group.outputPath);
-}
-
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion: must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-
-    if (assertObject("fernConfig", contract.fernConfig)) {
-        safeRelativePath("fernConfig.path", contract.fernConfig.path);
-        assertNonEmptyString("fernConfig.organization", contract.fernConfig.organization);
-        assertNonEmptyString("fernConfig.cliVersion", contract.fernConfig.cliVersion);
+    if (assertObject("localGenerator", contract.localGenerator)) {
+        for (const key of ["script", "inputOpenApi", "outputPath", "syncScript", "generatedWrapperPath"]) {
+            safeRelativePath(`localGenerator.${key}`, contract.localGenerator[key]);
+        }
+        assertNonEmptyString("localGenerator.writeCommand", contract.localGenerator.writeCommand);
+        assertNonEmptyString("localGenerator.checkCommand", contract.localGenerator.checkCommand);
+        assertNonEmptyString("localGenerator.testCommand", contract.localGenerator.testCommand);
     }
 
-    if (assertObject("generators", contract.generators)) {
-        safeRelativePath("generators.path", contract.generators.path);
-        assertNonEmptyString("generators.defaultGroup", contract.generators.defaultGroup);
-        fernRelativePath("generators.activeOpenApiPath", contract.generators.activeOpenApiPath);
-        if (assertObject("generators.groups", contract.generators.groups)) {
-            for (const [group, expected] of Object.entries(contract.generators.groups)) {
-                validateGeneratorGroup(`generators.groups.${group}`, expected);
-            }
+    if (assertObject("offlineReproducibility", contract.offlineReproducibility)) {
+        for (const key of ["requiresDocker", "requiresHostedLogin", "requiresApiToken"]) {
+            assertBoolean(`offlineReproducibility.${key}`, contract.offlineReproducibility[key]);
         }
+        assertStringArray("offlineReproducibility.forbiddenCommandMarkers", contract.offlineReproducibility.forbiddenCommandMarkers, {
+            min: 1,
+        });
     }
 
     if (!Array.isArray(contract.requiredDocs) || contract.requiredDocs.length === 0) {
@@ -153,7 +135,7 @@ function validateContractShape() {
     );
 
     if (assertObject("wiring", contract.wiring)) {
-        for (const key of ["makeTarget", "checker", "qualityGate", "inventoryId", "auditId"]) {
+        for (const key of ["makeTarget", "checker", "codegenTarget", "codegenDriftTarget", "codegenTestTarget", "qualityGate", "inventoryId", "auditId"]) {
             assertNonEmptyString(`wiring.${key}`, contract.wiring[key]);
         }
         safeRelativePath("wiring.checker", contract.wiring.checker);
@@ -169,47 +151,42 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-const fernConfig = readJson(contract.fernConfig.path, "fernConfig.path");
-if (fernConfig == null) {
-    fail(`${contract.fernConfig.path} is missing`);
-} else {
-    if (fernConfig.organization !== contract.fernConfig.organization) {
-        fail(`expected Fern organization ${contract.fernConfig.organization}, got ${fernConfig.organization}`);
-    }
-    if (fernConfig.version !== contract.fernConfig.cliVersion) {
-        fail(`expected Fern CLI ${contract.fernConfig.cliVersion}, got ${fernConfig.version}`);
+const localGenerator = contract.localGenerator;
+const scriptText = readRelative(localGenerator.script, "localGenerator.script");
+readRelative(localGenerator.inputOpenApi, "localGenerator.inputOpenApi");
+readRelative(localGenerator.syncScript, "localGenerator.syncScript");
+
+for (const marker of [localGenerator.inputOpenApi, localGenerator.outputPath]) {
+    if (!scriptText.includes(marker)) fail(`${localGenerator.script} missing marker ${marker}`);
+}
+for (const marker of contract.offlineReproducibility.forbiddenCommandMarkers ?? []) {
+    if (scriptText.toLowerCase().includes(marker.toLowerCase())) {
+        fail(`${localGenerator.script} must not include ${marker.trim()}`);
     }
 }
 
-const generatorsText = readRelative(contract.generators.path, "generators.path");
-if (generatorsText === "") {
-    fail(`${contract.generators.path} is missing`);
-} else {
-    const uncommented = generatorsText
-        .split("\n")
-        .filter((line) => !line.trimStart().startsWith("#"))
-        .join("\n");
-
-    if (!uncommented.includes(`default-group: ${contract.generators.defaultGroup}`)) {
-        fail(`generators.yml default-group must be ${contract.generators.defaultGroup}`);
+for (const commandName of ["writeCommand", "checkCommand"]) {
+    const command = localGenerator[commandName];
+    if (!command.startsWith(`node ${localGenerator.script}`)) {
+        fail(`localGenerator.${commandName} must invoke node ${localGenerator.script}`);
     }
-    if (!uncommented.includes(`openapi: ${contract.generators.activeOpenApiPath}`)) {
-        fail(`generators.yml active OpenAPI path must be ${contract.generators.activeOpenApiPath}`);
-    }
-    if (uncommented.includes("../official/clockify.official.openapi.yaml")) {
-        fail("generators.yml must not actively point at the official upstream OpenAPI spec");
-    }
-
-    for (const [group, expected] of Object.entries(contract.generators.groups ?? {})) {
-        if (!uncommented.includes(`${group}:`)) fail(`generators.yml missing group ${group}`);
-        for (const marker of [
-            `name: ${expected.name}`,
-            `version: ${expected.version}`,
-            `path: ${expected.outputPath}`,
-        ]) {
-            if (!uncommented.includes(marker)) fail(`generators.yml missing ${group} marker ${marker}`);
+    for (const marker of contract.offlineReproducibility.forbiddenCommandMarkers ?? []) {
+        if (command.toLowerCase().includes(marker.toLowerCase())) {
+            fail(`localGenerator.${commandName} must not include ${marker.trim()}`);
         }
     }
+}
+if (!localGenerator.testCommand.startsWith("npm run test:codegen")) {
+    fail("localGenerator.testCommand must invoke npm run test:codegen");
+}
+if (contract.offlineReproducibility.requiresDocker !== false) {
+    fail("offlineReproducibility.requiresDocker must be false");
+}
+if (contract.offlineReproducibility.requiresHostedLogin !== false) {
+    fail("offlineReproducibility.requiresHostedLogin must be false");
+}
+if (contract.offlineReproducibility.requiresApiToken !== false) {
+    fail("offlineReproducibility.requiresApiToken must be false");
 }
 
 for (const doc of contract.requiredDocs ?? []) {
@@ -220,13 +197,31 @@ for (const doc of contract.requiredDocs ?? []) {
 }
 
 const makefile = readRelative("Makefile");
-if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail(`Makefile missing ${contract.wiring.makeTarget} target`);
+for (const target of [contract.wiring.makeTarget, contract.wiring.codegenTarget, contract.wiring.codegenDriftTarget, contract.wiring.codegenTestTarget]) {
+    if (!makefile.includes(`${target}:`)) fail(`Makefile missing ${target} target`);
+}
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail(`Makefile missing ${contract.wiring.checker} invocation`);
+if (!makefile.includes(localGenerator.writeCommand)) fail(`Makefile missing ${localGenerator.writeCommand}`);
+if (!makefile.includes(localGenerator.checkCommand)) fail(`Makefile missing ${localGenerator.checkCommand}`);
+if (!makefile.includes(localGenerator.testCommand)) fail(`Makefile missing ${localGenerator.testCommand}`);
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
     const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
     if (!targetLine.includes(contract.wiring.makeTarget)) {
         fail(`Makefile ${aggregateTarget} missing ${contract.wiring.makeTarget}`);
     }
+}
+const fullLine = makefile.split("\n").find((line) => line.startsWith("perfect-full:")) ?? "";
+if (!fullLine.includes(contract.wiring.codegenTarget)) {
+    fail(`Makefile perfect-full missing ${contract.wiring.codegenTarget}`);
+}
+if (!fullLine.includes(contract.wiring.codegenDriftTarget)) {
+    fail(`Makefile perfect-full missing ${contract.wiring.codegenDriftTarget}`);
+}
+if (!fullLine.includes(contract.wiring.codegenTestTarget)) {
+    fail(`Makefile perfect-full missing ${contract.wiring.codegenTestTarget}`);
+}
+if (fullLine.includes("fern-check") || fullLine.includes("fern-generate")) {
+    fail("Makefile perfect-full must not depend on fern-check or fern-generate");
 }
 
 const docsIndex = readRelative("docs/README.md");
@@ -250,4 +245,4 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log(`generator config contract passed (Fern ${contract.fernConfig.cliVersion}, TS generator ${contract.generators.groups.ts.version})`);
+console.log(`generator config contract passed (${localGenerator.script} -> ${localGenerator.outputPath})`);

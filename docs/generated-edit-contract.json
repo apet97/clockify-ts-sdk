@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Generated and snapshot edit guard contract for paths that must only change through the GOCLMCP -> Fern -> wrapper sync chain.",
+  "purpose": "Generated and snapshot edit guard contract for paths that must only change through the GOCLMCP -> local SDK generator -> wrapper sync chain.",
   "wiring": {
     "makeTarget": "generated-edit-check",
     "checker": "scripts/check-no-generated-edits.mjs",
@@ -12,5 +12,5 @@
     "wrapper/src/"
   ],
   "bypassEnv": "CLOCKIFY_ALLOW_GENERATED_DIFF",
-  "regenerationGuidance": "Do not hand-edit these paths. Regenerate through GOCLMCP -> Fern -> wrapper sync."
+  "regenerationGuidance": "Do not hand-edit these paths. Regenerate through GOCLMCP -> local SDK generator -> wrapper sync."
 }

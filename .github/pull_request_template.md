@@ -15,7 +15,7 @@ Do not paste secrets, customer data, raw live probe captures, or private tokens.
 - [ ] SDK wrapper (`wrapper/*.ts`, `wrapper/tests/**`, `wrapper/examples/**`)
 - [ ] CLI (`cli/src/**`, `cli/tests/**`, `cli/README.md`)
 - [ ] MCP (`mcp/src/**`, `mcp/tests/**`, `mcp/README.md`)
-- [ ] OpenAPI / Fern / GOCLMCP handoff (`spec/fern/**`, generated metadata)
+- [ ] OpenAPI / local generator / GOCLMCP handoff (`scripts/generate-sdk-from-openapi.mjs`, generated metadata)
 - [ ] Docs or contracts (`docs/**`, `README.md`, `AGENTS.md`, `CLAUDE.md`)
 - [ ] Package/install surface (`package.json`, lockfiles, pack smoke, runtime support)
 - [ ] Governance (`SECURITY.md`, `.github/ISSUE_TEMPLATE/**`, PR template)

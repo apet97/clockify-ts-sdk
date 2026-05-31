@@ -21,14 +21,15 @@
       "mustContain": [
         "name: CI",
         "node-version: [\"20\", \"22\"]",
-        "npm run sync",
         "npm run type-check",
         "npm run build",
         "npm run build:smoke",
         "npm test",
         "npm run test:types",
         "npm pack --dry-run --json",
-        "fern check --warnings --from-openapi",
+        "make sdk-codegen",
+        "make sdk-codegen-drift",
+        "make openapi-lint",
         "persist-credentials: false"
       ]
     },
@@ -37,7 +38,8 @@
       "mustContain": [
         "name: CI (cli)",
         "node-version: [\"20\", \"22\"]",
-        "working-directory: wrapper",
+        "make sdk-codegen",
+        "npm run build -w clockify-sdk-ts-115",
         "working-directory: cli",
         "npm run type-check",
         "npm test",
@@ -51,7 +53,8 @@
       "mustContain": [
         "name: CI (mcp)",
         "node-version: [\"20\", \"22\"]",
-        "working-directory: wrapper",
+        "make sdk-codegen",
+        "npm run build -w clockify-sdk-ts-115",
         "working-directory: mcp",
         "npm run type-check",
         "npm test",
@@ -76,6 +79,7 @@
         "name: Docs",
         "pages: write",
         "id-token: write",
+        "make sdk-codegen",
         "npm run docs",
         "actions/deploy-pages"
       ]
@@ -96,6 +100,7 @@
         "tags:",
         "Verify tag matches package version",
         "id-token: write",
+        "make sdk-codegen",
         "npm publish",
         "npm sbom",
         "Post-publish smoke install"

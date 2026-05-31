@@ -22,7 +22,7 @@ that scope.
 3. Generated and snapshot surfaces remain upstream-first.
 
    If a change touches OpenAPI shape, generator behavior, or generated
-   output, use the GOCLMCP/Fern chain instead of patching snapshots by
+   output, use the GOCLMCP/local-generator chain instead of patching snapshots by
    hand.
 
 4. Proof can be deferred only when the final receipt says so.

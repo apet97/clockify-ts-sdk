@@ -38,7 +38,7 @@ Preferred root gates:
 
 ```bash
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof (~76 sub-gates)
-make perfect-full   # GOCLMCP drift + Fern + package gates + packed-consumer smoke
+make perfect-full   # GOCLMCP drift + local codegen + package gates + packed-consumer smoke
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
@@ -62,8 +62,7 @@ each workspace's scripts):
 ```bash
 npm ci                                                       # root install all 3 workspaces
 
-cd spec/fern && fern generate --group ts --local --force     # Docker required
-cd ../../wrapper && npm run sync                             # populate wrapper/src/
+make sdk-codegen                                             # populate output/ts-sdk/ and wrapper/src/
 
 cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke && npm pack --dry-run
 cd ../cli   && npm run type-check && npm test && npm run build && npm pack --dry-run
@@ -97,9 +96,11 @@ make docs-drift
   (`workspaces: ["wrapper", "cli", "mcp"]`) with a single root
   `package-lock.json`. Run `npm ci` at the root, then per-package
   scripts work from either the root (`-w <name>`) or the package dir.
-- `output/ts-sdk/**` is **gitignored**. A fresh clone needs Docker:
-  `(cd spec/fern && fern generate --group ts --local --force)` then
-  `(cd wrapper && npm run sync)` before SDK package gates can pass.
+- `output/ts-sdk/**` and `wrapper/src/**` are **gitignored**. A fresh
+  clone needs `make sdk-codegen` before SDK package gates can pass.
+  The local generator reads `spec/corrected/clockify.corrected.openapi.yaml`
+  and does not require Docker, Fern, a hosted SDK-generator account, or
+  Clockify credentials.
   Validators (schema-quality, generator-comparison) skip gracefully
   with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.

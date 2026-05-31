@@ -4,20 +4,22 @@ Standalone repo (`apet97/clockify-ts-sdk`). Ships the packable package
 **`clockify-sdk-ts-115`** from `wrapper/dist/`, plus two sibling
 packable packages on top of it: `@clockify115/cli` from `cli/dist/`
 and `@clockify115/mcp-server` from `mcp/dist/`. Everything else is the
-toolchain that produces and proves those packages: a Fern workspace
-(`spec/fern/`), a snapshot of the canonical Clockify OpenAPI
-(`spec/corrected/`), an evidence ledger for spec-vs-live deltas
-(`spec/evidence/discrepancies.md`), the regenerable raw generator
-output (`output/ts-sdk/`, gitignored), and docs that keep humans
-and agents aligned.
+toolchain that produces and proves those packages: the repo-owned local
+TypeScript SDK generator (`scripts/generate-sdk-from-openapi.mjs`), a
+snapshot of the canonical Clockify OpenAPI (`spec/corrected/`), an
+evidence ledger for spec-vs-live deltas
+(`spec/evidence/discrepancies.md`), the regenerable raw generator output
+(`output/ts-sdk/`, gitignored), and docs that keep humans and agents
+aligned. The historical Fern workspace remains under `spec/fern/` for
+reference, but it is not the required TypeScript SDK emitter.
 
 The canonical OpenAPI is **not** in this repo. It lives in the
 sister project `apet97/go-clockify` (cloned conventionally as
 `../GOCLMCP/`), which produces it from a curated source bundle via
-`make gen-openapi`. This repo snapshots that canonical and feeds
-it to Fern, which doubles as a strict smoke test for the spec:
-schema / enum / `oneOf` / pagination patterns must be coherent
-enough for Fern to emit a clean SDK.
+`make gen-openapi`. This repo snapshots that canonical and feeds it to
+the local TypeScript SDK generator. Schema / enum / `oneOf` /
+pagination patterns must be coherent enough for the local generator,
+SDK package gates, and parity checks to produce a clean package.
 
 End-users of the SDK package: see [`wrapper/README.md`](./wrapper/README.md).
 MCP users: see [`mcp/README.md`](./mcp/README.md). This file is for
@@ -30,31 +32,29 @@ The default release path is local tarballs (`npm pack`) for sharing inside the p
 
 The three packages are wired as **npm workspaces** from a root
 `package.json`, so a single `npm ci` at the root populates all of
-them. `output/ts-sdk/` is gitignored, so SDK package gates need
-Fern + Docker before they can run:
+them. `output/ts-sdk/` and `wrapper/src/` are gitignored, so SDK
+package gates need the local codegen step before they can run:
 
 ```bash
 git clone https://github.com/apet97/clockify-ts-sdk.git
 cd clockify-ts-sdk
 npm ci                                                      # install all 3 workspaces
 
-# SDK source comes from Fern → wrapper/src via sync. Docker required.
-npm install -g fern-api@5.37.9
-(cd spec/fern && fern generate --group ts --local --force)
-(cd wrapper && npm run sync)
+# SDK source comes from the corrected OpenAPI via local generation.
+make sdk-codegen
 
 make perfect-fast                                           # 76 sub-gates, ~317 tests
 ```
 
 If you only touch CLI or MCP code, you still need the wrapper built
 once because cli + mcp resolve `clockify-sdk-ts-115` through the
-workspace symlink. After the first `fern generate` + `npm run sync`
-+ `npm run build -w clockify-sdk-ts-115`, subsequent
-`cd cli && npm test` (or `cd mcp && npm test`) cycles are fast.
+workspace symlink. After the first `make sdk-codegen` +
+`npm run build -w clockify-sdk-ts-115`, subsequent `cd cli && npm test`
+(or `cd mcp && npm test`) cycles are fast.
 
-For agents and operators who can't run Docker but want to read or
-plan: the validators that depend on `wrapper/src/**` skip with a
-clear "run fern generate first" warning instead of failing, so
+For agents and operators who want to read or plan without generating
+the SDK: the validators that depend on `wrapper/src/**` skip with a
+clear "run make sdk-codegen first" warning instead of failing, so
 `make perfect-fast` still completes on non-SDK workflows. Use
 `node scripts/plan.mjs <topic>` for no-network planning surfaces
 (see [`docs/operator-toolbox.md`](./docs/operator-toolbox.md)).
@@ -67,7 +67,7 @@ future-agent handoff:
 ```bash
 make help           # show the available gates
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof
-make perfect-full   # GOCLMCP drift + Fern + packages + packed-consumer smoke
+make perfect-full   # GOCLMCP drift + local codegen + packages + packed-consumer smoke
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
@@ -139,13 +139,13 @@ clockify-ts-sdk/
 ├── spec/
 │   ├── corrected/clockify.corrected.openapi.yaml   ← snapshot of GOCLMCP canonical
 │   ├── official/clockify.official.openapi.yaml      ← copy of upstream source
-│   ├── fern/{fern.config.json, generators.yml}     ← Fern workspace
+│   ├── fern/{fern.config.json, generators.yml}     ← historical Fern workspace
 │   └── evidence/
 │       ├── discrepancies.md                         ← five-question ledger
 │       ├── fern-issues/                             ← drafted upstream issues (internal evidence)
 │       ├── fixtures/                                ← curated golden response shapes
 │       └── probes/                                  ← raw live API captures (gitignored)
-├── output/{ts-sdk,py-sdk,postman}/                  ← generator outputs, all gitignored; ts-sdk regenerable via Fern + Docker
+├── output/ts-sdk/                                   ← local TS generator output, gitignored
 ├── wrapper/                                         ← packable SDK package layout
 ├── cli/                                             ← packable CLI package layout
 ├── mcp/                                             ← packable stdio MCP package layout
@@ -186,33 +186,26 @@ cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml \
    spec/corrected/clockify.corrected.openapi.yaml
 ```
 
-## Running Fern
+## Running Local SDK Generation
 
-Install the CLI once: `npm install -g fern-api` (pinned to `5.37.9`
-via `spec/fern/fern.config.json`). `fern generate` runs each
-generator in Docker — the daemon must be up.
+The TypeScript SDK is generated locally from the corrected OpenAPI
+snapshot. The command is deterministic, offline, and does not require
+Docker, Fern, a hosted SDK-generator account, or Clockify credentials.
 
 ```bash
-cd spec/fern
-
-# Validation. ALWAYS use --from-openapi: the legacy parser fires
-# 8 no-conflicting-endpoint-paths warnings for literal-vs-{id}
-# siblings (e.g. /expenses/categories vs /expenses/{expenseId})
-# that are conformant per OpenAPI 3.0.3 §4.8.5.4. Full evidence:
-# spec/evidence/discrepancies.md →
-# fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings.
-fern check --warnings --from-openapi
-
-# Local generation. Output paths come from generators.yml.
-fern generate --group ts --local       # TypeScript
-fern generate --group py --local       # Python
-fern generate --group postman --local  # Postman collection
+make sdk-codegen        # writes output/ts-sdk/** and syncs wrapper/src/**
+make sdk-codegen-drift  # checks reproducibility without writing
+make sdk-codegen-test   # runs fixture tests for schema/runtime codegen behavior
 ```
 
-To smoke-test the **official** spec instead, swap the active line
-in `spec/fern/generators.yml` `api.specs[]` to point at
-`../official/...`. The diagnostics delta is the rough size of what
-the corrected spec has absorbed.
+To refresh the input snapshot, regenerate GOCLMCP first and then run
+`make sdk-codegen`. To smoke-test the **official** spec, copy it into a
+throwaway branch or temp tree and point the local generator at that copy;
+do not hand-edit `spec/corrected/**`.
+
+`spec/fern/` remains as historical evidence for the previous generator
+stack and for drafted upstream issue notes. Do not restore it as the
+active TypeScript path without maintainer approval.
 
 ## Current state
 
@@ -232,8 +225,9 @@ Package surfaces:
 
 | Surface                                            | Result |
 | -------------------------------------------------- | ------ |
-| `fern check --warnings --from-openapi`             | All checks passed (2 unrelated example-pairing notes on `POST /workspaces/`) |
-| `fern generate --group ts --local --force`         | 708 files synced into `wrapper/src/`; 31 resource modules; 184 SDK methods |
+| `make sdk-codegen`                                 | Local generator emits 185 operations across 31 resources and syncs `wrapper/src/` |
+| `make sdk-codegen-drift`                           | Checks `output/ts-sdk/**` is reproducible from the corrected snapshot |
+| `make sdk-codegen-test`                            | Runs fixture tests for nullable fields, simple unions, multipart/binary runtime support, deterministic ordering, and JSON diagnostic receipts |
 | `tsc -p tsconfig.json --noEmit` (wrapper)          | package gate; run from `wrapper/` before SDK changes |
 | `vitest run` (wrapper)                             | unit coverage plus env-gated live sandbox flows |
 | `npm pack --dry-run` (wrapper, v0.9.0)             | checked by package gates |
@@ -245,9 +239,9 @@ per-divergence evidence is in
 The repo-level product target is in
 [`docs/product-north-star.md`](./docs/product-north-star.md).
 
-## Reviewing Fern output
+## Reviewing Generated Output
 
-When auditing what Fern emits from the corrected spec, score on:
+When auditing what the local generator emits from the corrected spec, score on:
 
 - **Schemas** — orphan `additionalProperties: true` where the live
   shape is known.
@@ -260,7 +254,7 @@ When auditing what Fern emits from the corrected spec, score on:
   family-specific totals keys). Models here are the canary.
 
 Ugly output from the **corrected** spec is a real bug to fix in
-`../GOCLMCP/docs/openapi/sources/**` or in the generator. Ugly
-output from the **official** spec only is a discrepancy already
-absorbed; add it (or update it) in
+`../GOCLMCP/docs/openapi/sources/**` or in
+`scripts/generate-sdk-from-openapi.mjs`. Ugly output from the
+**official** spec only is a discrepancy already absorbed; add it (or update it) in
 `spec/evidence/discrepancies.md`.

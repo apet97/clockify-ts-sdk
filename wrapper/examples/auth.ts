@@ -31,16 +31,10 @@ function loadFromSecretManager(): string {
 }
 
 // (4) Advanced: bypass the factory entirely for non-header auth
-// (custom AuthProvider, `auth: false`, mocked transport). The
-// addonToken cast workaround documented in
-// spec/evidence/discrepancies.md ->
-// fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive
-// is required when you skip the factory.
+// (custom AuthProvider, `auth: false`, mocked transport).
 import { ClockifyApiClient } from "clockify-sdk-ts-115";
 
 const noAuth = new ClockifyApiClient({
-    apiKey: () => "",
-    addonToken: (() => undefined) as unknown as () => string,
     auth: false,
 });
 

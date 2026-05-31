@@ -34,7 +34,7 @@ export interface RateLimitSnapshot {
 }
 
 /** Minimal Headers shape — compatible with Web `Headers`, Node's
- *  `IncomingHttpHeaders` after a wrapping, and Fern's
+ *  `IncomingHttpHeaders` after a wrapping, and the generated
  *  `RawResponse.headers`. */
 interface HeaderReader {
     get(name: string): string | null;

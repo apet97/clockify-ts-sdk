@@ -506,7 +506,7 @@ Each of these needs:
   generate --group ts --local --force` succeeds, `tsc --noEmit`
   against `output/ts-sdk/` exits 0.
 
-### `fern.x-fern-pagination.bare-array-unsupported` — UPSTREAM-TRACKING 2026-05-25
+### `fern.x-fern-pagination.bare-array-unsupported` — HISTORICAL-FERN-LIMITATION 2026-06-01
 
 - **Official claim (Fern docs):** the `x-fern-pagination` OpenAPI
   extension instructs Fern's SDK generators to emit auto-pagination
@@ -633,6 +633,23 @@ Each of these needs:
      a removal target (v2.0).
   4. Land as v2.0 with the deprecation removed; `iter.ts` +
      `pagination.ts` deleted; subpath exports removed.
+
+#### Update 2026-06-01 — local generator migration
+
+- **Local generator impact:** the required TypeScript SDK generation path no
+  longer uses Fern's `x-fern-pagination` implementation. The repo-owned
+  generator reads the corrected OpenAPI snapshot directly, emits list methods
+  that accept `page` + `page-size`, and preserves `core.HttpResponsePromise<T>`
+  so the wrapper's `paginate`, `iterAll`, and `iterPages` helpers remain the
+  supported public pagination surface.
+- **Proof:** `make sdk-codegen-drift`, `make generator-comparison`, wrapper
+  pagination tests, and the broad `make perfect-full` proof cover the local
+  replacement path. Fern's bare-array limitation remains useful historical
+  evidence, but it is no longer a blocker for this repo's required TS SDK
+  generation.
+- **Status:** `historical-fern-limitation-local-generator-owned`. Re-open only
+  if maintainers intentionally restore Fern as the active TypeScript generator
+  or if the local generator stops preserving the wrapper pagination contracts.
 
 ### `fern.x-fern-sdk-method-name.drops-resource-modules` — PARTIALLY-RESOLVED 2026-05-24 (session 3)
 
@@ -850,6 +867,21 @@ Each of these needs:
   eight expansion steps preserved the invariant "31 modules +
   index.ts, 0 root hoists".
 
+#### Update 2026-06-01 — local generator migration
+
+- **Local generator impact:** the required TypeScript SDK generator now treats
+  `x-fern-sdk-group-name` and `x-fern-sdk-method-name` as legacy naming hints,
+  not as Fern-specific runtime dependencies. The local generator consumes the
+  paired hints directly and emits 31 resource modules without the historical
+  root-hoist/module-drop behavior.
+- **Proof:** `make sdk-codegen-drift` verifies reproducible local output and
+  `make generator-comparison` verifies the generated method map against the
+  OpenAPI naming hints.
+- **Status:** `resolved-local-generator-consumes-legacy-hints`. The
+  `x-fern-*` extension names remain in the OpenAPI snapshot for continuity;
+  rename them only as a separate compatibility cleanup after generator and
+  method-map parity pass.
+
 ### `tag-renames.singular-to-plural` — RESOLVED 2026-05-24
 
 - **Official claim:** Clockify's published OpenAPI tags mix singular
@@ -1052,7 +1084,7 @@ on the bare route (the granular variants — already in
   docs paste and notices the string-vs-int divergence sees the
   decision already taken.
 
-### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — UPSTREAM-TRACKING 2026-05-25
+### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — CLOSED-BY-LOCAL-GENERATOR 2026-06-01
 
 - **Official claim:** Clockify's OpenAPI declares two security schemes
   `ApiKeyAuth` (header `X-Api-Key`) and `AddonTokenAuth` (header
@@ -1185,6 +1217,21 @@ on the bare route (the granular variants — already in
   6. Land as the v1.0.0 cut — typed-correct auth surface is a
      v1.0.0 acceptance-criterion bullet.
 
+#### Update 2026-06-01 — local generator retires the workaround
+
+- **Local generator impact:** `scripts/generate-sdk-from-openapi.mjs` now emits
+  mutually exclusive generated auth types for `apiKey` and `addonToken`, and
+  `wrapper/create-client.ts` no longer needs the `NULL_SUPPLIER` cast. The
+  wrapper-facing `createClockifyClient` API keeps the same XOR behavior and
+  environment fallback semantics.
+- **Proof:** wrapper auth tests cover api-key/addon-token exclusivity and
+  environment precedence, `npm run type-check -w clockify-sdk-ts-115` proves
+  the generated types, and live sandbox SDK proof exercises the api-key path
+  without an addon-token workaround.
+- **Status:** `closed-by-local-generator`. The internal Fern issue draft remains
+  historical evidence only; no upstream Fern fix is required for the active
+  repo-owned SDK generation path.
+
 ## Generator choice — Phase 0 spike for the Stainless/Speakeasy-quality push
 
 ### `generator.choice.fern-vs-stainless-vs-speakeasy` — DECIDED 2026-05-24
@@ -1194,7 +1241,7 @@ on the bare route (the granular variants — already in
 - **Actual behavior:** Three SDK generators were considered for
   emitting the Clockify TypeScript SDK from
   `spec/corrected/clockify.corrected.openapi.yaml`:
-  1. **Fern 5.37.9** (current production) — generated 723 TS files,
+  1. **Fern 5.37.9** (historical production before 2026-06-01) — generated 723 TS files,
      0 errors, 0 hints with `fern check --from-openapi`. Synced into
      `wrapper/src/`, type-checked, built, tested.
   2. **Speakeasy 1.763.6** — `speakeasy generate sdk --lang
@@ -1238,10 +1285,24 @@ on the bare route (the granular variants — already in
   3. Should we ever evaluate Stainless? Likely same `rtl/RTL`
      collision since Stainless also normalizes identifiers. Only
      worth re-running Phase 0 if a future reviewer disagrees.
-- **Status:** `decided-stay-on-fern`. The wrapper-side quality
-  plan (Phases 1-8) executes against Fern's existing output.
-  Generator decision revisited only if one of the three open
-  questions above flips.
+- **Status:** `superseded-by-local-generator`. The wrapper-side quality
+  plan initially executed against Fern's output, but the active required TS SDK
+  emitter is now the repo-owned local generator.
+
+#### Update 2026-06-01 — final generator choice
+
+- **Decision:** replace Fern as the required TypeScript SDK emitter with
+  `scripts/generate-sdk-from-openapi.mjs`, a deterministic repo-owned generator
+  that reads `spec/corrected/clockify.corrected.openapi.yaml` and emits
+  `output/ts-sdk/**` before `wrapper/scripts/sync-sdk.sh` refreshes
+  `wrapper/src/**`.
+- **Rationale:** Speakeasy still cannot pass the real `RTL`/`rtl` collision
+  without changing API truth, Stainless remains hosted/account-based, and Fern
+  adds Docker/vendor-specific generator behavior that this repo no longer needs
+  for the required proof path.
+- **Status:** `decided-local-repo-owned-generator`. Historical generator
+  evidence remains in this ledger so future agents understand why the local
+  generator owns the active SDK surface.
 
 ## Webhook delivery — signature scheme
 
@@ -1646,4 +1707,3 @@ routes that return 404/405 live exist.
   fields nested under `body`; keep project update fields at the
   request top level. Re-test with live archive+delete cleanup before
   changing either shape.
-

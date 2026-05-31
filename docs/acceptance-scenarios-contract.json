@@ -131,7 +131,7 @@
       "mustContain": [
         "OpenAPI truth and generated core",
         "GOCLMCP drift gates",
-        "Fern check/generate",
+        "local codegen drift",
         "generated-edit guard"
       ]
     },

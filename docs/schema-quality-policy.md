@@ -22,8 +22,9 @@ enums can make a generated SDK feel unfinished even when every route exists.
 
 When schema shape changes because of live behavior, record the finding in
 `spec/evidence/discrepancies.md` before trusting the generated SDK. When schema
-shape changes because Fern cannot express a desired pattern, record the Fern
-limitation, the local wrapper workaround, and the re-evaluation trigger.
+shape changes because the local generator cannot yet express a desired pattern,
+record the generator limitation, the local wrapper workaround, and the
+re-evaluation trigger.
 
 ## Generated model review checklist
 

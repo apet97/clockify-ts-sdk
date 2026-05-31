@@ -7,9 +7,9 @@
 **Reference docs:** <https://apet97.github.io/clockify-ts-sdk/>
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
-Generated from the canonical Clockify OpenAPI by
-[Fern](https://buildwithfern.com), wrapped with a packable npm
-layout. 31 resource modules, 185 live operations, idiomatic
+Generated from the canonical Clockify OpenAPI by this repo's local
+TypeScript generator, wrapped with a packable npm layout. 31 resource
+modules, 185 live operations, idiomatic
 `client.<resource>.<verb>()` naming on 27 modules (91% of the
 surface), and dual ESM + CJS.
 
@@ -149,16 +149,14 @@ import { ClockifyApiClient } from "clockify-sdk-ts-115";
 
 const client = new ClockifyApiClient({
     apiKey: "...",
-    addonToken: (() => undefined) as unknown as () => string,
     auth: false, // or a custom AuthProvider / function
 });
 ```
 
-The cast is the documented workaround for a Fern typing
-limitation — see
-`spec/evidence/discrepancies.md` →
-`fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive`.
-`createClockifyClient` hides it for the 99% case.
+The generated client models `apiKey` and `addonToken` as mutually
+exclusive. `createClockifyClient` remains the recommended entry because
+it adds env fallback, request IDs, user-agent headers, hooks, and retry
+configuration.
 
 ## No-network diagnostics
 
@@ -327,7 +325,7 @@ try {
     await client.tags.get({ workspaceId: "...", tagId: "deleted-tag-id" });
 } catch (raw) {
     // 429/409/500/503 are not in the OpenAPI spec per endpoint, so
-    // Fern throws the base ClockifyApiError. `promoteApiError` swaps
+    // the generated client throws the base ClockifyApiError. `promoteApiError` swaps
     // it for the matching subclass when one exists.
     const err = promoteApiError(raw);
     if (err instanceof NotFoundError) console.log("tag is gone");
@@ -371,7 +369,7 @@ narrow on the base class keep working:
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `ClockifyConnectionError`        | The underlying `fetch` failed before getting a response (DNS, TLS, ECONNRESET, `TypeError: fetch failed`). | Retry with backoff; surface as "offline?" UI. |
 | `ClockifyAbortError`             | The caller cancelled via an `AbortSignal` (`controller.abort()`).                                          | Do NOT retry — the user asked for a stop.     |
-| `ClockifyApiTimeoutError` (Fern) | The request exceeded `timeoutInSeconds`.                                                                   | Retry with backoff.                           |
+| `ClockifyApiTimeoutError`        | The request exceeded `timeoutInSeconds`.                                                                   | Retry with backoff.                           |
 
 ```typescript
 import { createClockifyClient, isAbortError, isConnectionError } from "clockify-sdk-ts-115";
@@ -392,7 +390,7 @@ try {
 
 These classes are emitted by `promoteApiError(err)` (called
 internally on every catch site in the documented examples).
-Manual call sites that catch raw Fern-emitted errors should pipe
+Manual call sites that catch raw generated errors should pipe
 through `promoteApiError` first:
 
 ```typescript
@@ -525,7 +523,7 @@ Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
 ### `timeoutMs` shorthand
 
 The axioms doc and most of the JS ecosystem use **milliseconds**
-(`setTimeout(ms)`, `AbortSignal.timeout(ms)`). Fern's per-call
+(`setTimeout(ms)`, `AbortSignal.timeout(ms)`). The generated per-call
 option is `timeoutInSeconds`. The conversion is straightforward:
 
 ```typescript
@@ -543,7 +541,7 @@ await client.tags.list({ workspaceId }, ms(5_000));
 ```
 
 We don't ship a `timeoutMs` field on `RequestOptions` because
-adding a Fern-overlapping field would create two ways to spell the
+adding a generated-client-overlapping field would create two ways to spell the
 same thing — small ergonomic gain, real risk of "set both,
 which one wins?" footguns. The conversion is a single division
 when you want it.
@@ -697,7 +695,7 @@ const tag = await client.tags.create(
 );
 ```
 
-The header threads through Fern's `RequestOptions.headers` and is
+The header threads through the generated client's `RequestOptions.headers` and is
 sent on the wire as `Idempotency-Key: <uuid>`. See
 `examples/pass-idempotency-key.ts` for a runnable script.
 
@@ -770,7 +768,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |
 | Static analysis | CodeQL (security-and-quality) on hand-written modules + workflows                                                                   | CI `codeql`                             |
-| Spec health     | `fern check --warnings --from-openapi` on the corrected snapshot                                                                    | CI `spec-check`                         |
+| Spec health     | `make openapi-lint` + `make sdk-codegen-drift` on the corrected snapshot                                                            | root gates                              |
 
 Lint scope is the hand-written wrapper (`*.ts` at root + `tests/**`).
 Generated sources under the package's local src tree are wiped on every

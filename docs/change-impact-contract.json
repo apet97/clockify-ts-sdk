@@ -1365,7 +1365,7 @@
         "docs/live-tests.md"
       ],
       "changelogRequired": false,
-      "notes": "Operator-onboarding changes must preserve non-coder bootstrap, persona selection, package-local setup, mock/live safety, stop conditions, and readiness-boundary wording."
+      "notes": "Operator-onboarding changes must preserve non-coder bootstrap, persona selection, root-workspace setup, mock/live safety, stop conditions, and readiness-boundary wording."
     },
     {
       "id": "operator-toolbox",

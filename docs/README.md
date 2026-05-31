@@ -17,11 +17,11 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`operator-toolbox.md`](./operator-toolbox.md) | No-network helper command catalogue for orientation, workflow, maintenance, release, performance, risk, and support planning. |
 | [`quickstart-receipt.md`](./quickstart-receipt.md) | Diagnostics-first quickstart receipt for SDK, CLI, MCP, mock/live split, and first live probes. |
 | [`migration-guide.md`](./migration-guide.md) | Package naming, import, auth, CLI, and MCP migration notes. |
-| [`dependency-policy.md`](./dependency-policy.md) | Tooling pins, runtime floors, and dependency update rules. |
+| [`dependency-policy.md`](./dependency-policy.md) | Local codegen tooling, runtime floors, and dependency update rules. |
 | [`dependency-license-policy.md`](./dependency-license-policy.md) | Runtime dependency license ledger, purpose map, and dependency-change evidence rules. |
 | [`config-precedence-policy.md`](./config-precedence-policy.md) | SDK/CLI/MCP configuration precedence, rc-file, env, flag, and base URL override rules. |
-| [`generator-portability-plan.md`](./generator-portability-plan.md) | No-paid-generator and vendor-exit plan for OpenAPI-to-SDK generation. |
-| [`sdk-runtime-policy.md`](./sdk-runtime-policy.md) | Durable hand-written SDK runtime seam policy around the generated Fern core. |
+| [`generator-portability-plan.md`](./generator-portability-plan.md) | Repo-owned local-generator and no-paid-generator plan for OpenAPI-to-SDK generation. |
+| [`sdk-runtime-policy.md`](./sdk-runtime-policy.md) | Durable hand-written SDK runtime seam policy around the generated core. |
 | [`workflow-cookbook.md`](./workflow-cookbook.md) | Cross-surface recipes and generated workflow-plan shape for first-run support plus common SDK, CLI, and MCP user jobs. |
 | [`acceptance-scenarios.md`](./acceptance-scenarios.md) | End-to-end SDK/CLI/MCP user journey acceptance matrix with generated plan shape, mock/live, receipt, cleanup, and OpenAPI proof expectations. |
 | [`examples-matrix.md`](./examples-matrix.md) | Cross-surface SDK/CLI/MCP examples matrix and generated examples-plan shape with mock/live boundaries and receipt expectations. |
@@ -51,14 +51,14 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`user-docs-policy.md`](./user-docs-policy.md) | User-facing README, onboarding, install, migration, and troubleshooting documentation rules. |
 | [`docs-quality-policy.md`](./docs-quality-policy.md) | Evidence-first documentation quality rules: exact names, generated truth surfaces, no unsupported readiness claims, and non-coder clarity. |
 | [`agent-handoff-policy.md`](./agent-handoff-policy.md) | Future-agent guidance, canonical contract, and temporary-context lifecycle rules. |
-| [`developer-environment-policy.md`](./developer-environment-policy.md) | Local Node/npm/Fern/Docker/GOCLMCP bootstrap rules and repo-doctor generated report shape. |
+| [`developer-environment-policy.md`](./developer-environment-policy.md) | Local Node/npm workspace, codegen, GOCLMCP bootstrap rules, and repo-doctor generated report shape. |
 | [`api-docs-policy.md`](./api-docs-policy.md) | TypeDoc and generated SDK resource documentation rules. |
 | [`mcp-write-safety-policy.md`](./mcp-write-safety-policy.md) | MCP destructive-write confirmation, receipt, and recovery policy. |
 | [`mcp-agent-ux-policy.md`](./mcp-agent-ux-policy.md) | MCP agent UX rules for workflow-first guidance, server instructions, resources, prompts, receipts, and recovery. |
 | [`cli-write-safety-policy.md`](./cli-write-safety-policy.md) | CLI write/delete determinism, explicit target, and receipt policy. |
 | [`openapi-evidence-policy.md`](./openapi-evidence-policy.md) | Evidence rules for manual OpenAPI corrections and generator decisions. |
 | [`schema-quality-policy.md`](./schema-quality-policy.md) | OpenAPI component schema, enum, request/response model, loose-object, and generated TypeScript model quality rules. |
-| [`upstream-drift-policy.md`](./upstream-drift-policy.md) | Clockify API, GOCLMCP, Fern, SDK, CLI, MCP, and docs drift lifecycle and routing rules. |
+| [`upstream-drift-policy.md`](./upstream-drift-policy.md) | Clockify API, GOCLMCP, SDK, CLI, MCP, and docs drift lifecycle and routing rules. |
 | [`operation-coverage-policy.md`](./operation-coverage-policy.md) | No-regression coverage thresholds for OpenAPI, SDK names, TS MCP, GOCLMCP, and curated parity overrides. |
 
 ## Generated truth surfaces
@@ -123,7 +123,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
 | [`docs-quality-contract.json`](./docs-quality-contract.json) | edit intentionally | Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, and operator docs. |
 | [`agent-handoff-contract.json`](./agent-handoff-contract.json) | edit intentionally | Future-agent guidance and temporary-context lifecycle contract. |
-| [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/Fern environment contract and repo-doctor generated report shape. |
+| [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/codegen environment contract and repo-doctor generated report shape. |
 | [`operator-onboarding-contract.json`](./operator-onboarding-contract.json) | edit intentionally | Non-coder bootstrap, persona-choice, mock/live, stop-condition, and readiness-boundary contract. |
 | [`operator-toolbox-contract.json`](./operator-toolbox-contract.json) | edit intentionally | No-network operator helper command catalogue and inventory-ownership contract. |
 | [`api-docs-contract.json`](./api-docs-contract.json) | edit intentionally | TypeDoc and generated SDK resource documentation contract. |
@@ -133,7 +133,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | [`cli-contract.json`](./cli-contract.json) | edit intentionally | CLI command/global/completion/exit-code contract. |
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
-| [`generator-config-contract.json`](./generator-config-contract.json) | edit intentionally | Fern CLI/generator pin and active OpenAPI snapshot contract. |
+| [`generator-config-contract.json`](./generator-config-contract.json) | edit intentionally | Local TypeScript generator input, output, command, and sync contract. |
 | [`generator-independence-contract.json`](./generator-independence-contract.json) | edit intentionally | Generated-core boundary contract for wrapper exports and CLI/MCP dependencies. |
 | [`generator-comparison-contract.json`](./generator-comparison-contract.json) | edit intentionally | OpenAPI SDK-stamp to generated TypeScript method comparison contract. |
 | [`generator-portability-contract.json`](./generator-portability-contract.json) | edit intentionally | No-paid-generator and vendor-exit contract. |
@@ -148,10 +148,10 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | OpenAPI lint | `make openapi-lint` | Enforce operation-count, SDK-stamp, pagination, and Last-Page invariants. |
 | Schema quality | `make schema-quality` | Check component schemas, enums, loose objects, request/response models, discrepancy evidence, and generated TypeScript model ergonomics. |
 | OpenAPI evidence | `make openapi-evidence` | Check discrepancy ledger policy, core findings, support evidence, and Makefile targets. |
-| Upstream drift | `make upstream-drift` | Check Clockify/API/Fern/GOCLMCP drift lifecycle, routing, evidence, regeneration, and proof surfaces. |
+| Upstream drift | `make upstream-drift` | Check Clockify/API/GOCLMCP/SDK drift lifecycle, routing, evidence, regeneration, and proof surfaces. |
 | Operation coverage | `make operation-coverage` | Check OpenAPI operation count plus SDK, TS MCP, GOCLMCP, and curated parity coverage floors. |
-| Generator config | `make generator-config` | Check Fern CLI/generator pins and active corrected OpenAPI snapshot. |
-| Generator independence | `make generator-independence` | Keep Fern output behind wrapper seams. |
+| Generator config | `make generator-config` | Check local TypeScript generator input, output, command, and wrapper sync paths. |
+| Generator independence | `make generator-independence` | Keep generated SDK output behind wrapper seams. |
 | Generator comparison | `make generator-comparison` | Compare OpenAPI SDK stamps to generated TypeScript methods. |
 | Generator portability | `make generator-portability` | Check no-paid-generator, local-regeneration, and vendor-exit boundaries. |
 | Package contract | `make package-contract` | Compare SDK/CLI/MCP manifests to the public package contract snapshot. |
@@ -201,7 +201,7 @@ This repo keeps product docs, generated truth surfaces, and agent handoff files 
 | Documentation quality | `make docs-quality` | Check evidence-first claims, exact package names, generated truth surfaces, safe snippets, and unsupported marketing-claim blacklist. |
 | Axioms contract | `make axioms-contract` | Check SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
 | Agent handoff | `make agent-handoff` | Check AGENTS/CLAUDE guidance, generated-path rules, temporary context lifecycle, and stale-count markers. |
-| Developer environment | `make developer-environment` | Check package-local lockfiles/scripts, repo-doctor generated report shape, Node floor, Fern pins, Docker/GOCLMCP setup docs, and no-root-workspace boundary. |
+| Developer environment | `make developer-environment` | Check root workspace lockfile/scripts, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundary. |
 | Operator toolbox | `make operator-toolbox` | Check the no-network helper command catalogue and inventory ownership for operators and future agents. |
 | Operator onboarding | `make operator-onboarding` | Check first-read bootstrap, generated onboarding-plan shape, SDK/CLI/MCP path choice, mock/live boundaries, stop conditions, and readiness levels. |
 | API docs | `make api-docs` | Check TypeDoc configuration, generated resource docs, sync wiring, Pages workflow, and docs identity. |

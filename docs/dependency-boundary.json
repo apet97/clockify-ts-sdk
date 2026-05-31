@@ -74,6 +74,22 @@
     "openai",
     "@anthropic-ai/sdk"
   ],
+  "forbiddenDependencyNames": [
+    "fern-api",
+    "@fern-api/cli",
+    "@fern-api/core",
+    "@fern-api/cloud",
+    "stainless",
+    "@stainless-api/sdk",
+    "speakeasy",
+    "@speakeasy-api/sdk"
+  ],
+  "forbiddenDependencyManifestPaths": [
+    "package.json",
+    "wrapper/package.json",
+    "cli/package.json",
+    "mcp/package.json"
+  ],
   "forbiddenImportMarkers": [
     "output/ts-sdk",
     "../wrapper/src",

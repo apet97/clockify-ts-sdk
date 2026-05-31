@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Release and handoff readiness evidence contract for SDK, CLI, MCP, OpenAPI/Fern, docs, security, performance, and live proof.",
+  "purpose": "Release and handoff readiness evidence contract for SDK, CLI, MCP, OpenAPI/local generation, docs, security, performance, and live proof.",
   "wiring": {
     "makeTarget": "release-readiness",
     "checker": "scripts/check-release-readiness.mjs",

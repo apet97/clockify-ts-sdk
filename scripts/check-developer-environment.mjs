@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // check-developer-environment: validates the developer environment contract
-// against the expected shape of repo-doctor output (Node floor, package-local
-// manifests, Fern pins, generated directories, GOCLMCP sibling presence).
+// against the expected shape of repo-doctor output (Node floor, npm workspace
+// manifests, local codegen, generated directories, GOCLMCP sibling presence).
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -187,11 +187,12 @@ function validateContractShape() {
         }
     }
 
-    environmentRelativePath("fern.config", contract.fern?.config);
-    environmentRelativePath("fern.generators", contract.fern?.generators);
+    environmentRelativePath("localGenerator.script", contract.localGenerator?.script);
     assertUnique(
-        "fern.mustContain",
-        assertStringArray("fern.mustContain", contract.fern?.mustContain, { allowEmpty: false }),
+        "localGenerator.mustContain",
+        assertStringArray("localGenerator.mustContain", contract.localGenerator?.mustContain, {
+            allowEmpty: false,
+        }),
     );
 
     if (!Array.isArray(contract.supportingDocs) || contract.supportingDocs.length === 0) {
@@ -263,7 +264,7 @@ if (Array.isArray(contract.root?.workspacesField)) {
 
 if (contract.repoDoctor) {
     const doctor = checkText(contract.repoDoctor.path, contract.repoDoctor.mustContain);
-    if (!doctor.includes("Does not run git, npm, Docker, Fern, tests, builds, or Clockify API calls")) {
+    if (!doctor.includes("Does not run git, npm, codegen, tests, builds, or Clockify API calls")) {
         fail(contract.repoDoctor.path, "missing no-side-effect statement");
     }
     const report = await buildReport();
@@ -272,6 +273,15 @@ if (contract.repoDoctor) {
     }
     if (!Array.isArray(report.repo?.commandsExecuted) || report.repo.commandsExecuted.length !== 0) {
         fail(contract.repoDoctor.path, "generated report commandsExecuted must be an empty array");
+    }
+    if (report.repo?.packageModel !== contract.repoDoctor.generatedReport?.packageModel) {
+        fail(contract.repoDoctor.path, `generated report packageModel must be ${contract.repoDoctor.generatedReport?.packageModel}`);
+    }
+    if (report.repo?.rootPackageJsonAllowed !== contract.repoDoctor.generatedReport?.rootPackageJsonAllowed) {
+        fail(
+            contract.repoDoctor.path,
+            `generated report rootPackageJsonAllowed must be ${contract.repoDoctor.generatedReport?.rootPackageJsonAllowed}`,
+        );
     }
     assertFalseFields(
         report.environmentShape,
@@ -302,9 +312,9 @@ for (const pkg of contract.packages ?? []) {
     }
 }
 
-const fernText = `${readRelative(contract.fern.config)}\n${readRelative(contract.fern.generators)}`;
-for (const marker of contract.fern.mustContain ?? []) {
-    if (!fernText.includes(marker)) fail("fern", `missing marker ${JSON.stringify(marker)}`);
+const localGeneratorText = readRelative(contract.localGenerator.script);
+for (const marker of contract.localGenerator.mustContain ?? []) {
+    if (!localGeneratorText.includes(marker)) fail("localGenerator", `missing marker ${JSON.stringify(marker)}`);
 }
 
 for (const doc of contract.supportingDocs ?? []) {

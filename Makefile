@@ -1,11 +1,11 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift fern-check fern-generate product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke mock-clockify
+.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke mock-clockify
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
 	@printf '%s\n' ''
 	@printf '%s\n' 'Core targets:'
-	@printf '%s\n' '  make perfect-fast        Deterministic local product gates without Fern/Docker/live Clockify.'
-	@printf '%s\n' '  make perfect-full        Canonical OpenAPI, Fern, package gates, and packed-consumer smoke.'
+	@printf '%s\n' '  make perfect-fast        Deterministic local product gates without codegen/live Clockify.'
+	@printf '%s\n' '  make perfect-full        Canonical OpenAPI, local SDK codegen, package gates, and packed-consumer smoke.'
 	@printf '%s\n' '  make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars.'
 	@printf '%s\n' ''
 	@printf '%s\n' 'Focused targets:'
@@ -17,13 +17,16 @@ help:
 	@printf '%s\n' '  make operation-coverage  Check OpenAPI/SDK/MCP operation coverage no-regression thresholds.'
 	@printf '%s\n' '  make naming-taxonomy    Check SDK/CLI/MCP/OpenAPI vocabulary and taxonomy consistency.'
 	@printf '%s\n' '  make openapi-lint        Check corrected OpenAPI operation contract invariants.'
+	@printf '%s\n' '  make sdk-codegen         Regenerate output/ts-sdk and sync wrapper/src from the corrected OpenAPI snapshot.'
+	@printf '%s\n' '  make sdk-codegen-drift   Check local SDK codegen output is reproducible.'
+	@printf '%s\n' '  make sdk-codegen-test    Run fixture tests for local generator schema/runtime compatibility.'
 	@printf '%s\n' '  make schema-quality     Check OpenAPI schema/model quality, enums, loose objects, and generated TS ergonomics.'
 	@printf '%s\n' '  make openapi-evidence    Check discrepancy ledger policy and evidence markers.'
-	@printf '%s\n' '  make upstream-drift     Check Clockify/API/Fern/GOCLMCP drift lifecycle, routing, evidence, and regeneration policy.'
-	@printf '%s\n' '  make generator-config    Check Fern CLI/generator pins and active OpenAPI snapshot.'
+	@printf '%s\n' '  make upstream-drift     Check Clockify/API/GOCLMCP/SDK drift lifecycle, routing, evidence, and regeneration policy.'
+	@printf '%s\n' '  make generator-config    Check local TypeScript generator input, output, command, and sync wiring.'
 	@printf '%s\n' '  make generator-independence Check generated core remains behind wrapper seams.'
 	@printf '%s\n' '  make generator-comparison Compare OpenAPI SDK stamps to generated TS methods.'
-	@printf '%s\n' '  make generator-portability Check no-paid-generator/vendor-exit contract.'
+	@printf '%s\n' '  make generator-portability Check repo-owned local-generator and no-paid-generator contract.'
 	@printf '%s\n' '  make package-contract    Check SDK/CLI/MCP package names, bins, exports, and pack files.'
 	@printf '%s\n' '  make examples-contract   Check SDK examples import public package and stay catalogued.'
 	@printf '%s\n' '  make examples-matrix     Check SDK/CLI/MCP examples matrix, mock/live boundaries, and receipt expectations.'
@@ -71,7 +74,7 @@ help:
 	@printf '%s\n' '  make docs-quality      Check evidence-first docs, exact names, generated table discipline, and no unsupported hype.'
 	@printf '%s\n' '  make axioms-contract   Check SDK/CLI/MCP/OpenAPI axioms map to concrete evidence.'
 	@printf '%s\n' '  make agent-handoff      Check future-agent guidance and temporary-context lifecycle.'
-	@printf '%s\n' '  make developer-environment Check local bootstrap/runtime/Fern setup contract.'
+	@printf '%s\n' '  make developer-environment Check local bootstrap/runtime/codegen setup contract.'
 	@printf '%s\n' '  make repo-doctor        Print a no-network JSON repo-shape doctor for non-coder setup triage.'
 	@printf '%s\n' '  make onboarding-plan    Print a no-network SDK/CLI/MCP/mock/live/full/support onboarding plan.'
 	@printf '%s\n' '  make operator-toolbox   Check no-network helper catalogue and inventory ownership.'
@@ -102,15 +105,15 @@ perfect-fast: generated-edit-check openapi-evidence upstream-drift operation-cov
 
 # Deterministic, offline, network-free contract/doc/drift gates only.
 # This is the perfect-fast set minus the package gates (wrapper-gates,
-# cli-gates, mcp-gates) and performance-budgets, which need the Fern/
-# Docker build chain or built artifacts. The src-dependent checks
+# cli-gates, mcp-gates) and performance-budgets, which need generated
+# package artifacts. The src-dependent checks
 # (schema-quality, generator-comparison) skip their generated-TS portions
 # with a clear warning when wrapper/src is absent, so this target runs
-# green on a fresh checkout without Docker. CI uses it to gate the doc
+# green on a fresh checkout without code generation. CI uses it to gate the doc
 # and contract drift suite that previously only ran locally.
 contract-gates: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook mutation-safety error-docs-drift troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift schema-quality
 
-perfect-full: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence goclmcp-drift fern-check fern-generate generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract mutation-safety maintenance-playbook product-surface-drift error-docs-drift troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke
+perfect-full: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract mutation-safety maintenance-playbook product-surface-drift error-docs-drift troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke
 
 perfect-live:
 	@if [ -z "$${CLOCKIFY_API_KEY:-}" ] || [ -z "$${CLOCKIFY_WORKSPACE_ID:-}" ]; then \
@@ -139,11 +142,15 @@ goclmcp-drift:
 	cd ../GOCLMCP && $(MAKE) openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift
 	cd ../GOCLMCP && go test ./internal/tools/...
 
-fern-check:
-	cd spec/fern && fern check --warnings --from-openapi
+sdk-codegen:
+	node scripts/generate-sdk-from-openapi.mjs --write
+	cd wrapper && npm run sync
 
-fern-generate:
-	cd spec/fern && fern generate --group ts --local --force
+sdk-codegen-drift:
+	node scripts/generate-sdk-from-openapi.mjs --check
+
+sdk-codegen-test:
+	npm run test:codegen
 
 product-surface:
 	node scripts/generate-product-surface.mjs --write

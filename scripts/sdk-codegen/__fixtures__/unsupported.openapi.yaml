@@ -1,0 +1,11 @@
+openapi: 3.0.3
+info:
+  title: Unsupported codegen fixture
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    UnsupportedThing:
+      type: string
+      not:
+        type: integer

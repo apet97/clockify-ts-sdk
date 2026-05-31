@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Machine-readable contract for durable hand-written SDK runtime seams around the generated Fern client.",
+  "purpose": "Machine-readable contract for durable hand-written SDK runtime seams around the local generated client.",
   "policyDocument": {
     "path": "docs/sdk-runtime-policy.md",
     "contains": [

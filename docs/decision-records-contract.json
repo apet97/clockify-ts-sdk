@@ -27,12 +27,13 @@
     "Consequences",
     "Proof"
   ],
-  "expectedRecordCount": 4,
+  "expectedRecordCount": 5,
   "requiredRecordIds": [
     "canonical-api-truth",
     "generated-core-boundary",
     "no-default-npm-publish",
-    "sandbox-only-live-proof"
+    "sandbox-only-live-proof",
+    "local-typescript-generator"
   ],
   "records": [
     {
@@ -69,6 +70,15 @@
         "Live proof mutates Clockify state",
         "sacrificial sandbox workspace",
         "make perfect-live"
+      ]
+    },
+    {
+      "id": "local-typescript-generator",
+      "path": "docs/decisions/0005-local-typescript-generator.md",
+      "contains": [
+        "repo-owned local TypeScript generator",
+        "spec/corrected/clockify.corrected.openapi.yaml",
+        "make sdk-codegen"
       ]
     }
   ]

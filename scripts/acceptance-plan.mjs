@@ -112,8 +112,8 @@ const scenarios = {
         mcp: ["wrapper semantics and parity metadata"],
         evidence: [
             "make goclmcp-drift",
-            "make fern-check",
-            "make fern-generate",
+            "make sdk-codegen",
+            "make sdk-codegen-drift",
             "make operation-coverage",
             "make generator-comparison",
             "make generated-edit-check",
@@ -193,4 +193,3 @@ export function renderMarkdown(plan) {
     }
     return `${lines.join("\n")}\n`;
 }
-

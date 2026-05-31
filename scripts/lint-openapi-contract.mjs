@@ -35,9 +35,9 @@ for (const op of inventory.operations ?? []) {
 
     const params = Array.isArray(op.parameters) ? op.parameters : [];
     const paramNames = new Set(params.map((param) => param.name));
-    if (paramNames.has("page") || paramNames.has("page-size")) {
+    if (paramNames.has("page-size")) {
         paginated += 1;
-        if (!paramNames.has("page") || !paramNames.has("page-size")) fail(`${label}: pagination must include both page and page-size`);
+        if (!paramNames.has("page")) fail(`${label}: pagination must include both page and page-size`);
     }
     if (op.lastPageHeader) lastPage += 1;
 

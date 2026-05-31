@@ -1,13 +1,12 @@
 /**
  * Upload a tiny PNG via the `client.files.uploadImage` endpoint —
- * exercises the SDK's multipart file-upload path (handled
- * transparently by Fern's `FormDataWrapper`).
+ * exercises the SDK's locally generated multipart file-upload path.
  *
  * Run: `CLOCKIFY_API_KEY=xxx CLOCKIFY_WORKSPACE_ID=yyy npx tsx examples/upload-image.ts`
  *
- * In a real script you'd pass `fs.createReadStream("/path/to/file.png")`
- * or a `File` / `Blob`; here we manufacture a 1-byte PNG so the
- * example needs no on-disk asset.
+ * In a real script you'd pass a `File`, `Blob`, `Buffer`, `Uint8Array`,
+ * or string field value; here we manufacture a 1-byte PNG so the example
+ * needs no on-disk asset.
  *
  * WARNING: writes to your sandbox workspace.
  */

@@ -20,7 +20,7 @@ Bug reports should include:
 
 - Package surface: SDK, CLI, MCP, OpenAPI/generator, docs, mock/replay, or package install.
 - Package version: `clockify-sdk-ts-115`, `@clockify115/cli`, or `@clockify115/mcp-server`.
-- Runtime: Node/npm version, OS, module system, and whether Docker/Fern was involved.
+- Runtime: Node/npm version, OS, module system, and whether local SDK codegen was involved.
 - Entry point: SDK import or method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
 - Sanitized receipt: `requestId`, `status`, stable `code`, `retryable`, `recovery`, `changed`, `next`, and cleanup/leftover count when present.
 - Generated support bundle: run
@@ -36,7 +36,7 @@ Bug reports should include:
   evidence: `clockifyDiagnostics()`, `clk115 doctor --json`, or
   `clockify://mcp/doctor`. Include only safe `safeCommandHints`, never env
   values.
-- Proof attempted: narrowest command or scenario, such as `make mock-contract`, `make acceptance-scenarios`, package-local tests, or live proof status.
+- Proof attempted: narrowest command or scenario, such as `make mock-contract`, `make acceptance-scenarios`, package tests, or live proof status.
 - Data boundary: mock, docs-only, sacrificial sandbox, private gateway, or unknown. Never customer workspace proof.
 
 ## Required feature evidence
@@ -48,7 +48,7 @@ surfaces must point to `docs/breaking-change-review-policy.md`.
 
 ## PR checklist quality
 
-PRs should not rely on stale package-local counts or old smoke assertions. The
+PRs should not rely on stale generated-file counts or old smoke assertions. The
 review checklist should point to root gates and contracts, then allow package
 maintainers to add exact output in the PR body or final proof receipt.
 Supportability changes should include diagnostics or support-bundle impact so
@@ -68,7 +68,7 @@ routing, PRs should mention whether `readinessContext.finalBlockingSignalIds`,
   object payloads.
 - Route Clockify API server behavior to Clockify support unless the local spec,
   generator, wrapper, CLI, or MCP contract is wrong.
-- Route synced SDK shape issues to GOCLMCP/Fern unless the public wrapper seam is
+- Route synced SDK shape issues to GOCLMCP or the local generator unless the public wrapper seam is
   the actual defect.
 - Route security-sensitive issues to private disclosure through `SECURITY.md`.
 ## Proof gates

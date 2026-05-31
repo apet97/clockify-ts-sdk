@@ -18,13 +18,13 @@
  *    `initialDelayMs`, `maxDelayMs`, `jitter`,
  *    `retryableStatusCodes`, `retryableMethods`, and `computeDelay`.
  *    Honors `Retry-After` + `X-RateLimit-Reset` headers (matches
- *    Fern's built-in behavior). When `retryPolicy` is set,
- *    `createClockifyClient` automatically sets Fern's
+ *    the generated client's default behavior). When `retryPolicy` is set,
+ *    `createClockifyClient` automatically sets the generated client's
  *    `maxRetries: 0` to avoid nested retry loops.
  *
  * `createClockifyClient` wraps every constructed client with this
  * fetcher using sensible defaults (UA + req-id on, no retry layer
- * beyond Fern's, no hooks). Direct callers can use `composedFetch`
+ * beyond the generated client's, no hooks). Direct callers can use `composedFetch`
  * via the `clockify-sdk-ts-115/composed-fetch` subpath for non-Clockify
  * fetch needs (e.g. testing, observability piping, multi-SDK
  * aggregation).
@@ -45,7 +45,7 @@ export const REQUEST_ID_HEADER = "X-Request-Id" as const;
 /** Header name carrying the SDK + runtime advertisement. */
 export const USER_AGENT_HEADER = "User-Agent" as const;
 
-/** Default retry behavior mirrors Fern's `requestWithRetries.ts`:
+/** Default retry behavior mirrors the generated client's retry layer:
  *  408/429/5xx retryable on idempotent methods only, exponential
  *  backoff with 20% jitter, honors `Retry-After` and
  *  `X-RateLimit-Reset`, max delay 60s.
@@ -64,7 +64,7 @@ const DEFAULT_RETRY_POLICY: Required<Omit<RetryPolicy, "computeDelay">> = {
 };
 
 /** Configurable retry behavior. Pass `false` to disable retries
- *  entirely. Omit to keep Fern's internal retry untouched. */
+ *  entirely. Omit to keep the generated client's retry layer untouched. */
 export interface RetryPolicy {
     /** Max retry attempts in addition to the initial request. Default `2`. */
     maxRetries?: number;

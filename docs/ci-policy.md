@@ -7,7 +7,7 @@ local package gates without becoming the source of product truth.
 
 | Workflow | Role |
 |---|---|
-| `.github/workflows/ci.yml` | SDK wrapper CI: sync generated SDK, type-check, build, smoke dual ESM/CJS, tests, type tests, pack snapshot, size, lint, Fern check, Bun smoke, and Deno smoke. |
+| `.github/workflows/ci.yml` | SDK wrapper CI: local SDK codegen, type-check, build, smoke dual ESM/CJS, tests, type tests, pack snapshot, size, lint, OpenAPI/codegen checks, Bun smoke, and Deno smoke. |
 | `.github/workflows/ci-cli.yml` | CLI CI: build the wrapper first, then type-check, test, build, and dry-run pack the CLI package. |
 | `.github/workflows/ci-mcp.yml` | MCP CI: build the wrapper first, then type-check, test, build, and dry-run pack the MCP package. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
@@ -37,7 +37,7 @@ node scripts/plan.mjs release-decision --decision all
 ```
 
 The planner is no-network and preflight-only. It does not run Git, npm,
-Docker, Fern, tests, builds, Clockify API calls, `npm publish`, or CI/CD
+Docker, hosted SDK generators, tests, builds, Clockify API calls, `npm publish`, or CI/CD
 changes. It separates the default local-tarball handoff path from
 tag-only, npm-via-CI, and legacy-workflow retirement decisions. Any path
 other than local tarball handoff requires explicit maintainer approval.

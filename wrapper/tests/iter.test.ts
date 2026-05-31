@@ -107,7 +107,7 @@ describe("iterPages", () => {
 });
 
 describe("iterPages — Last-Page header consumption", () => {
-    // Build a thenable that mimics Fern's HttpResponsePromise<T>:
+        // Build a thenable that mimics the generated HttpResponsePromise<T>:
     // resolves to the data on `await`, and exposes `.withRawResponse()`
     // returning the data + a `rawResponse` carrying the Last-Page
     // header. The wrapper feature-detects `withRawResponse` and uses

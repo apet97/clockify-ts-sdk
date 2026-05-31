@@ -37,7 +37,7 @@ export interface ClockifyDiagnosticsInput {
     addonToken?: unknown;
     /** Optional workspace ID used by most resource calls. */
     workspaceId?: string;
-    /** Fern environment/base URL override passed through createClockifyClient. */
+    /** Environment/base URL override passed through createClockifyClient. */
     environment?: string;
     /** Alias accepted for operator-oriented diagnostics. */
     baseUrl?: string;

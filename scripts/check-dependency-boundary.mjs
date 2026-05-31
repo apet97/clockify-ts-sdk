@@ -137,9 +137,18 @@ function validateContractShape() {
         assertStringMap(`${label}.devDependencies`, pkgContract.devDependencies ?? {});
     }
 
-    for (const field of ["forbiddenRuntimeDependencies", "forbiddenImportMarkers", "sourceRoots"]) {
+    for (const field of ["forbiddenRuntimeDependencies", "forbiddenDependencyNames", "forbiddenImportMarkers", "sourceRoots"]) {
         const values = assertStringArray(field, contract[field], { allowEmpty: false });
         assertUnique(field, values);
+    }
+    const forbiddenDependencyManifestPaths = assertStringArray(
+        "forbiddenDependencyManifestPaths",
+        contract.forbiddenDependencyManifestPaths,
+        { allowEmpty: false },
+    );
+    assertUnique("forbiddenDependencyManifestPaths", forbiddenDependencyManifestPaths);
+    for (const [index, manifestPath] of forbiddenDependencyManifestPaths.entries()) {
+        safeRelativePath(`forbiddenDependencyManifestPaths[${index}]`, manifestPath);
     }
     for (const [index, sourceRoot] of (contract.sourceRoots ?? []).entries()) {
         safeRelativePath(`sourceRoots[${index}]`, sourceRoot);
@@ -223,6 +232,30 @@ for (const pkgContract of contract.packages ?? []) {
     for (const name of pkgContract.requiredDevDependencies ?? []) {
         if (typeof manifest.devDependencies?.[name] !== "string") {
             fail(pkgContract.id, `missing required dev dependency ${name}`);
+        }
+    }
+}
+
+for (const manifestPath of contract.forbiddenDependencyManifestPaths ?? []) {
+    const safeManifest = safeRelativePath("forbiddenDependencyManifestPaths", manifestPath);
+    if (safeManifest == null) continue;
+    const absoluteManifest = path.join(root, safeManifest);
+    if (!fs.existsSync(absoluteManifest)) {
+        fail(manifestPath, "manifest is missing");
+        continue;
+    }
+    const manifest = JSON.parse(fs.readFileSync(absoluteManifest, "utf8"));
+    const dependencyBuckets = {
+        dependencies: manifest.dependencies ?? {},
+        devDependencies: manifest.devDependencies ?? {},
+        peerDependencies: manifest.peerDependencies ?? {},
+        optionalDependencies: manifest.optionalDependencies ?? {},
+    };
+    for (const [bucketName, bucket] of Object.entries(dependencyBuckets)) {
+        for (const forbidden of contract.forbiddenDependencyNames ?? []) {
+            if (Object.hasOwn(bucket, forbidden)) {
+                fail(manifestPath, `${bucketName} must not include hosted generator dependency ${forbidden}`);
+            }
         }
     }
 }
