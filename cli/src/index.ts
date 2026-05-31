@@ -48,7 +48,10 @@ export function buildProgram(): Command {
         .version("0.1.0")
         .option("--api-key <key>", "Clockify personal API key (or CLOCKIFY_API_KEY env var).")
         .option("--workspace <id>", "Clockify workspace ID (or CLOCKIFY_WORKSPACE_ID env var).")
-        .option("--base-url <url>", "Override Clockify API base URL (or CLOCKIFY_BASE_URL env var).")
+        .option(
+            "--base-url <url>",
+            "Override Clockify API base URL (or CLOCKIFY_BASE_URL env var). Only a Clockify host or a loopback host is accepted; arbitrary hosts are rejected.",
+        )
         .option("--json", "Emit machine-readable JSON instead of human-friendly tables.", false)
         .option("--no-color", "Disable ANSI color output.")
         .showHelpAfterError(true);

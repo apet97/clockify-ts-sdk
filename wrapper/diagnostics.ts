@@ -5,6 +5,7 @@
  * a client and without contacting Clockify. Pair it with `client.health()`
  * when you are ready for the first live credential probe.
  */
+import { classifyClockifyBaseUrl } from "./create-client.js";
 
 const ENV_API_KEY = "CLOCKIFY_API_KEY";
 const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
@@ -27,11 +28,7 @@ export type ClockifyDiagnosticsStatus =
     | "override"
     | "unknown";
 
-export type ClockifyDiagnosticsSource =
-    | "explicit"
-    | "env"
-    | "default"
-    | "unavailable";
+export type ClockifyDiagnosticsSource = "explicit" | "env" | "default" | "unavailable";
 
 export interface ClockifyDiagnosticsInput {
     /** Explicit API key, if the caller intends to pass one to createClockifyClient. */
@@ -56,6 +53,15 @@ export interface ClockifyDiagnosticCheck {
     source: ClockifyDiagnosticsSource;
     value?: string;
     recovery?: string;
+    /**
+     * For the base URL check only: whether a configured override would
+     * pass the Clockify host allowlist that `createClockifyClient`
+     * enforces. `allowed` for a Clockify host / loopback, `rejected`
+     * for a non-Clockify or non-HTTPS host. Absent when no override is
+     * configured. This is an advisory report — the diagnostics call
+     * never throws; the factory is where a rejected host actually fails.
+     */
+    allowlist?: "allowed" | "rejected";
 }
 
 export interface ClockifyDiagnosticsResult {
@@ -140,7 +146,9 @@ function authCheck(input: {
             ok: true,
             status: "present",
             source: "explicit",
-            value: input.explicitApiKey ? "apiKey configured (redacted)" : "addonToken configured (redacted)",
+            value: input.explicitApiKey
+                ? "apiKey configured (redacted)"
+                : "addonToken configured (redacted)",
         };
     }
     if (input.envApiKey || input.envAddonToken) {
@@ -148,7 +156,9 @@ function authCheck(input: {
             ok: true,
             status: "present",
             source: "env",
-            value: input.envApiKey ? `${ENV_API_KEY} configured (redacted)` : `${ENV_ADDON_TOKEN} configured (redacted)`,
+            value: input.envApiKey
+                ? `${ENV_API_KEY} configured (redacted)`
+                : `${ENV_ADDON_TOKEN} configured (redacted)`,
         };
     }
     return {
@@ -211,12 +221,20 @@ function baseUrlCheck(
             value: DEFAULT_CLOCKIFY_BASE_URL,
         };
     }
+    // Report (do not enforce) whether this override would pass the
+    // host allowlist createClockifyClient applies. Diagnostics is a
+    // no-network advisory: it never throws, so `ok` stays true.
+    const classification = classifyClockifyBaseUrl(baseUrl);
+    const allowlist: "allowed" | "rejected" = classification.allowed ? "allowed" : "rejected";
     return {
         ok: true,
         status: "override",
         source,
         value: baseUrl,
-        recovery: "Use the default Clockify API base URL for live work; keep overrides for mocks or replay.",
+        allowlist,
+        recovery: classification.allowed
+            ? "Use the default Clockify API base URL for live work; keep overrides for mocks or replay."
+            : `${classification.reason} createClockifyClient will reject this host unless allowInsecureBaseUrl is set.`,
     };
 }
 
@@ -238,13 +256,24 @@ function buildWarnings(input: {
 }): string[] {
     const warnings: string[] = [];
     if (input.envApiKey && input.envAddonToken) {
-        warnings.push(`${ENV_API_KEY} and ${ENV_ADDON_TOKEN} are both set; createClockifyClient prefers ${ENV_API_KEY}.`);
+        warnings.push(
+            `${ENV_API_KEY} and ${ENV_ADDON_TOKEN} are both set; createClockifyClient prefers ${ENV_API_KEY}.`,
+        );
     }
     if (input.workspace.status === "missing") {
-        warnings.push(`${ENV_WORKSPACE_ID} is not set; client.health() can run, but most resource calls need a workspaceId.`);
+        warnings.push(
+            `${ENV_WORKSPACE_ID} is not set; client.health() can run, but most resource calls need a workspaceId.`,
+        );
     }
     if (input.base.status === "override") {
-        warnings.push("A Clockify base URL override is configured; confirm this is intentional before live work.");
+        warnings.push(
+            "A Clockify base URL override is configured; confirm this is intentional before live work.",
+        );
+    }
+    if (input.base.allowlist === "rejected") {
+        warnings.push(
+            "The configured base URL is not an allowlisted Clockify host; createClockifyClient will reject it unless allowInsecureBaseUrl is set.",
+        );
     }
     return warnings;
 }
@@ -257,12 +286,17 @@ function nextSteps(input: {
 }): string[] {
     const steps: string[] = [];
     if (!input.runtime.ok) steps.push("Install Node.js 20 or newer.");
-    if (input.auth.status === "conflict") steps.push("Keep exactly one auth scheme: apiKey or addonToken.");
+    if (input.auth.status === "conflict")
+        steps.push("Keep exactly one auth scheme: apiKey or addonToken.");
     if (!input.auth.ok && input.auth.status !== "conflict") {
         steps.push(`Set ${ENV_API_KEY} or ${ENV_ADDON_TOKEN}, or pass auth explicitly.`);
     }
-    if (input.workspace.status === "missing") steps.push(`Set ${ENV_WORKSPACE_ID} before workspace resource calls.`);
-    if (input.base.status === "override") steps.push("Confirm the base URL override points at a mock/replay server or an intended Clockify-compatible endpoint.");
+    if (input.workspace.status === "missing")
+        steps.push(`Set ${ENV_WORKSPACE_ID} before workspace resource calls.`);
+    if (input.base.status === "override")
+        steps.push(
+            "Confirm the base URL override points at a mock/replay server or an intended Clockify-compatible endpoint.",
+        );
     if (steps.length === 0) {
         steps.push("Create the client with createClockifyClient().");
         steps.push("Run client.health() as the first live Clockify probe.");

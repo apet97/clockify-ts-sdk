@@ -15,6 +15,7 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- `--base-url` / `CLOCKIFY_BASE_URL` is now validated against the SDK Clockify host allowlist: only an official Clockify API host or a loopback host is accepted, arbitrary hosts are rejected with a clear message (strict by default — the CLI never opts in to insecure hosts). Help text updated.
 - Commander usage errors now return exit code `2`, matching the documented CLI contract.
 - Added `exports` field to the package manifest so consumers can use the package self-reference; only `./dist/index.js` is exposed.
 - Migrated the SDK dev dependency from `file:../wrapper` to a workspace link (`"*"`). The peer dependency `clockify-sdk-ts-115 >=0.9.0` is unchanged for published consumers.

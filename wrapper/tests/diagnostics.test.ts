@@ -25,7 +25,10 @@ describe("clockifyDiagnostics", () => {
         expect(result.ok).toBe(true);
         expect(result.readiness).toBe("ready_for_health");
         expect(JSON.stringify(result)).not.toContain("super-secret-token");
-        expect(result.checks.auth).toMatchObject({ source: "env", value: "CLOCKIFY_API_KEY configured (redacted)" });
+        expect(result.checks.auth).toMatchObject({
+            source: "env",
+            value: "CLOCKIFY_API_KEY configured (redacted)",
+        });
         expect(result.checks.workspaceId).toMatchObject({ source: "env", value: "1234...5678" });
         expect(result.checks.baseUrl).toMatchObject({ source: "default", status: "default" });
         expect(result.next).toContain("Create the client with createClockifyClient().");
@@ -44,7 +47,10 @@ describe("clockifyDiagnostics", () => {
         });
 
         expect(result.ok).toBe(true);
-        expect(result.checks.workspaceId).toMatchObject({ source: "explicit", value: "1234...5678" });
+        expect(result.checks.workspaceId).toMatchObject({
+            source: "explicit",
+            value: "1234...5678",
+        });
         expect(result.checks.baseUrl).toMatchObject({
             source: "explicit",
             status: "override",
@@ -91,7 +97,9 @@ describe("clockifyDiagnostics", () => {
         });
 
         expect(result.ok).toBe(true);
-        expect(result.warnings.join("\n")).toContain("createClockifyClient prefers CLOCKIFY_API_KEY");
+        expect(result.warnings.join("\n")).toContain(
+            "createClockifyClient prefers CLOCKIFY_API_KEY",
+        );
         expect(JSON.stringify(result)).not.toContain("addon-token");
     });
 
@@ -101,5 +109,31 @@ describe("clockifyDiagnostics", () => {
         expect(result.ok).toBe(false);
         expect(result.readiness).toBe("runtime_unsupported");
         expect(result.checks.runtime.recovery).toMatch(/Node\.js 20/);
+    });
+    it("reports an allowlisted Clockify base URL override as allowed", () => {
+        const result = clockifyDiagnostics({
+            apiKey: "api",
+            baseUrl: "https://api.clockify.me/api/v1",
+            env: {},
+            nodeVersion: "22.1.0",
+        });
+
+        expect(result.ok).toBe(true);
+        expect(result.checks.baseUrl).toMatchObject({ status: "override", allowlist: "allowed" });
+    });
+
+    it("flags a non-Clockify base URL override as rejected with recovery guidance", () => {
+        const result = clockifyDiagnostics({
+            apiKey: "api",
+            baseUrl: "https://evil.example.com/api/v1",
+            env: {},
+            nodeVersion: "22.1.0",
+        });
+
+        // Diagnostics never throws — it reports advisory readiness — so ok
+        // stays true even though createClockifyClient would reject the host.
+        expect(result.ok).toBe(true);
+        expect(result.checks.baseUrl).toMatchObject({ status: "override", allowlist: "rejected" });
+        expect(result.warnings.join("\n")).toContain("not an allowlisted Clockify host");
     });
 });
