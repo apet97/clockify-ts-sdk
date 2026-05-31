@@ -105,6 +105,37 @@ jobs:
           fi
           echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
 
+  contract-gates:
+    name: Contract + doc drift gates (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        run: npm ci
+
+      # Runs the deterministic, network-free contract/doc/drift suite
+      # (`make contract-gates`) that previously only ran locally via
+      # `make perfect-fast`. No Fern/Docker: the src-dependent checks
+      # (schema-quality, generator-comparison) skip their generated-TS
+      # portions with a clear warning when wrapper/src is absent. The
+      # package build/test gates stay in build-and-test / ci-cli / ci-mcp.
+      - name: Run contract + doc drift gates
+        run: make contract-gates
+
   size:
     name: Bundle size ceiling (size-limit)
     runs-on: ubuntu-latest
