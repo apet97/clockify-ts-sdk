@@ -12,5 +12,13 @@ export type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
 export function buildClient(config: CliConfig): ClockifyClient {
     const apiKey = requireApiKey(config);
-    return createClockifyClient({ apiKey, environment: config.baseUrl });
+    // Strict by default: createClockifyClient enforces the Clockify host
+    // allowlist (official Clockify API hosts + loopback) on `--base-url`
+    // / CLOCKIFY_BASE_URL, so an arbitrary host is rejected with a clear
+    // message rather than silently sending the API key off-host.
+    return createClockifyClient({
+        apiKey,
+        environment: config.baseUrl,
+        allowInsecureBaseUrl: false,
+    });
 }

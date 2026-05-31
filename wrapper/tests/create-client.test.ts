@@ -32,7 +32,9 @@ describe("createClockifyClient", () => {
     it("forwards passthrough options (environment, headers, timeout, retries)", () => {
         const client = createClockifyClient({
             apiKey: "k",
-            environment: "https://api.clockify.test",
+            // Use a loopback override so the host allowlist accepts it while
+            // still exercising the environment passthrough path.
+            environment: "http://127.0.0.1:19099/api/v1",
             headers: { "X-Custom": "v" },
             timeoutInSeconds: 5,
             maxRetries: 0,
@@ -225,6 +227,118 @@ describe("createClockifyClient", () => {
             expect(allCalls.some((msg) => msg.startsWith("[clockify] ✘"))).toBe(true);
 
             debugSpy.mockRestore();
+        });
+    });
+
+    describe("base URL allowlist (H1)", () => {
+        it("rejects an http:// base URL (must be HTTPS)", () => {
+            expect(() =>
+                createClockifyClient({ apiKey: "k", environment: "http://api.clockify.me/api/v1" }),
+            ).toThrow(/https:\/\//);
+        });
+
+        it("rejects http:// even with allowInsecureBaseUrl: true (no cleartext credentials)", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: "http://evil.example.com/api/v1",
+                    allowInsecureBaseUrl: true,
+                }),
+            ).toThrow(/https:\/\//);
+        });
+
+        it("allows the production api.clockify.me host over HTTPS", () => {
+            const client = createClockifyClient({
+                apiKey: "k",
+                environment: "https://api.clockify.me/api/v1",
+            });
+            expect(client).toBeInstanceOf(ClockifyApiClient);
+        });
+
+        it("allows the reports / audit-log / pto Clockify API hosts over HTTPS", () => {
+            for (const url of [
+                "https://reports.api.clockify.me/v1",
+                "https://auditlog.api.clockify.me/v1",
+                "https://pto.api.clockify.me/v1",
+            ]) {
+                const client = createClockifyClient({ apiKey: "k", environment: url });
+                expect(client).toBeInstanceOf(ClockifyApiClient);
+            }
+        });
+
+        it("allows localhost / 127.0.0.1 / ::1 (IPv6) loopback on any port", () => {
+            for (const url of [
+                "http://localhost:8080/api/v1",
+                "http://127.0.0.1:19091/api/v1",
+                "https://127.0.0.1:8443/api/v1",
+                "http://[::1]:9000/api/v1",
+            ]) {
+                const client = createClockifyClient({ apiKey: "k", environment: url });
+                expect(client).toBeInstanceOf(ClockifyApiClient);
+            }
+        });
+
+        it("rejects an arbitrary HTTPS host by default", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: "https://evil.example.com/api/v1",
+                }),
+            ).toThrow(/not an allowlisted Clockify host/);
+        });
+
+        it("includes recovery guidance pointing at the opt-in flag when rejecting", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: "https://evil.example.com/api/v1",
+                }),
+            ).toThrow(/allowInsecureBaseUrl: true/);
+        });
+
+        it("allows an arbitrary HTTPS host when allowInsecureBaseUrl: true is set, with a warning", () => {
+            const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+            const client = createClockifyClient({
+                apiKey: "k",
+                environment: "https://my-proxy.example.com/api/v1",
+                allowInsecureBaseUrl: true,
+            });
+            expect(client).toBeInstanceOf(ClockifyApiClient);
+            const warned = warnSpy.mock.calls.map((c) => String(c[0]));
+            expect(warned.some((m) => m.includes("allowInsecureBaseUrl"))).toBe(true);
+            warnSpy.mockRestore();
+        });
+
+        it("also validates the baseUrl alias, not just environment", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    baseUrl: "https://evil.example.com/api/v1",
+                } as unknown as CreateClockifyClientOptions),
+            ).toThrow(/not an allowlisted Clockify host/);
+        });
+
+        it("validates a base URL resolved from CLOCKIFY_BASE_URL via the MCP/CLI env path", () => {
+            // The factory itself does not read CLOCKIFY_BASE_URL (MCP/CLI
+            // pass it through as `environment`), but a malicious value
+            // arriving by that route must still be rejected.
+            vi.stubEnv("CLOCKIFY_BASE_URL", "https://evil.example.com/api/v1");
+            expect(() =>
+                createClockifyClient({ apiKey: "k", environment: process.env.CLOCKIFY_BASE_URL }),
+            ).toThrow(/not an allowlisted Clockify host/);
+        });
+
+        it("leaves a base URL Supplier (function) unvalidated — it resolves at request time", () => {
+            const client = createClockifyClient({
+                apiKey: "k",
+                environment: () => "https://evil.example.com/api/v1",
+            });
+            expect(client).toBeInstanceOf(ClockifyApiClient);
+        });
+
+        it("accepts the default (no base URL override)", () => {
+            const client = createClockifyClient({ apiKey: "k" });
+            expect(client).toBeInstanceOf(ClockifyApiClient);
         });
     });
 });
