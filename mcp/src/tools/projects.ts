@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
@@ -149,12 +150,20 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         "clockify_projects_delete",
         {
             title: "Delete a project",
-            description: "Permanently delete one project by ID from the pinned workspace.",
-            inputSchema: { projectId: z.string().min(1) },
+            description:
+                "Permanently delete one project by ID. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "project", id: args.projectId };
+                const confirmation = requireConfirmation(ctx, "clockify_projects_delete", "project_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.projects.delete({
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

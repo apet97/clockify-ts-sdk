@@ -113,7 +113,7 @@ function validateContractShape() {
 
     assertPositiveInteger("minimumDestructiveToolCount", contract.minimumDestructiveToolCount);
 
-    for (const field of ["highRiskWorkflowTools", "idempotentWorkflowTools"]) {
+    for (const field of ["highRiskWorkflowTools", "idempotentWorkflowTools", "confirmationGuardedDomainTools"]) {
         const values = assertStringArray(field, contract[field], { allowEmpty: false });
         assertUnique(field, values);
     }
@@ -129,7 +129,12 @@ function validateContractShape() {
         validateMarkerEntry(`requiredFiles[${index}]`, file);
     }
 
-    for (const field of ["workflowRequiredMarkers", "confirmationRequiredMarkers", "forbiddenPolicyMarkers"]) {
+    for (const field of [
+        "workflowRequiredMarkers",
+        "domainDeleteRequiredMarkers",
+        "confirmationRequiredMarkers",
+        "forbiddenPolicyMarkers",
+    ]) {
         const markers = assertStringArray(field, contract[field], { allowEmpty: false });
         assertUnique(field, markers);
     }
@@ -139,6 +144,7 @@ function validateContractShape() {
         safeRelativePath("wiring.checker", contract.wiring.checker);
         safeRelativePath("wiring.toolsDirectory", contract.wiring.toolsDirectory);
         assertNonEmptyString("wiring.workflowsFile", contract.wiring.workflowsFile);
+        safeRelativePath("wiring.confirmGuardFile", contract.wiring.confirmGuardFile);
         assertNonEmptyString("wiring.docsIndexPolicy", contract.wiring.docsIndexPolicy);
         assertNonEmptyString("wiring.docsIndexContract", contract.wiring.docsIndexContract);
         assertNonEmptyString("wiring.qualityGate", contract.wiring.qualityGate);
@@ -164,7 +170,14 @@ for (const file of contract.requiredFiles) {
 
 const wiring = contract.wiring ?? {};
 const workflows = await readRel(wiring.workflowsFile);
-includesAll(workflows, contract.confirmationRequiredMarkers, "mcp/src/tools/workflows.ts confirmation flow");
+// The dry_run -> confirm_token handshake lives in one shared guard so the
+// workflow surface and the destructive domain deletes cannot drift.
+const confirmGuard = await readRel(wiring.confirmGuardFile);
+includesAll(confirmGuard, contract.confirmationRequiredMarkers, `${wiring.confirmGuardFile} confirmation flow`);
+// workflows.ts must keep delegating to the shared guard via maybeConfirm.
+if (!workflows.includes("requireConfirmation(ctx, toolName, riskClass, args, preview)")) {
+    failures.push("mcp/src/tools/workflows.ts maybeConfirm does not delegate to the shared requireConfirmation guard");
+}
 
 for (const toolName of contract.highRiskWorkflowTools) {
     const registration = registrationBlock(workflows, toolName);
@@ -178,6 +191,42 @@ for (const toolName of contract.highRiskWorkflowTools) {
     }
     if (!workflows.includes(`successResult("${toolName}"`)) {
         failures.push(`${toolName} does not return a success receipt`);
+    }
+}
+
+// Destructive domain delete tools must route through the same shared guard:
+// dry_run + confirm_token in their schema and a requireConfirmation call
+// before the SDK delete. This closes the gap where a client that ignored
+// the destructiveHint annotation could delete with no server-side guard.
+const toolsDirectoryRel = safeRelativePath("wiring.toolsDirectory", wiring.toolsDirectory) ?? "mcp/src/tools";
+const toolFileTexts = [];
+{
+    const dir = path.join(root, toolsDirectoryRel);
+    const files = (await readdir(dir)).filter((file) => file.endsWith(".ts")).sort();
+    for (const file of files) {
+        toolFileTexts.push(await readRel(`${toolsDirectoryRel}/${file}`));
+    }
+}
+function findToolFile(toolName) {
+    return (
+        toolFileTexts.find((text) => new RegExp(`server\\.registerTool\\(\\s*"${toolName}"`).test(text)) ?? ""
+    );
+}
+
+for (const toolName of contract.confirmationGuardedDomainTools) {
+    const text = findToolFile(toolName);
+    const registration = registrationBlock(text, toolName);
+    if (!registration) {
+        failures.push(`destructive domain tool ${toolName} registration not found`);
+        continue;
+    }
+    includesAll(
+        registration,
+        contract.domainDeleteRequiredMarkers.filter((marker) => marker !== "requireConfirmation"),
+        `${toolName} registration`,
+    );
+    if (!text.includes(`requireConfirmation(ctx, "${toolName}"`)) {
+        failures.push(`${toolName} does not call requireConfirmation before the delete`);
     }
 }
 
@@ -211,10 +260,10 @@ for (const tool of destructiveTools) {
     }
 }
 
-if (!workflows.includes("confirm_token: issued.confirmToken")) {
+if (!confirmGuard.includes("confirm_token: issued.confirmToken")) {
     failures.push("confirmation preview does not expose confirm_token in receipt data");
 }
-if (!workflows.includes("store.validate(str(args.confirm_token), payload)")) {
+if (!confirmGuard.includes("store.validate(str(args.confirm_token), payload)")) {
     failures.push("confirmation execution does not validate confirm_token against stable payload");
 }
 

@@ -2,7 +2,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { ConfirmationTokenStore, confirmationPayload } from "../orchestration/confirmation.js";
+import { requireConfirmation, stripConfirmationArgs } from "../orchestration/confirm-guard.js";
+import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
 import type { ChangeSet, EntityRef, NextAction, RecoveryHint, Warning } from "../result.js";
 import { errorResult, successResult } from "../result.js";
 
@@ -769,12 +770,12 @@ async function scheduleWork(ctx: Context, args: AnyRecord) {
 }
 
 async function setupWebhook(ctx: Context, args: AnyRecord) {
-    const url = new URL(str(args.url));
-    if (url.protocol !== "https:") throw new Error("webhook URL must use HTTPS");
-    if (["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
-        throw new Error("webhook URL must not target localhost or loopback hosts");
-    }
-    if (url.username || url.password) throw new Error("webhook URL must not contain credentials");
+    // assertSafeWebhookUrl enforces HTTPS and rejects SSRF targets
+    // (loopback / private / link-local / unique-local / cloud-metadata
+    // hosts and localhost-ish names) before the preview is built, so even a
+    // dry_run refuses a bad host. DNS-rebinding is out of scope (offline
+    // guard); see orchestration/webhook-url.ts.
+    const url = assertSafeWebhookUrl(str(args.url));
     const webhookEvent = str(args.webhook_event) || str(args.event);
     if (!webhookEvent) throw new Error("webhook_event is required");
     const triggerSourceType = str(args.trigger_source_type) || "WORKSPACE_ID";
@@ -979,52 +980,12 @@ async function prepareEntryBody(ctx: Context, args: AnyRecord, requireEnd: boole
     };
 }
 
+// maybeConfirm delegates to the shared requireConfirmation guard so the
+// workflow surface and the destructive domain delete tools run one
+// implementation of the dry_run -> confirm_token handshake. Behaviour is
+// byte-identical to the previous inline implementation.
 function maybeConfirm(ctx: Context, toolName: string, riskClass: string, args: AnyRecord, preview: AnyRecord) {
-    const stableArgs = stripConfirmationArgs(args);
-    const payload = confirmationPayload(toolName, ctx.workspaceId, riskClass, stableArgs, preview);
-    const store = tokenStore(ctx);
-    if (args.dry_run === true) {
-        const issued = store.issue(payload);
-        return successResult(
-            toolName,
-            {
-                preview,
-                confirm_token: issued.confirmToken,
-                expires_at: issued.expiresAt,
-                preview_hash: issued.previewHash,
-                risk_class: riskClass,
-            },
-            { workspaceId: ctx.workspaceId },
-            {
-                entity: "confirmation",
-                ids: { workspaceId: ctx.workspaceId },
-                next: [{ tool: toolName, args: { ...stableArgs, confirm_token: issued.confirmToken }, reason: "Execute this preview." }],
-            },
-        );
-    }
-    if (str(args.confirm_token)) {
-        store.validate(str(args.confirm_token), payload);
-        return null;
-    }
-    return errorResult(toolName, new Error("dry_run confirmation required before executing this workflow"), {
-        hint: "Run this workflow with dry_run:true, review the preview, then retry with the returned confirm_token.",
-        tool: toolName,
-        args: { ...stableArgs, dry_run: true },
-        retryable: true,
-    });
-}
-
-function tokenStore(ctx: Context): ConfirmationTokenStore {
-    ctx.confirmationTokens ??= new ConfirmationTokenStore();
-    return ctx.confirmationTokens;
-}
-
-function stripConfirmationArgs(args: AnyRecord): AnyRecord {
-    const out: AnyRecord = {};
-    for (const [key, value] of Object.entries(args)) {
-        if (key !== "dry_run" && key !== "confirm_token" && value !== undefined) out[key] = value;
-    }
-    return out;
+    return requireConfirmation(ctx, toolName, riskClass, args, preview);
 }
 
 function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
