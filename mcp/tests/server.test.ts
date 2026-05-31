@@ -383,3 +383,142 @@ describe("@clockify115/mcp-server", () => {
         expect(parsed.data.running).toBe(false);
     });
 });
+
+describe("destructive domain delete confirmation gating", () => {
+    // A delete-spy harness: the spy records each SDK delete call so we can
+    // assert the delete only fires after a valid confirm_token. We reuse the
+    // existing fakeContext surface and overwrite the delete fns we observe.
+    function deleteSpy() {
+        const calls: unknown[] = [];
+        const fn = async (req: unknown) => {
+            calls.push(req);
+            return {};
+        };
+        return { fn, calls };
+    }
+
+    function projectsCtx(spy: { fn: (req: unknown) => Promise<unknown> }): Context {
+        const ctx = fakeContext();
+        (ctx.client.projects as unknown as { delete: (req: unknown) => Promise<unknown> }).delete = spy.fn;
+        return ctx;
+    }
+
+    function entriesCtx(spy: { fn: (req: unknown) => Promise<unknown> }): Context {
+        const ctx = fakeContext();
+        (ctx.client.timeEntries as unknown as { delete: (req: unknown) => Promise<unknown> }).delete = spy.fn;
+        return ctx;
+    }
+
+    function dataOf(res: unknown): Record<string, unknown> {
+        const parsed = JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}");
+        return parsed as Record<string, unknown>;
+    }
+
+    it("clockify_projects_delete refuses without dry_run/confirm_token and never calls the SDK", async () => {
+        const spy = deleteSpy();
+        const client = await connect(projectsCtx(spy));
+        const res = await client.callTool({ name: "clockify_projects_delete", arguments: { projectId: "p-1" } });
+        const json = dataOf(res);
+        expect(json.ok).toBe(false);
+        expect(JSON.stringify(json)).toMatch(/dry_run/i);
+        expect(spy.calls).toHaveLength(0);
+    });
+
+    it("clockify_projects_delete dry_run returns a confirm_token + preview without deleting", async () => {
+        const spy = deleteSpy();
+        const client = await connect(projectsCtx(spy));
+        const res = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1", dry_run: true },
+        });
+        const json = dataOf(res);
+        expect(json.ok).toBe(true);
+        const data = json.data as { confirm_token?: string; preview?: { action?: string; id?: string } };
+        expect(data.confirm_token).toBeTruthy();
+        expect(data.preview?.action).toBe("delete");
+        expect(data.preview?.id).toBe("p-1");
+        expect(spy.calls).toHaveLength(0);
+    });
+
+    it("clockify_projects_delete executes with a valid confirm_token", async () => {
+        const spy = deleteSpy();
+        const client = await connect(projectsCtx(spy));
+        const preview = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1", dry_run: true },
+        });
+        const token = (dataOf(preview).data as { confirm_token?: string }).confirm_token;
+        expect(token).toBeTruthy();
+        expect(spy.calls).toHaveLength(0);
+
+        const res = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1", confirm_token: token },
+        });
+        const json = dataOf(res);
+        expect(json.ok).toBe(true);
+        expect((json.data as { deleted?: boolean }).deleted).toBe(true);
+        expect(spy.calls).toHaveLength(1);
+        expect(spy.calls[0]).toMatchObject({ projectId: "p-1" });
+    });
+
+    it("clockify_projects_delete rejects a tampered confirm_token and does not delete", async () => {
+        const spy = deleteSpy();
+        const client = await connect(projectsCtx(spy));
+        const res = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1", confirm_token: "not-a-real-token" },
+        });
+        expect(dataOf(res).ok).toBe(false);
+        expect(spy.calls).toHaveLength(0);
+    });
+
+    it("clockify_projects_delete rejects a token issued for a different id (preview mismatch)", async () => {
+        const spy = deleteSpy();
+        const client = await connect(projectsCtx(spy));
+        const preview = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1", dry_run: true },
+        });
+        const token = (dataOf(preview).data as { confirm_token?: string }).confirm_token;
+        // Same token, different project id → payload hash differs → rejected.
+        const res = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-2", confirm_token: token },
+        });
+        expect(dataOf(res).ok).toBe(false);
+        expect(spy.calls).toHaveLength(0);
+    });
+
+    it("clockify_entries_delete refuses without confirmation and executes after dry_run+token", async () => {
+        const spy = deleteSpy();
+        const client = await connect(entriesCtx(spy));
+
+        const refused = await client.callTool({
+            name: "clockify_entries_delete",
+            arguments: { timeEntryId: "e-1" },
+        });
+        expect(dataOf(refused).ok).toBe(false);
+        expect(spy.calls).toHaveLength(0);
+
+        const preview = await client.callTool({
+            name: "clockify_entries_delete",
+            arguments: { timeEntryId: "e-1", dry_run: true },
+        });
+        const previewJson = dataOf(preview);
+        expect(previewJson.ok).toBe(true);
+        const token = (previewJson.data as { confirm_token?: string }).confirm_token;
+        expect(token).toBeTruthy();
+        expect(spy.calls).toHaveLength(0);
+
+        const executed = await client.callTool({
+            name: "clockify_entries_delete",
+            arguments: { timeEntryId: "e-1", confirm_token: token },
+        });
+        const executedJson = dataOf(executed);
+        expect(executedJson.ok).toBe(true);
+        expect((executedJson.data as { deleted?: boolean }).deleted).toBe(true);
+        expect(spy.calls).toHaveLength(1);
+        expect(spy.calls[0]).toMatchObject({ timeEntryId: "e-1" });
+    });
+});

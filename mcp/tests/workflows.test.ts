@@ -429,6 +429,27 @@ describe("workflow tools", () => {
         });
     });
 
+    it("setup_webhook refuses an SSRF/private-host callback URL end-to-end, even on dry_run", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        for (const url of [
+            "https://169.254.169.254/hook", // cloud metadata
+            "https://10.0.0.5/hook", // RFC-1918 private
+            "https://localhost/hook", // loopback name
+            "http://example.com/hook", // non-HTTPS
+        ]) {
+            const res = await client.callTool({
+                name: "clockify_setup_webhook",
+                // dry_run:true would normally produce a preview; the validator
+                // runs first so even the preview is refused for a bad host.
+                arguments: { name: "Audit", url, webhook_event: "NEW_TIME_ENTRY", dry_run: true },
+            });
+            expect(res.isError).toBe(true);
+            expect(parse(res)).toMatchObject({ ok: false });
+        }
+        expect(ctx.state.webhookCreates).toBe(0);
+    });
+
     it("invoice confirmation uses stable default dates", async () => {
         const ctx = fakeContext({ clients: [{ id: "c1", name: "Acme" }] });
         const client = await connect(ctx);

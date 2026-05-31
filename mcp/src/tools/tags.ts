@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerTagsTools(server: McpServer, ctx: Context): void {
@@ -118,12 +119,20 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_delete",
         {
             title: "Delete a tag",
-            description: "Permanently delete one tag by ID from the pinned workspace.",
-            inputSchema: { tagId: z.string().min(1) },
+            description:
+                "Permanently delete one tag by ID. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                tagId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "tag", id: args.tagId };
+                const confirmation = requireConfirmation(ctx, "clockify_tags_delete", "tag_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.tags.delete({
                     workspaceId: ctx.workspaceId,
                     tagId: args.tagId,

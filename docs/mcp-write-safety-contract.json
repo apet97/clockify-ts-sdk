@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Machine-readable MCP write-safety contract. High-risk workflow writes must require dry-run confirmation; low-level destructive tools must advertise destructive semantics and return receipts.",
+  "purpose": "Machine-readable MCP write-safety contract. High-risk workflow writes and destructive domain delete tools must require dry-run confirmation through one shared confirmation guard; low-level destructive tools must advertise destructive semantics and return receipts.",
   "minimumDestructiveToolCount": 20,
   "highRiskWorkflowTools": [
     "clockify_invoice_client_work",
@@ -8,6 +8,14 @@
     "clockify_request_time_off",
     "clockify_schedule_work",
     "clockify_setup_webhook"
+  ],
+  "confirmationGuardedDomainTools": [
+    "clockify_entries_delete",
+    "clockify_projects_delete",
+    "clockify_clients_delete",
+    "clockify_tags_delete",
+    "clockify_tasks_delete",
+    "clockify_webhooks_delete"
   ],
   "idempotentWorkflowTools": [
     "clockify_demo_seed"
@@ -43,6 +51,15 @@
       ]
     },
     {
+      "path": "mcp/src/orchestration/confirm-guard.ts",
+      "contains": [
+        "export function requireConfirmation",
+        "store.issue(payload)",
+        "store.validate(str(args.confirm_token), payload)",
+        "dry_run confirmation required before executing this workflow"
+      ]
+    },
+    {
       "path": "mcp/src/resources.ts",
       "contains": [
         "dry_run",
@@ -73,6 +90,11 @@
     "confirm_token",
     "maybeConfirm"
   ],
+  "domainDeleteRequiredMarkers": [
+    "dry_run: z.boolean().optional()",
+    "confirm_token: z.string().optional()",
+    "requireConfirmation"
+  ],
   "confirmationRequiredMarkers": [
     "confirmationPayload",
     "store.validate",
@@ -88,6 +110,7 @@
     "checker": "scripts/check-mcp-write-safety.mjs",
     "toolsDirectory": "mcp/src/tools",
     "workflowsFile": "mcp/src/tools/workflows.ts",
+    "confirmGuardFile": "mcp/src/orchestration/confirm-guard.ts",
     "docsIndexPolicy": "mcp-write-safety-policy.md",
     "docsIndexContract": "mcp-write-safety-contract.json",
     "qualityGate": "make mcp-write-safety",

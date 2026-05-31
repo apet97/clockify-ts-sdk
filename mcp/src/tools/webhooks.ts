@@ -7,6 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
@@ -140,12 +141,20 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         "clockify_webhooks_delete",
         {
             title: "Delete a webhook subscription",
-            description: "Permanently delete a webhook subscription.",
-            inputSchema: { webhookId: z.string().min(1) },
+            description:
+                "Permanently delete a webhook subscription. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                webhookId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "webhook", id: args.webhookId };
+                const confirmation = requireConfirmation(ctx, "clockify_webhooks_delete", "webhook_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.webhooks.delete({
                     workspaceId: ctx.workspaceId,
                     webhookId: args.webhookId,
