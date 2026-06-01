@@ -66,7 +66,9 @@ export const registerApiCommand: Registrar = (program, services) => {
             // Fail loudly on HTTP errors so scripts can rely on the exit code,
             // unless --include-headers asked for the raw status-bearing payload.
             if (!response.ok && !options.includeHeaders) {
-                throw new Error(`HTTP ${response.status}: ${formatBody(data)}`);
+                throw Object.assign(new Error(`HTTP ${response.status}: ${formatBody(data)}`), {
+                    statusCode: response.status,
+                });
             }
             printApiOutput(responsePayload(response, data, options.includeHeaders), output);
         });
@@ -160,7 +162,9 @@ async function fetchAllPages(
         const response = await client.fetch(pagePath, requestInit("GET", headers));
         const data = await readResponseData(response);
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status} on page ${page}: ${formatBody(data)}`);
+            throw Object.assign(new Error(`HTTP ${response.status} on page ${page}: ${formatBody(data)}`), {
+                statusCode: response.status,
+            });
         }
         if (!Array.isArray(data)) {
             throw new Error("--all expects each page to return a JSON array.");

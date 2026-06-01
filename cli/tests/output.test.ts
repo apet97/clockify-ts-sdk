@@ -105,6 +105,13 @@ describe("printSuccess / printError", () => {
         expect(JSON.parse(logged[0] ?? "")).toEqual({ ok: true, message: "done" });
         expect(JSON.parse(errored[0] ?? "").ok).toBe(false);
     });
+
+    it("classifies by HTTP status when provided, beating the message heuristic", () => {
+        // The body text "workspace" would misclassify as auth_or_permission;
+        // the attached 404 status must win and yield not_found.
+        printError("HTTP 404: workspace not accessible", json, 404);
+        expect(JSON.parse(errored[0] ?? "").code).toBe("not_found");
+    });
 });
 
 describe("selectValue", () => {

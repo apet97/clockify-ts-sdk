@@ -77,6 +77,11 @@ describe("api command", () => {
         await expect(run(client, ["GET", "x"])).rejects.toThrow(/must start with/);
     });
 
+    it("attaches the HTTP status to a non-2xx error so the status classifier wins", async () => {
+        const { client } = makeClient([[{ message: "workspace not accessible" }]], 404);
+        await expect(run(client, ["GET", "/x"])).rejects.toMatchObject({ statusCode: 404 });
+    });
+
     it("replaces {workspaceId} from config", async () => {
         const { client, calls } = makeClient();
         await run(client, ["GET", "/workspaces/{workspaceId}/tags"]);

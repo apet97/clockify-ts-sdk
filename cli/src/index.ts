@@ -145,8 +145,9 @@ export async function main(argv: string[]): Promise<number> {
             return Number(err.exitCode ?? 0);
         }
         const message = err instanceof Error ? err.message : String(err);
+        const statusCode = (err as { statusCode?: number }).statusCode;
         const flags = resolveFlags(program);
-        printError(message, { mode: flags.mode, color: flags.color });
+        printError(message, { mode: flags.mode, color: flags.color }, statusCode);
         return isCommanderUsageError(err) ? 2 : 1;
     }
 }
