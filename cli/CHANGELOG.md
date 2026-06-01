@@ -39,6 +39,8 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Internal
 
+- Updated the CLI write-safety checker and receipt tests for receipt-shaped
+  destructive delete output.
 - Added an ESLint flat config (`eslint.config.mjs` + `tsconfig.lint.json`) and a
   `lint` script for the hand-written CLI surface, wired into `make lint`, CI, and
   `make perfect-fast`. Fixed what it surfaced: the table-cell formatter no longer

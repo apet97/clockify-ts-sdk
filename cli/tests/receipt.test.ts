@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { printReceipt } from "../src/receipt.js";
 import type { OutputOptions } from "../src/output.js";
+import { printReceipt } from "../src/receipt.js";
 
 describe("printReceipt", () => {
     const jsonOutput: OutputOptions = { mode: "json", color: false };

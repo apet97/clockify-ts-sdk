@@ -55,6 +55,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Internal
 
+- Normalized import ordering in the split workflow modules so `make lint` stays
+  green after the refactor.
 - Added an ESLint flat config (`eslint.config.mjs` + `tsconfig.lint.json`) and a
   `lint` script for the hand-written server surface, wired into `make lint`, CI,
   and `make perfect-fast`. Fixed what it surfaced: tightened two webhook-URL

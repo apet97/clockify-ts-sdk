@@ -1,8 +1,9 @@
 import { successResult } from "../../result.js";
+
+import { createWorkPackage, idOf, mergeChanged, ref, str } from "./resolve.js";
+import { logWork } from "./time-tracking.js";
 import type { AnyRecord, EntityRef, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
-import { logWork } from "./time-tracking.js";
-import { createWorkPackage, idOf, mergeChanged, ref, str } from "./resolve.js";
 import type { ChangeSet } from "./types.js";
 
 export async function demoSeed(ctx: Context, args: AnyRecord) {
