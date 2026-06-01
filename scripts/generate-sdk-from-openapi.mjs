@@ -133,6 +133,7 @@ function relativeToRoot(value) {
 }
 
 function buildModel(doc) {
+    const defaultServer = doc.servers?.[0]?.url;
     const operations = [];
     for (const [rawPath, pathItem] of Object.entries(doc.paths ?? {})) {
         const pathParameters = (pathItem.parameters ?? []).map((parameter) => deref(parameter, { doc }));
@@ -157,6 +158,10 @@ function buildModel(doc) {
                 queryParams,
             });
             const response = getResponse(operation.responses ?? {}, doc);
+            // Operations on Clockify's reports/audit-log hosts carry a per-operation
+            // `servers` override; route them there instead of the default api host.
+            const operationServer = (operation.servers ?? pathItem.servers)?.[0]?.url;
+            const baseUrl = operationServer && operationServer !== defaultServer ? operationServer : undefined;
             operations.push({
                 httpMethod: method.toUpperCase(),
                 path: rawPath,
@@ -169,6 +174,7 @@ function buildModel(doc) {
                 requestBody,
                 requestType,
                 response,
+                baseUrl,
             });
         }
     }
@@ -350,6 +356,7 @@ import * as url from "./url/index.js";
 export interface OperationSpec {
     method: string;
     path: string;
+    baseUrl?: string;
     pathParams?: Record<string, unknown>;
     queryParams?: Record<string, unknown>;
     body?: unknown;
@@ -369,7 +376,7 @@ export interface RequestOptionsShape {
 }
 
 export async function request<T>(clientOptions: any, operation: OperationSpec, requestOptions?: RequestOptionsShape): Promise<WithRawResponse<T>> {
-    const baseUrl = (await Supplier.get(clientOptions.baseUrl)) ?? (await Supplier.get(clientOptions.environment)) ?? ClockifyApiEnvironment.Default;
+    const baseUrl = (await Supplier.get(clientOptions.baseUrl)) ?? (await Supplier.get(clientOptions.environment)) ?? operation.baseUrl ?? ClockifyApiEnvironment.Default;
     let pathname = operation.path.replace(/^\/+/, "");
     for (const [key, value] of Object.entries(operation.pathParams ?? {})) {
         pathname = pathname.replace(new RegExp("\\{" + key + "\\}", "g"), url.encodePathParam(String(value)));
@@ -667,6 +674,7 @@ function operationSpecSource(operation, requestVar) {
         `    method: "${operation.httpMethod}",`,
         `    path: "${operation.path}",`,
     ];
+    if (operation.baseUrl) lines.push(`    baseUrl: ${JSON.stringify(operation.baseUrl)},`);
     if (Object.keys(pathParams).length > 0) lines.push(`    pathParams: ${objectExpression(pathParams)},`);
     if (Object.keys(queryParams).length > 0) lines.push(`    queryParams: ${objectExpression(queryParams)},`);
     if (operation.requestBody) {

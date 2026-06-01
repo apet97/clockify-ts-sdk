@@ -23,6 +23,15 @@ once v1.0.0 ships.
 - Added `clockifyDiagnostics()` as a no-network SDK readiness receipt for auth, runtime, workspace ID, base URL override, warnings, and next steps.
 - Added a Clockify base-URL host allowlist to `createClockifyClient`: a `baseUrl` / `environment` override must target an official Clockify API host (`api.clockify.me`, `reports.api.clockify.me`, `auditlog.api.clockify.me`, `pto.api.clockify.me`, `developer.clockify.me`) or a loopback host (`localhost` / `127.0.0.1` / `::1`, any port). Arbitrary HTTPS hosts are rejected unless the new `allowInsecureBaseUrl: true` option is set (which warns); plain `http://` on non-loopback hosts is always rejected. Exposed `validateClockifyBaseUrl()` / `classifyClockifyBaseUrl()`, and `clockifyDiagnostics()` now reports `checks.baseUrl.allowlist` (`allowed` / `rejected`).
 
+### Fixed
+
+- Routed operations whose OpenAPI definition carries a per-operation `servers`
+  override to that host. The reports (`reports.api.clockify.me`), audit-log
+  (`auditlog-api.api.clockify.me`), and shared-reports/expense-report methods
+  previously hit the default `api.clockify.me/api/v1` host and 404'd; they now
+  reach the correct sub-API. An explicit `baseUrl` / `environment` override
+  still wins, so mock/replay routing is unchanged.
+
 ### Changed
 
 - Replaced the required Fern TypeScript SDK emitter with the repo-owned local OpenAPI generator. The generated client now models `apiKey` and `addonToken` as mutually exclusive auth options, preserves the existing public SDK surface, and keeps generated `timeoutInSeconds`, `maxRetries`, `withRawResponse()`, binary response, and request-header behavior compatible with the wrapper helpers.
