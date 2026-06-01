@@ -9,9 +9,9 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 47 public names; 16 subpaths |
-| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 28 commands incl. `doctor` and `completion` |
-| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 105 tools |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 53 public names; 18 subpaths (incl. `request-options`, `operation-receipt`) |
+| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 29 commands incl. `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 108 tools (20 workflow + 88 domain); 5 resources |
 
 The `-115` / `115` suffix is intentional trademark distance. Default
 stance: local/packable packages, not npm publication. Keep
