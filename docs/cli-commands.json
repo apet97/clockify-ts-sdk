@@ -102,6 +102,10 @@
       "description": "Search the workspace audit log. Window must be ≤ 31 days."
     },
     {
+      "command": "clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json|@file|-] [--all] [--page-size N] [--max-pages N] [--include-headers]",
+      "description": "Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID."
+    },
+    {
       "command": "clk115 completion [zsh|bash|fish]",
       "description": "Print a shell completion script for zsh, bash, or fish."
     },

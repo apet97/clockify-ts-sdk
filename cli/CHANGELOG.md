@@ -6,6 +6,11 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- Added `clk115 api <method> <path>` for scriptable direct API calls through the
+  generated SDK client's fetch layer, with `--query`, `--header`, `--body`
+  (inline/`@file`/stdin), `--all` page/page-size walking, and `--include-headers`.
+- Added `--output table|json|ndjson`, `--compact`, and `--select <dot-path>`
+  output controls for automation. `--json` remains a shortcut for `--output json`.
 - Added `CLOCKIFY_BASE_URL` and `--base-url` for deterministic mock/replay testing.
 - Added `clk115 completion [zsh|bash|fish]` shell completion generation.
 - Added `clk115 doctor` local diagnostics for config, runtime, base URL, and next-step readiness without contacting Clockify.

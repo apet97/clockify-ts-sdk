@@ -3,11 +3,13 @@ import pc from "picocolors";
 
 import { errorCodeForMessage, recoveryForCode, retryableForCode } from "./error-codes.js";
 
-export type OutputMode = "table" | "json";
+export type OutputMode = "table" | "json" | "ndjson";
 
 export interface OutputOptions {
     mode: OutputMode;
     color: boolean;
+    compact?: boolean;
+    select?: string;
 }
 
 /**
@@ -18,7 +20,11 @@ export interface OutputOptions {
  */
 export function printRecords(rows: Record<string, unknown>[], opts: OutputOptions): void {
     if (opts.mode === "json") {
-        printJson(rows);
+        printJson(rows, opts);
+        return;
+    }
+    if (opts.mode === "ndjson") {
+        printNdjson(rows, opts);
         return;
     }
     if (rows.length === 0) {
@@ -42,7 +48,11 @@ export function printRecords(rows: Record<string, unknown>[], opts: OutputOption
  */
 export function printObject(obj: Record<string, unknown>, opts: OutputOptions): void {
     if (opts.mode === "json") {
-        printJson(obj);
+        printJson(obj, opts);
+        return;
+    }
+    if (opts.mode === "ndjson") {
+        printNdjson(obj, opts);
         return;
     }
     const table = new Table({
@@ -60,8 +70,12 @@ export function printObject(obj: Record<string, unknown>, opts: OutputOptions): 
  * prefix in no-color mode. Always goes to stdout.
  */
 export function printSuccess(message: string, opts: OutputOptions): void {
+    if (opts.mode === "ndjson") {
+        printNdjson({ ok: true, message }, opts);
+        return;
+    }
     if (opts.mode === "json") {
-        printJson({ ok: true, message });
+        printJson({ ok: true, message }, opts);
         return;
     }
     const prefix = opts.color ? pc.green("OK") : "OK";
@@ -74,7 +88,7 @@ export function printSuccess(message: string, opts: OutputOptions): void {
  * top-level error wrapper.
  */
 export function printError(message: string, opts: OutputOptions): void {
-    if (opts.mode === "json") {
+    if (opts.mode !== "table") {
         const code = errorCodeForMessage(message);
         console.error(
             JSON.stringify({
@@ -91,8 +105,49 @@ export function printError(message: string, opts: OutputOptions): void {
     console.error(`${prefix} ${message}`);
 }
 
-function printJson(value: unknown): void {
-    console.log(JSON.stringify(value, null, 2));
+/**
+ * Resolve a dot-path against a value before printing. Numeric segments
+ * index into arrays. Returns `undefined` when the path does not exist.
+ */
+export function selectValue(value: unknown, selector?: string): unknown {
+    if (!selector) {
+        return value;
+    }
+    let current: unknown = value;
+    for (const part of selector.split(".").filter(Boolean)) {
+        if (Array.isArray(current)) {
+            const index = Number(part);
+            if (!Number.isInteger(index) || index < 0 || index >= current.length) {
+                return undefined;
+            }
+            current = current[index];
+            continue;
+        }
+        if (current !== null && typeof current === "object" && part in current) {
+            current = (current as Record<string, unknown>)[part];
+            continue;
+        }
+        return undefined;
+    }
+    return current;
+}
+
+/** Print a value as JSON, honoring `--select` and `--compact`. */
+export function printJson(value: unknown, options: Pick<OutputOptions, "compact" | "select"> = {}): void {
+    const selected = selectValue(value, options.select);
+    console.log(JSON.stringify(selected, null, options.compact ? 0 : 2));
+}
+
+/** Print a value as newline-delimited JSON; arrays emit one line per item. */
+export function printNdjson(value: unknown, options: Pick<OutputOptions, "select"> = {}): void {
+    const selected = selectValue(value, options.select);
+    if (Array.isArray(selected)) {
+        for (const item of selected) {
+            console.log(JSON.stringify(item));
+        }
+        return;
+    }
+    console.log(JSON.stringify(selected));
 }
 
 function collectHeaders(rows: Record<string, unknown>[]): string[] {

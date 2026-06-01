@@ -12,6 +12,7 @@ describe("buildProgram", () => {
         expect(program.description()).toContain("clockify-sdk-ts-115");
         expect(program.version()).toBe("0.1.0");
         expect(commandNames).toEqual([
+            "api",
             "audit-log",
             "clients",
             "completion",

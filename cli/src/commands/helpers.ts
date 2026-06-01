@@ -7,8 +7,15 @@ import type { Command } from "commander";
 import { globalFlags, resolveFlags } from "../index.js";
 import { requireWorkspaceId } from "../config.js";
 import type { ClockifyClient } from "../client.js";
+import type { CliConfig } from "../config.js";
 import type { OutputOptions } from "../output.js";
 import type { Services } from "./types.js";
+
+export interface BaseContext {
+    client: ClockifyClient;
+    config: CliConfig;
+    output: OutputOptions;
+}
 
 export interface ResolvedContext {
     client: ClockifyClient;
@@ -29,11 +36,19 @@ function rootProgram(cmd: Command): Command {
     return current;
 }
 
-export function resolveContext(cmd: Command, services: Services): ResolvedContext {
+/**
+ * Resolve client, config, and output without requiring a workspace.
+ * Used by commands (like `api`) that only need a workspace for some paths.
+ */
+export function resolveBaseContext(cmd: Command, services: Services): BaseContext {
     const program = rootProgram(cmd);
     const config = services.loadConfig(globalFlags(program));
-    const workspaceId = requireWorkspaceId(config);
     const client = services.buildClient(config);
     const output = resolveFlags(program);
-    return { client, workspaceId, output };
+    return { client, config, output };
+}
+
+export function resolveContext(cmd: Command, services: Services): ResolvedContext {
+    const { client, config, output } = resolveBaseContext(cmd, services);
+    return { client, workspaceId: requireWorkspaceId(config), output };
 }
