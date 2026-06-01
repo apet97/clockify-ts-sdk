@@ -210,7 +210,9 @@
       "wrapper/tests/composed-fetch.test.ts",
       "wrapper/tests/sandbox.test.ts",
       "wrapper/diagnostics.ts",
-      "wrapper/tests/diagnostics.test.ts"
+      "wrapper/tests/diagnostics.test.ts",
+      "wrapper/tests/request-options.test.ts",
+      "wrapper/tests/operation-receipt.test.ts"
     ]
   },
   "wiring": {
