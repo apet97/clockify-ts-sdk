@@ -1,0 +1,77 @@
+import { Command } from "commander";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import type { ClockifyClient } from "../src/client.js";
+import { registerLogCommand } from "../src/commands/log.js";
+import type { Services } from "../src/commands/types.js";
+
+function makeClient(): { client: ClockifyClient; created: Record<string, unknown>[] } {
+    const created: Record<string, unknown>[] = [];
+    const client = {
+        timeEntries: {
+            create: async (body: Record<string, unknown>) => {
+                created.push(body);
+                return { id: "te-1", ...body };
+            },
+        },
+    };
+    return { client: client as unknown as ClockifyClient, created };
+}
+
+function makeProgram(client: ClockifyClient): Command {
+    const program = new Command();
+    program.exitOverride();
+    const services: Services = {
+        loadConfig: () => ({ apiKey: "k", workspaceId: "ws-1" }),
+        buildClient: () => client,
+    };
+    registerLogCommand(program, services);
+    return program;
+}
+
+function run(client: ClockifyClient, args: string[]): Promise<Command> {
+    return makeProgram(client).parseAsync(["node", "clk115", "log", ...args]);
+}
+
+const END = "2026-06-01T10:00:00.000Z";
+
+let logSpy: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+    logSpy.mockRestore();
+});
+
+describe("log command", () => {
+    it.each([
+        ["1h30m"],
+        ["90"],
+        ["PT1H30M"],
+    ])("derives start = end - duration for %s (90 minutes)", async (duration) => {
+        const { client, created } = makeClient();
+        await run(client, [duration, "wrote tests", "--end", END]);
+        expect(created[0]?.end).toBe(END);
+        expect(created[0]?.start).toBe("2026-06-01T08:30:00.000Z");
+    });
+
+    it("rejects an unparseable duration", async () => {
+        const { client } = makeClient();
+        await expect(run(client, ["banana", "work", "--end", END])).rejects.toThrow(/cannot parse duration/);
+    });
+
+    it("rejects an invalid --end timestamp", async () => {
+        const { client } = makeClient();
+        await expect(run(client, ["30m", "work", "--end", "not-a-date"])).rejects.toThrow(
+            /not a valid ISO 8601/,
+        );
+    });
+
+    it("passes project, tag, and billable through to the entry body", async () => {
+        const { client, created } = makeClient();
+        await run(client, ["30m", "work", "--end", END, "--project", "p-1", "--tag", "t-1", "--billable"]);
+        expect(created[0]).toMatchObject({ projectId: "p-1", tagIds: ["t-1"], billable: true });
+    });
+});

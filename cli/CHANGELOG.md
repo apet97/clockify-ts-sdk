@@ -17,6 +17,9 @@ All notable changes to `@clockify115/cli` are documented here.
 - Added generated CLI command table metadata.
 - Added JSON error payloads with stable code, recovery, and retryability fields.
 - Added exit-code contract tests for success, runtime errors, and commander usage errors.
+- Added focused unit tests for the `audit-log search`, `start`, and `log` commands
+  (required-field rejection, list splitting, authors-mode toggle, page bounds,
+  name→ID resolution, and duration/end derivation).
 
 ### Changed
 
