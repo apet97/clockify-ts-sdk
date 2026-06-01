@@ -80,7 +80,7 @@ describe("createClockifyClient", () => {
     it("serializes generated request body envelopes without dropping write fields", async () => {
         let capturedBody: string | null | undefined;
         const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-            capturedBody = init?.body?.toString();
+            capturedBody = init?.body as string | null | undefined;
             return new Response(JSON.stringify({ id: "client-1", name: "Acme" }), {
                 status: 200,
                 headers: { "content-type": "application/json" },

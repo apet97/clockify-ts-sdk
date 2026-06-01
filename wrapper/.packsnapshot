@@ -36,6 +36,10 @@ dist/cjs/iter.d.ts
 dist/cjs/iter.d.ts.map
 dist/cjs/iter.js
 dist/cjs/iter.js.map
+dist/cjs/operation-receipt.d.ts
+dist/cjs/operation-receipt.d.ts.map
+dist/cjs/operation-receipt.js
+dist/cjs/operation-receipt.js.map
 dist/cjs/otel-hooks.d.ts
 dist/cjs/otel-hooks.d.ts.map
 dist/cjs/otel-hooks.js
@@ -53,6 +57,10 @@ dist/cjs/rate-limit.d.ts
 dist/cjs/rate-limit.d.ts.map
 dist/cjs/rate-limit.js
 dist/cjs/rate-limit.js.map
+dist/cjs/request-options.d.ts
+dist/cjs/request-options.d.ts.map
+dist/cjs/request-options.js
+dist/cjs/request-options.js.map
 dist/cjs/scoped-client.d.ts
 dist/cjs/scoped-client.d.ts.map
 dist/cjs/scoped-client.js
@@ -2937,6 +2945,10 @@ dist/esm/iter.d.ts
 dist/esm/iter.d.ts.map
 dist/esm/iter.js
 dist/esm/iter.js.map
+dist/esm/operation-receipt.d.ts
+dist/esm/operation-receipt.d.ts.map
+dist/esm/operation-receipt.js
+dist/esm/operation-receipt.js.map
 dist/esm/otel-hooks.d.ts
 dist/esm/otel-hooks.d.ts.map
 dist/esm/otel-hooks.js
@@ -2953,6 +2965,10 @@ dist/esm/rate-limit.d.ts
 dist/esm/rate-limit.d.ts.map
 dist/esm/rate-limit.js
 dist/esm/rate-limit.js.map
+dist/esm/request-options.d.ts
+dist/esm/request-options.d.ts.map
+dist/esm/request-options.js
+dist/esm/request-options.js.map
 dist/esm/scoped-client.d.ts
 dist/esm/scoped-client.d.ts.map
 dist/esm/scoped-client.js

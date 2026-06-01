@@ -33,6 +33,10 @@ once v1.0.0 ships.
 - Rewrote the `tests/axioms-checklist.test.ts` header comment to point at `docs/axioms.md` (the canonical axioms doc) instead of a contributor's machine-local path.
 - Documented `composedFetch`'s retry mutation-safety model: the default `retryableMethods` retries idempotent methods only (`GET`/`HEAD`/`OPTIONS`/`PUT`/`DELETE`); `POST`/`PATCH` stay excluded because a 5xx or transport timeout on a write can land server-side mid-mutation, so a blind retry could double-apply it. JSDoc-only clarification plus regression tests pinning the no-retry-on-transport-timeout guarantee for `POST`/`PATCH`; behavior unchanged.
 
+### Internal
+
+- Refreshed `wrapper/.packsnapshot` with the `request-options` and `operation-receipt` subpath build artifacts, and narrowed a `createClockifyClient` test's captured request body to `string` so the stricter `@typescript-eslint/no-base-to-string` rule passes.
+
 ## [0.9.0] — 2026-05-25
 
 Closes the Tier-1 and Tier-3 gaps from the "Stainless/Speakeasy
