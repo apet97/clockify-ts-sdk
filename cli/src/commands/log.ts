@@ -6,7 +6,7 @@
 import type { Command } from "commander";
 
 import { parseDuration } from "../duration.js";
-import { printObject } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -52,13 +52,27 @@ export const registerLogCommand: Registrar = (program, services) => {
 
             const created = await client.timeEntries.create({ workspaceId, ...body } as never);
             const entry = created as { id?: string; description?: string; timeInterval?: { duration?: string } };
-            printObject(
+            const data = {
+                id: entry.id ?? "",
+                description: entry.description ?? "",
+                duration: entry.timeInterval?.duration ?? "",
+                start: startIso,
+                end: endIso,
+            };
+            printReceipt(
                 {
-                    id: entry.id ?? "",
-                    description: entry.description ?? "",
-                    duration: entry.timeInterval?.duration ?? "",
-                    start: startIso,
-                    end: endIso,
+                    ok: true,
+                    action: "entries.log",
+                    entity: "time_entry",
+                    ids: { entryId: data.id },
+                    data,
+                    changed: { created: [{ type: "time_entry", id: data.id }] },
+                    next: [
+                        {
+                            command: "clk115 entries list --json",
+                            reason: "Verify the entry appears in the expected date range.",
+                        },
+                    ],
                 },
                 output,
             );

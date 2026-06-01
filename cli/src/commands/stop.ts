@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printSuccess } from "../output.js";
+import { printSuccess } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -24,12 +25,22 @@ export const registerStopCommand: Registrar = (program, services) => {
             try {
                 const stopped = await client.timeEntries.stopTimer({ workspaceId, userId, end });
                 const entry = stopped as { id?: string; description?: string; timeInterval?: { duration?: string } };
-                if (output.mode === "json") {
-                    printObject(entry, output);
-                    return;
-                }
-                printSuccess(
-                    `stopped entry ${entry.id ?? "?"} — ${entry.description ?? "(no description)"} — ${entry.timeInterval?.duration ?? "?"}`,
+                const data = {
+                    ...entry,
+                    id: entry.id ?? "",
+                    description: entry.description ?? "",
+                    duration: entry.timeInterval?.duration ?? "",
+                };
+                printReceipt(
+                    {
+                        ok: true,
+                        action: "timer.stop",
+                        entity: "time_entry",
+                        ids: { entryId: data.id },
+                        data,
+                        changed: { updated: [{ type: "time_entry", id: data.id }] },
+                        next: [{ command: "clk115 entries list --json", reason: "Review the stopped entry." }],
+                    },
                     output,
                 );
             } catch (err) {

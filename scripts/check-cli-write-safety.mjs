@@ -183,8 +183,8 @@ for (const command of contract.writeCommands.filter((item) => item.name.includes
     if (!text.includes(".argument(\"<id>\"")) {
         failures.push(`${command.name} is destructive but lacks explicit <id> argument`);
     }
-    if (!/printSuccess\(`deleted /.test(text)) {
-        failures.push(`${command.name} is destructive but lacks deleted-resource success receipt`);
+    if (!text.includes("printReceipt") || !text.includes("deleted: true")) {
+        failures.push(`${command.name} is destructive but lacks receipt-shaped deleted-resource output`);
     }
 }
 

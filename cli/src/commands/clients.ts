@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -58,6 +59,23 @@ export const registerClientsCommand: Registrar = (program, services) => {
                 id?: string;
                 name?: string;
             };
-            printObject({ id: created.id ?? "", name: created.name ?? "" }, output);
+            const data = { id: created.id ?? "", name: created.name ?? "" };
+            printReceipt(
+                {
+                    ok: true,
+                    action: "clients.create",
+                    entity: "client",
+                    ids: { clientId: data.id },
+                    data,
+                    changed: { created: [{ type: "client", id: data.id, name: data.name }] },
+                    next: [
+                        {
+                            command: `clk115 projects create <name> --client ${data.id}`,
+                            reason: "Create a project for this client.",
+                        },
+                    ],
+                },
+                output,
+            );
         });
 };

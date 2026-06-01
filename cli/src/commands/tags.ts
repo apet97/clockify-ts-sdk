@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -49,6 +50,18 @@ export const registerTagsCommand: Registrar = (program, services) => {
                 id?: string;
                 name?: string;
             };
-            printObject({ id: created.id ?? "", name: created.name ?? "" }, output);
+            const data = { id: created.id ?? "", name: created.name ?? "" };
+            printReceipt(
+                {
+                    ok: true,
+                    action: "tags.create",
+                    entity: "tag",
+                    ids: { tagId: data.id },
+                    data,
+                    changed: { created: [{ type: "tag", id: data.id, name: data.name }] },
+                    next: [{ command: "clk115 tags list --json", reason: "Verify the tag appears." }],
+                },
+                output,
+            );
         });
 };

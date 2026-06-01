@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords, printSuccess } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -82,13 +83,22 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                 webhookEvent?: string;
                 enabled?: boolean;
             };
-            printObject(
+            const data = {
+                id: created.id ?? "",
+                name: created.name ?? "",
+                event: created.webhookEvent ?? "",
+                url: created.url ?? "",
+                enabled: created.enabled !== false,
+            };
+            printReceipt(
                 {
-                    id: created.id ?? "",
-                    name: created.name ?? "",
-                    event: created.webhookEvent ?? "",
-                    url: created.url ?? "",
-                    enabled: created.enabled !== false,
+                    ok: true,
+                    action: "webhooks.create",
+                    entity: "webhook",
+                    ids: { webhookId: data.id },
+                    data,
+                    changed: { created: [{ type: "webhook", id: data.id, name: data.name }] },
+                    next: [{ command: "clk115 webhooks list --json", reason: "Verify the webhook appears." }],
                 },
                 output,
             );
@@ -101,6 +111,17 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
             await client.webhooks.delete({ workspaceId, webhookId: id });
-            printSuccess(`deleted webhook ${id}`, output);
+            printReceipt(
+                {
+                    ok: true,
+                    action: "webhooks.delete",
+                    entity: "webhook",
+                    ids: { webhookId: id },
+                    data: { id, deleted: true, message: `deleted webhook ${id}` },
+                    changed: { deleted: [{ type: "webhook", id }] },
+                    next: [{ command: "clk115 webhooks list --json", reason: "Verify the webhook no longer appears." }],
+                },
+                output,
+            );
         });
 };

@@ -25,13 +25,20 @@ codes, and receipts that can be logged by automation.
    Creation commands must print at least the new object ID in JSON mode
    and a concise human-readable receipt otherwise.
 
-4. High-risk writes need wording in the README.
+4. Write JSON is receipt-shaped.
+
+   In `--json` and `--output ndjson`, successful writes include `ok`,
+   `action`, `entity`, `ids`, `changed`, `warnings`, and `next` fields.
+   Legacy top-level fields such as `id` remain so simple shell scripts do not
+   break.
+
+5. High-risk writes need wording in the README.
 
    Invoice, scheduling, webhook, time-off, timer, and delete commands
    must be visible in `cli/README.md` so users can review side effects
    before running them.
 
-5. Errors must stay machine-readable.
+6. Errors must stay machine-readable.
 
    `--json` errors must include stable error codes and recovery hints.
    Usage errors must keep the documented exit-code contract.

@@ -6,7 +6,7 @@
 import type { Command } from "commander";
 
 import type { ClockifyClient } from "../client.js";
-import { printObject } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -51,12 +51,21 @@ export const registerStartCommand: Registrar = (program, services) => {
 
             const created = await client.timeEntries.create({ workspaceId, ...body } as never);
             const entry = created as { id?: string; description?: string; projectId?: string | null; timeInterval?: { start?: string } };
-            printObject(
+            const data = {
+                id: entry.id ?? "",
+                description: entry.description ?? "",
+                projectId: entry.projectId ?? "",
+                startedAt: entry.timeInterval?.start ?? body.start,
+            };
+            printReceipt(
                 {
-                    id: entry.id ?? "",
-                    description: entry.description ?? "",
-                    projectId: entry.projectId ?? "",
-                    startedAt: entry.timeInterval?.start ?? body.start,
+                    ok: true,
+                    action: "timer.start",
+                    entity: "time_entry",
+                    ids: { entryId: data.id },
+                    data,
+                    changed: { created: [{ type: "time_entry", id: data.id }] },
+                    next: [{ command: "clk115 stop --json", reason: "Stop this running timer." }],
                 },
                 output,
             );
@@ -112,4 +121,3 @@ async function resolveTagIds(
 function looksLikeId(value: string): boolean {
     return /^[0-9a-fA-F]{24}$/.test(value);
 }
-

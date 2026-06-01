@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -73,13 +74,22 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                 currency?: string;
                 amount?: number;
             };
-            printObject(
+            const data = {
+                id: created.id ?? "",
+                number: created.number ?? "",
+                status: created.status ?? "",
+                currency: created.currency ?? "",
+                amount: created.amount ?? 0,
+            };
+            printReceipt(
                 {
-                    id: created.id ?? "",
-                    number: created.number ?? "",
-                    status: created.status ?? "",
-                    currency: created.currency ?? "",
-                    amount: created.amount ?? 0,
+                    ok: true,
+                    action: "invoices.create",
+                    entity: "invoice",
+                    ids: { invoiceId: data.id },
+                    data,
+                    changed: { created: [{ type: "invoice", id: data.id, name: data.number }] },
+                    next: [{ command: "clk115 invoices list --json", reason: "Verify the invoice draft appears." }],
                 },
                 output,
             );
