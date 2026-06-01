@@ -27,7 +27,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                     workspaceId: ctx.workspaceId,
                     page: args.page ?? 1,
                     "page-size": args.pageSize ?? 50,
-                } as never)) as unknown[];
+                })) as unknown[];
                 return successResult("clockify_custom_fields_list", items, {
                     workspaceId: ctx.workspaceId,
                     count: items.length,
@@ -157,7 +157,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                     projectId: args.projectId,
                     page: args.page ?? 1,
                     "page-size": args.pageSize ?? 50,
-                } as never)) as unknown[];
+                })) as unknown[];
                 return successResult("clockify_project_custom_fields_list", items, {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
@@ -194,7 +194,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                     projectId: args.projectId,
                     customFieldId: args.customFieldId,
                     body,
-                } as never);
+                });
                 return successResult("clockify_project_custom_fields_update", updated, {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

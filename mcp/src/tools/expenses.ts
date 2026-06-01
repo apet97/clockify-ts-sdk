@@ -240,7 +240,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     categoryId: args.categoryId,
                     body: { archived: args.archived },
-                } as never);
+                });
                 return successResult("clockify_expenses_categories_archive", archived, {
                     workspaceId: ctx.workspaceId,
                     categoryId: args.categoryId,

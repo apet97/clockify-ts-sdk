@@ -3,10 +3,11 @@
  * any in-progress timer. The first command an operator runs to
  * confirm credentials and orientation.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { formatIsoDuration } from "../duration.js";
 import { printObject } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

@@ -1,9 +1,10 @@
 /**
  * `clk115 projects list` / `clk115 projects create <name>`.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printRecords, printObject } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

@@ -1,9 +1,10 @@
 /**
  * `clk115 webhooks list` / `clk115 webhooks create` / `clk115 webhooks delete <id>`.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printObject, printRecords, printSuccess } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

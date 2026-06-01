@@ -137,7 +137,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     requestId: args.requestId,
                     body,
-                } as never);
+                });
                 return successResult("clockify_time_off_requests_update_status", updated, {
                     workspaceId: ctx.workspaceId,
                     requestId: args.requestId,

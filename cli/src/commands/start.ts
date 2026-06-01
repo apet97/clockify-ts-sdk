@@ -3,9 +3,11 @@
  * --project / --task / --tag flags resolve names to IDs via list
  * queries so the user does not have to keep IDs at hand.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
+import type { ClockifyClient } from "../client.js";
 import { printObject } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
@@ -61,7 +63,7 @@ export const registerStartCommand: Registrar = (program, services) => {
         });
 };
 
-async function resolveProjectId(client: ReturnType<typeof buildBag>["client"], workspaceId: string, ref: string): Promise<string> {
+async function resolveProjectId(client: ClockifyClient, workspaceId: string, ref: string): Promise<string> {
     if (looksLikeId(ref)) return ref;
     const list = (await client.projects.list({ workspaceId, name: ref })) as unknown[];
     const match = list.find((p) => (p as { name?: string }).name === ref);
@@ -72,7 +74,7 @@ async function resolveProjectId(client: ReturnType<typeof buildBag>["client"], w
 }
 
 async function resolveTaskId(
-    client: ReturnType<typeof buildBag>["client"],
+    client: ClockifyClient,
     workspaceId: string,
     projectId: string,
     ref: string,
@@ -87,7 +89,7 @@ async function resolveTaskId(
 }
 
 async function resolveTagIds(
-    client: ReturnType<typeof buildBag>["client"],
+    client: ClockifyClient,
     workspaceId: string,
     refs: string[],
 ): Promise<string[]> {
@@ -111,8 +113,3 @@ function looksLikeId(value: string): boolean {
     return /^[0-9a-fA-F]{24}$/.test(value);
 }
 
-// Just-for-typing bag — the SDK type isn't exported as a name we can
-// destructure directly, so we reify the shape from the factory return.
-function buildBag(): { client: import("../client.js").ClockifyClient } {
-    return null as never;
-}

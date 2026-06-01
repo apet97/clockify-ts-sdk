@@ -218,7 +218,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
                     userLocale: args.userLocale ?? "en-US",
-                } as never);
+                });
                 return successResult("clockify_invoices_export", exported, {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,

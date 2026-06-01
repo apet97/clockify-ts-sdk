@@ -416,7 +416,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 name: str(args.client),
                 page: 1,
                 "page-size": 200,
-            } as never),
+            }),
             str(args.client),
             "client",
         );
@@ -428,7 +428,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
             const created = await ctx.client.clients.create({
                 workspaceId: ctx.workspaceId,
                 body: { name: str(args.client) },
-            } as never);
+            });
             clientId = idOf(created);
             data.client = created;
             pushChanged(changed, "created", ref("client", created, str(args.client)));
@@ -446,7 +446,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
             ...(clientId ? { clients: [clientId] } : {}),
             page: 1,
             "page-size": 200,
-        } as never);
+        });
         const found = await findOneByName(listed, projectName, "project");
         if (found && upsert) {
             projectId = idOf(found);
@@ -476,7 +476,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
             name: str(args.task),
             page: 1,
             "page-size": 200,
-        } as never);
+        });
         const found = await findOneByName(listed, str(args.task), "task");
         if (found && upsert) {
             taskId = idOf(found);
@@ -487,7 +487,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 workspaceId: ctx.workspaceId,
                 projectId,
                 name: str(args.task),
-            } as never);
+            });
             taskId = idOf(created);
             data.task = created;
             pushChanged(changed, "created", ref("task", created, str(args.task)));
@@ -500,7 +500,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
     const tags: unknown[] = [];
     for (const name of tagNames) {
         const found = await findOneByName(
-            await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name, page: 1, "page-size": 200 } as never),
+            await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name, page: 1, "page-size": 200 }),
             name,
             "tag",
         );
@@ -509,7 +509,7 @@ async function createWorkPackage(ctx: Context, args: AnyRecord) {
             tags.push(found);
             pushChanged(changed, "reused", ref("tag", found));
         } else {
-            const created = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name } as never);
+            const created = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name });
             tagIds.push(idOf(created));
             tags.push(created);
             pushChanged(changed, "created", ref("tag", created, name));
@@ -571,7 +571,7 @@ async function stopWork(ctx: Context, args: AnyRecord) {
             workspaceId: ctx.workspaceId,
             userId,
             end: str(args.end) || new Date().toISOString(),
-        } as never);
+        });
         const ids = entryIds(ctx, entry, { userId });
         return successResult("clockify_stop_work", entry, { workspaceId: ctx.workspaceId, userId }, {
             entity: "entry",
@@ -621,7 +621,7 @@ async function reviewPeriod(ctx: Context, action: string, args: AnyRecord) {
         end: range.end,
         page: 1,
         "page-size": pageSize,
-    } as never)) as AnyRecord[];
+    })) as AnyRecord[];
     const review = summarizeEntries(entries, args);
     return successResult(action, review, { workspaceId: ctx.workspaceId, userId: idOf(user), count: entries.length }, {
         entity: "entry_review",
@@ -676,7 +676,7 @@ async function invoiceClientWork(ctx: Context, args: AnyRecord) {
     };
     const confirmation = maybeConfirm(ctx, "clockify_invoice_client_work", "billing_write", args, preview);
     if (confirmation) return confirmation;
-    const invoice = await ctx.client.invoices.create(preview as never);
+    const invoice = await ctx.client.invoices.create(preview);
     const ids = { workspaceId: ctx.workspaceId, clientId, invoiceId: idOf(invoice) };
     return successResult("clockify_invoice_client_work", invoice, { workspaceId: ctx.workspaceId }, {
         entity: "invoice",
@@ -838,10 +838,10 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
         end: str(args.end) || "2026-12-31T23:59:59.999Z",
         page: 1,
         "page-size": 200,
-    } as never)) as AnyRecord[];
+    })) as AnyRecord[];
     for (const entry of entries.filter((item) => str(item.description).startsWith(prefix))) {
         await cleanupEntity("entry", entry, deleted, warnings, () =>
-            ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: idOf(entry) } as never),
+            ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: idOf(entry) }),
         );
     }
 
@@ -850,7 +850,7 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
             workspaceId: ctx.workspaceId,
             page: 1,
             "page-size": 200,
-        } as never),
+        }),
         prefix,
     );
     for (const project of projects) {
@@ -860,7 +860,7 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
                 projectId: idOf(project),
                 page: 1,
                 "page-size": 200,
-            } as never),
+            }),
             prefix,
         );
         for (const task of tasks) {
@@ -869,18 +869,18 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
                     workspaceId: ctx.workspaceId,
                     projectId: idOf(project),
                     taskId: idOf(task),
-                } as never),
+                }),
             );
         }
     }
 
     const tags = prefixMatches(
-        await ctx.client.tags.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never),
+        await ctx.client.tags.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 }),
         prefix,
     );
     for (const tag of tags) {
         await cleanupEntity("tag", tag, deleted, warnings, () =>
-            ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId: idOf(tag) } as never),
+            ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId: idOf(tag) }),
         );
     }
 
@@ -891,11 +891,11 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
                 projectId: idOf(project),
                 name: str(project.name),
                 archived: true,
-            } as never);
+            });
             await ctx.client.projects.delete({
                 workspaceId: ctx.workspaceId,
                 projectId: idOf(project),
-            } as never);
+            });
         });
     }
 
@@ -904,7 +904,7 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
             workspaceId: ctx.workspaceId,
             page: 1,
             "page-size": 200,
-        } as never),
+        }),
         prefix,
     );
     for (const client of clients) {
@@ -917,7 +917,7 @@ async function demoCleanup(ctx: Context, args: AnyRecord) {
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,
                 clientId: idOf(client),
-            } as never);
+            });
         });
     }
     return successResult("clockify_demo_cleanup", { prefix, deleted: deleted.length }, { workspaceId: ctx.workspaceId }, {
@@ -1027,7 +1027,7 @@ function packageNext(projectId: string, taskId: string, tagIds: string[]): NextA
 
 async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord> {
     if (str(args.entry_id)) {
-        return (await ctx.client.timeEntries.get({ workspaceId: ctx.workspaceId, timeEntryId: str(args.entry_id) } as never)) as AnyRecord;
+        return (await ctx.client.timeEntries.get({ workspaceId: ctx.workspaceId, timeEntryId: str(args.entry_id) })) as AnyRecord;
     }
     const user = await ctx.client.users.getCurrentUser();
     const entries = (await ctx.client.timeEntries.listForUser({
@@ -1037,7 +1037,7 @@ async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord
         end: str(args.start_before) || new Date().toISOString(),
         page: 1,
         "page-size": 200,
-    } as never)) as AnyRecord[];
+    })) as AnyRecord[];
     const matches = entries.filter((entry) => {
         const description = str(entry.description);
         if (str(args.exact_description) && description !== str(args.exact_description)) return false;
@@ -1050,7 +1050,7 @@ async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord
 
 function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
     const sorted = [...entries].sort((a, b) => Date.parse(entryStart(a)) - Date.parse(entryStart(b)));
-    const issues: AnyRecord[] = [];
+    const issues: Array<{ code: string; entry_id?: string }> = [];
     let totalSeconds = 0;
     for (const entry of sorted) {
         const startMs = Date.parse(entryStart(entry));
@@ -1097,23 +1097,23 @@ function dateRange(action: string, args: AnyRecord): { start: string; end: strin
 }
 
 async function resolveClientId(ctx: Context, value: string): Promise<string> {
-    const listed = await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 } as never);
+    const listed = await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
     return idOf((await findOneByName(listed, value, "client")) ?? { id: value });
 }
 
 async function resolveProjectId(ctx: Context, value: string): Promise<string> {
-    const listed = await ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 } as never);
+    const listed = await ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
     return idOf((await findOneByName(listed, value, "project")) ?? { id: value });
 }
 
 async function resolveTaskId(ctx: Context, projectId: string, value: string): Promise<string> {
     if (!projectId) throw new Error("project_id or project is required when resolving task by name");
-    const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 } as never);
+    const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 });
     return idOf((await findOneByName(listed, value, "task")) ?? { id: value });
 }
 
 async function resolveTagId(ctx: Context, value: string): Promise<string> {
-    const listed = await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 } as never);
+    const listed = await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
     return idOf((await findOneByName(listed, value, "tag")) ?? { id: value });
 }
 
@@ -1176,7 +1176,7 @@ function ref(type: string, value: unknown, fallbackName?: string): EntityRef {
 function pushChanged(changed: ChangeSet, bucket: Bucket, value: EntityRef): void {
     if (!value.id) return;
     changed[bucket] ??= [];
-    changed[bucket]!.push(value);
+    changed[bucket].push(value);
 }
 
 function mergeChanged(...sets: Array<ChangeSet | undefined>): ChangeSet {
@@ -1184,7 +1184,7 @@ function mergeChanged(...sets: Array<ChangeSet | undefined>): ChangeSet {
     for (const set of sets) {
         if (!set) continue;
         for (const bucket of ["created", "updated", "deleted", "reused"] as const) {
-            if (set[bucket]?.length) out[bucket] = [...(out[bucket] ?? []), ...set[bucket]!];
+            if (set[bucket]?.length) out[bucket] = [...(out[bucket] ?? []), ...set[bucket]];
         }
     }
     return out;

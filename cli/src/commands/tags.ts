@@ -1,9 +1,10 @@
 /**
  * `clk115 tags list` / `clk115 tags create <name>`.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

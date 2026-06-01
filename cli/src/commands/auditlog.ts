@@ -5,9 +5,10 @@
  * `actions` and `authors` filters; this surface mirrors that contract
  * so a missing flag fails locally instead of round-tripping to a 400.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

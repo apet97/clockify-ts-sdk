@@ -25,6 +25,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
+
 import { ConfirmationTokenStore, confirmationPayload } from "./confirmation.js";
 
 type AnyRecord = Record<string, unknown>;

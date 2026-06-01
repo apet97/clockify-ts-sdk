@@ -76,7 +76,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                 const created = await ctx.client.userGroups.create({
                     workspaceId: ctx.workspaceId,
                     body: { name: args.name },
-                } as never);
+                });
                 return successResult("clockify_groups_create", created, {
                     workspaceId: ctx.workspaceId,
                 });
@@ -103,7 +103,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
                     body: { name: args.name },
-                } as never);
+                });
                 return successResult("clockify_groups_update", updated, {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,

@@ -148,7 +148,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     assignmentId: args.assignmentId,
                     body,
-                } as never);
+                });
                 return successResult("clockify_scheduling_assignments_update", updated, {
                     workspaceId: ctx.workspaceId,
                     assignmentId: args.assignmentId,

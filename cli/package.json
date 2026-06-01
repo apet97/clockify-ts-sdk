@@ -41,6 +41,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "prepublishOnly": "npm run type-check && npm test && npm run build"
   },
   "dependencies": {

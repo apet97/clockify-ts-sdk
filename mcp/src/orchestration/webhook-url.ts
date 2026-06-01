@@ -99,7 +99,7 @@ function classifyHostname(host: string): string | null {
  * literal, null for an acceptable public IPv4 literal, or the sentinel
  * "not-ipv4" when `host` is not an IPv4 literal at all.
  */
-function classifyIpv4(host: string): string | null | "not-ipv4" {
+function classifyIpv4(host: string): string | null {
     const octets = parseIpv4(host);
     if (!octets) return "not-ipv4";
     return ipv4Reason(octets);
@@ -142,7 +142,7 @@ function ipv4Reason([a, b]: [number, number, number, number]): string | null {
  * dotted tail for robustness against any caller that hasn't gone through
  * the URL parser.
  */
-function classifyIpv6(host: string): string | null | "not-ipv6" {
+function classifyIpv6(host: string): string | null {
     if (!host.includes(":")) return "not-ipv6";
 
     // IPv4-mapped (::ffff:a.b.c.d) / IPv4-compatible (::a.b.c.d) literal

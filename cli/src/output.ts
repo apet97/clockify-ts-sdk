@@ -177,6 +177,7 @@ function stringifyCell(value: unknown): string {
     try {
         return JSON.stringify(value);
     } catch {
-        return String(value);
+        // JSON.stringify throws on circular references and BigInt.
+        return typeof value === "bigint" ? value.toString() : "[unserializable]";
     }
 }

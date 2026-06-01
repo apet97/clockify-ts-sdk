@@ -1,9 +1,10 @@
 /**
  * `clk115 tasks list <projectId>`.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

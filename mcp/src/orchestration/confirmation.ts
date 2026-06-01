@@ -92,7 +92,7 @@ function sortValue(value: unknown): unknown {
     if (Array.isArray(value)) return value.map((item) => sortValue(item));
     if (!value || typeof value !== "object") return value;
     const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+    for (const key of Object.keys(value).sort()) {
         const next = (value as Record<string, unknown>)[key];
         if (next !== undefined) sorted[key] = sortValue(next);
     }

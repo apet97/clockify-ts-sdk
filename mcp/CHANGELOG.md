@@ -23,6 +23,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Migrated the SDK dev dependency from `file:../wrapper` to a workspace link (`"*"`). The peer dependency `clockify-sdk-ts-115 >=0.9.0` is unchanged for published consumers.
 - Regenerated the shared error-code module to drop an unnecessary non-null assertion flagged by `typescript-eslint/no-unnecessary-type-assertion`.
 
+### Internal
+
+- Added an ESLint flat config (`eslint.config.mjs` + `tsconfig.lint.json`) and a
+  `lint` script for the hand-written server surface, wired into `make lint`, CI,
+  and `make perfect-fast`. Fixed what it surfaced: tightened two webhook-URL
+  classifier return types and the day-review issue-list typing.
+
 ## [0.3.0] - 2026-05-26
 
 ### Added
