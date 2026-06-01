@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 108,
+    "totalTools": 112,
     "workflowTools": 20,
-    "domainTools": 88
+    "domainTools": 92
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -40,6 +40,7 @@
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
     { "resourceGroup": "time_off", "count": 12, "tools": "requests, policies, and balances" },
     { "resourceGroup": "scheduling", "count": 5, "tools": "assignments list/create/update/delete" },
+    { "resourceGroup": "reports", "count": 4, "tools": "summary, detailed, weekly, attendance" },
     { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },
     { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
     { "resourceGroup": "approvals", "count": 3, "tools": "list, submit, update state" },

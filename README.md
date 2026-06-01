@@ -221,7 +221,7 @@ Package surfaces:
 |---|---|
 | `clockify-sdk-ts-115` | v0.9.0; 31 resource modules, 185 live operations, dual ESM/CJS, pagination helpers, webhook verification, typed errors, scoped clients, OTel hooks, health and rate-limit helpers |
 | `@clockify115/cli` | v0.1.0; 29 commands across 17 groups incl. a scriptable `api` raw command, env/config based auth, `table`/`json`/`ndjson` output for automation |
-| `@clockify115/mcp-server` | v0.3.0; 108 stdio MCP tools: 20 workflow/orientation tools plus 88 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
+| `@clockify115/mcp-server` | v0.3.0; 112 stdio MCP tools: 20 workflow/orientation tools plus 92 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
 
 | Surface                                            | Result |
 | -------------------------------------------------- | ------ |

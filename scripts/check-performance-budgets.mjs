@@ -369,7 +369,7 @@ await server.connect(serverTransport);
 const client = new Client({ name: 'budget-smoke', version: '0.0.0' });
 await client.connect(clientTransport);
 const tools = await client.listTools();
-if (tools.tools.length !== 108) throw new Error('expected 108 tools, got ' + tools.tools.length);
+if (tools.tools.length !== 112) throw new Error('expected 112 tools, got ' + tools.tools.length);
 await client.close();
 await server.close();
 `;
