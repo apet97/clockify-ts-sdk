@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 116 tools: 20 workflow tools plus 96
+This package now advertises 119 tools: 20 workflow tools plus 99
 domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
@@ -225,9 +225,9 @@ Prompts:
 | `projects` | 5 | list, get, create, update, delete |
 | `tasks` | 5 | list, get, create, update, delete |
 | `tags` | 5 | list, get, create, update, delete |
-| `entries` | 5 | list, get, log, update, delete |
+| `entries` | 6 | list, get, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
-| `invoices` | 7 | list, get, create, update, delete, update_status, export |
+| `invoices` | 8 | list, get, create, update, delete, update_status, export, import_time |
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 5 | list, get, create, update, delete |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
@@ -236,7 +236,7 @@ Prompts:
 | `reports` | 4 | summary, detailed, weekly, attendance |
 | `groups` | 8 | CRUD plus membership tools |
 | `holidays` | 5 | list/create/update/delete |
-| `approvals` | 3 | list, submit, update state |
+| `approvals` | 4 | list, submit, update state, resubmit |
 | `audit_log` | 1 | search |
 <!-- END generated:mcp-domain-tools -->
 

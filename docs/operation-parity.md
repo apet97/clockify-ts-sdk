@@ -10,9 +10,9 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 185 |
 | sdkNamed | 170 |
-| tsMcpExact | 78 |
+| tsMcpExact | 83 |
 | goMcpExact | 84 |
-| curated | 29 |
+| curated | 31 |
 
 ## Operations
 
@@ -28,7 +28,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | GET | `/workspaces/{workspaceId}/addons/{addonId}/webhooks` | `getAddonWebhooksOnWorkspace` | `client.webhooks.listForAddon` | - | - | - | `clockify_webhooks_list_for_addon` |
 | GET | `/workspaces/{workspaceId}/approval-requests` | `getApprovalRequests` | `client.approvals.list` | `clockify_approvals_list` | `clockify_approvals_list` | - | `clockify_approvals_list` |
 | POST | `/workspaces/{workspaceId}/approval-requests` | `submitApprovalRequest` | `client.approvals.submit` | `clockify_approvals_submit` | `clockify_approvals_submit` | - | `clockify_approvals_submit`<br>`clockify_approvals_create` |
-| POST | `/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval` | `resubmitEntriesForApproval` | `client.approvals.resubmit` | - | `clockify_approvals_resubmit` | - | `clockify_approvals_resubmit` |
+| POST | `/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval` | `resubmitEntriesForApproval` | `client.approvals.resubmit` | `clockify_approvals_resubmit` | `clockify_approvals_resubmit` | - | `clockify_approvals_resubmit` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}` | `submitApprovalRequestForUser` | `client.approvals.submitForUser` | - | - | - | `clockify_approvals_submit_for_user` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval` | `resubmitEntriesForApprovalForUser` | `client.approvals.resubmitForUser` | - | - | - | `clockify_approvals_resubmit_for_user` |
 | PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `updateApprovalRequest` | `client.approvals.updateStatus` | - | - | - | `clockify_approvals_update_status` |
@@ -75,7 +75,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate` | `duplicateInvoice` | `client.invoices.duplicate` | - | - | - | `clockify_invoices_duplicate` |
 | GET | `/workspaces/{workspaceId}/invoices/{invoiceId}/export` | `exportInvoice` | `client.invoices.export` | `clockify_invoices_export` | `clockify_invoices_export` | - | `clockify_invoices_export` |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items` | `addInvoiceItem` | `client.invoiceItems.create` | `clockify_invoices_create` | `clockify_invoices_items_add` | GOCLMCP groups invoice item operations under invoices_items. | `clockify_invoices_create` |
-| POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items/import` | `importInvoiceItems` | `client.invoiceItems.import` | - | `clockify_invoices_import_time` | GOCLMCP exposes import workflows instead of a direct generated operation name. | `clockify_invoices_import` |
+| POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items/import` | `importInvoiceItems` | `client.invoiceItems.import` | `clockify_invoices_import_time` | `clockify_invoices_import_time` | Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time. | `clockify_invoices_import` |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}` | `deleteInvoiceItem` | `client.invoiceItems.delete` | `clockify_invoices_delete` | `clockify_invoices_items_delete` | GOCLMCP groups invoice item operations under invoices_items. | `clockify_invoices_delete` |
 | GET | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | `getInvoicePayments` | `client.invoicePayments.list` | `clockify_invoices_list` | `clockify_invoices_payments_list` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_list` |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | `addInvoicePayment` | `client.invoicePayments.create` | `clockify_invoices_create` | `clockify_invoices_payments_create` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_create` |
@@ -96,7 +96,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | GET | `/workspaces/{workspaceId}/projects/{projectId}` | `getProjectById` | `client.projects.get` | `clockify_projects_get` | `clockify_projects_get` | - | `clockify_projects_get` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | `updateProject` | `client.projects.update` | `clockify_projects_update` | `clockify_projects_update` | - | `clockify_projects_update` |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | `deleteProject` | `client.projects.delete` | `clockify_projects_delete` | `clockify_projects_delete` | - | `clockify_projects_delete` |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | `client.projects.archive` | - | `clockify_projects_archive` | - | `clockify_projects_archive` |
+| PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | `client.projects.archive` | `clockify_projects_update` | `clockify_projects_archive` | The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md. | `clockify_projects_archive` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/cost-rate` | `putWorkspacesWorkspaceIdProjectsProjectIdCostRate` | `client.projects.updateCostRate` | - | - | - | `clockify_projects_update_cost_rate` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields` | `listProjectCustomFields` | `client.customFields.listForProject` | - | - | - | `clockify_custom_fields_list_for_project` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `updateProjectCustomField` | `client.customFields.updateForProject` | - | - | - | `clockify_custom_fields_update_for_project` |
@@ -145,8 +145,8 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | `getWorkspacesWorkspaceIdTagsTagId` | `client.tags.get` | `clockify_tags_get` | `clockify_tags_get` | - | `clockify_tags_get` |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | `putWorkspacesWorkspaceIdTagsTagId` | `client.tags.update` | `clockify_tags_update` | `clockify_tags_update` | - | `clockify_tags_update` |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | `deleteWorkspacesWorkspaceIdTagsTagId` | `client.tags.delete` | `clockify_tags_delete` | `clockify_tags_delete` | - | `clockify_tags_delete` |
-| POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | `client.timeEntries.create` | - | `clockify_entries_create` | - | `clockify_entries_create` |
-| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | `client.timeEntries.markInvoiced` | - | `clockify_entries_mark_invoiced` | - | `clockify_entries_mark_invoiced` |
+| POST | `/workspaces/{workspaceId}/time-entries` | `postWorkspacesWorkspaceIdTimeEntries` | `client.timeEntries.create` | `clockify_entries_log` | `clockify_entries_create` | POST /time-entries is the workflow-first create exposed as clockify_entries_log. | `clockify_entries_create` |
+| PATCH | `/workspaces/{workspaceId}/time-entries/invoiced` | `patchWorkspacesWorkspaceIdTimeEntriesInvoiced` | `client.timeEntries.markInvoiced` | `clockify_entries_mark_invoiced` | `clockify_entries_mark_invoiced` | - | `clockify_entries_mark_invoiced` |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk` | `client.timeEntries.markInvoicedBulk` | - | - | - | `clockify_entries_mark_invoiced_bulk` |
 | GET | `/workspaces/{workspaceId}/time-entries/status/in-progress` | `getWorkspacesWorkspaceIdTimeEntriesStatusInProgress` | `client.timeEntries.listInProgress` | `clockify_entries_list` | `clockify_entries_list` | - | `clockify_entries_list_in_progress`<br>`clockify_entries_list` |
 | GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | `getWorkspacesWorkspaceIdTimeEntriesTimeEntryId` | `client.timeEntries.get` | `clockify_entries_get` | `clockify_entries_get` | - | `clockify_entries_get` |

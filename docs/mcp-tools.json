@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 116,
+    "totalTools": 119,
     "workflowTools": 20,
-    "domainTools": 96
+    "domainTools": 99
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -32,9 +32,9 @@
     { "resourceGroup": "projects", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "tasks", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "tags", "count": 5, "tools": "list, get, create, update, delete" },
-    { "resourceGroup": "entries", "count": 5, "tools": "list, get, log, update, delete" },
+    { "resourceGroup": "entries", "count": 6, "tools": "list, get, log, update, delete, mark_invoiced" },
     { "resourceGroup": "timer", "count": 2, "tools": "start, stop" },
-    { "resourceGroup": "invoices", "count": 7, "tools": "list, get, create, update, delete, update_status, export" },
+    { "resourceGroup": "invoices", "count": 8, "tools": "list, get, create, update, delete, update_status, export, import_time" },
     { "resourceGroup": "expenses", "count": 10, "tools": "expense list/get/create/update/delete; category CRUD plus archive" },
     { "resourceGroup": "webhooks", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
@@ -43,7 +43,7 @@
     { "resourceGroup": "reports", "count": 4, "tools": "summary, detailed, weekly, attendance" },
     { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },
     { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
-    { "resourceGroup": "approvals", "count": 3, "tools": "list, submit, update state" },
+    { "resourceGroup": "approvals", "count": 4, "tools": "list, submit, update state, resubmit" },
     { "resourceGroup": "audit_log", "count": 1, "tools": "search" }
   ]
 }

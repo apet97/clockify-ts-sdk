@@ -6,6 +6,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added single-operation write tools: `clockify_approvals_resubmit` (resubmit
+  entries for approval over a period), `clockify_invoices_import_time` (import
+  time/expenses into an existing invoice), and `clockify_entries_mark_invoiced`
+  (mark/unmark time entries invoiced). Project archiving and the `POST
+  /time-entries` create are covered by `clockify_projects_update` (archived:true)
+  and `clockify_entries_log` respectively; the dedicated `/projects/{id}/archive`
+  route is not bound on the live API (see `spec/evidence/discrepancies.md`).
 - Added expense write tools: `clockify_expenses_create` and
   `clockify_expenses_update`. Both expose the scalar expense fields (amount,
   category, project, date, notes, billable), default the user to the API-key

@@ -10,9 +10,9 @@
   "summary": {
     "operations": 185,
     "sdkNamed": 170,
-    "tsMcpExact": 78,
+    "tsMcpExact": 83,
     "goMcpExact": 84,
-    "curated": 29
+    "curated": 31
   },
   "operations": [
     {
@@ -204,12 +204,12 @@
       "candidateTools": [
         "clockify_approvals_resubmit"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_approvals_resubmit",
       "goMcp": "clockify_approvals_resubmit",
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
       }
@@ -1051,12 +1051,12 @@
       "candidateTools": [
         "clockify_invoices_import"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_invoices_import_time",
       "goMcp": "clockify_invoices_import_time",
-      "overrideReason": "GOCLMCP exposes import workflows instead of a direct generated operation name.",
+      "overrideReason": "Import time/expenses into an existing invoice; both surfaces expose it under invoices_import_time.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -1429,14 +1429,14 @@
       "candidateTools": [
         "clockify_projects_archive"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_projects_update",
       "goMcp": "clockify_projects_archive",
-      "overrideReason": null,
+      "overrideReason": "The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2312,14 +2312,14 @@
       "candidateTools": [
         "clockify_entries_create"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entries_log",
       "goMcp": "clockify_entries_create",
-      "overrideReason": null,
+      "overrideReason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2330,12 +2330,12 @@
       "candidateTools": [
         "clockify_entries_mark_invoiced"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_entries_mark_invoiced",
       "goMcp": "clockify_entries_mark_invoiced",
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
       }
