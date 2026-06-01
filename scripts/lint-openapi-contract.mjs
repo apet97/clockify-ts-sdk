@@ -48,7 +48,7 @@ for (const op of inventory.operations ?? []) {
     }
 }
 
-if (sdkNamed < 169) fail(`expected at least 169 SDK-named operations, got ${sdkNamed}`);
+if (sdkNamed < 172) fail(`expected at least 172 SDK-named operations, got ${sdkNamed}`);
 if (paginated < 18) fail(`expected at least 18 paginated operations, got ${paginated}`);
 if (lastPage < 15) fail(`expected at least 15 Last-Page-aware operations, got ${lastPage}`);
 
