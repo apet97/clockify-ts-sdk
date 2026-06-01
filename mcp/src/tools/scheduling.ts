@@ -183,4 +183,70 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_scheduling_publish",
+        {
+            title: "Publish scheduling assignments",
+            description: "Publish draft scheduling assignments across a date range; set notifyUsers to alert the affected users.",
+            inputSchema: {
+                start: z.string().min(1),
+                end: z.string().min(1),
+                notifyUsers: z.boolean().optional(),
+                search: z.string().optional(),
+                extra: z.record(z.unknown()).optional().describe("Additional publish filters, e.g. userFilter, userGroupFilter, viewType"),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: false },
+        },
+        async (args) => {
+            try {
+                const { extra, ...rest } = args;
+                await ctx.client.scheduling.publish({ ...rest, ...(extra ?? {}), workspaceId: ctx.workspaceId });
+                return successResult(
+                    "clockify_scheduling_publish",
+                    { published: true, start: args.start, end: args.end },
+                    { workspaceId: ctx.workspaceId },
+                );
+            } catch (err) {
+                return errorResult("clockify_scheduling_publish", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_scheduling_capacity",
+        {
+            title: "Scheduling user capacity",
+            description: "List each user's scheduled capacity totals across a date range, filtered by user, group, or status.",
+            inputSchema: {
+                start: z.string().min(1),
+                end: z.string().min(1),
+                search: z.string().optional(),
+                page: z.number().int().min(1).default(1).optional(),
+                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                extra: z.record(z.unknown()).optional().describe("Additional capacity filters, e.g. userFilter, userGroupFilter, statusFilter"),
+            },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const { extra, page, pageSize, ...rest } = args;
+                const items = (await ctx.client.scheduling.getUsersCapacityFiltered({
+                    ...rest,
+                    page: page ?? 1,
+                    pageSize: pageSize ?? 50,
+                    ...(extra ?? {}),
+                    workspaceId: ctx.workspaceId,
+                })) as unknown[];
+                return successResult(
+                    "clockify_scheduling_capacity",
+                    items,
+                    { workspaceId: ctx.workspaceId, count: items.length, page: page ?? 1, pageSize: pageSize ?? 50 },
+                    { entity: "scheduling" },
+                );
+            } catch (err) {
+                return errorResult("clockify_scheduling_capacity", err);
+            }
+        },
+    );
 }

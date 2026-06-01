@@ -300,6 +300,13 @@ probe evidence before the corrected spec is allowed to claim
   a total. Tools synthesize `total_min` lower-bound on full pages
   rather than an authoritative `total`. — affects every paginated
   `clockify_*_list`.
+- `scheduling.calculateUsersTotals` (`POST /scheduling/assignments/users/totals`):
+  route is not bound on the live API — both POST and a GET probe return
+  `404 "No static resource"` (vs `405` on the sibling `publish` route that
+  exists). The corrected OpenAPI tags it `x-clockify-live-status:
+  probe-documented`. No TS MCP tool is exposed; the parity override records it
+  as deferred. Revisit if Clockify binds the endpoint. — affects no tool by
+  design.
 
 Each of these needs:
 - a probe fixture under `probes/`,

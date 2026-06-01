@@ -6,6 +6,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Completed the scheduling surface: `clockify_scheduling_publish` (publish draft
+  assignments across a date range, optionally notifying users) and
+  `clockify_scheduling_capacity` (per-user scheduled-capacity totals). The
+  project-totals endpoint is already covered by
+  `clockify_scheduling_assignments_list_per_project`; the users/totals endpoint
+  is deferred because it returns HTTP 404 on the live API (see
+  `spec/evidence/discrepancies.md`).
 - Added read-only reports tools: `clockify_reports_summary`,
   `clockify_reports_detailed`, `clockify_reports_weekly`, and
   `clockify_reports_attendance` run the Clockify report endpoints over a date
