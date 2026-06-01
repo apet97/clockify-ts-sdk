@@ -58,6 +58,20 @@ Common paths:
 `,
     },
     {
+        name: "clockify-agent-mode",
+        uri: "clockify://guide/agent-mode",
+        title: "Clockify Agent Mode Guide",
+        description: "Compact guidance for choosing SDK, CLI, and MCP surfaces.",
+        text: `# Clockify Agent Mode Guide
+
+Start with clockify_status.
+Use clockify_docs_search when the task is unclear.
+Use clockify_operation_guide before long-tail or risky workflows.
+Use clockify_sdk_snippet for compact SDK, CLI, or MCP examples.
+Preview high-risk writes with dry_run and confirm with confirm_token.
+`,
+    },
+    {
         name: "clockify-mcp-doctor",
         uri: "clockify://mcp/doctor",
         title: "Clockify MCP Doctor",
