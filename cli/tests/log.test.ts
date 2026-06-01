@@ -21,6 +21,7 @@ function makeClient(): { client: ClockifyClient; created: Record<string, unknown
 function makeProgram(client: ClockifyClient): Command {
     const program = new Command();
     program.exitOverride();
+    program.option("--json", "Emit JSON.", false);
     const services: Services = {
         loadConfig: () => ({ apiKey: "k", workspaceId: "ws-1" }),
         buildClient: () => client,
@@ -31,6 +32,10 @@ function makeProgram(client: ClockifyClient): Command {
 
 function run(client: ClockifyClient, args: string[]): Promise<Command> {
     return makeProgram(client).parseAsync(["node", "clk115", "log", ...args]);
+}
+
+function runJson(client: ClockifyClient, args: string[]): Promise<Command> {
+    return makeProgram(client).parseAsync(["node", "clk115", "--json", "log", ...args]);
 }
 
 const END = "2026-06-01T10:00:00.000Z";
@@ -73,5 +78,16 @@ describe("log command", () => {
         const { client, created } = makeClient();
         await run(client, ["30m", "work", "--end", END, "--project", "p-1", "--tag", "t-1", "--billable"]);
         expect(created[0]).toMatchObject({ projectId: "p-1", tagIds: ["t-1"], billable: true });
+    });
+
+    it("prints additive receipt fields while keeping top-level id", async () => {
+        const { client } = makeClient();
+        await runJson(client, ["30m", "work", "--end", END]);
+        const payload = JSON.parse(logSpy.mock.calls[0]?.[0] as string);
+        expect(payload.id).toBe("te-1");
+        expect(payload.ok).toBe(true);
+        expect(payload.action).toBe("entries.log");
+        expect(payload.ids.entryId).toBe(payload.id);
+        expect(payload.changed.created[0].id).toBe(payload.id);
     });
 });

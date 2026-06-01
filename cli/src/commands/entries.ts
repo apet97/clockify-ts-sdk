@@ -3,7 +3,8 @@
  */
 import type { Command } from "commander";
 
-import { printRecords, printSuccess } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -66,6 +67,17 @@ export const registerEntriesCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
             await client.timeEntries.delete({ workspaceId, timeEntryId: id });
-            printSuccess(`deleted time entry ${id}`, output);
+            printReceipt(
+                {
+                    ok: true,
+                    action: "entries.delete",
+                    entity: "time_entry",
+                    ids: { entryId: id },
+                    data: { id, deleted: true, message: `deleted time entry ${id}` },
+                    changed: { deleted: [{ type: "time_entry", id }] },
+                    next: [{ command: "clk115 entries list --json", reason: "Verify the entry no longer appears." }],
+                },
+                output,
+            );
         });
 };

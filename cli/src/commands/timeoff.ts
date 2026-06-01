@@ -7,7 +7,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -104,11 +105,20 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 status?: { statusType?: string };
                 userId?: string;
             };
-            printObject(
+            const data = {
+                id: created.id ?? "",
+                user: created.userId ?? "",
+                status: created.status?.statusType ?? "",
+            };
+            printReceipt(
                 {
-                    id: created.id ?? "",
-                    user: created.userId ?? "",
-                    status: created.status?.statusType ?? "",
+                    ok: true,
+                    action: "timeoff.submit",
+                    entity: "time_off_request",
+                    ids: { timeOffRequestId: data.id },
+                    data,
+                    changed: { created: [{ type: "time_off_request", id: data.id }] },
+                    next: [{ command: "clk115 timeoff list --json", reason: "Review request status." }],
                 },
                 output,
             );

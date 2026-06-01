@@ -8,6 +8,7 @@
         "CLI writes stay non-interactive",
         "Destructive commands must be ID-scoped",
         "Create commands must return identifiers",
+        "Write JSON is receipt-shaped",
         "Errors must stay machine-readable"
       ]
     },
@@ -31,6 +32,16 @@
       ]
     },
     {
+      "path": "cli/src/receipt.ts",
+      "contains": [
+        "CliReceipt",
+        "printReceipt",
+        "changed",
+        "warnings",
+        "next"
+      ]
+    },
+    {
       "path": "cli/src/index.ts",
       "contains": [
         "exitCode",
@@ -46,7 +57,7 @@
       "readmeCommand": "clk115 --json log",
       "markers": [
         "timeEntries.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -56,7 +67,7 @@
       "readmeCommand": "clk115 start",
       "markers": [
         "timeEntries.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -68,7 +79,7 @@
         ".command(\"delete\")",
         ".argument(\"<id>\"",
         "timeEntries.delete",
-        "printSuccess",
+        "printReceipt",
         "deleted time entry"
       ]
     },
@@ -79,7 +90,7 @@
       "markers": [
         ".command(\"create\")",
         "projects.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -90,7 +101,7 @@
       "markers": [
         ".command(\"create\")",
         "clients.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -101,7 +112,7 @@
       "markers": [
         ".command(\"create\")",
         "tags.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -112,7 +123,7 @@
       "markers": [
         ".command(\"create\")",
         "webhooks.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -124,7 +135,7 @@
         ".command(\"delete\")",
         ".argument(\"<id>\"",
         "webhooks.delete",
-        "printSuccess",
+        "printReceipt",
         "deleted webhook"
       ]
     },
@@ -135,7 +146,7 @@
       "markers": [
         ".command(\"create\")",
         "invoices.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -146,7 +157,7 @@
       "markers": [
         ".command(\"create\")",
         "scheduling.create",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     },
@@ -156,7 +167,7 @@
       "readmeCommand": "time-off",
       "markers": [
         "timeOff.submit",
-        "printObject",
+        "printReceipt",
         "id:"
       ]
     }

@@ -8,7 +8,8 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -96,15 +97,24 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 period?: { start?: string; end?: string };
                 published?: boolean;
             };
-            printObject(
+            const data = {
+                id: created.id ?? "",
+                user: created.userId ?? "",
+                project: created.projectId ?? "",
+                hoursPerDay: created.hoursPerDay ?? 0,
+                start: created.period?.start ?? "",
+                end: created.period?.end ?? "",
+                published: created.published === true,
+            };
+            printReceipt(
                 {
-                    id: created.id ?? "",
-                    user: created.userId ?? "",
-                    project: created.projectId ?? "",
-                    hoursPerDay: created.hoursPerDay ?? 0,
-                    start: created.period?.start ?? "",
-                    end: created.period?.end ?? "",
-                    published: created.published === true,
+                    ok: true,
+                    action: "scheduling.create",
+                    entity: "scheduling_assignment",
+                    ids: { assignmentId: data.id },
+                    data,
+                    changed: { created: [{ type: "scheduling_assignment", id: data.id }] },
+                    next: [{ command: "clk115 scheduling list --json", reason: "Verify the assignment appears." }],
                 },
                 output,
             );
