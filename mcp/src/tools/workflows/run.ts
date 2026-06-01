@@ -1,6 +1,8 @@
-import { errorResult, successResult } from "../../result.js";
-import type { AnyRecord } from "./types.js";
+import type { successResult } from "../../result.js";
+import { errorResult } from "../../result.js";
+
 import { defaultRecovery } from "./resolve.js";
+import type { AnyRecord } from "./types.js";
 
 export async function runWorkflow(action: string, args: AnyRecord, fn: () => Promise<ReturnType<typeof successResult>>) {
     try {
