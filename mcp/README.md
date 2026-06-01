@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 114 tools: 20 workflow tools plus 94
+This package now advertises 116 tools: 20 workflow tools plus 96
 domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
@@ -228,7 +228,7 @@ Prompts:
 | `entries` | 5 | list, get, log, update, delete |
 | `timer` | 2 | start, stop |
 | `invoices` | 7 | list, get, create, update, delete, update_status, export |
-| `expenses` | 8 | expense list/get/delete; category CRUD plus archive |
+| `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
 | `webhooks` | 5 | list, get, create, update, delete |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |

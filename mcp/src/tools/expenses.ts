@@ -1,14 +1,38 @@
 /**
- * Expense + expense-category tools. Expense create takes a multipart
- * file upload upstream — for now we expose update/delete/list/get +
- * the category surface, and defer create to a future port that wraps
- * the wrapper's file-upload helper.
+ * Expense + expense-category tools. Create/update POST multipart
+ * form-data upstream; the receipt file is optional in practice (the
+ * live API validates the scalar fields, not `file`), so the tools
+ * expose the scalar surface and default the user to the API-key owner.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
+
+// Clockify's expense PUT needs an explicit list of which fields to apply;
+// derive it from the scalar fields the caller actually supplied.
+const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
+    amount: "AMOUNT",
+    date: "DATE",
+    projectId: "PROJECT",
+    taskId: "TASK",
+    categoryId: "CATEGORY",
+    notes: "NOTES",
+    billable: "BILLABLE",
+};
+
+function expenseChangeFields(fields: Record<string, unknown>): string[] {
+    return Object.entries(EXPENSE_CHANGE_FIELDS)
+        .filter(([key]) => fields[key] !== undefined)
+        .map(([, value]) => value);
+}
+
+async function currentUserId(ctx: Context): Promise<string> {
+    const id = (await ctx.client.users.getCurrentUser() as { id?: string }).id;
+    if (!id) throw new Error("Could not determine the current user ID; pass userId explicitly.");
+    return id;
+}
 
 export function registerExpensesTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -102,6 +126,82 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 );
             } catch (err) {
                 return errorResult("clockify_expenses_delete", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_expenses_create",
+        {
+            title: "Create an expense",
+            description: "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
+            inputSchema: {
+                amount: z.number(),
+                categoryId: z.string().min(1),
+                projectId: z.string().min(1),
+                date: z.string().min(1),
+                taskId: z.string().optional(),
+                notes: z.string().optional(),
+                billable: z.boolean().optional(),
+                userId: z.string().optional(),
+                extra: z.record(z.unknown()).optional().describe("Additional expense fields, e.g. a receipt file reference"),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: false },
+        },
+        async (args) => {
+            try {
+                const { extra, userId, ...fields } = args;
+                const owner = userId ?? (await currentUserId(ctx));
+                const created = await ctx.client.expenses.create({
+                    ...fields,
+                    ...(extra ?? {}),
+                    userId: owner,
+                    workspaceId: ctx.workspaceId,
+                } as never);
+                return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId });
+            } catch (err) {
+                return errorResult("clockify_expenses_create", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_expenses_update",
+        {
+            title: "Update an expense",
+            description: "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
+            inputSchema: {
+                expenseId: z.string().min(1),
+                amount: z.number(),
+                categoryId: z.string().min(1),
+                date: z.string().min(1),
+                projectId: z.string().optional(),
+                taskId: z.string().optional(),
+                notes: z.string().optional(),
+                billable: z.boolean().optional(),
+                userId: z.string().optional(),
+                extra: z.record(z.unknown()).optional().describe("Additional expense fields to replace"),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const { expenseId, extra, userId, ...fields } = args;
+                const owner = userId ?? (await currentUserId(ctx));
+                const updated = await ctx.client.expenses.update({
+                    ...fields,
+                    ...(extra ?? {}),
+                    changeFields: expenseChangeFields(fields),
+                    userId: owner,
+                    expenseId,
+                    workspaceId: ctx.workspaceId,
+                } as never);
+                return successResult("clockify_expenses_update", updated, {
+                    workspaceId: ctx.workspaceId,
+                    expenseId,
+                });
+            } catch (err) {
+                return errorResult("clockify_expenses_update", err);
             }
         },
     );

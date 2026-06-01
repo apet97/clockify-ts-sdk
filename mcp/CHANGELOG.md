@@ -6,6 +6,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added expense write tools: `clockify_expenses_create` and
+  `clockify_expenses_update`. Both expose the scalar expense fields (amount,
+  category, project, date, notes, billable), default the user to the API-key
+  owner, and — for update — derive Clockify's required `changeFields` list from
+  the supplied fields. The upstream multipart `file` is optional in practice,
+  so no binary upload is required.
 - Completed the scheduling surface: `clockify_scheduling_publish` (publish draft
   assignments across a date range, optionally notifying users) and
   `clockify_scheduling_capacity` (per-user scheduled-capacity totals). The
