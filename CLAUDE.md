@@ -104,6 +104,19 @@ make docs-drift
   Validators (schema-quality, generator-comparison) skip gracefully
   with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
+- Some operations live on non-default Clockify hosts (reports →
+  `reports.api.clockify.me/v1`, audit-log → `auditlog-api.api.clockify.me/v1`,
+  shared/expense reports). The corrected OpenAPI carries a per-operation
+  `servers` override and the generator emits `OperationSpec.baseUrl`, so the
+  typed SDK methods reach the right host; an explicit `baseUrl`/`environment`
+  override still wins (mock/replay). Hand-written code must not assume the
+  default host for those resources.
+- Not every documented operation is live. Some routes return HTTP 404
+  ("No static resource") and are deferred, not shipped as tools
+  (`scheduling.calculateUsersTotals`, `projects.archive` — archiving is done via
+  project update). Probe a write route's existence with a fake-id request (404
+  vs 405) before adding a tool; record dead endpoints in
+  `spec/evidence/discrepancies.md`.
 - `mcp/src/tools/workflows.ts` is the workflow-first MCP surface.
 - MCP receipts should include useful `ids`, `changed`, `warnings`,
   `next`, stable error codes, and recovery hints.

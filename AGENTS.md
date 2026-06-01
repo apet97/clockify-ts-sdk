@@ -126,6 +126,13 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `PHANTOM_PATHS` + `phantom_path?` — 9 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
      plus bare `/balance` × 2 and `/scheduling/capacity` × 1)
+   - per-operation `servers` overrides on the reports, audit-log, and
+     shared/expense-report ops. `scripts/generate-sdk-from-openapi.mjs`
+     reads `operation.servers[0].url` and emits `OperationSpec.baseUrl`,
+     so `client.reports.*` / `client.auditLogReport.*` reach their real
+     hosts (`reports.api.clockify.me`, `auditlog-api.api.clockify.me`)
+     instead of the default `api.clockify.me/api/v1`. An explicit
+     `baseUrl`/`environment` override still wins.
 7. `spec/fern/{fern.config.json,generators.yml}` — historical Fern
    workspace. It is retained for evidence and fallback context only;
    the active TypeScript SDK emitter is
