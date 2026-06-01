@@ -33,6 +33,8 @@ All notable changes to `@clockify115/cli` are documented here.
   `make perfect-fast`. Fixed what it surfaced: the table-cell formatter no longer
   risks `[object Object]` for unserializable values, and `start.ts` uses the
   exported `ClockifyClient` type directly instead of a type-only helper shim.
+  The ESLint toolchain (`eslint`, `typescript-eslint`, `eslint-plugin-import-x`)
+  is declared as explicit devDependencies rather than relying on workspace hoisting.
 
 ## [0.1.0] - 2026-05-26
 
