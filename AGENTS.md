@@ -31,16 +31,16 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **112 tools**: 20
-  workflow/orientation tools plus 92 domain tools across 17 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **114 tools**: 20
+  workflow/orientation tools plus 94 domain tools across 17 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools
   (`clockify_docs_search`, `clockify_operation_guide`,
   `clockify_sdk_snippet`) help an agent pick the smallest correct
-  surface. Domain tools provide broad CRUDL coverage; reports and raw
-  API fallback remain the Go MCP's niche. Local build artefact:
-  `mcp/dist/`.
+  surface. Domain tools provide broad CRUDL coverage including the four
+  report tools; the raw API fallback remains the Go MCP's niche. Local
+  build artefact: `mcp/dist/`.
   MCP write-safety is part of this product contract: high-risk
   workflow writes and destructive domain deletes share the
   `dry_run` -> `confirm_token` guard in

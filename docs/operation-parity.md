@@ -10,7 +10,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 185 |
 | sdkNamed | 170 |
-| tsMcpExact | 73 |
+| tsMcpExact | 76 |
 | goMcpExact | 84 |
 | curated | 29 |
 
@@ -122,16 +122,16 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | `client.reports.weekly` | `clockify_reports_weekly` | `clockify_reports_weekly` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_weekly` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments` | `postWorkspacesWorkspaceIdSchedulingAssignments` | `client.scheduling.create` | - | - | - | `clockify_scheduling_create` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | `client.scheduling.list` | - | - | - | `clockify_scheduling_list` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | `client.scheduling.listPerProject` | - | `clockify_scheduling_project_totals` | GOCLMCP exposes project totals as a scheduling aggregate tool. | `clockify_scheduling_list_per_project` |
+| POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | `client.scheduling.listPerProject` | `clockify_scheduling_assignments_list_per_project` | `clockify_scheduling_project_totals` | Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate. | `clockify_scheduling_list_per_project` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}` | `getScheduledAssignmentsOnProject` | `client.scheduling.listOnProject` | - | - | - | `clockify_scheduling_list_on_project` |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | `client.scheduling.publish` | - | `clockify_scheduling_publish` | - | `clockify_scheduling_publish` |
+| PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | `client.scheduling.publish` | `clockify_scheduling_publish` | `clockify_scheduling_publish` | - | `clockify_scheduling_publish` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/recurring` | `createRecurringAssignment` | `client.scheduling.createRecurring` | - | - | - | `clockify_scheduling_create_recurring` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId` | `client.scheduling.replaceRecurring` | - | - | - | `clockify_scheduling_replace_recurring` |
 | PATCH | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `updateRecurringAssignment` | `client.scheduling.updateRecurring` | - | - | - | `clockify_scheduling_update_recurring` |
 | DELETE | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `deleteRecurringAssignment` | `client.scheduling.deleteRecurring` | - | - | - | `clockify_scheduling_delete_recurring` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}` | `changeRecurringPeriod` | - | - | - | - | `clockify_scheduling_change_recurring_period` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals` | `getUsersCapacityTotals` | `client.scheduling.getUsersCapacityFiltered` | - | `clockify_scheduling_capacity` | GOCLMCP names capacity totals as the capacity workflow. | `clockify_scheduling_get_users_capacity_filtered` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | `postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals` | `client.scheduling.calculateUsersTotals` | - | `clockify_scheduling_user_totals` | GOCLMCP exposes user totals as a scheduling aggregate tool. | `clockify_scheduling_calculate_users_totals` |
+| POST | `/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals` | `getUsersCapacityTotals` | `client.scheduling.getUsersCapacityFiltered` | `clockify_scheduling_capacity` | `clockify_scheduling_capacity` | GOCLMCP names capacity totals as the capacity workflow. | `clockify_scheduling_get_users_capacity_filtered` |
+| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | `postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals` | `client.scheduling.calculateUsersTotals` | - | `clockify_scheduling_user_totals` | Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md. | `clockify_scheduling_calculate_users_totals` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals` | `getUserCapacityTotal` | `client.scheduling.getUserCapacity` | - | - | - | `clockify_scheduling_get_user_capacity` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.update` | - | - | - | `clockify_scheduling_update` |
 | DELETE | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.delete` | - | - | - | `clockify_scheduling_delete` |

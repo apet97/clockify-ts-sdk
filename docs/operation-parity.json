@@ -10,7 +10,7 @@
   "summary": {
     "operations": 185,
     "sdkNamed": 170,
-    "tsMcpExact": 73,
+    "tsMcpExact": 76,
     "goMcpExact": 84,
     "curated": 29
   },
@@ -1898,12 +1898,12 @@
       "candidateTools": [
         "clockify_scheduling_list_per_project"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_assignments_list_per_project",
       "goMcp": "clockify_scheduling_project_totals",
-      "overrideReason": "GOCLMCP exposes project totals as a scheduling aggregate tool.",
+      "overrideReason": "Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -1934,12 +1934,12 @@
       "candidateTools": [
         "clockify_scheduling_publish"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_publish",
       "goMcp": "clockify_scheduling_publish",
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
       }
@@ -2042,12 +2042,12 @@
       "candidateTools": [
         "clockify_scheduling_get_users_capacity_filtered"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_scheduling_capacity",
       "goMcp": "clockify_scheduling_capacity",
       "overrideReason": "GOCLMCP names capacity totals as the capacity workflow.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -2062,7 +2062,7 @@
       ],
       "tsMcp": null,
       "goMcp": "clockify_scheduling_user_totals",
-      "overrideReason": "GOCLMCP exposes user totals as a scheduling aggregate tool.",
+      "overrideReason": "Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md.",
       "parity": {
         "sdkNamed": true,
         "tsMcpExact": false,
