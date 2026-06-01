@@ -9,8 +9,8 @@
   },
   "summary": {
     "operations": 185,
-    "sdkNamed": 170,
-    "tsMcpExact": 83,
+    "sdkNamed": 173,
+    "tsMcpExact": 87,
     "goMcpExact": 84,
     "curated": 31
   },
@@ -1159,12 +1159,12 @@
       "candidateTools": [
         "clockify_member_profiles_get"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_member_profile_get",
       "goMcp": "clockify_users_profile",
-      "overrideReason": "GOCLMCP exposes member profile lookup through users_profile.",
+      "overrideReason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -3012,17 +3012,16 @@
       "method": "GET",
       "path": "/workspaces/{workspaceId}/users",
       "operationId": "findWorkspaceUsers",
-      "sdk": null,
+      "sdk": "client.users.list",
       "candidateTools": [
-        "clockify_users_find_workspace_users",
         "clockify_users_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_list",
       "goMcp": "clockify_users_list",
       "overrideReason": "GOCLMCP exposes workspace users through the users_list tool.",
       "parity": {
-        "sdkNamed": false,
-        "tsMcpExact": false,
+        "sdkNamed": true,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -3157,16 +3156,16 @@
       "method": "POST",
       "path": "/workspaces/{workspaceId}/users/{userId}/roles",
       "operationId": "giveUserManagerRole",
-      "sdk": null,
+      "sdk": "client.users.giveRole",
       "candidateTools": [
-        "clockify_roles_give_user_manager_role"
+        "clockify_users_give_role"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_grant_role",
       "goMcp": "clockify_users_role",
-      "overrideReason": "GOCLMCP groups user role writes under users_role.",
+      "overrideReason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role.",
       "parity": {
-        "sdkNamed": false,
-        "tsMcpExact": false,
+        "sdkNamed": true,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
@@ -3175,16 +3174,16 @@
       "method": "DELETE",
       "path": "/workspaces/{workspaceId}/users/{userId}/roles",
       "operationId": "removeUserManagerRole",
-      "sdk": null,
+      "sdk": "client.users.removeRole",
       "candidateTools": [
-        "clockify_roles_remove_user_manager_role"
+        "clockify_users_remove_role"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_revoke_role",
       "goMcp": "clockify_users_role",
-      "overrideReason": "GOCLMCP groups user role writes under users_role.",
+      "overrideReason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role.",
       "parity": {
-        "sdkNamed": false,
-        "tsMcpExact": false,
+        "sdkNamed": true,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }

@@ -91,7 +91,7 @@ export type KnownPaginatedMethod =
     | { readonly resource: "timeOffPolicies"; readonly method: "list" }
     | { readonly resource: "userGroups"; readonly method: "list" }
     | { readonly resource: "users"; readonly method: "findUserTeamManagers" }
-    | { readonly resource: "users"; readonly method: "findWorkspaceUsers" };
+    | { readonly resource: "users"; readonly method: "list" };
 
 /**
  * Constant runtime list of the 19 known paginated `(resource,
@@ -117,7 +117,7 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "timeOffPolicies", method: "list" },
     { resource: "userGroups", method: "list" },
     { resource: "users", method: "findUserTeamManagers" },
-    { resource: "users", method: "findWorkspaceUsers" },
+    { resource: "users", method: "list" },
 ] as const;
 
 /**

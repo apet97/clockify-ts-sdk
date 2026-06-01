@@ -174,7 +174,7 @@ Operation count: **185**
 | DELETE | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `deleteMany` | Time Entries | - | - | - | - | 200 |
 | PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop` | Time Entries | timeEntries | stopTimer | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate` | Time Entries | timeEntries | duplicate | - | - | 201 |
-| GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | Users | - | - | yes | - | 200 |
+| GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | Users | users | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | Workspaces | workspaces | addUser | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | Users | - | - | - | yes | 200 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | Workspaces | - | - | - | yes | 200 |
@@ -182,8 +182,8 @@ Operation count: **185**
 | PUT | `/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value` | `updateUserCustomFieldValue` | Users | - | - | - | yes | 201 |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/hourly-rate` | `updateUserHourlyRate` | Workspaces | - | - | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/users/{userId}/managers` | `findUserTeamManagers` | Users | - | - | yes | - | 200 |
-| POST | `/workspaces/{workspaceId}/users/{userId}/roles` | `giveUserManagerRole` | Roles | - | - | - | yes | 201 |
-| DELETE | `/workspaces/{workspaceId}/users/{userId}/roles` | `removeUserManagerRole` | Roles | - | - | - | yes | 204 |
+| POST | `/workspaces/{workspaceId}/users/{userId}/roles` | `giveUserManagerRole` | Roles | users | giveRole | - | yes | 201 |
+| DELETE | `/workspaces/{workspaceId}/users/{userId}/roles` | `removeUserManagerRole` | Roles | users | removeRole | - | yes | 204 |
 | GET | `/workspaces/{workspaceId}/webhooks` | `getWebhooksOnWorkspace` | Webhooks | webhooks | list | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/webhooks` | `createWebhook` | Webhooks | webhooks | create | - | yes | 201 |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | Webhooks | webhooks | get | - | - | 200 |

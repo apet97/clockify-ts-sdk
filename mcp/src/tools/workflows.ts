@@ -1128,7 +1128,7 @@ async function resolvePolicyId(ctx: Context, value: string): Promise<string> {
 }
 
 async function resolveUserId(ctx: Context, value: string): Promise<string> {
-    const listed = (await ctx.client.users.findWorkspaceUsers({ workspaceId: ctx.workspaceId, name: value } as never)) as unknown[];
+    const listed = (await ctx.client.users.list({ workspaceId: ctx.workspaceId, name: value, "include-roles": false })) as unknown[];
     const found = await findOneByName(listed, value, "user", ["name", "email"]);
     return idOf(found ?? { id: value });
 }

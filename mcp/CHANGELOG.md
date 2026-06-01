@@ -6,6 +6,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added users/roles tools: `clockify_users_list`, `clockify_member_profile_get`
+  (read), and the privileged `clockify_users_grant_role` /
+  `clockify_users_revoke_role` writes, built on the newly stamped
+  `client.users.list/giveRole/removeRole` SDK methods.
 - Added single-operation write tools: `clockify_approvals_resubmit` (resubmit
   entries for approval over a period), `clockify_invoices_import_time` (import
   time/expenses into an existing invoice), and `clockify_entries_mark_invoiced`

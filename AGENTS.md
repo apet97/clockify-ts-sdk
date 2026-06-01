@@ -31,8 +31,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **119 tools**: 20
-  workflow/orientation tools plus 99 domain tools across 17 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **123 tools**: 20
+  workflow/orientation tools plus 103 domain tools across 18 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools
@@ -121,8 +121,8 @@ refreshed by `cp` after every regen in GOCLMCP.
      `x-clockify-last-page-header: true` on 15 endpoints that emit
      the header
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
-     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 169 ops
-     across 27 modules
+     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 172 ops
+     across 28 modules
    - `PHANTOM_PATHS` + `phantom_path?` — 9 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
      plus bare `/balance` × 2 and `/scheduling/capacity` × 1)
@@ -471,8 +471,8 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    (internal evidence only — not filed).
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
-   `x-fern-sdk-method-name`. Coverage: 169 ops / 27 modules /
-   91.4% of the 185-op live surface. The other ~16 ops are
+   `x-fern-sdk-method-name`. Coverage: 172 ops / 28 modules /
+   93.0% of the 185-op live surface. The other ~13 ops are
    already-clean operationIds or per-module domain edge cases.
 
 Re-attempt item 1 only after the upstream gating concern resolves

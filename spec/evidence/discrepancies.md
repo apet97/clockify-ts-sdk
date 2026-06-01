@@ -809,9 +809,6 @@ Each of these needs:
 - **What's NOT shipped (~4 modules + a handful of ops):** the remaining
   ~24 unstamped ops live in:
   - `files.uploadImage` — already a clean verb-noun name.
-  - `roles.{giveUserManagerRole, removeUserManagerRole}` — verbs
-    `give` / `remove` are already domain-clear for a 2-op module;
-    renaming to `grant`/`revoke` would not improve clarity.
   - `expenseReport.generateDetailedReportV1` — the explicit `V1`
     suffix is load-bearing and a rename would lose that signal.
   - `workspaces.{updateUserStatus, updateUserCostRate,
@@ -853,8 +850,7 @@ Each of these needs:
   below). The remaining ~21 ops
   split into:
   - **Already-clean operationId names (don't need a rename)** —
-    `files.uploadImage`, `roles.giveUserManagerRole`,
-    `roles.removeUserManagerRole`,
+    `files.uploadImage`,
     `expenseReport.generateDetailedReportV1` (the `V1` suffix is
     load-bearing), the per-user `workspaces.updateUser*` family,
     `timeEntries.deleteMany`, `scheduling.changeRecurringPeriod`.

@@ -30,8 +30,8 @@
     { "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive", "tsMcp": "clockify_projects_update", "goMcp": "clockify_projects_archive", "reason": "The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md." },
     { "operationId": "postWorkspacesWorkspaceIdTimeEntries", "tsMcp": "clockify_entries_log", "goMcp": "clockify_entries_create", "reason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log." },
     { "operationId": "findWorkspaceUsers", "goMcp": "clockify_users_list", "reason": "GOCLMCP exposes workspace users through the users_list tool." },
-    { "operationId": "getMemberProfile", "goMcp": "clockify_users_profile", "reason": "GOCLMCP exposes member profile lookup through users_profile." },
-    { "operationId": "giveUserManagerRole", "goMcp": "clockify_users_role", "reason": "GOCLMCP groups user role writes under users_role." },
-    { "operationId": "removeUserManagerRole", "goMcp": "clockify_users_role", "reason": "GOCLMCP groups user role writes under users_role." }
+    { "operationId": "getMemberProfile", "tsMcp": "clockify_member_profile_get", "goMcp": "clockify_users_profile", "reason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile." },
+    { "operationId": "giveUserManagerRole", "tsMcp": "clockify_users_grant_role", "goMcp": "clockify_users_role", "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role." },
+    { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." }
   ]
 }
