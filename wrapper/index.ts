@@ -119,3 +119,20 @@ export {
     type ClockifyDiagnosticsStatus,
 } from "./diagnostics.js";
 export { getRateLimit, getRateLimitFromError, type RateLimitSnapshot } from "./rate-limit.js";
+export {
+    requestOptions,
+    withHeaders,
+    withIdempotencyKey,
+    withRequestTimeout,
+    type ClockifyHeaderValue,
+    type ClockifyRequestHeaders,
+    type ClockifyRequestOptions,
+} from "./request-options.js";
+export {
+    toOperationErrorReceipt,
+    toOperationReceipt,
+    type ClockifyOperationErrorReceipt,
+    type ClockifyOperationReceipt,
+    type ClockifyOperationResult,
+    type OperationReceiptOptions,
+} from "./operation-receipt.js";

@@ -54,7 +54,13 @@
     "clockifyHealth",
     "clockifyDiagnostics",
     "getRateLimit",
-    "getRateLimitFromError"
+    "getRateLimitFromError",
+    "requestOptions",
+    "withHeaders",
+    "withIdempotencyKey",
+    "withRequestTimeout",
+    "toOperationReceipt",
+    "toOperationErrorReceipt"
   ],
   "subpaths": {
     ".": [
@@ -113,6 +119,16 @@
     ],
     "./diagnostics": [
       "clockifyDiagnostics"
+    ],
+    "./request-options": [
+      "requestOptions",
+      "withHeaders",
+      "withIdempotencyKey",
+      "withRequestTimeout"
+    ],
+    "./operation-receipt": [
+      "toOperationReceipt",
+      "toOperationErrorReceipt"
     ]
   },
   "tsconfigAliases": {
@@ -163,6 +179,12 @@
     ],
     "clockify-sdk-ts-115/diagnostics": [
       "./diagnostics.ts"
+    ],
+    "clockify-sdk-ts-115/request-options": [
+      "./request-options.ts"
+    ],
+    "clockify-sdk-ts-115/operation-receipt": [
+      "./operation-receipt.ts"
     ]
   },
   "packageMarkerScan": {
@@ -182,6 +204,8 @@
       "wrapper/otel-hooks.ts",
       "wrapper/health.ts",
       "wrapper/rate-limit.ts",
+      "wrapper/request-options.ts",
+      "wrapper/operation-receipt.ts",
       "wrapper/tsconfig.json",
       "wrapper/tests/composed-fetch.test.ts",
       "wrapper/tests/sandbox.test.ts",

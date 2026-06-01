@@ -9,6 +9,14 @@ once v1.0.0 ships.
 
 ### Added
 
+- Added the `request-options` subpath: `requestOptions()`, `withHeaders()`,
+  `withIdempotencyKey()`, and `withRequestTimeout()` give per-call timeout,
+  retry, abort, query, and header behavior a stable public type without
+  importing generated internals. `ClockifyRequestOptions` omits `addonToken`.
+- Added the `operation-receipt` subpath: `toOperationReceipt()` and
+  `toOperationErrorReceipt()` normalize SDK calls into the same success/error
+  receipt vocabulary the CLI and MCP surfaces emit (status, headers, request
+  id, rate limit, stable error code, recovery).
 - Exported shared error-code and recovery helpers from the SDK error surface.
 - Added `classifyClockifyError()` and `getStableErrorCode()` for SDK runtime recovery classification.
 - Added deterministic mock Clockify server coverage for SDK health and pagination flows.
