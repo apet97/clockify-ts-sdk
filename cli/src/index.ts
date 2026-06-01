@@ -12,8 +12,9 @@ import { buildClient } from "./client.js";
 import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
-import { printError, type OutputMode } from "./output.js";
+import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
+import { registerApiCommand } from "./commands/api.js";
 import { registerStatusCommand } from "./commands/status.js";
 import { registerDoctorCommand } from "./commands/doctor.js";
 import { registerStartCommand } from "./commands/start.js";
@@ -31,10 +32,7 @@ import { registerTimeOffCommand } from "./commands/timeoff.js";
 import { registerSchedulingCommand } from "./commands/scheduling.js";
 import { registerAuditLogCommand } from "./commands/auditlog.js";
 
-export interface ResolvedFlags {
-    mode: OutputMode;
-    color: boolean;
-}
+export type ResolvedFlags = OutputOptions;
 
 /**
  * Build the commander program. Exposed for tests; the real binary
@@ -53,6 +51,9 @@ export function buildProgram(): Command {
             "Override Clockify API base URL (or CLOCKIFY_BASE_URL env var). Only a Clockify host or a loopback host is accepted; arbitrary hosts are rejected.",
         )
         .option("--json", "Emit machine-readable JSON instead of human-friendly tables.", false)
+        .option("--output <mode>", "Output mode: table, json, or ndjson.")
+        .option("--compact", "Print compact JSON without indentation.", false)
+        .option("--select <path>", "Select a dot-path before printing JSON or NDJSON.")
         .option("--no-color", "Disable ANSI color output.")
         .showHelpAfterError(true);
 
@@ -61,6 +62,7 @@ export function buildProgram(): Command {
         buildClient,
     };
 
+    registerApiCommand(program, services);
     registerStatusCommand(program, services);
     registerDoctorCommand(program, services);
     registerStartCommand(program, services);
@@ -94,11 +96,33 @@ export function buildProgram(): Command {
  * OutputOptions shape. Used by every command's handler.
  */
 export function resolveFlags(program: Command): ResolvedFlags {
-    const opts = program.opts<{ json?: boolean; color?: boolean }>();
-    return {
-        mode: opts.json ? "json" : "table",
+    const opts = program.opts<{
+        json?: boolean;
+        color?: boolean;
+        output?: string;
+        compact?: boolean;
+        select?: string;
+    }>();
+    const mode = resolveMode(opts.output, opts.json);
+    const resolved: ResolvedFlags = {
+        mode,
         color: opts.color !== false && process.stdout.isTTY === true,
     };
+    if (opts.compact) resolved.compact = true;
+    if (opts.select !== undefined) resolved.select = opts.select;
+    return resolved;
+}
+
+function resolveMode(output: string | undefined, json: boolean | undefined): OutputMode {
+    if (output === undefined) {
+        return json ? "json" : "table";
+    }
+    const modes: OutputMode[] = ["table", "json", "ndjson"];
+    const match = modes.find((mode) => mode === output);
+    if (!match) {
+        throw new Error(`Unsupported output mode "${output}". Use table, json, or ndjson.`);
+    }
+    return match;
 }
 
 export function globalFlags(program: Command): GlobalFlags {
