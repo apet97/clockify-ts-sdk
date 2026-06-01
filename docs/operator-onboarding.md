@@ -26,9 +26,9 @@ path without guessing which package, gate, or safety boundary applies.
 | Use agent workflows | `mcp/README.md` and the MCP user path in `docs/install-personas.md` | `make mcp-contract`, `make mcp-write-safety`, then MCP package gates when validation is allowed. |
 | Diagnose first-run setup or support handoff | `docs/quickstart-receipt.md`, `docs/workflow-cookbook.md`, and `node scripts/plan.mjs workflow --workflow first-run-support` | `make quickstart-receipt`, `make diagnostics`, `make support-bundle`, `make workflow-cookbook`, and `make acceptance-scenarios` when validation is allowed. |
 | Test without credentials | `make mock-clockify` plus `CLOCKIFY_BASE_URL` or SDK `environment` override | `make mock-contract` and acceptance scenarios. |
-| Prove broad readiness | `docs/final-proof-runbook.md` | `make enterprise-audit`, `make perfect-fast`, `make perfect-full`, performance receipts, completed live sandbox proof, final receipt, final audit. |
+| Prove broad readiness | `docs/release-readiness-checklist.md` | `make enterprise-audit`, `make perfect-fast`, `make perfect-full`, performance receipts, completed live sandbox proof, command receipts, enterprise audit. |
 
-Broad readiness receipts must paste command evidence with `Exit status: 0` and `Result: passed` in every final success section. A prose success summary is not enough for `make final-proof-receipt-check`.
+Broad readiness receipts must paste command evidence with `Exit status: 0` and `Result: passed` in every final success section. A prose success summary is not enough for `make release-readiness`.
 
 ## Readiness context
 

@@ -171,17 +171,19 @@ make docs-drift
   2026-05-28). `release.yml` still publishes only on a pushed tag
   whose version matches `wrapper/package.json`; that guard is
   load-bearing.
-- The `final-proof` / `enterprise-audit-final` / `enterprise-goal-status`
-  make-target family was retired on 2026-05-28; only `make enterprise-audit`
-  remains. `scripts/check-enterprise-hardening.mjs` lost its `--final`
-  mode and the `audit.wiring.finalMakeTarget` assertion in the same pass.
-  References still appear in `docs/risk-register.md`,
-  `docs/release-readiness-checklist.md`, `docs/maintenance-playbook.md`,
-  the `scripts/*-plan.mjs` plan emitters, and the historical
-  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` —
-  one audit JSON marker pins the literal in `risk-register.md`, so
-  surgery there needs to land alongside an audit-contract update.
-  Restoring or fully retiring the workflow is a maintainer call.
+- The retired final-readiness receipt make-target family (the former
+  `make` targets for draft/check/final receipts and the goal-status report)
+  was removed on 2026-05-28; only `make enterprise-audit` remains, and
+  `scripts/check-enterprise-hardening.mjs` lost its `--final` mode and the
+  `audit.wiring.finalMakeTarget` assertion. The residual textual references
+  across `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
+  `docs/maintenance-playbook.md`, and the `scripts/*-plan.mjs` plan emitters
+  have now been removed and the cross-validating audit/contract markers were
+  updated in lockstep. Only the historical
+  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` and
+  `docs/decisions/0004-sandbox-only-live-proof.md` records retain the old
+  terminology. Restoring or further changing the release workflow is a
+  maintainer call.
 
 ## Where To Change Things
 

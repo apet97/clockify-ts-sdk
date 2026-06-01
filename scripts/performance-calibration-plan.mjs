@@ -50,7 +50,7 @@ function calibrationSteps(requiredSuccessfulRuns) {
         ],
         evidence: [
             "Each ceiling follows the tightening rule in docs/performance-budgets.json.",
-            "The final proof receipt states Budget status: tightened.",
+            "The calibration note records Budget status: tightened.",
         ],
         stopConditions: [
             `Fewer than ${requiredSuccessfulRuns} successful baseline receipts exist.`,
@@ -59,20 +59,17 @@ function calibrationSteps(requiredSuccessfulRuns) {
     },
     {
         id: "prove-calibrated-state",
-        title: "Prove calibrated state during final proof",
+        title: "Prove the calibrated state",
         commands: [
             "make performance-budgets",
-            "make final-proof-receipt-check",
-            "make final-proof-final",
         ],
         evidence: [
             "Performance budgets pass after tightening.",
-            "Final proof receipt is filled from real command output.",
-            "Temporary context file is removed after receipt completion and immediately before final-proof-final.",
+            "docs/performance-baseline-latest.json embeds the current budgetFingerprint.",
         ],
         stopConditions: [
             "docs/performance-budgets.json still says provisional.",
-            "docs/final-proof-receipt.md lacks real command output.",
+            "docs/performance-baseline-latest.json lacks real command output.",
         ],
     },
 ];
@@ -176,7 +173,7 @@ export async function buildReport() {
         `Record ${requiredSuccessfulRuns} successful receipt(s) on a clean built tree.`,
         "Tighten docs/performance-budgets.json from actual measurements.",
         "Set calibrationPolicy.status to calibrated only after tightening.",
-        "Use final proof to record the calibrated budget evidence.",
+        "Run make performance-budgets to guard the calibrated budget evidence.",
     ];
     if (!latestReceipt.successfulReceiptPresent) {
         next.unshift(`Create a passing latest receipt at ${receiptPath} with make performance-receipt after package builds.`);

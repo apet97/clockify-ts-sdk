@@ -105,7 +105,7 @@ const goals = {
         stopIf: [
             "The support bundle readinessContext drops riskRoutingSummary.",
             "Performance budgets are still provisional.",
-            "Live proof is deferred; deferral is draft-only and must be replaced before final-proof-final.",
+            "Live proof is deferred; deferral is draft-only and must be replaced before acceptance.",
             "Any final receipt success section lacks Exit status: 0 and Result: passed evidence.",
             "Live proof is neither completed nor explicitly deferred with a concrete reason.",
             "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md still exists during final audit.",

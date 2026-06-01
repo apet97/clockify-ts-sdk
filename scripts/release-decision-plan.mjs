@@ -17,7 +17,6 @@ const decisions = [
             "make perfect-full",
             "make pack-smoke",
             "make release-readiness",
-            "make final-proof-receipt-check when this is final readiness",
         ],
         allowedActions: [
             "Attach or hand off local tarball paths after proof.",
@@ -68,7 +67,7 @@ const decisions = [
             "Maintainer approval naming package, version, tag, provenance, and rollback owner.",
             "Reviewed release workflow update or confirmation that the existing workflow is still correct.",
             "Post-publish smoke install plan.",
-            "Security, supply-chain, support, and final-proof receipts.",
+            "Security, supply-chain, support, and command receipts.",
         ],
         proofTargets: [
             "make perfect-full",
@@ -76,7 +75,6 @@ const decisions = [
             "make release-support-contract",
             "make supply-chain",
             "make ci-contract",
-            "make final-proof-receipt-check",
         ],
         allowedActions: [
             "Update release workflow only in a dedicated approved change.",

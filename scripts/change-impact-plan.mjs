@@ -22,7 +22,7 @@ function findScopes(contract, options) {
         );
     }
     return contract.scopes.filter((scope) =>
-        ["docs-and-contracts", "axioms-contract", "final-proof", "release-readiness"].includes(scope.id),
+        ["docs-and-contracts", "axioms-contract", "release-readiness"].includes(scope.id),
     );
 }
 

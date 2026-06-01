@@ -12,7 +12,7 @@ explicit residual risk. Prefer this shape:
 
 - Claim: what is true now.
 - Evidence: command, contract file, generated surface, or receipt path.
-- Boundary: mock-only, live sandbox required, final proof pending, or publish
+- Boundary: mock-only, live sandbox required, readiness pending, or publish
   not approved.
 
 Do not claim broad readiness from a narrow check. For example, `npm test` is not
@@ -76,4 +76,4 @@ Before claiming documentation quality readiness, run or cite:
 - `make docs-drift`
 - `make readme-tables-drift`
 - `make troubleshooting-drift`
-- `make final-proof-receipt-check` when making final readiness claims
+- `make release-readiness` when making final readiness claims

@@ -10,8 +10,7 @@ commands, and temporary goal context without reading chat history.
 |---|---|
 | `AGENTS.md` | Canonical contributor and agent contract. It owns repo boundaries, first reads, build chain, critical conventions, and hard stops. |
 | `CLAUDE.md` | Concise Claude Code companion. It must point back to `AGENTS.md`, not replace it. |
-| `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` | Temporary context-retention file for this hardening goal. Keep through evidence capture; remove only after the receipt is complete and immediately before final acceptance. |
-| `docs/final-proof-runbook.md` | Exact proof sequence for turning the temporary context into a final receipt. |
+| `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` | Temporary context-retention file for this hardening goal. Keep through evidence capture; remove only after command receipts are complete and immediately before final acceptance. |
 
 ## Handoff rules
 
@@ -39,4 +38,4 @@ Before claiming agent-handoff readiness, run or cite:
 - `make docs-index-drift`
 - `make user-docs`
 - `make enterprise-audit`
-- `make final-proof-receipt-check` after removing temporary context and completing the receipt
+- `make perfect-full` after removing temporary context and completing the receipts
