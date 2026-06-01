@@ -8,7 +8,7 @@ use.
 ## Readiness rule
 
 A release is not ready because the code looks finished. It is ready only when
-evidence exists for each required surface and the final proof receipt records the
+evidence exists for each required surface and command receipts record the
 commands that produced that evidence.
 
 ## Required evidence
@@ -16,20 +16,15 @@ commands that produced that evidence.
 For a preflight view of what still needs proof, run:
 
 ```bash
-make final-proof-preflight
+make release-readiness
 ```
 
 This preflight is static and no-network. It does not run Git, npm, Docker,
 Fern, tests, builds, or Clockify API calls, and it is not release proof. It
-prints the active-goal status report plus the release-readiness report: current
-final-proof blockers, the draft/check/final command split, required proof
-commands, and file-state signals such as final receipt presence, performance
-calibration, and temporary context removal. Internally it includes
-`make enterprise-goal-status`; use the combined `make final-proof-preflight`
-target unless you specifically need just the active-goal status report.
-For automation, the JSON reports expose compact blocker arrays:
-`finalBlockingSignalIds` and `finalBlockingRiskIds` in the active-goal report,
-plus `blockingSignalIds` and `blockingRiskIds` in the release-readiness report.
+prints the release-readiness report: required proof commands and file-state
+signals such as performance calibration and temporary context removal.
+For automation, the JSON report exposes compact blocker arrays:
+`blockingSignalIds` and `blockingRiskIds` in the release-readiness report.
 Those arrays are orientation only, not proof; use them to decide which receipt
 or risk-register item to close next.
 
@@ -47,8 +42,7 @@ or risk-register item to close next.
 | Breaking-change review | Public SDK, CLI, MCP, OpenAPI, package, and install breakage has replacement-first migration evidence. | `make breaking-change-review` |
 | Security posture | Secret hygiene, threat model, support bundle, supply chain, and live-safety contracts pass. | `make secret-hygiene`, `make security-threat-model`, `make support-bundle`, `make supply-chain`, `make live-safety` |
 | Performance | Built artifacts are under tightened budgets calibrated from measured receipts. | `make performance-budgets`, `make performance-receipt` |
-| Live proof | Live cleanup ran in a sacrificial sandbox; failed live proof must be rerun, and deferral is draft-only and must be replaced before final acceptance. | `make perfect-live`, `make final-proof-draft` |
-| Final receipt | The final proof receipt is filled from real command output, not copied from the template, checked after temporary context removal, and final acceptance passes. | `make final-proof-receipt-check`, `make final-proof-final` |
+| Live proof | Live cleanup ran in a sacrificial sandbox; failed live proof must be rerun before acceptance. | `make perfect-live` |
 
 ## Publish decision boundary
 
@@ -102,21 +96,19 @@ packed-consumer smoke path:
 
 1. Run `make perfect-full`.
 2. Run `make pack-smoke` if it was not already included in the proof path.
-3. Attach the generated tarball path and final proof receipt.
+3. Attach the generated tarball path and command receipts.
 4. Include `docs/support-runbook.md` for escalation and redaction rules.
 
-## Final proof closure
+## Readiness closure
 
-The temporary context file stays through evidence capture and receipt drafting.
-Remove `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` only after:
+Capture evidence for each required surface, then confirm readiness by:
 
-1. `docs/final-proof-receipt.md` exists and is filled from command output.
-2. Performance budgets are calibrated from measured receipts and the final
-   receipt says `Budget status: tightened`.
+1. Command receipts exist and are filled from real command output.
+2. Performance budgets are calibrated from measured receipts and the receipt
+   says `Budget status: tightened`.
 3. Live proof is completed in a sacrificial sandbox; failed live proof must be
-   rerun, and deferred live proof is a draft blocker, not final readiness.
-4. The receipt records the temporary-context removal, then
-   `make final-proof-final` passes after the temporary context file is gone.
+   rerun before acceptance.
+4. `make perfect-full` passes on a clean tree.
 
 ## Operator checklist
 

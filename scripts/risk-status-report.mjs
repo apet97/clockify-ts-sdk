@@ -19,14 +19,6 @@ async function exists(relPath) {
     }
 }
 
-async function readOptional(relPath) {
-    try {
-        return await readFile(path.join(root, relPath), "utf8");
-    } catch {
-        return "";
-    }
-}
-
 async function readJson(relPath) {
     return JSON.parse(await readFile(path.join(root, relPath), "utf8"));
 }
@@ -56,20 +48,6 @@ async function readJsonState(relPath) {
             parseError: error instanceof Error ? error.message : String(error),
         };
     }
-}
-
-function readSection(text, startMarker, endMarker) {
-    const start = text.indexOf(startMarker);
-    if (start === -1) return "";
-    const end = text.indexOf(endMarker, start + startMarker.length);
-    return end === -1 ? text.slice(start) : text.slice(start, end);
-}
-
-function readListField(text, prefix) {
-    const line = text.split("\n").find((candidate) => candidate.startsWith(prefix));
-    if (!line) return undefined;
-    const value = line.slice(prefix.length).trim();
-    return value.length > 0 ? value : undefined;
 }
 
 function countByStatus(risks) {
@@ -149,49 +127,6 @@ function performanceReceiptStatus(receiptState, expectedCalibrationStatus, expec
     };
 }
 
-function finalReceiptPresenceStatus(receiptExists, receiptText) {
-    if (!receiptExists) {
-        return {
-            status: "missing",
-            detail: "docs/final-proof-receipt.md",
-        };
-    }
-    const failedDraftMarkers = [
-        { label: "NOT COMPLETE", pattern: /\bNOT COMPLETE:/i },
-        { label: "Result: failed", pattern: /\bResult:\s*failed\b/i },
-        { label: "non-zero Exit status", pattern: /\bExit status:\s*[1-9]\d*\b/i },
-        { label: "draft blocker", pattern: /\bdraft blocker\b/i },
-        { label: "empty output placeholder", pattern: /PASTE OUTPUT HERE/i },
-        { label: "empty cleanup placeholder", pattern: /PASTE CLEANUP RECEIPT HERE/i },
-    ];
-    const matches = failedDraftMarkers
-        .filter((marker) => marker.pattern.test(receiptText))
-        .map((marker) => marker.label);
-    if (matches.length > 0) {
-        return {
-            status: "blocking",
-            detail: `docs/final-proof-receipt.md exists but contains failed-draft marker(s): ${matches.join(", ")}.`,
-        };
-    }
-    return {
-        status: "present",
-        detail: "docs/final-proof-receipt.md",
-    };
-}
-
-function liveProofStatusDetail(liveProofStatus) {
-    if (liveProofStatus === "completed") {
-        return "Final receipt records completed sacrificial-sandbox live proof.";
-    }
-    if (liveProofStatus === "failed") {
-        return "Final receipt records failed live proof; rerun make perfect-live successfully before final acceptance.";
-    }
-    if (liveProofStatus === "deferred") {
-        return "Final receipt records deferred live proof; deferral is draft-only and must be replaced before final acceptance.";
-    }
-    return "Final receipt does not contain a recognized live proof status.";
-}
-
 export async function buildReport(options = { status: "all" }) {
     const status = options.status ?? "all";
     if (!VALID_STATUSES.has(status)) {
@@ -201,10 +136,6 @@ export async function buildReport(options = { status: "all" }) {
     const risks = status === "all" ? register.risks : register.risks.filter((risk) => risk.status === status);
 
     const performanceBudgets = await readJsonOptional("docs/performance-budgets.json", {});
-    const finalProofManifest = await readJsonOptional("docs/final-proof-receipt-manifest.json", {});
-    const finalReceipt = await readOptional("docs/final-proof-receipt.md");
-    const finalReceiptExists = await exists("docs/final-proof-receipt.md");
-    const finalReceiptSignal = finalReceiptPresenceStatus(finalReceiptExists, finalReceipt);
     const tempContextExists = await exists("docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md");
     const expectedPerformanceReceiptCalibrationStatus =
         performanceBudgets.calibrationPolicy?.status === performanceBudgets.calibrationPolicy?.finalStatus
@@ -217,29 +148,16 @@ export async function buildReport(options = { status: "all" }) {
         performanceBudgets.schemaVersion,
         budgetFingerprint(performanceBudgets),
     );
-    const liveProofSection = readSection(
-        finalReceipt,
-        finalProofManifest.liveProof?.sectionStart ?? "## Live sandbox proof",
-        finalProofManifest.liveProof?.sectionEnd ?? "## Temporary context cleanup",
-    );
-    const liveProofStatus = readListField(liveProofSection, finalProofManifest.liveProof?.field ?? "- Live proof status:");
-    const allowedLiveProofStatuses = finalProofManifest.liveProof?.allowedStatuses ?? ["completed", "failed", "deferred"];
 
     const fileSignals = {
         temporaryContext: tempContextExists ? "present" : "removed",
-        finalProofReceipt: finalReceiptSignal.status,
         performanceBaselineLatest: performanceBaselineSignal.status,
         performanceCalibration: performanceBudgets.calibrationPolicy?.status === "calibrated"
             ? "calibrated"
             : "not-calibrated",
-        finalReceiptLiveStatus: allowedLiveProofStatuses.includes(liveProofStatus)
-            ? liveProofStatus
-            : "missing",
     };
     const fileSignalDetails = {
-        finalProofReceipt: finalReceiptSignal.detail,
         performanceBaselineLatest: performanceBaselineSignal.detail,
-        finalReceiptLiveStatus: liveProofStatusDetail(fileSignals.finalReceiptLiveStatus),
     };
 
     const readinessBlocking = risks
@@ -260,10 +178,9 @@ export async function buildReport(options = { status: "all" }) {
             ? [
                   "Close final-readiness blocking open and provisional risks only with their closure gates.",
                   "Keep blocked-upstream and accepted risks visible unless their upstream or policy condition changes.",
-                  "Keep docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md through evidence capture; remove it only after receipt completion and immediately before final-proof-final.",
               ]
             : [
-                  "No final-readiness blocking open or provisional risks in the selected view; still run make risk-register and final proof gates before any readiness claim.",
+                  "No final-readiness blocking open or provisional risks in the selected view; still run make risk-register before any readiness claim.",
               ];
     if (nonBlockingOpenOrProvisional.length > 0) {
         next.push(

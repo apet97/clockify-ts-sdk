@@ -25,7 +25,7 @@ becoming a pile of disconnected files.
 
    A contract that guards product readiness must be wired into both
    `make perfect-fast` and `make perfect-full`, unless it is explicitly
-   a live-only, generation-only, or final-proof target.
+   a live-only, generation-only, or release-only target.
 
 4. Inventory is not proof by itself.
 

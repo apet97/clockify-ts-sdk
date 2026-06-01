@@ -46,17 +46,17 @@ truth, not an intermediate green line.
 
 ## Deferring live proof
 
-If sandbox credentials are unavailable, the final proof runner can
-record an explicit deferral:
+If sandbox credentials are unavailable, record an explicit deferral in the
+release-decision packet with a `DEFER_LIVE_REASON`, for example:
 
-```bash
-DEFER_LIVE_REASON="No sacrificial Clockify sandbox credentials are available in this session." make final-proof-draft
+```text
+DEFER_LIVE_REASON="No sacrificial Clockify sandbox credentials are available in this session."
 ```
 
 A deferral is residual risk. It is allowed only in a draft or decision
-packet that states the reason, owner, and closure gate clearly. A
-completed final proof receipt must replace the deferral with live sandbox
-proof.
+packet that states the reason, owner, and closure gate clearly. Completed
+command receipts must replace the deferral with live sandbox proof from
+`make perfect-live`.
 
 ## Mock alternative
 

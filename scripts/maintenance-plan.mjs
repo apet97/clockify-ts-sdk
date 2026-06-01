@@ -216,7 +216,7 @@ const cadences = [
     {
         id: "rollback",
         title: "Rollback and recovery plan",
-        when: "Use after a dependency, generator, package, CLI, MCP, docs, live, or final-proof attempt fails.",
+        when: "Use after a dependency, generator, package, CLI, MCP, docs, live, or release-readiness attempt fails.",
         safeStart: [
             "node scripts/plan.mjs change-impact --scope docs-and-contracts",
             "node scripts/plan.mjs workflow --workflow first-run-support",
@@ -232,11 +232,10 @@ const cadences = [
             "docs/maintenance-playbook.md",
             "docs/support-runbook.md",
             "docs/risk-register.md",
-            "docs/final-proof-receipt.md when rollback happens during final proof",
         ],
         receipts: [
             "Rollback scope names only the change being undone.",
-            "Failure output is captured in a support bundle or final-proof receipt when relevant.",
+            "Failure output is captured in a support bundle or command receipt when relevant.",
             "Support bundle readinessContext is kept with blocker, risk-routing, and ordered proof-chain summaries.",
         ],
         stopConditions: [

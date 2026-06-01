@@ -83,7 +83,6 @@
       "flags": "g",
       "allowedPathPattern": "^docs/[^/]+-contract\\.json$",
       "allowedPaths": [
-        "docs/final-proof-receipt-manifest.json",
         "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md"
       ]
     }

@@ -43,7 +43,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Print acceptance scenario plan | `make acceptance-plan` | Static no-network proof plan for SDK/CLI/MCP acceptance scenarios and required evidence, backed by the acceptance-scenarios contract. |
 | Check naming taxonomy | `make naming-taxonomy` | One Clockify vocabulary across SDK methods, CLI commands, MCP tools, docs, examples, and OpenAPI parity stays aligned. |
 | Check change impact | `make change-impact` | Change scopes, generated change-impact plan shape, required gates, docs, changelog posture, and proof receipts stay aligned. |
-| Print change impact plan | `make change-impact-plan` | Static no-network proof plan for default final-proof/release/docs scopes, backed by the change-impact contract; use the script directly with `--scope` or `--path` for focused triage. |
+| Print change impact plan | `make change-impact-plan` | Static no-network proof plan for default docs/axioms/release scopes, backed by the change-impact contract; use the script directly with `--scope` or `--path` for focused triage. |
 | Check security threat model | `make security-threat-model` | SDK/CLI/MCP/OpenAPI risk surfaces, mitigations, supporting safety docs, and proof-gate wiring stay explicit. |
 | Check version policy | `make version-policy` | Package manifests, changelog headings, generated product surface, and install examples agree on versions. |
 | Check secret hygiene | `make secret-hygiene` | Scans committed source/docs for common token-shaped secrets and verifies secret-handling docs remain present. |
@@ -64,10 +64,10 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check release readiness | `make release-readiness` | Release/handoff evidence checklist, generated preflight report shape, final proof closure, and publish decision boundary stay explicit. |
 | Print release workflow decision plan | `make release-decision-plan` | Static no-network decision packet for local tarball, tag-only, npm-via-CI, or legacy-workflow retirement paths. |
 | Check CI contract | `make ci-contract` | GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary stay explicit. |
-| Check live safety | `make live-safety` | Sandbox-only live-test policy, env gates, cleanup prefixes, final-proof deferral rules, and mock alternative stay aligned. |
+| Check live safety | `make live-safety` | Sandbox-only live-test policy, env gates, cleanup prefixes, live-proof deferral rules, and mock alternative stay aligned. |
 | Check test data lifecycle | `make test-data-lifecycle` | Sandbox prefixes, create/delete pairing, cleanup scan coverage, leftover counts, and sanitized cleanup receipts stay aligned. |
 | Check risk register | `make risk-register` | Known limitations, accepted constraints, provisional states, evidence paths, closure gates, and generated risk-status report shape stay explicit. |
-| Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and final-proof file-state signals. |
+| Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and performance/temp-context file-state signals. |
 | Check user docs | `make user-docs` | Root, SDK, CLI, MCP, install, migration, and troubleshooting docs keep required onboarding content. |
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |

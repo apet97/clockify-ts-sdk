@@ -22,11 +22,6 @@
       "This report is not proof",
       "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
       "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
-      "docs/final-proof-receipt.md",
-      "finalReceiptPresenceStatus",
-      "failed-draft marker",
-      "NOT COMPLETE:",
-      "docs/final-proof-receipt.md exists but contains failed-draft marker",
       "docs/performance-baseline-latest.json",
       "performanceReceiptStatus",
       "readJsonState",
@@ -50,15 +45,7 @@
       "readinessBlockingRiskIds",
       "nonBlockingOpenOrProvisionalRiskIds",
       "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
-      "liveProofSection",
-      "liveProofStatus",
-      "allowedLiveProofStatuses",
       "failed",
-      "readListField",
-      "finalProofManifest.liveProof?.sectionStart",
-      "liveProofStatusDetail",
-      "failed live proof; rerun make perfect-live successfully",
-      "deferral is draft-only",
       "Final-readiness risk routing",
       "riskRoutingSummary",
       "finalReadinessRiskStatus",
@@ -83,15 +70,11 @@
       ],
       "requiredFileSignalKeys": [
         "temporaryContext",
-        "finalProofReceipt",
         "performanceBaselineLatest",
-        "performanceCalibration",
-        "finalReceiptLiveStatus"
+        "performanceCalibration"
       ],
       "requiredFileSignalDetailKeys": [
-        "finalProofReceipt",
-        "performanceBaselineLatest",
-        "finalReceiptLiveStatus"
+        "performanceBaselineLatest"
       ],
       "requiredFileSignalDetailKeysAreNonEmpty": true,
       "requiredRiskRoutingSummaryKeys": [

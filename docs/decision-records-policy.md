@@ -34,5 +34,5 @@ proof, and publishing boundaries look the way they do.
 
 - `make decision-records` checks the required records and headings.
 - `make risk-register` checks accepted risks and closure gates.
-- `make final-proof-final` is still required after removing the
+- `make perfect-full` is still required after removing the
   temporary context and before marking the long-running goal complete.

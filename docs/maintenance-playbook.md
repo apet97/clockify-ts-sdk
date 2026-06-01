@@ -12,7 +12,7 @@ API drift, release rehearsals, and rollback.
 | Every local change | Run the smallest change-scope gates from `docs/change-impact-policy.md`. | `make change-impact` plus the listed target set. |
 | Weekly when active | Refresh product-surface, README tables, troubleshooting, operation parity, and risk register decisions if code moved. | `make perfect-fast` when verification is allowed. |
 | Monthly | Review dependency pins, Node runtime floor, local SDK generator wiring, GOCLMCP drift, mock/replay coverage, risk register, and performance-budget calibration. | `make dependency-boundary`, `make generator-config`, `make risk-register`. |
-| Before release or handoff | Run packed-consumer proof, release readiness, final proof receipt, and final audit. | `make perfect-full`, `make pack-smoke`, `make release-readiness`. |
+| Before release or handoff | Run packed-consumer proof, release readiness, command receipts, and the enterprise audit. | `make perfect-full`, `make pack-smoke`, `make release-readiness`. |
 ## No-network maintenance planner
 
 Use `node scripts/plan.mjs maintenance --cadence all` when an operator needs a
@@ -84,10 +84,10 @@ TypeScript or local docs first.
 3. Run `make pack-smoke` to test tarballs in clean consumer projects.
 4. Keep npm publication disabled by default; do not touch release workflow or
    auth without explicit maintainer approval.
-5. Fill `docs/final-proof-receipt.md` only from real command output.
+5. Capture command receipts only from real command output.
 6. Remove `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` only after
-   proof evidence is captured, the receipt is complete, and permanent docs
-   contain the surviving context; then run `make final-proof-final`.
+   proof evidence is captured, receipts are complete, and permanent docs
+   contain the surviving context; then run `make perfect-full`.
 
 ## Readiness context maintenance rule
 
@@ -111,7 +111,7 @@ continue.
 If an update breaks the SDK, CLI, MCP, generation chain, or package smoke:
 
 1. Stop widening the change and identify the failed surface.
-2. Preserve raw command output in the final proof receipt or support bundle if it
+2. Preserve raw command output in command receipts or a support bundle if it
    is part of a release/handoff attempt.
 3. Revert only the change you made; never reset unrelated user work.
 4. Restore the previous documented pin, contract value, generated metadata, or

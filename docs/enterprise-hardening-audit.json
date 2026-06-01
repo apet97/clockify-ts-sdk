@@ -733,7 +733,6 @@
             "requiredSuccessfulRuns",
             "requiredSuccessfulRuns} successful receipt(s)",
             "Budget status: tightened",
-            "immediately before final-proof-final",
             "Embedded calibration status",
             "Embedded calibration final status",
             "Run make performance-receipt again after calibration",
@@ -2416,29 +2415,15 @@
             "readinessBlockingRiskCount",
             "nonBlockingOpenOrProvisionalRiskCount",
             "performanceBudgets.calibrationPolicy?.status === \\\"calibrated\\\"",
-            "liveProofSection",
-            "liveProofStatus",
-            "allowedLiveProofStatuses",
             "failed",
-            "readListField",
-            "finalProofManifest.liveProof?.sectionStart",
-            "liveProofStatusDetail",
-            "failed live proof; rerun make perfect-live successfully",
-            "deferral is draft-only",
             "Visible non-blocking open/provisional risks",
             "allowedStatuses",
             "performanceReceiptStatus",
             "failedMeasurements",
             "successful latest receipt",
             "fileSignalDetails",
-            "finalReceiptPresenceStatus",
-            "failed-draft marker",
-            "NOT COMPLETE:",
-            "docs/final-proof-receipt.md exists but contains failed-draft marker",
             "requiredFileSignalDetailKeys",
-            "finalProofReceipt",
             "performanceBaselineLatest",
-            "finalReceiptLiveStatus",
             "requiredFileSignalDetailKeysAreNonEmpty",
             "measurement?.ok !== true",
             "readJsonState",
@@ -2462,7 +2447,6 @@
             "Status meanings",
             "plan.mjs performance-calibration",
             "plan.mjs release-decision",
-            "make enterprise-goal-status",
             "shape-checks the generated report",
             "Final-readiness blocking",
             "Final-readiness risk routing",
@@ -2475,16 +2459,11 @@
             "generated-report contract fields",
             "failed latest receipt is reported as",
             "blocking",
-            "failed draft receipt",
-            "failed command output or placeholders",
             "generated file-state signal keys",
             "generated `fileSignalDetails` keys",
-            "final live-status recovery",
             "non-empty detail strings",
             "malformed receipt JSON",
-            "blocking invalid receipt JSON",
-            "final receipt live-status signal preserves",
-            "`completed`, `failed`, and `deferred`"
+            "blocking invalid receipt JSON"
           ]
         },
         {
@@ -3056,8 +3035,7 @@
           "contains": [
             "legacy-sdk-package-name",
             "placeholder-marker",
-            "docs-drift-checker",
-            "docs/final-proof-receipt-manifest.json"
+            "docs-drift-checker"
           ]
         },
         {

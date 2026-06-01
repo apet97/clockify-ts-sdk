@@ -508,16 +508,18 @@ Re-attempt item 1 only after the upstream gating concern resolves
 
 ## 11. Doc maintenance
 
-- The `final-proof` / `enterprise-audit-final` / `enterprise-goal-status`
-  family of make targets was retired on 2026-05-28. `make enterprise-audit`
-  remains; `scripts/check-enterprise-hardening.mjs` no longer carries a
-  `--final` mode or asserts `audit.wiring.finalMakeTarget`. Stray text
-  references in `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
-  `docs/maintenance-playbook.md`, `scripts/*-plan.mjs` emitters, and the
-  historical `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md`
-  describe the (retired) intent; one is pinned by an audit JSON marker on
-  `risk-register.md`, so deleting the literal there needs an audit-contract
-  update in the same change. Restoring or fully retiring the workflow is a
+- The retired final-readiness receipt make-target family (the former
+  draft/check/final receipt targets and the goal-status report) was removed
+  on 2026-05-28. `make enterprise-audit` remains; and
+  `scripts/check-enterprise-hardening.mjs` no longer carries a `--final` mode
+  or asserts `audit.wiring.finalMakeTarget`. The residual textual references
+  across `docs/risk-register.md`, `docs/release-readiness-checklist.md`,
+  `docs/maintenance-playbook.md`, and the `scripts/*-plan.mjs` emitters have
+  now been removed, with the cross-validating audit/contract markers updated
+  in lockstep. Only the historical
+  `docs/superpowers/plans/2026-05-26-enterprise-sdk-hardening.md` and
+  `docs/decisions/0004-sandbox-only-live-proof.md` records retain the old
+  terminology. Restoring or further changing the release workflow is a
   maintainer call — do not invent the targets back without one.
 - Every spec-shape change ships with a `spec/evidence/discrepancies.md`
   entry using the five-question format. An entry is not a substitute

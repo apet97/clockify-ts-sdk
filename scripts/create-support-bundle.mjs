@@ -27,8 +27,8 @@ const safeCommandHints = [
     "make quickstart-receipt",
     "make support-bundle",
     "make mock-clockify",
-    "make final-proof-draft",
-    "make final-proof-final",
+    "make perfect-live",
+    "make perfect-full",
 ];
 
 const diagnosticsSurfaces = [
