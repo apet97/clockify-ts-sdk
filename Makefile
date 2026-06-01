@@ -101,7 +101,7 @@ help:
 
 perfect: perfect-fast
 
-perfect-fast: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook mutation-safety product-surface-drift error-docs-drift troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets schema-quality
+perfect-fast: generated-edit-check openapi-evidence upstream-drift operation-coverage generator-config generator-independence generator-comparison generator-portability package-contract examples-contract examples-matrix snippet-safety runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review receipts-contract observability diagnostics quickstart-receipt receipt-examples support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety test-matrix mock-contract maintenance-playbook mutation-safety product-surface-drift error-docs-drift troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-drift wrapper-gates cli-gates mcp-gates performance-budgets schema-quality lint pack-snapshot-check
 
 # Deterministic, offline, network-free contract/doc/drift gates only.
 # This is the perfect-fast set minus the package gates (wrapper-gates,
@@ -136,6 +136,26 @@ cli-gates:
 
 mcp-gates:
 	cd mcp && npm run type-check && npm test && npm run build && npm pack --dry-run
+
+# Lint the hand-written surface of all three packages. Assumes the wrapper is
+# already built and synced (cli/mcp type-aware lint follows imports into its
+# types; the wrapper lint follows into wrapper/src). perfect-fast runs the
+# package gates first, so this is safe there.
+lint:
+	npm run lint -w clockify-sdk-ts-115
+	npm run lint -w @clockify115/cli
+	npm run lint -w @clockify115/mcp-server
+
+# Regenerate wrapper/.packsnapshot from a freshly built wrapper dist. Run after
+# the SDK public surface or generated file names change, then commit.
+pack-snapshot:
+	npm run build -w clockify-sdk-ts-115
+	node scripts/pack-snapshot.mjs
+
+# Verify the committed snapshot still matches the built tarball (same proof CI
+# runs). Assumes the wrapper dist is already built.
+pack-snapshot-check:
+	node scripts/pack-snapshot.mjs --check
 
 goclmcp-drift:
 	@if [ ! -d ../GOCLMCP ]; then echo 'goclmcp-drift: ../GOCLMCP not found.' >&2; exit 1; fi
