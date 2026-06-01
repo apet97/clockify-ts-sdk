@@ -33,8 +33,26 @@ function prepublishGate(pkg) {
 const wrapperPkg = readJson("wrapper/package.json");
 const cliPkg = readJson("cli/package.json");
 const mcpPkg = readJson("mcp/package.json");
+const mcpTools = readJson("docs/mcp-tools.json");
 const goCatalog = maybeReadJson("../GOCLMCP/docs/tool-catalog.json");
 const goTools = Array.isArray(goCatalog?.tools) ? goCatalog.tools : [];
+
+function requirePositiveInteger(label, value) {
+    if (!Number.isInteger(value) || value <= 0) {
+        throw new Error(`${label} must be a positive integer`);
+    }
+    return value;
+}
+
+const tsMcpSummary = mcpTools.summary ?? {};
+const tsMcpToolCounts = {
+    total: requirePositiveInteger("docs/mcp-tools.json summary.totalTools", tsMcpSummary.totalTools),
+    workflow: requirePositiveInteger(
+        "docs/mcp-tools.json summary.workflowTools",
+        tsMcpSummary.workflowTools,
+    ),
+    domain: requirePositiveInteger("docs/mcp-tools.json summary.domainTools", tsMcpSummary.domainTools),
+};
 
 const workflows = [
     {
@@ -198,7 +216,9 @@ const surface = {
             node: mcpPkg.engines?.node,
             bins: Object.keys(mcpPkg.bin ?? {}).sort((a, b) => a.localeCompare(b)),
             files: packageFiles(mcpPkg),
-            declaredToolCount: 105,
+            declaredToolCount: tsMcpToolCounts.total,
+            declaredWorkflowToolCount: tsMcpToolCounts.workflow,
+            declaredDomainToolCount: tsMcpToolCounts.domain,
             prepublishOnly: prepublishGate(mcpPkg),
             gates: ["npm run type-check", "npm test", "npm run build", "npm pack --dry-run"],
         },
