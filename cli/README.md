@@ -58,6 +58,9 @@ touching production credentials.
 Errors go to stderr as `{"ok": false, "error": "..."}`; success-only
 commands emit `{"ok": true, "message": "..."}`. `--no-color` disables ANSI
 codes, and the CLI also auto-disables color when stdout is not a TTY.
+Successful write commands in JSON and NDJSON include receipt fields:
+`ok`, `action`, `entity`, `ids`, `changed`, `warnings`, and `next`.
+Legacy top-level fields such as `id` remain for simple shell scripts.
 
 ## Commands
 

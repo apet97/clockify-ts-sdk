@@ -61,8 +61,12 @@
       "surface": "cli",
       "requiredMarkers": [
         "ok",
-        "command",
+        "action",
+        "entity",
+        "ids",
         "changed",
+        "warnings",
+        "next",
         "id"
       ]
     },
@@ -116,6 +120,16 @@
       "contains": [
         "retryable",
         "recovery"
+      ]
+    },
+    {
+      "path": "cli/src/receipt.ts",
+      "contains": [
+        "CliReceipt",
+        "ids",
+        "changed",
+        "warnings",
+        "next"
       ]
     },
     {
