@@ -20,6 +20,7 @@ All notable changes to `@clockify115/cli` are documented here.
 - Added focused unit tests for the `audit-log search`, `start`, and `log` commands
   (required-field rejection, list splitting, authors-mode toggle, page bounds,
   name→ID resolution, and duration/end derivation).
+- Return additive receipt fields for successful write commands in JSON and NDJSON output.
 
 ### Fixed
 

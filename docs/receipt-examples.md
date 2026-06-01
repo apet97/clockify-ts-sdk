@@ -43,13 +43,22 @@ workspace already authorized the operation.
 
 ```json
 {
+  "id": "entry_123",
+  "description": "Daily standup",
   "ok": true,
-  "command": "clk115 tags create",
-  "data": {
-    "id": "tag_123",
-    "name": "billable-review"
+  "action": "entries.log",
+  "entity": "time_entry",
+  "ids": { "entryId": "entry_123" },
+  "changed": {
+    "created": [{ "type": "time_entry", "id": "entry_123" }]
   },
-  "changed": true
+  "warnings": [],
+  "next": [
+    {
+      "command": "clk115 entries list --json",
+      "reason": "Verify the entry appears in the expected date range."
+    }
+  ]
 }
 ```
 
