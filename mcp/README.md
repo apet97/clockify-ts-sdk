@@ -324,7 +324,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 20+ | Go |
 | Transport | stdio | stdio |
-| Tools | 105 | 156 |
+| Tools | 123 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

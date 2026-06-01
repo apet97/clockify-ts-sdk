@@ -70,7 +70,7 @@
     },
     {
       "id": "old-mcp-tool-count",
-      "pattern": "89 tools|no workflow tools",
+      "pattern": "105 tools|105-tool surface|105 advertised tools|105-tool|17 workflow tools plus 88\\s+domain tools|30 resource\\s+modules",
       "flags": "g",
       "allowedPaths": [
         "docs/agent-handoff-contract.json",

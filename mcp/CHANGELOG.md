@@ -76,7 +76,7 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 ### Changed
 
 - Bumped the package to `0.3.0`.
-- Updated the README around the 105-tool surface, workflow examples, envelopes, dry-run confirmation, and TypeScript-vs-Go positioning.
+- Updated the README around the 123-tool surface, workflow examples, envelopes, dry-run confirmation, and TypeScript-vs-Go positioning.
 
 ## [0.2.0] - 2026-05-26
 

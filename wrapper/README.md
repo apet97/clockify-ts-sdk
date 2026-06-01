@@ -8,7 +8,7 @@
 
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by this repo's local
-TypeScript generator, wrapped with a packable npm layout. 30 resource
+TypeScript generator, wrapped with a packable npm layout. 31 resource
 modules, 185 live operations, idiomatic
 `client.<resource>.<verb>()` naming on 28 modules (93% of the
 surface), and dual ESM + CJS.

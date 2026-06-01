@@ -83,7 +83,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 105,
+      "declaredToolCount": 123,
+      "declaredWorkflowToolCount": 20,
+      "declaredDomainToolCount": 103,
       "prepublishOnly": "npm run type-check && npm test && npm run build",
       "gates": [
         "npm run type-check",

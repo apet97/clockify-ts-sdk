@@ -59,10 +59,7 @@ function updateCliReadme(input) {
 }
 
 function updateMcpReadme(input) {
-    let out = input.replace(
-        /This package now advertises 105 tools: 16 workflow tools plus the\nexisting 89 domain tools/g,
-        "This package now advertises 105 tools: 17 workflow tools plus 88\ndomain tools",
-    );
+    let out = input;
     out = replaceSection(out, "## Workflow Tools", "## Workflow Examples", mcpWorkflowTable());
     out = replaceSection(out, "## Domain Tools", "## Result Envelope", mcpDomainTable());
     return out;
