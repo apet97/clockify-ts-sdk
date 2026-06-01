@@ -14,7 +14,10 @@ interface FetchCall {
     init?: RequestInit;
 }
 
-function makeClient(pages: unknown[][] = [[{ id: "row-1" }]]): {
+function makeClient(
+    pages: unknown[][] = [[{ id: "row-1" }]],
+    status = 200,
+): {
     client: ClockifyClient;
     calls: FetchCall[];
 } {
@@ -26,7 +29,7 @@ function makeClient(pages: unknown[][] = [[{ id: "row-1" }]]): {
             const body = pages[index] ?? [];
             index += 1;
             return new Response(JSON.stringify(body), {
-                status: 200,
+                status,
                 headers: { "content-type": "application/json", "x-test": "yes" },
             });
         },
@@ -121,6 +124,30 @@ describe("api command", () => {
         expect(calls).toHaveLength(2);
         expect(calls[0]?.input).toBe("/x?page=1&page-size=2");
         expect(JSON.parse(logged[0] ?? "")).toEqual([{ id: "a" }, { id: "b" }, { id: "c" }]);
+    });
+
+    it("stops at --max-pages when every page is full", async () => {
+        const { client, calls } = makeClient([
+            [{ id: "a" }, { id: "b" }],
+            [{ id: "c" }, { id: "d" }],
+            [{ id: "e" }, { id: "f" }],
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2", "--max-pages", "2"]);
+        expect(calls).toHaveLength(2);
+        expect(JSON.parse(logged[0] ?? "")).toHaveLength(4);
+    });
+
+    it("throws on a non-2xx response so scripts see a non-zero exit", async () => {
+        const { client } = makeClient([[{ message: "Not found." }]], 404);
+        await expect(run(client, ["GET", "/missing"])).rejects.toThrow(/HTTP 404/);
+    });
+
+    it("returns the raw status-bearing payload on non-2xx with --include-headers", async () => {
+        const { client } = makeClient([[{ message: "Not found." }]], 404);
+        await run(client, ["GET", "/missing", "--include-headers"]);
+        const payload = JSON.parse(logged[0] ?? "");
+        expect(payload.status).toBe(404);
+        expect(payload.data).toEqual([{ message: "Not found." }]);
     });
 
     it("rejects --all for non-GET methods", async () => {

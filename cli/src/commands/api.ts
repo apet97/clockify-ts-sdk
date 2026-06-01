@@ -62,6 +62,11 @@ export const registerApiCommand: Registrar = (program, services) => {
             const body = readBody(options.body);
             const response = await client.fetch(buildPath(path, query), requestInit(method, headers, body));
             const data = await readResponseData(response);
+            // Fail loudly on HTTP errors so scripts can rely on the exit code,
+            // unless --include-headers asked for the raw status-bearing payload.
+            if (!response.ok && !options.includeHeaders) {
+                throw new Error(`HTTP ${response.status}: ${formatBody(data)}`);
+            }
             printApiOutput(responsePayload(response, data, options.includeHeaders), output);
         });
 };
@@ -153,6 +158,9 @@ async function fetchAllPages(
         const pagePath = buildPath(path, { ...query, page: String(page), "page-size": String(pageSize) });
         const response = await client.fetch(pagePath, requestInit("GET", headers));
         const data = await readResponseData(response);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status} on page ${page}: ${formatBody(data)}`);
+        }
         if (!Array.isArray(data)) {
             throw new Error("--all expects each page to return a JSON array.");
         }
@@ -165,6 +173,10 @@ async function fetchAllPages(
         }
     }
     return items;
+}
+
+function formatBody(data: unknown): string {
+    return typeof data === "string" ? data : JSON.stringify(data);
 }
 
 async function readResponseData(response: Response): Promise<unknown> {
