@@ -6,6 +6,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added read-only reports tools: `clockify_reports_summary`,
+  `clockify_reports_detailed`, `clockify_reports_weekly`, and
+  `clockify_reports_attendance` run the Clockify report endpoints over a date
+  range, exposing the always-required filter and passing any other report field
+  through `extra`.
 - Added read-only agent discovery tools: `clockify_docs_search`,
   `clockify_operation_guide`, and `clockify_sdk_snippet` map a task to the
   recommended SDK imports, CLI examples, MCP tools, and next steps without

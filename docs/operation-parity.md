@@ -10,7 +10,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 185 |
 | sdkNamed | 170 |
-| tsMcpExact | 69 |
+| tsMcpExact | 73 |
 | goMcpExact | 84 |
 | curated | 29 |
 
@@ -115,11 +115,11 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/template` | `updateProjectTemplate` | `client.projects.updateTemplate` | - | - | - | `clockify_projects_update_template` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/cost-rate` | `updateProjectUserCostRate` | `client.projects.updateUserCostRate` | - | - | - | `clockify_projects_update_user_cost_rate` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/hourly-rate` | `updateProjectUserHourlyRate` | `client.projects.updateUserHourlyRate` | - | - | - | `clockify_projects_update_user_hourly_rate` |
-| POST | `/workspaces/{workspaceId}/reports/attendance` | `generateAttendanceReport` | `client.reports.attendance` | - | `clockify_reports_attendance` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_attendance` |
-| POST | `/workspaces/{workspaceId}/reports/detailed` | `generateDetailedReport` | `client.reports.detailed` | - | `clockify_reports_detailed` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_detailed` |
+| POST | `/workspaces/{workspaceId}/reports/attendance` | `generateAttendanceReport` | `client.reports.attendance` | `clockify_reports_attendance` | `clockify_reports_attendance` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_attendance` |
+| POST | `/workspaces/{workspaceId}/reports/detailed` | `generateDetailedReport` | `client.reports.detailed` | `clockify_reports_detailed` | `clockify_reports_detailed` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_detailed` |
 | POST | `/workspaces/{workspaceId}/reports/expenses/detailed` | `generateDetailedReportV1` | `client.expenseReport.generateDetailedReportV1` | `clockify_expenses_list` | `clockify_reports_expense` | Expense reports are generated under an operationId-derived SDK module and a reports-family Go MCP tool. | `clockify_expenses_generate_detailed_report_v1`<br>`clockify_expenses_list` |
-| POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | `client.reports.summary` | - | `clockify_reports_summary` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_summary` |
-| POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | `client.reports.weekly` | - | `clockify_reports_weekly` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_weekly` |
+| POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | `client.reports.summary` | `clockify_reports_summary` | `clockify_reports_summary` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_summary` |
+| POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | `client.reports.weekly` | `clockify_reports_weekly` | `clockify_reports_weekly` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_weekly` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments` | `postWorkspacesWorkspaceIdSchedulingAssignments` | `client.scheduling.create` | - | - | - | `clockify_scheduling_create` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | `client.scheduling.list` | - | - | - | `clockify_scheduling_list` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | `client.scheduling.listPerProject` | - | `clockify_scheduling_project_totals` | GOCLMCP exposes project totals as a scheduling aggregate tool. | `clockify_scheduling_list_per_project` |
