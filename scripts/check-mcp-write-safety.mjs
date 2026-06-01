@@ -144,6 +144,9 @@ function validateContractShape() {
         safeRelativePath("wiring.checker", contract.wiring.checker);
         safeRelativePath("wiring.toolsDirectory", contract.wiring.toolsDirectory);
         assertNonEmptyString("wiring.workflowsFile", contract.wiring.workflowsFile);
+        for (const [index, workflowFile] of (contract.wiring.workflowFiles ?? []).entries()) {
+            safeRelativePath(`wiring.workflowFiles[${index}]`, workflowFile);
+        }
         safeRelativePath("wiring.confirmGuardFile", contract.wiring.confirmGuardFile);
         assertNonEmptyString("wiring.docsIndexPolicy", contract.wiring.docsIndexPolicy);
         assertNonEmptyString("wiring.docsIndexContract", contract.wiring.docsIndexContract);
@@ -169,20 +172,21 @@ for (const file of contract.requiredFiles) {
 }
 
 const wiring = contract.wiring ?? {};
-const workflows = await readRel(wiring.workflowsFile);
+const workflowFiles = contract.wiring?.workflowFiles ?? [wiring.workflowsFile];
+const workflows = (await Promise.all(workflowFiles.map((workflowFile) => readRel(workflowFile)))).join("\n");
 // The dry_run -> confirm_token handshake lives in one shared guard so the
 // workflow surface and the destructive domain deletes cannot drift.
 const confirmGuard = await readRel(wiring.confirmGuardFile);
 includesAll(confirmGuard, contract.confirmationRequiredMarkers, `${wiring.confirmGuardFile} confirmation flow`);
-// workflows.ts must keep delegating to the shared guard via maybeConfirm.
+// Workflow implementation modules must keep delegating to the shared guard via maybeConfirm.
 if (!workflows.includes("requireConfirmation(ctx, toolName, riskClass, args, preview)")) {
-    failures.push("mcp/src/tools/workflows.ts maybeConfirm does not delegate to the shared requireConfirmation guard");
+    failures.push("workflow modules maybeConfirm does not delegate to the shared requireConfirmation guard");
 }
 
 for (const toolName of contract.highRiskWorkflowTools) {
     const registration = registrationBlock(workflows, toolName);
     if (!registration) {
-        failures.push(`mcp/src/tools/workflows.ts missing registration for ${toolName}`);
+        failures.push(`workflow modules missing registration for ${toolName}`);
         continue;
     }
     includesAll(registration, contract.workflowRequiredMarkers.filter((marker) => marker !== "maybeConfirm"), `${toolName} registration`);
@@ -202,9 +206,9 @@ const toolsDirectoryRel = safeRelativePath("wiring.toolsDirectory", wiring.tools
 const toolFileTexts = [];
 {
     const dir = path.join(root, toolsDirectoryRel);
-    const files = (await readdir(dir)).filter((file) => file.endsWith(".ts")).sort();
+    const files = await listTypeScriptFiles(dir);
     for (const file of files) {
-        toolFileTexts.push(await readRel(`${toolsDirectoryRel}/${file}`));
+        toolFileTexts.push(await readRel(path.relative(root, file)));
     }
 }
 function findToolFile(toolName) {
@@ -327,11 +331,11 @@ function registrationBlock(text, toolName) {
 async function discoverDestructiveTools() {
     const toolsDirectory = safeRelativePath("wiring.toolsDirectory", contract.wiring?.toolsDirectory) ?? "mcp/src/tools";
     const dir = path.join(root, toolsDirectory);
-    const files = (await readdir(dir)).filter((file) => file.endsWith(".ts")).sort();
+    const files = await listTypeScriptFiles(dir);
     const tools = [];
 
     for (const file of files) {
-        const relPath = `mcp/src/tools/${file}`;
+        const relPath = path.relative(root, file);
         const text = await readRel(relPath);
         let offset = 0;
         while (offset < text.length) {
@@ -352,4 +356,18 @@ async function discoverDestructiveTools() {
     }
 
     return tools;
+}
+
+async function listTypeScriptFiles(dir) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+        const absolute = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            files.push(...(await listTypeScriptFiles(absolute)));
+            continue;
+        }
+        if (entry.isFile() && entry.name.endsWith(".ts")) files.push(absolute);
+    }
+    return files.sort((a, b) => a.localeCompare(b));
 }
