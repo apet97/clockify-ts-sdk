@@ -9,8 +9,8 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | Metric | Count |
 |---|---:|
 | operations | 185 |
-| sdkNamed | 170 |
-| tsMcpExact | 83 |
+| sdkNamed | 173 |
+| tsMcpExact | 87 |
 | goMcpExact | 84 |
 | curated | 31 |
 
@@ -81,7 +81,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | `addInvoicePayment` | `client.invoicePayments.create` | `clockify_invoices_create` | `clockify_invoices_payments_create` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_create` |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}` | `deleteInvoicePayment` | `client.invoicePayments.delete` | `clockify_invoices_delete` | `clockify_invoices_payments_delete` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_delete` |
 | PATCH | `/workspaces/{workspaceId}/invoices/{invoiceId}/status` | `changeInvoiceStatus` | `client.invoices.updateStatus` | `clockify_invoices_update_status` | - | - | `clockify_invoices_update_status` |
-| GET | `/workspaces/{workspaceId}/member-profile/{userId}` | `getMemberProfile` | `client.memberProfiles.get` | - | `clockify_users_profile` | GOCLMCP exposes member profile lookup through users_profile. | `clockify_member_profiles_get` |
+| GET | `/workspaces/{workspaceId}/member-profile/{userId}` | `getMemberProfile` | `client.memberProfiles.get` | `clockify_member_profile_get` | `clockify_users_profile` | Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile. | `clockify_member_profiles_get` |
 | PUT | `/workspaces/{workspaceId}/member-profile/{userId}` | `putWorkspacesWorkspaceIdMemberProfileUserId` | - | - | - | - | `clockify_users_put_workspaces_workspace_id_member_profile_user_id` |
 | PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | `updateMemberProfile` | `client.memberProfiles.update` | - | - | - | `clockify_member_profiles_update` |
 | GET | `/workspaces/{workspaceId}/policies` | `getWorkspacesWorkspaceIdPolicies` | `client.policies.list` | - | - | - | `clockify_policies_list` |
@@ -184,7 +184,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | DELETE | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `deleteMany` | - | - | - | - | `clockify_entries_delete_many` |
 | PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop` | `client.timeEntries.stopTimer` | - | - | - | `clockify_entries_stop_timer` |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate` | `client.timeEntries.duplicate` | - | - | - | `clockify_entries_duplicate` |
-| GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | - | - | `clockify_users_list` | GOCLMCP exposes workspace users through the users_list tool. | `clockify_users_find_workspace_users`<br>`clockify_users_list` |
+| GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | `client.users.list` | `clockify_users_list` | `clockify_users_list` | GOCLMCP exposes workspace users through the users_list tool. | `clockify_users_list` |
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | - | - | - | `clockify_workspaces_add_user` |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | - | - | - | - | `clockify_users_filter_workspace_users` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | - | - | - | - | `clockify_workspaces_update_user_status` |
@@ -192,8 +192,8 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PUT | `/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value` | `updateUserCustomFieldValue` | - | - | - | - | `clockify_users_update_user_custom_field_value` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/hourly-rate` | `updateUserHourlyRate` | - | - | - | - | `clockify_workspaces_update_user_hourly_rate` |
 | GET | `/workspaces/{workspaceId}/users/{userId}/managers` | `findUserTeamManagers` | - | - | - | - | `clockify_users_find_user_team_managers` |
-| POST | `/workspaces/{workspaceId}/users/{userId}/roles` | `giveUserManagerRole` | - | - | `clockify_users_role` | GOCLMCP groups user role writes under users_role. | `clockify_roles_give_user_manager_role` |
-| DELETE | `/workspaces/{workspaceId}/users/{userId}/roles` | `removeUserManagerRole` | - | - | `clockify_users_role` | GOCLMCP groups user role writes under users_role. | `clockify_roles_remove_user_manager_role` |
+| POST | `/workspaces/{workspaceId}/users/{userId}/roles` | `giveUserManagerRole` | `client.users.giveRole` | `clockify_users_grant_role` | `clockify_users_role` | Grant a workspace role to a user; GOCLMCP groups role writes under users_role. | `clockify_users_give_role` |
+| DELETE | `/workspaces/{workspaceId}/users/{userId}/roles` | `removeUserManagerRole` | `client.users.removeRole` | `clockify_users_revoke_role` | `clockify_users_role` | Revoke a workspace role from a user; GOCLMCP groups role writes under users_role. | `clockify_users_remove_role` |
 | GET | `/workspaces/{workspaceId}/webhooks` | `getWebhooksOnWorkspace` | `client.webhooks.list` | `clockify_webhooks_list` | `clockify_webhooks_list` | - | `clockify_webhooks_list` |
 | POST | `/workspaces/{workspaceId}/webhooks` | `createWebhook` | `client.webhooks.create` | `clockify_webhooks_create` | `clockify_webhooks_create` | - | `clockify_webhooks_create` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | `getWebhookById` | `client.webhooks.get` | `clockify_webhooks_get` | `clockify_webhooks_get` | - | `clockify_webhooks_get` |

@@ -212,7 +212,7 @@ active TypeScript path without maintainer approval.
 The canonical spec exposes **185 live operations across 121 paths
 on 31 tags**, with quarantined phantom routes tracked in the
 GOCLMCP generator. The wrapper ships idiomatic method names on
-**27 of 31 modules / 169 ops (91.4% of the live surface)** via
+**28 of 31 modules / 172 ops (93.0% of the live surface)** via
 `x-fern-sdk-group-name` + `x-fern-sdk-method-name` stamps.
 
 Package surfaces:
@@ -221,7 +221,7 @@ Package surfaces:
 |---|---|
 | `clockify-sdk-ts-115` | v0.9.0; 31 resource modules, 185 live operations, dual ESM/CJS, pagination helpers, webhook verification, typed errors, scoped clients, OTel hooks, health and rate-limit helpers |
 | `@clockify115/cli` | v0.1.0; 29 commands across 17 groups incl. a scriptable `api` raw command, env/config based auth, `table`/`json`/`ndjson` output for automation |
-| `@clockify115/mcp-server` | v0.3.0; 119 stdio MCP tools: 20 workflow/orientation tools plus 99 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
+| `@clockify115/mcp-server` | v0.3.0; 123 stdio MCP tools: 20 workflow/orientation tools plus 103 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
 
 | Surface                                            | Result |
 | -------------------------------------------------- | ------ |

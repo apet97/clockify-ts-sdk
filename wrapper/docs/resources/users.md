@@ -1,6 +1,6 @@
 # users
 
-6 methods on `client.users`.
+8 methods on `client.users`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
 
@@ -18,9 +18,9 @@
 - `userId` (`string`, required)
 - `body` (`Record<string, unknown>`, required)
 
-### `findWorkspaceUsers`
+### `list`
 
-**Request fields** (`FindWorkspaceUsersUsersRequest`):
+**Request fields** (`ListUsersRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `email` (`string`, optional) — Filters users by email substring.
@@ -59,6 +59,38 @@
 - `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional) — Sorting mode.
 - `page` (`number`, optional) — Page number.
 - `page-size` (`number`, optional) — Page size.
+
+### `giveRole`
+
+**Request fields** (`GiveRoleUsersRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `entityId` (`string`, required) — Represents an entity identifier across the system.
+- `role` (`"WORKSPACE_ADMIN" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"`, required) — Represents a valid role.
+- `sourceType` (`"USER_GROUP"`, optional) — Optional field used to indicate that the target of the operation is a user group.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `body` (`GiveRoleUsersRequestBody`, required)
+- `entityId` (`string`, required) — Represents an entity identifier across the system.
+- `role` (`"WORKSPACE_ADMIN" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"`, required) — Represents a valid role.
+- `sourceType` (`"USER_GROUP"`, optional) — Optional field used to indicate that the target of the operation is a user group.
+
+### `removeRole`
+
+**Request fields** (`RemoveRoleUsersRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `entityId` (`string`, required) — Represents an entity identifier across the system.
+- `role` (`"WORKSPACE_ADMIN" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"`, required) — Represents a valid role.
+- `sourceType` (`"USER_GROUP"`, optional) — Optional field used to indicate that the target of the operation is a user group.
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `userId` (`string`, required) — Represents a user identifier across the system.
+- `body` (`RemoveRoleUsersRequestBody`, required)
+- `entityId` (`string`, required) — Represents an entity identifier across the system.
+- `role` (`"WORKSPACE_ADMIN" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"`, required) — Represents a valid role.
+- `sourceType` (`"USER_GROUP"`, optional) — Optional field used to indicate that the target of the operation is a user group.
 
 ### `filterWorkspaceUsers`
 

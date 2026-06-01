@@ -43,7 +43,6 @@ import type { MemberProfilesClient } from "./src/api/resources/memberProfiles/cl
 import type { PoliciesClient } from "./src/api/resources/policies/client/Client.js";
 import type { ProjectsClient } from "./src/api/resources/projects/client/Client.js";
 import type { ReportsClient } from "./src/api/resources/reports/client/Client.js";
-import type { RolesClient } from "./src/api/resources/roles/client/Client.js";
 import type { SchedulingClient } from "./src/api/resources/scheduling/client/Client.js";
 import type { SharedReportsClient } from "./src/api/resources/sharedReports/client/Client.js";
 import type { TagsClient } from "./src/api/resources/tags/client/Client.js";
@@ -139,9 +138,6 @@ export class Workspace {
     }
     get reports(): ReportsClient {
         return this.scoped("reports") as ReportsClient;
-    }
-    get roles(): RolesClient {
-        return this.scoped("roles") as RolesClient;
     }
     get scheduling(): SchedulingClient {
         return this.scoped("scheduling") as SchedulingClient;

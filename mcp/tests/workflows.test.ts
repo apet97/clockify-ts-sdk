@@ -35,7 +35,7 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
         client: {
             users: {
                 getCurrentUser: async () => fakeUser,
-                findWorkspaceUsers: async () => [fakeUser],
+                list: async () => [fakeUser],
             },
             clients: {
                 list: async (req: { name?: string } = {}) => {

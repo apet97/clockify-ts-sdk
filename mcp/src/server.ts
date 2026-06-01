@@ -27,6 +27,7 @@ import { registerTagsTools } from "./tools/tags.js";
 import { registerTasksTools } from "./tools/tasks.js";
 import { registerTimeOffTools } from "./tools/timeOff.js";
 import { registerTimerTools } from "./tools/timer.js";
+import { registerUsersTools } from "./tools/users.js";
 import { registerWebhooksTools } from "./tools/webhooks.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
 
@@ -72,6 +73,7 @@ export function buildServer(ctx: Context): McpServer {
     registerTimeOffTools(server, ctx);
     registerSchedulingTools(server, ctx);
     registerReportsTools(server, ctx);
+    registerUsersTools(server, ctx);
     registerGroupsTools(server, ctx);
     registerHolidaysTools(server, ctx);
     registerApprovalsTools(server, ctx);
