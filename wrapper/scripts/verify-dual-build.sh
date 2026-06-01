@@ -87,7 +87,9 @@ if (typeof rl.getRateLimit !== 'function') { console.error('CJS subpath rate-lim
 if (typeof rl.getRateLimitFromError !== 'function') { console.error('CJS subpath rate-limit.getRateLimitFromError broken'); process.exit(1); }
 const ro = require('./dist/cjs/request-options.js');
 if (typeof ro.requestOptions !== 'function') { console.error('CJS subpath request-options.requestOptions broken'); process.exit(1); }
+if (typeof ro.withHeaders !== 'function') { console.error('CJS subpath request-options.withHeaders broken'); process.exit(1); }
 if (typeof ro.withIdempotencyKey !== 'function') { console.error('CJS subpath request-options.withIdempotencyKey broken'); process.exit(1); }
+if (typeof ro.withRequestTimeout !== 'function') { console.error('CJS subpath request-options.withRequestTimeout broken'); process.exit(1); }
 const or = require('./dist/cjs/operation-receipt.js');
 if (typeof or.toOperationReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationReceipt broken'); process.exit(1); }
 if (typeof or.toOperationErrorReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationErrorReceipt broken'); process.exit(1); }
