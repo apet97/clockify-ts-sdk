@@ -23,20 +23,24 @@ subdirectory:
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **28 commands** across 16 top-level
-  groups including `doctor`, `completion`, and the workflow
-  shortcuts (`start`, `stop`, `log`, `switch`, `entries`,
-  `projects`, `clients`, `tasks`, `tags`, `webhooks`, `invoices`,
-  `expenses`, `timeoff`, `scheduling`, `audit-log`). Local build
-  artefact: `cli/dist/`.
+  interface on top of the SDK. **29 commands** across 17 top-level
+  groups including `doctor`, `completion`, the scriptable `api` raw
+  command, and the workflow shortcuts (`start`, `stop`, `log`,
+  `entries`, `projects`, `clients`, `tasks`, `tags`, `webhooks`,
+  `invoices`, `expenses`, `timeoff`, `scheduling`, `audit-log`).
+  Output controls: `--output table|json|ndjson`, `--compact`,
+  `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **105 tools**: 17
-  workflow tools plus 88 domain tools across 16 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **108 tools**: 20
+  workflow/orientation tools plus 88 domain tools across 16 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
-  and demo seed/cleanup. Domain tools provide broad CRUDL coverage;
-  reports and raw API fallback remain the Go MCP's niche. Local build
-  artefact: `mcp/dist/`.
+  and demo seed/cleanup; read-only orientation tools
+  (`clockify_docs_search`, `clockify_operation_guide`,
+  `clockify_sdk_snippet`) help an agent pick the smallest correct
+  surface. Domain tools provide broad CRUDL coverage; reports and raw
+  API fallback remain the Go MCP's niche. Local build artefact:
+  `mcp/dist/`.
   MCP write-safety is part of this product contract: high-risk
   workflow writes and destructive domain deletes share the
   `dry_run` -> `confirm_token` guard in
@@ -196,7 +200,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 47 names + 16 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 53 names + 18 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -333,7 +337,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (47 names, 16 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (53 names, 18 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
