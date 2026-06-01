@@ -44,6 +44,8 @@ surface), and dual ESM + CJS.
     - [Error codes](#error-codes)
 - [Retries](#retries)
 - [Timeouts and abort signals](#timeouts-and-abort-signals)
+- [Per-request options](#per-request-options)
+- [Operation receipts](#operation-receipts)
 - [Logging](#logging)
 - [Custom fetch and proxies](#custom-fetch-and-proxies)
 - [Webhooks](#webhooks)
@@ -545,6 +547,72 @@ adding a generated-client-overlapping field would create two ways to spell the
 same thing — small ergonomic gain, real risk of "set both,
 which one wins?" footguns. The conversion is a single division
 when you want it.
+
+## Per-request options
+
+The generated client already takes per-call options as its last argument
+(`maxRetries`, `timeoutInSeconds`, `abortSignal`, `queryParams`, `headers`).
+The `request-options` subpath gives them a stable public type and small
+builders so you never reach into generated internals:
+
+```typescript
+import {
+    createClockifyClient,
+    requestOptions,
+    withHeaders,
+    withRequestTimeout,
+} from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+
+await client.tags.list(
+    { workspaceId },
+    requestOptions({
+        ...withRequestTimeout(10),
+        ...withHeaders({ "X-Request-Id": "tags-page-1" }),
+    }),
+);
+```
+
+`ClockifyRequestOptions` omits `addonToken` — auth belongs on the client, not
+on individual calls. Header values are stringified; `withRequestTimeout`
+rejects non-positive timeouts and `withIdempotencyKey` rejects empty keys
+(see [Idempotency keys](#idempotency-keys)).
+
+## Operation receipts
+
+`toOperationReceipt()` wraps a generated call in the same receipt vocabulary
+the CLI and MCP surfaces emit — `status`, `headers`, `requestId`, `rateLimit`,
+`changed`, `warnings`, `next` — without swallowing errors:
+
+```typescript
+import { createClockifyClient, toOperationReceipt } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+
+const receipt = await toOperationReceipt(client.tags.list({ workspaceId }), {
+    action: "tags.list",
+    changed: false,
+    next: ["Use iterAll for a full paginated walk."],
+});
+
+console.log(receipt.status, receipt.requestId, receipt.data);
+```
+
+Errors still throw. Catch them and call `toOperationErrorReceipt()` for the
+matching error receipt with a stable `code`, `retryable` flag, and `recovery`
+hints:
+
+```typescript
+import { toOperationErrorReceipt } from "clockify-sdk-ts-115";
+
+try {
+    await toOperationReceipt(client.tags.list({ workspaceId }), { action: "tags.list" });
+} catch (error) {
+    const receipt = toOperationErrorReceipt("tags.list", error);
+    console.error(receipt.code, receipt.recovery);
+}
+```
 
 ## Logging
 

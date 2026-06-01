@@ -29,7 +29,9 @@
     "otel-hooks.ts",
     "health.ts",
     "diagnostics.ts",
-    "rate-limit.ts"
+    "rate-limit.ts",
+    "request-options.ts",
+    "operation-receipt.ts"
   ],
   "exclude": [
     "node_modules",

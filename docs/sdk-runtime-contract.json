@@ -184,6 +184,34 @@
         "warnOnce",
         "DEPRECATION"
       ]
+    },
+    {
+      "id": "request-options",
+      "path": "wrapper/request-options.ts",
+      "tests": [
+        "wrapper/tests/request-options.test.ts"
+      ],
+      "contains": [
+        "requestOptions",
+        "withHeaders",
+        "withIdempotencyKey",
+        "withRequestTimeout",
+        "ClockifyRequestOptions"
+      ]
+    },
+    {
+      "id": "operation-receipt",
+      "path": "wrapper/operation-receipt.ts",
+      "tests": [
+        "wrapper/tests/operation-receipt.test.ts"
+      ],
+      "contains": [
+        "toOperationReceipt",
+        "toOperationErrorReceipt",
+        "rateLimit",
+        "warnings",
+        "recovery"
+      ]
     }
   ],
   "packageSurface": {

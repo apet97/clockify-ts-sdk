@@ -65,6 +65,12 @@
       ],
       "clockify-sdk-ts-115/diagnostics": [
         "./diagnostics.ts"
+      ],
+      "clockify-sdk-ts-115/request-options": [
+        "./request-options.ts"
+      ],
+      "clockify-sdk-ts-115/operation-receipt": [
+        "./operation-receipt.ts"
       ]
     }
   },
@@ -87,6 +93,8 @@
     "health.ts",
     "diagnostics.ts",
     "rate-limit.ts",
+    "request-options.ts",
+    "operation-receipt.ts",
     "tests/**/*.ts",
     "examples/**/*.ts",
     "scripts/**/*.ts"

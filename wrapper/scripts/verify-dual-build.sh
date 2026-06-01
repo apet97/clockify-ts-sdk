@@ -14,8 +14,8 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError"
-EXPECTED_ROOT_SURFACE_COUNT=47
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt"
+EXPECTED_ROOT_SURFACE_COUNT=53
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
@@ -85,6 +85,12 @@ if (typeof dg.clockifyDiagnostics !== 'function') { console.error('CJS subpath d
 const rl = require('./dist/cjs/rate-limit.js');
 if (typeof rl.getRateLimit !== 'function') { console.error('CJS subpath rate-limit.getRateLimit broken'); process.exit(1); }
 if (typeof rl.getRateLimitFromError !== 'function') { console.error('CJS subpath rate-limit.getRateLimitFromError broken'); process.exit(1); }
+const ro = require('./dist/cjs/request-options.js');
+if (typeof ro.requestOptions !== 'function') { console.error('CJS subpath request-options.requestOptions broken'); process.exit(1); }
+if (typeof ro.withIdempotencyKey !== 'function') { console.error('CJS subpath request-options.withIdempotencyKey broken'); process.exit(1); }
+const or = require('./dist/cjs/operation-receipt.js');
+if (typeof or.toOperationReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationReceipt broken'); process.exit(1); }
+if (typeof or.toOperationErrorReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationErrorReceipt broken'); process.exit(1); }
 console.log('OK: All ' + process.env.SUBPATH_COUNT + ' CJS subpaths resolve');
 "
 

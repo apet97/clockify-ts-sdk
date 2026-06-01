@@ -186,6 +186,26 @@
         "types": "./dist/cjs/diagnostics.d.ts",
         "default": "./dist/cjs/diagnostics.js"
       }
+    },
+    "./request-options": {
+      "import": {
+        "types": "./dist/esm/request-options.d.ts",
+        "default": "./dist/esm/request-options.js"
+      },
+      "require": {
+        "types": "./dist/cjs/request-options.d.ts",
+        "default": "./dist/cjs/request-options.js"
+      }
+    },
+    "./operation-receipt": {
+      "import": {
+        "types": "./dist/esm/operation-receipt.d.ts",
+        "default": "./dist/esm/operation-receipt.js"
+      },
+      "require": {
+        "types": "./dist/cjs/operation-receipt.d.ts",
+        "default": "./dist/cjs/operation-receipt.js"
+      }
     }
   },
   "files": [
