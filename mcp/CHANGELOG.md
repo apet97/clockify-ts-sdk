@@ -28,7 +28,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Added an ESLint flat config (`eslint.config.mjs` + `tsconfig.lint.json`) and a
   `lint` script for the hand-written server surface, wired into `make lint`, CI,
   and `make perfect-fast`. Fixed what it surfaced: tightened two webhook-URL
-  classifier return types and the day-review issue-list typing.
+  classifier return types and the day-review issue-list typing. The ESLint
+  toolchain (`eslint`, `typescript-eslint`, `eslint-plugin-import-x`) is declared
+  as explicit devDependencies rather than relying on workspace hoisting.
 
 ## [0.3.0] - 2026-05-26
 
