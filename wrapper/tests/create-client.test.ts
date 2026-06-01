@@ -77,6 +77,49 @@ describe("createClockifyClient", () => {
         expect(url.searchParams.get("page-size")).toBe("5");
     });
 
+    it("routes report operations to the dedicated reports host", async () => {
+        let capturedUrl: string | undefined;
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            capturedUrl = input instanceof URL ? input.toString() : typeof input === "string" ? input : input.url;
+            return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
+        });
+
+        const client = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch, maxRetries: 0 });
+        await client.reports.summary({
+            workspaceId: "ws-1",
+            dateRangeStart: "2026-06-01T00:00:00Z",
+            dateRangeEnd: "2026-06-07T00:00:00Z",
+            summaryFilter: { groups: ["PROJECT"] },
+        });
+
+        const url = new URL(capturedUrl!);
+        expect(url.host).toBe("reports.api.clockify.me");
+        expect(url.pathname).toBe("/v1/workspaces/ws-1/reports/summary");
+    });
+
+    it("lets an explicit base URL override the per-operation host", async () => {
+        let capturedUrl: string | undefined;
+        const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+            capturedUrl = input instanceof URL ? input.toString() : typeof input === "string" ? input : input.url;
+            return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
+        });
+
+        const client = createClockifyClient({
+            apiKey: "test",
+            environment: "http://127.0.0.1:4321",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
+        await client.reports.summary({
+            workspaceId: "ws-1",
+            dateRangeStart: "2026-06-01T00:00:00Z",
+            dateRangeEnd: "2026-06-07T00:00:00Z",
+            summaryFilter: { groups: ["PROJECT"] },
+        });
+
+        expect(new URL(capturedUrl!).host).toBe("127.0.0.1:4321");
+    });
+
     it("serializes generated request body envelopes without dropping write fields", async () => {
         let capturedBody: string | null | undefined;
         const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
