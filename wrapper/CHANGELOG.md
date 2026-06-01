@@ -35,7 +35,7 @@ once v1.0.0 ships.
 
 ### Internal
 
-- Refreshed `wrapper/.packsnapshot` with the `request-options` and `operation-receipt` subpath build artifacts, and narrowed a `createClockifyClient` test's captured request body to `string` so the stricter `@typescript-eslint/no-base-to-string` rule passes.
+- Regenerated `wrapper/.packsnapshot` from current codegen so it matches the local generator output again: it had drifted from the renamed generated request types (e.g. `ClientCreate`, `UpdateStatusApprovalsRequest`) and now also carries the new `request-options` and `operation-receipt` subpath artifacts. Narrowed a `createClockifyClient` test's captured request body to `string` so the stricter `@typescript-eslint/no-base-to-string` rule passes.
 
 ## [0.9.0] — 2026-05-25
 
