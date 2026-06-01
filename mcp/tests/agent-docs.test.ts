@@ -9,14 +9,6 @@ describe("agent docs catalog", () => {
         expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("references only real MCP tool names", () => {
-        for (const chunk of AGENT_DOC_CHUNKS) {
-            for (const tool of chunk.tools) {
-                expect(tool).toMatch(/^clockify_[a-z_]+$/);
-            }
-        }
-    });
-
     it("ranks safety guidance for dry_run/webhook queries", () => {
         const results = searchAgentDocs("dry_run webhook safety", 3);
         expect(results.length).toBeGreaterThan(0);

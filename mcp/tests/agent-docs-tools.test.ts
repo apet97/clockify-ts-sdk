@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { AGENT_DOC_CHUNKS } from "../src/agent-docs/catalog.js";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
@@ -91,5 +92,15 @@ describe("agent discovery tools", () => {
         const client = await connect();
         const uris = (await client.listResources()).resources.map((resource) => resource.uri);
         expect(uris).toContain("clockify://guide/agent-mode");
+    });
+
+    it("catalog references only registered tools", async () => {
+        const client = await connect();
+        const registered = new Set((await client.listTools()).tools.map((tool) => tool.name));
+        for (const chunk of AGENT_DOC_CHUNKS) {
+            for (const tool of chunk.tools) {
+                expect(registered.has(tool), `catalog references unknown tool: ${tool}`).toBe(true);
+            }
+        }
     });
 });
