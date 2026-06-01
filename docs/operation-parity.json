@@ -10,7 +10,7 @@
   "summary": {
     "operations": 185,
     "sdkNamed": 170,
-    "tsMcpExact": 76,
+    "tsMcpExact": 78,
     "goMcpExact": 84,
     "curated": 29
   },
@@ -564,12 +564,12 @@
       "candidateTools": [
         "clockify_expenses_create"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_expenses_create",
       "goMcp": "clockify_expenses_create",
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
       }
@@ -690,12 +690,12 @@
       "candidateTools": [
         "clockify_expenses_update"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_expenses_update",
       "goMcp": "clockify_expenses_update",
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": false
       }

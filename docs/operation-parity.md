@@ -10,7 +10,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 185 |
 | sdkNamed | 170 |
-| tsMcpExact | 76 |
+| tsMcpExact | 78 |
 | goMcpExact | 84 |
 | curated | 29 |
 
@@ -48,14 +48,14 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | GET | `/workspaces/{workspaceId}/entities/deleted` | `getDeletedEntityInfo` | `client.entityChangesExperimental.listDeleted` | - | - | - | `clockify_entity_changes_experimental_list_deleted` |
 | GET | `/workspaces/{workspaceId}/entities/updated` | `getUpdatedEntityInfo` | `client.entityChangesExperimental.listUpdated` | - | - | - | `clockify_entity_changes_experimental_list_updated` |
 | GET | `/workspaces/{workspaceId}/expenses` | `getWorkspaceExpenses` | `client.expenses.list` | `clockify_expenses_list` | `clockify_expenses_list` | - | `clockify_expenses_list` |
-| POST | `/workspaces/{workspaceId}/expenses` | `createExpense` | `client.expenses.create` | - | `clockify_expenses_create` | - | `clockify_expenses_create` |
+| POST | `/workspaces/{workspaceId}/expenses` | `createExpense` | `client.expenses.create` | `clockify_expenses_create` | `clockify_expenses_create` | - | `clockify_expenses_create` |
 | GET | `/workspaces/{workspaceId}/expenses/categories` | `getExpenseCategories` | `client.expenseCategories.list` | `clockify_expenses_categories_list` | `clockify_expenses_categories_list` | Category tools live under the expenses_categories prefix. | `clockify_expenses_list` |
 | POST | `/workspaces/{workspaceId}/expenses/categories` | `addExpenseCategory` | `client.expenseCategories.create` | `clockify_expenses_categories_create` | `clockify_expenses_categories_create` | Category tools live under the expenses_categories prefix. | `clockify_expenses_create` |
 | PUT | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | `updateExpenseCategory` | `client.expenseCategories.update` | `clockify_expenses_categories_update` | `clockify_expenses_categories_update` | Category tools live under the expenses_categories prefix. | `clockify_expenses_update` |
 | DELETE | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | `deleteExpenseCategory` | `client.expenseCategories.delete` | `clockify_expenses_categories_delete` | `clockify_expenses_categories_delete` | Category tools live under the expenses_categories prefix. | `clockify_expenses_delete` |
 | PATCH | `/workspaces/{workspaceId}/expenses/categories/{categoryId}/status` | `archiveExpenseCategory` | `client.expenseCategories.archive` | `clockify_expenses_categories_archive` | - | The TS MCP has an archive helper; GOCLMCP models archive under update/delete style category operations. | `clockify_expenses_archive` |
 | GET | `/workspaces/{workspaceId}/expenses/{expenseId}` | `getExpenseById` | `client.expenses.get` | `clockify_expenses_get` | `clockify_expenses_get` | - | `clockify_expenses_get` |
-| PUT | `/workspaces/{workspaceId}/expenses/{expenseId}` | `updateExpense` | `client.expenses.update` | - | `clockify_expenses_update` | - | `clockify_expenses_update` |
+| PUT | `/workspaces/{workspaceId}/expenses/{expenseId}` | `updateExpense` | `client.expenses.update` | `clockify_expenses_update` | `clockify_expenses_update` | - | `clockify_expenses_update` |
 | DELETE | `/workspaces/{workspaceId}/expenses/{expenseId}` | `deleteExpense` | `client.expenses.delete` | `clockify_expenses_delete` | `clockify_expenses_delete` | - | `clockify_expenses_delete` |
 | GET | `/workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}` | `downloadExpenseReceipt` | `client.expenses.downloadReceipt` | - | - | - | `clockify_expenses_download_receipt` |
 | GET | `/workspaces/{workspaceId}/holidays` | `getWorkspaceHolidays` | `client.holidays.list` | `clockify_holidays_list` | `clockify_holidays_list` | - | `clockify_holidays_list` |

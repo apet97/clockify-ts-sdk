@@ -137,6 +137,8 @@ describe("@clockify115/mcp-server", () => {
                 // Expenses + categories
                 "clockify_expenses_list",
                 "clockify_expenses_get",
+                "clockify_expenses_create",
+                "clockify_expenses_update",
                 "clockify_expenses_delete",
                 "clockify_expenses_categories_list",
                 "clockify_expenses_categories_create",
@@ -206,7 +208,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(114);
+        expect(names).toHaveLength(116);
     });
 
     it("advertises agent-ready metadata for every tool", async () => {
