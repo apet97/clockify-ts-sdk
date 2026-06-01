@@ -1,9 +1,10 @@
 /**
  * `clk115 entries list` and `clk115 entries delete <id>`.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printRecords, printSuccess } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

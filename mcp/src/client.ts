@@ -6,6 +6,7 @@
  */
 import { createClockifyClient } from "clockify-sdk-ts-115";
 import type { ComposedFetchHooks } from "clockify-sdk-ts-115/composed-fetch";
+
 import { ConfirmationTokenStore } from "./orchestration/confirmation.js";
 
 export type ClockifyClient = ReturnType<typeof createClockifyClient>;

@@ -9,6 +9,7 @@ import type { Command } from "commander";
 
 import type { ClockifyClient } from "../client.js";
 import { printJson, printNdjson, type OutputOptions } from "../output.js";
+
 import { resolveBaseContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

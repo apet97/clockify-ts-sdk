@@ -6,9 +6,10 @@
  * (`published: false`) and surfaces the upstream 403 verbatim so the
  * caller can route the failure to an admin.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

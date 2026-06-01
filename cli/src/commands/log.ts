@@ -3,10 +3,11 @@
  * with an explicit duration ending now (or at --end). The most-
  * common after-the-fact entry pattern.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { parseDuration } from "../duration.js";
 import { printObject } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 

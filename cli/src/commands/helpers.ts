@@ -4,11 +4,12 @@
  */
 import type { Command } from "commander";
 
-import { globalFlags, resolveFlags } from "../index.js";
-import { requireWorkspaceId } from "../config.js";
 import type { ClockifyClient } from "../client.js";
+import { requireWorkspaceId } from "../config.js";
 import type { CliConfig } from "../config.js";
+import { globalFlags, resolveFlags } from "../index.js";
 import type { OutputOptions } from "../output.js";
+
 import type { Services } from "./types.js";
 
 export interface BaseContext {

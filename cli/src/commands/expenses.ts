@@ -5,9 +5,10 @@
  * future iteration can add `expenses create` with a `--file` flag once
  * the wrapper exposes the right uploadable helper to the CLI surface.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
@@ -54,7 +55,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 };
                 const category =
                     typeof e.category === "object" && e.category !== null
-                        ? (e.category as { name?: string }).name ?? ""
+                        ? (e.category).name ?? ""
                         : typeof e.category === "string"
                           ? e.category
                           : "";

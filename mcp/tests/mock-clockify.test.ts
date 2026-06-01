@@ -2,9 +2,9 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createMockClockifyServer, type MockClockifyServer } from "../../scripts/mock-clockify-server.mjs";
 import { loadContext } from "../src/client.js";
 import { buildServer } from "../src/server.js";
-import { createMockClockifyServer, type MockClockifyServer } from "../../scripts/mock-clockify-server.mjs";
 
 let mock: MockClockifyServer;
 let baseUrl: string;

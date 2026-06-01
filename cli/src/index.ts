@@ -9,28 +9,28 @@
 import { Command } from "commander";
 
 import { buildClient } from "./client.js";
+import { registerApiCommand } from "./commands/api.js";
+import { registerAuditLogCommand } from "./commands/auditlog.js";
+import { registerClientsCommand } from "./commands/clients.js";
+import { registerDoctorCommand } from "./commands/doctor.js";
+import { registerEntriesCommand } from "./commands/entries.js";
+import { registerExpensesCommand } from "./commands/expenses.js";
+import { registerInvoicesCommand } from "./commands/invoices.js";
+import { registerLogCommand } from "./commands/log.js";
+import { registerProjectsCommand } from "./commands/projects.js";
+import { registerSchedulingCommand } from "./commands/scheduling.js";
+import { registerStartCommand } from "./commands/start.js";
+import { registerStatusCommand } from "./commands/status.js";
+import { registerStopCommand } from "./commands/stop.js";
+import { registerTagsCommand } from "./commands/tags.js";
+import { registerTasksCommand } from "./commands/tasks.js";
+import { registerTimeOffCommand } from "./commands/timeoff.js";
+import { registerWebhooksCommand } from "./commands/webhooks.js";
 import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
 import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
-import { registerApiCommand } from "./commands/api.js";
-import { registerStatusCommand } from "./commands/status.js";
-import { registerDoctorCommand } from "./commands/doctor.js";
-import { registerStartCommand } from "./commands/start.js";
-import { registerStopCommand } from "./commands/stop.js";
-import { registerLogCommand } from "./commands/log.js";
-import { registerEntriesCommand } from "./commands/entries.js";
-import { registerProjectsCommand } from "./commands/projects.js";
-import { registerClientsCommand } from "./commands/clients.js";
-import { registerTasksCommand } from "./commands/tasks.js";
-import { registerTagsCommand } from "./commands/tags.js";
-import { registerWebhooksCommand } from "./commands/webhooks.js";
-import { registerInvoicesCommand } from "./commands/invoices.js";
-import { registerExpensesCommand } from "./commands/expenses.js";
-import { registerTimeOffCommand } from "./commands/timeoff.js";
-import { registerSchedulingCommand } from "./commands/scheduling.js";
-import { registerAuditLogCommand } from "./commands/auditlog.js";
 
 export type ResolvedFlags = OutputOptions;
 

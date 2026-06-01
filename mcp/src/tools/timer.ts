@@ -61,7 +61,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                         workspaceId: ctx.workspaceId,
                         userId,
                         end,
-                    } as never);
+                    });
                     return successResult("clockify_timer_stop", entry);
                 } catch (innerErr) {
                     if ((innerErr as { statusCode?: number }).statusCode === 404) {

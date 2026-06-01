@@ -1,9 +1,10 @@
 /**
  * `clk115 stop` — stop the running timer for the current user.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printObject, printSuccess } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
@@ -21,10 +22,10 @@ export const registerStopCommand: Registrar = (program, services) => {
 
             const end = new Date().toISOString();
             try {
-                const stopped = await client.timeEntries.stopTimer({ workspaceId, userId, end } as never);
+                const stopped = await client.timeEntries.stopTimer({ workspaceId, userId, end });
                 const entry = stopped as { id?: string; description?: string; timeInterval?: { duration?: string } };
                 if (output.mode === "json") {
-                    printObject(entry as unknown as Record<string, unknown>, output);
+                    printObject(entry, output);
                     return;
                 }
                 printSuccess(

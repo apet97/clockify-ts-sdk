@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 
 // Installed as every tool's output schema for CallToolResult.structuredContent.
 
@@ -67,5 +67,5 @@ export function installDefaultOutputSchema(server: McpServer): void {
                 ? { ...config, outputSchema: MCP_RESULT_OUTPUT_SCHEMA }
                 : config;
         return original(name, nextConfig, callback);
-    }) as RegisterToolLike;
+    });
 }

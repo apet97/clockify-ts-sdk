@@ -3,11 +3,12 @@
  * operators. It checks config readiness without contacting Clockify;
  * `clk115 status` remains the live credential/workspace probe.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import type { CliConfig, GlobalFlags } from "../config.js";
 import { globalFlags, resolveFlags } from "../index.js";
 import { printObject } from "../output.js";
+
 import type { Registrar } from "./types.js";
 
 const DEFAULT_CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1";

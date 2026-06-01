@@ -5,9 +5,10 @@
  * tools stay behind the broader `clockify-sdk-ts-115` surface until enough
  * demand surfaces to justify the CLI ergonomics work.
  */
-import { Command } from "commander";
+import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
+
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
@@ -49,7 +50,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 };
                 const statusValue =
                     typeof r.status === "object" && r.status !== null
-                        ? (r.status as { statusType?: string }).statusType ?? ""
+                        ? (r.status).statusType ?? ""
                         : typeof r.status === "string"
                           ? r.status
                           : "";
