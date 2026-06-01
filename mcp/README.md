@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 105 tools: 17 workflow tools plus 88
+This package now advertises 108 tools: 20 workflow tools plus 88
 domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
@@ -53,6 +53,9 @@ only be used for mock/replay gateways or private test environments.
 |---|---|
 | `clockify_status` | Confirm user, workspace, and running timer. |
 | `clockify_tools_guide` | Show workflow groups and when to use domain tools. |
+| `clockify_docs_search` | Search compact SDK/CLI/MCP guidance for agents (read-only). |
+| `clockify_operation_guide` | Map a task, operation, or tool to recommended paths (read-only). |
+| `clockify_sdk_snippet` | Return a compact SDK, CLI, or MCP snippet for a task (read-only). |
 | `clockify_create_work_package` | Create or reuse client, project, task, and tag objects. |
 | `clockify_log_work` | Log a finished time entry from names or IDs. |
 | `clockify_start_work` | Start a running work timer. |
@@ -202,7 +205,12 @@ The server exposes guide resources for agent discovery:
 - `clockify://guide/axioms` — product axioms and safety boundaries.
 - `clockify://guide/workflows` — workflow-first guidance and tool sequencing.
 - `clockify://guide/safety` — write-safety rules including dry_run and confirm_token.
+- `clockify://guide/agent-mode` — when to use the read-only discovery tools.
 - `clockify://mcp/doctor` — No-network diagnostics checklist for local readiness.
+
+The read-only `clockify_docs_search`, `clockify_operation_guide`, and
+`clockify_sdk_snippet` tools help an agent pick the smallest correct SDK, CLI,
+or MCP path before touching live data.
 
 Prompts:
 

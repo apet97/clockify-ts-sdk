@@ -1,13 +1,16 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 105,
-    "workflowTools": 17,
+    "totalTools": 108,
+    "workflowTools": 20,
     "domainTools": 88
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
     { "tool": "clockify_tools_guide", "purpose": "Show workflow groups and when to use domain tools." },
+    { "tool": "clockify_docs_search", "purpose": "Search compact SDK/CLI/MCP guidance for agents (read-only)." },
+    { "tool": "clockify_operation_guide", "purpose": "Map a task, operation, or tool to recommended paths (read-only)." },
+    { "tool": "clockify_sdk_snippet", "purpose": "Return a compact SDK, CLI, or MCP snippet for a task (read-only)." },
     { "tool": "clockify_create_work_package", "purpose": "Create or reuse client, project, task, and tag objects." },
     { "tool": "clockify_log_work", "purpose": "Log a finished time entry from names or IDs." },
     { "tool": "clockify_start_work", "purpose": "Start a running work timer." },

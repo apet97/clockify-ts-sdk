@@ -6,6 +6,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added read-only agent discovery tools: `clockify_docs_search`,
+  `clockify_operation_guide`, and `clockify_sdk_snippet` map a task to the
+  recommended SDK imports, CLI examples, MCP tools, and next steps without
+  loading the full domain catalog.
+- Added the `clockify://guide/agent-mode` resource describing those tools.
 - Added `CLOCKIFY_BASE_URL` for mock/replay environments.
 - Added a shared MCP result output schema to every advertised tool.
 - Added MCP guide resources and a workflow-planning prompt.

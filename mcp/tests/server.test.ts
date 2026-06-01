@@ -71,6 +71,10 @@ describe("@clockify115/mcp-server", () => {
         const names = list.tools.map((t) => t.name).sort();
         expect(names).toEqual(
             [
+                // Agent discovery
+                "clockify_docs_search",
+                "clockify_operation_guide",
+                "clockify_sdk_snippet",
                 // Status
                 "clockify_status",
                 "clockify_tools_guide",
@@ -195,7 +199,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(105);
+        expect(names).toHaveLength(108);
     });
 
     it("advertises agent-ready metadata for every tool", async () => {
@@ -238,6 +242,7 @@ describe("@clockify115/mcp-server", () => {
         const prompts = await client.listPrompts();
 
         expect(resources.resources.map((resource) => resource.uri).sort()).toEqual([
+            "clockify://guide/agent-mode",
             "clockify://guide/axioms",
             "clockify://guide/safety",
             "clockify://guide/workflows",

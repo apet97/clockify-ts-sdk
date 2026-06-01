@@ -10,6 +10,7 @@ import { installDefaultOutputSchema } from "./output-schema.js";
 import { registerClockifyPrompts } from "./prompts.js";
 import { registerClockifyResources } from "./resources.js";
 import { registerWorkflowTools } from "./tools/workflows.js";
+import { registerAgentDocsTools } from "./tools/agent-docs.js";
 import { registerStatusTool } from "./tools/status.js";
 import { registerProjectsTools } from "./tools/projects.js";
 import { registerClientsTools } from "./tools/clients.js";
@@ -55,6 +56,7 @@ export function buildServer(ctx: Context): McpServer {
     registerClockifyPrompts(server);
 
     registerWorkflowTools(server, ctx);
+    registerAgentDocsTools(server);
     registerStatusTool(server, ctx);
     registerProjectsTools(server, ctx);
     registerClientsTools(server, ctx);
