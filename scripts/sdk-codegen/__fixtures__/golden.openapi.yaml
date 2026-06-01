@@ -57,6 +57,8 @@ paths:
       tags: [Reports]
       x-fern-sdk-group-name: reports
       x-fern-sdk-method-name: export
+      servers:
+        - url: https://reports.api.clockify.me/v1
       parameters:
         - name: workspaceId
           in: path

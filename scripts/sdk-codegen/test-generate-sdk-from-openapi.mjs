@@ -56,6 +56,7 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
         const reportsClient = await readGenerated(out, "api/resources/reports/client/Client.ts");
         assert.match(reportsClient, /core\.HttpResponsePromise<core\.BinaryResponse>/);
         assert.match(reportsClient, /responseType: "binary"/);
+        assert.match(reportsClient, /baseUrl: "https:\/\/reports\.api\.clockify\.me\/v1"/);
 
         const parsedReceipt = JSON.parse(await readFile(receipt, "utf8"));
         assert.equal(parsedReceipt.ok, true);
