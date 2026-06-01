@@ -97,4 +97,31 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_approvals_resubmit",
+        {
+            title: "Resubmit entries for approval",
+            description: "Resubmit the current user's time entries for approval for a given period and start date.",
+            inputSchema: {
+                period: z.enum(["WEEKLY", "SEMI_MONTHLY", "MONTHLY"]),
+                periodStart: z.string().min(1).describe("RFC3339 timestamp for the start of the period."),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: false },
+        },
+        async (args) => {
+            try {
+                const resubmitted = await ctx.client.approvals.resubmit({
+                    workspaceId: ctx.workspaceId,
+                    period: args.period,
+                    periodStart: args.periodStart,
+                });
+                return successResult("clockify_approvals_resubmit", resubmitted, {
+                    workspaceId: ctx.workspaceId,
+                });
+            } catch (err) {
+                return errorResult("clockify_approvals_resubmit", err);
+            }
+        },
+    );
 }

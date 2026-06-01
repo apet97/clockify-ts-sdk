@@ -228,4 +228,44 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_invoices_import_time",
+        {
+            title: "Import time into an invoice",
+            description: "Import time entries (and optionally expenses) into an existing invoice over a date range.",
+            inputSchema: {
+                invoiceId: z.string().min(1),
+                from: z.string().min(1).describe("ISO start of the import window"),
+                to: z.string().min(1).describe("ISO end of the import window"),
+                importExpenses: z.boolean().default(false).optional(),
+                timeEntryGroupType: z.enum(["SINGLE_ITEM", "GROUPED", "DETAILED"]).default("GROUPED").optional(),
+                projectFilter: z.record(z.unknown()).optional().describe('Project filter; status is required, e.g. { "status": "ACTIVE" }'),
+                extra: z.record(z.unknown()).optional().describe("Additional import grouping fields"),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: false },
+        },
+        async (args) => {
+            try {
+                const { invoiceId, extra, importExpenses, timeEntryGroupType, projectFilter, from, to } = args;
+                const imported = await ctx.client.invoiceItems.import({
+                    importExpenses: importExpenses ?? false,
+                    timeEntryGroupType: timeEntryGroupType ?? "GROUPED",
+                    ...(extra ?? {}),
+                    // status is required upstream; default it but let the caller's filter win.
+                    projectFilter: { status: "ACTIVE", ...(projectFilter ?? {}) },
+                    from,
+                    to,
+                    invoiceId,
+                    workspaceId: ctx.workspaceId,
+                } as never);
+                return successResult("clockify_invoices_import_time", imported, {
+                    workspaceId: ctx.workspaceId,
+                    invoiceId,
+                });
+            } catch (err) {
+                return errorResult("clockify_invoices_import_time", err);
+            }
+        },
+    );
 }

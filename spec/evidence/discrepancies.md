@@ -300,6 +300,11 @@ probe evidence before the corrected spec is allowed to claim
   a total. Tools synthesize `total_min` lower-bound on full pages
   rather than an authoritative `total`. — affects every paginated
   `clockify_*_list`.
+- `projects.archive` (`PUT /projects/{projectId}/archive`): route is not bound
+  on the live API — a real-format projectId returns `404 "No static resource"`.
+  Projects are archived through the project update endpoint (`archived:true`),
+  which `clockify_projects_update` already exposes; the parity override maps the
+  archive operation there. — affects no dedicated tool by design.
 - `scheduling.calculateUsersTotals` (`POST /scheduling/assignments/users/totals`):
   route is not bound on the live API — both POST and a GET probe return
   `404 "No static resource"` (vs `405` on the sibling `publish` route that

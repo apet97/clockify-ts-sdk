@@ -123,6 +123,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_entries_log",
                 "clockify_entries_update",
                 "clockify_entries_delete",
+                "clockify_entries_mark_invoiced",
                 // Timer
                 "clockify_timer_start",
                 "clockify_timer_stop",
@@ -134,6 +135,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_invoices_delete",
                 "clockify_invoices_update_status",
                 "clockify_invoices_export",
+                "clockify_invoices_import_time",
                 // Expenses + categories
                 "clockify_expenses_list",
                 "clockify_expenses_get",
@@ -204,11 +206,12 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_approvals_list",
                 "clockify_approvals_submit",
                 "clockify_approvals_update_state",
+                "clockify_approvals_resubmit",
                 // Audit log
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(116);
+        expect(names).toHaveLength(119);
     });
 
     it("advertises agent-ready metadata for every tool", async () => {

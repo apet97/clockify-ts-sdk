@@ -205,4 +205,34 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             }
         },
     );
+
+    server.registerTool(
+        "clockify_entries_mark_invoiced",
+        {
+            title: "Mark time entries invoiced",
+            description: "Mark the given time entries as invoiced (or clear the flag with invoiced:false) in the pinned workspace.",
+            inputSchema: {
+                timeEntryIds: z.array(z.string().min(1)).min(1),
+                invoiced: z.boolean().default(true).optional(),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const invoiced = args.invoiced ?? true;
+                await ctx.client.timeEntries.markInvoiced({
+                    workspaceId: ctx.workspaceId,
+                    timeEntryIds: args.timeEntryIds,
+                    invoiced,
+                });
+                return successResult(
+                    "clockify_entries_mark_invoiced",
+                    { invoiced, timeEntryIds: args.timeEntryIds },
+                    { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
+                );
+            } catch (err) {
+                return errorResult("clockify_entries_mark_invoiced", err);
+            }
+        },
+    );
 }
