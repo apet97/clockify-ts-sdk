@@ -1,0 +1,42 @@
+import { z } from "zod";
+
+import { successResult } from "../../result.js";
+import type { AnyRecord } from "./types.js";
+import type { WorkflowContext as Context } from "./types.js";
+import { dateRange, idOf, summarizeEntries } from "./resolve.js";
+
+export function reviewInputSchema({ week }: { week: boolean }) {
+    return {
+        date: week ? z.never().optional() : z.string().optional(),
+        week_start: week ? z.string().optional() : z.never().optional(),
+        start: z.string().optional(),
+        end: z.string().optional(),
+        workday_start: z.string().optional(),
+        workday_end: z.string().optional(),
+        min_gap_minutes: z.number().int().min(0).optional(),
+        include_entries: z.boolean().optional(),
+        max_rows: z.number().int().min(0).optional(),
+    };
+}
+
+export async function reviewPeriod(ctx: Context, action: string, args: AnyRecord) {
+    const user = await ctx.client.users.getCurrentUser();
+    const range = dateRange(action, args);
+    const pageSize = 200;
+    const entries = (await ctx.client.timeEntries.listForUser({
+        workspaceId: ctx.workspaceId,
+        userId: idOf(user),
+        start: range.start,
+        end: range.end,
+        page: 1,
+        "page-size": pageSize,
+    })) as AnyRecord[];
+    const review = summarizeEntries(entries, args);
+    return successResult(action, review, { workspaceId: ctx.workspaceId, userId: idOf(user), count: entries.length }, {
+        entity: "entry_review",
+        ids: { workspaceId: ctx.workspaceId, userId: idOf(user) },
+        next: review.suggestedActions.length
+            ? review.suggestedActions
+            : [{ tool: "clockify_log_work", reason: "Log any missing work discovered during review." }],
+    });
+}

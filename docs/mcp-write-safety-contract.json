@@ -18,7 +18,8 @@
     "clockify_webhooks_delete"
   ],
   "idempotentWorkflowTools": [
-    "clockify_demo_seed"
+    "clockify_demo_seed",
+    "clockify_demo_cleanup"
   ],
   "requiredFiles": [
     {
@@ -110,6 +111,11 @@
     "checker": "scripts/check-mcp-write-safety.mjs",
     "toolsDirectory": "mcp/src/tools",
     "workflowsFile": "mcp/src/tools/workflows.ts",
+    "workflowFiles": [
+      "mcp/src/tools/workflows/index.ts",
+      "mcp/src/tools/workflows/business.ts",
+      "mcp/src/tools/workflows/resolve.ts"
+    ],
     "confirmGuardFile": "mcp/src/orchestration/confirm-guard.ts",
     "docsIndexPolicy": "mcp-write-safety-policy.md",
     "docsIndexContract": "mcp-write-safety-contract.json",
