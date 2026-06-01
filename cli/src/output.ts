@@ -1,7 +1,7 @@
 import Table from "cli-table3";
 import pc from "picocolors";
 
-import { errorCodeForMessage, recoveryForCode, retryableForCode } from "./error-codes.js";
+import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
 
 export type OutputMode = "table" | "json" | "ndjson";
 
@@ -87,9 +87,11 @@ export function printSuccess(message: string, opts: OutputOptions): void {
  * SDK / network errors; the actual process.exit is handled by the
  * top-level error wrapper.
  */
-export function printError(message: string, opts: OutputOptions): void {
+export function printError(message: string, opts: OutputOptions, statusCode?: number): void {
     if (opts.mode !== "table") {
-        const code = errorCodeForMessage(message);
+        // Prefer the HTTP status when the thrower attached one; a synthetic
+        // "HTTP 404:" message would otherwise hit the message heuristic.
+        const code = errorCodeForStatus(statusCode) ?? errorCodeForMessage(message);
         console.error(
             JSON.stringify({
                 ok: false,

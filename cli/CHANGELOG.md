@@ -21,6 +21,13 @@ All notable changes to `@clockify115/cli` are documented here.
   (required-field rejection, list splitting, authors-mode toggle, page bounds,
   name→ID resolution, and duration/end derivation).
 
+### Fixed
+
+- `clk115 api` now attaches the HTTP status to the error it throws on a non-2xx
+  response, so the status-based classifier wins. A 404 whose body mentions a
+  trigger word (e.g. "workspace") is no longer misclassified as
+  `auth_or_permission`.
+
 ### Changed
 
 - `--base-url` / `CLOCKIFY_BASE_URL` is now validated against the SDK Clockify host allowlist: only an official Clockify API host or a loopback host is accepted, arbitrary hosts are rejected with a clear message (strict by default — the CLI never opts in to insecure hosts). Help text updated.
