@@ -1715,3 +1715,85 @@ routes that return 404/405 live exist.
   fields nested under `body`; keep project update fields at the
   request top level. Re-test with live archive+delete cleanup before
   changing either shape.
+
+## Name reserved after archive-then-delete (cross-repo: ai-assistant-addon)
+
+### `entity.name-reserved-after-delete.cross-repo-2026-06-09` — DOCUMENTED 2026-06-09
+
+- **Official claim:** none. The spec describes create
+  (`POST /workspaces/{workspaceId}/projects`, `.../tags`,
+  `.../clients`) as taking a workspace-unique `name`, but says
+  nothing about a name's lifecycle after the entity is deleted.
+- **Actual behavior:** a project / tag / client NAME stays
+  reserved even after the entity is archived and then deleted.
+  Re-creating with the same name returns `... with this name
+  already exists` (e.g. `"Project with this name already exists"`)
+  even though the name no longer appears in any list — so a
+  "list, then reuse the name" recovery never surfaces it. The only
+  fix is a distinct name.
+- **Live evidence:** discovered live in the sibling
+  `../ai-assistant-addon` Clockify work — its live exerciser had to
+  switch to unique `AIASSIST_SMOKE_*` names because archived-then-
+  deleted names stayed taken (recorded in that repo's `CLAUDE.md`
+  planner-quirks section). The conflict wire message is pinned by
+  `../GOCLMCP/internal/clockify/errors_test.go`
+  (`{"message":"Project with this name already exists","code":501}`).
+- **MCP tools affected:** `clockify_projects_create`,
+  `clockify_tags_create`, `clockify_clients_create`, and the
+  generated SDK `projects.create` / `tags.create` / `clients.create`.
+  GOCLMCP now emits a name-reservation recovery hint for these (its
+  `internal/tools/firstslice_recovery.go` `recoverable(...)`
+  "already exists" branch, with `recovery_test.go` coverage). The
+  TS MCP/SDK do not yet surface this.
+- **Open questions:** does Clockify ever release a reserved name
+  (TTL, or only on workspace reset)? Does the reservation apply to
+  tasks (per-project) the same way? Unprobed.
+- **Status:** `documented; ts-side-hint-pending`. Recommend the TS
+  MCP `clockify_*_create` tools (and the SDK `create` docstrings)
+  warn that a previously deleted name may report "already exists"
+  and to retry with a distinct name. No spec change — a platform
+  behavior, not a shape divergence.
+
+## Per-op host vs client `environment`/`baseUrl` override (add-on consumers)
+
+### `config.per-op-host-vs-environment-override.cross-repo-2026-06-09` — DOCUMENTED 2026-06-09
+
+- **Official claim:** n/a (SDK-internal). Reports run on
+  `reports.api.clockify.me/v1` and audit on
+  `auditlog-api.api.clockify.me/v1`; the corrected OpenAPI carries
+  per-operation `servers` and the generator emits
+  `OperationSpec.baseUrl`, so typed methods reach the right host.
+- **Actual behavior (by design):** the generated `core/request.ts`
+  resolves
+  `clientOptions.baseUrl ?? clientOptions.environment ?? operation.baseUrl ?? Default`
+  (emitter: `scripts/generate-sdk-from-openapi.mjs`
+  `requestRuntimeSourceWithTimeoutAndRetry`). A client-level
+  `baseUrl`/`environment` override therefore **wins over** the
+  per-op reports/audit host. This is INTENTIONAL per
+  `docs/config-precedence-policy.md` ("Base URL override rule":
+  `environment`/`baseUrl` are mock/replay/private-gateway levers) —
+  it lets one mock host capture ALL traffic, including reports/
+  audit (`wrapper/tests/mock-clockify.test.ts` points `environment`
+  at a localhost mock). Reordering `operation.baseUrl` ahead of
+  `environment` would let reports/audit escape the mock and break
+  replay.
+- **Cross-repo observation:** the sibling `../ai-assistant-addon`
+  is a Clockify ADD-ON whose API host is dynamic per install (read
+  from the install-context `apiUrl`), and which derives the reports
+  host from the `reportsUrl` claim and the audit host prod-only.
+  That "set the api host AND keep per-op reports/audit hosts"
+  pattern is NOT expressible through this SDK's single `environment`
+  override (setting it clobbers the per-op hosts). A first-pass
+  cross-repo audit flagged this precedence as a "bug"; it is not —
+  it is the documented mock/replay contract.
+- **MCP tools affected:** none directly. Affects SDK consumers that
+  are themselves multi-host add-ons.
+- **Open questions:** if add-on consumption (dynamic api host +
+  derived reports/audit) becomes in-scope, the precedence reorder
+  is the wrong fix; the right shape is a separate, explicit
+  per-host override map (e.g. `hosts: {api, reports, audit}`) that
+  leaves the single mock/replay override semantics intact. Out of
+  scope until an add-on consumer is a real target.
+- **Status:** `not-a-bug; intentional`. Recorded so a future audit
+  does not "fix" the precedence and regress mock/replay. No code
+  change.
