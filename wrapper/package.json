@@ -206,6 +206,26 @@
         "types": "./dist/cjs/operation-receipt.d.ts",
         "default": "./dist/cjs/operation-receipt.js"
       }
+    },
+    "./money": {
+      "import": {
+        "types": "./dist/esm/money.d.ts",
+        "default": "./dist/esm/money.js"
+      },
+      "require": {
+        "types": "./dist/cjs/money.d.ts",
+        "default": "./dist/cjs/money.js"
+      }
+    },
+    "./invoice-body": {
+      "import": {
+        "types": "./dist/esm/invoice-body.d.ts",
+        "default": "./dist/esm/invoice-body.js"
+      },
+      "require": {
+        "types": "./dist/cjs/invoice-body.d.ts",
+        "default": "./dist/cjs/invoice-body.js"
+      }
     }
   },
   "files": [

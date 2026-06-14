@@ -30,7 +30,9 @@
     "diagnostics.ts",
     "rate-limit.ts",
     "request-options.ts",
-    "operation-receipt.ts"
+    "operation-receipt.ts",
+    "money.ts",
+    "invoice-body.ts"
   ],
   "exclude": [
     "node_modules",

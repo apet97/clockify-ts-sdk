@@ -60,7 +60,15 @@
     "withIdempotencyKey",
     "withRequestTimeout",
     "toOperationReceipt",
-    "toOperationErrorReceipt"
+    "toOperationErrorReceipt",
+    "toMinor",
+    "toMajor",
+    "invoiceItemUnitPriceToWire",
+    "invoiceItemUnitPriceFromWire",
+    "CLOCKIFY_AMOUNT_UNITS",
+    "invoiceUpdateBodyFromExisting",
+    "INVOICE_EDITABLE_FIELDS",
+    "INVOICE_PERCENT_FIELD_MAP"
   ],
   "subpaths": {
     ".": [
@@ -129,6 +137,18 @@
     "./operation-receipt": [
       "toOperationReceipt",
       "toOperationErrorReceipt"
+    ],
+    "./money": [
+      "toMinor",
+      "toMajor",
+      "invoiceItemUnitPriceToWire",
+      "invoiceItemUnitPriceFromWire",
+      "CLOCKIFY_AMOUNT_UNITS"
+    ],
+    "./invoice-body": [
+      "invoiceUpdateBodyFromExisting",
+      "INVOICE_EDITABLE_FIELDS",
+      "INVOICE_PERCENT_FIELD_MAP"
     ]
   },
   "tsconfigAliases": {
@@ -185,6 +205,12 @@
     ],
     "clockify-sdk-ts-115/operation-receipt": [
       "./operation-receipt.ts"
+    ],
+    "clockify-sdk-ts-115/money": [
+      "./money.ts"
+    ],
+    "clockify-sdk-ts-115/invoice-body": [
+      "./invoice-body.ts"
     ]
   },
   "packageMarkerScan": {

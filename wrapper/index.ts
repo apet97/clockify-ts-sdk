@@ -136,3 +136,23 @@ export {
     type ClockifyOperationResult,
     type OperationReceiptOptions,
 } from "./operation-receipt.js";
+// Amount-unit conversion (major↔minor) — Clockify money fields want integer
+// minor units, but expenses are MAJOR on the wire and invoice item unitPrice
+// is minor×100. Funnel every amount through these so the mapping lives once.
+export {
+    CLOCKIFY_AMOUNT_UNITS,
+    INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE,
+    invoiceItemUnitPriceFromWire,
+    invoiceItemUnitPriceToWire,
+    toMajor,
+    toMinor,
+    type AmountUnit,
+} from "./money.js";
+// Safe `PUT /invoices/{id}` body builder — guards the GET-then-PUT replace
+// semantics and the tax/discount name+scale asymmetry that otherwise silently
+// zero invoice tax/discount.
+export {
+    INVOICE_EDITABLE_FIELDS,
+    INVOICE_PERCENT_FIELD_MAP,
+    invoiceUpdateBodyFromExisting,
+} from "./invoice-body.js";
