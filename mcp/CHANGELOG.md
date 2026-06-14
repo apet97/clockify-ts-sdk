@@ -6,6 +6,38 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Fixed `clockify_time_off_requests_update_status`: it now calls the policy-scoped
+  `changeTimeOffRequestStatus` endpoint with the correct `status` wire field (it
+  previously hit the dead `/time-off/requests/{id}/status` route with `statusType`,
+  so approvals/denials silently failed); the tool now requires `policyId`.
+- `clockify_expenses_categories_delete` now archives the category (the dedicated
+  PATCH `.../status` endpoint) before deleting — Clockify rejects deleting an active
+  category. Both live-verified via the ai-assistant addon.
+- Added rate-setting tools `clockify_projects_set_member_rate`,
+  `clockify_users_set_member_rate`, and `clockify_tasks_set_rate` — amounts are
+  given in MAJOR units and converted to integer minor via the SDK `toMinor`
+  helper, then PUT to the per-project-member / workspace-member / task rate
+  endpoints. This grows the MCP server to the **126-tool surface**.
+- `clockify_scheduling_assignments_list_per_project` now accepts a `projectId`
+  for one project's totals (the dedicated GET endpoint) instead of silently
+  returning all projects.
+- `clockify_time_off_policies_create`/`_update` now send their body FLAT (the
+  generated methods ignore a nested `body`), and `_update` reads-then-replaces
+  the policy and reconstructs the user/group scope into the `{contains,ids,status}`
+  filter form — the same replace-safety + scope fix as holidays.
+- `clockify_invoices_update` now reads-then-replaces the invoice via the SDK's
+  `invoiceUpdateBodyFromExisting`: a sparse update no longer wipes untouched
+  fields (note, subject, billFrom, …) and tax/discount are name+scale mapped
+  (GET `discount`/`tax` ×100 ints → PUT `*Percent`) instead of silently zeroed.
+  The tool also gained `taxPercent`/`discountPercent`/`tax2Percent` inputs.
+- `clockify_invoices_create` now accepts `note`/`subject` and applies them via a
+  follow-up update, because Clockify's `POST /invoices` silently drops them.
+- `clockify_holidays_update` now list-scans (there is no single-GET route),
+  rebuilds the full holiday body (PUT replaces), and reconstructs the user/group
+  assignment into Clockify's `{contains,ids,status}` filter form (the GET echoes
+  it flat); it errors clearly instead of dropping a required assignment.
+  `clockify_holidays_create`/`_update` accept `userIds`/`userGroupIds` scope.
+  All live-verified via the ai-assistant addon; see `spec/evidence/discrepancies.md`.
 - Added users/roles tools: `clockify_users_list`, `clockify_member_profile_get`
   (read), and the privileged `clockify_users_grant_role` /
   `clockify_users_revoke_role` writes, built on the newly stamped

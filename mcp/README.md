@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 123 tools: 20 workflow tools plus 103
+This package now advertises 126 tools: 20 workflow tools plus 106
 domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
@@ -222,8 +222,8 @@ Prompts:
 | Resource group | Count | Tools |
 |---|---:|---|
 | `clients` | 5 | list, get, create, update, delete |
-| `projects` | 5 | list, get, create, update, delete |
-| `tasks` | 5 | list, get, create, update, delete |
+| `projects` | 6 | list, get, create, update, delete, set_member_rate |
+| `tasks` | 6 | list, get, create, update, delete, set_rate |
 | `tags` | 5 | list, get, create, update, delete |
 | `entries` | 6 | list, get, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
@@ -232,7 +232,7 @@ Prompts:
 | `webhooks` | 5 | list, get, create, update, delete |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |
-| `users` | 4 | list, member_profile_get, grant_role, revoke_role |
+| `users` | 5 | list, member_profile_get, grant_role, revoke_role, set_member_rate |
 | `scheduling` | 7 | assignments list/create/update/delete plus publish and capacity |
 | `reports` | 4 | summary, detailed, weekly, attendance |
 | `groups` | 8 | CRUD plus membership tools |
@@ -324,7 +324,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 20+ | Go |
 | Transport | stdio | stdio |
-| Tools | 123 | 156 |
+| Tools | 126 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

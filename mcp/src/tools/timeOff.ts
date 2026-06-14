@@ -9,8 +9,27 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
+import { scopeFilter } from "../scope-filter.js";
 
 const REQUEST_STATUSES = ["APPROVED", "PENDING", "REJECTED", "WITHDRAWN"] as const;
+
+// Policy fields the generated PUT accepts and we carry forward from the GET on a
+// replace-style update (everything except the users/userGroups scope, which is
+// reconstructed from the flat GET via scopeFilter).
+const POLICY_CARRY_FIELDS = [
+    "allowHalfDay",
+    "allowNegativeBalance",
+    "approve",
+    "archived",
+    "automaticAccrual",
+    "automaticTimeEntryCreation",
+    "color",
+    "everyoneIncludingNew",
+    "hasExpiration",
+    "icon",
+    "name",
+    "negativeBalance",
+] as const;
 
 export function registerTimeOffTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -121,8 +140,10 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_requests_update_status",
         {
             title: "Update a time-off request status",
-            description: "Approve, reject, or change the status of a time-off request.",
+            description:
+                "Approve, reject, or change the status of a time-off request. Requires policyId — the status endpoint is policy-scoped.",
             inputSchema: {
+                policyId: z.string().min(1),
                 requestId: z.string().min(1),
                 statusType: z.enum(REQUEST_STATUSES),
                 note: z.string().optional(),
@@ -131,15 +152,22 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
-                const body: Record<string, unknown> = { statusType: args.statusType };
-                if (args.note) body.note = args.note;
-                const updated = await ctx.client.timeOff.updateStatus({
+                // The live status endpoint is PATCH
+                // /time-off/policies/{policyId}/requests/{requestId} and the WIRE
+                // field is `status` (`statusType` only appears in responses). The
+                // flat /requests/{id}/status route 404s, so use
+                // changeTimeOffRequestStatus, not updateStatus.
+                const req: Record<string, unknown> = {
                     workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
                     requestId: args.requestId,
-                    body,
-                });
+                    status: args.statusType,
+                };
+                if (args.note) req.note = args.note;
+                const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
                 return successResult("clockify_time_off_requests_update_status", updated, {
                     workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
                     requestId: args.requestId,
                 });
             } catch (err) {
@@ -235,24 +263,25 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 name: z.string().min(1),
                 timeUnit: z.string().optional().describe("DAYS | HOURS."),
-                daysPerYear: z.number().optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
-                requiresApproval: z.boolean().optional(),
-                automaticApproval: z.boolean().optional(),
+                userIds: z.array(z.string()).optional().describe("Apply to these users (sent as a CONTAINS filter)."),
+                userGroupIds: z.array(z.string()).optional().describe("Apply to these user groups (sent as a CONTAINS filter)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             try {
+                // The generated create reads the policy fields FLAT off the request
+                // (not a nested `body`), so spread them; a nested body is silently
+                // dropped.
                 const body: Record<string, unknown> = { name: args.name };
                 if (args.timeUnit) body.timeUnit = args.timeUnit;
-                if (args.daysPerYear !== undefined) body.daysPerYear = args.daysPerYear;
-                if (args.negativeBalanceAllowed !== undefined) body.negativeBalance = args.negativeBalanceAllowed;
-                if (args.requiresApproval !== undefined) body.requiresApproval = args.requiresApproval;
-                if (args.automaticApproval !== undefined) body.automaticApproval = args.automaticApproval;
+                if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
                 const created = await ctx.client.timeOffPolicies.create({
                     workspaceId: ctx.workspaceId,
-                    body,
+                    ...body,
                 } as never);
                 return successResult("clockify_time_off_policies_create", created, {
                     workspaceId: ctx.workspaceId,
@@ -267,29 +296,46 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_update",
         {
             title: "Update a time-off policy",
-            description: "Update one time-off policy's yearly balance and approval rules by ID.",
+            description:
+                "Update one time-off policy by ID. Reads the policy then replaces it (PUT semantics), preserving untouched fields and the user/group scope.",
             inputSchema: {
                 policyId: z.string().min(1),
                 name: z.string().optional(),
-                daysPerYear: z.number().optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
-                requiresApproval: z.boolean().optional(),
-                automaticApproval: z.boolean().optional(),
+                userIds: z.array(z.string()).optional().describe("Replace the scope with these users."),
+                userGroupIds: z.array(z.string()).optional().describe("Replace the scope with these user groups."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
+                // PUT /time-off/policies/{id} REPLACES the policy, the generated
+                // method reads body fields FLAT (a nested `body` is dropped), and the
+                // GET echoes the scope FLAT as userIds/userGroupIds. So read the
+                // policy, carry forward its editable fields, overlay the patch, and
+                // reconstruct the scope into the {contains,ids,status} filter form.
+                const existing = (await ctx.client.timeOffPolicies.get({
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                })) as Record<string, unknown>;
                 const body: Record<string, unknown> = {};
+                for (const k of POLICY_CARRY_FIELDS) {
+                    if (existing[k] !== undefined) body[k] = existing[k];
+                }
                 if (args.name) body.name = args.name;
-                if (args.daysPerYear !== undefined) body.daysPerYear = args.daysPerYear;
-                if (args.negativeBalanceAllowed !== undefined) body.negativeBalance = args.negativeBalanceAllowed;
-                if (args.requiresApproval !== undefined) body.requiresApproval = args.requiresApproval;
-                if (args.automaticApproval !== undefined) body.automaticApproval = args.automaticApproval;
+                if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
+                const existingUserIds = Array.isArray(existing.userIds) ? (existing.userIds as string[]) : [];
+                const existingGroupIds = Array.isArray(existing.userGroupIds)
+                    ? (existing.userGroupIds as string[])
+                    : [];
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
+                else if (existingUserIds.length) body.users = scopeFilter(existingUserIds);
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
+                else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds);
                 const updated = await ctx.client.timeOffPolicies.update({
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                    body,
+                    ...body,
                 } as never);
                 return successResult("clockify_time_off_policies_update", updated, {
                     workspaceId: ctx.workspaceId,

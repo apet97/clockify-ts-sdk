@@ -86,7 +86,7 @@
       "path": "mcp/CHANGELOG.md",
       "mustContain": [
         "@clockify115/mcp-server",
-        "123-tool surface",
+        "126-tool surface",
         "workflow tools"
       ]
     },

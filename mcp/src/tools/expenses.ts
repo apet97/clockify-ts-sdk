@@ -308,6 +308,14 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                // Clockify rejects deleting an ACTIVE category — archive it first
+                // via the dedicated PATCH .../status endpoint (not a replace), then
+                // delete.
+                await ctx.client.expenseCategories.archive({
+                    workspaceId: ctx.workspaceId,
+                    categoryId: args.categoryId,
+                    archived: true,
+                });
                 await ctx.client.expenseCategories.delete({
                     workspaceId: ctx.workspaceId,
                     categoryId: args.categoryId,

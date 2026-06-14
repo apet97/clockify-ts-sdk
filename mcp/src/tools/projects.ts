@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { toMinor } from "clockify-sdk-ts-115/money";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -175,6 +176,49 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 );
             } catch (err) {
                 return errorResult("clockify_projects_delete", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_projects_set_member_rate",
+        {
+            title: "Set a project member's rate",
+            description:
+                "Set a user's hourly (billable) or cost rate ON a specific project. Amount is in MAJOR units (e.g. 75 = $75.00); Clockify stores integer minor units. The member must already be on the project.",
+            inputSchema: {
+                projectId: z.string().min(1),
+                userId: z.string().min(1),
+                rateKind: z.enum(["HOURLY", "COST"]).describe("HOURLY = billable rate; COST = internal cost rate."),
+                amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
+                since: z.string().optional().describe("Effective-from date (ISO)."),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const amountMinor = toMinor(args.amount, "major");
+                const req: Record<string, unknown> = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                };
+                if (args.since) req.since = args.since;
+                const updated =
+                    args.rateKind === "COST"
+                        ? await ctx.client.projects.updateUserCostRate(req as never)
+                        : await ctx.client.projects.updateUserHourlyRate(req as never);
+                return successResult("clockify_projects_set_member_rate", updated, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    userId: args.userId,
+                    rateKind: args.rateKind,
+                    amountMajor: args.amount,
+                    amountMinor,
+                });
+            } catch (err) {
+                return errorResult("clockify_projects_set_member_rate", err);
             }
         },
     );

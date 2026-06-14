@@ -4,6 +4,7 @@
  * so their descriptions say so plainly.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { toMinor } from "clockify-sdk-ts-115/money";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -126,6 +127,46 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 );
             } catch (err) {
                 return errorResult("clockify_users_revoke_role", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_users_set_member_rate",
+        {
+            title: "Set a workspace member's rate",
+            description:
+                "Set a user's workspace-level hourly (billable) or cost rate — the Team-section rate that applies across the workspace. Amount is in MAJOR units (e.g. 75 = $75.00); Clockify stores integer minor units.",
+            inputSchema: {
+                userId: z.string().min(1),
+                rateKind: z.enum(["HOURLY", "COST"]).describe("HOURLY = billable rate; COST = internal cost rate."),
+                amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
+                since: z.string().optional().describe("Effective-from date (ISO)."),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const amountMinor = toMinor(args.amount, "major");
+                const req: Record<string, unknown> = {
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                };
+                if (args.since) req.since = args.since;
+                const updated =
+                    args.rateKind === "COST"
+                        ? await ctx.client.workspaces.updateUserCostRate(req as never)
+                        : await ctx.client.workspaces.updateUserHourlyRate(req as never);
+                return successResult("clockify_users_set_member_rate", updated, {
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    rateKind: args.rateKind,
+                    amountMajor: args.amount,
+                    amountMinor,
+                });
+            } catch (err) {
+                return errorResult("clockify_users_set_member_rate", err);
             }
         },
     );
