@@ -28,6 +28,8 @@
         "wrapper/tests/rate-limit.test.ts",
         "wrapper/tests/sandbox.test.ts",
         "wrapper/tests/webhooks.test.ts",
+        "wrapper/tests/wire-shape.test.ts",
+        "wrapper/tests/wire-shape-http.test.ts",
         "wrapper/tests/with-response.test.ts"
       ],
       "forbiddenSkipPatterns": [
@@ -78,6 +80,7 @@
         "mcp/tests/result.test.ts",
         "mcp/tests/sandbox.test.ts",
         "mcp/tests/server.test.ts",
+        "mcp/tests/wire-shape.test.ts",
         "mcp/tests/workflows.test.ts"
       ]
     }

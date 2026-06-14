@@ -5,6 +5,9 @@ export interface MockClockifyState {
     clients: Array<Record<string, unknown>>;
     projects: Array<Record<string, unknown>>;
     entries: Array<Record<string, unknown>>;
+    invoices: Array<Record<string, unknown>>;
+    /** Most recent `PUT /invoices/{id}` body, for wire-shape assertions. */
+    lastInvoicePut: Record<string, unknown> | null;
 }
 
 export interface MockClockifyServer {

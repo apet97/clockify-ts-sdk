@@ -6,6 +6,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added `mcp/tests/wire-shape.test.ts` locking the shared holiday/time-off-policy
+  `scopeFilter` `{contains:"CONTAINS", ids, status:"ALL"}` shape (the POST/PUT form
+  Clockify wants; the GET echoes it back flat).
 - Fixed `clockify_time_off_requests_update_status`: it now calls the policy-scoped
   `changeTimeOffRequestStatus` endpoint with the correct `status` wire field (it
   previously hit the dead `/time-off/requests/{id}/status` route with `statusType`,
