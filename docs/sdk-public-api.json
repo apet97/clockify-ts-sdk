@@ -68,7 +68,17 @@
     "CLOCKIFY_AMOUNT_UNITS",
     "invoiceUpdateBodyFromExisting",
     "INVOICE_EDITABLE_FIELDS",
-    "INVOICE_PERCENT_FIELD_MAP"
+    "INVOICE_PERCENT_FIELD_MAP",
+    "resolveRelativeDay",
+    "resolveInstant",
+    "resolvePeriod",
+    "REPORT_PERIODS",
+    "looksLikeClockifyId",
+    "matchByName",
+    "suggestOptions",
+    "resolveEntityRef",
+    "resolveProjectTaskRefs",
+    "resolveUserRef"
   ],
   "subpaths": {
     ".": [
@@ -149,6 +159,20 @@
       "invoiceUpdateBodyFromExisting",
       "INVOICE_EDITABLE_FIELDS",
       "INVOICE_PERCENT_FIELD_MAP"
+    ],
+    "./dates": [
+      "resolveRelativeDay",
+      "resolveInstant",
+      "resolvePeriod",
+      "REPORT_PERIODS"
+    ],
+    "./resolve": [
+      "looksLikeClockifyId",
+      "matchByName",
+      "suggestOptions",
+      "resolveEntityRef",
+      "resolveProjectTaskRefs",
+      "resolveUserRef"
     ]
   },
   "tsconfigAliases": {
@@ -211,6 +235,12 @@
     ],
     "clockify-sdk-ts-115/invoice-body": [
       "./invoice-body.ts"
+    ],
+    "clockify-sdk-ts-115/dates": [
+      "./dates.ts"
+    ],
+    "clockify-sdk-ts-115/resolve": [
+      "./resolve.ts"
     ]
   },
   "packageMarkerScan": {

@@ -226,6 +226,26 @@
         "types": "./dist/cjs/invoice-body.d.ts",
         "default": "./dist/cjs/invoice-body.js"
       }
+    },
+    "./dates": {
+      "import": {
+        "types": "./dist/esm/dates.d.ts",
+        "default": "./dist/esm/dates.js"
+      },
+      "require": {
+        "types": "./dist/cjs/dates.d.ts",
+        "default": "./dist/cjs/dates.js"
+      }
+    },
+    "./resolve": {
+      "import": {
+        "types": "./dist/esm/resolve.d.ts",
+        "default": "./dist/esm/resolve.js"
+      },
+      "require": {
+        "types": "./dist/cjs/resolve.d.ts",
+        "default": "./dist/cjs/resolve.js"
+      }
     }
   },
   "files": [
