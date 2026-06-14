@@ -71,6 +71,12 @@
       ],
       "clockify-sdk-ts-115/operation-receipt": [
         "./operation-receipt.ts"
+      ],
+      "clockify-sdk-ts-115/money": [
+        "./money.ts"
+      ],
+      "clockify-sdk-ts-115/invoice-body": [
+        "./invoice-body.ts"
       ]
     }
   },
@@ -95,6 +101,8 @@
     "rate-limit.ts",
     "request-options.ts",
     "operation-receipt.ts",
+    "money.ts",
+    "invoice-body.ts",
     "tests/**/*.ts",
     "examples/**/*.ts",
     "scripts/**/*.ts"

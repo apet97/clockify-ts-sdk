@@ -9,6 +9,17 @@ once v1.0.0 ships.
 
 ### Added
 
+- Added the `money` subpath: `toMinor()` / `toMajor()` plus the
+  `CLOCKIFY_AMOUNT_UNITS` table and `invoiceItemUnitPrice*` helpers encode
+  Clockify's non-uniform money units in one place — invoices/payments/rates are
+  minor (cents), expenses are MAJOR (dollars), and an invoice item `unitPrice` is
+  minor×100 — so callers stop guessing and silently mis-billing.
+- Added the `invoice-body` subpath: `invoiceUpdateBodyFromExisting()` builds a
+  safe `PUT /invoices/{id}` body. It carries forward the editable fields the
+  replace-semantics PUT would otherwise wipe, and maps the GET's ×100
+  `discount`/`tax`/`tax2` integers to the PUT's `discountPercent`/`taxPercent`/
+  `tax2Percent` fields — preventing the silent tax/discount zeroing that goclmcp
+  (the spec source) still inherits. Live-verified via the ai-assistant addon.
 - Added the `request-options` subpath: `requestOptions()`, `withHeaders()`,
   `withIdempotencyKey()`, and `withRequestTimeout()` give per-call timeout,
   retry, abort, query, and header behavior a stable public type without
