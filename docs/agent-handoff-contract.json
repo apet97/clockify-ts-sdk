@@ -98,6 +98,8 @@
   "forbiddenGuidanceMarkers": [
     "44 public names",
     "89 tools",
+    "123 tools",
+    "123 advertised",
     "no workflow tools",
     "clockify-sdk-ts` |"
   ],

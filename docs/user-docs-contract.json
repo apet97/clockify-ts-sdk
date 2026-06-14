@@ -119,6 +119,10 @@
         "structuredContent",
         "generated:mcp-workflow-tools",
         "generated:mcp-domain-tools"
+      ],
+      "forbiddenMarkers": [
+        "advertises 123 tools",
+        "| Tools | 123 |"
       ]
     },
     {
@@ -126,7 +130,7 @@
       "path": "mcp/CHANGELOG.md",
       "mustContain": [
         "@clockify115/mcp-server",
-        "123-tool surface",
+        "126-tool surface",
         "workflow tools"
       ],
       "forbiddenMarkers": [
