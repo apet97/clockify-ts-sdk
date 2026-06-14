@@ -14,8 +14,8 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP"
-EXPECTED_ROOT_SURFACE_COUNT=61
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef"
+EXPECTED_ROOT_SURFACE_COUNT=71
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
@@ -98,6 +98,12 @@ if (typeof mn.toMinor !== 'function') { console.error('CJS subpath money.toMinor
 if (typeof mn.toMajor !== 'function') { console.error('CJS subpath money.toMajor broken'); process.exit(1); }
 const ib = require('./dist/cjs/invoice-body.js');
 if (typeof ib.invoiceUpdateBodyFromExisting !== 'function') { console.error('CJS subpath invoice-body.invoiceUpdateBodyFromExisting broken'); process.exit(1); }
+const dt = require('./dist/cjs/dates.js');
+if (typeof dt.resolveRelativeDay !== 'function') { console.error('CJS subpath dates.resolveRelativeDay broken'); process.exit(1); }
+if (typeof dt.resolvePeriod !== 'function') { console.error('CJS subpath dates.resolvePeriod broken'); process.exit(1); }
+const rs = require('./dist/cjs/resolve.js');
+if (typeof rs.resolveEntityRef !== 'function') { console.error('CJS subpath resolve.resolveEntityRef broken'); process.exit(1); }
+if (typeof rs.matchByName !== 'function') { console.error('CJS subpath resolve.matchByName broken'); process.exit(1); }
 console.log('OK: All ' + process.env.SUBPATH_COUNT + ' CJS subpaths resolve');
 "
 

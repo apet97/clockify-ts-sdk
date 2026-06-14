@@ -39,6 +39,17 @@ once v1.0.0 ships.
   `wire-shape-http.test.ts` round-trips the invoice tax/discount + replace quirks
   through the generated SDK against an extended mock Clockify server (new invoice
   GET/PUT/POST routes reproducing the ×100 tax/discount and note/subject drop).
+- Added the `resolve` subpath: `looksLikeClockifyId`, `matchByName`,
+  `suggestOptions`, `resolveEntityRef`, `resolveProjectTaskRefs`, and
+  `resolveUserRef` turn a name (or `me`) into a real Clockify id BEFORE the call —
+  case-insensitive, with a grounded "did you mean?" clarify on a miss or ambiguous
+  match — so a CLI flag or agent argument never ships a typo'd name to the wire as
+  an id. The list lookups are caller-supplied callbacks, so the layer is
+  client-agnostic.
+- Added the `dates` subpath: `resolveRelativeDay`, `resolveInstant`,
+  `resolvePeriod`, and `REPORT_PERIODS` resolve "yesterday" / "next Monday" / a
+  period keyword to the `YYYY-MM-DD` or UTC instant the API wants, given an
+  explicit `now` — so a model or remote clock never computes calendar dates.
 
 ### Changed
 

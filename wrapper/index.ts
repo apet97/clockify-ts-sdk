@@ -156,3 +156,28 @@ export {
     INVOICE_PERCENT_FIELD_MAP,
     invoiceUpdateBodyFromExisting,
 } from "./invoice-body.js";
+// Server-side date/period resolution — turn "yesterday" / "next Monday" / a
+// period keyword into the UTC instant the API wants, so a model or remote clock
+// never computes calendar dates.
+export {
+    REPORT_PERIODS,
+    resolveInstant,
+    resolvePeriod,
+    resolveRelativeDay,
+    type ReportPeriod,
+} from "./dates.js";
+// Name → id resolution — turn a CLI flag / agent argument that is a name into a
+// real id (case-insensitive, grounded "did you mean?" on a miss) before the call.
+export {
+    looksLikeClockifyId,
+    matchByName,
+    resolveEntityRef,
+    resolveProjectTaskRefs,
+    resolveUserRef,
+    suggestOptions,
+    type ArchivedFilter,
+    type ClarifyOption,
+    type ClarifyResult,
+    type NameMatch,
+    type ResolveEntityResult,
+} from "./resolve.js";

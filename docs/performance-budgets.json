@@ -59,13 +59,13 @@
   "fileSize": [
     {
       "path": "wrapper/dist/esm/index.js",
-      "maxBytes": 3500,
-      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application. Calibrated from measured baseline of 2501 bytes (max(actual*1.35, actual+500))."
+      "maxBytes": 4500,
+      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application. Recalibrated from 3500 after the money/invoice-body/resolve/dates root re-exports grew the barrel to ~4008 bytes (actual + ~12% headroom)."
     },
     {
       "path": "wrapper/dist/cjs/index.js",
-      "maxBytes": 16000,
-      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Calibrated from measured baseline of 11693 bytes."
+      "maxBytes": 18500,
+      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Recalibrated from 16000 after the money/invoice-body/resolve/dates root re-exports grew the CJS barrel to ~17027 bytes (actual + ~9% headroom)."
     },
     {
       "path": "cli/dist/index.js",

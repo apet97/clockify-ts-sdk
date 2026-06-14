@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-06-01T18:03:54.804Z",
+  "measuredAt": "2026-06-14T23:53:54.143Z",
   "source": "scripts/check-performance-budgets.mjs",
   "budgetsSchemaVersion": 2,
-  "budgetFingerprint": "75666ace9a5e5e9fc351192dc9c46ac9ea3470a25a8c28db77cfe9d79ef48501",
+  "budgetFingerprint": "66a49df669e6583084abeae8107694de1aba56390d9346154afddcae417bfd71",
   "calibrationPolicy": {
     "status": "calibrated",
     "finalStatus": "calibrated",
@@ -15,18 +15,18 @@
     {
       "kind": "fileSize",
       "path": "wrapper/dist/esm/index.js",
-      "actualBytes": 2699,
-      "maxBytes": 3500,
+      "actualBytes": 4008,
+      "maxBytes": 4500,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "fileSize",
       "path": "wrapper/dist/cjs/index.js",
-      "actualBytes": 12855,
-      "maxBytes": 16000,
+      "actualBytes": 17027,
+      "maxBytes": 18500,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "fileSize",
@@ -34,7 +34,7 @@
       "actualBytes": 6795,
       "maxBytes": 8000,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "fileSize",
@@ -42,31 +42,31 @@
       "actualBytes": 1110,
       "maxBytes": 1700,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "timing",
       "name": "sdk-esm-import",
-      "actualMs": 312,
+      "actualMs": 351,
       "maxMs": 600,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "timing",
       "name": "cli-version",
-      "actualMs": 325,
+      "actualMs": 285,
       "maxMs": 600,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     },
     {
       "kind": "timing",
       "name": "mcp-tools-list",
-      "actualMs": 588,
+      "actualMs": 865,
       "maxMs": 1200,
       "ok": true,
-      "measuredAt": "2026-06-01T18:03:54.804Z"
+      "measuredAt": "2026-06-14T23:53:54.143Z"
     }
   ],
   "failures": []

@@ -77,6 +77,12 @@
       ],
       "clockify-sdk-ts-115/invoice-body": [
         "./invoice-body.ts"
+      ],
+      "clockify-sdk-ts-115/dates": [
+        "./dates.ts"
+      ],
+      "clockify-sdk-ts-115/resolve": [
+        "./resolve.ts"
       ]
     }
   },
@@ -103,6 +109,8 @@
     "operation-receipt.ts",
     "money.ts",
     "invoice-body.ts",
+    "dates.ts",
+    "resolve.ts",
     "tests/**/*.ts",
     "examples/**/*.ts",
     "scripts/**/*.ts"

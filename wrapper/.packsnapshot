@@ -8,6 +8,10 @@ dist/cjs/create-client.d.ts
 dist/cjs/create-client.d.ts.map
 dist/cjs/create-client.js
 dist/cjs/create-client.js.map
+dist/cjs/dates.d.ts
+dist/cjs/dates.d.ts.map
+dist/cjs/dates.js
+dist/cjs/dates.js.map
 dist/cjs/deprecation.d.ts
 dist/cjs/deprecation.d.ts.map
 dist/cjs/deprecation.js
@@ -69,6 +73,10 @@ dist/cjs/request-options.d.ts
 dist/cjs/request-options.d.ts.map
 dist/cjs/request-options.js
 dist/cjs/request-options.js.map
+dist/cjs/resolve.d.ts
+dist/cjs/resolve.d.ts.map
+dist/cjs/resolve.js
+dist/cjs/resolve.js.map
 dist/cjs/scoped-client.d.ts
 dist/cjs/scoped-client.d.ts.map
 dist/cjs/scoped-client.js
@@ -2837,6 +2845,10 @@ dist/esm/create-client.d.ts
 dist/esm/create-client.d.ts.map
 dist/esm/create-client.js
 dist/esm/create-client.js.map
+dist/esm/dates.d.ts
+dist/esm/dates.d.ts.map
+dist/esm/dates.js
+dist/esm/dates.js.map
 dist/esm/deprecation.d.ts
 dist/esm/deprecation.d.ts.map
 dist/esm/deprecation.js
@@ -2897,6 +2909,10 @@ dist/esm/request-options.d.ts
 dist/esm/request-options.d.ts.map
 dist/esm/request-options.js
 dist/esm/request-options.js.map
+dist/esm/resolve.d.ts
+dist/esm/resolve.d.ts.map
+dist/esm/resolve.js
+dist/esm/resolve.js.map
 dist/esm/scoped-client.d.ts
 dist/esm/scoped-client.d.ts.map
 dist/esm/scoped-client.js
