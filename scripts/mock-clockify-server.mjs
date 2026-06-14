@@ -21,6 +21,27 @@ export function createMockClockifyServer(options = {}) {
             },
         ],
         entries: [],
+        invoices: [
+            {
+                // Wire-shape fixture: tax/discount are ×100-scaled integers on the
+                // GET (10% reads back as 1000), and note/subject ARE present on a
+                // real invoice (the POST drops them; only a follow-up PUT sets them).
+                id: "000000000000000000000401",
+                number: "INV-1",
+                clientId: "000000000000000000000201",
+                currency: "USD",
+                note: "Net 30 terms",
+                subject: "Website redesign",
+                discount: 500,
+                tax: 1000,
+                tax2: 0,
+                amount: 120000,
+                status: "UNSENT",
+            },
+        ],
+        // Captures the most recent PUT /invoices/{id} body so tests can assert the
+        // exact wire bytes (tax/discount name+scale, preserved fields).
+        lastInvoicePut: null,
     };
 
     function json(res, status, body, headers = {}) {
@@ -118,6 +139,46 @@ export function createMockClockifyServer(options = {}) {
                 }
                 if (req.method === "GET" && resource === "projects" && !id) {
                     json(res, 200, page(state.projects, url), { "Last-Page": "true" });
+                    return;
+                }
+                if (req.method === "GET" && resource === "invoices" && !id) {
+                    json(res, 200, { invoices: page(state.invoices, url), total: state.invoices.length }, { "Last-Page": "true" });
+                    return;
+                }
+                if (req.method === "POST" && resource === "invoices" && !id) {
+                    const body = await readBody(req);
+                    // POST silently drops note/subject — both echo the workspace placeholder.
+                    const invoice = {
+                        id: randomUUID().replaceAll("-", "").slice(0, 24),
+                        number: body.number ?? "INV-NEW",
+                        clientId: body.clientId ?? null,
+                        currency: body.currency ?? "USD",
+                        note: "INPUT BILL INFO HERE",
+                        subject: "INPUT BILL INFO HERE",
+                        discount: 0,
+                        tax: 0,
+                        tax2: 0,
+                    };
+                    state.invoices.push(invoice);
+                    json(res, 201, invoice);
+                    return;
+                }
+                if (req.method === "GET" && resource === "invoices" && id) {
+                    const invoice = state.invoices.find((inv) => inv.id === id);
+                    if (!invoice) {
+                        notFound(res);
+                        return;
+                    }
+                    json(res, 200, invoice);
+                    return;
+                }
+                if (req.method === "PUT" && resource === "invoices" && id) {
+                    const body = await readBody(req);
+                    // PUT replaces the document — capture the exact body sent.
+                    state.lastInvoicePut = body;
+                    const invoice = state.invoices.find((inv) => inv.id === id);
+                    if (invoice) Object.assign(invoice, body);
+                    json(res, 200, invoice ?? { id, ...body });
                     return;
                 }
                 if (

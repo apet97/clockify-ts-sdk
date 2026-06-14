@@ -14,7 +14,11 @@
     "DELETE /workspaces/{workspaceId}/tags/{tagId}",
     "GET /workspaces/{workspaceId}/clients",
     "GET /workspaces/{workspaceId}/projects",
-    "GET /workspaces/{workspaceId}/time-entries/status/in-progress"
+    "GET /workspaces/{workspaceId}/time-entries/status/in-progress",
+    "GET /workspaces/{workspaceId}/invoices",
+    "POST /workspaces/{workspaceId}/invoices",
+    "GET /workspaces/{workspaceId}/invoices/{invoiceId}",
+    "PUT /workspaces/{workspaceId}/invoices/{invoiceId}"
   ],
   "requiredHeaders": [
     "X-Request-Id",
@@ -46,6 +50,15 @@
         "loadContext",
         "CLOCKIFY_BASE_URL",
         "clockify_status"
+      ]
+    },
+    {
+      "surface": "sdk",
+      "path": "wrapper/tests/wire-shape-http.test.ts",
+      "mustContain": [
+        "invoiceUpdateBodyFromExisting",
+        "taxPercent",
+        "lastInvoicePut"
       ]
     }
   ],
