@@ -1797,3 +1797,232 @@ routes that return 404/405 live exist.
 - **Status:** `not-a-bug; intentional`. Recorded so a future audit
   does not "fix" the precedence and regress mock/replay. No code
   change.
+
+---
+
+## Live-verified money & wire-shape findings ported from the ai-assistant addon (2026-06-14)
+
+These entries port hard-won, **live-probed** Clockify behaviour from the sibling
+`ai-assistant-addon` (its `src/clockify/rest/*` adapter, probe dates 2026-06-10/-11/-12).
+That addon hits the real API on every request and found these by probing, not by
+reading the spec — so they supersede the spec where they disagree. Some are now
+**compensated in this repo's hand-written/MCP layer** (with tests); the rest carry
+exact wiring notes and stay `open` until coded + probe-pinned here.
+
+### `invoices.update.replace-and-tax-discount-zeroing` — COMPENSATED 2026-06-14
+
+- **Official claim:** `PUT /invoices/{id}` updates an invoice; the GET and PUT
+  share field names.
+- **Actual behavior (addon live-probe 2026-06-10):** the PUT **replaces** the
+  whole document — a sparse body drops every omitted field (note, subject,
+  billFrom, clientAddress, …). AND tax/discount are asymmetric: the GET returns
+  `discount`/`tax`/`tax2` as ×100-scaled integers (10% reads back as `1000`),
+  but the PUT body wants `discountPercent`/`taxPercent`/`tax2Percent` as plain
+  percents. Copying the GET names verbatim **silently ZEROES** tax/discount on
+  every update. goclmcp (this repo's spec source) inherits the bug.
+- **Live evidence:** addon `tests/unit/rest-invoices.test.ts`
+  (`invoiceUpdateBodyFromExisting` / `INVOICE_PERCENT_FIELDS`) and its
+  `docs/HISTORY.md` "the big one" post-mortem.
+- **MCP tools affected:** `clockify_invoices_update`, `clockify_invoices_create`.
+- **Open questions:** none.
+- **Status:** `compensated-in-tool-layer`. Shipped here as the pure wrapper
+  helper `wrapper/invoice-body.ts` (`invoiceUpdateBodyFromExisting` — editable
+  whitelist + name+scale ÷100 map) consumed by `clockify_invoices_update`, which
+  now does GET-then-PUT. Tests: `wrapper/tests/invoice-body.test.ts`,
+  `mcp/tests/invoices.test.ts`.
+
+### `invoices.create.note-subject-dropped` — COMPENSATED 2026-06-14
+
+- **Official claim:** `POST /invoices` accepts `note`/`subject`.
+- **Actual behavior (addon live-probe 2026-06-11):** POST accepts ONLY
+  `CreateInvoiceRequest` fields (clientId/currency/dueDate/issuedDate/number);
+  `note`/`subject` are **silently dropped** — POST + a follow-up GET both echo the
+  workspace placeholder ("INPUT BILL INFO HERE"), never the supplied text.
+- **Live evidence:** addon `src/clockify/rest/invoices.ts:219-242` + unit test.
+- **MCP tools affected:** `clockify_invoices_create`.
+- **Open questions:** none.
+- **Status:** `compensated-in-tool-layer`. `clockify_invoices_create` now accepts
+  note/subject and applies them via the verified GET-then-PUT path after create.
+
+### `money.amount-units.expenses-major-invoices-minor` — COMPENSATED 2026-06-14
+
+- **Official claim:** money fields use "raw upstream integer units" uniformly.
+- **Actual behavior (addon live-verified):** units are NOT uniform — invoices,
+  invoice payments, and rates are **minor** (cents) on the wire; **expenses are
+  MAJOR** (dollars). An invoice item `unitPrice` is a third scale, minor×100
+  (Clockify computes `amount = unitPrice × quantity / 100`).
+- **Live evidence:** addon `src/harness/money.ts`, `rest/expenses.ts`,
+  `rest/invoices.ts:78-95` + tests.
+- **MCP tools affected:** every money-carrying tool (expenses, invoices, reports,
+  rates).
+- **Open questions:** none for the helper; per-tool adoption tracked below.
+- **Status:** `compensated-in-wrapper`. Shipped here as `wrapper/money.ts`
+  (`toMinor`/`toMajor`, `CLOCKIFY_AMOUNT_UNITS`, `invoiceItemUnitPrice*`). The
+  existing `clockify_expenses_create` already passes major units, consistent with
+  this table; rate tools (below) should funnel through `toMinor`. Tests:
+  `wrapper/tests/money.test.ts`.
+
+### `holidays.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
+
+- **Official claim:** update a holiday's changed fields.
+- **Actual behavior (addon live-verified 2026-06-12):** `PUT /holidays/{id}`
+  **replaces** the document (omitted fields 400 "must not be null"), there is **no
+  single-GET route** (must list-scan), and the assignment round-trips
+  asymmetrically — GET echoes it FLAT as `userIds`/`userGroupIds`, but POST/PUT
+  want it as a `{contains:"CONTAINS", ids, status}` filter under `users`/
+  `userGroups`. A holiday with no resolvable assignment is rejected.
+- **Live evidence:** addon `src/clockify/rest/holidays.ts:62-97` + unit tests.
+- **MCP tools affected:** `clockify_holidays_update`, `clockify_holidays_create`.
+- **Open questions:** none.
+- **Status:** `compensated-in-tool-layer`. `clockify_holidays_update` now
+  list-scans, rebuilds the full body, reconstructs the flat assignment into the
+  CONTAINS filter, and errors clearly when no assignment can be preserved;
+  create accepts `userIds`/`userGroupIds`. Tests: `mcp/tests/holidays.test.ts`.
+
+### `time-off.policies.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
+
+- **Actual behavior (addon live-verified 2026-06-12):** identical class to
+  holidays — `PUT /time-off/policies/{policyId}` replaces the doc and wants
+  `users`/`userGroups` as `{contains,ids,status}` filters; GET echoes them flat.
+  Unlike holidays, policies DO have a single GET (`timeOffPolicies.get`).
+- **MCP tools affected:** `clockify_time_off_policies_update`,
+  `clockify_time_off_policies_create`.
+- **Open questions:** confirm the generated `timeOffPolicies.update` body accepts
+  the `users`/`userGroups` filter keys (it lists them in `bodyFromRequest`).
+- **Status:** `compensated-in-tool-layer` (2026-06-14). `clockify_time_off_policies_update`
+  now GET-then-PUTs via `timeOffPolicies.get`, carries forward the accepted policy
+  fields (`POLICY_CARRY_FIELDS`), reconstructs the scope via the shared
+  `mcp/src/scope-filter.ts`, and passes the body **FLAT** — the generated method reads
+  fields flat and silently dropped the prior nested `body` (a pre-existing bug also
+  fixed); create accepts `userIds`/`userGroupIds`. Tests: `mcp/tests/time-off-policies.test.ts`.
+
+### `rates.put-minor-units-no-get` — PARTIALLY COMPENSATED 2026-06-14
+
+- **Actual behavior (addon live-verified 2026-06-12):** rates are PUTs of an
+  integer **minor-unit** `{amount}` body; **GET on a rate path 405s** (discover
+  the current value from a membership/project doc). Per-scope endpoints:
+  per-project member `…/projects/{p}/users/{u}/{hourly-rate|cost-rate}`;
+  Team-section workspace member `…/users/{u}/{hourly-rate|cost-rate}`; task
+  `…/projects/{p}/tasks/{t}/{cost-rate|hourly-rate}`. The project **default**
+  rate has NO standalone endpoint in the addon's experience — it set
+  `hourlyRate`/`costRate` in the project create/update BODY.
+- **MCP tools affected:** none yet (the SDK exposes no rate-setting tools).
+- **Open questions:** the generated client DOES carry `projects.updateHourlyRate`
+  / `updateCostRate` at `PUT /projects/{id}/hourly-rate` (the project-default
+  path). The addon found no working default-rate endpoint — so this is a
+  spec-vs-live conflict (like the deferred `projects.archive`). **Probe a fake-id
+  request (404 vs 405) before shipping a default-rate tool.**
+- **Status:** `compensated-in-tool-layer` for the LIVE-VERIFIED member/task rates
+  (2026-06-14); the project-DEFAULT rate stays `open`. Shipped three tools — all take
+  amount in MAJOR units and `toMinor(amount,"major")` to integer minor:
+  `clockify_projects_set_member_rate` (`projects.updateUserHourlyRate`/`updateUserCostRate`),
+  `clockify_users_set_member_rate` (`workspaces.updateUserHourlyRate`/`updateUserCostRate`,
+  the Team-section workspace-member rate), and `clockify_tasks_set_rate`
+  (`tasks.updateBillableRate`/`updateCostRate`). Tests: `mcp/tests/rates.test.ts`. This
+  bumped the tool-surface contract to **126** (`docs/mcp-tools.json`, `mcp-contract.json`,
+  `mcp-agent-ux-contract.json`, `docs/docs-quality-contract.json`,
+  `docs/user-docs-contract.json`, `scripts/check-performance-budgets.mjs`,
+  `mcp/tests/server.test.ts`, + README/product-surface/operation-parity regen).
+  STILL OPEN: the **project-default** rate — the generated `projects.updateHourlyRate`/
+  `updateCostRate` hit `PUT /projects/{id}/hourly-rate`, but the addon found no working
+  default-rate endpoint (set `hourlyRate`/`costRate` in the project body instead). Probe
+  a fake-id request (404 vs 405) before shipping a default-rate tool.
+
+### `scheduling.project-totals.get-vs-post` — COMPENSATED 2026-06-14
+
+- **Actual behavior (addon live-verified):** a single project's schedule totals
+  live at **GET** `…/scheduling/assignments/projects/totals/{projectId}?start&end`.
+  The all-projects search is a **POST** whose body has NO `projectId` field —
+  sending one was silently dropped and returned ALL projects.
+- **MCP tools affected:** the scheduling totals surface
+  (`clockify_scheduling_assignments_list_per_project` / `clockify_scheduling_capacity`).
+- **Open questions:** the generated `scheduling.listOnProject` (single-project GET)
+  carries no `start`/`end` query params; if the live endpoint needs a date range,
+  that's a generator gap to widen separately.
+- **Status:** `compensated-in-tool-layer` (2026-06-14).
+  `clockify_scheduling_assignments_list_per_project` now takes an optional `projectId`
+  and routes to the single-project GET (`scheduling.listOnProject`); without it, the
+  all-projects POST (`listPerProject`). Tests: `mcp/tests/scheduling-totals.test.ts`.
+  Port from addon `src/clockify/rest/scheduling.ts:102-120`.
+
+### `single-gets.404-405-read-from-list` — OPEN
+
+- **Actual behavior (addon live-verified):** several single-GETs are not real
+  routes and must read-from-list: `GET /time-off/requests/{id}` 404 ("No static
+  resource") → POST-search the requests list and scan; `GET /user-groups/{id}`
+  404 → list + scan; `GET /custom-fields/{id}` 405 → list + scan; invoice items
+  come from the single-invoice GET (already handled). Holidays/{id} (404) is
+  handled by the holidays-update list-scan above.
+- **MCP tools affected:** `clockify_time_off_requests_get` (currently a single
+  `timeOff.get` — likely 404s live), `clockify_groups_get`.
+- **Open questions:** **fake-id probe (404 vs 405) each route before converting** —
+  don't convert a route that actually works.
+- **Status:** `open`. Port the get-by-scan / POST-search shapes from the addon
+  `src/clockify/rest/{time-off,users}.ts`.
+
+### `invoices.items-unit-price-scale` + `invoices.payments.post-returns-invoice` — OPEN (no tools yet)
+
+- **Actual behavior (addon live-probe 2026-06-10):** invoice item `unitPrice` is
+  minor×100 on the wire (sending plain minor billed a $1000 item as $10); and
+  `POST /invoices/{id}/payments` returns the updated **invoice** document, not the
+  payment — the new payment id must be list-diffed around the POST.
+- **MCP tools affected:** none — the MCP surface has no invoice item-add or
+  payment-create tool (`mcp/src/tools/invoices.ts` defers items to a workflow).
+- **Open questions:** none.
+- **Status:** `open`. If item/payment tools are added later, scale unitPrice via
+  `wrapper/money.ts` `invoiceItemUnitPriceToWire` and list-diff the payment id.
+  Port from addon `src/clockify/rest/invoices.ts:249-277`.
+
+### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
+
+- **Actual behavior (addon live-verified):** the request status endpoint is PATCH
+  `/time-off/policies/{policyId}/requests/{requestId}` and the wire field is
+  **`status`** (`statusType` only appears in responses). The flat
+  `/time-off/requests/{requestId}/status` route 404s.
+- **Bug found:** `clockify_time_off_requests_update_status` called the generated
+  `timeOff.updateStatus` (the dead flat route) with a `statusType` body — so every
+  approve/deny hit the wrong endpoint with the wrong field name.
+- **Live evidence:** addon `src/clockify/rest/time-off.ts:187-194` ("the wire field
+  is `status`; `statusType` only appears in responses"); generated
+  `timeOff.changeTimeOffRequestStatus` (PATCH policy-scoped, body `["note","status"]`)
+  vs `timeOff.updateStatus` (PATCH flat, body `["note","statusType"]`).
+- **Status:** `compensated-in-tool-layer`. The tool now requires `policyId`, calls
+  `changeTimeOffRequestStatus`, and sends `status`. Test: `mcp/tests/sweep-fixes.test.ts`.
+
+### `deletes.archive-first` — PARTIALLY COMPENSATED 2026-06-14
+
+- **Actual behavior (addon live-verified):** Clockify rejects DELETE of an ACTIVE
+  entity. Projects/clients/expense-categories must be archived first; tasks marked
+  DONE first.
+- **Live evidence:** addon `rest/projects.ts:54-57`, `rest/clients.ts:35-37`,
+  `rest/tasks.ts:44-47`, `rest/expenses.ts` (category archive via PATCH `/status`).
+- **MCP tools affected:** `clockify_projects_delete`, `clockify_clients_delete`,
+  `clockify_tasks_delete`, `clockify_expenses_categories_delete` (all bare DELETE).
+- **Status:** `compensated-in-tool-layer` for expense categories (2026-06-14) —
+  `clockify_expenses_categories_delete` now `expenseCategories.archive({archived:true})`
+  (the dedicated PATCH `/status`, no replace risk) before delete. Test:
+  `mcp/tests/sweep-fixes.test.ts`. STILL OPEN: projects/clients/tasks — their archive
+  is a **replace-PUT** (`*.update`), so a sparse `{archived:true}`/`{status:"DONE"}`
+  risks a 400 on missing required fields; the safe fix is GET-then-PUT (carry the
+  entity's fields, overlay archived/DONE) then DELETE. The dedicated `/archive` routes
+  (`projects.archive`, `clients.archive`) are suspect — `projects.archive` is a known
+  dead 404 route — so prefer the update path. All wired through `requireConfirmation`.
+
+### `time-off.requests.get.dead-route` — OPEN
+
+- **Actual behavior (addon live-verified):** `GET /time-off/requests/{id}` 404s ("No
+  static resource"); the addon POST-searches the requests list and scans by id.
+- **MCP tool affected:** `clockify_time_off_requests_get` (calls the dead
+  `timeOff.get` → `GET /time-off/requests/{requestId}`).
+- **Open questions:** fake-id probe (404 vs 405) to re-confirm, then convert to a
+  list/POST-search + scan (the generated `timeOff.list` is the search surface).
+- **Status:** `open`. Port from addon `src/clockify/rest/time-off.ts:151-161`.
+
+### `user-groups.get.returns-void` — OPEN (generator/upstream)
+
+- **Actual behavior:** the generated `userGroups.get` is emitted with
+  `responseType: "void"`, so `clockify_groups_get` gets nothing back even when the
+  group exists; addon reads groups from the list (no single-GET).
+- **Status:** `open`. This is a generated-shape defect — fix belongs upstream in the
+  spec/generator (`../GOCLMCP/`), or compensate by converting `clockify_groups_get`
+  to a `groups.list` + scan in the tool layer (probe 404/405 first).
