@@ -27,7 +27,9 @@
         "./diagnostics",
         "./errors",
         "./health",
+        "./invoice-body",
         "./iter",
+        "./money",
         "./operation-receipt",
         "./otel-hooks",
         "./paginated-list",
@@ -83,9 +85,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 123,
+      "declaredToolCount": 126,
       "declaredWorkflowToolCount": 20,
-      "declaredDomainToolCount": 103,
+      "declaredDomainToolCount": 106,
       "prepublishOnly": "npm run type-check && npm test && npm run build",
       "gates": [
         "npm run type-check",

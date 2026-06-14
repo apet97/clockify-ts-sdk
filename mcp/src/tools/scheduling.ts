@@ -46,8 +46,10 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_list_per_project",
         {
             title: "List scheduling assignments per project",
-            description: "List scheduling assignments grouped by project.",
+            description:
+                "Scheduling assignment totals grouped by project. Pass a projectId for one project's totals (a dedicated GET endpoint); otherwise all projects.",
             inputSchema: {
+                projectId: z.string().optional().describe("One project's totals. Uses the GET .../projects/totals/{projectId} endpoint."),
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
             },
@@ -55,6 +57,20 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                // A single project's totals live at GET .../projects/totals/{projectId}.
+                // The all-projects search is a POST whose body has NO projectId field —
+                // sending one was silently dropped and returned ALL projects, so route
+                // by presence of projectId instead.
+                if (args.projectId) {
+                    const one = await ctx.client.scheduling.listOnProject({
+                        workspaceId: ctx.workspaceId,
+                        projectId: args.projectId,
+                    });
+                    return successResult("clockify_scheduling_assignments_list_per_project", one, {
+                        workspaceId: ctx.workspaceId,
+                        projectId: args.projectId,
+                    });
+                }
                 const items = (await ctx.client.scheduling.listPerProject({
                     workspaceId: ctx.workspaceId,
                     page: args.page ?? 1,

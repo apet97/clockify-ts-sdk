@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
+import { scopeFilter } from "../scope-filter.js";
 
 export function registerHolidaysTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -75,6 +76,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 endDate: z.string().min(1).describe("YYYY-MM-DD."),
                 occursAnnually: z.boolean().optional(),
                 everyoneIncludingNew: z.boolean().optional(),
+                userIds: z.array(z.string()).optional().describe("Assign to these users (sent as a CONTAINS filter)."),
+                userGroupIds: z.array(z.string()).optional().describe("Assign to these user groups (sent as a CONTAINS filter)."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
@@ -88,6 +91,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 if (args.occursAnnually !== undefined) body.occursAnnually = args.occursAnnually;
                 if (args.everyoneIncludingNew !== undefined)
                     body.everyoneIncludingNew = args.everyoneIncludingNew;
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
                 if (args.color) body.color = args.color;
                 const created = await ctx.client.holidays.create({
                     workspaceId: ctx.workspaceId,
@@ -106,26 +111,63 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_update",
         {
             title: "Update a holiday",
-            description: "Update one workspace holiday's name, dates, annual recurrence, or color by ID.",
+            description:
+                "Update one workspace holiday by ID. Reads the holiday then replaces it (PUT semantics), preserving untouched fields and the user/group assignment.",
             inputSchema: {
                 holidayId: z.string().min(1),
                 name: z.string().optional(),
                 startDate: z.string().optional(),
                 endDate: z.string().optional(),
                 occursAnnually: z.boolean().optional(),
+                userIds: z.array(z.string()).optional().describe("Replace the assignment with these users."),
+                userGroupIds: z.array(z.string()).optional().describe("Replace the assignment with these user groups."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
-                const body: Record<string, unknown> = {};
-                if (args.name) body.name = args.name;
-                if (args.startDate && args.endDate) {
-                    body.datePeriod = { startDate: args.startDate, endDate: args.endDate };
+                // PUT /holidays/{id} REPLACES the document (omitted fields 400 "must
+                // not be null"), and there is no single-GET route — list then scan.
+                // The read-back exposes the assignment FLAT (userIds/userGroupIds);
+                // re-send it in the {contains,ids,status} filter form or the PUT
+                // drops the (required) assignment.
+                const all = (await ctx.client.holidays.list({ workspaceId: ctx.workspaceId })) as Array<
+                    Record<string, unknown>
+                >;
+                const existing =
+                    (Array.isArray(all) ? all : []).find((h) => h.id === args.holidayId) ?? {};
+                const existingPeriod = (existing.datePeriod ?? {}) as Record<string, unknown>;
+                const body: Record<string, unknown> = {
+                    name: args.name ?? existing.name,
+                    datePeriod: {
+                        startDate: args.startDate ?? existingPeriod.startDate,
+                        endDate: args.endDate ?? args.startDate ?? existingPeriod.endDate,
+                    },
+                };
+                const occursAnnually = args.occursAnnually ?? existing.occursAnnually;
+                if (occursAnnually !== undefined) body.occursAnnually = occursAnnually;
+                const color = args.color ?? existing.color;
+                if (color !== undefined) body.color = color;
+                // Scope reconstruction: flat userIds/userGroupIds -> CONTAINS filter.
+                const existingUserIds = Array.isArray(existing.userIds) ? (existing.userIds as string[]) : [];
+                const existingGroupIds = Array.isArray(existing.userGroupIds)
+                    ? (existing.userGroupIds as string[])
+                    : [];
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
+                else if (existingUserIds.length) body.users = scopeFilter(existingUserIds);
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
+                else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds);
+                if (existing.everyoneIncludingNew !== undefined)
+                    body.everyoneIncludingNew = existing.everyoneIncludingNew;
+                if (!body.users && !body.userGroups && body.everyoneIncludingNew !== true) {
+                    return errorResult(
+                        "clockify_holidays_update",
+                        new Error(
+                            `Holiday ${args.holidayId} has no resolvable user/group assignment to preserve; pass userIds or userGroupIds.`,
+                        ),
+                    );
                 }
-                if (args.occursAnnually !== undefined) body.occursAnnually = args.occursAnnually;
-                if (args.color) body.color = args.color;
                 const updated = await ctx.client.holidays.update({
                     workspaceId: ctx.workspaceId,
                     holidayId: args.holidayId,

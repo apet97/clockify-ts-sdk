@@ -8,6 +8,10 @@ import { buildReport as buildPerformanceCalibrationPlan } from "./performance-ca
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const budgets = JSON.parse(fs.readFileSync(path.join(root, "docs", "performance-budgets.json"), "utf8"));
+// Tool-count single source of truth: derive the expected MCP tool count from
+// the canonical docs/mcp-tools.json summary so this smoke can never disagree
+// with the contract (the value is interpolated into the in-process smoke below).
+const EXPECTED_TOOLS = JSON.parse(fs.readFileSync(path.join(root, "docs", "mcp-tools.json"), "utf8")).summary.totalTools;
 let failures = [];
 const measurements = [];
 const writeReceipt = process.argv.includes("--write-receipt");
@@ -369,7 +373,7 @@ await server.connect(serverTransport);
 const client = new Client({ name: 'budget-smoke', version: '0.0.0' });
 await client.connect(clientTransport);
 const tools = await client.listTools();
-if (tools.tools.length !== 123) throw new Error('expected 123 tools, got ' + tools.tools.length);
+if (tools.tools.length !== ${EXPECTED_TOOLS}) throw new Error('expected ${EXPECTED_TOOLS} tools, got ' + tools.tools.length);
 await client.close();
 await server.close();
 `;

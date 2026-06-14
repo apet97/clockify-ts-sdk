@@ -5,6 +5,7 @@
  * formatting helper; defer to a workflow port.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -86,6 +87,8 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 issuedDate: z.string().min(1),
                 dueDate: z.string().min(1),
                 timeViewMode: z.string().optional(),
+                note: z.string().optional().describe("Billing note. POST drops it; applied via a follow-up update."),
+                subject: z.string().optional().describe("Invoice subject. POST drops it; applied via a follow-up update."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -100,7 +103,23 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     dueDate: normaliseInvoiceDate(args.dueDate),
                 };
                 if (args.timeViewMode) body.timeViewMode = args.timeViewMode;
-                const created = await ctx.client.invoices.create(body as never);
+                const created = (await ctx.client.invoices.create(body as never)) as { id?: string };
+                // POST /invoices SILENTLY DROPS note/subject (live-verified) — apply
+                // them via the verified GET-then-PUT path so the billing doc is truthful.
+                if ((args.note !== undefined || args.subject !== undefined) && created?.id) {
+                    const patch: Record<string, unknown> = {};
+                    if (args.note !== undefined) patch.note = args.note;
+                    if (args.subject !== undefined) patch.subject = args.subject;
+                    const existing = (await ctx.client.invoices.get({
+                        workspaceId: ctx.workspaceId,
+                        invoiceId: created.id,
+                    })) as Record<string, unknown>;
+                    await ctx.client.invoices.update({
+                        workspaceId: ctx.workspaceId,
+                        invoiceId: created.id,
+                        ...invoiceUpdateBodyFromExisting(existing, patch),
+                    } as never);
+                }
                 return successResult("clockify_invoices_create", created, {
                     workspaceId: ctx.workspaceId,
                 });
@@ -114,7 +133,8 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         "clockify_invoices_update",
         {
             title: "Update an invoice",
-            description: "Update invoice metadata. Status changes go through clockify_invoices_update_status.",
+            description:
+                "Update invoice metadata. Reads the invoice then replaces it, preserving untouched fields and mapping tax/discount correctly. Status changes go through clockify_invoices_update_status.",
             inputSchema: {
                 invoiceId: z.string().min(1),
                 clientId: z.string().optional(),
@@ -124,20 +144,39 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 dueDate: z.string().optional(),
                 note: z.string().optional(),
                 subject: z.string().optional(),
+                taxPercent: z.number().min(0).max(100).optional().describe("Primary tax rate as a percent (e.g. 15 for 15%)."),
+                tax2Percent: z.number().min(0).max(100).optional().describe("Secondary tax rate as a percent."),
+                discountPercent: z.number().min(0).max(100).optional().describe("Discount as a percent."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             try {
-                const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, invoiceId: args.invoiceId };
-                if (args.clientId) body.clientId = args.clientId;
-                if (args.number) body.number = args.number;
-                if (args.currency) body.currency = args.currency;
-                if (args.issuedDate) body.issuedDate = normaliseInvoiceDate(args.issuedDate);
-                if (args.dueDate) body.dueDate = normaliseInvoiceDate(args.dueDate);
-                if (args.note !== undefined) body.note = args.note;
-                if (args.subject !== undefined) body.subject = args.subject;
-                const updated = await ctx.client.invoices.update(body as never);
+                // PUT /invoices REPLACES the document, and tax/discount are asymmetric
+                // on the wire (GET returns discount/tax/tax2 ×100 ints; PUT wants
+                // *Percent). Read the current invoice and rebuild a clean body so a
+                // sparse update never wipes untouched fields or silently zeroes
+                // tax/discount.
+                const existing = (await ctx.client.invoices.get({
+                    workspaceId: ctx.workspaceId,
+                    invoiceId: args.invoiceId,
+                })) as Record<string, unknown>;
+                const patch: Record<string, unknown> = {};
+                if (args.clientId) patch.clientId = args.clientId;
+                if (args.number) patch.number = args.number;
+                if (args.currency) patch.currency = args.currency;
+                if (args.issuedDate) patch.issuedDate = normaliseInvoiceDate(args.issuedDate);
+                if (args.dueDate) patch.dueDate = normaliseInvoiceDate(args.dueDate);
+                if (args.note !== undefined) patch.note = args.note;
+                if (args.subject !== undefined) patch.subject = args.subject;
+                if (args.taxPercent !== undefined) patch.taxPercent = args.taxPercent;
+                if (args.tax2Percent !== undefined) patch.tax2Percent = args.tax2Percent;
+                if (args.discountPercent !== undefined) patch.discountPercent = args.discountPercent;
+                const updated = await ctx.client.invoices.update({
+                    workspaceId: ctx.workspaceId,
+                    invoiceId: args.invoiceId,
+                    ...invoiceUpdateBodyFromExisting(existing, patch),
+                } as never);
                 return successResult("clockify_invoices_update", updated, {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
