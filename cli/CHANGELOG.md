@@ -24,6 +24,11 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- `clk115 start --project/--task/--tag <name>` now matches names
+  **case-insensitively** via the SDK's shared `matchByName` (previously a
+  case-sensitive `===` missed `acme` for a project named `Acme`), and reports an
+  ambiguous-name error instead of silently resolving the first duplicate. Drops
+  the CLI's private id/name matchers in favour of `clockify-sdk-ts-115/resolve`.
 - `clk115 api` now attaches the HTTP status to the error it throws on a non-2xx
   response, so the status-based classifier wins. A 404 whose body mentions a
   trigger word (e.g. "workspace") is no longer misclassified as
