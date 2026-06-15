@@ -105,6 +105,13 @@ export function printError(message: string, opts: OutputOptions, statusCode?: nu
     }
     const prefix = opts.color ? pc.red("ERR") : "ERR";
     console.error(`${prefix} ${message}`);
+    // Surface the stable error code's recovery hint in human (table) mode too —
+    // JSON/ndjson modes already carry `recovery`; without this the default mode
+    // showed only the raw message with no next step.
+    const recovery = recoveryForCode(errorCodeForStatus(statusCode) ?? errorCodeForMessage(message));
+    if (recovery) {
+        console.error(`${opts.color ? pc.dim("→") : "→"} ${recovery}`);
+    }
 }
 
 /**

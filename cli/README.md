@@ -138,6 +138,27 @@ clk115 api POST '/workspaces/{workspaceId}/tags' --body '{"name":"billable"}' --
 `--all` walks `page`/`page-size` until a short or empty page (bounded by
 `--max-pages`), and `--body` also accepts `@file` or `-` for stdin.
 
+## Shell completion
+
+`clk115 completion <shell>` prints a completion script for `bash`, `zsh`, or
+`fish` to stdout (it contacts nothing). Install it once into your shell's
+completion location:
+
+```sh
+# bash (Linux)
+clk115 completion bash > ~/.local/share/bash-completion/completions/clk115
+
+# zsh — write into a directory on your $fpath, then restart the shell
+clk115 completion zsh > "${fpath[1]}/_clk115"
+
+# fish
+clk115 completion fish > ~/.config/fish/completions/clk115.fish
+```
+
+For a one-off in the current shell: `source <(clk115 completion bash)`. The
+`clockify115` binary accepts the same subcommand. See `examples/` for runnable
+scripts.
+
 ## Exit codes
 
 - `0` — success
