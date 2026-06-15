@@ -72,6 +72,43 @@ Preview high-risk writes with dry_run and confirm with confirm_token.
 `,
     },
     {
+        name: "clockify-which-tool",
+        uri: "clockify://guide/which-tool",
+        title: "Clockify: Which Tool to Use",
+        description: "Intent to the first tool to reach for, across time tracking, billing, and admin.",
+        text: `# Which Clockify Tool to Use
+
+Always call clockify_status first. Then match the user's intent to the first tool:
+
+Time tracking
+- "log / record N hours of finished work" -> clockify_log_work
+- "start / stop a timer", "clock in / out" -> clockify_start_work / clockify_stop_work
+- "switch what I'm working on" -> clockify_switch_work
+- "what did I do today / this week", "any gaps" -> clockify_review_day / clockify_review_week
+- "fix / correct an entry" -> clockify_review_day first, then clockify_fix_entry
+
+Setting up work
+- "create or reuse a client / project / task / tag before logging" -> clockify_create_work_package
+
+Billing
+- "invoice a client for work" -> clockify_invoice_client_work (dry_run first, then confirm_token)
+- "record an expense" -> clockify_record_expense (dry_run first)
+
+People and time off
+- "request time off" -> clockify_request_time_off (dry_run first)
+- "schedule / assign someone" -> clockify_schedule_work (dry_run first)
+
+Integrations
+- "set up a webhook" -> clockify_setup_webhook (validated)
+
+When no workflow tool fits
+- Use clockify_operation_guide to map the task to a path, then call the matching domain tool.
+- Reach for low-level domain tools (projects, tasks, clients, tags, entries, ...) only then.
+
+Rule of thumb: prefer a workflow tool over assembling domain primitives, and preview every billing or admin write with dry_run, reusing the returned confirm_token.
+`,
+    },
+    {
         name: "clockify-mcp-doctor",
         uri: "clockify://mcp/doctor",
         title: "Clockify MCP Doctor",

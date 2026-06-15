@@ -265,6 +265,7 @@ describe("@clockify115/mcp-server", () => {
             "clockify://guide/agent-mode",
             "clockify://guide/axioms",
             "clockify://guide/safety",
+            "clockify://guide/which-tool",
             "clockify://guide/workflows",
             "clockify://mcp/doctor",
         ]);
