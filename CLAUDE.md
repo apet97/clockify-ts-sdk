@@ -9,7 +9,7 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 53 public names; 18 subpaths (incl. `request-options`, `operation-receipt`) |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 71 public names; 21 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`) |
 | `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 29 commands incl. `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
 | `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 126 tools (20 workflow + 106 domain); 5 resources |
 
@@ -132,9 +132,13 @@ make docs-drift
   creation. The guard is offline: it rejects non-HTTPS, embedded
   credentials, private/loopback/link-local/CGNAT/metadata IPs, and
   localhost-ish hostnames, but not DNS rebinding.
-- Client/project archive cleanup uses different generated SDK shapes:
-  clients update with nested `body`; projects update with top-level
-  fields. See `spec/evidence/discrepancies.md`.
+- Deleting an ACTIVE project/task/client 400s (live-verified).
+  `clockify_projects_delete` archives first (`projects.update({archived:true})`)
+  and `clockify_tasks_delete` marks DONE (`tasks.update({status:"DONE"})`) before
+  the DELETE. Clients are the exception: the generated `clients.update` drops
+  `archived` and `clients.archive` 404s, so the typed SDK exposes no client-archive
+  path (a generator/spec defect — the raw `PUT /clients/{id}` does accept it). See
+  `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
   values. Check presence, never print values.
 - `wrapper/.packsnapshot` must be the sorted `npm pack --dry-run --json`

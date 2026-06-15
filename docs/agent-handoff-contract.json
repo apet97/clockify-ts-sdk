@@ -38,7 +38,7 @@
       "mustContain": [
         "canonical",
         "AGENTS.md",
-        "53 public names",
+        "71 public names",
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",
@@ -97,6 +97,7 @@
   ],
   "forbiddenGuidanceMarkers": [
     "44 public names",
+    "53 public names",
     "89 tools",
     "123 tools",
     "123 advertised",
