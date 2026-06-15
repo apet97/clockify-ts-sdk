@@ -2,6 +2,28 @@
 
 This repo keeps product docs, generated truth surfaces, and agent handoff files in one place. Use this index instead of hunting through the tree.
 
+## Start here
+
+New to the repo? Pick your surface, then read the cross-cutting docs:
+
+| I want to… | First read |
+|---|---|
+| Use the **SDK** (`clockify-sdk-ts-115`) | [SDK README](../wrapper/README.md) — install, auth, pagination, typed errors, webhooks, observability |
+| Use the **CLI** (`@clockify115/cli`) | [CLI README](../cli/README.md) — `clockify115` / `clk115` commands, output modes, config precedence, shell completion |
+| Run the **MCP server** (`@clockify115/mcp-server`) | [MCP README](../mcp/README.md) — stdio tools, guide resources, dry-run + confirm_token write safety |
+
+Then, regardless of surface:
+
+- [`install-personas.md`](./install-personas.md) — which install path fits you, and the mock vs. live boundary.
+- [`quickstart-receipt.md`](./quickstart-receipt.md) — a diagnostics-first first run (no live calls required).
+- [`workflow-cookbook.md`](./workflow-cookbook.md) — common cross-surface recipes (set up work → log it, invoice a client, review a timesheet).
+- [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
+
+Two SDK helper layers are shared by all three surfaces so you never hand-roll them:
+the `clockify-sdk-ts-115/resolve` subpath turns a **name** into a real id (case-insensitive,
+with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` resolves
+"yesterday" / "next Monday" / period keywords to the instants the API wants.
+
 ## Operator docs
 
 | Document | Purpose |
