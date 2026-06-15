@@ -165,6 +165,20 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 const preview = { action: "delete", entity: "project", id: args.projectId };
                 const confirmation = requireConfirmation(ctx, "clockify_projects_delete", "project_delete", args, preview);
                 if (confirmation) return confirmation;
+                // Clockify rejects DELETE of an ACTIVE project (400 "Cannot delete
+                // an active project", live-verified 2026-06-15) and the dedicated
+                // /archive route 404s — archive first via GET-then-PUT, carrying
+                // the name the replace-PUT requires.
+                const current = (await ctx.client.projects.get({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                })) as { name?: string };
+                await ctx.client.projects.update({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    name: String(current.name ?? ""),
+                    archived: true,
+                });
                 await ctx.client.projects.delete({
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

@@ -77,6 +77,7 @@
         "prepublishOnly": "npm run type-check && npm test && npm run build"
       },
       "requiredTests": [
+        "mcp/tests/archive-then-delete.test.ts",
         "mcp/tests/client.test.ts",
         "mcp/tests/groups-get.test.ts",
         "mcp/tests/mock-clockify.test.ts",

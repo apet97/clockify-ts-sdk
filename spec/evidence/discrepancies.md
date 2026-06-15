@@ -2038,18 +2038,35 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   tool (`mcp/src/tools/customFields.ts` has none), so there is nothing to
   convert; recorded so a future custom-field get tool list-scans from the start.
 
-### `deletes.archive-first.projects-clients-tasks` — OPEN
+### `deletes.archive-first.projects-tasks` — COMPENSATED 2026-06-15 (live e2e)
 
-- **Actual behavior (addon live-verified):** Clockify rejects DELETE of an ACTIVE
-  project/client; tasks must be marked DONE first. The dedicated `/archive` routes
-  are dead — re-probed live 2026-06-15: `POST /projects/{id}/archive` → **404**
-  "No static resource" — so archive is a replace-PUT (`*.update` with
-  `archived:true` / `status:"DONE"`) before DELETE.
-- **MCP tools affected:** `clockify_projects_delete`, `clockify_clients_delete`,
-  `clockify_tasks_delete` (all bare DELETE).
-- **Status:** `open`. The conversion (GET-then-PUT to archive, then DELETE) is a
-  destructive multi-step write; it needs a sacrificial create→delete live proof
-  before shipping, then a TDD mock test. Tracked for a follow-up session.
+- **Live-verified 2026-06-15 on the sacrificial sandbox:** bare DELETE of an
+  ACTIVE project → **400 "Cannot delete an active project"**; an ACTIVE task →
+  **400 "Cannot delete an active task"**. The dedicated `/archive` route is dead
+  (`POST /projects/{id}/archive` → **404**). Archive is a replace-PUT: a project
+  via `projects.update({name, archived:true})` (the update whitelist HAS
+  `archived`); a task via `tasks.update({name, status:"DONE"})` — both carrying
+  the name the replace-PUT requires, GET-then-PUT.
+- **Status:** `compensated-in-tool-layer` (2026-06-15). `clockify_projects_delete`
+  and `clockify_tasks_delete` now GET-then-PUT (archive / DONE) before DELETE,
+  after the confirm gate. Verified LIVE end-to-end through the real MCP tools
+  (dry_run → confirm_token → execute): both returned `deleted:true` against a real
+  active project + task. Order pinned by `mcp/tests/archive-then-delete.test.ts`.
+
+### `deletes.archive-first.clients-blocked` — OPEN (generator/spec defect)
+
+- **Live-verified 2026-06-15:** bare DELETE of an ACTIVE client → **400**. The raw
+  `PUT /clients/{id}` with `{name, archived:true}` archives it (HTTP 200), then
+  DELETE succeeds — BUT the generated `clients.update` whitelist is
+  `[address, currencyCode, email, name, note]` (NO `archived`), and the dedicated
+  `clients.archive` route **404s**. So the typed SDK exposes NO way to archive a
+  client; the MCP tool layer cannot compensate (same class as
+  `user-groups.get.returns-void`).
+- **Status:** `open`. The durable fix is upstream — add `archived` to the
+  `clients.update` request schema in the corrected OpenAPI / generator
+  (`../GOCLMCP/` / `spec/corrected`), then convert `clockify_clients_delete` the
+  same way as projects. Until then `clockify_clients_delete` stays a bare DELETE
+  that 400s on an active client with a clear API message.
 
 ### `user-groups.get.returns-void` — COMPENSATED 2026-06-15
 

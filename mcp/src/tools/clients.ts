@@ -143,6 +143,13 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 const preview = { action: "delete", entity: "client", id: args.clientId };
                 const confirmation = requireConfirmation(ctx, "clockify_clients_delete", "client_delete", args, preview);
                 if (confirmation) return confirmation;
+                // NOTE: unlike projects/tasks, this is NOT archive-then-delete.
+                // Clockify rejects DELETE of an ACTIVE client, but the generated
+                // `clients.update` whitelist drops `archived` and `clients.archive`
+                // 404s — so the typed SDK exposes no client-archive path (a
+                // generator/spec defect; see spec/evidence/discrepancies.md
+                // `deletes.archive-first.clients-blocked`). The bare DELETE 400s on
+                // an active client with a clear API message until the spec is fixed.
                 await ctx.client.clients.delete({
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,
