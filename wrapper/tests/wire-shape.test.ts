@@ -42,6 +42,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "scheduling.project-totals.get-vs-post": ["mcp/tests/scheduling-totals.test.ts"],
     "time-off.requests.update-status.wrong-method-and-field": ["mcp/tests/sweep-fixes.test.ts"],
     "deletes.archive-first": ["mcp/tests/sweep-fixes.test.ts"],
+    "user-groups.get.returns-void": ["mcp/tests/groups-get.test.ts"],
 };
 
 /**

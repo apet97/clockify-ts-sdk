@@ -2017,12 +2017,26 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** fake-id probe (404 vs 405) to re-confirm, then convert to a
   list/POST-search + scan (the generated `timeOff.list` is the search surface).
 - **Status:** `open`. Port from addon `src/clockify/rest/time-off.ts:151-161`.
+  Unlike `user-groups.get.returns-void` (a generated `void` signature, fixable
+  offline), the generated `timeOff.get` is typed `ClockifyApi.TimeOffRequest`, so
+  "it 404s" is LIVE-ONLY evidence. Per this repo's "probe 404/405 before
+  converting" discipline, the conversion is DEFERRED until a live re-probe — the
+  2026-06-15 session had no live Clockify key. The same gate applies to the
+  `single-gets.404-405-read-from-list` custom-field/time-off conversions and the
+  `deletes.archive-first` projects/clients/tasks GET-then-PUT change: wiring is
+  documented above, blocked only on a sandbox re-probe.
 
-### `user-groups.get.returns-void` — OPEN (generator/upstream)
+### `user-groups.get.returns-void` — COMPENSATED 2026-06-15
 
 - **Actual behavior:** the generated `userGroups.get` is emitted with
   `responseType: "void"`, so `clockify_groups_get` gets nothing back even when the
   group exists; addon reads groups from the list (no single-GET).
-- **Status:** `open`. This is a generated-shape defect — fix belongs upstream in the
-  spec/generator (`../GOCLMCP/`), or compensate by converting `clockify_groups_get`
-  to a `groups.list` + scan in the tool layer (probe 404/405 first).
+- **Why this is offline-verifiable:** the defect is in the GENERATED method
+  signature (`core.HttpResponsePromise<void>` at
+  `wrapper/src/api/resources/userGroups/client/Client.ts`), not a live-only
+  behaviour — the method literally cannot return the group, so the fix needs no
+  live probe.
+- **Status:** `compensated-in-tool-layer` (2026-06-15). `clockify_groups_get` now
+  reads `userGroups.list` and scans by id, erroring clearly on an unknown id
+  (never returning void). Test: `mcp/tests/groups-get.test.ts`. The upstream
+  generator/spec fix (`../GOCLMCP/`) is still the durable fix.
