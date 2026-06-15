@@ -2008,23 +2008,48 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   (`projects.archive`, `clients.archive`) are suspect — `projects.archive` is a known
   dead 404 route — so prefer the update path. All wired through `requireConfirmation`.
 
-### `time-off.requests.get.dead-route` — OPEN
+### `time-off.requests.get.dead-route` — COMPENSATED 2026-06-15 (live re-probed)
 
-- **Actual behavior (addon live-verified):** `GET /time-off/requests/{id}` 404s ("No
-  static resource"); the addon POST-searches the requests list and scans by id.
-- **MCP tool affected:** `clockify_time_off_requests_get` (calls the dead
-  `timeOff.get` → `GET /time-off/requests/{requestId}`).
-- **Open questions:** fake-id probe (404 vs 405) to re-confirm, then convert to a
-  list/POST-search + scan (the generated `timeOff.list` is the search surface).
-- **Status:** `open`. Port from addon `src/clockify/rest/time-off.ts:151-161`.
-  Unlike `user-groups.get.returns-void` (a generated `void` signature, fixable
-  offline), the generated `timeOff.get` is typed `ClockifyApi.TimeOffRequest`, so
-  "it 404s" is LIVE-ONLY evidence. Per this repo's "probe 404/405 before
-  converting" discipline, the conversion is DEFERRED until a live re-probe — the
-  2026-06-15 session had no live Clockify key. The same gate applies to the
-  `single-gets.404-405-read-from-list` custom-field/time-off conversions and the
-  `deletes.archive-first` projects/clients/tasks GET-then-PUT change: wiring is
-  documented above, blocked only on a sandbox re-probe.
+- **Actual behavior (re-probed live 2026-06-15, fake id):** `GET
+  /time-off/requests/{id}` → **404** "No static resource" — confirmed dead. The
+  requests live behind the POST search `timeOff.list` (`POST
+  /time-off/requests`), which returns an envelope `{count, requests}`.
+- **NEW live finding:** the search `statuses` filter accepts ONLY
+  `[PENDING, APPROVED, REJECTED, ALL]` — it 400s on `WITHDRAWN` (code 501,
+  "Value must be from the following set"), even though `WITHDRAWN` IS a valid
+  per-request status. So a get-by-scan must filter on `["ALL"]`, not the
+  per-request status enum. (Latent: `clockify_time_off_requests_list`'s
+  `statuses` input enum includes `WITHDRAWN`, so a caller passing it would 400 —
+  documented, not yet guarded.)
+- **MCP tool affected:** `clockify_time_off_requests_get`.
+- **Status:** `compensated-in-tool-layer` (2026-06-15). The tool now searches
+  `timeOff.list` with `statuses:["ALL"]`, walks pages (bounded at 50×200), and
+  scans by id; errors clearly when the id isn't in the search. Verified live
+  end-to-end through the real MCP tool against a real request id. Test:
+  `mcp/tests/time-off-get.test.ts`.
+
+### `single-gets.custom-field-get.dead-route` — DOCUMENTED 2026-06-15 (no tool)
+
+- **Re-probed live 2026-06-15 (fake id):** `GET /custom-fields/{id}` → **405**
+  "Request method 'GET' is not supported" (confirmed dead). `GET
+  /user-groups/{id}` → **405** (already compensated; see
+  `user-groups.get.returns-void`).
+- **Status:** `documented`. The MCP surface exposes NO custom-field single-GET
+  tool (`mcp/src/tools/customFields.ts` has none), so there is nothing to
+  convert; recorded so a future custom-field get tool list-scans from the start.
+
+### `deletes.archive-first.projects-clients-tasks` — OPEN
+
+- **Actual behavior (addon live-verified):** Clockify rejects DELETE of an ACTIVE
+  project/client; tasks must be marked DONE first. The dedicated `/archive` routes
+  are dead — re-probed live 2026-06-15: `POST /projects/{id}/archive` → **404**
+  "No static resource" — so archive is a replace-PUT (`*.update` with
+  `archived:true` / `status:"DONE"`) before DELETE.
+- **MCP tools affected:** `clockify_projects_delete`, `clockify_clients_delete`,
+  `clockify_tasks_delete` (all bare DELETE).
+- **Status:** `open`. The conversion (GET-then-PUT to archive, then DELETE) is a
+  destructive multi-step write; it needs a sacrificial create→delete live proof
+  before shipping, then a TDD mock test. Tracked for a follow-up session.
 
 ### `user-groups.get.returns-void` — COMPENSATED 2026-06-15
 

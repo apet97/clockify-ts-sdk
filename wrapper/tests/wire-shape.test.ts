@@ -43,6 +43,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "time-off.requests.update-status.wrong-method-and-field": ["mcp/tests/sweep-fixes.test.ts"],
     "deletes.archive-first": ["mcp/tests/sweep-fixes.test.ts"],
     "user-groups.get.returns-void": ["mcp/tests/groups-get.test.ts"],
+    "time-off.requests.get.dead-route": ["mcp/tests/time-off-get.test.ts"],
 };
 
 /**
