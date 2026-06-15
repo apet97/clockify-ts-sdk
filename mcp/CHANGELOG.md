@@ -6,6 +6,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added `mcp/examples/README.md` — agent tool-call recipes (status, log work,
+  invoice with dry_run → confirm_token, demo seed/cleanup) and how to run the
+  server, cross-linked from the top-level `examples/` index.
 - Added a `clockify://guide/which-tool` resource — an intent → first-tool decision
   tree (time tracking, work setup, billing, time off, scheduling, webhooks, and the
   domain-tool fallback) so an agent can route a request without scanning all 126
