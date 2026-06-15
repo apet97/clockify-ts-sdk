@@ -37,7 +37,7 @@ once v1.0.0 ships.
   and money-unit invariants and asserts every COMPENSATED finding in
   `spec/evidence/discrepancies.md` keeps a live test (a ledger-coverage guard — it
   now also tracks the `user-groups.get` and `time-off.requests.get` list-scan
-  fixes), and
+  fixes and the projects/tasks archive-then-delete fix), and
   `wire-shape-http.test.ts` round-trips the invoice tax/discount + replace quirks
   through the generated SDK against an extended mock Clockify server (new invoice
   GET/PUT/POST routes reproducing the ×100 tax/discount and note/subject drop).

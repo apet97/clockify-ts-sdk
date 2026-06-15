@@ -168,6 +168,21 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 const preview = { action: "delete", entity: "task", id: args.taskId, projectId: args.projectId };
                 const confirmation = requireConfirmation(ctx, "clockify_tasks_delete", "task_delete", args, preview);
                 if (confirmation) return confirmation;
+                // Clockify rejects DELETE of an ACTIVE task (400 "Cannot delete an
+                // active task", live-verified 2026-06-15) — mark it DONE first via
+                // GET-then-PUT, carrying the name the replace-PUT requires.
+                const current = (await ctx.client.tasks.get({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                })) as { name?: string };
+                await ctx.client.tasks.update({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                    name: String(current.name ?? ""),
+                    status: "DONE",
+                } as never);
                 await ctx.client.tasks.delete({
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

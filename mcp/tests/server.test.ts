@@ -29,6 +29,7 @@ function fakeContext(overrides?: {
             projects: {
                 list: overrides?.projectsList ?? (async () => [{ id: "p1", name: "Proj" }]),
                 create: async (body: Record<string, unknown>) => ({ id: "p2", ...body }),
+                get: async () => ({ id: "p1", name: "Proj" }),
                 update: overrides?.projectsUpdate ?? (async (req: unknown) => req),
             },
             clients: {
@@ -36,7 +37,12 @@ function fakeContext(overrides?: {
                 create: async (body: Record<string, unknown>) => ({ id: "c1", ...body }),
                 update: overrides?.clientsUpdate ?? (async (req: unknown) => req),
             },
-            tasks: { list: async () => [] },
+            tasks: {
+                list: async () => [],
+                get: async () => ({ id: "t1", name: "Task" }),
+                update: async (req: unknown) => req,
+                delete: async () => ({}),
+            },
             tags: {
                 list: async () => [],
                 create: async (body: Record<string, unknown>) => ({ id: "t1", ...body }),
