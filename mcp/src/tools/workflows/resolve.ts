@@ -1,3 +1,6 @@
+import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
+import { looksLikeClockifyId } from "clockify-sdk-ts-115/resolve";
+
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
 import { successResult } from "../../result.js";
 
@@ -227,7 +230,10 @@ export function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
 
 export function dateRange(action: string, args: AnyRecord): { start: string; end: string } {
     if (str(args.start) && str(args.end)) return { start: str(args.start), end: str(args.end) };
-    const raw = str(args.date) || str(args.week_start) || new Date().toISOString().slice(0, 10);
+    const rawInput = str(args.date) || str(args.week_start);
+    // Resolve relative words ("yesterday", "last monday") + YYYY-MM-DD server-side;
+    // an empty input means today. Unparseable input falls through unchanged.
+    const raw = (resolveRelativeDay(new Date(), { date: rawInput || undefined }) ?? rawInput) || new Date().toISOString().slice(0, 10);
     const day = new Date(`${raw}T00:00:00.000Z`);
     if (action === "clockify_review_week") {
         const start = new Date(day);
@@ -241,41 +247,72 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
     return { start: day.toISOString(), end: end.toISOString() };
 }
 
+/**
+ * Resolve a name to an id, or throw. A 24-hex value is trusted as an id (the
+ * happy path, no list call). Otherwise the name is matched (case-insensitive via
+ * findOneByName); a miss THROWS rather than shipping the unverified name to the
+ * wire as an id — the old `?? { id: value }` fallback 404'd at best and could hit
+ * a different entity at worst.
+ */
+function notFound(noun: string, value: string): Error {
+    return new Error(`no ${noun} named ${JSON.stringify(value)}; pass a 24-character id or an exact name`);
+}
+
 export async function resolveClientId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    return idOf((await findOneByName(listed, value, "client")) ?? { id: value });
+    const found = await findOneByName(listed, value, "client");
+    if (!found) throw notFound("client", value);
+    return idOf(found);
 }
 
 export async function resolveProjectId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    return idOf((await findOneByName(listed, value, "project")) ?? { id: value });
+    const found = await findOneByName(listed, value, "project");
+    if (!found) throw notFound("project", value);
+    return idOf(found);
 }
 
 export async function resolveTaskId(ctx: Context, projectId: string, value: string): Promise<string> {
     if (!projectId) throw new Error("project_id or project is required when resolving task by name");
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 });
-    return idOf((await findOneByName(listed, value, "task")) ?? { id: value });
+    const found = await findOneByName(listed, value, "task");
+    if (!found) throw notFound("task", value);
+    return idOf(found);
 }
 
 export async function resolveTagId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    return idOf((await findOneByName(listed, value, "tag")) ?? { id: value });
+    const found = await findOneByName(listed, value, "tag");
+    if (!found) throw notFound("tag", value);
+    return idOf(found);
 }
 
 export async function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.expenseCategories.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never);
-    return idOf((await findOneByName(listed, value, "expense category")) ?? { id: value });
+    const found = await findOneByName(listed, value, "expense category");
+    if (!found) throw notFound("expense category", value);
+    return idOf(found);
 }
 
 export async function resolvePolicyId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = await ctx.client.timeOffPolicies.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never);
-    return idOf((await findOneByName(listed, value, "time-off policy")) ?? { id: value });
+    const found = await findOneByName(listed, value, "time-off policy");
+    if (!found) throw notFound("time-off policy", value);
+    return idOf(found);
 }
 
 export async function resolveUserId(ctx: Context, value: string): Promise<string> {
+    if (looksLikeClockifyId(value)) return value;
     const listed = (await ctx.client.users.list({ workspaceId: ctx.workspaceId, name: value, "include-roles": false })) as unknown[];
     const found = await findOneByName(listed, value, "user", ["name", "email"]);
-    return idOf(found ?? { id: value });
+    if (!found) throw notFound("user", value);
+    return idOf(found);
 }
 
 export async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {

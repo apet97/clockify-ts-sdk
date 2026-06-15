@@ -11,6 +11,16 @@
 import { describe, expect, it } from "vitest";
 
 import { scopeFilter } from "../src/scope-filter.js";
+import { resolveProjectId } from "../src/tools/workflows/resolve.js";
+
+// A minimal context whose project list contains one project named "Website".
+function ctxWith(projects: Array<{ id: string; name: string }>) {
+    return {
+        workspaceId: "ws1",
+        client: { projects: { list: async () => projects } },
+    } as unknown as Parameters<typeof resolveProjectId>[0];
+}
+const PROJECT_ID = "000000000000000000000301";
 
 describe("wire-shape ledger (MCP scope filter)", () => {
     it("wraps ids in the CONTAINS filter Clockify wants on POST/PUT", () => {
@@ -28,5 +38,27 @@ describe("wire-shape ledger (MCP scope filter)", () => {
     it("preserves id order and supports an empty assignment list", () => {
         expect((scopeFilter(["c", "a", "b"]) as { ids: string[] }).ids).toEqual(["c", "a", "b"]);
         expect((scopeFilter([]) as { ids: string[] }).ids).toEqual([]);
+    });
+});
+
+describe("workflow name→id resolution never ships a name as an id", () => {
+    const projects = [{ id: PROJECT_ID, name: "Website" }];
+
+    it("resolves a known name to its id", async () => {
+        expect(await resolveProjectId(ctxWith(projects), "Website")).toBe(PROJECT_ID);
+    });
+
+    it("trusts a 24-hex id without listing", async () => {
+        let listed = false;
+        const ctx = {
+            workspaceId: "ws1",
+            client: { projects: { list: async () => ((listed = true), projects) } },
+        } as unknown as Parameters<typeof resolveProjectId>[0];
+        expect(await resolveProjectId(ctx, "ffffffffffffffffffffffff")).toBe("ffffffffffffffffffffffff");
+        expect(listed).toBe(false);
+    });
+
+    it("throws on an unknown name instead of shipping it as an id", async () => {
+        await expect(resolveProjectId(ctxWith(projects), "Nonexistent")).rejects.toThrow(/no project named/);
     });
 });
