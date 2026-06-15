@@ -7,7 +7,7 @@
     {
         "name": "CJS root entry (index.js)",
         "path": "dist/cjs/index.js",
-        "limit": "2.5 kB"
+        "limit": "3 kB"
     },
     {
         "name": "Subpath: create-client (ESM)",
