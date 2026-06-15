@@ -83,6 +83,9 @@ describe("printSuccess / printError", () => {
         printError("nope", plain);
         expect(logged[0]).toBe("OK done");
         expect(errored[0]).toBe("ERR nope");
+        // table mode now surfaces the stable code's recovery hint as a → line
+        expect(errored[1]).toMatch(/^→ /);
+        expect(errored[1]).toContain("classify the failure into a stable code");
     });
 
     it("emits structured JSON in json mode", () => {

@@ -36,6 +36,11 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- Human (table) mode errors now print the stable error code's recovery hint on a
+  second `→` line, so the default output points at a next step instead of showing
+  only the raw message. JSON/ndjson modes already carried `recovery`.
+- Documented shell-completion install in the README (`clk115 completion bash|zsh|fish`
+  into the shell's completion location, or `source <(...)` for the current shell).
 - `--base-url` / `CLOCKIFY_BASE_URL` is now validated against the SDK Clockify host allowlist: only an official Clockify API host or a loopback host is accepted, arbitrary hosts are rejected with a clear message (strict by default — the CLI never opts in to insecure hosts). Help text updated.
 - Commander usage errors now return exit code `2`, matching the documented CLI contract.
 - Added `exports` field to the package manifest so consumers can use the package self-reference; only `./dist/index.js` is exposed.
