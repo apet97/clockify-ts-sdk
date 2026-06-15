@@ -83,6 +83,7 @@
         "mcp/tests/result.test.ts",
         "mcp/tests/sandbox.test.ts",
         "mcp/tests/server.test.ts",
+        "mcp/tests/time-off-get.test.ts",
         "mcp/tests/wire-shape.test.ts",
         "mcp/tests/workflows.test.ts"
       ]

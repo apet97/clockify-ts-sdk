@@ -79,11 +79,32 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
-                const req = await ctx.client.timeOff.get({
-                    workspaceId: ctx.workspaceId,
-                    requestId: args.requestId,
-                });
-                return successResult("clockify_time_off_requests_get", req, {
+                // GET /time-off/requests/{id} is a dead 404 route ("No static
+                // resource", live-verified 2026-06-15). The requests live behind
+                // the POST search (`timeOff.list`, an envelope {count, requests}).
+                // The search `statuses` filter accepts only [PENDING, APPROVED,
+                // REJECTED, ALL] (NOT the per-request WITHDRAWN status), so use
+                // ALL and walk pages (bounded) scanning by id.
+                const pageSize = 200;
+                let found: { id?: string } | undefined;
+                for (let page = 1; page <= 50; page++) {
+                    const res = (await ctx.client.timeOff.list({
+                        workspaceId: ctx.workspaceId,
+                        page,
+                        pageSize,
+                        statuses: ["ALL"],
+                    } as never)) as { requests?: Array<{ id?: string }> } | Array<{ id?: string }>;
+                    const requests = Array.isArray(res) ? res : (res.requests ?? []);
+                    found = requests.find((r) => String(r.id ?? "") === args.requestId);
+                    if (found || requests.length < pageSize) break;
+                }
+                if (!found) {
+                    return errorResult(
+                        "clockify_time_off_requests_get",
+                        new Error(`no time-off request with id ${JSON.stringify(args.requestId)} found in the workspace search`),
+                    );
+                }
+                return successResult("clockify_time_off_requests_get", found, {
                     workspaceId: ctx.workspaceId,
                     requestId: args.requestId,
                 });
