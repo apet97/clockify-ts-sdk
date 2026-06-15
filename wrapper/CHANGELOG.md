@@ -35,7 +35,8 @@ once v1.0.0 ships.
 - Added a Clockify base-URL host allowlist to `createClockifyClient`: a `baseUrl` / `environment` override must target an official Clockify API host (`api.clockify.me`, `reports.api.clockify.me`, `auditlog.api.clockify.me`, `pto.api.clockify.me`, `developer.clockify.me`) or a loopback host (`localhost` / `127.0.0.1` / `::1`, any port). Arbitrary HTTPS hosts are rejected unless the new `allowInsecureBaseUrl: true` option is set (which warns); plain `http://` on non-loopback hosts is always rejected. Exposed `validateClockifyBaseUrl()` / `classifyClockifyBaseUrl()`, and `clockifyDiagnostics()` now reports `checks.baseUrl.allowlist` (`allowed` / `rejected`).
 - Added a wire-shape regression suite: `wire-shape.test.ts` pins the invoice-body
   and money-unit invariants and asserts every COMPENSATED finding in
-  `spec/evidence/discrepancies.md` keeps a live test (a ledger-coverage guard), and
+  `spec/evidence/discrepancies.md` keeps a live test (a ledger-coverage guard — it
+  now also tracks the `user-groups.get` list-scan fix), and
   `wire-shape-http.test.ts` round-trips the invoice tax/discount + replace quirks
   through the generated SDK against an extended mock Clockify server (new invoice
   GET/PUT/POST routes reproducing the ×100 tax/discount and note/subject drop).

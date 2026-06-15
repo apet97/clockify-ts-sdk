@@ -49,10 +49,18 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
-                const group = await ctx.client.userGroups.get({
+                // The generated userGroups.get is typed `void` — Clockify has no
+                // single-GET route that returns the group — so read it from the
+                // list and scan by id (the same shape the addon found live).
+                const groups = (await ctx.client.userGroups.list({
                     workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                });
+                    page: 1,
+                    "page-size": 200,
+                })) as Array<{ id?: string }>;
+                const group = groups.find((g) => String(g.id ?? "") === args.groupId);
+                if (!group) {
+                    return errorResult("clockify_groups_get", new Error(`no user group with id ${JSON.stringify(args.groupId)} in this workspace`));
+                }
                 return successResult("clockify_groups_get", group, {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
