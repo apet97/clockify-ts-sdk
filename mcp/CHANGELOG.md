@@ -6,6 +6,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Added a `clockify://guide/which-tool` resource — an intent → first-tool decision
+  tree (time tracking, work setup, billing, time off, scheduling, webhooks, and the
+  domain-tool fallback) so an agent can route a request without scanning all 126
+  tools.
 - Added `mcp/tests/wire-shape.test.ts` locking the shared holiday/time-off-policy
   `scopeFilter` `{contains:"CONTAINS", ids, status:"ALL"}` shape (the POST/PUT form
   Clockify wants; the GET echoes it back flat).

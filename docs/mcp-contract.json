@@ -11,6 +11,7 @@
       "clockify://guide/workflows",
       "clockify://guide/safety",
       "clockify://guide/agent-mode",
+      "clockify://guide/which-tool",
       "clockify://mcp/doctor"
     ],
     "prompts": [

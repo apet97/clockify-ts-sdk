@@ -206,6 +206,7 @@ The server exposes guide resources for agent discovery:
 - `clockify://guide/workflows` — workflow-first guidance and tool sequencing.
 - `clockify://guide/safety` — write-safety rules including dry_run and confirm_token.
 - `clockify://guide/agent-mode` — when to use the read-only discovery tools.
+- `clockify://guide/which-tool` — intent → first-tool decision tree across time tracking, billing, and admin.
 - `clockify://mcp/doctor` — No-network diagnostics checklist for local readiness.
 
 The read-only `clockify_docs_search`, `clockify_operation_guide`, and
