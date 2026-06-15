@@ -1,260 +1,124 @@
-# clockify-ts-sdk — Clockify TypeScript SDK, CLI, and MCP
+# Clockify TypeScript SDK · CLI · MCP
 
-Standalone repo (`apet97/clockify-ts-sdk`). Ships the packable package
-**`clockify-sdk-ts-115`** from `wrapper/dist/`, plus two sibling
-packable packages on top of it: `@clockify115/cli` from `cli/dist/`
-and `@clockify115/mcp-server` from `mcp/dist/`. Everything else is the
-toolchain that produces and proves those packages: the repo-owned local
-TypeScript SDK generator (`scripts/generate-sdk-from-openapi.mjs`), a
-snapshot of the canonical Clockify OpenAPI (`spec/corrected/`), an
-evidence ledger for spec-vs-live deltas
-(`spec/evidence/discrepancies.md`), the regenerable raw generator output
-(`output/ts-sdk/`, gitignored), and docs that keep humans and agents
-aligned. The historical Fern workspace remains under `spec/fern/` for
-reference, but it is not the required TypeScript SDK emitter.
+A TypeScript toolkit for [Clockify](https://clockify.me/) in three layers, all
+built from one corrected OpenAPI snapshot and the same hard-won, **live-verified**
+knowledge of how the real API behaves:
 
-The canonical OpenAPI is **not** in this repo. It lives in the
-sister project `apet97/go-clockify` (cloned conventionally as
-`../GOCLMCP/`), which produces it from a curated source bundle via
-`make gen-openapi`. This repo snapshots that canonical and feeds it to
-the local TypeScript SDK generator. Schema / enum / `oneOf` /
-pagination patterns must be coherent enough for the local generator,
-SDK package gates, and parity checks to produce a clean package.
+| Package | What it is | Use it for |
+|---|---|---|
+| **`clockify-sdk-ts-115`** ([`wrapper/`](./wrapper/README.md)) | The SDK — 31 resource modules, 185 operations, dual ESM/CJS | Calling Clockify from Node/TypeScript with typed errors, pagination, webhooks, and OTel hooks |
+| **`@clockify115/cli`** ([`cli/`](./cli/README.md)) | The CLI — `clockify115` / `clk115` | Time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output |
+| **`@clockify115/mcp-server`** ([`mcp/`](./mcp/README.md)) | The MCP server — 126 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
 
-End-users of the SDK package: see [`wrapper/README.md`](./wrapper/README.md).
-MCP users: see [`mcp/README.md`](./mcp/README.md). This file is for
-contributors and agents working on the spec, SDK, CLI, and MCP
-toolchain.
+The three share two pure helper subpaths so you never hand-roll them:
+`clockify-sdk-ts-115/resolve` turns a **name** into a real id (case-insensitive,
+with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates`
+resolves `"yesterday"` / `"next Monday"` / period keywords to the instants the API
+wants.
 
-The default release path is local tarballs (`npm pack`) for sharing inside the project, not public npm publication. Publishing requires explicit maintainer approval.
+> **Why another Clockify SDK?** The published OpenAPI is wrong in ~20 places that
+> silently corrupt data — invoice tax/discount zeroing, mixed minor/major money
+> units, dead single-GET routes, archive-before-delete. Every such quirk here was
+> found against the **real API** and is pinned by a regression test. The evidence
+> ledger is [`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
 
-## Getting started (fresh clone)
+## Quick start
 
-The three packages are wired as **npm workspaces** from a root
-`package.json`, so a single `npm ci` at the root populates all of
-them. `output/ts-sdk/` and `wrapper/src/` are gitignored, so SDK
-package gates need the local codegen step before they can run:
+### SDK
 
-```bash
+```ts
+import { createClockifyClient } from "clockify-sdk-ts-115";
+
+const clockify = createClockifyClient({ apiKey: process.env.CLOCKIFY_API_KEY });
+const projects = await clockify.projects.list({ workspaceId, "page-size": 50 });
+```
+
+Auth, pagination, typed errors, webhooks, and observability hooks are documented
+in the [SDK README](./wrapper/README.md). Runnable scripts live in
+[`examples/`](./examples/README.md).
+
+### CLI
+
+```sh
+npm install -g @clockify115/cli   # or: npm pack, then install the tarball
+export CLOCKIFY_API_KEY=...        # Clockify › Profile › API Keys
+export CLOCKIFY_WORKSPACE_ID=...
+
+clk115 status
+clk115 start "WIP refactor" --project "Acme"   # resolves the name to an id
+clk115 projects list --json
+```
+
+### MCP server
+
+```jsonc
+// Claude Desktop / any MCP client
+{
+  "command": "clockify115-mcp",
+  "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." }
+}
+```
+
+Call `clockify_status` first; read the `clockify://guide/which-tool` resource to
+route a request to the right tool. Risky writes preview with `dry_run: true` and
+commit with the returned `confirm_token`. See the [MCP README](./mcp/README.md).
+
+> Packages ship as local tarballs (`npm pack`) by default — this is not public npm publication. Publishing requires explicit maintainer approval.
+
+## Develop
+
+The three packages are npm workspaces, and the SDK source is generated locally
+from the corrected OpenAPI snapshot (deterministic, offline — no Docker, Fern,
+hosted generator, or Clockify credentials):
+
+```sh
 git clone https://github.com/apet97/clockify-ts-sdk.git
 cd clockify-ts-sdk
-npm ci                                                      # install all 3 workspaces
-
-# SDK source comes from the corrected OpenAPI via local generation.
-make sdk-codegen
-
-make perfect-fast                                           # 76 sub-gates, ~317 tests
+npm ci                 # install all three workspaces
+make sdk-codegen       # generate output/ts-sdk/** and sync wrapper/src/**
+make perfect-fast      # the local gate: type-check, build, dual-build smoke, tests, contracts
 ```
 
-If you only touch CLI or MCP code, you still need the wrapper built
-once because cli + mcp resolve `clockify-sdk-ts-115` through the
-workspace symlink. After the first `make sdk-codegen` +
-`npm run build -w clockify-sdk-ts-115`, subsequent `cd cli && npm test`
-(or `cd mcp && npm test`) cycles are fast.
+Three gate tiers:
 
-For agents and operators who want to read or plan without generating
-the SDK: the validators that depend on `wrapper/src/**` skip with a
-clear "run make sdk-codegen first" warning instead of failing, so
-`make perfect-fast` still completes on non-SDK workflows. Use
-`node scripts/plan.mjs <topic>` for no-network planning surfaces
-(see [`docs/operator-toolbox.md`](./docs/operator-toolbox.md)).
+| Command | What it proves |
+|---|---|
+| `make perfect-fast` | Deterministic local SDK/CLI/MCP package proof (no network, no live Clockify) |
+| `make perfect-full` | Adds GOCLMCP spec drift, codegen determinism, and a packed-consumer smoke |
+| `make perfect-live` | Explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
 
-## One-command gates
-
-The repo now exposes root-level commands for non-coder operation and
-future-agent handoff:
-
-```bash
-make help           # show the available gates
-make perfect-fast   # local deterministic SDK/CLI/MCP package proof
-make perfect-full   # GOCLMCP drift + local codegen + packages + packed-consumer smoke
-make perfect-live   # explicit sandbox/live cleanup proof
-```
-
-The gate map lives in [`docs/quality-gates.md`](./docs/quality-gates.md).
-The shared SDK/CLI/MCP metadata surface lives in
-[`docs/product-surface.json`](./docs/product-surface.json), with the
-human-readable table in
-[`docs/product-surface.md`](./docs/product-surface.md). Regenerate both
-with:
-
-```bash
-make product-surface
-```
-
-The shared error/recovery registry lives in
-[`docs/error-codes.json`](./docs/error-codes.json), with generated
-human-readable docs in [`docs/error-codes.md`](./docs/error-codes.md):
-
-```bash
-make error-docs
-```
-
-The OpenAPI operation inventory is generated from the corrected
-snapshot into [`docs/openapi-operations.json`](./docs/openapi-operations.json)
-and [`docs/openapi-operations.md`](./docs/openapi-operations.md):
-
-```bash
-make openapi-operations
-```
-
-The best-effort operation/tool parity join across OpenAPI, SDK naming,
-TS MCP, and GOCLMCP lives in
-[`docs/operation-parity.json`](./docs/operation-parity.json) and
-[`docs/operation-parity.md`](./docs/operation-parity.md):
-
-```bash
-make operation-parity
-```
-
-OpenAPI lint and generator-independence checks are local substitutes
-for paid generator-platform guardrails:
-
-```bash
-make openapi-lint
-make generator-independence
-make generator-comparison
-```
-
-The CLI and MCP README tables are generated from
-[`docs/cli-commands.json`](./docs/cli-commands.json) and
-[`docs/mcp-tools.json`](./docs/mcp-tools.json):
-
-```bash
-make readme-tables
-```
-
-Operator-facing install, migration, dependency, and troubleshooting
-docs live under [`docs/`](./docs/README.md). Troubleshooting is
-generated from the shared error registry:
-
-```bash
-make troubleshooting
-```
+`make help` lists every focused gate. Contribution workflow, the contract system,
+and the spec/generator relationship are in [`CONTRIBUTING.md`](./CONTRIBUTING.md);
+the full documentation index is [`docs/README.md`](./docs/README.md). The canonical
+OpenAPI is **not** in this repo — it is produced by the sister project
+`apet97/go-clockify` (cloned as `../GOCLMCP/`) and snapshotted into
+`spec/corrected/`.
 
 ## Layout
 
 ```
 clockify-ts-sdk/
-├── spec/
-│   ├── corrected/clockify.corrected.openapi.yaml   ← snapshot of GOCLMCP canonical
-│   ├── official/clockify.official.openapi.yaml      ← copy of upstream source
-│   ├── fern/{fern.config.json, generators.yml}     ← historical Fern workspace
-│   └── evidence/
-│       ├── discrepancies.md                         ← five-question ledger
-│       ├── fern-issues/                             ← drafted upstream issues (internal evidence)
-│       ├── fixtures/                                ← curated golden response shapes
-│       └── probes/                                  ← raw live API captures (gitignored)
-├── output/ts-sdk/                                   ← local TS generator output, gitignored
-├── wrapper/                                         ← packable SDK package layout
-├── cli/                                             ← packable CLI package layout
-├── mcp/                                             ← packable stdio MCP package layout
-├── scripts/                                         ← root orchestration/check/generation helpers
-├── Makefile                                         ← one-command local/full/live gates
-└── docs/
-    ├── axioms.md                                    ← SDK/CLI/MCP product rules
-    ├── error-codes.{json,md}                        ← shared recovery vocabulary
-    ├── openapi-operations.{json,md}                 ← generated operation inventory
-    ├── operation-parity.{json,md}                   ← generated SDK/MCP parity join
-    ├── operation-parity-overrides.json              ← curated non-mechanical parity joins
-    ├── cli-commands.json + mcp-tools.json           ← generated README table inputs
-    ├── install-personas.md                          ← SDK/CLI/MCP installation paths
-    ├── migration-guide.md                           ← package/import/auth migration notes
-    ├── dependency-policy.md                         ← tooling/runtime update rules
-    ├── troubleshooting.md                           ← generated recovery guide
-    ├── performance-budgets.json                     ← package/startup budget ceilings
-    ├── product-north-star.md                        ← final-state quality bar
-    ├── product-surface.{json,md}                    ← generated parity metadata
-    ├── quality-gates.md                             ← exact commands and evidence map
-    └── README.md                                    ← documentation index
+├── wrapper/   clockify-sdk-ts-115   — the SDK package
+├── cli/       @clockify115/cli      — the CLI package
+├── mcp/       @clockify115/mcp-server — the stdio MCP package
+├── examples/  runnable SDK / CLI / MCP examples
+├── spec/      corrected + official OpenAPI snapshots and the evidence ledger
+├── scripts/   local generator + contract checkers
+├── docs/      product docs, policies, and generated truth surfaces (see docs/README.md)
+└── Makefile   one-command local / full / live gates
 ```
 
-Each entry in `spec/evidence/discrepancies.md` answers five
-questions per divergence: official claim, actual behaviour, live
-test that proves it, MCP tool that depends on it, open questions.
+## Status
 
-## Refreshing inputs
+| Package | Version | Surface |
+|---|---|---|
+| `clockify-sdk-ts-115` | 0.9.0 | 31 resource modules, 185 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@clockify115/cli` | 0.1.0 | 29 commands incl. a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@clockify115/mcp-server` | 0.3.0 | 126 stdio tools (20 workflow + 106 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
-```bash
-# Refresh the official spec
-cp ../GOCLMCP/docs/openapi/sources/AIII/openapi.yaml \
-   spec/official/clockify.official.openapi.yaml
-
-# Regen + snapshot the canonical
-(cd ../GOCLMCP && make gen-openapi)
-cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml \
-   spec/corrected/clockify.corrected.openapi.yaml
-```
-
-## Running Local SDK Generation
-
-The TypeScript SDK is generated locally from the corrected OpenAPI
-snapshot. The command is deterministic, offline, and does not require
-Docker, Fern, a hosted SDK-generator account, or Clockify credentials.
-
-```bash
-make sdk-codegen        # writes output/ts-sdk/** and syncs wrapper/src/**
-make sdk-codegen-drift  # checks reproducibility without writing
-make sdk-codegen-test   # runs fixture tests for schema/runtime codegen behavior
-```
-
-To refresh the input snapshot, regenerate GOCLMCP first and then run
-`make sdk-codegen`. To smoke-test the **official** spec, copy it into a
-throwaway branch or temp tree and point the local generator at that copy;
-do not hand-edit `spec/corrected/**`.
-
-`spec/fern/` remains as historical evidence for the previous generator
-stack and for drafted upstream issue notes. Do not restore it as the
-active TypeScript path without maintainer approval.
-
-## Current state
-
-The canonical spec exposes **185 live operations across 121 paths
-on 31 tags**, with quarantined phantom routes tracked in the
-GOCLMCP generator. The wrapper ships idiomatic method names on
-**28 of 31 modules / 172 ops (93.0% of the live surface)** via
-`x-fern-sdk-group-name` + `x-fern-sdk-method-name` stamps.
-
-Package surfaces:
-
-| Package | Current surface |
-|---|---|
-| `clockify-sdk-ts-115` | v0.9.0; 31 resource modules, 185 live operations, dual ESM/CJS, pagination helpers, webhook verification, typed errors, scoped clients, OTel hooks, health and rate-limit helpers |
-| `@clockify115/cli` | v0.1.0; 29 commands across 17 groups incl. a scriptable `api` raw command, env/config based auth, `table`/`json`/`ndjson` output for automation |
-| `@clockify115/mcp-server` | v0.3.0; 126 stdio MCP tools: 20 workflow/orientation tools plus 106 domain tools, rich `changed`/`next` envelopes, stable recovery errors, dry-run confirmation tokens |
-
-| Surface                                            | Result |
-| -------------------------------------------------- | ------ |
-| `make sdk-codegen`                                 | Local generator emits 185 operations across 31 resources and syncs `wrapper/src/` |
-| `make sdk-codegen-drift`                           | Checks `output/ts-sdk/**` is reproducible from the corrected snapshot |
-| `make sdk-codegen-test`                            | Runs fixture tests for nullable fields, simple unions, multipart/binary runtime support, deterministic ordering, and JSON diagnostic receipts |
-| `tsc -p tsconfig.json --noEmit` (wrapper)          | package gate; run from `wrapper/` before SDK changes |
-| `vitest run` (wrapper)                             | unit coverage plus env-gated live sandbox flows |
-| `npm pack --dry-run` (wrapper, v0.9.0)             | checked by package gates |
-| `npm test` (mcp, v0.3.0 with live sandbox env)     | 45 tests, including 11 live sandbox flows |
-
-The full release log is in [`wrapper/CHANGELOG.md`](./wrapper/CHANGELOG.md);
-per-divergence evidence is in
-[`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
-The repo-level product target is in
+Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md).
 
-## Reviewing Generated Output
+## License
 
-When auditing what the local generator emits from the corrected spec, score on:
-
-- **Schemas** — orphan `additionalProperties: true` where the live
-  shape is known.
-- **Enums** — exhaustive; silent extras break consumers.
-- **Request / response models** — stable names, no anonymous
-  `Type_42` auto-names.
-- **Pagination** — one pattern across endpoints, not a different
-  one per op.
-- **Reports** — historically the dirtiest area (minor-unit amounts,
-  family-specific totals keys). Models here are the canary.
-
-Ugly output from the **corrected** spec is a real bug to fix in
-`../GOCLMCP/docs/openapi/sources/**` or in
-`scripts/generate-sdk-from-openapi.mjs`. Ugly output from the
-**official** spec only is a discrepancy already absorbed; add it (or update it) in
-`spec/evidence/discrepancies.md`.
+MIT. See [`SECURITY.md`](./SECURITY.md) for vulnerability reporting.

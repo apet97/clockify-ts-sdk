@@ -207,7 +207,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 53 names + 18 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 71 names + 21 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -344,7 +344,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (53 names, 18 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (71 names, 21 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
@@ -390,27 +390,16 @@ whitelists what `npm pack` includes. Do not add without a
 pack/readiness review. `CHANGELOG.md` is intentionally omitted to
 keep the tarball lean.
 
-Sixteen subpaths in `package.json` `exports` at v0.9.0, each
-with `import` + `require` conditions (modern dual-tier shape:
-`{ types, default }` per condition so TS resolves ESM vs CJS
-types correctly):
-
-- `clockify-sdk-ts-115` → `./dist/{esm,cjs}/index.js` (package root)
-- `clockify-sdk-ts-115/create-client` → the factory in isolation
-- `clockify-sdk-ts-115/composed-fetch` → the standalone fetch wrapper
-- `clockify-sdk-ts-115/errors` → typed-error helpers + status subclasses
-- `clockify-sdk-ts-115/deprecation` → `warnOnce` for slow-deprecation rails
-- `clockify-sdk-ts-115/iter` → per-resource pagination + drift union
-- `clockify-sdk-ts-115/pagination` → low-level callback `paginate<T>`
-- `clockify-sdk-ts-115/paginated-list` → `PaginatedList<T>` async-iterable wrapper
-- `clockify-sdk-ts-115/webhooks` → signature verifier + JSON parser
-- `clockify-sdk-ts-115/webhook-events` → `ClockifyWebhookEvent` discriminated union (50)
-- `clockify-sdk-ts-115/with-response` → `HttpResponsePromise` shim
-- `clockify-sdk-ts-115/scoped-client` → `Workspace` Proxy sub-client
-- `clockify-sdk-ts-115/otel-hooks` → OTel-typed `ComposedFetchHooks`
-- `clockify-sdk-ts-115/health` → `clockifyHealth()` preflight
-- `clockify-sdk-ts-115/rate-limit` → `getRateLimit` / `getRateLimitFromError`
-- `clockify-sdk-ts-115/diagnostics` → `clockifyDiagnostics()` no-network preflight
+Twenty-one subpaths in `package.json` `exports` at v0.9.0, each with `import` +
+`require` conditions (modern dual-tier shape: `{ types, default }` per condition so
+TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
+`docs/sdk-public-api.json` (`subpaths` + `tsconfigAliases`), kept in lockstep with
+`package.json` exports, the tsconfig path aliases, and `verify-dual-build.sh` by
+`make sdk-public-api` — edit there, not by hand-listing here. The subpaths:
+`create-client`, `composed-fetch`, `errors`, `deprecation`, `iter`, `pagination`,
+`paginated-list`, `webhooks`, `webhook-events`, `with-response`, `scoped-client`,
+`otel-hooks`, `health`, `rate-limit`, `diagnostics`, `request-options`,
+`operation-receipt`, `money`, `invoice-body`, `resolve`, and `dates`.
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` for the legacy release path. Because that would
