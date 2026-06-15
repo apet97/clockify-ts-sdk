@@ -1,0 +1,72 @@
+name: Release @clockify115/mcp-server to npm (DISABLED scaffold)
+
+# INERT publish scaffold — it cannot publish anything as written.
+#
+# The repo posture is "local tarballs only — no public npm publish without
+# explicit maintainer approval" (AGENTS.md §12.7). Only the SDK (`wrapper/`) has a
+# live release path (release.yml). This workflow exists so the MCP release is
+# DESIGNED and ready, but it is doubly disabled:
+#   - it runs ONLY on manual `workflow_dispatch` (never on a tag push), and
+#   - its publish step is guarded `if: false`, so even a manual run only builds
+#     and packs — it never runs `npm publish`.
+#
+# To actually publish @clockify115/mcp-server (a separate, deliberate maintainer
+# decision — see docs/release-support-policy.md):
+#   1. add a `push: { tags: ['mcp-v*.*.*'] }` trigger and a tag↔version guard,
+#   2. remove the `if: false` guard on the "Publish to npm" step,
+#   3. set the NPM_TOKEN secret and confirm provenance/OIDC.
+# Until then this workflow only proves the package builds, tests, and packs.
+
+on:
+  workflow_dispatch: {}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  publish:
+    name: Pack @clockify115/mcp-server (publish disabled)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # reserved for npm provenance via OIDC once enabled
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        working-directory: .
+        run: npm ci
+
+      - name: Generate + sync TS SDK (local generator)
+        working-directory: .
+        run: make sdk-codegen
+
+      - name: Type-check, test, build
+        run: |
+          npm run type-check
+          npm test
+          npm run build
+
+      - name: Pack (dry-run — never publishes)
+        run: npm pack --dry-run
+
+      - name: Publish to npm (DISABLED — opt-in only)
+        if: false # remove this guard to enable publishing — see header + AGENTS.md §12.7
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish

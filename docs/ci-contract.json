@@ -105,6 +105,28 @@
         "npm sbom",
         "Post-publish smoke install"
       ]
+    },
+    {
+      "path": ".github/workflows/ci-cli-release.yml",
+      "mustContain": [
+        "DISABLED scaffold",
+        "workflow_dispatch",
+        "working-directory: cli",
+        "Pack (dry-run — never publishes)",
+        "if: false",
+        "persist-credentials: false"
+      ]
+    },
+    {
+      "path": ".github/workflows/ci-mcp-release.yml",
+      "mustContain": [
+        "DISABLED scaffold",
+        "workflow_dispatch",
+        "working-directory: mcp",
+        "Pack (dry-run — never publishes)",
+        "if: false",
+        "persist-credentials: false"
+      ]
     }
   ],
   "supportingDocs": [
