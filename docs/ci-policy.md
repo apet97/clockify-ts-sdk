@@ -14,6 +14,8 @@ local package gates without becoming the source of product truth.
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
 | `.github/workflows/release-please.yml` | Release PR automation only. |
 | `.github/workflows/release.yml` | Legacy tag-triggered npm release path; not the default local workflow and not to be changed without explicit maintainer approval. |
+| `.github/workflows/ci-cli-release.yml` | INERT CLI publish scaffold: `workflow_dispatch`-only with the publish step guarded `if: false`. Builds and dry-run packs only; cannot publish until a maintainer deliberately enables it (AGENTS.md §12.7, docs/release-support-policy.md). |
+| `.github/workflows/ci-mcp-release.yml` | INERT MCP publish scaffold: same doubly-disabled posture as the CLI scaffold. |
 
 ## CI safety rules
 

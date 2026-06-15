@@ -45,6 +45,22 @@ Before a maintainer intentionally ships or hands off artifacts:
 Do not run `npm publish` from a developer laptop without explicit
 maintainer approval. Do not change CI/CD, provenance, auth, or release
 workflow triggers as part of routine SDK polish.
+
+## Enabling CLI / MCP npm publish (deferred — maintainer decision)
+
+Only `clockify-sdk-ts-115` (`wrapper/`) has a live release path
+(`.github/workflows/release.yml`). The CLI and MCP packages ship as local
+tarballs by default. Two INERT scaffolds are in place so their release is
+designed and ready but cannot fire:
+`.github/workflows/ci-cli-release.yml` and `ci-mcp-release.yml` — both run on
+manual `workflow_dispatch` only and guard the publish step with `if: false`, so
+a run only builds and dry-run packs.
+
+Enabling public npm publication of `@clockify115/cli` / `@clockify115/mcp-server`
+is a separate, deliberate maintainer decision (AGENTS.md §12.7). To enable a
+package: add a `push: { tags: [...] }` trigger with a tag↔`package.json` version
+guard, remove the `if: false` guard on its publish step, set the `NPM_TOKEN`
+secret, and confirm provenance/OIDC. Until then, nothing is published.
 ## Security support
 
 Security intake is documented in `SECURITY.md`. Security fixes use the
