@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
+import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
@@ -108,8 +109,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 endDate: z.string().min(1).describe("YYYY-MM-DD."),
                 occursAnnually: z.boolean().optional(),
                 everyoneIncludingNew: z.boolean().optional(),
-                userIds: z.array(z.string()).optional().describe("Assign to these users (sent as a CONTAINS filter)."),
-                userGroupIds: z.array(z.string()).optional().describe("Assign to these user groups (sent as a CONTAINS filter)."),
+                userIds: zStringList(z.array(z.string())).optional().describe("Assign to these users (sent as a CONTAINS filter)."),
+                userGroupIds: zStringList(z.array(z.string())).optional().describe("Assign to these user groups (sent as a CONTAINS filter)."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
@@ -171,8 +172,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 startDate: z.string().optional(),
                 endDate: z.string().optional(),
                 occursAnnually: z.boolean().optional(),
-                userIds: z.array(z.string()).optional().describe("Replace the assignment with these users."),
-                userGroupIds: z.array(z.string()).optional().describe("Replace the assignment with these user groups."),
+                userIds: zStringList(z.array(z.string())).optional().describe("Replace the assignment with these users."),
+                userGroupIds: zStringList(z.array(z.string())).optional().describe("Replace the assignment with these user groups."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },

@@ -7,6 +7,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
@@ -42,8 +43,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             title: "List expenses",
             description: "List workspace expenses with optional date range and pagination.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
             },
@@ -145,7 +146,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             title: "Create an expense",
             description: "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
             inputSchema: {
-                amount: z.number(),
+                amount: zNumberLike(z.number()),
                 categoryId: z.string().min(1),
                 projectId: z.string().min(1),
                 date: z.string().min(1),
@@ -181,7 +182,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             description: "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
             inputSchema: {
                 expenseId: z.string().min(1),
-                amount: z.number(),
+                amount: zNumberLike(z.number()),
                 categoryId: z.string().min(1),
                 date: z.string().min(1),
                 projectId: z.string().optional(),
@@ -221,8 +222,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             title: "List expense categories",
             description: "List workspace expense categories with bounded pagination controls.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -251,7 +252,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 name: z.string().min(1),
                 unit: z.string().optional(),
-                priceInCents: z.number().int().optional(),
+                priceInCents: zNumberLike(z.number().int()).optional(),
                 hasUnitPrice: z.boolean().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
@@ -281,7 +282,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 categoryId: z.string().min(1),
                 name: z.string().optional(),
                 unit: z.string().optional(),
-                priceInCents: z.number().int().optional(),
+                priceInCents: zNumberLike(z.number().int()).optional(),
                 hasUnitPrice: z.boolean().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
