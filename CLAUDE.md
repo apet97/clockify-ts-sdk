@@ -127,6 +127,21 @@ make docs-drift
   update `docs/mcp-write-safety-contract.json`,
   `scripts/check-mcp-write-safety.mjs`, tests, and `mcp/README.md`
   together.
+- The holidays, timeOff (policy/request/balance), scheduling, groups
+  `add_member`, and users grant/revoke-role MCP tools resolve a name
+  passed where a user/group/project id is expected to a real id
+  **before any write**, via the `resolve` SDK subpath (wired in
+  `mcp/src/tools/{holidays,timeOff,scheduling,groups,users}.ts`). A
+  24-hex id passes through; an ambiguous/unknown name short-circuits to
+  a grounded `clarification` receipt (no API call) built in
+  `mcp/src/tools/resolve-clarify.ts`. Read-filter slots stay list-free.
+  No new tools — the count stays 127.
+- MCP arg-shape forgiveness: list fields accept a bare string
+  (`"Bob"` -> `["Bob"]`) and number fields a numeric string
+  (`"75"` -> `75`, never `""` -> `0`), via `zStringList` / `zNumberLike`
+  in `mcp/src/arg-shapes.ts`. The `z.preprocess` wrappers unwrap before
+  validation, so the model-visible JSON Schema (and `docs/mcp-tools.json`
+  and the tool count) is unchanged.
 - `clockify_setup_webhook` validates callback URLs through
   `mcp/src/orchestration/webhook-url.ts` before dry-run preview or
   creation. The guard is offline: it rejects non-HTTPS, embedded
@@ -141,6 +156,13 @@ make docs-drift
   `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
   values. Check presence, never print values.
+- `mcp/src/scope-filter.ts` builds the `{contains, ids, status}`
+  user/group scope filter for holidays and time-off. The `status` arg
+  splits: time-off **policies** scope `status:"ACTIVE"`
+  (`mcp/src/tools/timeOff.ts`), holidays keep the `"ALL"` default
+  (`mcp/src/tools/holidays.ts`) — matching the live-verified addon. See
+  `spec/evidence/discrepancies.md`
+  (`time-off.policies.scope.status-active-not-all`).
 - `wrapper/.packsnapshot` must be the sorted `npm pack --dry-run --json`
   file list. The exact CI diff command should pass before push.
 - `docs/product-surface.json` and `docs/product-surface.md` are generated

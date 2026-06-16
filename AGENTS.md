@@ -309,6 +309,19 @@ end-to-end and green before push. Drift gates are non-negotiable.
 9. **No `it.skip` / `test.skip` / `xit` / `xdescribe` in `wrapper/tests/`.**
    Use the env-gated `describe.skip` pattern from
    `tests/sandbox.test.ts` for live tests. Never skip silently.
+10. **MCP id-slots resolve a name to an id before any write.** The
+    holidays, time-off (policy/request/balance), scheduling, groups
+    `add_member`, and users grant/revoke-role tools resolve a name in a
+    user/group/project id slot via the `resolve` subpath, returning a
+    grounded `clarification` receipt (no API call) on an ambiguous or
+    unknown name; a 24-hex id passes through and read-filter slots stay
+    list-free. The shared `mcp/src/scope-filter.ts` splits its `status`:
+    time-off **policies** scope `"ACTIVE"`, holidays keep `"ALL"`
+    (`spec/evidence/discrepancies.md`
+    `time-off.policies.scope.status-active-not-all`). Adds no tools
+    (still 127); arg-shape coercion (`zStringList` / `zNumberLike` in
+    `mcp/src/arg-shapes.ts`) keeps the model-visible JSON Schema
+    unchanged. Change the tool, its test, and the ledger together.
 
 ## 6. The wrapper layout
 
@@ -391,16 +404,16 @@ whitelists what `npm pack` includes. Do not add without a
 pack/readiness review. `CHANGELOG.md` is intentionally omitted to
 keep the tarball lean.
 
-Twenty-one subpaths in `package.json` `exports` at v0.9.0, each with `import` +
+Twenty-three subpaths in `package.json` `exports` at v0.9.0 (the root `.` plus 22 named), each with `import` +
 `require` conditions (modern dual-tier shape: `{ types, default }` per condition so
 TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
 `docs/sdk-public-api.json` (`subpaths` + `tsconfigAliases`), kept in lockstep with
 `package.json` exports, the tsconfig path aliases, and `verify-dual-build.sh` by
-`make sdk-public-api` — edit there, not by hand-listing here. The subpaths:
+`make sdk-public-api` — edit there, not by hand-listing here. The 22 named subpaths:
 `create-client`, `composed-fetch`, `errors`, `deprecation`, `iter`, `pagination`,
 `paginated-list`, `webhooks`, `webhook-events`, `with-response`, `scoped-client`,
 `otel-hooks`, `health`, `rate-limit`, `diagnostics`, `request-options`,
-`operation-receipt`, `money`, `invoice-body`, `resolve`, and `dates`.
+`operation-receipt`, `money`, `invoice-body`, `resolve`, `dates`, and `ensure`.
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` for the legacy release path. Because that would

@@ -7,6 +7,14 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Documentation
+
+- Documented the new `resolve` list/filter resolvers
+  (`resolveUserRefs` / `resolveGroupRefs` / `resolveTagRefs` /
+  `resolveUserFilter`) and the `errors` `mapAddonTokenRestriction` /
+  `AddonTokenRestrictionError` exports in `README.md` (helper table +
+  error table). Surface is now 81 public names / 23 subpaths.
+
 ### Added
 
 - Added `mapAddonTokenRestriction(err, { authScheme, method?, path? })` and the

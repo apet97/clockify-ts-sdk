@@ -82,3 +82,12 @@ Every MCP tool returns the shared envelope in `content[0].text` and `structuredC
 ## Breaking change review
 
 Replacement first: add the new SDK export, CLI command, MCP tool, package path, or OpenAPI-generated method before removing the old one. Changelog and migration notes must land in the same change as public breakage, and `make breaking-change-review` is the narrow gate before broader package and final proof gates.
+
+## Additive in this version (no breakage)
+
+These are new public names, not replacements — existing imports are unchanged, so no code migration is required to keep working:
+
+- SDK `clockify-sdk-ts-115/resolve` gained list/filter name→id resolvers `resolveUserRefs`, `resolveGroupRefs`, `resolveTagRefs`, and `resolveUserFilter`, alongside the existing `resolveEntityRef` / `resolveUserRef` / `matchByName`.
+- SDK `clockify-sdk-ts-115/errors` gained `mapAddonTokenRestriction` and `AddonTokenRestrictionError` (a pure catch-site helper that names an add-on-token 401 hitting an out-of-reach endpoint; API-key 401s stay raw).
+- This grows the SDK root public surface from 75 to 81 names; the 23 subpaths are unchanged.
+- MCP behavior (no new tools; count stays 127): the holidays, time-off (policy/request/balance), scheduling, `groups add_member`, and `users` grant/revoke-role tools now resolve a name passed where a user/group/project id is expected to a real id before any write, returning a grounded `clarification` receipt with no API call on an ambiguous or unknown name. 24-hex ids pass through unchanged, and read-filter slots stay list-free. List fields also accept a bare string and number fields a numeric string; the model-visible JSON Schema is unchanged.
