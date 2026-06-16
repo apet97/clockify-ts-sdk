@@ -219,6 +219,38 @@ export class ClockifyAbortError extends ClockifyApiError {
     }
 }
 
+/**
+ * Thrown by {@link mapAddonTokenRestriction} when an `X-Addon-Token` request
+ * gets a 401 whose body says the endpoint is not accessible to add-ons.
+ *
+ * Clockify refuses some endpoint FAMILIES for add-on tokens regardless of
+ * manifest scopes — no scope exists to grant them (live-probed: webhooks,
+ * custom-field management, account-level `GET /workspaces`). This names the
+ * restriction instead of surfacing a bare 401, so an addon backend can tell a
+ * genuine auth failure (bad/expired token) apart from a structural "add-ons
+ * can never call this" wall. Subclasses `ClockifyApiError` so existing
+ * `catch (err) { if (err instanceof ClockifyApiError) ... }` sites still match.
+ */
+export class AddonTokenRestrictionError extends ClockifyApiError {
+    /** HTTP method of the refused request (e.g. `"GET"`). */
+    public readonly method: string;
+    /** Request path of the refused request (e.g. `"/v1/workspaces"`). */
+    public readonly path: string;
+    constructor(opts: SubclassOpts & { method: string; path: string }) {
+        super({
+            message:
+                opts.message ??
+                `Clockify does not allow add-ons to call ${opts.method} ${opts.path} — this endpoint is outside the add-on token's reach regardless of manifest scopes.`,
+            ...opts,
+        });
+        Object.setPrototypeOf(this, new.target.prototype);
+        if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
+        this.name = "AddonTokenRestrictionError";
+        this.method = opts.method;
+        this.path = opts.path;
+    }
+}
+
 const STATUS_TO_CTOR = new Map<number, new (o: SubclassOpts) => ClockifyApiError>([
     [409, ConflictError],
     [429, RateLimitError],
@@ -495,4 +527,80 @@ export function getErrorCode(err: unknown): string | undefined {
     const nested = (body as { error?: { code?: unknown } }).error?.code;
     if (typeof nested === "string" && nested.length > 0) return nested;
     return undefined;
+}
+
+/** The marker phrase Clockify returns when an endpoint family is structurally
+ *  off-limits to add-on tokens (vs. a generic bad/expired-token 401). */
+const ADDON_RESTRICTION_MARKER = "API is not accessible" as const;
+
+/** True if the error's body (string OR object `message`/`error`/`code`) contains
+ *  the add-on-restriction marker phrase. */
+function bodyMentionsAddonRestriction(body: unknown): boolean {
+    if (typeof body === "string") return body.includes(ADDON_RESTRICTION_MARKER);
+    if (body != null && typeof body === "object") {
+        const b = body as { message?: unknown; error?: unknown; code?: unknown };
+        for (const v of [b.message, b.error, b.code]) {
+            if (typeof v === "string" && v.includes(ADDON_RESTRICTION_MARKER)) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Map an `X-Addon-Token` 401 whose body says the endpoint is not accessible to
+ * add-ons into a named {@link AddonTokenRestrictionError}; otherwise return the
+ * error UNCHANGED.
+ *
+ * Clockify walls off some endpoint families from add-on tokens regardless of
+ * manifest scopes (live-probed: webhooks, custom-field management, account-level
+ * `GET /workspaces`). A bare 401 reads like a bad token; this names the
+ * structural restriction so an addon backend stops retrying / re-issuing the
+ * token. **API-key auth keeps the raw 401** (so dev scripts and personal-token
+ * callers see the unmapped truth) — pass `authScheme: "apiKey"` and the input
+ * is returned as-is.
+ *
+ * The SDK error does not record which auth header it sent, so the caller — which
+ * constructed the client and therefore knows — must pass `authScheme`. Use it at
+ * a catch site (it is pure / non-throwing; it RETURNS the error to throw):
+ *
+ * @example
+ * ```ts
+ * import { createClockifyClient, mapAddonTokenRestriction } from "clockify-sdk-ts-115";
+ * const client = createClockifyClient({ addonToken });
+ * try {
+ *   await client.workspaces.list();
+ * } catch (err) {
+ *   throw mapAddonTokenRestriction(err, {
+ *     authScheme: "addonToken",
+ *     method: "GET",
+ *     path: "/v1/workspaces",
+ *   });
+ * }
+ * ```
+ *
+ * @param err the caught error (any value; non-`ClockifyApiError` values pass through).
+ * @param opts.authScheme which header the client used (`"addonToken"` or `"apiKey"`).
+ *   Only `"addonToken"` triggers mapping.
+ * @param opts.method optional HTTP method for the message; defaults to `"?"`.
+ * @param opts.path optional request path for the message; defaults to `"?"`.
+ * @returns an {@link AddonTokenRestrictionError} when (and only when) the error is
+ *   a 401 `ClockifyApiError`, `authScheme === "addonToken"`, and the body carries
+ *   the marker phrase; otherwise `err` unchanged.
+ */
+export function mapAddonTokenRestriction(
+    err: unknown,
+    opts: { authScheme: "addonToken" | "apiKey"; method?: string; path?: string },
+): unknown {
+    if (opts.authScheme !== "addonToken") return err;
+    if (!(err instanceof ClockifyApiError)) return err;
+    if (err.statusCode !== 401) return err;
+    if (!bodyMentionsAddonRestriction(err.body)) return err;
+    return new AddonTokenRestrictionError({
+        method: opts.method ?? "?",
+        path: opts.path ?? "?",
+        statusCode: err.statusCode,
+        body: err.body,
+        rawResponse: err.rawResponse,
+        cause: err.cause,
+    });
 }

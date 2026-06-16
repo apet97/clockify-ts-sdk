@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    AddonTokenRestrictionError,
     BadRequestError,
     ClockifyAbortError,
     ClockifyConnectionError,
@@ -16,10 +17,12 @@ import {
     isInternalServerError,
     isRateLimitError,
     isServiceUnavailableError,
+    mapAddonTokenRestriction,
     promoteApiError,
     RateLimitError,
     ServiceUnavailableError,
 } from "../errors.js";
+import { UnauthorizedError } from "../src/api/errors/index.js";
 import { ClockifyApiError } from "../src/errors/index.js";
 
 /** Headers double matching the `HeaderReader` shape (just `get`). */
@@ -428,5 +431,105 @@ describe("stable SDK error classification", () => {
     it("returns undefined for non-SDK errors", () => {
         expect(classifyClockifyError(new Error("plain"))).toBeUndefined();
         expect(getStableErrorCode(new Error("plain"))).toBeUndefined();
+    });
+});
+
+describe("mapAddonTokenRestriction", () => {
+    it("maps an addon-token 401 with string body marker → AddonTokenRestrictionError", () => {
+        const err = new ClockifyApiError({ statusCode: 401, body: "API is not accessible" });
+        const mapped = mapAddonTokenRestriction(err, {
+            authScheme: "addonToken",
+            method: "GET",
+            path: "/v1/workspaces",
+        });
+        expect(mapped).toBeInstanceOf(AddonTokenRestrictionError);
+        expect(mapped).toBeInstanceOf(ClockifyApiError);
+        const e = mapped as AddonTokenRestrictionError;
+        expect(e.message).toContain("Clockify does not allow add-ons to call GET /v1/workspaces");
+        expect(e.message).toContain("outside the add-on token's reach");
+        expect(e.method).toBe("GET");
+        expect(e.path).toBe("/v1/workspaces");
+        expect(e.statusCode).toBe(401);
+        expect(e.name).toBe("AddonTokenRestrictionError");
+    });
+
+    it("maps an addon-token 401 with object body message marker", () => {
+        const err = new ClockifyApiError({
+            statusCode: 401,
+            body: { message: "API is not accessible for add-ons" },
+        });
+        const mapped = mapAddonTokenRestriction(err, { authScheme: "addonToken" });
+        expect(mapped).toBeInstanceOf(AddonTokenRestrictionError);
+    });
+
+    it("maps a generated UnauthorizedError carrying the marker", () => {
+        const err = new UnauthorizedError("API is not accessible", undefined);
+        const mapped = mapAddonTokenRestriction(err, {
+            authScheme: "addonToken",
+            method: "GET",
+            path: "/v1/workspaces",
+        });
+        expect(mapped).toBeInstanceOf(AddonTokenRestrictionError);
+        expect(mapped).toBeInstanceOf(ClockifyApiError);
+    });
+
+    it("leaves an api-key 401 raw", () => {
+        const err = new ClockifyApiError({ statusCode: 401, body: "API is not accessible" });
+        const mapped = mapAddonTokenRestriction(err, {
+            authScheme: "apiKey",
+            method: "GET",
+            path: "/v1/workspaces",
+        });
+        expect(mapped).toBe(err);
+        expect(mapped).not.toBeInstanceOf(AddonTokenRestrictionError);
+    });
+
+    it("leaves an addon-token 401 WITHOUT the marker raw", () => {
+        const err = new ClockifyApiError({
+            statusCode: 401,
+            body: { message: "Full authentication is required" },
+        });
+        const mapped = mapAddonTokenRestriction(err, { authScheme: "addonToken" });
+        expect(mapped).toBe(err);
+    });
+
+    it("leaves a non-401 addon-token error raw", () => {
+        const err = new ClockifyApiError({ statusCode: 403, body: "API is not accessible" });
+        const mapped = mapAddonTokenRestriction(err, { authScheme: "addonToken" });
+        expect(mapped).toBe(err);
+    });
+
+    it("returns non-ClockifyApiError values unchanged", () => {
+        const plain = new Error("plain");
+        expect(mapAddonTokenRestriction(plain, { authScheme: "addonToken" })).toBe(plain);
+        expect(mapAddonTokenRestriction("string", { authScheme: "addonToken" })).toBe("string");
+        expect(mapAddonTokenRestriction(null, { authScheme: "addonToken" })).toBe(null);
+        expect(mapAddonTokenRestriction(undefined, { authScheme: "addonToken" })).toBe(undefined);
+    });
+
+    it('defaults method/path to "?" when omitted', () => {
+        const err = new ClockifyApiError({ statusCode: 401, body: "API is not accessible" });
+        const mapped = mapAddonTokenRestriction(err, { authScheme: "addonToken" });
+        expect(mapped).toBeInstanceOf(AddonTokenRestrictionError);
+        expect((mapped as AddonTokenRestrictionError).message).toContain("call ? ?");
+    });
+
+    it("preserves body and rawResponse on the mapped error", () => {
+        const body = { message: "API is not accessible" };
+        const rawResponse = H({ "x-request-id": "req-123" }) as never;
+        const err = new ClockifyApiError({ statusCode: 401, body, rawResponse });
+        const mapped = mapAddonTokenRestriction(err, {
+            authScheme: "addonToken",
+            method: "GET",
+            path: "/v1/workspaces",
+        }) as AddonTokenRestrictionError;
+        expect(mapped.body).toBe(err.body);
+        expect(mapped.rawResponse).toBe(err.rawResponse);
+    });
+
+    it("AddonTokenRestrictionError uses a custom message when provided", () => {
+        const e = new AddonTokenRestrictionError({ method: "GET", path: "/x", message: "custom" });
+        expect(e.message).toContain("custom");
+        expect(e.message).not.toContain("outside the add-on token's reach");
     });
 });

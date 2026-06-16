@@ -9,6 +9,15 @@ once v1.0.0 ships.
 
 ### Added
 
+- Added `mapAddonTokenRestriction(err, { authScheme, method?, path? })` and the
+  `AddonTokenRestrictionError` class to the `errors` surface: when an
+  `X-Addon-Token` request 401s with a body saying the endpoint is not accessible
+  to add-ons, the helper names the structural restriction (some endpoint families
+  — webhooks, custom-field management, account-level `GET /workspaces` — are
+  off-limits to add-on tokens regardless of manifest scopes) instead of surfacing
+  a bare 401. API-key 401s pass through unchanged. The SDK error does not record
+  the auth scheme, so the caller passes `authScheme`. Pure / catch-site helper,
+  like `promoteApiError`.
 - Added the list/filter name→id resolvers to the `resolve` subpath:
   `resolveUserRefs` / `resolveGroupRefs` / `resolveTagRefs` (id/exact-name lists →
   ids + labels, order-preserving dedup, one list call max, grounded clarify on
