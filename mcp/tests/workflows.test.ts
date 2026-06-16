@@ -349,6 +349,43 @@ describe("workflow tools", () => {
         });
     });
 
+    it("log_work emits a clarification receipt when a name matches more than one project", async () => {
+        const client = await connect(
+            fakeContext({
+                projects: [
+                    { id: "p1", name: "Launch" },
+                    { id: "p2", name: "Launch" },
+                ],
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_log_work",
+            arguments: {
+                description: "Ship workflows",
+                start: "2026-05-26T09:00:00.000Z",
+                end: "2026-05-26T10:00:00.000Z",
+                project: "Launch",
+            },
+        });
+        // An ambiguous name is a success envelope carrying a grounded "did you mean?"
+        // receipt with the real candidate ids — never an error, never a guessed id.
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env).toMatchObject({
+            ok: true,
+            action: "clockify_log_work",
+            clarification: {
+                question: 'More than one project is named "Launch". Which one?',
+                field: "project",
+                candidates: [
+                    { type: "project", id: "p1", name: "Launch" },
+                    { type: "project", id: "p2", name: "Launch" },
+                ],
+            },
+        });
+        expect((res as { structuredContent?: unknown }).structuredContent).toEqual(env);
+    });
+
     it("log_work accepts durationSeconds as a camelCase alias", async () => {
         const client = await connect(fakeContext());
         const res = await client.callTool({
