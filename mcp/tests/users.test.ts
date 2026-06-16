@@ -11,6 +11,13 @@ afterEach(async () => {
     await teardown();
 });
 
+// A 24-hex id so the resolver treats it as a real id, plus the short "user-1"
+// id the existing grant/revoke fixtures pass (resolved against the list by id).
+const ALICE = "aaaaaaaaaaaaaaaaaaaaaaaa";
+const SAM1 = "cccccccccccccccccccccccc";
+const SAM2 = "dddddddddddddddddddddddd";
+const ME = "eeeeeeeeeeeeeeeeeeeeeeee";
+
 function usersContext(captured: Record<string, unknown>): Context {
     return {
         workspaceId: "ws-1",
@@ -18,8 +25,15 @@ function usersContext(captured: Record<string, unknown>): Context {
             users: {
                 list: async (req: unknown) => {
                     captured.list = req;
-                    return [{ id: "user-1", name: "Alice" }];
+                    captured.usersListCalled = true;
+                    return [
+                        { id: "user-1", name: "Alice" },
+                        { id: ALICE, name: "Alicia" },
+                        { id: SAM1, name: "Sam" },
+                        { id: SAM2, name: "Sam" },
+                    ];
                 },
+                getCurrentUser: async () => ({ id: ME }),
                 giveRole: async (req: unknown) => {
                     captured.giveRole = req;
                     return [{ role: "TEAM_MANAGER" }];
@@ -115,5 +129,64 @@ describe("users and roles tools", () => {
         expect(res.isError).toBeFalsy();
         expect(captured.removeRole).toMatchObject({ userId: "user-1", role: "TEAM_MANAGER", entityId: "ws-1" });
         expect((envelope(res).data as { revoked?: boolean }).revoked).toBe(true);
+    });
+
+    it("clockify_users_grant_role resolves a user NAME to its id before giveRole", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_users_grant_role",
+            arguments: { userId: "Alicia", role: "PROJECT_MANAGER", entityId: "proj-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.giveRole as { userId?: string }).userId).toBe(ALICE);
+    });
+
+    it("clockify_users_grant_role clarifies + does NOT call giveRole on an ambiguous name", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_users_grant_role",
+            arguments: { userId: "Sam", role: "PROJECT_MANAGER", entityId: "proj-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = envelope(res);
+        expect(env.ok).toBe(true);
+        expect((env.clarification as { field?: string }).field).toBe("userId");
+        expect(captured.giveRole).toBeUndefined();
+    });
+
+    it("clockify_users_grant_role passes a 24-hex userId through", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_users_grant_role",
+            arguments: { userId: ALICE, role: "PROJECT_MANAGER", entityId: "proj-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.giveRole as { userId?: string }).userId).toBe(ALICE);
+    });
+
+    it("clockify_users_revoke_role resolves a name and clarifies on unknown", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const ok = await client.callTool({
+            name: "clockify_users_revoke_role",
+            arguments: { userId: "Alicia", role: "TEAM_MANAGER", entityId: "ws-1" },
+        });
+        expect(ok.isError).toBeFalsy();
+        expect((captured.removeRole as { userId?: string }).userId).toBe(ALICE);
+
+        const captured2: Record<string, unknown> = {};
+        const client2 = await connect(usersContext(captured2));
+        const bad = await client2.callTool({
+            name: "clockify_users_revoke_role",
+            arguments: { userId: "Nobody", role: "TEAM_MANAGER", entityId: "ws-1" },
+        });
+        expect(bad.isError).toBeFalsy();
+        const env = envelope(bad);
+        expect(env.ok).toBe(true);
+        expect((env.clarification as { field?: string }).field).toBe("userId");
+        expect(captured2.removeRole).toBeUndefined();
     });
 });

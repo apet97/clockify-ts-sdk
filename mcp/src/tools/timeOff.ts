@@ -5,12 +5,15 @@
  * requests are the actual time-off events.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
+
+import { clarifyResult } from "./resolve-clarify.js";
 
 const REQUEST_STATUSES = ["APPROVED", "PENDING", "REJECTED", "WITHDRAWN"] as const;
 
@@ -33,6 +36,26 @@ const POLICY_CARRY_FIELDS = [
 ] as const;
 
 export function registerTimeOffTools(server: McpServer, ctx: Context): void {
+    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.users.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            "include-roles": false,
+        } as never)) as Array<{ id?: string; name?: string }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
+    };
+    const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.userGroups.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+        } as never)) as Array<{ id?: string; name?: string }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
+    };
+    const meUserId = async (): Promise<string> =>
+        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+
     server.registerTool(
         "clockify_time_off_requests_list",
         {
@@ -50,6 +73,17 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                let users = args.users;
+                if (args.users?.length) {
+                    const r = await resolveUserRefs(args.users, {
+                        verb: "filter time-off requests by",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: false, // read filter — a 24-hex id is trusted, no list call
+                    });
+                    if (!r.ok) return clarifyResult("clockify_time_off_requests_list", "users", "user", r.clarify);
+                    users = r.userIds;
+                }
                 const req: Record<string, unknown> = {
                     workspaceId: ctx.workspaceId,
                     page: args.page ?? 1,
@@ -58,7 +92,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 if (args.start) req.start = args.start;
                 if (args.end) req.end = args.end;
                 if (args.statuses) req.statuses = args.statuses;
-                if (args.users) req.users = args.users;
+                if (users) req.users = users;
                 const items = (await ctx.client.timeOff.list(req as never)) as unknown[];
                 return successResult("clockify_time_off_requests_list", items, {
                     workspaceId: ctx.workspaceId,
@@ -301,14 +335,34 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "apply the policy to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok) return clarifyResult("clockify_time_off_policies_create", "userIds", "user", r.clarify);
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "apply the policy to",
+                        listGroups,
+                    });
+                    if (!r.ok) return clarifyResult("clockify_time_off_policies_create", "userGroupIds", "group", r.clarify);
+                    resolvedGroupIds = r.groupIds;
+                }
                 // The generated create reads the policy fields FLAT off the request
                 // (not a nested `body`), so spread them; a nested body is silently
                 // dropped.
                 const body: Record<string, unknown> = { name: args.name };
                 if (args.timeUnit) body.timeUnit = args.timeUnit;
                 if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
-                if (args.userIds?.length) body.users = scopeFilter(args.userIds, "ACTIVE");
-                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds, "ACTIVE");
+                if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
+                if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
                 const created = await ctx.client.timeOffPolicies.create({
                     workspaceId: ctx.workspaceId,
                     ...body,
@@ -339,6 +393,28 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                // Resolve the EXPLICIT replacement scope (a name in an id slot) before
+                // reconstructing scope; carried-forward existing ids are not re-resolved.
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "apply the policy to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok) return clarifyResult("clockify_time_off_policies_update", "userIds", "user", r.clarify);
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "apply the policy to",
+                        listGroups,
+                    });
+                    if (!r.ok) return clarifyResult("clockify_time_off_policies_update", "userGroupIds", "group", r.clarify);
+                    resolvedGroupIds = r.groupIds;
+                }
                 // PUT /time-off/policies/{id} REPLACES the policy, the generated
                 // method reads body fields FLAT (a nested `body` is dropped), and the
                 // GET echoes the scope FLAT as userIds/userGroupIds. So read the
@@ -358,9 +434,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 const existingGroupIds = Array.isArray(existing.userGroupIds)
                     ? (existing.userGroupIds as string[])
                     : [];
-                if (args.userIds?.length) body.users = scopeFilter(args.userIds, "ACTIVE");
+                if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
                 else if (existingUserIds.length) body.users = scopeFilter(existingUserIds, "ACTIVE");
-                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds, "ACTIVE");
+                if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
                 else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
                 const updated = await ctx.client.timeOffPolicies.update({
                     workspaceId: ctx.workspaceId,
@@ -445,15 +521,23 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                const filter = await resolveUserFilter(args.userId, {
+                    verb: "fetch the time-off balance for",
+                    meUserId: await meUserId(),
+                    listUsers,
+                });
+                if (!filter.ok)
+                    return clarifyResult("clockify_time_off_balance_for_user", "userId", "user", filter.clarify);
+                const userId = filter.userId ?? args.userId;
                 const balance = await ctx.client.balances.getForUser({
                     workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                    userId,
                     page: args.page ?? 1,
                     "page-size": args.pageSize ?? 50,
                 });
                 return successResult("clockify_time_off_balance_for_user", balance, {
                     workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                    userId,
                 });
             } catch (err) {
                 return errorResult("clockify_time_off_balance_for_user", err);

@@ -2,13 +2,27 @@
  * User group admin: CRUDL + membership management.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
+import { clarifyResult } from "./resolve-clarify.js";
+
 export function registerGroupsTools(server: McpServer, ctx: Context): void {
+    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.users.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            "include-roles": false,
+        } as never)) as Array<{ id?: string; name?: string }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
+    };
+    const meUserId = async (): Promise<string> =>
+        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
     server.registerTool(
         "clockify_groups_list",
         {
@@ -193,15 +207,20 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "add to the group", meUserId: await meUserId(), listUsers, trustIds: false },
+                );
+                if (!u.ok) return clarifyResult("clockify_groups_add_member", "userId", "user", u.clarify);
                 const result = await ctx.client.userGroups.addMembers({
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
-                    userId: args.userId,
+                    userId: u.userId,
                 });
                 return successResult("clockify_groups_add_member", result, {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
-                    userId: args.userId,
+                    userId: u.userId,
                 });
             } catch (err) {
                 return errorResult("clockify_groups_add_member", err);

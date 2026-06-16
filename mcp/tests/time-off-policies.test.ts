@@ -44,6 +44,20 @@ function policiesContext(captured: Record<string, unknown>, policy = existingPol
                     return { id: "pol-9" };
                 },
             },
+            // The scope tools now resolve a name in an id slot through the list/filter
+            // resolvers; the resolver matches a non-hex ref against listed ids first, so
+            // the short ids these fixtures use must appear in the listed users/groups.
+            users: {
+                list: async () => [
+                    { id: "u1", name: "User One" },
+                    { id: "u2", name: "User Two" },
+                    { id: "u9", name: "User Nine" },
+                ],
+                getCurrentUser: async () => ({ id: "me-1" }),
+            },
+            userGroups: {
+                list: async () => [{ id: "g1", name: "Group One" }],
+            },
         } as never,
     };
 }
