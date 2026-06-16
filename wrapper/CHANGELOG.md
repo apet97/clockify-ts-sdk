@@ -9,6 +9,14 @@ once v1.0.0 ships.
 
 ### Added
 
+- Added the list/filter name→id resolvers to the `resolve` subpath:
+  `resolveUserRefs` / `resolveGroupRefs` / `resolveTagRefs` (id/exact-name lists →
+  ids + labels, order-preserving dedup, one list call max, grounded clarify on
+  ambiguous/unknown) and `resolveUserFilter` (optional read-filter slot, trusts a
+  24-hex id, configurable default-when-empty). Ported from the live-proven
+  ai-assistant addon. Groups always verify a 24-hex value, tags/filters trust it;
+  all four are pure (injected `list` callbacks) and reuse the existing
+  `ClarifyResult` shape.
 - Added the `ensure` subpath: `ensureTag` / `ensureProject` / `findOrCreateClient`
   do a case-insensitive list-then-match before creating, so a re-run reuses the
   existing record instead of silently making a duplicate (Clockify does not enforce

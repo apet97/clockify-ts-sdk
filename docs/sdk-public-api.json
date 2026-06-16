@@ -79,6 +79,10 @@
     "resolveEntityRef",
     "resolveProjectTaskRefs",
     "resolveUserRef",
+    "resolveUserRefs",
+    "resolveGroupRefs",
+    "resolveTagRefs",
+    "resolveUserFilter",
     "ensureTag",
     "ensureProject",
     "findOrCreateClient",
@@ -176,7 +180,11 @@
       "suggestOptions",
       "resolveEntityRef",
       "resolveProjectTaskRefs",
-      "resolveUserRef"
+      "resolveUserRef",
+      "resolveUserRefs",
+      "resolveGroupRefs",
+      "resolveTagRefs",
+      "resolveUserFilter"
     ],
     "./ensure": [
       "ensureTag",

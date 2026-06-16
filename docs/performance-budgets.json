@@ -64,8 +64,8 @@
     },
     {
       "path": "wrapper/dist/cjs/index.js",
-      "maxBytes": 18500,
-      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Recalibrated from 16000 after the money/invoice-body/resolve/dates root re-exports grew the CJS barrel to ~17027 bytes (actual + ~9% headroom)."
+      "maxBytes": 20500,
+      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Recalibrated from 18500 after the list/filter resolver root re-exports (resolveUserRefs/resolveGroupRefs/resolveTagRefs/resolveUserFilter) grew the CJS barrel to ~18514 bytes (actual + ~11% headroom)."
     },
     {
       "path": "cli/dist/index.js",
