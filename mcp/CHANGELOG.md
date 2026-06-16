@@ -15,6 +15,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   `dry_run` → `confirm_token` handshake through the shared confirmation guard,
   matching the six already-guarded deletes. An LLM caller must preview the delete
   and pass back a single-use token before anything is removed.
+- `clockify_time_off_policies_create` / `clockify_time_off_policies_update` now
+  send the user/group scope filter with `status:"ACTIVE"` (was `"ALL"`), matching
+  the live-verified Clockify behavior for time-off policies; holiday assignments
+  keep `status:"ALL"`. The shared `scope-filter.ts` helper gained an optional
+  `status` parameter (defaults to `"ALL"`).
 
 ### Added
 

@@ -24,6 +24,7 @@ policy).
 | `invoices.create.note-subject-dropped` | `compensated-in-tool-layer` |
 | `holidays.update.replace-and-scope-filter` | `compensated-in-tool-layer` |
 | `time-off.policies.update.replace-and-scope-filter` | `compensated-in-tool-layer` |
+| `time-off.policies.scope.status-active-not-all` | `compensated-in-tool-layer` |
 | `rates.put-minor-units-no-get` | `compensated-in-tool-layer` |
 | `scheduling.project-totals.get-vs-post` | `compensated-in-tool-layer` |
 | `time-off.requests.update-status.wrong-method-and-field` | `compensated-in-tool-layer` |

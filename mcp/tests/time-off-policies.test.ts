@@ -81,8 +81,8 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
         expect(update.allowNegativeBalance).toBe(true);
         expect(update.approve).toBe(true);
         // Scope reconstructed from flat userIds/userGroupIds.
-        expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u1", "u2"], status: "ALL" });
-        expect(update.userGroups).toEqual({ contains: "CONTAINS", ids: ["g1"], status: "ALL" });
+        expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u1", "u2"], status: "ACTIVE" });
+        expect(update.userGroups).toEqual({ contains: "CONTAINS", ids: ["g1"], status: "ACTIVE" });
         expect(update.userIds).toBeUndefined();
         expect(update.workspaceId).toBe("ws-1");
         expect(update.policyId).toBe("pol-1");
@@ -96,7 +96,22 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
             arguments: { policyId: "pol-1", userIds: ["u9"] },
         });
         const update = captured.update as Record<string, unknown>;
-        expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u9"], status: "ALL" });
+        expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u9"], status: "ACTIVE" });
+    });
+
+    it("sends status ACTIVE (not ALL) for the policy scope filter", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        await client.callTool({
+            name: "clockify_time_off_policies_update",
+            arguments: { policyId: "pol-1", name: "Vacation" },
+        });
+        const update = captured.update as Record<string, unknown>;
+        // Policies diverge from holidays: the live-verified addon sends ACTIVE.
+        expect((update.users as { status: string }).status).toBe("ACTIVE");
+        expect((update.users as { status: string }).status).not.toBe("ALL");
+        expect((update.userGroups as { status: string }).status).toBe("ACTIVE");
+        expect((update.userGroups as { status: string }).status).not.toBe("ALL");
     });
 });
 
@@ -113,6 +128,18 @@ describe("clockify_time_off_policies_create — flat body + scope", () => {
         expect(create.body).toBeUndefined();
         expect(create.name).toBe("Sick");
         expect(create.timeUnit).toBe("DAYS");
-        expect(create.users).toEqual({ contains: "CONTAINS", ids: ["u1"], status: "ALL" });
+        expect(create.users).toEqual({ contains: "CONTAINS", ids: ["u1"], status: "ACTIVE" });
+    });
+
+    it("sends status ACTIVE on create scope, not ALL", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        await client.callTool({
+            name: "clockify_time_off_policies_create",
+            arguments: { name: "Sick", userIds: ["u1"], userGroupIds: ["g1"] },
+        });
+        const create = captured.create as Record<string, unknown>;
+        expect((create.users as { status: string }).status).toBe("ACTIVE");
+        expect((create.userGroups as { status: string }).status).toBe("ACTIVE");
     });
 });
