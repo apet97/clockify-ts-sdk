@@ -2017,16 +2017,46 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ### `invoices.items-unit-price-scale` + `invoices.payments.post-returns-invoice` — OPEN (no tools yet)
 
-- **Actual behavior (addon live-probe 2026-06-10):** invoice item `unitPrice` is
-  minor×100 on the wire (sending plain minor billed a $1000 item as $10); and
-  `POST /invoices/{id}/payments` returns the updated **invoice** document, not the
-  payment — the new payment id must be list-diffed around the POST.
-- **MCP tools affected:** none — the MCP surface has no invoice item-add or
-  payment-create tool (`mcp/src/tools/invoices.ts` defers items to a workflow).
-- **Open questions:** none.
-- **Status:** `open`. If item/payment tools are added later, scale unitPrice via
-  `wrapper/money.ts` `invoiceItemUnitPriceToWire` and list-diff the payment id.
-  Port from addon `src/clockify/rest/invoices.ts:249-277`.
+- **1. What official docs claim:** `AddInvoiceItemRequest.unitPrice`
+  (`POST /workspaces/{workspaceId}/invoices/{invoiceId}/items`, operationId
+  `addInvoiceItem`) is documented as a plain integer money field, same as every other
+  amount; `POST /invoices/{id}/payments` is documented to create a payment. The
+  corrected snapshot inherits this — `spec/corrected/clockify.corrected.openapi.yaml`
+  carries the blanket note "Invoice item unitPrice/amount fields are preserved in raw
+  upstream minor units," which is **wrong for `unitPrice`** (it is a third, ×100 scale).
+- **2. What Clockify actually returns (addon live-probe 2026-06-10):** an invoice item's
+  `unitPrice` is **minor×100** on the wire (hundredths of a cent), distinct from every
+  other money field, because Clockify computes `amount = unitPrice × quantity / 100`.
+  Sending plain minor `unitPrice` billed a $1000 item as $10. The sibling `amount` field
+  stays plain minor. Separately, `POST /invoices/{id}/payments` returns the updated
+  **invoice** document, not the payment — the new payment id must be list-diffed around
+  the POST (GET the payments list before and after, take the new id).
+- **3. Which test/fixture proves it:** the wrapper helper is unit-tested directly —
+  `wrapper/tests/money.test.ts:46-58` and `wrapper/tests/wire-shape.test.ts:126-129`
+  pin `invoiceItemUnitPriceToWire(100000) === 10000000` (a $1000 item) and the ÷100
+  read-back. The wire scale matches addon `src/clockify/rest/invoices.ts:83`
+  (`UNIT_PRICE_WIRE_SCALE = 100`), `:90` (read `/100`), `:254` (write `×100`). No live
+  probe fixture ships here (raw probe payloads stay out of git per the data-handling
+  policy); the addon's June-2026 live probe is the source of record.
+- **4. Which `clockify_*` tool depends on it:** **none today.** The MCP surface has no
+  invoice item-add tool and no payment-create tool — the 8 invoices tools are
+  `clockify_invoices_{list,get,create,update,delete,update_status,export,import_time}`
+  (`mcp/src/tools/invoices.ts`). `clockify_invoices_import_time` is the only invoice-item
+  write and it lets Clockify auto-generate items from time/expenses over a date range, so
+  no user-supplied `unitPrice` is ever sent. The wrapper helpers
+  `invoiceItemUnitPriceToWire`/`invoiceItemUnitPriceFromWire` are therefore
+  **correct-but-unused** — a latent money-corruption trap.
+- **5. Which uncertainty remains:** none about the scale itself (live-verified). The open
+  question is purely forward-looking: **if** an add-item tool (wiring
+  `client.invoiceItems.create`/`addInvoiceItem`) or a payment-create tool is ever added,
+  it MUST scale the user-supplied price with `wrapper/money.ts`
+  `invoiceItemUnitPriceToWire` (minor → minor×100) before sending and
+  `invoiceItemUnitPriceFromWire` on read-back, and a payment-create tool MUST list-diff
+  the payments list around the POST to recover the new payment id (the POST response is
+  the invoice, not the payment).
+- **Status:** `open` (no tools yet — latent only). When item/payment tools land, port the
+  shapes from addon `src/clockify/rest/invoices.ts:249-277` and add a COMPENSATED entry
+  + test coverage at that time.
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
 
