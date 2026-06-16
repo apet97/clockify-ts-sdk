@@ -15,7 +15,17 @@
     "clockify_clients_delete",
     "clockify_tags_delete",
     "clockify_tasks_delete",
-    "clockify_webhooks_delete"
+    "clockify_webhooks_delete",
+    "clockify_custom_fields_delete",
+    "clockify_project_custom_fields_remove",
+    "clockify_holidays_delete",
+    "clockify_groups_delete",
+    "clockify_groups_remove_member",
+    "clockify_expenses_categories_delete",
+    "clockify_expenses_delete",
+    "clockify_invoices_delete",
+    "clockify_scheduling_assignments_delete",
+    "clockify_time_off_requests_delete"
   ],
   "idempotentWorkflowTools": [
     "clockify_demo_seed",

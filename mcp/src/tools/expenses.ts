@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -109,12 +110,20 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_delete",
         {
             title: "Delete an expense",
-            description: "Permanently delete one expense by ID from the pinned workspace.",
-            inputSchema: { expenseId: z.string().min(1) },
+            description:
+                "Permanently delete one expense by ID from the pinned workspace. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                expenseId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "expense", id: args.expenseId };
+                const confirmation = requireConfirmation(ctx, "clockify_expenses_delete", "expense_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.expenses.delete({
                     workspaceId: ctx.workspaceId,
                     expenseId: args.expenseId,
@@ -302,12 +311,20 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_categories_delete",
         {
             title: "Delete an expense category",
-            description: "Permanently delete an expense category by ID.",
-            inputSchema: { categoryId: z.string().min(1) },
+            description:
+                "Permanently delete an expense category by ID. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                categoryId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "expense_category", id: args.categoryId };
+                const confirmation = requireConfirmation(ctx, "clockify_expenses_categories_delete", "expense_category_delete", args, preview);
+                if (confirmation) return confirmation;
                 // Clockify rejects deleting an ACTIVE category — archive it first
                 // via the dedicated PATCH .../status endpoint (not a replace), then
                 // delete.
