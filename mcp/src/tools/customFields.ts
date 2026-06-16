@@ -7,6 +7,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerCustomFieldsTools(server: McpServer, ctx: Context): void {
@@ -117,12 +118,20 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         "clockify_custom_fields_delete",
         {
             title: "Delete a workspace custom field",
-            description: "Permanently delete a workspace custom field definition.",
-            inputSchema: { customFieldId: z.string().min(1) },
+            description:
+                "Permanently delete a workspace custom field definition. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                customFieldId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "custom_field", id: args.customFieldId };
+                const confirmation = requireConfirmation(ctx, "clockify_custom_fields_delete", "custom_field_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.customFields.deleteForWorkspace({
                     workspaceId: ctx.workspaceId,
                     customFieldId: args.customFieldId,
@@ -210,15 +219,26 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         "clockify_project_custom_fields_remove",
         {
             title: "Remove a custom field from a project",
-            description: "Detach one custom field association from a project by ID.",
+            description:
+                "Detach one custom field association from a project by ID. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 projectId: z.string().min(1),
                 customFieldId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
             },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = {
+                    action: "remove",
+                    entity: "project_custom_field",
+                    projectId: args.projectId,
+                    customFieldId: args.customFieldId,
+                };
+                const confirmation = requireConfirmation(ctx, "clockify_project_custom_fields_remove", "project_custom_field_remove", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.customFields.removeFromProject({
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

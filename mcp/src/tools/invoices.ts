@@ -9,6 +9,7 @@ import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body"
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
@@ -191,12 +192,20 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         "clockify_invoices_delete",
         {
             title: "Delete an invoice",
-            description: "Permanently delete an invoice. Billing-impactful; coordinate before running.",
-            inputSchema: { invoiceId: z.string().min(1) },
+            description:
+                "Permanently delete an invoice. Billing-impactful; coordinate before running. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                invoiceId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "invoice", id: args.invoiceId };
+                const confirmation = requireConfirmation(ctx, "clockify_invoices_delete", "invoice_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.invoices.delete({
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,

@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
@@ -187,12 +188,20 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_delete",
         {
             title: "Delete a holiday",
-            description: "Permanently delete one workspace holiday by ID.",
-            inputSchema: { holidayId: z.string().min(1) },
+            description:
+                "Permanently delete one workspace holiday by ID. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                holidayId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "holiday", id: args.holidayId };
+                const confirmation = requireConfirmation(ctx, "clockify_holidays_delete", "holiday_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.holidays.delete({
                     workspaceId: ctx.workspaceId,
                     holidayId: args.holidayId,

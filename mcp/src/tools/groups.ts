@@ -5,6 +5,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerGroupsTools(server: McpServer, ctx: Context): void {
@@ -126,12 +127,20 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_delete",
         {
             title: "Delete a user group",
-            description: "Permanently delete one user group by ID from the workspace.",
-            inputSchema: { groupId: z.string().min(1) },
+            description:
+                "Permanently delete one user group by ID from the workspace. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                groupId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "group", id: args.groupId };
+                const confirmation = requireConfirmation(ctx, "clockify_groups_delete", "group_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.userGroups.delete({
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
@@ -204,15 +213,26 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         "clockify_groups_remove_member",
         {
             title: "Remove a user from a group",
-            description: "Remove one user from one user group in the pinned workspace.",
+            description:
+                "Remove one user from one user group in the pinned workspace. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 groupId: z.string().min(1),
                 userId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
             },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = {
+                    action: "remove",
+                    entity: "group_member",
+                    groupId: args.groupId,
+                    userId: args.userId,
+                };
+                const confirmation = requireConfirmation(ctx, "clockify_groups_remove_member", "group_member_remove", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.userGroups.removeMember({
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,

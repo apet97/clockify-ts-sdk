@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
+import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
 export function registerSchedulingTools(server: McpServer, ctx: Context): void {
@@ -179,12 +180,20 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_delete",
         {
             title: "Delete a scheduling assignment",
-            description: "Permanently delete a scheduling assignment.",
-            inputSchema: { assignmentId: z.string().min(1) },
+            description:
+                "Permanently delete a scheduling assignment. Run dry_run first, then retry with the returned confirm_token.",
+            inputSchema: {
+                assignmentId: z.string().min(1),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
+            },
             annotations: { destructiveHint: true },
         },
         async (args) => {
             try {
+                const preview = { action: "delete", entity: "scheduling_assignment", id: args.assignmentId };
+                const confirmation = requireConfirmation(ctx, "clockify_scheduling_assignments_delete", "scheduling_assignment_delete", args, preview);
+                if (confirmation) return confirmation;
                 await ctx.client.scheduling.delete({
                     workspaceId: ctx.workspaceId,
                     assignmentId: args.assignmentId,
