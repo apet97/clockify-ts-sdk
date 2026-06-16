@@ -24,6 +24,10 @@ async function connect(ctx: Context): Promise<Client> {
     return client;
 }
 
+function dataOf(res: unknown): Record<string, unknown> {
+    return JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}") as Record<string, unknown>;
+}
+
 describe("clockify_time_off_requests_update_status — correct method, path, and field", () => {
     it("calls changeTimeOffRequestStatus (policy-scoped) with the `status` wire field, not updateStatus/statusType", async () => {
         const captured: Record<string, unknown> = {};
@@ -81,9 +85,21 @@ describe("clockify_expenses_categories_delete — archive before delete", () => 
             } as never,
         };
         const client = await connect(ctx);
+        // The delete is now behind the shared dry_run -> confirm_token guard: a
+        // dry_run must preview without mutating, then the confirmed call archives
+        // before deleting.
+        const dry = dataOf(
+            await client.callTool({
+                name: "clockify_expenses_categories_delete",
+                arguments: { categoryId: "cat-1", dry_run: true },
+            }),
+        );
+        const token = (dry.data as { confirm_token?: string }).confirm_token;
+        expect(token).toBeTruthy();
+        expect(order).toEqual([]); // dry_run must not archive or delete
         const res = await client.callTool({
             name: "clockify_expenses_categories_delete",
-            arguments: { categoryId: "cat-1" },
+            arguments: { categoryId: "cat-1", confirm_token: token },
         });
         expect(res.isError).toBeFalsy();
         expect(order).toEqual(["archive", "delete"]);
