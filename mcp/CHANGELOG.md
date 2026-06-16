@@ -123,6 +123,18 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Added a shared MCP result output schema to every advertised tool.
 - Added MCP guide resources and a workflow-planning prompt.
 - Added deterministic mock Clockify server coverage for `clockify_status`.
+- Added forgiving argument shapes for weak-model robustness: list fields now
+  accept a bare string (`userIds: "Bob"` -> `["Bob"]`) and numeric fields accept
+  a numeric string (`amount: "75"` -> `75`), via `zStringList`/`zNumberLike` in
+  the new `mcp/src/arg-shapes.ts`. Coercion is conservative — never `"" -> 0`
+  (a silent zero-amount money bug) and no comma splitting. Because the MCP SDK's
+  zod-to-json-schema unwraps `z.preprocess`, the model-visible tool schema and
+  `docs/mcp-tools.json` are unchanged and no new tools are added (surface stays
+  127). The module also ships `formatZodIssues` (field-path-prefixed Zod messages)
+  and `nearestNames`/`didYouMeanHint` (Levenshtein + token-overlap "did you mean?"),
+  exported and unit-tested, available for handler-side validation and unknown-name
+  recovery. Applied to the holidays, scheduling, time-off, and expenses
+  list/number/array fields.
 
 ### Changed
 

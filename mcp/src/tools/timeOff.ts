@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
+import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
@@ -62,12 +63,12 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "List time-off requests",
             description: "List time-off requests in the workspace with filters and pagination.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
-                statuses: z.array(z.enum(REQUEST_STATUSES)).optional(),
-                users: z.array(z.string()).optional(),
+                statuses: zStringList(z.array(z.enum(REQUEST_STATUSES))).optional(),
+                users: zStringList(z.array(z.string())).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -158,7 +159,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 policyId: z.string().min(1),
                 start: z.string().min(1),
                 end: z.string().min(1),
-                days: z.number().int().optional(),
+                days: zNumberLike(z.number().int()).optional(),
                 note: z.string().optional(),
                 isHalfDay: z.boolean().optional(),
                 halfDayPeriod: z.string().optional().describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
@@ -273,8 +274,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "List time-off policies",
             description: "List time-off policies in the workspace with bounded pagination.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -328,8 +329,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 name: z.string().min(1),
                 timeUnit: z.string().optional().describe("DAYS | HOURS."),
                 negativeBalanceAllowed: z.boolean().optional(),
-                userIds: z.array(z.string()).optional().describe("Apply to these users (sent as a CONTAINS filter)."),
-                userGroupIds: z.array(z.string()).optional().describe("Apply to these user groups (sent as a CONTAINS filter)."),
+                userIds: zStringList(z.array(z.string())).optional().describe("Apply to these users (sent as a CONTAINS filter)."),
+                userGroupIds: zStringList(z.array(z.string())).optional().describe("Apply to these user groups (sent as a CONTAINS filter)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -386,8 +387,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 policyId: z.string().min(1),
                 name: z.string().optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
-                userIds: z.array(z.string()).optional().describe("Replace the scope with these users."),
-                userGroupIds: z.array(z.string()).optional().describe("Replace the scope with these user groups."),
+                userIds: zStringList(z.array(z.string())).optional().describe("Replace the scope with these users."),
+                userGroupIds: zStringList(z.array(z.string())).optional().describe("Replace the scope with these user groups."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
@@ -514,8 +515,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             description: "Fetch a single user's time-off balance across policies.",
             inputSchema: {
                 userId: z.string().min(1),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },

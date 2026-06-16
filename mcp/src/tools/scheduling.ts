@@ -8,6 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveEntityRef, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
@@ -43,8 +44,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             title: "List scheduling assignments",
             description: "List scheduling assignments in the workspace with pagination and name filters.",
             inputSchema: {
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
@@ -76,8 +77,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 "Scheduling assignment totals grouped by project. Pass a projectId for one project's totals (a dedicated GET endpoint); otherwise all projects.",
             inputSchema: {
                 projectId: z.string().optional().describe("One project's totals. Uses the GET .../projects/totals/{projectId} endpoint."),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -122,7 +123,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 projectId: z.string().min(1),
                 start: z.string().min(1),
                 end: z.string().min(1),
-                hoursPerDay: z.number(),
+                hoursPerDay: zNumberLike(z.number()),
                 taskId: z.string().optional(),
                 note: z.string().optional(),
                 billable: z.boolean().optional(),
@@ -179,7 +180,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 projectId: z.string().optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
-                hoursPerDay: z.number().optional(),
+                hoursPerDay: zNumberLike(z.number()).optional(),
                 taskId: z.string().optional(),
                 note: z.string().optional(),
                 billable: z.boolean().optional(),
@@ -300,8 +301,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 start: z.string().min(1),
                 end: z.string().min(1),
                 search: z.string().optional(),
-                page: z.number().int().min(1).default(1).optional(),
-                pageSize: z.number().int().min(1).max(200).default(50).optional(),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 extra: z.record(z.unknown()).optional().describe("Additional capacity filters, e.g. userFilter, userGroupFilter, statusFilter"),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
