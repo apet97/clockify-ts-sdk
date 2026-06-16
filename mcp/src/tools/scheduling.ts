@@ -22,7 +22,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             page: 1,
             "page-size": 200,
             "include-roles": false,
-        } as never)) as Array<{ id?: string; name?: string }>;
+        })) as Array<{ id?: string; name?: string }>;
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const listProjects = async (
@@ -33,7 +33,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             page: 1,
             "page-size": 200,
             ...(filter?.archived !== undefined ? { archived: filter.archived } : {}),
-        } as never)) as Array<{ id?: string; name?: string; archived?: boolean }>;
+        })) as Array<{ id?: string; name?: string; archived?: boolean }>;
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? ""), archived: r.archived }));
     };
     const meUserId = async (): Promise<string> =>

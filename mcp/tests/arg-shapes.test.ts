@@ -3,9 +3,9 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { didYouMeanHint, formatZodIssues, nearestNames, zNumberLike, zStringList } from "../src/arg-shapes.js";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
-import { didYouMeanHint, formatZodIssues, nearestNames, zNumberLike, zStringList } from "../src/arg-shapes.js";
 
 let teardown: () => Promise<void> = async () => {};
 
@@ -24,11 +24,6 @@ async function connect(ctx: Context): Promise<Client> {
         await server.close();
     };
     return client;
-}
-
-function envelope(res: unknown): Record<string, unknown> {
-    const text = (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
-    return JSON.parse(text) as Record<string, unknown>;
 }
 
 /**

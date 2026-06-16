@@ -29,7 +29,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             page: 1,
             "page-size": 200,
             "include-roles": false,
-        } as never)) as Array<{ id?: string; name?: string }>;
+        })) as Array<{ id?: string; name?: string }>;
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
