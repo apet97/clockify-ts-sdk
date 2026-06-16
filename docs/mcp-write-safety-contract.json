@@ -31,6 +31,8 @@
     "clockify_demo_seed",
     "clockify_demo_cleanup"
   ],
+  "confirmationExemptDestructiveTools": [],
+  "confirmationExemptDestructiveToolsNote": "Destructive delete/remove tools intentionally NOT behind the dry_run->confirm guard; each entry needs a written reason in this note. This list is empty: every destructive domain delete/remove tool is guarded via confirmationGuardedDomainTools.",
   "requiredFiles": [
     {
       "path": "docs/mcp-write-safety-policy.md",
