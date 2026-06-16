@@ -4,6 +4,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Documentation
+
+- Documented the name→id resolution behavior (resolve-then-write, with a
+  grounded `clarification` receipt on ambiguous/unknown names) in the
+  Domain Tools and Result Envelope sections of `README.md`.
+
 ### Fixed
 
 - Holiday, time-off, scheduling, group add-member, and role-grant tools now resolve a

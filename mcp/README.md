@@ -274,6 +274,27 @@ Success:
 }
 ```
 
+Name resolution (`clarification`): when a name is passed where a
+user/group/project id is expected and it is ambiguous or unknown, the
+tool returns a success-shaped receipt that asks for disambiguation
+instead of calling Clockify. `candidates` carries the real ids the
+agent should pick from.
+
+```json
+{
+    "ok": true,
+    "action": "clockify_groups_add_member",
+    "clarification": {
+        "question": "Multiple users match \"Bob\". Which one?",
+        "field": "userId",
+        "candidates": [
+            { "type": "user", "id": "...", "name": "Bob Lee" },
+            { "type": "user", "id": "...", "name": "Bob Ng" }
+        ]
+    }
+}
+```
+
 Recoverable error:
 
 ```json

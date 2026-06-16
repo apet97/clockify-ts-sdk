@@ -8,7 +8,7 @@ knowledge of how the real API behaves:
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([`wrapper/`](./wrapper/README.md)) | The SDK — 31 resource modules, 185 operations, dual ESM/CJS | Calling Clockify from Node/TypeScript with typed errors, pagination, webhooks, and OTel hooks |
 | **`@clockify115/cli`** ([`cli/`](./cli/README.md)) | The CLI — `clockify115` / `clk115` | Time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output |
-| **`@clockify115/mcp-server`** ([`mcp/`](./mcp/README.md)) | The MCP server — 126 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
+| **`@clockify115/mcp-server`** ([`mcp/`](./mcp/README.md)) | The MCP server — 127 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
 
 The three share two pure helper subpaths so you never hand-roll them:
 `clockify-sdk-ts-115/resolve` turns a **name** into a real id (case-insensitive,

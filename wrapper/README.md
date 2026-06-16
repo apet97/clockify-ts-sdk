@@ -309,6 +309,7 @@ Every non-2xx throws a typed error:
 | `InternalServerError`     | 500    | Upstream failure.                                                 |
 | `ServiceUnavailableError` | 503    | Backend overloaded or maintenance.                                |
 | `ClockifyApiTimeoutError` | —      | `timeoutInSeconds` elapsed before a response.                     |
+| `AddonTokenRestrictionError` | 401 | Add-on-token request hit an endpoint outside the add-on token's reach (body says "API is not accessible"), regardless of manifest scopes. Map a raw add-on-token 401 with `mapAddonTokenRestriction`; API-key 401s stay raw. |
 
 `instanceof` checks work (each constructor calls
 `Object.setPrototypeOf`):
@@ -811,6 +812,7 @@ requestId, status }` shape.
 | You want to… | Use | Subpath |
 |---|---|---|
 | Turn a name/"me" into a real id (or a grounded "did you mean?") | `resolveEntityRef`, `resolveUserRef`, `matchByName` | `clockify-sdk-ts-115/resolve` |
+| Resolve a **list** of user/group/tag names (or a single user filter) to ids in one call | `resolveUserRefs`, `resolveGroupRefs`, `resolveTagRefs`, `resolveUserFilter` | `clockify-sdk-ts-115/resolve` |
 | Create a tag/project/client only if it does not already exist | `ensureTag`, `ensureProject`, `findOrCreateClient` | `clockify-sdk-ts-115/ensure` |
 | Delete a project the way the live API allows (archive first) | `archiveThenDeleteProject` | `clockify-sdk-ts-115/ensure` |
 | Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
