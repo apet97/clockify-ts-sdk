@@ -255,6 +255,16 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check future-agent guidance parity | `make agent-handoff` |
 | Print a no-network operator plan/report | `node scripts/plan.mjs <topic>` — topics: `acceptance`, `change-impact`, `contract-inventory`, `examples`, `maintenance`, `onboarding`, `performance-calibration`, `release-decision`, `risk-status`, `workflow`. Per-topic modules under `scripts/<topic>-plan.mjs` / `<topic>-report.mjs` are libraries — do not add a new standalone CLI; add a topic to `plan.mjs` instead. |
 
+**Run `perfect-fast` solo and with creds blanked:**
+`CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`. With creds set the
+live `sandbox.test.ts` suites run and 401 on an expired/absent key; blanked they
+self-skip, so the run is deterministic and offline. The `performance-budgets`
+startup-time checks (`cli-version` ≤600ms, `mcp-tools-list` ≤1200ms) flake under CPU contention —
+don't run other heavy work alongside the gate, or you'll see false reds. For a fast
+inner loop use the per-package gates (they skip the startup budgets); `perfect-fast`
+also runs `lint` (incl. mcp eslint), which the per-package `type-check`/`test`/`build`
+do not — run `npm run lint -w <pkg>` before claiming green.
+
 | Change scope | Run |
 |---|---|
 | Generator (`../GOCLMCP/scripts/gen-clockify-openapi`) | `make gen-openapi` + all 4 drift gates + `go test ./internal/tools/...` |

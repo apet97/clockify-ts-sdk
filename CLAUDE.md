@@ -42,6 +42,24 @@ make perfect-full   # GOCLMCP drift + local codegen + package gates + packed-con
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
+Running `perfect-fast` cleanly (read before your first run):
+
+- **Blank the creds:** `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`.
+  With creds set, the live `sandbox.test.ts` suites run and **fail (401) on an
+  expired/absent sandbox key**; blanked, they self-skip (`describe.skip`), so the
+  run is offline and deterministic. `perfect-fast` is "deterministic" only this way.
+- **Run it solo.** The `performance-budgets` sub-gate measures CLI/MCP **startup
+  time** (`cli-version` ≤600ms, `mcp-tools-list` ≤1200ms); under CPU contention it
+  flakes 6–10× over budget → false reds (not regressions). Don't run other agents or
+  heavy commands concurrently. These startup-time checks live ONLY in
+  `make perfect-fast` / `make performance-budgets`, not in the focused gates below.
+- **Fast inner loop = focused gates** (below); they skip the load-sensitive startup
+  budgets. Reserve one full solo `perfect-fast` for the final proof. Note
+  `perfect-fast` also runs `lint` (incl. mcp eslint), which the per-package
+  `type-check`/`test`/`build` do NOT — run `npm run lint -w <pkg>` before claiming green.
+- `make perfect-fast` runs the make exit code last; capture it directly (a
+  `make ... ; echo $?` compound masks make's real status).
+
 No-network operator helpers all route through `scripts/plan.mjs`:
 
 ```bash
@@ -142,6 +160,13 @@ make docs-drift
   in `mcp/src/arg-shapes.ts`. The `z.preprocess` wrappers unwrap before
   validation, so the model-visible JSON Schema (and `docs/mcp-tools.json`
   and the tool count) is unchanged.
+- The `errors` SDK subpath gained `mapAddonTokenRestriction(err, { authScheme,
+  method?, path? })` + the `AddonTokenRestrictionError` class (`wrapper/errors.ts`):
+  a pure **catch-site** helper that names an add-on-token 401 hitting an endpoint
+  outside the token's reach (body says "API is not accessible"); API-key 401s pass
+  through raw. It is opt-in, not automatic — the SDK error doesn't record the auth
+  scheme — mirroring the existing `promoteApiError`. Do not wire it into generated
+  code or `createClockifyClient`.
 - `clockify_setup_webhook` validates callback URLs through
   `mcp/src/orchestration/webhook-url.ts` before dry-run preview or
   creation. The guard is offline: it rejects non-HTTPS, embedded
