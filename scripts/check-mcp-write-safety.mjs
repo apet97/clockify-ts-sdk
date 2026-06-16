@@ -118,6 +118,27 @@ function validateContractShape() {
         assertUnique(field, values);
     }
 
+    // confirmationExemptDestructiveTools is the escape hatch: destructive
+    // delete/remove tools that intentionally must NOT be guarded. It may be
+    // empty, but every entry must be a unique non-empty string, must not also
+    // appear in confirmationGuardedDomainTools (a tool cannot be both guarded
+    // and exempt), and a non-empty list must carry a written reason note.
+    const exemptTools = assertStringArray("confirmationExemptDestructiveTools", contract.confirmationExemptDestructiveTools, {
+        allowEmpty: true,
+    });
+    assertUnique("confirmationExemptDestructiveTools", exemptTools);
+    const guardedNames = new Set(
+        Array.isArray(contract.confirmationGuardedDomainTools) ? contract.confirmationGuardedDomainTools : [],
+    );
+    for (const exemptTool of exemptTools) {
+        if (guardedNames.has(exemptTool)) {
+            fail("confirmationExemptDestructiveTools", `${exemptTool} also appears in confirmationGuardedDomainTools`);
+        }
+    }
+    if (exemptTools.length > 0) {
+        assertNonEmptyString("confirmationExemptDestructiveToolsNote", contract.confirmationExemptDestructiveToolsNote);
+    }
+
     if (!Array.isArray(contract.requiredFiles) || contract.requiredFiles.length === 0) {
         fail("requiredFiles", "must be a non-empty array");
     }
@@ -266,6 +287,29 @@ for (const tool of destructiveTools) {
 
 // Every destructive DELETE/REMOVE domain tool must be guarded (dry_run->confirm)
 // or explicitly exempted, so a new unguarded delete cannot ship silently.
+//
+// The match must catch every name segment that ENDS in delete/remove, not just
+// those immediately followed by `_` or end-of-name. `_(delete|remove)\b` was too
+// narrow: `\b` after a letter only fires before a non-word char, so it still
+// matched `_delete`/`_remove` at a boundary but it failed to express intent
+// clearly and is easy to regress. `(?![a-z])` makes the intent explicit:
+// delete/remove not immediately followed by another lowercase letter, so
+// `_remove_member`, `_delete_all`, and `_delete` are all ENFORCED, while a tool
+// like `_removed`/`_delements` (delete/remove glued into a longer word) is not.
+const destructiveNamePattern = /_(delete|remove)(?![a-z])/;
+// Regression self-check: if a future edit narrows this regex so it no longer
+// catches `_remove_member`-shaped names, fail loudly here instead of silently
+// letting an unguarded destructive tool ship. The gate's whole value is that
+// EVERY delete/remove domain tool is forced into the guarded/exempt decision.
+if (
+    !destructiveNamePattern.test("clockify_groups_remove_member") ||
+    !destructiveNamePattern.test("clockify_entries_delete") ||
+    destructiveNamePattern.test("clockify_reports_summary")
+) {
+    failures.push(
+        "destructive name coverage regex regressed: it must match `_remove_member` and plain `_delete` names and must not match a non-destructive name",
+    );
+}
 const guardedSet = new Set(contract.confirmationGuardedDomainTools);
 const exemptSet = new Set(contract.confirmationExemptDestructiveTools ?? []);
 const workflowSet = new Set([
@@ -274,7 +318,7 @@ const workflowSet = new Set([
 ]);
 for (const tool of destructiveTools) {
     if (workflowSet.has(tool.name)) continue;            // workflow writes use maybeConfirm separately
-    if (!/_(delete|remove)\b/.test(tool.name)) continue; // only delete/remove domain tools
+    if (!destructiveNamePattern.test(tool.name)) continue; // only delete/remove domain tools
     if (guardedSet.has(tool.name) || exemptSet.has(tool.name)) continue;
     failures.push(
         `destructive domain tool ${tool.name} is neither in confirmationGuardedDomainTools nor confirmationExemptDestructiveTools`,
