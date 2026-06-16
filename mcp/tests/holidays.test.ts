@@ -37,6 +37,21 @@ function holidaysContext(captured: Record<string, unknown>, holiday = existingHo
                     return { id: "hol-1", name: (req as { name?: string }).name };
                 },
             },
+            // holidays_update now resolves EXPLICIT replacement userIds through the
+            // resolver (carried-forward existing ids pass through untouched). The
+            // resolver matches a non-hex ref against listed ids first, so the short
+            // ids these fixtures use must be listed.
+            users: {
+                list: async () => [
+                    { id: "u1", name: "User One" },
+                    { id: "u2", name: "User Two" },
+                    { id: "u9", name: "User Nine" },
+                ],
+                getCurrentUser: async () => ({ id: "me-1" }),
+            },
+            userGroups: {
+                list: async () => [{ id: "g1", name: "Group One" }],
+            },
         } as never,
     };
 }

@@ -6,6 +6,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Holiday, time-off, scheduling, group add-member, and role-grant tools now resolve a
+  NAME passed where a user/group/project id is expected to a real id BEFORE any write
+  or read filter, via the list/filter resolvers (`clockify-sdk-ts-115/resolve`). An
+  ambiguous or unknown name returns a grounded `clarification` receipt (real candidate
+  ids) and performs no API call; 24-hex ids pass through unchanged, and read-filter
+  slots stay list-free on the happy path.
 - All destructive domain delete/remove tools (`clockify_custom_fields_delete`,
   `clockify_project_custom_fields_remove`, `clockify_holidays_delete`,
   `clockify_groups_delete`, `clockify_groups_remove_member`,

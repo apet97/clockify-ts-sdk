@@ -5,10 +5,13 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { toMinor } from "clockify-sdk-ts-115/money";
+import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
+
+import { clarifyResult } from "./resolve-clarify.js";
 
 const WORKSPACE_ROLES = ["WORKSPACE_ADMIN", "TEAM_MANAGER", "PROJECT_MANAGER"] as const;
 
@@ -20,6 +23,18 @@ const roleInput = {
 };
 
 export function registerUsersTools(server: McpServer, ctx: Context): void {
+    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.users.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            "include-roles": false,
+        } as never)) as Array<{ id?: string; name?: string }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
+    };
+    const meUserId = async (): Promise<string> =>
+        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+
     server.registerTool(
         "clockify_users_list",
         {
@@ -86,16 +101,21 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "grant the role to", meUserId: await meUserId(), listUsers, trustIds: false },
+                );
+                if (!u.ok) return clarifyResult("clockify_users_grant_role", "userId", "user", u.clarify);
                 const assignments = await ctx.client.users.giveRole({
                     workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                    userId: u.userId,
                     role: args.role,
                     entityId: args.entityId,
                     ...(args.sourceType ? { sourceType: args.sourceType } : {}),
                 });
                 return successResult("clockify_users_grant_role", assignments, {
                     workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                    userId: u.userId,
                 });
             } catch (err) {
                 return errorResult("clockify_users_grant_role", err);
@@ -113,17 +133,22 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "revoke the role from", meUserId: await meUserId(), listUsers, trustIds: false },
+                );
+                if (!u.ok) return clarifyResult("clockify_users_revoke_role", "userId", "user", u.clarify);
                 await ctx.client.users.removeRole({
                     workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                    userId: u.userId,
                     role: args.role,
                     entityId: args.entityId,
                     ...(args.sourceType ? { sourceType: args.sourceType } : {}),
                 });
                 return successResult(
                     "clockify_users_revoke_role",
-                    { revoked: true, userId: args.userId, role: args.role },
-                    { workspaceId: ctx.workspaceId, userId: args.userId },
+                    { revoked: true, userId: u.userId, role: args.role },
+                    { workspaceId: ctx.workspaceId, userId: u.userId },
                 );
             } catch (err) {
                 return errorResult("clockify_users_revoke_role", err);

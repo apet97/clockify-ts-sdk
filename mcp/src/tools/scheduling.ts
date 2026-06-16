@@ -5,13 +5,38 @@
  * through errorResult.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { resolveEntityRef, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { errorResult, successResult } from "../result.js";
 
+import { clarifyResult } from "./resolve-clarify.js";
+
 export function registerSchedulingTools(server: McpServer, ctx: Context): void {
+    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
+        const rows = (await ctx.client.users.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            "include-roles": false,
+        } as never)) as Array<{ id?: string; name?: string }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
+    };
+    const listProjects = async (
+        filter?: { archived?: boolean },
+    ): Promise<Array<{ id: string; name: string; archived?: boolean }>> => {
+        const rows = (await ctx.client.projects.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            ...(filter?.archived !== undefined ? { archived: filter.archived } : {}),
+        } as never)) as Array<{ id?: string; name?: string; archived?: boolean }>;
+        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? ""), archived: r.archived }));
+    };
+    const meUserId = async (): Promise<string> =>
+        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
     server.registerTool(
         "clockify_scheduling_assignments_list",
         {
@@ -108,9 +133,19 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
+                );
+                if (!u.ok) return clarifyResult("clockify_scheduling_assignments_create", "userId", "user", u.clarify);
+                const p = await resolveEntityRef(
+                    { id: args.projectId },
+                    { noun: "project", verb: "schedule against", list: listProjects },
+                );
+                if (!p.ok) return clarifyResult("clockify_scheduling_assignments_create", "projectId", "project", p.clarify);
                 const body: Record<string, unknown> = {
-                    userId: args.userId,
-                    projectId: args.projectId,
+                    userId: u.userId,
+                    projectId: p.id,
                     hoursPerDay: args.hoursPerDay,
                     period: { start: args.start, end: args.end },
                     published: args.published === true,
@@ -153,9 +188,27 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                let resolvedUserId: string | undefined;
+                let resolvedProjectId: string | undefined;
+                if (args.userId) {
+                    const u = await resolveUserRef(
+                        { id: args.userId },
+                        { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
+                    );
+                    if (!u.ok) return clarifyResult("clockify_scheduling_assignments_update", "userId", "user", u.clarify);
+                    resolvedUserId = u.userId;
+                }
+                if (args.projectId) {
+                    const p = await resolveEntityRef(
+                        { id: args.projectId },
+                        { noun: "project", verb: "schedule against", list: listProjects },
+                    );
+                    if (!p.ok) return clarifyResult("clockify_scheduling_assignments_update", "projectId", "project", p.clarify);
+                    resolvedProjectId = p.id;
+                }
                 const body: Record<string, unknown> = {};
-                if (args.userId) body.userId = args.userId;
-                if (args.projectId) body.projectId = args.projectId;
+                if (resolvedUserId) body.userId = resolvedUserId;
+                if (resolvedProjectId) body.projectId = resolvedProjectId;
                 if (args.start && args.end) body.period = { start: args.start, end: args.end };
                 if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
                 if (args.taskId) body.taskId = args.taskId;
