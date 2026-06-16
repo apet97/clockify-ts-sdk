@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^3.25.0"
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "clockify-sdk-ts-115": ">=0.9.0"
