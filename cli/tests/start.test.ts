@@ -103,6 +103,13 @@ describe("start command", () => {
         );
     });
 
+    it("errors when --task is given without --project", async () => {
+        const { client } = makeClient({ projects: [], tasks: [] });
+        await expect(run(client, ["work", "--task", "MyTask"])).rejects.toThrow(
+            /--task requires --project/,
+        );
+    });
+
     it("resolves multiple tags, mixing ids and names", async () => {
         const { client, created } = makeClient({ tags: [{ id: "t-2", name: "Deep Work" }] });
         await run(client, ["work", "--tag", ID_A, "--tag", "Deep Work"]);

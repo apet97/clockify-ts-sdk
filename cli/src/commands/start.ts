@@ -37,6 +37,9 @@ export const registerStartCommand: Registrar = (program, services) => {
             }
 
             const projectId = opts.project ? await resolveProjectId(client, workspaceId, opts.project) : undefined;
+            if (opts.task && !projectId) {
+                throw new Error("--task requires --project: a task can only be resolved within a project.");
+            }
             const taskId =
                 opts.task && projectId
                     ? await resolveTaskId(client, workspaceId, projectId, opts.task)
