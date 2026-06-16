@@ -25,6 +25,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Added a first-class `clarification` field to the success-result envelope (and
   its output schema): a grounded "did you mean?" receipt with a question, the
   ambiguous field, and real candidate ids for ambiguous-name resolution.
+- Wired the `clarification` receipt into the workflow tools: when a name matches
+  more than one entity, name→id resolution now returns a success envelope carrying
+  a populated `clarification` (question, ambiguous field, and real candidate ids)
+  instead of a dead-end error, so the caller can re-invoke with the chosen id.
 - Added `mcp/examples/claude-desktop.json`, a compact `mcp/examples/agent-mode.md`
   guide, and `mcp/examples/workflow-transcripts/` (log yesterday's work, invoice
   Acme, clean demo data, recover from not_found).

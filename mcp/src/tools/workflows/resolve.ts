@@ -315,10 +315,37 @@ export async function resolveUserId(ctx: Context, value: string): Promise<string
     return idOf(found);
 }
 
+/**
+ * Thrown when a name matches more than one entity. Carries the real candidate
+ * ids so `runWorkflow` can surface a grounded `clarification` receipt (a "did you
+ * mean?" success envelope) instead of a dead-end error. The caller re-invokes with
+ * the chosen id rather than guessing a name.
+ */
+export class AmbiguousNameError extends Error {
+    readonly field: string;
+    readonly value: string;
+    readonly candidates: EntityRef[];
+
+    constructor(label: string, value: string, candidates: EntityRef[]) {
+        super(`multiple ${label}s match ${JSON.stringify(value)}; use an ID`);
+        this.name = "AmbiguousNameError";
+        this.field = label;
+        this.value = value;
+        this.candidates = candidates;
+        Object.setPrototypeOf(this, AmbiguousNameError.prototype);
+    }
+}
+
 export async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {
     const rows = Array.isArray(items) ? items : [];
     const matches = rows.filter((item) => keys.some((key) => str((item as AnyRecord)[key]).toLowerCase() === name.toLowerCase())) as AnyRecord[];
-    if (matches.length > 1) throw new Error(`multiple ${label}s match ${JSON.stringify(name)}; use an ID`);
+    if (matches.length > 1) {
+        throw new AmbiguousNameError(
+            label,
+            name,
+            matches.map((match) => ref(label, match)),
+        );
+    }
     return matches[0] ?? null;
 }
 
