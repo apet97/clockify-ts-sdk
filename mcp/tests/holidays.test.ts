@@ -93,6 +93,19 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u9"], status: "ALL" });
     });
 
+    it("keeps holiday assignment status ALL (not ACTIVE)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+        await client.callTool({
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", name: "Xmas Day" },
+        });
+        const update = captured.update as Record<string, unknown>;
+        // Holidays diverge from time-off policies: holidays send ALL.
+        expect((update.users as { status: string }).status).toBe("ALL");
+        expect((update.users as { status: string }).status).not.toBe("ACTIVE");
+    });
+
     it("errors clearly instead of dropping a required assignment to nothing", async () => {
         const captured: Record<string, unknown> = {};
         // A holiday with no users/groups and not everyone-assigned.

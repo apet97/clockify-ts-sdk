@@ -307,8 +307,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 const body: Record<string, unknown> = { name: args.name };
                 if (args.timeUnit) body.timeUnit = args.timeUnit;
                 if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
-                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
-                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds, "ACTIVE");
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds, "ACTIVE");
                 const created = await ctx.client.timeOffPolicies.create({
                     workspaceId: ctx.workspaceId,
                     ...body,
@@ -358,10 +358,10 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 const existingGroupIds = Array.isArray(existing.userGroupIds)
                     ? (existing.userGroupIds as string[])
                     : [];
-                if (args.userIds?.length) body.users = scopeFilter(args.userIds);
-                else if (existingUserIds.length) body.users = scopeFilter(existingUserIds);
-                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds);
-                else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds);
+                if (args.userIds?.length) body.users = scopeFilter(args.userIds, "ACTIVE");
+                else if (existingUserIds.length) body.users = scopeFilter(existingUserIds, "ACTIVE");
+                if (args.userGroupIds?.length) body.userGroups = scopeFilter(args.userGroupIds, "ACTIVE");
+                else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
                 const updated = await ctx.client.timeOffPolicies.update({
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,

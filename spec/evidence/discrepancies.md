@@ -1925,6 +1925,32 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   fields flat and silently dropped the prior nested `body` (a pre-existing bug also
   fixed); create accepts `userIds`/`userGroupIds`. Tests: `mcp/tests/time-off-policies.test.ts`.
 
+### `time-off.policies.scope.status-active-not-all` — COMPENSATED 2026-06-16
+
+- **Official claim:** the `{contains, ids, status}` user/group scope filter on a
+  time-off policy is undocumented as to its `status` value.
+- **Actual behavior (addon live-verified 2026-06-12):** holiday assignments and
+  time-off **policy** scope share the `{contains:"CONTAINS", ids, status}` filter
+  shape but use DIFFERENT `status` values — holidays send `status:"ALL"`
+  (`ai-assistant-addon/src/clockify/rest/holidays.ts:7`) while policies send
+  `status:"ACTIVE"` (`ai-assistant-addon/src/clockify/rest/time-off.ts:13`). The
+  SDK's shared `mcp/src/scope-filter.ts` previously hard-coded `"ALL"` for both,
+  so the policy create/update path sent the wrong status.
+- **Live evidence:** addon `src/clockify/rest/time-off.ts:11-14` (`filter()` →
+  `status:"ACTIVE"`) vs `src/clockify/rest/holidays.ts:5-8` (`assignment()` →
+  `status:"ALL"`); cross-repo unit tests in both modules.
+- **MCP tools affected:** `clockify_time_off_policies_create`,
+  `clockify_time_off_policies_update` (now pass `"ACTIVE"`);
+  `clockify_holidays_create`, `clockify_holidays_update` (unchanged on `"ALL"`).
+- **Open questions:** none — the addon proved both values live; whether the API
+  silently coerces `"ALL"`→`"ACTIVE"` for policies is unconfirmed but moot since
+  we now match the addon's proven value.
+- **Status:** `compensated-in-tool-layer` (2026-06-16). `scopeFilter` gained an
+  optional `status: "ALL" | "ACTIVE" = "ALL"` parameter; the four policy
+  create/update sites in `mcp/src/tools/timeOff.ts` pass `"ACTIVE"`, holiday
+  sites keep the default `"ALL"`. Tests: `mcp/tests/time-off-policies.test.ts`
+  (policy → ACTIVE), `mcp/tests/holidays.test.ts` (holiday → ALL).
+
 ### `rates.put-minor-units-no-get` — PARTIALLY COMPENSATED 2026-06-14
 
 - **Actual behavior (addon live-verified 2026-06-12):** rates are PUTs of an

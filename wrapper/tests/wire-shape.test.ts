@@ -38,6 +38,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "money.amount-units.expenses-major-invoices-minor": ["wrapper/tests/money.test.ts", "wrapper/tests/wire-shape.test.ts"],
     "holidays.update.replace-and-scope-filter": ["mcp/tests/holidays.test.ts", "mcp/tests/wire-shape.test.ts"],
     "time-off.policies.update.replace-and-scope-filter": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/wire-shape.test.ts"],
+    "time-off.policies.scope.status-active-not-all": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/holidays.test.ts"],
     "rates.put-minor-units-no-get": ["mcp/tests/rates.test.ts"],
     "scheduling.project-totals.get-vs-post": ["mcp/tests/scheduling-totals.test.ts"],
     "time-off.requests.update-status.wrong-method-and-field": ["mcp/tests/sweep-fixes.test.ts"],

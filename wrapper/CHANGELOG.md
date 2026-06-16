@@ -18,6 +18,10 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- Mapped the new `time-off.policies.scope.status-active-not-all` ledger finding to
+  its MCP regression tests in the `wire-shape.test.ts` `LEDGER_COVERAGE` table, so
+  the wrapper ledger-coverage guard stays green for the time-off-policy
+  `status:"ACTIVE"` scope-filter fix.
 - Corrected stale headline counts in `README.md`: the dual-build smoke verifies
   71 public names + 22 subpaths (was the obsolete "47 exports + 15 subpaths"), and
   idiomatic naming is stated as 173 of 185 operations (was an inconsistent "28
