@@ -20,6 +20,7 @@ export {
     UnauthorizedError,
 } from "./src/api/errors/index.js";
 export {
+    AddonTokenRestrictionError,
     ClockifyAbortError,
     ClockifyConnectionError,
     CLOCKIFY_ERROR_CODES,
@@ -38,6 +39,7 @@ export {
     isInternalServerError,
     isRateLimitError,
     isServiceUnavailableError,
+    mapAddonTokenRestriction,
     promoteApiError,
     RateLimitError,
     recoveryForCode,

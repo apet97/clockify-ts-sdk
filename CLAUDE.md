@@ -9,7 +9,7 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 79 public names; 23 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`) |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 81 public names; 23 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`) |
 | `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 29 commands incl. `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
 | `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 127 tools (21 workflow + 106 domain); 5 resources |
 
