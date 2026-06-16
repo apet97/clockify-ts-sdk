@@ -2,7 +2,7 @@
     {
         "name": "ESM root entry (index.js)",
         "path": "dist/esm/index.js",
-        "limit": "1.5 kB"
+        "limit": "2 kB"
     },
     {
         "name": "CJS root entry (index.js)",

@@ -268,3 +268,168 @@ export async function resolveUserRef(
     }
     return { ok: true, userId: user.id, label: user.name };
 }
+
+/**
+ * Generic LIST resolver — id/exact-name (and an optional `special` token like
+ * "me") → ids + display labels, with a grounded clarify on any ambiguous/unknown
+ * entry. Order is kept, duplicates collapse, `labels[i]` pairs with `ids[i]`, and
+ * `list` is called at most once. The single place this logic lives —
+ * `resolveUserRefs`/`resolveGroupRefs`/`resolveTagRefs` are thin wrappers, so they
+ * can never drift apart.
+ *
+ * `trustIds`: when true a 24-hex value is taken as an id WITHOUT a list call (the
+ * assignee happy path). When false even a 24-hex value is verified against the
+ * real list — a wrong-typed id then clarifies instead of hitting the wire.
+ */
+async function resolveRefList(
+    refs: string[],
+    opts: {
+        verb: string;
+        pluralNoun: string;
+        singularPhrase: string;
+        pronoun: string;
+        list: () => Promise<Array<{ id: string; name: string }>>;
+        special?: (ref: string) => { id: string; label: string } | undefined;
+        trustIds?: boolean;
+    },
+): Promise<{ ok: true; ids: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+    const ids: string[] = [];
+    const labels: string[] = [];
+    const push = (id: string, label: string): void => {
+        if (!ids.includes(id)) {
+            ids.push(id);
+            labels.push(label);
+        }
+    };
+    let items: Array<{ id: string; name: string }> | undefined;
+    for (const raw of refs) {
+        const ref = raw.trim();
+        if (!ref) continue;
+        const special = opts.special?.(ref);
+        if (special) {
+            push(special.id, special.label);
+            continue;
+        }
+        if (opts.trustIds && looksLikeClockifyId(ref)) {
+            push(ref, ref);
+            continue;
+        }
+        if (!items) items = await opts.list();
+        const byId = items.find((x) => x.id === ref);
+        if (byId) {
+            push(byId.id, byId.name);
+            continue;
+        }
+        const match = matchByName(items, ref);
+        if (match.kind === "one") {
+            push(match.entity.id, match.entity.name);
+            continue;
+        }
+        if (match.kind === "many") {
+            return {
+                ok: false,
+                clarify: {
+                    clarify: `Several ${opts.pluralNoun} match "${ref}". Which one should I ${opts.verb}?`,
+                    options: match.matches.map((x) => ({ id: x.id, label: x.name })),
+                },
+            };
+        }
+        return {
+            ok: false,
+            clarify: {
+                clarify: `"${ref}" isn't ${opts.singularPhrase}, so I can't ${opts.verb} ${opts.pronoun}.`,
+                options: suggestOptions(items, ref),
+            },
+        };
+    }
+    return { ok: true, ids, labels };
+}
+
+/**
+ * Resolve a LIST of user references — ids, exact names, or "me" — to user ids with
+ * display labels. "me" maps to `meUserId` (label "you"). See {@link resolveRefList};
+ * `verifyIds` sets `trustIds: false` so a 24-hex value is verified rather than
+ * blindly trusted (permission-affecting writes).
+ */
+export async function resolveUserRefs(
+    refs: string[],
+    opts: { verb: string; meUserId: string; listUsers: () => Promise<Array<{ id: string; name: string }>>; verifyIds?: boolean },
+): Promise<{ ok: true; userIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+    const r = await resolveRefList(refs, {
+        verb: opts.verb,
+        pluralNoun: "workspace users",
+        singularPhrase: "a workspace member",
+        pronoun: "them",
+        list: opts.listUsers,
+        special: (ref) => (ref.toLowerCase() === "me" ? { id: opts.meUserId, label: "you" } : undefined),
+        trustIds: !opts.verifyIds,
+    });
+    return r.ok ? { ok: true, userIds: r.ids, labels: r.labels } : r;
+}
+
+/**
+ * Resolve a LIST of user-GROUP references — ids or exact names — to group ids with
+ * display labels. No "me"; a 24-hex value is ALWAYS verified against the real
+ * groups (so a project/user id in a group slot clarifies, never hits the wire).
+ * See {@link resolveRefList}.
+ */
+export async function resolveGroupRefs(
+    refs: string[],
+    opts: { verb: string; listGroups: () => Promise<Array<{ id: string; name: string }>> },
+): Promise<{ ok: true; groupIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+    const r = await resolveRefList(refs, {
+        verb: opts.verb,
+        pluralNoun: "user groups",
+        singularPhrase: "a user group",
+        pronoun: "it",
+        list: opts.listGroups,
+        trustIds: false,
+    });
+    return r.ok ? { ok: true, groupIds: r.ids, labels: r.labels } : r;
+}
+
+/**
+ * Resolve a LIST of TAG references — ids or exact names — to tag ids. A 24-hex
+ * value is trusted without a list call (tags on an entry aren't
+ * permission-affecting; a wrong id is a wire 400, caught there); names/short ids
+ * resolve against the real tags with grounded clarifies. See {@link resolveRefList}.
+ */
+export async function resolveTagRefs(
+    refs: string[],
+    opts: { verb: string; listTags: () => Promise<Array<{ id: string; name: string }>> },
+): Promise<{ ok: true; tagIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+    const r = await resolveRefList(refs, {
+        verb: opts.verb,
+        pluralNoun: "workspace tags",
+        singularPhrase: "a workspace tag",
+        pronoun: "it",
+        list: opts.listTags,
+        trustIds: true,
+    });
+    return r.ok ? { ok: true, tagIds: r.ids, labels: r.labels } : r;
+}
+
+/**
+ * Resolve an OPTIONAL `userId` READ-FILTER slot — id, exact name, or "me". When
+ * the slot is empty the caller's stated default applies (`defaultTo`, usually the
+ * current user; `undefined` = unfiltered). Built on {@link resolveUserRef} with
+ * `trustIds` — a wrong id on a read yields an empty list, not a damaging write,
+ * so the 24-hex happy path stays list-free. ONE copy for every read that filters
+ * by user.
+ */
+export async function resolveUserFilter(
+    userId: string | undefined,
+    opts: {
+        verb: string;
+        meUserId: string;
+        listUsers: () => Promise<Array<{ id: string; name: string }>>;
+        defaultTo?: string;
+    },
+): Promise<{ ok: true; userId: string | undefined } | { ok: false; clarify: ClarifyResult }> {
+    if (!userId?.trim()) return { ok: true, userId: opts.defaultTo };
+    const user = await resolveUserRef(
+        { id: userId },
+        { verb: opts.verb, meUserId: opts.meUserId, listUsers: opts.listUsers, trustIds: true },
+    );
+    return user.ok ? { ok: true, userId: user.userId } : user;
+}
