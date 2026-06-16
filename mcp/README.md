@@ -6,7 +6,7 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 126 tools: 20 workflow tools plus 106
+This package now advertises 127 tools: 21 workflow tools plus 106
 domain tools across Clockify's major resources. It is
 unpublished by default in this repo, but keeps npm metadata and
 `prepublishOnly` gates so a later publisher inherits the right checks.
@@ -53,6 +53,7 @@ only be used for mock/replay gateways or private test environments.
 |---|---|
 | `clockify_status` | Confirm user, workspace, and running timer. |
 | `clockify_tools_guide` | Show workflow groups and when to use domain tools. |
+| `clockify_plan_change` | Explain which tools a change will use, in order, before mutating (read-only). |
 | `clockify_docs_search` | Search compact SDK/CLI/MCP guidance for agents (read-only). |
 | `clockify_operation_guide` | Map a task, operation, or tool to recommended paths (read-only). |
 | `clockify_sdk_snippet` | Return a compact SDK, CLI, or MCP snippet for a task (read-only). |
@@ -325,7 +326,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 20+ | Go |
 | Transport | stdio | stdio |
-| Tools | 126 | 156 |
+| Tools | 127 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 

@@ -9,9 +9,8 @@
 TypeScript SDK for the [Clockify](https://clockify.me) REST API.
 Generated from the canonical Clockify OpenAPI by this repo's local
 TypeScript generator, wrapped with a packable npm layout. 31 resource
-modules, 185 live operations, idiomatic
-`client.<resource>.<verb>()` naming on 28 modules (93% of the
-surface), and dual ESM + CJS.
+modules, 185 live operations, idiomatic `client.<resource>.<verb>()`
+naming on 173 of 185 operations (93%), and dual ESM + CJS.
 
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
@@ -807,6 +806,21 @@ map. TypeScript picks the correct `.d.ts` per consumer's
 lifting `HttpResponsePromise` into a flat `{ data, response, headers,
 requestId, status }` shape.
 
+### Which helper do I use?
+
+| You want to… | Use | Subpath |
+|---|---|---|
+| Turn a name/"me" into a real id (or a grounded "did you mean?") | `resolveEntityRef`, `resolveUserRef`, `matchByName` | `clockify-sdk-ts-115/resolve` |
+| Create a tag/project/client only if it does not already exist | `ensureTag`, `ensureProject`, `findOrCreateClient` | `clockify-sdk-ts-115/ensure` |
+| Delete a project the way the live API allows (archive first) | `archiveThenDeleteProject` | `clockify-sdk-ts-115/ensure` |
+| Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
+| Build a safe replace-semantics invoice `PUT` body | `invoiceUpdateBodyFromExisting` | `clockify-sdk-ts-115/invoice-body` |
+| Resolve relative dates server-side ("yesterday", periods) | `resolveRelativeDay`, `resolvePeriod` | `clockify-sdk-ts-115/dates` |
+
+The `ensure` helpers are pure (you inject `list`/`create`/`archive`/`delete`),
+so they reuse instead of duplicating on a re-run — Clockify does not enforce
+name uniqueness, so a naive create silently makes a second "Acme".
+
 ## Supported runtimes
 
 The SDK supports Node 20+.
@@ -831,7 +845,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 47 exports + 15 subpaths                                                         | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 75 public names + 23 subpaths                                                    | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |

@@ -60,5 +60,15 @@ Every tool returns a structured `{ ok, ids, changed, warnings, next, ... }`
 envelope (`structuredContent`); inspect `ids`/`changed` rather than re-resolving
 names, and surface `next` + the stable error code on failure.
 
+## More in this directory
+
+- [`claude-desktop.json`](./claude-desktop.json) — drop-in Claude Desktop MCP config (sandbox key).
+- [`agent-mode.md`](./agent-mode.md) — compact, LLM-context-friendly operating guide.
+- [`workflow-transcripts/`](./workflow-transcripts/) — full tool-call transcripts:
+  [log yesterday's work](./workflow-transcripts/log-yesterdays-work.md),
+  [invoice Acme](./workflow-transcripts/invoice-acme.md),
+  [clean demo data](./workflow-transcripts/clean-demo-data.md),
+  [recover from not_found](./workflow-transcripts/recover-from-not-found.md).
+
 See [`../../examples/README.md`](../../examples/README.md) for the SDK and CLI
 equivalents of these jobs.

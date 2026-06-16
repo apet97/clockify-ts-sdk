@@ -362,6 +362,44 @@
       ]
     },
     {
+      "id": "official-openapi-drift",
+      "requirement": "Compare Clockify's official OpenAPI against the corrected snapshot and the live-evidence ledger, and keep the generated diff/confidence/live-evidence surfaces fresh and wired.",
+      "evidence": [
+        {
+          "path": "scripts/check-official-openapi-drift.mjs",
+          "markers": [
+            "official-openapi-drift contract passed",
+            "generatedTruthSurfaces",
+            "generatedBanner"
+          ]
+        },
+        {
+          "path": "scripts/official-openapi-report.mjs",
+          "markers": [
+            "NEW_OFFICIAL_ENDPOINT",
+            "CUSTOM_BETTER",
+            "PHANTOM_RISK",
+            "canonicalizePath"
+          ]
+        },
+        {
+          "path": "docs/official-openapi-drift-contract.json",
+          "contains": [
+            "official-openapi-drift",
+            "scripts/official-openapi-drift.mjs"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "official-openapi-drift:",
+            "official-openapi-report:",
+            "node scripts/check-official-openapi-drift.mjs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "generator-independence",
       "requirement": "Keep local generated output replaceable and behind explicit wrapper seams.",
       "evidence": [
@@ -2611,6 +2649,97 @@
           "markers": [
             "agent-handoff:",
             "node scripts/check-agent-handoff.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conformance",
+      "requirement": "Map every headline behavior claim to a runnable proof gate, validating that each curated claim references a real make target and evidence file.",
+      "evidence": [
+        {
+          "path": "scripts/generate-conformance.mjs",
+          "markers": [
+            "Conformance matrix",
+            "CURATED_CLAIMS",
+            "validateProof"
+          ]
+        },
+        {
+          "path": "docs/conformance.md",
+          "contains": [
+            "Conformance matrix",
+            "Gate coverage"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "conformance:",
+            "node scripts/generate-conformance.mjs --write"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docs-counts",
+      "requirement": "Keep generated count sources internally consistent and hand-written docs free of stale headline-count strings.",
+      "evidence": [
+        {
+          "path": "docs/docs-counts-contract.json",
+          "contains": [
+            "docs-counts",
+            "consistencyChecks",
+            "forbiddenStrings"
+          ]
+        },
+        {
+          "path": "scripts/check-docs-counts.mjs",
+          "markers": [
+            "docs counts contract passed",
+            "cross-source consistency"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "docs-counts:",
+            "node scripts/check-docs-counts.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agent-tasks",
+      "requirement": "Provide task-scoped agent packets with files-to-read/edit/forbidden, required tests, required docs/changelog updates, and a completion checklist for the most common changes.",
+      "evidence": [
+        {
+          "path": "docs/agent-tasks-contract.json",
+          "contains": [
+            "agent-tasks",
+            "## Completion checklist",
+            "scripts/check-agent-tasks.mjs"
+          ]
+        },
+        {
+          "path": "docs/agent-tasks/README.md",
+          "contains": [
+            "Agent task packets",
+            "handle-official-openapi-drift.md"
+          ]
+        },
+        {
+          "path": "scripts/check-agent-tasks.mjs",
+          "markers": [
+            "agent-tasks contract passed",
+            "requiredSections"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "agent-tasks:",
+            "node scripts/check-agent-tasks.mjs"
           ]
         }
       ]

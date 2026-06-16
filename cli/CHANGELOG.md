@@ -6,6 +6,10 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- Added `cli/examples/daily-timesheet.sh` and `cli/examples/export-json.sh` —
+  copy-paste recipes for a one-day review and a JSON/NDJSON export (read-only,
+  sandbox/mock-safe).
+
 - Added `clk115 api <method> <path>` for scriptable direct API calls through the
   generated SDK client's fetch layer, with `--query`, `--header`, `--body`
   (inline/`@file`/stdin), `--all` page/page-size walking, and `--include-headers`.
@@ -33,6 +37,14 @@ All notable changes to `@clockify115/cli` are documented here.
   response, so the status-based classifier wins. A 404 whose body mentions a
   trigger word (e.g. "workspace") is no longer misclassified as
   `auth_or_permission`.
+- `clk115 start --task <name>` without `--project` now throws a clear error
+  (`--task requires --project`) instead of silently dropping the task. A task only
+  exists within a project, so the name cannot be resolved without one; the previous
+  behaviour started the timer with no task attached and no warning.
+- `clk115 log --task <id>` without `--project` now throws the same
+  `--task requires --project` error instead of sending an unscoped task entry that
+  Clockify rejects with a 400. Mirrors the `start` guard so the invalid combination
+  fails locally rather than as a server 4xx.
 
 ### Changed
 

@@ -83,6 +83,9 @@
       ],
       "clockify-sdk-ts-115/resolve": [
         "./resolve.ts"
+      ],
+      "clockify-sdk-ts-115/ensure": [
+        "./ensure.ts"
       ]
     }
   },
@@ -111,6 +114,7 @@
     "invoice-body.ts",
     "dates.ts",
     "resolve.ts",
+    "ensure.ts",
     "tests/**/*.ts",
     "examples/**/*.ts",
     "scripts/**/*.ts"

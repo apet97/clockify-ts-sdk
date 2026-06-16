@@ -31,7 +31,7 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **126 tools**: 20
+  server, sibling to the Go MCP in GOCLMCP. **127 tools**: 21
   workflow/orientation tools plus 106 domain tools across 18 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
@@ -189,6 +189,7 @@ GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 185 ops, 9 quarantined s
         ▼
 spec/corrected/clockify.corrected.openapi.yaml  (frozen snapshot)
         │
+        │  node scripts/repo-doctor.mjs                            ← start here: no-network repo-shape check
         │  npm ci                                                   ← from repo root, installs all 3 workspaces
         │  make sdk-codegen                                         ← local generator + wrapper sync
         │  make sdk-codegen-drift                                   ← reproducibility check
@@ -207,7 +208,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 71 names + 21 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 75 names + 23 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -344,7 +345,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (71 names, 21 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (75 names, 23 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`

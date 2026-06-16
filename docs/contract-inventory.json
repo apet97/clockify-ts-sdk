@@ -241,6 +241,22 @@
       "perfectFull": true
     },
     {
+      "id": "official-openapi-drift",
+      "target": "official-openapi-drift",
+      "checker": "scripts/check-official-openapi-drift.mjs",
+      "policies": [
+        "docs/official-openapi-drift-policy.md"
+      ],
+      "contracts": [
+        "docs/official-openapi-drift-contract.json"
+      ],
+      "auditIds": [
+        "official-openapi-drift"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "generator-config",
       "target": "generator-config",
       "checker": "scripts/check-generator-config.mjs",
@@ -958,6 +974,32 @@
       ],
       "auditIds": [
         "agent-handoff"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "agent-tasks",
+      "target": "agent-tasks",
+      "checker": "scripts/check-agent-tasks.mjs",
+      "contracts": [
+        "docs/agent-tasks-contract.json"
+      ],
+      "auditIds": [
+        "agent-tasks"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "docs-counts",
+      "target": "docs-counts",
+      "checker": "scripts/check-docs-counts.mjs",
+      "contracts": [
+        "docs/docs-counts-contract.json"
+      ],
+      "auditIds": [
+        "docs-counts"
       ],
       "perfectFast": true,
       "perfectFull": true

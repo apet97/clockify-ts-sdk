@@ -17,6 +17,7 @@ Then, regardless of surface:
 - [`install-personas.md`](./install-personas.md) — which install path fits you, and the mock vs. live boundary.
 - [`quickstart-receipt.md`](./quickstart-receipt.md) — a diagnostics-first first run (no live calls required).
 - [`workflow-cookbook.md`](./workflow-cookbook.md) — common cross-surface recipes (set up work → log it, invoice a client, review a timesheet).
+- [`agent-tasks/README.md`](./agent-tasks/README.md) — task-scoped playbooks for agents (fix a helper, add a tool/command, handle drift) with files-to-edit, tests, and checklists.
 - [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
 
 Two SDK helper layers are shared by all three surfaces so you never hand-roll them:
@@ -97,6 +98,12 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |
 | [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage no-regression threshold contract. |
 | [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Best-effort OpenAPI, SDK, TS MCP, and GOCLMCP parity join. |
+| [`official-openapi-drift-contract.json`](./official-openapi-drift-contract.json) | edit intentionally | Official-vs-custom OpenAPI drift pipeline contract. |
+| [`official-openapi-drift-policy.md`](./official-openapi-drift-policy.md) | edit intentionally | Official-vs-custom drift lifecycle, commands, and response policy. |
+| [`spec-diff-official.md`](./spec-diff-official.md) | `make official-openapi-report` | Official-vs-custom OpenAPI diff (NEW_OFFICIAL_ENDPOINT / CUSTOM_BETTER / CONFLICT / PHANTOM_RISK). |
+| [`spec-confidence.md`](./spec-confidence.md) | `make official-openapi-report` | Per-operation confidence from `x-clockify-live-status`; why the custom spec is trusted. |
+| [`live-evidence-index.md`](./live-evidence-index.md) | `make official-openapi-report` | Where custom claims meet real Clockify behavior, plus quarantined phantom routes. |
+| [`conformance.md`](./conformance.md) | `make conformance` | Claim → proof matrix: every headline behavior claim mapped to a runnable proof gate. |
 | [`operation-parity-overrides.json`](./operation-parity-overrides.json) | `make operation-parity` | Curated non-mechanical parity mappings. |
 | [`cli-commands.json`](./cli-commands.json) | `make readme-tables` | Source for the generated CLI README command table. |
 | [`mcp-tools.json`](./mcp-tools.json) | `make readme-tables` | Source for the generated MCP README tool tables. |
@@ -145,6 +152,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
 | [`docs-quality-contract.json`](./docs-quality-contract.json) | edit intentionally | Evidence-first documentation quality contract for SDK, CLI, MCP, OpenAPI, and operator docs. |
 | [`agent-handoff-contract.json`](./agent-handoff-contract.json) | edit intentionally | Future-agent guidance and temporary-context lifecycle contract. |
+| [`agent-tasks-contract.json`](./agent-tasks-contract.json) | edit intentionally | Agent task packet contract: required packets, sections, and index links. |
+| [`docs-counts-contract.json`](./docs-counts-contract.json) | edit intentionally | Headline-count contract: generated count sources agree and docs hold no stale counts. |
 | [`developer-environment-contract.json`](./developer-environment-contract.json) | edit intentionally | Local bootstrap/runtime/codegen environment contract and repo-doctor generated report shape. |
 | [`operator-onboarding-contract.json`](./operator-onboarding-contract.json) | edit intentionally | Non-coder bootstrap, persona-choice, mock/live, stop-condition, and readiness-boundary contract. |
 | [`operator-toolbox-contract.json`](./operator-toolbox-contract.json) | edit intentionally | No-network operator helper command catalogue and inventory-ownership contract. |
@@ -171,6 +180,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Schema quality | `make schema-quality` | Check component schemas, enums, loose objects, request/response models, discrepancy evidence, and generated TypeScript model ergonomics. |
 | OpenAPI evidence | `make openapi-evidence` | Check discrepancy ledger policy, core findings, support evidence, and Makefile targets. |
 | Upstream drift | `make upstream-drift` | Check Clockify/API/GOCLMCP/SDK drift lifecycle, routing, evidence, regeneration, and proof surfaces. |
+| Official OpenAPI drift | `make official-openapi-drift` | Check the official-vs-custom diff/confidence/live-evidence surfaces are fresh and wired (offline; `make official-openapi-fetch` for the live delta). |
 | Operation coverage | `make operation-coverage` | Check OpenAPI operation count plus SDK, TS MCP, GOCLMCP, and curated parity coverage floors. |
 | Generator config | `make generator-config` | Check local TypeScript generator input, output, command, and wrapper sync paths. |
 | Generator independence | `make generator-independence` | Keep generated SDK output behind wrapper seams. |

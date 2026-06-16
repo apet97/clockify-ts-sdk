@@ -1,0 +1,12 @@
+{
+  "_comment": "Claude Desktop MCP config for @clockify115/mcp-server. Copy the mcpServers entry into your claude_desktop_config.json (macOS: ~/Library/Application Support/Claude/claude_desktop_config.json). Use a SACRIFICIAL sandbox workspace key, never production. After `npm run build && npm link` in mcp/, the bin is clockify115-mcp.",
+  "mcpServers": {
+    "clockify": {
+      "command": "clockify115-mcp",
+      "env": {
+        "CLOCKIFY_API_KEY": "<sandbox api key>",
+        "CLOCKIFY_WORKSPACE_ID": "<sandbox workspace id>"
+      }
+    }
+  }
+}

@@ -181,3 +181,16 @@ export {
     type NameMatch,
     type ResolveEntityResult,
 } from "./resolve.js";
+
+// Safe create-or-reuse helpers for duplicate-name-prone entities (tags, projects,
+// clients) plus archive-then-delete for projects (active delete 400s on the wire).
+export {
+    archiveThenDeleteProject,
+    ensureProject,
+    ensureTag,
+    findOrCreateClient,
+    type ArchiveThenDeleteResult,
+    type EnsureResult,
+    type FindOrCreateOptions,
+    type NamedRecord,
+} from "./ensure.js";

@@ -235,6 +235,35 @@ before emitting tags.
   `timeOffPolicies` are correctly retained as separate domains.
 - **Status:** `fixed-in-canonical-generator`.
 
+### `entries.stoptimer.route-404-no-static-resource` — DOCUMENTED 2026-06-16
+
+- **What does official documentation claim?** The generated TypeScript SDK exposes
+  `timeEntries.stopTimer({ workspaceId, userId, end })`, which issues
+  `PATCH /workspaces/{workspaceId}/user/{userId}/time-entries/stop`.
+- **What does Clockify actually return?** That route is not bound. With a real
+  running timer present it returns
+  `404 { "code": 3000, "message": "No static resource ...time-entries/stop." }`.
+  The user-scoped stop route WITHOUT the `/stop` suffix
+  (`PATCH /workspaces/{workspaceId}/user/{userId}/time-entries`) IS bound — the same
+  minimal `{ end }` body returns `400` (route exists, body incomplete), not `404`.
+  So the live stop endpoint is the bare user-scoped PATCH and the generated `/stop`
+  suffix is spurious. Phantom route: `entries.stoptimer` (`PATCH /user/{userId}/time-entries/stop`)
+  returns 404 "No static resource".
+- **Which live test proves it?** Direct `curl` probes captured 2026-06-16 against
+  workspace `65b382b606de527a7ee2b60e` (create running entry → `PATCH .../stop` =
+  404 → `PATCH .../time-entries` = 400 → `DELETE` = 204). Surfaced while running
+  `wrapper/examples/start-stop-timer.ts` live.
+- **Which MCP tool depends on it?** `clockify_stop_work` and `clockify_switch_work`
+  need a working stop; they must not call the generated `stopTimer` route directly.
+  `wrapper/examples/start-stop-timer.ts` discards the running timer with `delete`
+  rather than relying on the dead route.
+- **Which uncertainty remains?** The exact required body for the bare user-scoped
+  stop PATCH (a 400 with `{ end }` only suggests it wants the full entry or extra
+  fields); whether the corrected OpenAPI snapshot models the `/stop` suffix
+  (generator source lives in `../GOCLMCP`).
+- **Status:** `open` — the route fix belongs in GOCLMCP; compensated in the example
+  and the MCP layer until then.
+
 ---
 
 ## Template

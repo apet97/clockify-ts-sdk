@@ -4,12 +4,14 @@ Runnable, copy-paste examples for all three surfaces of this repo, organized by
 the cross-surface jobs in [`docs/examples-matrix.md`](../docs/examples-matrix.md).
 Pick your surface:
 
-- **SDK** (`clockify-sdk-ts-115`) — 18 runnable TypeScript scripts in
+- **SDK** (`clockify-sdk-ts-115`) — 24 runnable TypeScript scripts in
   [`wrapper/examples/`](../wrapper/examples/README.md).
 - **CLI** (`@clockify115/cli`) — runnable shell scripts in
-  [`cli/examples/`](../cli/examples/).
-- **MCP** (`@clockify115/mcp-server`) — agent tool-call recipes in
-  [`mcp/examples/`](../mcp/examples/README.md).
+  [`cli/examples/`](../cli/examples/) (status, log time, list projects,
+  daily timesheet, JSON export, mock run).
+- **MCP** (`@clockify115/mcp-server`) — agent tool-call recipes plus
+  `claude-desktop.json`, a compact `agent-mode.md`, and `workflow-transcripts/`
+  in [`mcp/examples/`](../mcp/examples/README.md).
 
 All examples are safe to read offline and never contain secrets. Live runs use a
 **sacrificial** sandbox workspace only (set `CLOCKIFY_API_KEY` +

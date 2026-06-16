@@ -246,6 +246,16 @@
         "types": "./dist/cjs/resolve.d.ts",
         "default": "./dist/cjs/resolve.js"
       }
+    },
+    "./ensure": {
+      "import": {
+        "types": "./dist/esm/ensure.d.ts",
+        "default": "./dist/esm/ensure.js"
+      },
+      "require": {
+        "types": "./dist/cjs/ensure.d.ts",
+        "default": "./dist/cjs/ensure.js"
+      }
     }
   },
   "files": [

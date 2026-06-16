@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Headline-count contract: the generated count sources must stay internally consistent, and hand-written docs must not hardcode a stale headline count. Catches both generator drift and prose that contradicts the generated metadata.",
+  "authoritativeCounts": [
+    { "label": "operations", "source": "docs/openapi-operations.json", "pointer": "operationCount" },
+    { "label": "MCP tools (total)", "source": "docs/mcp-tools.json", "pointer": "summary.totalTools" },
+    { "label": "MCP workflow tools", "source": "docs/mcp-tools.json", "pointer": "summary.workflowTools" },
+    { "label": "MCP domain tools", "source": "docs/mcp-tools.json", "pointer": "summary.domainTools" },
+    { "label": "CLI commands", "source": "docs/cli-commands.json", "pointer": "commands#length" },
+    { "label": "SDK public names", "source": "docs/sdk-public-api.json", "pointer": "rootSymbols#length" },
+    { "label": "SDK subpaths", "source": "docs/sdk-public-api.json", "pointer": "subpaths#keys" }
+  ],
+  "consistencyChecks": [
+    "openapi-operations.operationCount == operation-parity.summary.operations",
+    "mcp-tools.summary.totalTools == summary.workflowTools + summary.domainTools",
+    "mcp-tools.summary.workflowTools == mcp-tools.workflowTools.length",
+    "mcp-tools.summary.domainTools == sum(mcp-tools.domainGroups[].count)",
+    "product-surface.packages.tsMcp.declaredToolCount == mcp-tools.summary.totalTools",
+    "product-surface.packages.tsMcp.declaredWorkflowToolCount == mcp-tools.summary.workflowTools",
+    "product-surface.packages.tsMcp.declaredDomainToolCount == mcp-tools.summary.domainTools"
+  ],
+  "resourceModulesConvention": "The documented figure is 31 resource modules = 30 generated directories under output/ts-sdk/api/resources/ plus index.ts. docs-drift owns the denial of the bare directory-count phrasing; keep the documented 31 figure.",
+  "proseDocs": [
+    "README.md",
+    "wrapper/README.md",
+    "cli/README.md",
+    "mcp/README.md",
+    "CLAUDE.md",
+    "AGENTS.md"
+  ],
+  "forbiddenStrings": [
+    "47 exports",
+    "15 subpaths",
+    "44 public names",
+    "53 public names",
+    "89 tools",
+    "123 tools"
+  ],
+  "wiring": {
+    "makeTarget": "docs-counts",
+    "checker": "scripts/check-docs-counts.mjs",
+    "qualityGate": "make docs-counts",
+    "inventoryId": "docs-counts",
+    "auditId": "docs-counts",
+    "docsIndex": ["docs-counts-contract.json"]
+  }
+}

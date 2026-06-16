@@ -74,10 +74,16 @@ hosted generator, or Clockify credentials):
 ```sh
 git clone https://github.com/apet97/clockify-ts-sdk.git
 cd clockify-ts-sdk
+node scripts/repo-doctor.mjs   # start here: no-network repo-shape check (Node, workspaces, codegen wiring)
 npm ci                 # install all three workspaces
 make sdk-codegen       # generate output/ts-sdk/** and sync wrapper/src/**
 make perfect-fast      # the local gate: type-check, build, dual-build smoke, tests, contracts
 ```
+
+`node scripts/repo-doctor.mjs` is the obvious first command: it runs no network,
+git, or build steps — it just confirms the repo shape (Node 20+, the three
+workspaces, the local-generator wiring) so a fresh clone fails fast and clearly
+before `npm ci`.
 
 Three gate tiers:
 
@@ -114,7 +120,7 @@ clockify-ts-sdk/
 |---|---|---|
 | `clockify-sdk-ts-115` | 0.9.0 | 31 resource modules, 185 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@clockify115/cli` | 0.1.0 | 29 commands incl. a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@clockify115/mcp-server` | 0.3.0 | 126 stdio tools (20 workflow + 106 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `@clockify115/mcp-server` | 0.3.0 | 127 stdio tools (21 workflow + 106 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md).

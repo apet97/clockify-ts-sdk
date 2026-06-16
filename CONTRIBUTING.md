@@ -1,4 +1,4 @@
-# Contributing to clockify-sdk-ts
+# Contributing to clockify-sdk-ts-115
 
 Thanks for considering a contribution. This repo is the human
 onboarding entry; the **canonical contributor + agent contract is
@@ -127,10 +127,10 @@ to break, then delete the symbol in the next major.
    (IDE strikethrough, tsdoc, generated docs) picks this up
    automatically.
 2. At the runtime entry of the deprecated function, call
-   `warnOnce(key, message)` from `clockify-sdk-ts/deprecation`:
+   `warnOnce(key, message)` from `clockify-sdk-ts-115/deprecation`:
 
    ```ts
-   import { warnOnce } from "clockify-sdk-ts/deprecation";
+   import { warnOnce } from "clockify-sdk-ts-115/deprecation";
 
    /** @deprecated since v0.7.0 — use `newName` instead. */
    export function oldName(...args: A): R {
@@ -192,8 +192,8 @@ sequencing is human.
    and attaches it to the GitHub release.
 8. **Verify on npm**:
    ```bash
-   npm view clockify-sdk-ts version  # should be vX.Y.Z
-   npm view clockify-sdk-ts dist.signatures  # provenance present
+   npm view clockify-sdk-ts-115 version  # should be vX.Y.Z
+   npm view clockify-sdk-ts-115 dist.signatures  # provenance present
    ```
 9. **TypeDoc → Pages** auto-deploys via `docs.yml` on the same
    tag push. Wait ~2 minutes, then verify at the project's

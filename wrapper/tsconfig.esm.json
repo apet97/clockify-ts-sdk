@@ -34,7 +34,8 @@
     "money.ts",
     "invoice-body.ts",
     "dates.ts",
-    "resolve.ts"
+    "resolve.ts",
+    "ensure.ts"
   ],
   "exclude": [
     "node_modules",

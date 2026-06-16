@@ -32,6 +32,9 @@ export const registerLogCommand: Registrar = (program, services) => {
         .option("--end <iso>", "End timestamp (ISO 8601). Defaults to now.")
         .action(async function (this: Command, duration: string, description: string, opts: LogOpts) {
             const { client, workspaceId, output } = resolveContext(this, services);
+            if (opts.task && !opts.project) {
+                throw new Error("--task requires --project: a task entry must be scoped to its project.");
+            }
             const seconds = parseDuration(duration);
             const endIso = opts.end ?? new Date().toISOString();
             const endMs = Date.parse(endIso);

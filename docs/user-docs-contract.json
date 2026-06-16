@@ -130,7 +130,7 @@
       "path": "mcp/CHANGELOG.md",
       "mustContain": [
         "@clockify115/mcp-server",
-        "126-tool surface",
+        "127-tool surface",
         "workflow tools"
       ],
       "forbiddenMarkers": [
