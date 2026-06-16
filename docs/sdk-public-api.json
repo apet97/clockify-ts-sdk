@@ -78,7 +78,11 @@
     "suggestOptions",
     "resolveEntityRef",
     "resolveProjectTaskRefs",
-    "resolveUserRef"
+    "resolveUserRef",
+    "ensureTag",
+    "ensureProject",
+    "findOrCreateClient",
+    "archiveThenDeleteProject"
   ],
   "subpaths": {
     ".": [
@@ -173,6 +177,12 @@
       "resolveEntityRef",
       "resolveProjectTaskRefs",
       "resolveUserRef"
+    ],
+    "./ensure": [
+      "ensureTag",
+      "ensureProject",
+      "findOrCreateClient",
+      "archiveThenDeleteProject"
     ]
   },
   "tsconfigAliases": {
@@ -241,6 +251,9 @@
     ],
     "clockify-sdk-ts-115/resolve": [
       "./resolve.ts"
+    ],
+    "clockify-sdk-ts-115/ensure": [
+      "./ensure.ts"
     ]
   },
   "packageMarkerScan": {
@@ -268,7 +281,9 @@
       "wrapper/diagnostics.ts",
       "wrapper/tests/diagnostics.test.ts",
       "wrapper/tests/request-options.test.ts",
-      "wrapper/tests/operation-receipt.test.ts"
+      "wrapper/tests/operation-receipt.test.ts",
+      "wrapper/ensure.ts",
+      "wrapper/tests/ensure.test.ts"
     ]
   },
   "wiring": {

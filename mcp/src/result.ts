@@ -28,7 +28,23 @@ export interface SuccessEnvelope {
     meta?: Record<string, unknown>;
     changed?: ChangeSet;
     warnings?: Warning[];
+    clarification?: Clarification;
     next?: NextAction[];
+}
+
+/**
+ * A first-class "did you mean?" receipt for an ambiguous reference. When a name
+ * matches more than one entity (or none), a tool returns a success envelope whose
+ * `clarification` holds a grounded question plus the real candidate ids — never a
+ * silently-wrong id. The caller re-invokes with the chosen id.
+ */
+export interface Clarification {
+    /** The grounded question to put to the caller. */
+    question: string;
+    /** The input field that was ambiguous (e.g. "project", "client"). */
+    field?: string;
+    /** Grounded "did you mean?" candidates (real id + name) to choose from. */
+    candidates?: EntityRef[];
 }
 
 export interface ErrorEnvelope {
@@ -75,6 +91,7 @@ export interface SuccessOptions {
     ids?: Record<string, string | undefined>;
     changed?: ChangeSet;
     warnings?: Warning[];
+    clarification?: Clarification;
     next?: NextAction[];
 }
 
@@ -91,6 +108,7 @@ export function successResult(
     if (meta && Object.keys(meta).length > 0) envelope.meta = meta;
     if (hasChangeSet(options.changed)) envelope.changed = options.changed;
     if (options.warnings && options.warnings.length > 0) envelope.warnings = options.warnings;
+    if (options.clarification) envelope.clarification = options.clarification;
     if (options.next && options.next.length > 0) envelope.next = options.next;
     return {
         content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],

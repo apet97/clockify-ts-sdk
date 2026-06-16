@@ -25,6 +25,7 @@
         "./dates",
         "./diagnostics",
         "./deprecation",
+        "./ensure",
         "./errors",
         "./health",
         "./invoice-body",

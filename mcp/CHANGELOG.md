@@ -4,8 +4,30 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- All destructive domain delete/remove tools (`clockify_custom_fields_delete`,
+  `clockify_project_custom_fields_remove`, `clockify_holidays_delete`,
+  `clockify_groups_delete`, `clockify_groups_remove_member`,
+  `clockify_expenses_categories_delete`, `clockify_expenses_delete`,
+  `clockify_invoices_delete`, `clockify_scheduling_assignments_delete`,
+  `clockify_time_off_requests_delete`) now require the
+  `dry_run` → `confirm_token` handshake through the shared confirmation guard,
+  matching the six already-guarded deletes. An LLM caller must preview the delete
+  and pass back a single-use token before anything is removed.
+
 ### Added
 
+- Added `clockify_plan_change` — a read-only planning tool that explains which
+  tools a change will use, in order, and whether each step mutates or needs the
+  dry_run → confirm_token handshake, before anything mutates. This grows the MCP
+  server to the **127-tool surface** (21 workflow + 106 domain).
+- Added a first-class `clarification` field to the success-result envelope (and
+  its output schema): a grounded "did you mean?" receipt with a question, the
+  ambiguous field, and real candidate ids for ambiguous-name resolution.
+- Added `mcp/examples/claude-desktop.json`, a compact `mcp/examples/agent-mode.md`
+  guide, and `mcp/examples/workflow-transcripts/` (log yesterday's work, invoice
+  Acme, clean demo data, recover from not_found).
 - Added `mcp/examples/README.md` — agent tool-call recipes (status, log work,
   invoice with dry_run → confirm_token, demo seed/cleanup) and how to run the
   server, cross-linked from the top-level `examples/` index.

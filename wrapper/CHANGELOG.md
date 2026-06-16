@@ -9,6 +9,22 @@ once v1.0.0 ships.
 
 ### Added
 
+- Added the `ensure` subpath: `ensureTag` / `ensureProject` / `findOrCreateClient`
+  do a case-insensitive list-then-match before creating, so a re-run reuses the
+  existing record instead of silently making a duplicate (Clockify does not enforce
+  name uniqueness). `archiveThenDeleteProject` encodes the live-verified rule that
+  deleting an ACTIVE project 400s — it archives first, then deletes. All four are
+  pure (injected `list`/`create`/`archive`/`delete` callbacks), like `resolve`.
+
+### Fixed
+
+- Corrected stale headline counts in `README.md`: the dual-build smoke verifies
+  71 public names + 22 subpaths (was the obsolete "47 exports + 15 subpaths"), and
+  idiomatic naming is stated as 173 of 185 operations (was an inconsistent "28
+  modules (93%)").
+
+### Added
+
 - Added the `money` subpath: `toMinor()` / `toMajor()` plus the
   `CLOCKIFY_AMOUNT_UNITS` table and `invoiceItemUnitPrice*` helpers encode
   Clockify's non-uniform money units in one place — invoices/payments/rates are

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Agent task packet contract: each task-scoped playbook in docs/agent-tasks/ must exist, be linked from the index, and carry the required sections so weaker agents have a complete, safe path for the most common changes.",
+  "indexDocument": {
+    "path": "docs/agent-tasks/README.md",
+    "mustContain": [
+      "Agent task packets",
+      "fix-sdk-helper.md",
+      "update-public-export.md",
+      "add-cli-command.md",
+      "add-mcp-tool.md",
+      "handle-official-openapi-drift.md",
+      "handle-live-api-discrepancy.md"
+    ],
+    "forbiddenMarkers": ["TODO", "TBD"]
+  },
+  "requiredSections": [
+    "## Files to read first",
+    "## Files you may edit",
+    "## Files you must NOT edit",
+    "## Required tests / gates",
+    "## Required docs / changelog updates",
+    "## Completion checklist"
+  ],
+  "packets": [
+    "docs/agent-tasks/fix-sdk-helper.md",
+    "docs/agent-tasks/update-public-export.md",
+    "docs/agent-tasks/add-cli-command.md",
+    "docs/agent-tasks/add-mcp-tool.md",
+    "docs/agent-tasks/handle-official-openapi-drift.md",
+    "docs/agent-tasks/handle-live-api-discrepancy.md"
+  ],
+  "forbiddenMarkers": ["TODO", "TBD"],
+  "wiring": {
+    "makeTarget": "agent-tasks",
+    "checker": "scripts/check-agent-tasks.mjs",
+    "qualityGate": "make agent-tasks",
+    "inventoryId": "agent-tasks",
+    "auditId": "agent-tasks",
+    "docsIndex": ["agent-tasks-contract.json"]
+  }
+}

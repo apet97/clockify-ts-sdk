@@ -40,6 +40,14 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
         meta: z.record(z.unknown()).optional(),
         changed: changeSetSchema.optional(),
         warnings: z.array(z.object({ code: z.string().optional(), message: z.string() }).passthrough()).optional(),
+        clarification: z
+            .object({
+                question: z.string(),
+                field: z.string().optional(),
+                candidates: z.array(entityRefSchema).optional(),
+            })
+            .passthrough()
+            .optional(),
         next: z
             .array(
                 z

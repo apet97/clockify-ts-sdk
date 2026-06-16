@@ -84,6 +84,7 @@ describe("@clockify115/mcp-server", () => {
                 // Status
                 "clockify_status",
                 "clockify_tools_guide",
+                "clockify_plan_change",
                 "clockify_create_work_package",
                 "clockify_log_work",
                 "clockify_start_work",
@@ -225,7 +226,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(126);
+        expect(names).toHaveLength(127);
     });
 
     it("advertises agent-ready metadata for every tool", async () => {

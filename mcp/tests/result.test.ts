@@ -31,6 +31,29 @@ describe("successResult", () => {
         expect(parsed).not.toHaveProperty("meta");
     });
 
+    it("carries a clarification receipt for an ambiguous name", () => {
+        const out = successResult("clockify_log_work", null, undefined, {
+            clarification: {
+                question: 'More than one active project is named "Website". Which one?',
+                field: "project",
+                candidates: [
+                    { type: "project", id: "p1", name: "Website" },
+                    { type: "project", id: "p2", name: "Website (archived)" },
+                ],
+            },
+        });
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.clarification).toEqual({
+            question: 'More than one active project is named "Website". Which one?',
+            field: "project",
+            candidates: [
+                { type: "project", id: "p1", name: "Website" },
+                { type: "project", id: "p2", name: "Website (archived)" },
+            ],
+        });
+        expect(out.structuredContent).toEqual(parsed);
+    });
+
     it("can carry workflow IDs, change sets, warnings, and next actions", () => {
         const out = successResult(
             "clockify_create_work_package",

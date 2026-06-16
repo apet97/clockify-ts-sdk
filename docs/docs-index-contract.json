@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 124,
+  "expectedRequiredLinkCount": 131,
   "requiredLinks": [
     "quality-gates.md",
     "axioms.md",
@@ -132,6 +132,13 @@
     "generator-portability-contract.json",
     "mock-clockify-contract.json",
     "maintenance-playbook-contract.json",
-    "mutation-safety-contract.json"
+    "mutation-safety-contract.json",
+    "official-openapi-drift-policy.md",
+    "official-openapi-drift-contract.json",
+    "agent-tasks-contract.json",
+    "docs-counts-contract.json",
+    "spec-diff-official.md",
+    "spec-confidence.md",
+    "live-evidence-index.md"
   ]
 }

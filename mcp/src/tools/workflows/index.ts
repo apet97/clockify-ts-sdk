@@ -6,6 +6,7 @@ import { successResult } from "../../result.js";
 
 import { WEBHOOK_EVENTS, invoiceClientWork, recordExpense, requestTimeOff, scheduleWork, setupWebhook } from "./business.js";
 import { demoCleanup, demoSeed } from "./demo.js";
+import { planChange } from "./plan.js";
 import { createWorkPackage } from "./resolve.js";
 import { reviewInputSchema, reviewPeriod } from "./review.js";
 import { runWorkflow } from "./run.js";
@@ -84,6 +85,21 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                     ],
                 },
             ),
+    );
+
+    server.registerTool(
+        "clockify_plan_change",
+        {
+            title: "Plan a change (read-only)",
+            description:
+                "READ-ONLY planning: explain which Clockify tools a change will use, in order, before anything mutates. For each step it reports the tool, whether it mutates, and whether it needs the dry_run -> confirm_token handshake. Accepts a free-text `goal` (e.g. \"invoice Acme\", \"log yesterday's work\", \"clean demo data\") and an optional `entity`. Makes no API calls. Next: call the first tool in the returned plan.",
+            inputSchema: {
+                goal: z.string().min(1),
+                entity: z.string().optional(),
+            },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => runWorkflow("clockify_plan_change", args, () => planChange(ctx, args)),
     );
 
     server.registerTool(

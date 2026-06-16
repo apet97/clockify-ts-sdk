@@ -74,6 +74,13 @@ describe("log command", () => {
         );
     });
 
+    it("errors when --task is given without --project", async () => {
+        const { client } = makeClient();
+        await expect(run(client, ["30m", "work", "--end", END, "--task", "tk-1"])).rejects.toThrow(
+            /--task requires --project/,
+        );
+    });
+
     it("passes project, tag, and billable through to the entry body", async () => {
         const { client, created } = makeClient();
         await run(client, ["30m", "work", "--end", END, "--project", "p-1", "--tag", "t-1", "--billable"]);

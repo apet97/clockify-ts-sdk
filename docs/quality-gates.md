@@ -19,6 +19,8 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check schema quality | `make schema-quality` | Corrected OpenAPI schemas, enums, loose objects, request/response models, evidence ledger, and generated TypeScript model ergonomics stay governed. |
 | Check OpenAPI evidence contract | `make openapi-evidence` | Discrepancy ledger policy, required finding markers, support evidence, and OpenAPI proof targets stay explicit. |
 | Check upstream drift lifecycle | `make upstream-drift` | Clockify/API/GOCLMCP/SDK drift detection, classification, evidence, regeneration, reconciliation, and proof rules stay explicit. |
+| Regenerate official-vs-custom drift surfaces | `make official-openapi-report` | `docs/spec-diff-official.md`, `docs/spec-confidence.md`, and `docs/live-evidence-index.md` match the committed official snapshot, the corrected spec, and the evidence ledger. |
+| Check official OpenAPI drift | `make official-openapi-drift` | The official-vs-custom diff/confidence/live-evidence surfaces are fresh and the gate is wired into the Makefile, docs index, contract inventory, and enterprise audit. |
 | Check operation coverage | `make operation-coverage` | OpenAPI operation count plus SDK, TS MCP, GOCLMCP, and curated parity coverage floors do not regress. |
 | Check generator config | `make generator-config` | Local TypeScript generator input, output, command, and wrapper sync paths stay intentional. |
 | Check generator independence | `make generator-independence` | Generated local SDK output remains behind the wrapper package seam and is not imported by CLI/MCP as product code. |
@@ -72,6 +74,9 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check documentation quality | `make docs-quality` | Evidence-first docs, exact names, generated truth surfaces, safe snippets, and unsupported readiness claims stay governed. |
 | Check axioms contract | `make axioms-contract` | SDK/CLI/MCP/OpenAPI axioms stay tied to concrete gates and evidence. |
 | Check agent handoff | `make agent-handoff` | AGENTS/CLAUDE guidance, generated-path rules, temporary-context lifecycle, and stale-count markers stay aligned. |
+| Check agent task packets | `make agent-tasks` | `docs/agent-tasks/` packets exist, are indexed, and carry every required section (files to read/edit/forbidden, tests, docs/changelog, checklist). |
+| Check headline counts | `make docs-counts` | Generated count sources agree (operations, MCP tool split, product-surface), and hand-written docs hold no stale headline-count string. |
+| Regenerate conformance matrix | `make conformance` | `docs/conformance.md` maps every headline behavior claim to a real proof gate; each curated claim is validated to reference an existing make target and evidence file. |
 | Check developer environment | `make developer-environment` | Root workspace lockfile/scripts, exact `prepublishOnly` command shape, repo-doctor generated report shape, Node floor, local codegen/GOCLMCP setup docs, and workspace boundaries stay aligned. |
 | Check operator toolbox | `make operator-toolbox` | No-network helper command catalogue stays safe, discoverable, inventory-owned, and clearly separated from proof gates. |
 | Check operator onboarding | `make operator-onboarding` | Non-coder bootstrap, generated onboarding-plan shape, SDK/CLI/MCP path choice, mock/live boundaries, stop conditions, and readiness levels stay aligned. |

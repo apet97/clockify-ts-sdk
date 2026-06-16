@@ -20,6 +20,10 @@ dist/cjs/diagnostics.d.ts
 dist/cjs/diagnostics.d.ts.map
 dist/cjs/diagnostics.js
 dist/cjs/diagnostics.js.map
+dist/cjs/ensure.d.ts
+dist/cjs/ensure.d.ts.map
+dist/cjs/ensure.js
+dist/cjs/ensure.js.map
 dist/cjs/error-codes.d.ts
 dist/cjs/error-codes.d.ts.map
 dist/cjs/error-codes.js
@@ -2857,6 +2861,10 @@ dist/esm/diagnostics.d.ts
 dist/esm/diagnostics.d.ts.map
 dist/esm/diagnostics.js
 dist/esm/diagnostics.js.map
+dist/esm/ensure.d.ts
+dist/esm/ensure.d.ts.map
+dist/esm/ensure.js
+dist/esm/ensure.js.map
 dist/esm/error-codes.d.ts
 dist/esm/error-codes.d.ts.map
 dist/esm/error-codes.js

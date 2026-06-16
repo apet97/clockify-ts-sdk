@@ -3,8 +3,8 @@
   "purpose": "Contract for MCP agent UX: status-first, workflow-first, receipt-first guidance, risky-write confirmation, recovery, and discoverability.",
   "toolsMetadata": "docs/mcp-tools.json",
   "expectedToolSummary": {
-    "totalTools": 126,
-    "workflowTools": 20,
+    "totalTools": 127,
+    "workflowTools": 21,
     "domainTools": 106,
     "requiredWorkflowTools": [
       "clockify_status",

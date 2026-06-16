@@ -26,6 +26,7 @@
         "./dates",
         "./deprecation",
         "./diagnostics",
+        "./ensure",
         "./errors",
         "./health",
         "./invoice-body",
@@ -87,8 +88,8 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 126,
-      "declaredWorkflowToolCount": 20,
+      "declaredToolCount": 127,
+      "declaredWorkflowToolCount": 21,
       "declaredDomainToolCount": 106,
       "prepublishOnly": "npm run type-check && npm test && npm run build",
       "gates": [
