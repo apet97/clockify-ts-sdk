@@ -264,6 +264,23 @@ for (const tool of destructiveTools) {
     }
 }
 
+// Every destructive DELETE/REMOVE domain tool must be guarded (dry_run->confirm)
+// or explicitly exempted, so a new unguarded delete cannot ship silently.
+const guardedSet = new Set(contract.confirmationGuardedDomainTools);
+const exemptSet = new Set(contract.confirmationExemptDestructiveTools ?? []);
+const workflowSet = new Set([
+    ...contract.highRiskWorkflowTools,
+    ...contract.idempotentWorkflowTools,
+]);
+for (const tool of destructiveTools) {
+    if (workflowSet.has(tool.name)) continue;            // workflow writes use maybeConfirm separately
+    if (!/_(delete|remove)\b/.test(tool.name)) continue; // only delete/remove domain tools
+    if (guardedSet.has(tool.name) || exemptSet.has(tool.name)) continue;
+    failures.push(
+        `destructive domain tool ${tool.name} is neither in confirmationGuardedDomainTools nor confirmationExemptDestructiveTools`,
+    );
+}
+
 if (!confirmGuard.includes("confirm_token: issued.confirmToken")) {
     failures.push("confirmation preview does not expose confirm_token in receipt data");
 }
