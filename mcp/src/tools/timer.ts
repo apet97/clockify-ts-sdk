@@ -4,6 +4,8 @@ import { z } from "zod";
 import type { Context } from "../client.js";
 import { errorResult, successResult } from "../result.js";
 
+import { stopRunningTimer } from "./timer-stop.js";
+
 export function registerTimerTools(server: McpServer, ctx: Context): void {
     server.registerTool(
         "clockify_timer_start",
@@ -55,20 +57,11 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                         new Error("could not determine user ID from getCurrentUser response"),
                     );
                 }
-                const end = new Date().toISOString();
-                try {
-                    const entry = await ctx.client.timeEntries.stopTimer({
-                        workspaceId: ctx.workspaceId,
-                        userId,
-                        end,
-                    });
-                    return successResult("clockify_timer_stop", entry);
-                } catch (innerErr) {
-                    if ((innerErr as { statusCode?: number }).statusCode === 404) {
-                        return successResult("clockify_timer_stop", { running: false, note: "no timer was running" });
-                    }
-                    throw innerErr;
+                const outcome = await stopRunningTimer(ctx, userId, new Date().toISOString());
+                if (!outcome.running) {
+                    return successResult("clockify_timer_stop", { running: false, note: "no timer was running" });
                 }
+                return successResult("clockify_timer_stop", outcome.entry);
             } catch (err) {
                 return errorResult("clockify_timer_stop", err);
             }

@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- `resolveUserRef` (the `resolve` subpath) now matches its exact-id fast path against the
+  trimmed id (`rawId`), consistent with `resolveEntityRef`, so a padded id like `" 64ab…"`
+  resolves directly instead of falling through to name matching.
+
 ### Documentation
 
 - Corrected the SDK-method coverage figure in `README.md` to 173 of 185 operations

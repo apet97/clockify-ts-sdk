@@ -4,30 +4,31 @@ import { startWork, stopWork, switchWork } from "../src/tools/workflows/time-tra
 import type { WorkflowContext } from "../src/tools/workflows/types.js";
 
 /**
- * Behavioral coverage for the start/stop/switch_work workflow tools, pinning
- * the SDK calls they make, the request shapes, and the success receipts with a
- * mocked client (no network). In particular this pins that clockify_stop_work
- * routes through timeEntries.stopTimer — the generated `/stop` route that 404s
- * live (see spec/evidence/discrepancies.md `entries.stoptimer.route-404...`);
- * the route fix is GOCLMCP-owned, so here we pin current behavior, including the
- * graceful 404 -> "no timer running" degradation the MCP layer compensates with.
+ * Behavioral coverage for the start/stop/switch_work workflow tools, pinning the
+ * SDK calls they make, the request shapes, and the success receipts with a mocked
+ * client (no network). stop_work/switch_work detect a running timer via
+ * `timeEntries.listInProgress` and stop it through the bound bare route
+ * `timeEntries.updateForUser` (PATCH /workspaces/{ws}/user/{userId}/time-entries,
+ * `{ end }`). The dead `/stop` suffix route (`stopTimer`) is gone: "no timer
+ * running" now comes from an empty in-progress list, NOT from swallowing a 404 —
+ * see spec/evidence/discrepancies.md `entries.stoptimer.route-404...`.
  */
 
 interface Calls {
     create: Record<string, unknown>[];
-    stopTimer: Record<string, unknown>[];
+    listInProgress: number;
+    updateForUser: Record<string, unknown>[];
     getCurrentUser: number;
 }
 
-function makeCtx(opts: { stopTimer?: (req: Record<string, unknown>) => Promise<unknown> } = {}): {
-    ctx: WorkflowContext;
-    calls: Calls;
-} {
-    const calls: Calls = { create: [], stopTimer: [], getCurrentUser: 0 };
-    const defaultStop = async (req: Record<string, unknown>) => {
-        calls.stopTimer.push(req);
-        return { id: "te-1", ...req };
-    };
+function makeCtx(
+    opts: {
+        inProgress?: () => Promise<unknown[]>;
+        updateForUser?: (req: Record<string, unknown>) => Promise<unknown>;
+        create?: (body: Record<string, unknown>) => Promise<unknown>;
+    } = {},
+): { ctx: WorkflowContext; calls: Calls } {
+    const calls: Calls = { create: [], listInProgress: 0, updateForUser: [], getCurrentUser: 0 };
     const client = {
         users: {
             getCurrentUser: async () => {
@@ -36,11 +37,22 @@ function makeCtx(opts: { stopTimer?: (req: Record<string, unknown>) => Promise<u
             },
         },
         timeEntries: {
-            create: async (body: Record<string, unknown>) => {
-                calls.create.push(body);
-                return { id: "te-1", ...body };
+            create:
+                opts.create ??
+                (async (body: Record<string, unknown>) => {
+                    calls.create.push(body);
+                    return { id: "te-1", ...body };
+                }),
+            listInProgress: async () => {
+                calls.listInProgress += 1;
+                return opts.inProgress ? await opts.inProgress() : [];
             },
-            stopTimer: opts.stopTimer ?? defaultStop,
+            updateForUser:
+                opts.updateForUser ??
+                (async (req: Record<string, unknown>) => {
+                    calls.updateForUser.push(req);
+                    return { id: "te-1", ...req };
+                }),
         },
     };
     return { ctx: { workspaceId: "ws-1", client } as unknown as WorkflowContext, calls };
@@ -49,6 +61,8 @@ function makeCtx(opts: { stopTimer?: (req: Record<string, unknown>) => Promise<u
 function envelopeOf(res: unknown): Record<string, unknown> {
     return JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}") as Record<string, unknown>;
 }
+
+const runningForUser = async () => [{ id: "te-1", userId: "user-1" }];
 
 describe("clockify_start_work", () => {
     it("creates a running entry (no end) and surfaces stop/switch as next steps", async () => {
@@ -79,42 +93,46 @@ describe("clockify_start_work", () => {
 });
 
 describe("clockify_stop_work", () => {
-    it("calls getCurrentUser then the /stop route (timeEntries.stopTimer) with {workspaceId, userId, end}", async () => {
-        const { ctx, calls } = makeCtx();
+    it("lists in-progress, then stops the user's running timer via updateForUser (never stopTimer)", async () => {
+        const { ctx, calls } = makeCtx({ inProgress: runningForUser });
         const env = envelopeOf(await stopWork(ctx, { end: "2026-06-01T10:00:00.000Z" }));
         expect(calls.getCurrentUser).toBe(1);
-        // PIN: stop_work uses the generated stopTimer /stop route (404s live; GOCLMCP-owned fix).
-        expect(calls.stopTimer).toHaveLength(1);
-        expect(calls.stopTimer[0]).toEqual({ workspaceId: "ws-1", userId: "user-1", end: "2026-06-01T10:00:00.000Z" });
+        expect(calls.listInProgress).toBe(1);
+        // PIN: the stop goes through the bound bare route, with the minimal { end } body.
+        expect(calls.updateForUser).toHaveLength(1);
+        expect(calls.updateForUser[0]).toEqual({ workspaceId: "ws-1", userId: "user-1", end: "2026-06-01T10:00:00.000Z" });
         expect(env.ok).toBe(true);
         expect(env.action).toBe("clockify_stop_work");
         expect((env.changed as { updated?: unknown[] }).updated).toHaveLength(1);
     });
 
-    it("degrades a 404 from the dead /stop route to a graceful 'no timer running' success", async () => {
-        const { ctx } = makeCtx({
-            stopTimer: async () => {
-                throw Object.assign(new Error("No static resource ...time-entries/stop."), { statusCode: 404 });
-            },
-        });
-        const res = await stopWork(ctx, {});
-        expect((res as { isError?: boolean }).isError).toBeFalsy();
-        const env = envelopeOf(res);
+    it("reports 'no timer running' WITHOUT any update when nothing is in progress", async () => {
+        const { ctx, calls } = makeCtx({ inProgress: async () => [] });
+        const env = envelopeOf(await stopWork(ctx, {}));
+        expect(calls.listInProgress).toBe(1);
+        expect(calls.updateForUser).toHaveLength(0); // no write when no timer is running
         expect(env.ok).toBe(true);
         const data = env.data as { stopped?: boolean; reason?: string };
         expect(data.stopped).toBe(false);
         expect(data.reason).toMatch(/no timer running/i);
     });
+
+    it("ignores an in-progress entry that belongs to a different user", async () => {
+        const { ctx, calls } = makeCtx({ inProgress: async () => [{ id: "other", userId: "user-2" }] });
+        const env = envelopeOf(await stopWork(ctx, {}));
+        expect(calls.updateForUser).toHaveLength(0);
+        expect((env.data as { stopped?: boolean }).stopped).toBe(false);
+    });
 });
 
 describe("clockify_switch_work", () => {
     it("stops the current timer then starts the new one, returning both", async () => {
-        const { ctx, calls } = makeCtx();
+        const { ctx, calls } = makeCtx({ inProgress: runningForUser });
         const env = envelopeOf(await switchWork(ctx, { description: "new task", start: "2026-06-01T09:00:00.000Z" }));
         expect(env.ok).toBe(true);
         expect(env.action).toBe("clockify_switch_work");
         expect(calls.getCurrentUser).toBe(1); // stop attempt
-        expect(calls.stopTimer).toHaveLength(1);
+        expect(calls.updateForUser).toHaveLength(1); // old timer stopped via the bound route
         expect(calls.create).toHaveLength(1); // new timer started
         expect(calls.create[0]).toMatchObject({ description: "new task" });
         const data = env.data as { status?: string; started?: unknown };
@@ -123,9 +141,9 @@ describe("clockify_switch_work", () => {
         expect((env.next as Array<{ tool: string }>).map((n) => n.tool)).toEqual(["clockify_stop_work"]);
     });
 
-    it("still starts the new timer when stopping the old one fails", async () => {
+    it("still starts the new timer (with a stop_failed warning) when stopping the old one errors", async () => {
         const { ctx, calls } = makeCtx({
-            stopTimer: async () => {
+            inProgress: async () => {
                 throw Object.assign(new Error("boom"), { statusCode: 500 });
             },
         });
@@ -134,5 +152,17 @@ describe("clockify_switch_work", () => {
         expect(calls.create).toHaveLength(1); // new timer started despite stop failure
         const warnings = (env.warnings as Array<{ code: string }>) ?? [];
         expect(warnings.some((w) => w.code === "stop_failed")).toBe(true);
+    });
+
+    it("when starting fails AFTER a successful stop, the error reports the timer was already stopped", async () => {
+        const { ctx } = makeCtx({
+            inProgress: runningForUser,
+            create: async () => {
+                throw new Error("start boom");
+            },
+        });
+        await expect(switchWork(ctx, { description: "next" })).rejects.toThrow(
+            /previous timer was stopped.*starting the new timer failed: start boom/,
+        );
     });
 });

@@ -84,7 +84,7 @@ export function requireConfirmation(
 }
 
 /** Lazily initialise and return the per-context confirmation token store. */
-export function confirmationStore(ctx: Context): ConfirmationTokenStore {
+function confirmationStore(ctx: Context): ConfirmationTokenStore {
     ctx.confirmationTokens ??= new ConfirmationTokenStore();
     return ctx.confirmationTokens;
 }

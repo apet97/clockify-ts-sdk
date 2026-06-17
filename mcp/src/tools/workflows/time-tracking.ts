@@ -1,8 +1,9 @@
 import { z } from "zod";
 
 import { successResult } from "../../result.js";
+import { stopRunningTimer } from "../timer-stop.js";
 
-import { arrayOfStrings, entryIds, findEntryForFix, idOf, ref, resolveProjectId, resolveTagId, resolveTaskId, reviewArgsFromEntry, str } from "./resolve.js";
+import { AmbiguousNameError, arrayOfStrings, entryIds, findEntryForFix, idOf, ref, resolveProjectId, resolveTagId, resolveTaskId, reviewArgsFromEntry, str } from "./resolve.js";
 import type { AnyRecord, ChangeSet, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 
@@ -66,30 +67,23 @@ export async function startWork(ctx: Context, args: AnyRecord) {
 export async function stopWork(ctx: Context, args: AnyRecord) {
     const user = await ctx.client.users.getCurrentUser();
     const userId = idOf(user);
-    try {
-        const entry = await ctx.client.timeEntries.stopTimer({
-            workspaceId: ctx.workspaceId,
-            userId,
-            end: str(args.end) || new Date().toISOString(),
-        });
-        const ids = entryIds(ctx, entry, { userId });
-        return successResult("clockify_stop_work", entry, { workspaceId: ctx.workspaceId, userId }, {
-            entity: "entry",
-            ids,
-            changed: { updated: [ref("entry", entry)] },
-            next: [{ tool: "clockify_review_day", reason: "Review the day after stopping work." }],
-        });
-    } catch (err) {
-        if ((err as { statusCode?: number }).statusCode === 404 || /no running/i.test(String((err as Error).message))) {
-            return successResult(
-                "clockify_stop_work",
-                { stopped: false, reason: "no timer running" },
-                { workspaceId: ctx.workspaceId, userId },
-                { entity: "entry", ids: { workspaceId: ctx.workspaceId, userId } },
-            );
-        }
-        throw err;
+    const outcome = await stopRunningTimer(ctx, userId, str(args.end) || new Date().toISOString());
+    if (!outcome.running) {
+        return successResult(
+            "clockify_stop_work",
+            { stopped: false, reason: "no timer running" },
+            { workspaceId: ctx.workspaceId, userId },
+            { entity: "entry", ids: { workspaceId: ctx.workspaceId, userId } },
+        );
     }
+    const entry = outcome.entry;
+    const ids = entryIds(ctx, entry, { userId });
+    return successResult("clockify_stop_work", entry, { workspaceId: ctx.workspaceId, userId }, {
+        entity: "entry",
+        ids,
+        changed: { updated: [ref("entry", entry)] },
+        next: [{ tool: "clockify_review_day", reason: "Review the day after stopping work." }],
+    });
 }
 
 export async function switchWork(ctx: Context, args: AnyRecord) {
@@ -100,7 +94,23 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
     } catch {
         warnings.push({ code: "stop_failed", message: "Could not stop the existing timer; attempting to start the new one." });
     }
-    const started = (await startWork(ctx, args)).structuredContent as AnyRecord;
+    let started: AnyRecord;
+    try {
+        started = (await startWork(ctx, args)).structuredContent as AnyRecord;
+    } catch (err) {
+        // An ambiguous/unknown project/task/tag name must still surface the grounded
+        // clarification receipt (runWorkflow turns this throw into one), so let it through.
+        if (err instanceof AmbiguousNameError) throw err;
+        // The stop already ran above. Re-throw with that fact in the message so the
+        // failure never silently hides that the previous timer is already stopped.
+        const stopNote =
+            stopped === null
+                ? "could not stop the previous timer"
+                : (stopped as { stopped?: boolean }).stopped === false
+                  ? "no timer was running"
+                  : "the previous timer was stopped";
+        throw new Error(`switch_work: ${stopNote}, but starting the new timer failed: ${(err as Error).message}`);
+    }
     return successResult("clockify_switch_work", { status: "ok", stopped, started }, { workspaceId: ctx.workspaceId }, {
         entity: "entry",
         ids: (started.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },

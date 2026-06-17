@@ -4,6 +4,17 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clk115 stop` now stops the running timer through the live, bound route: it detects a
+  running timer via `timeEntries.listInProgress` and stops it via
+  `timeEntries.updateForUser` (`{ end }`, live-verified 2026-06-17) instead of the dead
+  `/stop` suffix route (`stopTimer`, 404 code 3000). "No timer was running" now comes
+  from an empty in-progress list, so a real running timer is never silently left ticking.
+- `parseDuration` no longer silently drops trailing/interior garbage when a space
+  precedes the unit (e.g. `"2 h x"` used to parse as `2h`); such input now throws.
+  Whitespace-tolerant forms like `"2 h"` and `"1h 30m"` still parse.
+
 ### Added
 
 - `clk115 log` now accepts project/task/tag NAMES, not just ids — resolving them the

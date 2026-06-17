@@ -46,6 +46,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "user-groups.get.returns-void": ["mcp/tests/groups-get.test.ts"],
     "time-off.requests.get.dead-route": ["mcp/tests/time-off-get.test.ts"],
     "deletes.archive-first.projects-tasks": ["mcp/tests/archive-then-delete.test.ts"],
+    "deletes.archive-first.clients-blocked": ["mcp/tests/archive-then-delete.test.ts"],
 };
 
 /**

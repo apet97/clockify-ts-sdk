@@ -26,6 +26,22 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Timer-stop now uses the live, bound route. The MCP `clockify_timer_stop` /
+  `clockify_stop_work` / `clockify_switch_work` tools detect a running timer via
+  `timeEntries.listInProgress` and stop it via `timeEntries.updateForUser` (`{ end }`,
+  live-verified 2026-06-17). The dead `/stop` suffix route (`stopTimer`, 404 code 3000)
+  is no longer called, and "no timer running" comes from an empty in-progress list — so a
+  real running timer is never silently left ticking. The callers share
+  `mcp/src/tools/timer-stop.ts`.
+- `clockify_switch_work` no longer hides partial state: if starting the new timer fails
+  after the previous one was already stopped, the error says so instead of masking the
+  stop. Ambiguous project/task/tag names still surface the grounded clarification receipt.
+- `clockify_review_day` / `clockify_review_week` reject an unparseable `date` /
+  `week_start` with a clear, field-named `invalid_request` error instead of letting an
+  opaque "Invalid time value" RangeError escape.
+- Refreshed the transitive `hono` dependency (resolved through `@modelcontextprotocol/sdk`)
+  to `4.12.25` so `npm audit --omit=dev` reports 0 production vulnerabilities; no direct
+  dependency on `hono` exists in this repo.
 - Holiday, time-off, scheduling, group add-member, and role-grant tools now resolve a
   NAME passed where a user/group/project id is expected to a real id BEFORE any write
   or read filter, via the list/filter resolvers (`clockify-sdk-ts-115/resolve`). An
@@ -158,7 +174,7 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
-- `clockify_projects_delete` and `clockify_tasks_delete` now archive the project (GET-then-PUT `archived:true`) / mark the task DONE before deleting, because Clockify rejects DELETE of an active project/task (400, live-verified 2026-06-15) and the dedicated `/archive` route 404s. Verified live end-to-end through the real tools. `clockify_clients_delete` stays a bare DELETE: the generated `clients.update` drops `archived` and `clients.archive` 404s, so the SDK exposes no client-archive path (generator/spec defect, tracked OPEN). Order pinned by `mcp/tests/archive-then-delete.test.ts`.
+- `clockify_projects_delete`, `clockify_tasks_delete`, and `clockify_clients_delete` now archive the project/client (GET-then-PUT `archived:true`) / mark the task DONE before deleting, because Clockify rejects DELETE of an active project/task/client (400, live-verified 2026-06-15) and the dedicated `/archive` routes 404. Projects/tasks were verified live end-to-end through the real tools. The client path uses the `clients.update` **body envelope** `{name, archived:true}`, which bypasses the generated field whitelist via `core.bodyFromRequest` (the flattened form drops `archived`); it carries the client name the replace-PUT requires and errors clearly if the client has no name. This corrects the earlier note that the SDK had no client-archive path. Order pinned by `mcp/tests/archive-then-delete.test.ts`.
 - `clockify_time_off_requests_get` now searches `timeOff.list` (`POST /time-off/requests`) with `statuses:["ALL"]`, walks pages (bounded), and scans by id, because `GET /time-off/requests/{id}` is a dead 404 route (live re-probed 2026-06-15). Live finding: the search `statuses` filter accepts only `[PENDING, APPROVED, REJECTED, ALL]` — it 400s on the per-request `WITHDRAWN` status — so the scan filters on `ALL`. Verified live end-to-end against a real request id. Test: `mcp/tests/time-off-get.test.ts`.
 - `clockify_groups_get` now reads the group from `userGroups.list` and scans by id, because the generated `userGroups.get` is typed `void` (Clockify has no single-GET route that returns the group) — the tool previously returned nothing. It now errors clearly on an unknown id. Offline-verifiable from the generated method signature; test in `mcp/tests/groups-get.test.ts`.
 - The workflow name→id resolvers (`resolveProjectId`/`resolveTaskId`/`resolveClientId`/`resolveTagId`/`resolveExpenseCategoryId`/`resolvePolicyId`/`resolveUserId`) now trust a 24-hex id via the SDK's `looksLikeClockifyId` and **throw a clear "not found" error on an unknown name** instead of the old `?? { id: value }` fallback that shipped the unverified name to the wire as an id (404 at best, a different entity at worst). `dateRange` now resolves relative dates ("yesterday", "last monday") via the SDK's `resolveRelativeDay`, so the review tools accept them, not just `YYYY-MM-DD`.

@@ -232,9 +232,18 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
     if (str(args.start) && str(args.end)) return { start: str(args.start), end: str(args.end) };
     const rawInput = str(args.date) || str(args.week_start);
     // Resolve relative words ("yesterday", "last monday") + YYYY-MM-DD server-side;
-    // an empty input means today. Unparseable input falls through unchanged.
+    // an empty input means today.
     const raw = (resolveRelativeDay(new Date(), { date: rawInput || undefined }) ?? rawInput) || new Date().toISOString().slice(0, 10);
     const day = new Date(`${raw}T00:00:00.000Z`);
+    if (Number.isNaN(day.getTime())) {
+        // Reject unparseable input with a clear, field-named message instead of
+        // letting `.toISOString()` throw an opaque "Invalid time value" RangeError.
+        // The "invalid" wording keeps the receipt's stable error code at invalid_request.
+        const field = str(args.date) ? "date" : "week_start";
+        throw new Error(
+            `invalid ${field} ${JSON.stringify(rawInput)}; use YYYY-MM-DD or a relative day like "yesterday" or "last monday"`,
+        );
+    }
     if (action === "clockify_review_week") {
         const start = new Date(day);
         start.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7));

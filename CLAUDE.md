@@ -176,11 +176,13 @@ make docs-drift
   credentials, private/loopback/link-local/CGNAT/metadata IPs, and
   localhost-ish hostnames, but not DNS rebinding.
 - Deleting an ACTIVE project/task/client 400s (live-verified).
-  `clockify_projects_delete` archives first (`projects.update({archived:true})`)
-  and `clockify_tasks_delete` marks DONE (`tasks.update({status:"DONE"})`) before
-  the DELETE. Clients are the exception: the generated `clients.update` drops
-  `archived` and `clients.archive` 404s, so the typed SDK exposes no client-archive
-  path (a generator/spec defect — the raw `PUT /clients/{id}` does accept it). See
+  `clockify_projects_delete` archives first (`projects.update({archived:true})`),
+  `clockify_tasks_delete` marks DONE (`tasks.update({status:"DONE"})`), and
+  `clockify_clients_delete` archives first via the `clients.update` **body envelope**
+  (`clients.update({...,body:{name,archived:true}} as never)`) before the DELETE. The
+  client path is the subtle one: the generated `clients.update` FLATTENED form drops
+  `archived` and `clients.archive` 404s, but the body-envelope form bypasses the field
+  whitelist via `core.bodyFromRequest`, so `archived:true` reaches the wire. See
   `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
   values. Check presence, never print values.

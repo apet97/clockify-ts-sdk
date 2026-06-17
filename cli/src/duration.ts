@@ -18,17 +18,21 @@ export function parseDuration(input: string): number {
     if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
         return Math.round(Number(trimmed) * 60);
     }
-    const re = /(\d+(?:\.\d+)?)\s*([dhms])/gi;
+    // Match against the whitespace-stripped string so a stray space cannot mask
+    // trailing/interior garbage: "1h 30m" stays valid (→ "1h30m"), but "2 h x"
+    // and "1 hx" are rejected instead of silently dropping the junk.
+    const compact = trimmed.replace(/\s+/g, "");
+    const re = /(\d+(?:\.\d+)?)([dhms])/gi;
     let total = 0;
     let consumed = 0;
     let match: RegExpExecArray | null;
-    while ((match = re.exec(trimmed)) !== null) {
+    while ((match = re.exec(compact)) !== null) {
         const value = Number(match[1]);
         const unit = (match[2] ?? "").toLowerCase();
         total += value * unitToSeconds(unit);
         consumed += match[0].length;
     }
-    if (consumed === 0 || consumed < trimmed.replace(/\s+/g, "").length) {
+    if (consumed === 0 || consumed < compact.length) {
         throw new Error(
             `cannot parse duration ${JSON.stringify(input)}; use forms like "1h30m", "45m", "90", or ISO "PT1H30M"`,
         );

@@ -143,13 +143,32 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 const preview = { action: "delete", entity: "client", id: args.clientId };
                 const confirmation = requireConfirmation(ctx, "clockify_clients_delete", "client_delete", args, preview);
                 if (confirmation) return confirmation;
-                // NOTE: unlike projects/tasks, this is NOT archive-then-delete.
-                // Clockify rejects DELETE of an ACTIVE client, but the generated
-                // `clients.update` whitelist drops `archived` and `clients.archive`
-                // 404s — so the typed SDK exposes no client-archive path (a
-                // generator/spec defect; see spec/evidence/discrepancies.md
-                // `deletes.archive-first.clients-blocked`). The bare DELETE 400s on
-                // an active client with a clear API message until the spec is fixed.
+                // Clockify rejects DELETE of an ACTIVE client (400, live-verified
+                // 2026-06-15) and the dedicated `clients.archive` route 404s. The
+                // generated `clients.update` FLATTENED form drops `archived`
+                // (whitelist [address, currencyCode, email, name, note]), but the
+                // BODY-ENVELOPE form bypasses the whitelist via core.bodyFromRequest
+                // (wrapper request.ts), landing `archived:true` on the wire. So
+                // archive first via GET-then-PUT (body envelope) — carrying the name
+                // the replace-PUT requires — then DELETE, mirroring
+                // clockify_projects_delete. See spec/evidence/discrepancies.md
+                // `deletes.archive-first.clients-blocked`.
+                const current = (await ctx.client.clients.get({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                })) as { name?: string };
+                const name = String(current.name ?? "");
+                if (!name) {
+                    return errorResult(
+                        "clockify_clients_delete",
+                        new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT."),
+                    );
+                }
+                await ctx.client.clients.update({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                    body: { name, archived: true },
+                } as never);
                 await ctx.client.clients.delete({
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,

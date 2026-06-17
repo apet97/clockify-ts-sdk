@@ -18,7 +18,7 @@ match), so operations are joined on HTTP method + path with positional parameter
 | New official (missing in custom) | 0 |
 | Custom-only (not in official snapshot) | 27 |
 | Wire-shape conflicts (shared ops) | 13 |
-| Phantom-risk (custom op, dead live route) | 3 |
+| Phantom-risk (custom op, dead live route) | 2 |
 
 Official source: `spec/official/clockify.official.openapi.yaml`.
 
@@ -90,6 +90,5 @@ differences are tracked entry-by-entry in [`live-evidence-index.md`](./live-evid
 
 | Method | Path | Note |
 | --- | --- | --- |
-| PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | live evidence: 404 / not bound |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | live evidence: 404 / not bound |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | live evidence: 404 / not bound |

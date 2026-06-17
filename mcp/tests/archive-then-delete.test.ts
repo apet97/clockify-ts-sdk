@@ -1,11 +1,13 @@
 /**
- * Clockify rejects DELETE of an ACTIVE project/task (400 "Cannot delete an active
- * …", live-verified 2026-06-15). The delete tools must archive (project) / mark
- * DONE (task) FIRST, via GET-then-PUT, then delete. This pins that order.
+ * Clockify rejects DELETE of an ACTIVE project/task/client (400 "Cannot delete an
+ * active …", live-verified 2026-06-15). The delete tools must archive (project /
+ * client) / mark DONE (task) FIRST, via GET-then-PUT, then delete. This pins that
+ * order.
  *
- * (Clients are deliberately NOT covered: the generated `clients.update` whitelist
- * drops `archived`, so the SDK exposes no clean client-archive path — that's a
- * generator/spec defect, tracked OPEN in spec/evidence/discrepancies.md.)
+ * Clients are covered too: the generated `clients.update` FLATTENED form drops
+ * `archived`, but the BODY-ENVELOPE form bypasses the whitelist via
+ * core.bodyFromRequest, so the tool archives via GET-then-PUT (body envelope) then
+ * deletes. See spec/evidence/discrepancies.md `deletes.archive-first.clients-blocked`.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -42,6 +44,17 @@ function capturingContext(calls: string[]): Context {
                 },
                 delete: async () => {
                     calls.push("task.delete");
+                    return {};
+                },
+            },
+            clients: {
+                get: async () => ({ id: "c1", name: "Client" }),
+                update: async (req: { body?: { archived?: boolean } }) => {
+                    calls.push(`client.update:archived=${req.body?.archived === true}`);
+                    return req;
+                },
+                delete: async () => {
+                    calls.push("client.delete");
                     return {};
                 },
             },
@@ -90,5 +103,24 @@ describe("destructive deletes archive/DONE before deleting", () => {
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["task.update:status=DONE", "task.delete"]);
+    });
+
+    it("clockify_clients_delete archives (body-envelope archived:true) BEFORE deleting", async () => {
+        const calls: string[] = [];
+        const client = await connect(capturingContext(calls));
+        const res = await confirmAndExecute(client, "clockify_clients_delete", { clientId: "c1" });
+        expect(res.ok).toBe(true);
+        expect((res.data as { deleted?: boolean }).deleted).toBe(true);
+        expect(calls).toEqual(["client.update:archived=true", "client.delete"]);
+    });
+
+    it("clockify_clients_delete errors (no update/delete) when the client has no name", async () => {
+        const calls: string[] = [];
+        const ctx = capturingContext(calls);
+        (ctx.client as unknown as { clients: { get: () => Promise<unknown> } }).clients.get = async () => ({ id: "c1" });
+        const client = await connect(ctx);
+        const res = await confirmAndExecute(client, "clockify_clients_delete", { clientId: "c1" });
+        expect(res.ok).toBe(false);
+        expect(calls).toEqual([]);
     });
 });
