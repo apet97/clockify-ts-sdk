@@ -20,7 +20,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
     scheduling
         .command("list")
         .description("List scheduling assignments in the workspace.")
-        .option("--limit <n>", "Items per page.", (v) => Number.parseInt(v, 10), 25)
+        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by assignment name substring.")
         .action(async function (this: Command, opts) {

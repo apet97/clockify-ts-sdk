@@ -14,6 +14,11 @@ function makeClient(): { client: ClockifyClient; created: Record<string, unknown
                 return { id: "te-1", ...body };
             },
         },
+        // Name→id resolution mirrors `start`: a non-hex --project/--task/--tag
+        // does one list lookup, so the mock returns a row matching by name.
+        projects: { list: async () => [{ id: "p-1", name: "p-1" }] },
+        tasks: { list: async () => [{ id: "tk-1", name: "tk-1" }] },
+        tags: { list: async () => [{ id: "t-1", name: "t-1" }] },
     };
     return { client: client as unknown as ClockifyClient, created };
 }

@@ -20,7 +20,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .command("list")
         .description("List time-off requests in the workspace.")
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
-        .option("--limit <n>", "Page size.", (v) => Number.parseInt(v, 10), 50)
+        .option("--limit <n>", "Items per page (default 50, max 200).", (v) => Number.parseInt(v, 10), 50)
         .option("--start <date>", "Window start (YYYY-MM-DD or RFC3339).")
         .option("--end <date>", "Window end (YYYY-MM-DD or RFC3339).")
         .option(

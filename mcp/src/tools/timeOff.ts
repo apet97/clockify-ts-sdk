@@ -11,7 +11,7 @@ import { z } from "zod";
 import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
@@ -186,7 +186,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_time_off_requests_submit", created, {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                });
+                }, writeReceipt("created", "time_off_request", { id: (created as { id?: string }).id }));
             } catch (err) {
                 return errorResult("clockify_time_off_requests_submit", err);
             }
@@ -226,7 +226,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
                     requestId: args.requestId,
-                });
+                }, writeReceipt("updated", "time_off_request", args.requestId));
             } catch (err) {
                 return errorResult("clockify_time_off_requests_update_status", err);
             }
@@ -259,6 +259,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     "clockify_time_off_requests_delete",
                     { deleted: true, requestId: args.requestId },
                     { workspaceId: ctx.workspaceId, requestId: args.requestId },
+                    writeReceipt("deleted", "time_off_request", args.requestId),
                 );
             } catch (err) {
                 return errorResult("clockify_time_off_requests_delete", err);
@@ -370,7 +371,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 } as never);
                 return successResult("clockify_time_off_policies_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "time_off_policy", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_time_off_policies_create", err);
             }
@@ -447,7 +448,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_time_off_policies_update", updated, {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                });
+                }, writeReceipt("updated", "time_off_policy", args.policyId));
             } catch (err) {
                 return errorResult("clockify_time_off_policies_update", err);
             }
@@ -475,7 +476,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_time_off_policies_archive", updated, {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                });
+                }, writeReceipt("updated", "time_off_policy", args.policyId));
             } catch (err) {
                 return errorResult("clockify_time_off_policies_archive", err);
             }

@@ -3,6 +3,7 @@
  * operators. It checks config readiness without contacting Clockify;
  * `clk115 status` remains the live credential/workspace probe.
  */
+import { classifyClockifyBaseUrl } from "clockify-sdk-ts-115/create-client";
 import type { Command } from "commander";
 
 import type { CliConfig, GlobalFlags } from "../config.js";
@@ -59,6 +60,7 @@ function buildDoctorReceipt(
     const apiKeyOk = isPresent(config.apiKey);
     const workspaceOk = isPresent(config.workspaceId);
     const baseUrl = config.baseUrl ?? DEFAULT_CLOCKIFY_BASE_URL;
+    const baseUrlClass = config.baseUrl ? classifyClockifyBaseUrl(baseUrl) : undefined;
     const configOk = apiKeyOk && workspaceOk;
     const ok = nodeOk && configOk;
 
@@ -95,13 +97,15 @@ function buildDoctorReceipt(
                     : "Provide --workspace, set CLOCKIFY_WORKSPACE_ID, or add workspaceId to ~/.clockifyrc.json.",
             },
             baseUrl: {
-                ok: true,
+                ok: baseUrlClass ? baseUrlClass.allowed : true,
                 status: config.baseUrl ? "override" : "default",
                 source: baseUrlSource,
                 value: baseUrl,
-                recovery: config.baseUrl
-                    ? "Use the default Clockify API base URL for real work; keep overrides for mocks or replay."
-                    : undefined,
+                recovery: !config.baseUrl
+                    ? undefined
+                    : baseUrlClass && !baseUrlClass.allowed
+                      ? `${baseUrlClass.reason ?? "Base URL is outside the Clockify host allowlist."} The client will reject it — use the default Clockify API base URL, or a loopback host for mocks/replay.`
+                      : "Use the default Clockify API base URL for real work; keep overrides for mocks or replay.",
             },
         },
         next: nextSteps({ nodeOk, apiKeyOk, workspaceOk, hasBaseUrlOverride: isPresent(config.baseUrl) }),

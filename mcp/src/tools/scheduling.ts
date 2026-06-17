@@ -11,7 +11,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -162,7 +162,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 } as never);
                 return successResult("clockify_scheduling_assignments_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "scheduling_assignment", { id: (created as { id?: string }).id }));
             } catch (err) {
                 return errorResult("clockify_scheduling_assignments_create", err);
             }
@@ -223,7 +223,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_scheduling_assignments_update", updated, {
                     workspaceId: ctx.workspaceId,
                     assignmentId: args.assignmentId,
-                });
+                }, writeReceipt("updated", "scheduling_assignment", args.assignmentId));
             } catch (err) {
                 return errorResult("clockify_scheduling_assignments_update", err);
             }
@@ -256,6 +256,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     "clockify_scheduling_assignments_delete",
                     { deleted: true, assignmentId: args.assignmentId },
                     { workspaceId: ctx.workspaceId, assignmentId: args.assignmentId },
+                    writeReceipt("deleted", "scheduling_assignment", args.assignmentId),
                 );
             } catch (err) {
                 return errorResult("clockify_scheduling_assignments_delete", err);

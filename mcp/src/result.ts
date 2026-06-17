@@ -116,6 +116,24 @@ export function successResult(
     };
 }
 
+/**
+ * Build the `SuccessOptions` for a write that created / updated / deleted one
+ * entity, so domain tools emit the same populated `entity` + `changed` receipt
+ * the workflow tools do — an agent can chain on `changed.{created,updated,deleted}`
+ * regardless of which tier answered. Pass `ids` / `next` / `warnings` via `extra`.
+ */
+export function writeReceipt(
+    kind: "created" | "updated" | "deleted",
+    entity: string,
+    ref: string | { id?: string; name?: string },
+    extra: Omit<SuccessOptions, "entity" | "changed"> = {},
+): SuccessOptions {
+    const id = typeof ref === "string" ? ref : (ref.id ?? "");
+    const name = typeof ref === "string" ? undefined : ref.name;
+    const entityRef: EntityRef = name ? { type: entity, id, name } : { type: entity, id };
+    return { entity, changed: { [kind]: [entityRef] }, ...extra };
+}
+
 export function errorResult(action: string, err: unknown, recovery?: string | RecoveryHint): CallToolResult {
     const message = err instanceof Error ? err.message : String(err);
     const status = (err as { statusCode?: number }).statusCode;

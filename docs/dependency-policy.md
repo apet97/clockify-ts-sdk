@@ -17,6 +17,13 @@ full `make perfect-full` proof.
 
 ## Historical generator stack
 
+Fern is **not a dependency** of this repo. The SDK generator was migrated to the
+repo-owned local generator in [ADR 0005](decisions/0005-local-typescript-generator.md);
+the `x-fern-sdk-*` keys that remain in the corrected OpenAPI are vendor-extension
+naming hints read by that local generator (`scripts/generate-sdk-from-openapi.mjs`),
+not a build- or runtime dependency on Fern. The table below pins the archived Fern
+stack as historical evidence only.
+
 | Tool | Archived pin | Change rule |
 |---|---:|---|
 | Fern CLI | `5.37.9` | Historical evidence only; do not restore as a required SDK generation path without maintainer approval and full `make perfect-full` proof. |
