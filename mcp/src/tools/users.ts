@@ -91,6 +91,11 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         },
     );
 
+    // Role grant/revoke skip the dry_run→confirm_token guard used for deletes:
+    // both resolve the target user with trustIds:false (an ambiguous/unknown
+    // name yields a grounded clarification, never a guessed id) and each is
+    // reversible via its sibling tool. Guarding them would expand the
+    // write-safety contract; revisit only if an unclarified id path is added.
     server.registerTool(
         "clockify_users_grant_role",
         {

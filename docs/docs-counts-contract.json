@@ -34,7 +34,10 @@
     "44 public names",
     "53 public names",
     "89 tools",
-    "123 tools"
+    "123 tools",
+    "227 tests",
+    "172 ops mapped",
+    "(currently 691)"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

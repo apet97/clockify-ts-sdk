@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -58,7 +58,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 const body: Record<string, unknown> = { name: args.name };
                 if (args.note) body.note = args.note;
                 const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
-                return successResult("clockify_clients_create", client);
+                return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: (client as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_clients_create", err);
             }
@@ -118,7 +118,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_clients_update", updated, {
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,
-                });
+                }, writeReceipt("updated", "client", args.clientId));
             } catch (err) {
                 return errorResult("clockify_clients_update", err);
             }
@@ -158,6 +158,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                     "clockify_clients_delete",
                     { deleted: true, clientId: args.clientId },
                     { workspaceId: ctx.workspaceId, clientId: args.clientId },
+                    writeReceipt("deleted", "client", args.clientId),
                 );
             } catch (err) {
                 return errorResult("clockify_clients_delete", err);

@@ -4,8 +4,22 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Domain write tools (create / update / delete across entries, projects, tasks, clients,
+  tags, webhooks, invoices, custom fields, groups, expenses, holidays, scheduling, time-off)
+  now emit the same populated `entity` + `changed.{created,updated,deleted}` receipt the
+  workflow tools do, via a shared `writeReceipt` helper — so an agent can chain on the
+  structured `changed` field no matter which tool tier answered.
+
 ### Documentation
 
+- Documented in `users.ts` why `grant_role` / `revoke_role` intentionally skip the
+  dry_run→confirm_token guard: both resolve the target user with `trustIds:false`
+  (an ambiguous/unknown name yields a grounded clarification, never a guessed id) and
+  each is reversible via its sibling tool.
+- Corrected a stale header comment in `holidays.ts` that referenced a non-existent
+  `clockify_api_request` MCP tool; the curated server has no raw-API escape hatch by design.
 - Documented the name→id resolution behavior (resolve-then-write, with a
   grounded `clarification` receipt on ambiguous/unknown names) in the
   Domain Tools and Result Envelope sections of `README.md`.

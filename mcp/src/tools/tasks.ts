@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerTasksTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -72,7 +72,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_tasks_create", task, {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
-                });
+                }, writeReceipt("created", "task", { id: (task as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_tasks_create", err);
             }
@@ -142,7 +142,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     taskId: args.taskId,
-                });
+                }, writeReceipt("updated", "task", args.taskId));
             } catch (err) {
                 return errorResult("clockify_tasks_update", err);
             }
@@ -196,6 +196,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                         projectId: args.projectId,
                         taskId: args.taskId,
                     },
+                    writeReceipt("deleted", "task", args.taskId),
                 );
             } catch (err) {
                 return errorResult("clockify_tasks_delete", err);
@@ -239,7 +240,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                     rateKind: args.rateKind,
                     amountMajor: args.amount,
                     amountMinor,
-                });
+                }, writeReceipt("updated", "task", args.taskId));
             } catch (err) {
                 return errorResult("clockify_tasks_set_rate", err);
             }
