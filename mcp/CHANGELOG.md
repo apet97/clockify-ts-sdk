@@ -6,6 +6,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- The workflow name→id matcher (`findOneByName` in `workflows/resolve.ts`) now routes
+  through the SDK's canonical `matchByName` (via the new `matchKeys` option) instead of
+  re-deriving its own case-insensitive multi-field match. Name-matching semantics now
+  live in exactly one place across the SDK, CLI, and MCP — no parallel matcher to drift.
+  Behavior preserved: ambiguous → `AmbiguousNameError`, miss → `null`/`notFound`, users
+  still match on `["name","email"]`.
 - Domain write tools (create / update / delete across entries, projects, tasks, clients,
   tags, webhooks, invoices, custom fields, groups, expenses, holidays, scheduling, time-off)
   now emit the same populated `entity` + `changed.{created,updated,deleted}` receipt the

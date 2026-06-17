@@ -35,6 +35,10 @@ once v1.0.0 ships.
 
 ### Added
 
+- `matchByName` (the `resolve` subpath) gained an optional `matchKeys` (default
+  `["name"]`) so a caller can match across extra fields — e.g. `["name","email"]` for
+  users. This makes the SDK matcher the single source of name-matching truth: the MCP
+  workflow surface, which used to re-derive multi-field matching, now routes through it.
 - Added `mapAddonTokenRestriction(err, { authScheme, method?, path? })` and the
   `AddonTokenRestrictionError` class to the `errors` surface: when an
   `X-Addon-Token` request 401s with a body saying the endpoint is not accessible

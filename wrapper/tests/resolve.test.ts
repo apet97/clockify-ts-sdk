@@ -51,6 +51,18 @@ describe("matchByName", () => {
         expect(matchByName(items, "Gamma")).toEqual({ kind: "none" });
         expect(matchByName(items, "Gamma", { includeArchived: true })).toEqual({ kind: "one", entity: items[3] });
     });
+    it("matches across matchKeys (e.g. name OR email) when asked, name-only by default", () => {
+        const users = [
+            { id: "u1", name: "Bob Smith", email: "bob@x.com", archived: false },
+            { id: "u2", name: "Carol", email: "carol@x.com", archived: false },
+        ];
+        // default key set is name-only: an email is NOT a match
+        expect(matchByName(users, "bob@x.com")).toEqual({ kind: "none" });
+        // matchKeys ["name","email"]: the email resolves to the user
+        expect(matchByName(users, "bob@x.com", { matchKeys: ["name", "email"] })).toEqual({ kind: "one", entity: users[0] });
+        // name still matches under the multi-key set
+        expect(matchByName(users, "carol", { matchKeys: ["name", "email"] })).toEqual({ kind: "one", entity: users[1] });
+    });
 });
 
 describe("suggestOptions", () => {

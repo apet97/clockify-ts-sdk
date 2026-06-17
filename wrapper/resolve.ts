@@ -36,15 +36,26 @@ export function looksLikeClockifyId(value: string): boolean {
 /** The outcome of matching a name against a list: exactly one, several, or none. */
 export type NameMatch<T> = { kind: "none" } | { kind: "one"; entity: T } | { kind: "many"; matches: T[] };
 
-/** Case-insensitive EXACT name match (Clockify's own `name` filter is contains+ci). */
+/**
+ * Case-insensitive EXACT name match (Clockify's own `name` filter is contains+ci).
+ * `matchKeys` (default `["name"]`) lets a caller match across extra fields — e.g.
+ * `["name","email"]` for users — so the multi-field matching the MCP workflow used
+ * to re-derive now lives in this one canonical matcher.
+ */
 export function matchByName<T extends { name: string; archived?: boolean }>(
     items: T[],
     name: string,
-    opts?: { includeArchived?: boolean },
+    opts?: { includeArchived?: boolean; matchKeys?: readonly string[] },
 ): NameMatch<T> {
     const target = name.trim().toLowerCase();
+    const keys = opts?.matchKeys ?? ["name"];
     const matches = items.filter(
-        (item) => (opts?.includeArchived || !item.archived) && item.name.trim().toLowerCase() === target,
+        (item) =>
+            (opts?.includeArchived || !item.archived) &&
+            keys.some((key) => {
+                const value = (item as Record<string, unknown>)[key];
+                return typeof value === "string" && value.trim().toLowerCase() === target;
+            }),
     );
     if (matches.length === 0) return { kind: "none" };
     const [first, ...rest] = matches;
