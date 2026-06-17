@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 
 import { scopeFilter } from "../src/scope-filter.js";
-import { resolveProjectId } from "../src/tools/workflows/resolve.js";
+import { resolveProjectId, resolveUserId } from "../src/tools/workflows/resolve.js";
 
 // A minimal context whose project list contains one project named "Website".
 function ctxWith(projects: Array<{ id: string; name: string }>) {
@@ -60,5 +60,14 @@ describe("workflow name→id resolution never ships a name as an id", () => {
 
     it("throws on an unknown name instead of shipping it as an id", async () => {
         await expect(resolveProjectId(ctxWith(projects), "Nonexistent")).rejects.toThrow(/no project named/);
+    });
+
+    it("resolves a user by EMAIL through the unified matcher (matchKeys name+email)", async () => {
+        const ctx = {
+            workspaceId: "ws1",
+            client: { users: { list: async () => [{ id: "u-7", name: "Bob Smith", email: "bob@x.com" }] } },
+        } as unknown as Parameters<typeof resolveUserId>[0];
+        // resolveUserId -> resolveByName -> findOneByName(["name","email"]) -> SDK matchByName
+        expect(await resolveUserId(ctx, "bob@x.com")).toBe("u-7");
     });
 });

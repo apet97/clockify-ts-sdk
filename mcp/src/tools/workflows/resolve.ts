@@ -1,5 +1,5 @@
 import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
-import { looksLikeClockifyId } from "clockify-sdk-ts-115/resolve";
+import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
 import { successResult } from "../../result.js";
@@ -342,16 +342,20 @@ export class AmbiguousNameError extends Error {
 }
 
 export async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {
-    const rows = Array.isArray(items) ? items : [];
-    const matches = rows.filter((item) => keys.some((key) => str((item as AnyRecord)[key]).toLowerCase() === name.toLowerCase())) as AnyRecord[];
-    if (matches.length > 1) {
+    // Match through the SDK's canonical matchByName so name-matching semantics
+    // (case-insensitive exact, multi-key) live in ONE place across the SDK, CLI, and
+    // MCP — no parallel matcher to drift. includeArchived:true preserves this path's
+    // prior no-archived-filter behavior (the name-filtered lists are active-only anyway).
+    const rows = (Array.isArray(items) ? items : []) as Array<{ name: string; archived?: boolean }>;
+    const match = matchByName(rows, name, { includeArchived: true, matchKeys: keys });
+    if (match.kind === "many") {
         throw new AmbiguousNameError(
             label,
             name,
-            matches.map((match) => ref(label, match)),
+            match.matches.map((m) => ref(label, m)),
         );
     }
-    return matches[0] ?? null;
+    return match.kind === "one" ? match.entity : null;
 }
 
 export function entryIds(ctx: Context, entry: unknown, fallback: AnyRecord): Record<string, string | undefined> {
