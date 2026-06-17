@@ -20,7 +20,7 @@
  * a single value you can pass around (return from a function, store
  * in state, etc.) and call `.toArray()` on later.
  */
-import { iterPages, type IterOptions, type PageEnvelope, type PaginatedRequest } from "./iter.js";
+import { iterAll, iterPages, type IterOptions, type PageEnvelope, type PaginatedRequest } from "./iter.js";
 
 /** Options for {@link PaginatedList#toArray}. */
 export interface PaginatedListToArrayOptions {
@@ -73,12 +73,14 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
     }
 
     /** Async-iterator protocol: yields individual items, flattening
-     *  across page boundaries. Equivalent to `for await (const i of
-     *  iterAll(fetcher, baseRequest, options))`. */
-    async *[Symbol.asyncIterator](): AsyncIterator<TItem> {
-        for await (const page of this.pages()) {
-            for (const item of page.items) yield item;
-        }
+     *  across page boundaries. Delegates to `iterAll` so the item-flatten
+     *  over `iterPages` lives in exactly one place. */
+    [Symbol.asyncIterator](): AsyncIterator<TItem> {
+        return iterAll<PaginatedRequest & Record<string, unknown>, TItem>(
+            this.fetcher,
+            this.baseRequest,
+            this.options,
+        );
     }
 }
 

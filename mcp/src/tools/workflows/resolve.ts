@@ -267,61 +267,57 @@ function notFound(noun: string, value: string): Error {
     return new Error(`no ${noun} named ${JSON.stringify(value)}; pass a 24-character id or an exact name`);
 }
 
-export async function resolveClientId(ctx: Context, value: string): Promise<string> {
+/**
+ * Shared body for the per-entity name→id resolvers: id-passthrough → list →
+ * match-by-name → throw. `keys` defaults to `["name"]`; an ambiguous match throws
+ * AmbiguousNameError (→ clarification receipt) and a miss throws notFound. The
+ * `list` thunk is only invoked for a name (a 24-hex id short-circuits first).
+ */
+async function resolveByName(value: string, label: string, list: () => Promise<unknown>, keys?: string[]): Promise<string> {
     if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    const found = await findOneByName(listed, value, "client");
-    if (!found) throw notFound("client", value);
+    const found = await findOneByName(await list(), value, label, keys);
+    if (!found) throw notFound(label, value);
     return idOf(found);
 }
 
-export async function resolveProjectId(ctx: Context, value: string): Promise<string> {
-    if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    const found = await findOneByName(listed, value, "project");
-    if (!found) throw notFound("project", value);
-    return idOf(found);
+export function resolveClientId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(value, "client", () =>
+        ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
 }
 
-export async function resolveTaskId(ctx: Context, projectId: string, value: string): Promise<string> {
+export function resolveProjectId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(value, "project", () =>
+        ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
+}
+
+export function resolveTaskId(ctx: Context, projectId: string, value: string): Promise<string> {
     if (!projectId) throw new Error("project_id or project is required when resolving task by name");
-    if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 });
-    const found = await findOneByName(listed, value, "task");
-    if (!found) throw notFound("task", value);
-    return idOf(found);
+    return resolveByName(value, "task", () =>
+        ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 }));
 }
 
-export async function resolveTagId(ctx: Context, value: string): Promise<string> {
-    if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 });
-    const found = await findOneByName(listed, value, "tag");
-    if (!found) throw notFound("tag", value);
-    return idOf(found);
+export function resolveTagId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(value, "tag", () =>
+        ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
 }
 
-export async function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
-    if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.expenseCategories.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never);
-    const found = await findOneByName(listed, value, "expense category");
-    if (!found) throw notFound("expense category", value);
-    return idOf(found);
+export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(value, "expense category", () =>
+        ctx.client.expenseCategories.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
 }
 
-export async function resolvePolicyId(ctx: Context, value: string): Promise<string> {
-    if (looksLikeClockifyId(value)) return value;
-    const listed = await ctx.client.timeOffPolicies.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never);
-    const found = await findOneByName(listed, value, "time-off policy");
-    if (!found) throw notFound("time-off policy", value);
-    return idOf(found);
+export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(value, "time-off policy", () =>
+        ctx.client.timeOffPolicies.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
 }
 
-export async function resolveUserId(ctx: Context, value: string): Promise<string> {
-    if (looksLikeClockifyId(value)) return value;
-    const listed = (await ctx.client.users.list({ workspaceId: ctx.workspaceId, name: value, "include-roles": false })) as unknown[];
-    const found = await findOneByName(listed, value, "user", ["name", "email"]);
-    if (!found) throw notFound("user", value);
-    return idOf(found);
+export function resolveUserId(ctx: Context, value: string): Promise<string> {
+    return resolveByName(
+        value,
+        "user",
+        () => ctx.client.users.list({ workspaceId: ctx.workspaceId, name: value, "include-roles": false }),
+        ["name", "email"],
+    );
 }
 
 /**

@@ -94,6 +94,12 @@ describe("api command", () => {
         expect(calls[0]?.input).toBe("/x?page=1&page-size=20");
     });
 
+    it("merges a query already on the path with --query instead of emitting a double-?", async () => {
+        const { client, calls } = makeClient();
+        await run(client, ["GET", "/reports?foo=bar", "--query", "page=1"]);
+        expect(calls[0]?.input).toBe("/reports?foo=bar&page=1");
+    });
+
     it("passes repeated --header to the request", async () => {
         const { client, calls } = makeClient();
         await run(client, ["GET", "/x", "-H", "X-A=1", "-H", "X-B=2"]);

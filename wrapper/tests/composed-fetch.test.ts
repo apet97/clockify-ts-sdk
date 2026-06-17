@@ -357,6 +357,18 @@ describe("composedFetch — retry policy", () => {
         expect(delays).toEqual([1000]);
     });
 
+    it("treats Retry-After: 0 as an immediate (0ms) retry, not exponential backoff", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () => new Response("rate", { status: 429, headers: { "Retry-After": "0" } })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x");
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(0); // 0, not the backoff value (1)
+    });
+
     it("invokes onRetry between attempts with the delay", async () => {
         const onRetry = vi.fn();
         let calls = 0;

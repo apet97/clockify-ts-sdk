@@ -446,7 +446,8 @@ function parseRetryAfterMs(headers: HeaderReader | undefined): number | undefine
     const retryAfter = headers.get("Retry-After") ?? headers.get("retry-after");
     if (retryAfter != null) {
         const seconds = Number.parseInt(retryAfter, 10);
-        if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+        // Retry-After: 0 (RFC 9110 delay-seconds=0) means retry immediately → 0ms.
+        if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
         const dateMs = new Date(retryAfter).getTime() - Date.now();
         if (Number.isFinite(dateMs) && dateMs > 0) return dateMs;
     }

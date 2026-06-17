@@ -430,7 +430,10 @@ function computeRetryDelay(
         const retryAfter = response.headers.get("Retry-After");
         if (retryAfter != null) {
             const seconds = Number.parseInt(retryAfter, 10);
-            if (Number.isFinite(seconds) && seconds > 0) {
+            // Honor Retry-After: 0 (RFC 9110 delay-seconds=0 = retry immediately) as a
+            // 0ms delay; only fall through to the HTTP-date / backoff paths for a
+            // non-numeric or negative value.
+            if (Number.isFinite(seconds) && seconds >= 0) {
                 return Math.min(seconds * 1000, policy.maxDelayMs);
             }
             const dateMs = new Date(retryAfter).getTime() - Date.now();

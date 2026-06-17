@@ -61,6 +61,13 @@ describe("loadConfig", () => {
         expect(config.baseUrl).toBe("https://env.test");
     });
 
+    it("treats a blank env var as absent so the rc file is not shadowed", () => {
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key", workspaceId: "rc-ws" }));
+        const config = loadConfig({}, envWithHome({ CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "   " }));
+        expect(config.apiKey).toBe("rc-key");
+        expect(config.workspaceId).toBe("rc-ws");
+    });
+
     it("flags beat env vars", () => {
         const config = loadConfig(
             { apiKey: "flag-key", baseUrl: "https://flag.test" },

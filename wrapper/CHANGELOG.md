@@ -12,6 +12,9 @@ once v1.0.0 ships.
 - `resolveUserRef` (the `resolve` subpath) now matches its exact-id fast path against the
   trimmed id (`rawId`), consistent with `resolveEntityRef`, so a padded id like `" 64ab…"`
   resolves directly instead of falling through to name matching.
+- `RateLimitError.retryAfterMs` now returns `0` (retry immediately) for `Retry-After: 0`
+  instead of `undefined`, and the internal retry backoff treats `Retry-After: 0` as a 0ms
+  wait rather than falling through to exponential backoff (RFC 9110 delay-seconds=0).
 
 ### Documentation
 

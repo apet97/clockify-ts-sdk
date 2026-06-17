@@ -14,6 +14,10 @@ All notable changes to `@clockify115/cli` are documented here.
 - `parseDuration` no longer silently drops trailing/interior garbage when a space
   precedes the unit (e.g. `"2 h x"` used to parse as `2h`); such input now throws.
   Whitespace-tolerant forms like `"2 h"` and `"1h 30m"` still parse.
+- `clk115 api` no longer emits a malformed double-`?` when the path already carries a
+  query: an existing path query and `--query` flags are now merged into one search string.
+- `loadConfig` treats a blank/whitespace env var as absent, so `CLOCKIFY_API_KEY=''` (the
+  deterministic-gate convention) no longer shadows a real `~/.clockifyrc.json` value.
 
 ### Added
 

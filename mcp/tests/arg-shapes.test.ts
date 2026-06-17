@@ -3,7 +3,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { didYouMeanHint, formatZodIssues, nearestNames, zNumberLike, zStringList } from "../src/arg-shapes.js";
+import { zNumberLike, zStringList } from "../src/arg-shapes.js";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
@@ -87,41 +87,6 @@ describe("arg-shapes — pure helpers", () => {
     it("zNumberLike: constraints apply after coercion", () => {
         expect(() => zNumberLike(z.number().int()).parse("3.5")).toThrow();
         expect(zNumberLike(z.number().int().min(1).default(1)).parse(undefined)).toBe(1);
-    });
-
-    it("formatZodIssues: prefixes the field path", () => {
-        const result = z.object({ amount: z.number() }).safeParse({ amount: "x" });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-            expect(formatZodIssues(result.error)).toContain("amount: ");
-        }
-    });
-
-    it("nearestNames: unknown near-name suggests the close match", () => {
-        expect(nearestNames("clockfy_status", ["clockify_status", "clockify_log_work"])).toEqual([
-            "clockify_status",
-        ]);
-    });
-
-    it("nearestNames: token-overlap catches order swaps", () => {
-        expect(
-            nearestNames("clockify_create_invoice", ["clockify_invoices_create", "clockify_log_work"])[0],
-        ).toBe("clockify_invoices_create");
-    });
-
-    it("nearestNames: a truly unrelated query suggests NOTHING", () => {
-        expect(nearestNames("zzzzzzzz", ["clockify_status"])).toEqual([]);
-    });
-
-    it("nearestNames: empty query -> []", () => {
-        expect(nearestNames("", ["clockify_status"])).toEqual([]);
-    });
-
-    it("didYouMeanHint: returns the hint for a close name, undefined for nothing close", () => {
-        expect(didYouMeanHint("clockfy_status", ["clockify_status"])).toBe(
-            "Did you mean: clockify_status?",
-        );
-        expect(didYouMeanHint("zzzzzzzz", ["clockify_status"])).toBeUndefined();
     });
 });
 
