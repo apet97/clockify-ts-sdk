@@ -16,6 +16,7 @@
  * transport flags the failure at the protocol level too.
  */
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
 
 import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
 
@@ -136,8 +137,12 @@ export function writeReceipt(
 
 export function errorResult(action: string, err: unknown, recovery?: string | RecoveryHint): CallToolResult {
     const message = err instanceof Error ? err.message : String(err);
+    // Prefer the SDK's cause-aware classifier: a connection/abort error (statusCode
+    // null) must not be mislabeled by the message-regex fallback — e.g. a network
+    // failure whose message contains "workspace" stays connection_error (retryable),
+    // not auth_or_permission. Non-SDK errors classify to undefined and fall through.
     const status = (err as { statusCode?: number }).statusCode;
-    const code = errorCodeForStatus(status) ?? errorCodeForMessage(message);
+    const code = classifyClockifyError(err)?.code ?? errorCodeForStatus(status) ?? errorCodeForMessage(message);
     const envelope: ErrorEnvelope = { ok: false, action, error: { code, message } };
     if (recovery) {
         envelope.recovery = typeof recovery === "string" ? { hint: recovery } : recovery;

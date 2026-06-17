@@ -1,3 +1,4 @@
+import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
 import { errorResult, successResult } from "../src/result.js";
@@ -130,6 +131,16 @@ describe("errorResult", () => {
             code: "invalid_request",
             message: "webhook URL must use HTTPS",
         });
+    });
+
+    it("classifies a connection error (statusCode null) as connection_error even when the message says 'workspace'", () => {
+        // Without the cause-aware classifier, the message-regex fallback would match
+        // /workspace/ and mislabel this as auth_or_permission (retryable:false).
+        const err = new ClockifyConnectionError({ message: "request to workspace API failed", cause: new Error("ENOTFOUND") });
+        const out = errorResult("clockify_status", err);
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.error.code).toBe("connection_error");
+        expect(parsed.recovery.retryable).toBe(true);
     });
 
     it("accepts structured recovery guidance", () => {

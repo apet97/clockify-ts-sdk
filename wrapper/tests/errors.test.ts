@@ -46,6 +46,14 @@ describe("RateLimitError", () => {
         expect(err.rateLimitResetAt!.getTime()).toBeGreaterThan(Date.now());
     });
 
+    it("treats Retry-After: 0 as 0ms (retry immediately), not undefined", () => {
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": "0" }) as never,
+        });
+        expect(err.retryAfterMs).toBe(0);
+    });
+
     it("parses Retry-After as HTTP-date", () => {
         const future = new Date(Date.now() + 45_000);
         const err = new RateLimitError({

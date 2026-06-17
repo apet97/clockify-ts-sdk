@@ -109,10 +109,17 @@ function resolvePath(path: string, workspaceId?: string): string {
 }
 
 // makePassthroughRequest ignores requestOptions.queryParams, so the query
-// string must be folded into the path before it reaches client.fetch.
+// string must be folded into the path before it reaches client.fetch. If the
+// caller already put a query on the path, merge both sides into one search
+// string (the -q params win on a key clash) instead of emitting a malformed
+// double-`?`.
 function buildPath(path: string, query: Record<string, string>): string {
-    const search = new URLSearchParams(query).toString();
-    return search ? `${path}?${search}` : path;
+    const qIndex = path.indexOf("?");
+    const base = qIndex === -1 ? path : path.slice(0, qIndex);
+    const params = new URLSearchParams(qIndex === -1 ? "" : path.slice(qIndex + 1));
+    for (const [key, value] of Object.entries(query)) params.set(key, value);
+    const search = params.toString();
+    return search ? `${base}?${search}` : base;
 }
 
 function requestInit(method: string, headers: Record<string, string>, body?: string): RequestInit {

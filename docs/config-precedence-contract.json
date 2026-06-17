@@ -52,7 +52,7 @@
         "lowest → highest precedence",
         "CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID / CLOCKIFY_BASE_URL env vars",
         "--api-key / --workspace / --base-url command-line flags",
-        "flags.apiKey ?? env.CLOCKIFY_API_KEY ?? file.apiKey",
+        "firstPresent(flags.apiKey, env.CLOCKIFY_API_KEY, file.apiKey)",
         "Provide --api-key, set CLOCKIFY_API_KEY",
         "Provide --workspace, set CLOCKIFY_WORKSPACE_ID",
         "failed to read Clockify rc file"
