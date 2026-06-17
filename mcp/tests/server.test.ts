@@ -23,7 +23,7 @@ function fakeContext(overrides?: {
                 listInProgress: overrides?.listInProgress ?? (async () => []),
                 listForUser: async () => [],
                 create: async (body: Record<string, unknown>) => ({ id: "te-1", ...body }),
-                stopTimer: async () => ({ id: "te-1", stopped: true }),
+                updateForUser: async (req: Record<string, unknown>) => ({ id: "te-1", stopped: true, ...req }),
                 delete: async () => ({}),
             },
             projects: {
@@ -404,16 +404,35 @@ describe("@clockify115/mcp-server", () => {
         expect(parsed.data.end).toBe("2026-05-26T10:00:00.000Z");
     });
 
-    it("clockify_timer_stop turns a 404 into a friendly ok envelope", async () => {
-        const ctx = fakeContext();
-        (ctx.client.timeEntries as unknown as { stopTimer: () => Promise<unknown> }).stopTimer = async () => {
-            throw Object.assign(new Error("no running timer"), { statusCode: 404 });
-        };
+    it("clockify_timer_stop returns a friendly ok when no timer is in progress", async () => {
+        const ctx = fakeContext(); // listInProgress defaults to []
         const client = await connect(ctx);
         const res = await client.callTool({ name: "clockify_timer_stop", arguments: {} });
         expect(res.isError).toBeFalsy();
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
         expect(parsed.data.running).toBe(false);
+        expect(parsed.data.note).toMatch(/no timer was running/i);
+    });
+
+    it("clockify_timer_stop stops the user's in-progress timer via the bound route", async () => {
+        const ctx = fakeContext({ listInProgress: async () => [{ id: "te-1", userId: "user-1" }] });
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_timer_stop", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
+        expect(parsed.ok).toBe(true);
+        expect(parsed.data.stopped).toBe(true);
+    });
+
+    it("clockify_review_week rejects an unparseable week_start with a clear, field-named error", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_review_week", arguments: { week_start: "garbage" } });
+        expect(res.isError).toBe(true);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.ok).toBe(false);
+        expect(parsed.error.code).toBe("invalid_request");
+        expect(parsed.error.message).toMatch(/invalid week_start "garbage"/);
     });
 });
 

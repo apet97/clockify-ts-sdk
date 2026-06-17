@@ -238,7 +238,7 @@ export async function resolveUserRef(
         return { ok: true, userId: rawId, label: ref.name ?? rawId };
     }
     const users = await opts.listUsers();
-    let user = ref.id ? users.find((u) => u.id === ref.id) : undefined;
+    let user = rawId ? users.find((u) => u.id === rawId) : undefined;
     if (!user) {
         // A name may have been passed in EITHER slot — match it after the id lookup.
         const query = (ref.name ?? ref.id ?? "").trim();

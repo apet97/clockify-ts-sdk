@@ -31,6 +31,7 @@ policy).
 | `deletes.archive-first` | `compensated-in-tool-layer` |
 | `time-off.requests.get.dead-route` | `compensated-in-tool-layer` |
 | `deletes.archive-first.projects-tasks` | `compensated-in-tool-layer` |
+| `deletes.archive-first.clients-blocked` | `compensated-in-tool-layer` |
 | `user-groups.get.returns-void` | `compensated-in-tool-layer` |
 
 ## Live-probed operations (live-success)
@@ -60,6 +61,5 @@ policy).
 
 | Slug | Method | Path |
 | --- | --- | --- |
-| `entries.stoptimer` | PATCH | `/user/{userId}/time-entries/stop` |
 | `projects.archive` | PUT | `/projects/{projectId}/archive` |
 | `scheduling.calculateUsersTotals` | POST | `/scheduling/assignments/users/totals` |

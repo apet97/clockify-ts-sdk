@@ -50,6 +50,6 @@ Recorded so they are not re-audited next pass:
 
 ## Also already known (surfaced earlier this session, not re-planned here)
 
-- CLI `audit-log search` sends kebab `page-size` in the POST body → live 400 (fix: `pageSize` or omit).
-- SDK `timeEntries.stopTimer` targets a `/stop` route that 404s live (recorded in `spec/evidence/discrepancies.md`; route fix belongs in `../GOCLMCP`).
+- CLI `audit-log search` sends kebab `page-size` in the POST body — **REFUTED 2026-06-17**: a live probe against the dedicated audit-log host returned **200** for kebab `page-size`, camel `pageSize`, and the omitted variant (all accepted; the earlier "live 400" note was wrong). The GOCLMCP source already stamps `page-size` `live-success` for this host. No code change.
+- SDK `timeEntries.stopTimer` targets a `/stop` route that 404s live — **FIXED 2026-06-17**: the CLI `stop` command and the MCP `clockify_timer_stop` / `clockify_stop_work` / `clockify_switch_work` tools now stop via the bound `timeEntries.updateForUser` route (`{ end }`, live-verified). Removing the dead `stopTimer` method + `/stop` route from generated output is a GOCLMCP quarantine (pending; see `spec/evidence/discrepancies.md`).
 - Live-test gap for write workflows / `clockify_plan_change` unit test / `official-openapi-fetch` delta not persisted.

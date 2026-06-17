@@ -235,34 +235,37 @@ before emitting tags.
   `timeOffPolicies` are correctly retained as separate domains.
 - **Status:** `fixed-in-canonical-generator`.
 
-### `entries.stoptimer.route-404-no-static-resource` — DOCUMENTED 2026-06-16
+### `entries.stoptimer.route-404-no-static-resource` — COMPENSATED 2026-06-17 (callers migrated to the bound route)
 
 - **What does official documentation claim?** The generated TypeScript SDK exposes
   `timeEntries.stopTimer({ workspaceId, userId, end })`, which issues
   `PATCH /workspaces/{workspaceId}/user/{userId}/time-entries/stop`.
-- **What does Clockify actually return?** That route is not bound. With a real
-  running timer present it returns
+- **What does Clockify actually return?** That `/stop` suffix route is not bound:
+  with a real running timer present it returns
   `404 { "code": 3000, "message": "No static resource ...time-entries/stop." }`.
-  The user-scoped stop route WITHOUT the `/stop` suffix
-  (`PATCH /workspaces/{workspaceId}/user/{userId}/time-entries`) IS bound — the same
-  minimal `{ end }` body returns `400` (route exists, body incomplete), not `404`.
-  So the live stop endpoint is the bare user-scoped PATCH and the generated `/stop`
-  suffix is spurious. Phantom route: `entries.stoptimer` (`PATCH /user/{userId}/time-entries/stop`)
-  returns 404 "No static resource".
-- **Which live test proves it?** Direct `curl` probes captured 2026-06-16 against
-  workspace `65b382b606de527a7ee2b60e` (create running entry → `PATCH .../stop` =
-  404 → `PATCH .../time-entries` = 400 → `DELETE` = 204). Surfaced while running
-  `wrapper/examples/start-stop-timer.ts` live.
-- **Which MCP tool depends on it?** `clockify_stop_work` and `clockify_switch_work`
-  need a working stop; they must not call the generated `stopTimer` route directly.
-  `wrapper/examples/start-stop-timer.ts` discards the running timer with `delete`
-  rather than relying on the dead route.
-- **Which uncertainty remains?** The exact required body for the bare user-scoped
-  stop PATCH (a 400 with `{ end }` only suggests it wants the full entry or extra
-  fields); whether the corrected OpenAPI snapshot models the `/stop` suffix
-  (generator source lives in `../GOCLMCP`).
-- **Status:** `open` — the route fix belongs in GOCLMCP; compensated in the example
-  and the MCP layer until then.
+  The bound route is the bare user-scoped PATCH
+  (`PATCH /workspaces/{workspaceId}/user/{userId}/time-entries`, the generated
+  `timeEntries.updateForUser`), and a minimal `{ end }` body STOPS the timer with
+  `200` — **provided the running entry satisfies the workspace's required fields**
+  (this sandbox forces a project). The earlier `400` on the bare route was a
+  project-less probe entry, not a body-shape problem: `{ end }` alone is sufficient
+  for a real running timer.
+- **Which live test proves it?** Probed 2026-06-16 (workspace
+  `65b382b606de527a7ee2b60e`): `PATCH .../stop` → 404. Re-probed 2026-06-17 with a
+  project-bearing running entry: `PATCH .../time-entries` with `{ end }` → **200**
+  (timer stopped, `end` applied), `DELETE` cleanup → 204. The `/stop` suffix still
+  404s.
+- **Which MCP tool depends on it?** `clockify_timer_stop`, `clockify_stop_work`,
+  `clockify_switch_work`, and the CLI `clk115 stop`. All now detect a running timer
+  via `timeEntries.listInProgress` and stop it via `timeEntries.updateForUser`
+  (`{ end }`) — they never call the dead `stopTimer`, and "no timer running" comes
+  from an empty in-progress list, not from swallowing a 404. The MCP callers share
+  `mcp/src/tools/timer-stop.ts`.
+- **Status:** `compensated-in-callers` (2026-06-17). The remaining cleanup — removing
+  the dead `stopTimer` method + `/stop` route from generated output via a GOCLMCP
+  quarantine (add the route to `PHANTOM_PATHS`, drop its `SDK_METHOD_NAMES` entry,
+  regenerate) — is pending, not a blocker. Tests: `cli/tests/stop.test.ts`,
+  `mcp/tests/work-time-tracking.test.ts`, `mcp/tests/server.test.ts`.
 
 ---
 
@@ -2074,7 +2077,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Status:** `compensated-in-tool-layer`. The tool now requires `policyId`, calls
   `changeTimeOffRequestStatus`, and sends `status`. Test: `mcp/tests/sweep-fixes.test.ts`.
 
-### `deletes.archive-first` — PARTIALLY COMPENSATED 2026-06-14
+### `deletes.archive-first` — COMPENSATED 2026-06-17 (all sub-entities)
 
 - **Actual behavior (addon live-verified):** Clockify rejects DELETE of an ACTIVE
   entity. Projects/clients/expense-categories must be archived first; tasks marked
@@ -2086,12 +2089,13 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Status:** `compensated-in-tool-layer` for expense categories (2026-06-14) —
   `clockify_expenses_categories_delete` now `expenseCategories.archive({archived:true})`
   (the dedicated PATCH `/status`, no replace risk) before delete. Test:
-  `mcp/tests/sweep-fixes.test.ts`. STILL OPEN: projects/clients/tasks — their archive
-  is a **replace-PUT** (`*.update`), so a sparse `{archived:true}`/`{status:"DONE"}`
-  risks a 400 on missing required fields; the safe fix is GET-then-PUT (carry the
-  entity's fields, overlay archived/DONE) then DELETE. The dedicated `/archive` routes
-  (`projects.archive`, `clients.archive`) are suspect — `projects.archive` is a known
-  dead 404 route — so prefer the update path. All wired through `requireConfirmation`.
+  `mcp/tests/sweep-fixes.test.ts`. Projects/tasks compensated 2026-06-15 and clients
+  2026-06-17 (see the sub-entries below) — each archives via GET-then-PUT (carry the
+  entity's fields, overlay `archived:true`/`status:"DONE"`) then DELETE, because their
+  archive is a **replace-PUT** (`*.update`) where a sparse body risks a 400 on missing
+  required fields. The dedicated `/archive` routes (`projects.archive`,
+  `clients.archive`) are dead/suspect (`projects.archive` is a known dead 404), so the
+  update path is used. All wired through `requireConfirmation`.
 
 ### `time-off.requests.get.dead-route` — COMPENSATED 2026-06-15 (live re-probed)
 
@@ -2138,20 +2142,27 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   (dry_run → confirm_token → execute): both returned `deleted:true` against a real
   active project + task. Order pinned by `mcp/tests/archive-then-delete.test.ts`.
 
-### `deletes.archive-first.clients-blocked` — OPEN (generator/spec defect)
+### `deletes.archive-first.clients-blocked` — COMPENSATED 2026-06-17 (body-envelope path)
 
 - **Live-verified 2026-06-15:** bare DELETE of an ACTIVE client → **400**. The raw
   `PUT /clients/{id}` with `{name, archived:true}` archives it (HTTP 200), then
-  DELETE succeeds — BUT the generated `clients.update` whitelist is
-  `[address, currencyCode, email, name, note]` (NO `archived`), and the dedicated
-  `clients.archive` route **404s**. So the typed SDK exposes NO way to archive a
-  client; the MCP tool layer cannot compensate (same class as
-  `user-groups.get.returns-void`).
-- **Status:** `open`. The durable fix is upstream — add `archived` to the
-  `clients.update` request schema in the corrected OpenAPI / generator
-  (`../GOCLMCP/` / `spec/corrected`), then convert `clockify_clients_delete` the
-  same way as projects. Until then `clockify_clients_delete` stays a bare DELETE
-  that 400s on an active client with a clear API message.
+  DELETE succeeds.
+- **Correction (2026-06-17):** the prior "the typed SDK exposes NO way to archive a
+  client" conclusion was wrong. The generated `clients.update` FLATTENED form does
+  drop `archived` (whitelist `[address, currencyCode, email, name, note]`), and the
+  dedicated `clients.archive` route 404s — but the **body-envelope** form
+  `clients.update({workspaceId, clientId, body:{name, archived:true}} as never)`
+  bypasses the field whitelist: `core.bodyFromRequest` (`wrapper/src/core/request.ts`)
+  returns the `body` envelope verbatim when the whitelist has no `"body"` key, so
+  `archived:true` reaches the wire. The demo cleanup already uses this path
+  (`mcp/src/tools/workflows/demo.ts`).
+- **Status:** `compensated-in-tool-layer` (2026-06-17). `clockify_clients_delete` now
+  GET-then-PUT (body envelope `{name, archived:true}`) to archive, then DELETE, after
+  the confirm gate — mirroring `clockify_projects_delete`. Carries the client `name`
+  the replace-PUT requires; errors clearly if the fetched client has no name. Order
+  pinned by `mcp/tests/archive-then-delete.test.ts`. The upstream cleanup (type
+  `archived` into `UpdateClientsRequestBody` so the cast isn't needed) remains a
+  nice-to-have in `../GOCLMCP/` / `spec/corrected`, not a blocker.
 
 ### `user-groups.get.returns-void` — COMPENSATED 2026-06-15
 
