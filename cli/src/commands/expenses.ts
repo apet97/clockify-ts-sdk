@@ -18,7 +18,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     expenses
         .command("list")
         .description("List expenses in the workspace.")
-        .option("--limit <n>", "Items per page.", (v) => Number.parseInt(v, 10), 25)
+        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--start <date>", "Start of the date range (YYYY-MM-DD).")
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")

@@ -6,6 +6,17 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- `clk115 log` now accepts project/task/tag NAMES, not just ids — resolving them the
+  same way `clk115 start` does (a 24-hex id still passes straight through). The two
+  sibling write commands now share one `resolve-refs` module so they can't drift apart.
+- `clk115 doctor` now classifies a `CLOCKIFY_BASE_URL` override against the Clockify
+  host allowlist (the same check the client enforces), so a host the client would
+  reject is flagged at `doctor` time instead of failing on the next real command.
+- `clk115 status` now degrades gracefully when `CLOCKIFY_WORKSPACE_ID` is unset: with
+  just an API key it lists the workspaces you can reach (id + name) and how to set one,
+  removing the only hard dead-end in the new-user journey.
+- `clk115 completion` now includes the `api` command, and `--limit` help text across all
+  list commands now states each command's default page size and the 200-item maximum.
 - Added `cli/examples/daily-timesheet.sh` and `cli/examples/export-json.sh` —
   copy-paste recipes for a one-day review and a JSON/NDJSON export (read-only,
   sandbox/mock-safe).

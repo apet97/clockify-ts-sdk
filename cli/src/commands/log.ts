@@ -9,6 +9,7 @@ import { parseDuration } from "../duration.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
 interface LogOpts {
@@ -25,9 +26,9 @@ export const registerLogCommand: Registrar = (program, services) => {
         .description("Log a finished time entry. Duration accepts 1h30m / 90m / PT1H30M.")
         .argument("<duration>", "Duration like '1h30m', '45m', or ISO 8601 'PT1H30M'.")
         .argument("<description>", "What you worked on.")
-        .option("-p, --project <id>", "Project ID (use clk115 projects list to find one).")
-        .option("-t, --task <id>", "Task ID.")
-        .option("--tag <id...>", "Tag ID(s).")
+        .option("-p, --project <name|id>", "Project name or ID.")
+        .option("-t, --task <name|id>", "Task name or ID.")
+        .option("--tag <name|id...>", "Tag name(s) or ID(s). Repeat the flag for multiple tags.")
         .option("--billable", "Mark the entry as billable.", false)
         .option("--end <iso>", "End timestamp (ISO 8601). Defaults to now.")
         .action(async function (this: Command, duration: string, description: string, opts: LogOpts) {
@@ -35,6 +36,10 @@ export const registerLogCommand: Registrar = (program, services) => {
             if (opts.task && !opts.project) {
                 throw new Error("--task requires --project: a task entry must be scoped to its project.");
             }
+            const projectId = opts.project ? await resolveProjectId(client, workspaceId, opts.project) : undefined;
+            const taskId =
+                opts.task && projectId ? await resolveTaskId(client, workspaceId, projectId, opts.task) : undefined;
+            const tagIds = opts.tag && opts.tag.length > 0 ? await resolveTagIds(client, workspaceId, opts.tag) : undefined;
             const seconds = parseDuration(duration);
             const endIso = opts.end ?? new Date().toISOString();
             const endMs = Date.parse(endIso);
@@ -48,9 +53,9 @@ export const registerLogCommand: Registrar = (program, services) => {
                 end: endIso,
                 description,
             };
-            if (opts.project) body.projectId = opts.project;
-            if (opts.task) body.taskId = opts.task;
-            if (opts.tag && Array.isArray(opts.tag) && opts.tag.length > 0) body.tagIds = opts.tag;
+            if (projectId) body.projectId = projectId;
+            if (taskId) body.taskId = taskId;
+            if (tagIds && tagIds.length > 0) body.tagIds = tagIds;
             if (opts.billable) body.billable = true;
 
             const created = await client.timeEntries.create({ workspaceId, ...body } as never);

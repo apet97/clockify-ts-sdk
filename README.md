@@ -30,6 +30,7 @@ wants.
 import { createClockifyClient } from "clockify-sdk-ts-115";
 
 const clockify = createClockifyClient({ apiKey: process.env.CLOCKIFY_API_KEY });
+const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID!;
 const projects = await clockify.projects.list({ workspaceId, "page-size": 50 });
 ```
 
@@ -52,10 +53,14 @@ clk115 projects list --json
 ### MCP server
 
 ```jsonc
-// Claude Desktop / any MCP client
+// Claude Desktop / any MCP client — add to the client's mcpServers config
 {
-  "command": "clockify115-mcp",
-  "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." }
+  "mcpServers": {
+    "clockify": {
+      "command": "clockify115-mcp",
+      "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." }
+    }
+  }
 }
 ```
 

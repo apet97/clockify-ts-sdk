@@ -19,7 +19,7 @@
  * Both compose with any list method that follows Clockify's
  * `page` + `"page-size"` convention. The {@link KnownPaginatedMethod}
  * union documents the 19 currently-known paginated `(resource,
- * method)` pairs as of v0.1.0 (synced from `PAGINATED_LIST_OPS` in
+ * method)` pairs (synced from `PAGINATED_LIST_OPS` in
  * the GOCLMCP generator). Future methods that follow the same
  * convention work without changes here.
  *
@@ -63,7 +63,7 @@ export interface PageEnvelope<TItem> {
 
 /**
  * Documentary union of the 19 known paginated `(resource, method)`
- * pairs on `ClockifyApiClient`, as of v0.1.0. Not load-bearing for
+ * pairs on `ClockifyApiClient`. Not load-bearing for
  * `iterAll` — the helper accepts any matching call site, not just
  * these. Kept here so:
  *

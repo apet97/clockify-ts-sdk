@@ -15,7 +15,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .command("list")
         .argument("<projectId>", "Project ID.")
         .description("List tasks for a project.")
-        .option("--limit <n>", "Items per page.", (v) => Number.parseInt(v, 10), 25)
+        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by task name substring.")
         .action(async function (this: Command, projectId: string, opts) {

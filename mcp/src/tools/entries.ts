@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerEntriesTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -108,7 +108,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 if (args.tagIds && args.tagIds.length > 0) body.tagIds = args.tagIds;
                 if (args.billable !== undefined) body.billable = args.billable;
                 const entry = await ctx.client.timeEntries.create(body as never);
-                return successResult("clockify_entries_log", entry);
+                return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: (entry as { id?: string }).id, name: args.description }));
             } catch (err) {
                 return errorResult("clockify_entries_log", err);
             }
@@ -134,7 +134,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 const confirmation = requireConfirmation(ctx, "clockify_entries_delete", "entry_delete", args, preview);
                 if (confirmation) return confirmation;
                 await ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: args.timeEntryId });
-                return successResult("clockify_entries_delete", { deleted: true, timeEntryId: args.timeEntryId });
+                return successResult("clockify_entries_delete", { deleted: true, timeEntryId: args.timeEntryId }, undefined, writeReceipt("deleted", "time_entry", args.timeEntryId));
             } catch (err) {
                 return errorResult("clockify_entries_delete", err);
             }
@@ -199,7 +199,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_entries_update", updated, {
                     workspaceId: ctx.workspaceId,
                     timeEntryId: args.timeEntryId,
-                });
+                }, writeReceipt("updated", "time_entry", args.timeEntryId));
             } catch (err) {
                 return errorResult("clockify_entries_update", err);
             }
@@ -229,6 +229,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                     "clockify_entries_mark_invoiced",
                     { invoiced, timeEntryIds: args.timeEntryIds },
                     { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
+                    writeReceipt("updated", "time_entry", args.timeEntryIds.join(",")),
                 );
             } catch (err) {
                 return errorResult("clockify_entries_mark_invoiced", err);

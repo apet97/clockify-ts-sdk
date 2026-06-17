@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -71,7 +71,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 if (args.billable !== undefined) body.billable = args.billable;
                 if (args.isPublic !== undefined) body.isPublic = args.isPublic;
                 const project = await ctx.client.projects.create(body as never);
-                return successResult("clockify_projects_create", project);
+                return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: (project as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult(
                     "clockify_projects_create",
@@ -140,7 +140,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_projects_update", updated, {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
-                });
+                }, writeReceipt("updated", "project", args.projectId));
             } catch (err) {
                 return errorResult("clockify_projects_update", err);
             }
@@ -187,6 +187,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                     "clockify_projects_delete",
                     { deleted: true, projectId: args.projectId },
                     { workspaceId: ctx.workspaceId, projectId: args.projectId },
+                    writeReceipt("deleted", "project", args.projectId),
                 );
             } catch (err) {
                 return errorResult("clockify_projects_delete", err);
@@ -230,7 +231,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                     rateKind: args.rateKind,
                     amountMajor: args.amount,
                     amountMinor,
-                });
+                }, writeReceipt("updated", "project", args.projectId));
             } catch (err) {
                 return errorResult("clockify_projects_set_member_rate", err);
             }

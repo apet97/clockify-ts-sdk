@@ -1,4 +1,5 @@
 const COMMANDS = [
+    "api",
     "status",
     "doctor",
     "start",

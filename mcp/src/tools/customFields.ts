@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerCustomFieldsTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -67,7 +67,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 } as never);
                 return successResult("clockify_custom_fields_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "custom_field", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_custom_fields_create", err);
             }
@@ -107,7 +107,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 return successResult("clockify_custom_fields_update", updated, {
                     workspaceId: ctx.workspaceId,
                     customFieldId: args.customFieldId,
-                });
+                }, writeReceipt("updated", "custom_field", args.customFieldId));
             } catch (err) {
                 return errorResult("clockify_custom_fields_update", err);
             }
@@ -140,6 +140,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                     "clockify_custom_fields_delete",
                     { deleted: true, customFieldId: args.customFieldId },
                     { workspaceId: ctx.workspaceId, customFieldId: args.customFieldId },
+                    writeReceipt("deleted", "custom_field", args.customFieldId),
                 );
             } catch (err) {
                 return errorResult("clockify_custom_fields_delete", err);
@@ -208,7 +209,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     customFieldId: args.customFieldId,
-                });
+                }, writeReceipt("updated", "project_custom_field", args.customFieldId));
             } catch (err) {
                 return errorResult("clockify_project_custom_fields_update", err);
             }
@@ -256,6 +257,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                         projectId: args.projectId,
                         customFieldId: args.customFieldId,
                     },
+                    writeReceipt("deleted", "project_custom_field", args.customFieldId),
                 );
             } catch (err) {
                 return errorResult("clockify_project_custom_fields_remove", err);

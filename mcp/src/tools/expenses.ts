@@ -10,7 +10,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied.
@@ -133,6 +133,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                     "clockify_expenses_delete",
                     { deleted: true, expenseId: args.expenseId },
                     { workspaceId: ctx.workspaceId, expenseId: args.expenseId },
+                    writeReceipt("deleted", "expense", args.expenseId),
                 );
             } catch (err) {
                 return errorResult("clockify_expenses_delete", err);
@@ -168,7 +169,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                     userId: owner,
                     workspaceId: ctx.workspaceId,
                 } as never);
-                return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId });
+                return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: (created as { id?: string }).id }));
             } catch (err) {
                 return errorResult("clockify_expenses_create", err);
             }
@@ -209,7 +210,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_expenses_update", updated, {
                     workspaceId: ctx.workspaceId,
                     expenseId,
-                });
+                }, writeReceipt("updated", "expense", expenseId));
             } catch (err) {
                 return errorResult("clockify_expenses_update", err);
             }
@@ -266,7 +267,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 const created = await ctx.client.expenseCategories.create(body as never);
                 return successResult("clockify_expenses_categories_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "expense_category", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_expenses_categories_create", err);
             }
@@ -301,7 +302,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_expenses_categories_update", updated, {
                     workspaceId: ctx.workspaceId,
                     categoryId: args.categoryId,
-                });
+                }, writeReceipt("updated", "expense_category", args.categoryId));
             } catch (err) {
                 return errorResult("clockify_expenses_categories_update", err);
             }
@@ -342,6 +343,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                     "clockify_expenses_categories_delete",
                     { deleted: true, categoryId: args.categoryId },
                     { workspaceId: ctx.workspaceId, categoryId: args.categoryId },
+                    writeReceipt("deleted", "expense_category", args.categoryId),
                 );
             } catch (err) {
                 return errorResult("clockify_expenses_categories_delete", err);
@@ -370,7 +372,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_expenses_categories_archive", archived, {
                     workspaceId: ctx.workspaceId,
                     categoryId: args.categoryId,
-                });
+                }, writeReceipt("updated", "expense_category", args.categoryId));
             } catch (err) {
                 return errorResult("clockify_expenses_categories_archive", err);
             }

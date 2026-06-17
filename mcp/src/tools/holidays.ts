@@ -1,8 +1,9 @@
 /**
  * Workspace holidays. The Clockify create/update payload is rich
  * (assignees, automatic time entries, recurrence). The MCP exposes
- * the most common knobs and lets advanced callers fall back to
- * clockify_api_request when that lands.
+ * the most common knobs; fields outside that curated set are
+ * intentionally not surfaced (the curated server has no raw-API escape
+ * hatch by design — see `clockify_operation_guide`).
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
@@ -11,7 +12,7 @@ import { z } from "zod";
 import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
@@ -153,7 +154,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 } as never);
                 return successResult("clockify_holidays_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "holiday", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_holidays_create", err);
             }
@@ -252,7 +253,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_holidays_update", updated, {
                     workspaceId: ctx.workspaceId,
                     holidayId: args.holidayId,
-                });
+                }, writeReceipt("updated", "holiday", args.holidayId));
             } catch (err) {
                 return errorResult("clockify_holidays_update", err);
             }
@@ -285,6 +286,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     "clockify_holidays_delete",
                     { deleted: true, holidayId: args.holidayId },
                     { workspaceId: ctx.workspaceId, holidayId: args.holidayId },
+                    writeReceipt("deleted", "holiday", args.holidayId),
                 );
             } catch (err) {
                 return errorResult("clockify_holidays_delete", err);

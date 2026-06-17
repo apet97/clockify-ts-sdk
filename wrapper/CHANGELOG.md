@@ -9,6 +9,15 @@ once v1.0.0 ships.
 
 ### Documentation
 
+- Corrected the SDK-method coverage figure in `README.md` to 173 of 185 operations
+  (93.5%) — the prior `172 ops mapped (93.0%)` line contradicted the header's
+  `173 of 185` — and clarified the `composed-fetch.ts` `PACKAGE_VERSION` JSDoc to
+  state that release-please rewrites it via the `x-release-please-version` marker
+  (comment-only; no behaviour change).
+- Fixed stale in-code comments (no behaviour change): `iter.ts` drops two outdated
+  "as of v0.1.0" version anchors (the drift-tested `KNOWN_PAGINATED_METHODS` array is
+  the source of truth), and `scoped-client.ts` corrects a comment that described a
+  positional-id call path the generated client never takes.
 - Documented the new `resolve` list/filter resolvers
   (`resolveUserRefs` / `resolveGroupRefs` / `resolveTagRefs` /
   `resolveUserFilter`) and the `errors` `mapAddonTokenRestriction` /

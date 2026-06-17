@@ -33,4 +33,4 @@ live proof only with a concrete reason.
 - `make live-safety`
 - `make mock-contract`
 - `make perfect-live`
-- `make final-proof-receipt-check`
+- `make enterprise-audit`

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerTagsTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -53,7 +53,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         async (args) => {
             try {
                 const tag = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name: args.name });
-                return successResult("clockify_tags_create", tag);
+                return successResult("clockify_tags_create", tag, undefined, writeReceipt("created", "tag", { id: (tag as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_tags_create", err);
             }
@@ -141,6 +141,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
                     "clockify_tags_delete",
                     { deleted: true, tagId: args.tagId },
                     { workspaceId: ctx.workspaceId, tagId: args.tagId },
+                    writeReceipt("deleted", "tag", args.tagId),
                 );
             } catch (err) {
                 return errorResult("clockify_tags_delete", err);

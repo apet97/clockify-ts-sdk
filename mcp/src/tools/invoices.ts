@@ -10,7 +10,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
 
@@ -123,7 +123,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 }
                 return successResult("clockify_invoices_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "invoice", { id: created?.id, name: args.number }));
             } catch (err) {
                 return errorResult("clockify_invoices_create", err);
             }
@@ -181,7 +181,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_invoices_update", updated, {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
-                });
+                }, writeReceipt("updated", "invoice", args.invoiceId));
             } catch (err) {
                 return errorResult("clockify_invoices_update", err);
             }
@@ -214,6 +214,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     "clockify_invoices_delete",
                     { deleted: true, invoiceId: args.invoiceId },
                     { workspaceId: ctx.workspaceId, invoiceId: args.invoiceId },
+                    writeReceipt("deleted", "invoice", args.invoiceId),
                 );
             } catch (err) {
                 return errorResult("clockify_invoices_delete", err);
@@ -242,7 +243,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_invoices_update_status", updated, {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
-                });
+                }, writeReceipt("updated", "invoice", args.invoiceId));
             } catch (err) {
                 return errorResult("clockify_invoices_update_status", err);
             }

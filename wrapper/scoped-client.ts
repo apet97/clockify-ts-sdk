@@ -221,7 +221,9 @@ export function wrapResource<T extends object>(resource: T, workspaceId: string)
                     args[0] = { ...(first as Record<string, unknown>), workspaceId };
                 }
                 // first is a primitive (string/number) — leave untouched.
-                // Common for `tags.get(tagId, opts)` style where id is positional.
+                // Purely defensive: every generated method takes a single request
+                // object, so this branch only guards third-party callers that pass
+                // `wrapResource` a positional first arg.
                 return (value as (...a: unknown[]) => unknown).apply(target, args);
             };
         },

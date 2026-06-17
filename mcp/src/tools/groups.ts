@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -102,7 +102,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                 });
                 return successResult("clockify_groups_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "group", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_groups_create", err);
             }
@@ -130,7 +130,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_groups_update", updated, {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
-                });
+                }, writeReceipt("updated", "group", args.groupId));
             } catch (err) {
                 return errorResult("clockify_groups_update", err);
             }
@@ -163,6 +163,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                     "clockify_groups_delete",
                     { deleted: true, groupId: args.groupId },
                     { workspaceId: ctx.workspaceId, groupId: args.groupId },
+                    writeReceipt("deleted", "group", args.groupId),
                 );
             } catch (err) {
                 return errorResult("clockify_groups_delete", err);
@@ -221,7 +222,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
                     userId: u.userId,
-                });
+                }, writeReceipt("updated", "group_member", { id: u.userId }));
             } catch (err) {
                 return errorResult("clockify_groups_add_member", err);
             }
@@ -265,6 +266,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
                         groupId: args.groupId,
                         userId: args.userId,
                     },
+                    writeReceipt("deleted", "group_member", args.userId),
                 );
             } catch (err) {
                 return errorResult("clockify_groups_remove_member", err);

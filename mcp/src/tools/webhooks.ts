@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
     server.registerTool(
@@ -92,7 +92,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 } as never);
                 return successResult("clockify_webhooks_create", created, {
                     workspaceId: ctx.workspaceId,
-                });
+                }, writeReceipt("created", "webhook", { id: (created as { id?: string }).id, name: args.name }));
             } catch (err) {
                 return errorResult("clockify_webhooks_create", err);
             }
@@ -130,7 +130,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 return successResult("clockify_webhooks_update", updated, {
                     workspaceId: ctx.workspaceId,
                     webhookId: args.webhookId,
-                });
+                }, writeReceipt("updated", "webhook", args.webhookId));
             } catch (err) {
                 return errorResult("clockify_webhooks_update", err);
             }
@@ -163,6 +163,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                     "clockify_webhooks_delete",
                     { deleted: true, webhookId: args.webhookId },
                     { workspaceId: ctx.workspaceId, webhookId: args.webhookId },
+                    writeReceipt("deleted", "webhook", args.webhookId),
                 );
             } catch (err) {
                 return errorResult("clockify_webhooks_delete", err);

@@ -23,9 +23,9 @@ subdirectory:
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **29 commands** across 17 top-level
+  interface on top of the SDK. **29 commands** across 18 top-level
   groups including `doctor`, `completion`, the scriptable `api` raw
-  command, and the workflow shortcuts (`start`, `stop`, `log`,
+  command, and the workflow shortcuts (`start`, `stop`, `status`, `log`,
   `entries`, `projects`, `clients`, `tasks`, `tags`, `webhooks`,
   `invoices`, `expenses`, `timeoff`, `scheduling`, `audit-log`).
   Output controls: `--output table|json|ndjson`, `--compact`,
@@ -154,7 +154,9 @@ not a loose generator dump:
   obvious.
 - Agent-facing APIs return structured receipts: ids, `changed`,
   `next`, warnings, stable error codes, and recovery instructions
-  where useful.
+  where useful. MCP domain create/update/delete tools populate
+  `entity` + `changed` via the shared `writeReceipt` helper
+  (`mcp/src/result.ts`), matching the workflow tier.
 - Documentation is part of the product. README examples must be
   runnable, concise, and current; generated API docs must not
   contradict package READMEs or agent guidance.
@@ -204,7 +206,7 @@ output/ts-sdk/**  (local generator emits TS files + codegen receipt; gitignored;
 wrapper/src/**  (gitignored; populated by sync)
         │
         │  npm run type-check    (tsc --noEmit; covers src/**, hand-written *.ts, tests/**)
-        │  npm test              (vitest; 227 tests, with live sandbox flows gated by
+        │  npm test              (vitest; full suite, with live sandbox flows gated by
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
@@ -273,8 +275,8 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 | `scripts/generate-sdk-from-openapi.mjs` | `make sdk-codegen` + `make sdk-codegen-drift` + `make sdk-codegen-test` + `make generator-comparison` + `cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke` |
 | `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
-| `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify file count is sensible (currently 691) |
-| `wrapper/*.ts` root files (hand-written; currently 17, all of `composed-fetch.ts`, `create-client.ts`, `deprecation.ts`, `diagnostics.ts`, `error-codes.ts`, `errors.ts`, `health.ts`, `index.ts`, `iter.ts`, `otel-hooks.ts`, `paginated-list.ts`, `pagination.ts`, `rate-limit.ts`, `scoped-client.ts`, `webhook-events.ts`, `webhooks.ts`, `with-response.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
+| `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify the synced file count is sensible (it tracks the generated tree, so the exact number moves with each regen) |
+| `wrapper/*.ts` root files (hand-written; currently 24, all of `composed-fetch.ts`, `create-client.ts`, `dates.ts`, `deprecation.ts`, `diagnostics.ts`, `ensure.ts`, `error-codes.ts`, `errors.ts`, `health.ts`, `index.ts`, `invoice-body.ts`, `iter.ts`, `money.ts`, `operation-receipt.ts`, `otel-hooks.ts`, `paginated-list.ts`, `pagination.ts`, `rate-limit.ts`, `request-options.ts`, `resolve.ts`, `scoped-client.ts`, `webhook-events.ts`, `webhooks.ts`, `with-response.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
@@ -382,7 +384,7 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; CI diffs on every PR
-├── tests/                    (20 files, 227 tests including env-gated live flows @ v0.9.0)
+├── tests/                    (29 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
 │   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
@@ -494,6 +496,9 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    `x-fern-sdk-method-name`. Coverage: 172 ops / 28 modules /
    93.0% of the 185-op live surface. The other ~13 ops are
    already-clean operationIds or per-module domain edge cases.
+   (This 172 is the fern *pairing* count. The SDK README states 173 —
+   total method-name coverage — which adds the one operationId-derived
+   method, `expenseReport.generateDetailedReportV1`, to these 172.)
 
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).
@@ -581,10 +586,12 @@ request and stop:
 3. Restoring Fern, Speakeasy, Stainless, or another hosted/paid SDK
    generator as the active TypeScript generation path. That needs a
    maintainer decision and a full regression cycle.
-4. Removing the `addonToken` workaround cast in `wrapper/` before the
-   replacement auth typing is proven end-to-end. It currently protects
-   runtime auth compatibility while the wrapper hides generated auth
-   details from most users.
+4. Reintroducing the historical `addonToken` workaround cast
+   (`addonToken: (() => undefined) as unknown as () => string`) in
+   `wrapper/`. The local generator now models `apiKey`/`addonToken` as
+   mutually exclusive (see §6, §8.2); the cast is archived Fern-era
+   evidence only, and restoring it needs a maintainer decision and a
+   full auth regression cycle.
 5. Anything that affects a customer workspace (running tests
    against a non-sandbox API key, posting to a production webhook,
    etc.).

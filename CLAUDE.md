@@ -11,7 +11,7 @@ This standalone repo ships three sibling packages:
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 81 public names; 23 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`) |
 | `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 29 commands incl. `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 127 tools (21 workflow + 106 domain); 5 resources |
+| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 127 tools (21 workflow + 106 domain); 6 resources |
 
 The `-115` / `115` suffix is intentional trademark distance. Default
 stance: local/packable packages, not npm publication. Keep
@@ -37,7 +37,7 @@ that snapshot by hand.
 Preferred root gates:
 
 ```bash
-make perfect-fast   # local deterministic SDK/CLI/MCP package proof (~76 sub-gates)
+make perfect-fast   # local deterministic SDK/CLI/MCP package proof
 make perfect-full   # GOCLMCP drift + local codegen + package gates + packed-consumer smoke
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
@@ -137,7 +137,10 @@ make docs-drift
   `spec/evidence/discrepancies.md`.
 - `mcp/src/tools/workflows.ts` is the workflow-first MCP surface.
 - MCP receipts should include useful `ids`, `changed`, `warnings`,
-  `next`, stable error codes, and recovery hints.
+  `next`, stable error codes, and recovery hints. Domain
+  create/update/delete tools populate `entity` + `changed` via the
+  `writeReceipt` helper in `mcp/src/result.ts` (read-only tools stay
+  receipt-free).
 - `mcp/src/orchestration/confirm-guard.ts` is the shared
   `dry_run` -> `confirm_token` handshake for high-risk workflow
   writes and destructive domain deletes (`entries`, `projects`,
@@ -255,6 +258,7 @@ make docs-drift
 |---|---|
 | SDK wrapper helper/export | root files in `wrapper/`, never `wrapper/src/**` |
 | CLI command | `cli/src/commands/*.ts`, wired in `cli/src/index.ts` |
+| CLI name→id resolution (`start`/`log`) | `cli/src/commands/resolve-refs.ts` (shared) |
 | MCP domain tool | `mcp/src/tools/*.ts`, wired in `mcp/src/server.ts` |
 | MCP workflow | `mcp/src/tools/workflows.ts` + `mcp/tests/workflows.test.ts` |
 | Live cleanup proof | `mcp/scripts/assert-clean-prefixes.mjs` |
