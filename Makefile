@@ -469,7 +469,7 @@ mock-contract:
 	node scripts/check-mock-clockify-contract.mjs
 
 replay-fixtures:
-	node scripts/check-replay-fixtures.mjs
+	node --import tsx scripts/check-replay-fixtures.mjs
 
 maintenance-playbook:
 	node scripts/check-maintenance-playbook.mjs

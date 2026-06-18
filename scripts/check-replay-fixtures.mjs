@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
 const failures = [];
@@ -20,20 +21,23 @@ function readJson(relPath) {
     return JSON.parse(fs.readFileSync(path.join(root, relPath), "utf8"));
 }
 
+// Import the real wrapper helpers (TS source, via the tsx loader the Make
+// target injects) so fixture replay exercises the exact SDK arithmetic.
+const moneyUrl = pathToFileURL(path.join(root, "wrapper", "money.ts")).href;
+const invoiceBodyUrl = pathToFileURL(path.join(root, "wrapper", "invoice-body.ts")).href;
+const { invoiceItemUnitPriceFromWire, invoiceItemUnitPriceToWire } = await import(moneyUrl);
+const { invoiceUpdateBodyFromExisting } = await import(invoiceBodyUrl);
+
 function unitPriceFromWire(wire) {
-    return Math.round(wire / 100);
+    return invoiceItemUnitPriceFromWire(wire);
 }
 
 function unitPriceToWire(minor) {
-    return Math.round(minor * 100);
+    return invoiceItemUnitPriceToWire(minor);
 }
 
 function invoicePercentBody(wire) {
-    const out = {};
-    if (typeof wire.tax === "number") out.taxPercent = wire.tax / 100;
-    if (typeof wire.discount === "number") out.discountPercent = wire.discount / 100;
-    if (typeof wire.tax2 === "number") out.tax2Percent = wire.tax2 / 100;
-    return out;
+    return invoiceUpdateBodyFromExisting(wire);
 }
 
 const contractPath = "docs/replay-fixtures-contract.json";

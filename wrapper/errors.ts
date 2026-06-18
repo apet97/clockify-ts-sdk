@@ -236,6 +236,8 @@ export class AddonTokenRestrictionError extends ClockifyApiError {
     public readonly method: string;
     /** Request path of the refused request (e.g. `"/v1/workspaces"`). */
     public readonly path: string;
+    /** Stable cross-surface code for addon-token endpoint walls. */
+    public readonly code: ClockifyErrorCode = "addon_token_restricted";
     constructor(opts: SubclassOpts & { method: string; path: string }) {
         super({
             message:
@@ -355,10 +357,34 @@ function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
         return "connection_error";
     }
 
+    if (err instanceof AddonTokenRestrictionError) return "addon_token_restricted";
+    if (err.statusCode === 401 && bodyMentionsAddonRestriction(err.body)) {
+        return "addon_token_restricted";
+    }
+
+    if (err.statusCode === 429 && parseRetryAfterMs(err.rawResponse?.headers) != null) {
+        return "rate_limited_retry_after";
+    }
+
+    if (err.statusCode === 400 && mentionsActiveDeleteBlock(err.message, err.body)) {
+        return "active_resource_delete_blocked";
+    }
+
     const byStatus = errorCodeForSdkStatus(err.statusCode);
     if (byStatus != null) return byStatus;
 
     return errorCodeForMessage(err.message);
+}
+
+function mentionsActiveDeleteBlock(message: string, body: unknown): boolean {
+    const re = /cannot delete an active (project|task|client)/i;
+    if (re.test(message)) return true;
+    if (typeof body === "string") return re.test(body);
+    if (body != null && typeof body === "object") {
+        const bodyMessage = (body as { message?: unknown }).message;
+        if (typeof bodyMessage === "string") return re.test(bodyMessage);
+    }
+    return false;
 }
 
 function errorCodeForSdkStatus(status: number | undefined): ClockifyErrorCode | undefined {
