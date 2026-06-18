@@ -196,7 +196,9 @@ make docs-drift
   whitelist via `core.bodyFromRequest`, so `archived:true` reaches the wire. See
   `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
-  values. Check presence, never print values.
+  values. Check presence, never print values. `make sandbox-key-health`
+  is the optional live preflight; it exits 0 when creds are blank and
+  never prints the key.
 - `mcp/src/scope-filter.ts` builds the `{contains, ids, status}`
   user/group scope filter for holidays and time-off. The `status` arg
   splits: time-off **policies** scope `status:"ACTIVE"`
@@ -204,8 +206,10 @@ make docs-drift
   (`mcp/src/tools/holidays.ts`) — matching the live-verified addon. See
   `spec/evidence/discrepancies.md`
   (`time-off.policies.scope.status-active-not-all`).
-- `wrapper/.packsnapshot` must be the sorted `npm pack --dry-run --json`
-  file list. The exact CI diff command should pass before push.
+- `wrapper/.packsnapshot`, `cli/.packsnapshot`, and `mcp/.packsnapshot`
+  must be the sorted `npm pack --dry-run --json` file lists. Run
+  `make pack-snapshot-check` before push when package contents or CI
+  pack steps change.
 - `docs/product-surface.json` and `docs/product-surface.md` are generated
   by `scripts/generate-product-surface.mjs`; run `make product-surface`
   after package, workflow, or parity metadata changes.

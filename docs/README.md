@@ -237,6 +237,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Release readiness | `make release-readiness` | Check release/handoff evidence checklist, generated preflight report shape, final proof closure, and publish decision boundary. |
 | Release decision plan | `make release-decision-plan` | Print no-network release workflow decision options without granting publish permission. |
 | CI contract | `make ci-contract` | Check GitHub workflow posture, package workflow gates, docs/release workflow safety rails, and release decision boundary. |
+| Sandbox key health | `make sandbox-key-health` | Optional live Clockify sandbox key preflight; skips cleanly when credentials are blank. |
 | Live safety | `make live-safety` | Check sandbox-only live-test docs, env gates, cleanup prefixes, and mock alternative. |
 | Test data lifecycle | `make test-data-lifecycle` | Check live sandbox prefixes, create/delete pairing, cleanup script coverage, leftover scans, and sanitized cleanup receipts. |
 | Risk register | `make risk-register` | Check known risks, accepted constraints, evidence paths, and closure gates. |

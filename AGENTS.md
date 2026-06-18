@@ -219,7 +219,7 @@ wrapper/src/**  (gitignored; populated by sync)
 wrapper/dist/**  (the packable artefact)
         │
         │  npm pack --dry-run    (verifies tarball; compare with the
-        │                         current wrapper/.packsnapshot baseline in CI)
+        │                         current <pkg>/.packsnapshot baseline in CI)
         ▼
 clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default path)
 ```
@@ -257,6 +257,8 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check touched package changelog coverage | `make changelog-drift` |
 | Check documentation index links | `make docs-index-drift` |
 | Check package size/startup budgets | `make performance-budgets` |
+| Check package tarball snapshots | `make pack-snapshot-check` |
+| Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |
 | Print a no-network operator plan/report | `node scripts/plan.mjs <topic>` — topics: `acceptance`, `change-impact`, `contract-inventory`, `examples`, `maintenance`, `onboarding`, `performance-calibration`, `release-decision`, `risk-status`, `workflow`. Per-topic modules under `scripts/<topic>-plan.mjs` / `<topic>-report.mjs` are libraries — do not add a new standalone CLI; add a topic to `plan.mjs` instead. |
 
@@ -386,7 +388,7 @@ wrapper/
 ├── .prettierrc + .prettierignore ← 4-space, double quotes, trailing commas, 100-char width. Ignore
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
-├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; CI diffs on every PR
+├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; mirrored by cli/mcp package snapshots
 ├── tests/                    (29 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug

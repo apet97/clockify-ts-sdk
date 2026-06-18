@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke mock-clockify coverage
+.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -106,6 +106,7 @@ help:
 	@printf '%s\n' '  make performance-receipt Write latest size/startup measurements for budget calibration.'
 	@printf '%s\n' '  make performance-calibration-plan Print the no-network budget calibration plan.'
 	@printf '%s\n' '  make pack-smoke          Install packed SDK/CLI/MCP tarballs into temp consumer projects.'
+	@printf '%s\n' '  make sandbox-key-health  Optional live Clockify sandbox key preflight; skips offline.'
 	@printf '%s\n' '  make mock-clockify       Start the local mock Clockify server for deterministic tests.'
 
 perfect: perfect-fast
@@ -155,16 +156,22 @@ lint:
 	npm run lint -w @clockify115/cli
 	npm run lint -w @clockify115/mcp-server
 
-# Regenerate wrapper/.packsnapshot from a freshly built wrapper dist. Run after
-# the SDK public surface or generated file names change, then commit.
+# Regenerate package .packsnapshot files from freshly built package dist trees.
+# Run after public surfaces or generated file names change, then commit.
 pack-snapshot:
 	npm run build -w clockify-sdk-ts-115
-	node scripts/pack-snapshot.mjs
+	npm run build -w @clockify115/cli
+	npm run build -w @clockify115/mcp-server
+	node scripts/pack-snapshot.mjs --pkg=wrapper
+	node scripts/pack-snapshot.mjs --pkg=cli
+	node scripts/pack-snapshot.mjs --pkg=mcp
 
-# Verify the committed snapshot still matches the built tarball (same proof CI
-# runs). Assumes the wrapper dist is already built.
+# Verify committed snapshots still match the built tarballs (same proof CI
+# runs). Assumes package dist trees are already built.
 pack-snapshot-check:
-	node scripts/pack-snapshot.mjs --check
+	node scripts/pack-snapshot.mjs --pkg=wrapper --check
+	node scripts/pack-snapshot.mjs --pkg=cli --check
+	node scripts/pack-snapshot.mjs --pkg=mcp --check
 
 goclmcp-drift:
 	@if [ ! -d ../GOCLMCP ]; then echo 'goclmcp-drift: ../GOCLMCP not found.' >&2; exit 1; fi
@@ -501,6 +508,9 @@ docs-drift:
 
 pack-smoke:
 	node scripts/pack-consumer-smoke.mjs
+
+sandbox-key-health:
+	node scripts/check-sandbox-key-health.mjs
 
 mock-clockify:
 	node scripts/mock-clockify-server.mjs

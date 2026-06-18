@@ -35,6 +35,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   troubleshooting docs share stable names for rate-limit headers, add-on-token
   scope, host routing, active-delete, dead-route, and delete-name-reservation
   failures.
+- Enforced `mcp/.packsnapshot` tarball-content drift in CI, replacing the old
+  print-only pack file list.
 - 7 new domain tools (**127 → 134**): a `shared_reports` group
   (`clockify_shared_reports_list` / `_view` / `_create` / `_update` / `_delete`)
   for the workspace's public-link reports, plus `clockify_users_invite`

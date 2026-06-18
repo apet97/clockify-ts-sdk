@@ -18,6 +18,8 @@ All notable changes to `@clockify115/cli` are documented here.
   troubleshooting docs: rate-limit headers, add-on-token scope, host routing,
   active-delete, dead-route, and delete-name-reservation failures now have
   stable vocabulary.
+- Enforced `cli/.packsnapshot` tarball-content drift in CI, replacing the old
+  print-only pack file list.
 
 ### Fixed
 

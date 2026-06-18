@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "CI/workflow posture contract. Checks existing workflow safety rails and local documentation without changing CI/CD behavior.",
+  "purpose": "CI/workflow posture contract. Checks workflow safety rails, package pack guards, and local documentation.",
   "policyDocument": {
     "path": "docs/ci-policy.md",
     "mustContain": [
@@ -48,7 +48,7 @@
         "npm run type-check",
         "npm test",
         "npm run build",
-        "npm pack --dry-run --json",
+        "node ../scripts/pack-snapshot.mjs --pkg=cli --check",
         "persist-credentials: false"
       ]
     },
@@ -63,7 +63,7 @@
         "npm run type-check",
         "npm test",
         "npm run build",
-        "npm pack --dry-run --json",
+        "node ../scripts/pack-snapshot.mjs --pkg=mcp --check",
         "persist-credentials: false"
       ]
     },
@@ -130,6 +130,21 @@
         "Pack (dry-run — never publishes)",
         "if: false",
         "persist-credentials: false"
+      ]
+    },
+    {
+      "path": ".github/workflows/sandbox-key-health.yml",
+      "mustContain": [
+        "name: Sandbox key health",
+        "schedule:",
+        "cron: \"0 7 * * 1\"",
+        "workflow_dispatch:",
+        "permissions:",
+        "contents: read",
+        "persist-credentials: false",
+        "secrets.CLOCKIFY_API_KEY",
+        "secrets.CLOCKIFY_WORKSPACE_ID",
+        "node scripts/check-sandbox-key-health.mjs"
       ]
     }
   ],
