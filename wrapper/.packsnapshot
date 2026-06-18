@@ -1,5 +1,9 @@
 LICENSE
 README.md
+dist/cjs/bulk.d.ts
+dist/cjs/bulk.d.ts.map
+dist/cjs/bulk.js
+dist/cjs/bulk.js.map
 dist/cjs/composed-fetch.d.ts
 dist/cjs/composed-fetch.d.ts.map
 dist/cjs/composed-fetch.js
@@ -73,6 +77,10 @@ dist/cjs/rate-limit.d.ts
 dist/cjs/rate-limit.d.ts.map
 dist/cjs/rate-limit.js
 dist/cjs/rate-limit.js.map
+dist/cjs/reports.d.ts
+dist/cjs/reports.d.ts.map
+dist/cjs/reports.js
+dist/cjs/reports.js.map
 dist/cjs/request-options.d.ts
 dist/cjs/request-options.d.ts.map
 dist/cjs/request-options.js
@@ -2837,6 +2845,10 @@ dist/cjs/with-response.d.ts
 dist/cjs/with-response.d.ts.map
 dist/cjs/with-response.js
 dist/cjs/with-response.js.map
+dist/esm/bulk.d.ts
+dist/esm/bulk.d.ts.map
+dist/esm/bulk.js
+dist/esm/bulk.js.map
 dist/esm/composed-fetch.d.ts
 dist/esm/composed-fetch.d.ts.map
 dist/esm/composed-fetch.js
@@ -2909,6 +2921,10 @@ dist/esm/rate-limit.d.ts
 dist/esm/rate-limit.d.ts.map
 dist/esm/rate-limit.js
 dist/esm/rate-limit.js.map
+dist/esm/reports.d.ts
+dist/esm/reports.d.ts.map
+dist/esm/reports.js
+dist/esm/reports.js.map
 dist/esm/request-options.d.ts
 dist/esm/request-options.d.ts.map
 dist/esm/request-options.js

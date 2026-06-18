@@ -256,6 +256,26 @@
         "types": "./dist/cjs/ensure.d.ts",
         "default": "./dist/cjs/ensure.js"
       }
+    },
+    "./reports": {
+      "import": {
+        "types": "./dist/esm/reports.d.ts",
+        "default": "./dist/esm/reports.js"
+      },
+      "require": {
+        "types": "./dist/cjs/reports.d.ts",
+        "default": "./dist/cjs/reports.js"
+      }
+    },
+    "./bulk": {
+      "import": {
+        "types": "./dist/esm/bulk.d.ts",
+        "default": "./dist/esm/bulk.js"
+      },
+      "require": {
+        "types": "./dist/cjs/bulk.d.ts",
+        "default": "./dist/cjs/bulk.js"
+      }
     }
   },
   "files": [

@@ -7,6 +7,18 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- New `clockify-sdk-ts-115/reports` subpath: typed report filter builders
+  (`summaryFilter`, `detailedFilter`, `weeklyFilter`) and response-narrowing
+  accessors (`detailedEntries` — coalesces the `timeEntries`/`timeentries`
+  spellings, `summaryGroups`, `reportTotals`) that re-expose the generated
+  report types, so callers stop casting report responses to ad-hoc shapes.
+- New `clockify-sdk-ts-115/bulk` subpath: `mapBounded(items, fn, {concurrency,
+  continueOnError})` runs an async op over many items with bounded concurrency
+  and collected per-item failures, plus thin DI `bulkArchiveProjects` /
+  `bulkDelete` wrappers. (Public surface: 81→90 names, 23→25 subpaths.)
+
 ### Fixed
 
 - Base-URL host allowlist now lists the **real** audit-log host

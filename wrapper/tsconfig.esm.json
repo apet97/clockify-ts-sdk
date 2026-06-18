@@ -35,7 +35,9 @@
     "invoice-body.ts",
     "dates.ts",
     "resolve.ts",
-    "ensure.ts"
+    "ensure.ts",
+    "reports.ts",
+    "bulk.ts"
   ],
   "exclude": [
     "node_modules",
