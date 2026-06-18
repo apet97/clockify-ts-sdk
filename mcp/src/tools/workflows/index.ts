@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { zNumberLike } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
-import { successResult } from "../../result.js";
+import { defineTool, successResult } from "../../result.js";
 
 import { WEBHOOK_EVENTS, invoiceClientWork, recordExpense, requestTimeOff, scheduleWork, setupWebhook } from "./business.js";
 import { demoCleanup, demoSeed } from "./demo.js";
@@ -14,7 +14,8 @@ import { runWorkflow } from "./run.js";
 import { fixEntry, logWork, startWork, stopWork, switchWork, timeEntryInputSchema } from "./time-tracking.js";
 
 export function registerWorkflowTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tools_guide",
         {
             title: "Clockify tools guide",
@@ -88,7 +89,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             ),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_plan_change",
         {
             title: "Plan a change (read-only)",
@@ -103,7 +105,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_plan_change", args, () => planChange(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_create_work_package",
         {
             title: "Create work package",
@@ -128,7 +131,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_create_work_package", args, () => createWorkPackage(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_log_work",
         {
             title: "Log finished work",
@@ -139,7 +143,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_log_work", args, () => logWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_start_work",
         {
             title: "Start work",
@@ -150,7 +155,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_start_work", args, () => startWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_stop_work",
         {
             title: "Stop work",
@@ -161,7 +167,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_stop_work", args, () => stopWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_switch_work",
         {
             title: "Switch work",
@@ -172,7 +179,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_switch_work", args, () => switchWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_review_day",
         {
             title: "Review day",
@@ -183,7 +191,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_review_day", args, () => reviewPeriod(ctx, "clockify_review_day", args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_review_week",
         {
             title: "Review week",
@@ -194,7 +203,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_review_week", args, () => reviewPeriod(ctx, "clockify_review_week", args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_fix_entry",
         {
             title: "Fix time entry",
@@ -222,7 +232,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_fix_entry", args, () => fixEntry(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_invoice_client_work",
         {
             title: "Invoice client work",
@@ -243,7 +254,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_invoice_client_work", args, () => invoiceClientWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_record_expense",
         {
             title: "Record expense",
@@ -267,7 +279,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_record_expense", args, () => recordExpense(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_request_time_off",
         {
             title: "Request time off",
@@ -287,7 +300,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_request_time_off", args, () => requestTimeOff(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_schedule_work",
         {
             title: "Schedule work",
@@ -313,7 +327,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_schedule_work", args, () => scheduleWork(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_setup_webhook",
         {
             title: "Set up webhook",
@@ -333,7 +348,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_setup_webhook", args, () => setupWebhook(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_demo_seed",
         {
             title: "Seed demo data",
@@ -349,7 +365,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         async (args) => runWorkflow("clockify_demo_seed", args, () => demoSeed(ctx, args)),
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_demo_cleanup",
         {
             title: "Clean demo data",

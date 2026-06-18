@@ -16,9 +16,9 @@
  * transport flags the failure at the protocol level too.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ShapeOutput, ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
-import type { ZodTypeAny } from "zod";
 
 import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
 
@@ -176,37 +176,42 @@ function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {
 }
 
 /** The registerTool config shape, minus the auto-injected `outputSchema`. */
-export interface ToolConfig {
+export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> {
     title: string;
     description: string;
-    inputSchema?: Record<string, ZodTypeAny>;
+    inputSchema?: InputArgs;
     annotations?: Record<string, unknown>;
 }
 
-/** A tool handler: receives the (schema-validated) args and returns an envelope. */
-export type ToolHandler = (args: Record<string, unknown>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+/** A tool handler: receives the (schema-validated, per-tool-inferred) args and returns an envelope. */
+export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> =
+    (args: ShapeOutput<InputArgs>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
 
 /**
  * Register a tool whose uniform `try { … } catch (err) { return errorResult(name, err) }`
  * envelope is owned here, so individual tools carry only their happy path. The optional
  * `recovery` is forwarded to `errorResult` for tools that want a tailored recovery hint.
  *
+ * The `InputArgs` generic is forwarded so the handler receives `ShapeOutput<InputArgs>` —
+ * per-tool Zod inference is preserved for the implementer (a zero-arg / no-`inputSchema`
+ * tool falls back to the `ZodRawShapeCompat` default and stays working).
+ *
  * MUST go through `server.registerTool` so the `installDefaultOutputSchema` monkeypatch
- * still injects the canonical `outputSchema`. The two casts bridge this helper's narrowed
- * config/handler types to `registerTool`'s generic (inputSchema-inferred) signature — the
- * same kind of sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the
- * model sees (and `server.test.ts` asserts) is unchanged.
+ * still injects the canonical `outputSchema`. The two `as never` casts sit on the
+ * `registerTool` forwarding boundary, NOT on the handler's `args` — the same kind of
+ * sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the model sees
+ * (and `server.test.ts` asserts) is unchanged.
  */
-export function defineTool(
+export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>(
     server: McpServer,
     name: string,
-    config: ToolConfig,
-    handler: ToolHandler,
+    config: ToolConfig<InputArgs>,
+    handler: ToolHandler<InputArgs>,
     recovery?: string | RecoveryHint,
 ): void {
-    server.registerTool(name, config as never, (async (args: Record<string, unknown>, extra: unknown) => {
+    server.registerTool(name, config as never, (async (args: unknown, extra: unknown) => {
         try {
-            return await handler(args, extra);
+            return await handler(args as ShapeOutput<InputArgs>, extra);
         } catch (err) {
             return errorResult(name, err, recovery);
         }

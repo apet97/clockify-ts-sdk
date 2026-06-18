@@ -36,6 +36,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- completed the type-preserving defineTool migration across all domain +
+  workflow tools (P2-2).
 - `clockify_create_work_package` is now transactional: it builds its client →
   project → task → tag create-or-reuse steps as a composition (the new SDK
   `clockify-sdk-ts-115/compose`) so a failure mid-way rolls back the entities it

@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 const SHARED_REPORT_TYPES = [
     "SUMMARY",
@@ -29,7 +29,8 @@ const SHARED_REPORT_TYPES = [
 ] as const;
 
 export function registerSharedReportsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_shared_reports_list",
         {
             title: "List shared reports",
@@ -38,16 +39,13 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async () => {
-            try {
-                const result = await ctx.client.sharedReports.list({ workspaceId: ctx.workspaceId });
-                return successResult("clockify_shared_reports_list", result, { workspaceId: ctx.workspaceId });
-            } catch (err) {
-                return errorResult("clockify_shared_reports_list", err);
-            }
+            const result = await ctx.client.sharedReports.list({ workspaceId: ctx.workspaceId });
+            return successResult("clockify_shared_reports_list", result, { workspaceId: ctx.workspaceId });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_shared_reports_view",
         {
             title: "View a shared report",
@@ -60,21 +58,18 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const result = await ctx.client.sharedReports.view({
-                    sharedReportId: args.shared_report_id,
-                    ...(args.export_type ? { exportType: args.export_type } : {}),
-                });
-                return successResult("clockify_shared_reports_view", result, {
-                    sharedReportId: args.shared_report_id,
-                });
-            } catch (err) {
-                return errorResult("clockify_shared_reports_view", err);
-            }
+            const result = await ctx.client.sharedReports.view({
+                sharedReportId: args.shared_report_id,
+                ...(args.export_type ? { exportType: args.export_type } : {}),
+            });
+            return successResult("clockify_shared_reports_view", result, {
+                sharedReportId: args.shared_report_id,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_shared_reports_create",
         {
             title: "Create a shared report",
@@ -89,24 +84,21 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
-                if (args.public !== undefined) body.public = args.public;
-                const created = await ctx.client.sharedReports.create({ workspaceId: ctx.workspaceId, body } as never);
-                const id = String((created as { id?: string }).id ?? "");
-                return successResult(
-                    "clockify_shared_reports_create",
-                    created,
-                    { workspaceId: ctx.workspaceId },
-                    writeReceipt("created", "shared_report", { id, name: args.name }),
-                );
-            } catch (err) {
-                return errorResult("clockify_shared_reports_create", err);
-            }
+            const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
+            if (args.public !== undefined) body.public = args.public;
+            const created = await ctx.client.sharedReports.create({ workspaceId: ctx.workspaceId, body } as never);
+            const id = String((created as { id?: string }).id ?? "");
+            return successResult(
+                "clockify_shared_reports_create",
+                created,
+                { workspaceId: ctx.workspaceId },
+                writeReceipt("created", "shared_report", { id, name: args.name }),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_shared_reports_update",
         {
             title: "Update a shared report",
@@ -122,27 +114,24 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
-                if (args.public !== undefined) body.public = args.public;
-                const updated = await ctx.client.sharedReports.update({
-                    workspaceId: ctx.workspaceId,
-                    sharedReportId: args.shared_report_id,
-                    body,
-                } as never);
-                return successResult(
-                    "clockify_shared_reports_update",
-                    updated,
-                    { workspaceId: ctx.workspaceId, sharedReportId: args.shared_report_id },
-                    writeReceipt("updated", "shared_report", { id: args.shared_report_id, name: args.name }),
-                );
-            } catch (err) {
-                return errorResult("clockify_shared_reports_update", err);
-            }
+            const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
+            if (args.public !== undefined) body.public = args.public;
+            const updated = await ctx.client.sharedReports.update({
+                workspaceId: ctx.workspaceId,
+                sharedReportId: args.shared_report_id,
+                body,
+            } as never);
+            return successResult(
+                "clockify_shared_reports_update",
+                updated,
+                { workspaceId: ctx.workspaceId, sharedReportId: args.shared_report_id },
+                writeReceipt("updated", "shared_report", { id: args.shared_report_id, name: args.name }),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_shared_reports_delete",
         {
             title: "Delete a shared report",
@@ -156,23 +145,19 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "shared_report", id: args.shared_report_id };
-                const confirmation = requireConfirmation(ctx, "clockify_shared_reports_delete", "shared_report_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.sharedReports.delete({
-                    workspaceId: ctx.workspaceId,
-                    sharedReportId: args.shared_report_id,
-                });
-                return successResult(
-                    "clockify_shared_reports_delete",
-                    { deleted: true, sharedReportId: args.shared_report_id },
-                    { workspaceId: ctx.workspaceId, sharedReportId: args.shared_report_id },
-                    writeReceipt("deleted", "shared_report", args.shared_report_id),
-                );
-            } catch (err) {
-                return errorResult("clockify_shared_reports_delete", err);
-            }
+            const preview = { action: "delete", entity: "shared_report", id: args.shared_report_id };
+            const confirmation = requireConfirmation(ctx, "clockify_shared_reports_delete", "shared_report_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.sharedReports.delete({
+                workspaceId: ctx.workspaceId,
+                sharedReportId: args.shared_report_id,
+            });
+            return successResult(
+                "clockify_shared_reports_delete",
+                { deleted: true, sharedReportId: args.shared_report_id },
+                { workspaceId: ctx.workspaceId, sharedReportId: args.shared_report_id },
+                writeReceipt("deleted", "shared_report", args.shared_report_id),
+            );
         },
     );
 }

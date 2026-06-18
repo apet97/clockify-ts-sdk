@@ -5,13 +5,14 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { errorResult, successResult } from "../result.js";
+import { defineTool, successResult } from "../result.js";
 
 const APPROVAL_STATES = ["APPROVED", "PENDING", "REJECTED", "WITHDRAWN"] as const;
 const APPROVAL_PERIODS = ["WEEKLY", "BIWEEKLY", "SEMI_MONTHLY", "MONTHLY"] as const;
 
 export function registerApprovalsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_approvals_list",
         {
             title: "List approval requests",
@@ -24,25 +25,22 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.status) req.status = args.status;
-                const items = (await ctx.client.approvals.list(req as never)) as unknown[];
-                return successResult("clockify_approvals_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_approvals_list", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.status) req.status = args.status;
+            const items = (await ctx.client.approvals.list(req as never)) as unknown[];
+            return successResult("clockify_approvals_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_approvals_submit",
         {
             title: "Submit a timesheet for approval",
@@ -54,21 +52,18 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const submitted = await ctx.client.approvals.submit({
-                    workspaceId: ctx.workspaceId,
-                    body: { period: args.period, periodStart: args.periodStart },
-                } as never);
-                return successResult("clockify_approvals_submit", submitted, {
-                    workspaceId: ctx.workspaceId,
-                });
-            } catch (err) {
-                return errorResult("clockify_approvals_submit", err);
-            }
+            const submitted = await ctx.client.approvals.submit({
+                workspaceId: ctx.workspaceId,
+                body: { period: args.period, periodStart: args.periodStart },
+            } as never);
+            return successResult("clockify_approvals_submit", submitted, {
+                workspaceId: ctx.workspaceId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_approvals_update_state",
         {
             title: "Update an approval request state",
@@ -81,24 +76,21 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const updated = await ctx.client.approvals.updateStatus({
-                    workspaceId: ctx.workspaceId,
-                    approvalRequestId: args.approvalRequestId,
-                    state: args.state,
-                    note: args.note,
-                } as never);
-                return successResult("clockify_approvals_update_state", updated, {
-                    workspaceId: ctx.workspaceId,
-                    approvalRequestId: args.approvalRequestId,
-                });
-            } catch (err) {
-                return errorResult("clockify_approvals_update_state", err);
-            }
+            const updated = await ctx.client.approvals.updateStatus({
+                workspaceId: ctx.workspaceId,
+                approvalRequestId: args.approvalRequestId,
+                state: args.state,
+                note: args.note,
+            } as never);
+            return successResult("clockify_approvals_update_state", updated, {
+                workspaceId: ctx.workspaceId,
+                approvalRequestId: args.approvalRequestId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_approvals_resubmit",
         {
             title: "Resubmit entries for approval",
@@ -110,18 +102,14 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const resubmitted = await ctx.client.approvals.resubmit({
-                    workspaceId: ctx.workspaceId,
-                    period: args.period,
-                    periodStart: args.periodStart,
-                });
-                return successResult("clockify_approvals_resubmit", resubmitted, {
-                    workspaceId: ctx.workspaceId,
-                });
-            } catch (err) {
-                return errorResult("clockify_approvals_resubmit", err);
-            }
+            const resubmitted = await ctx.client.approvals.resubmit({
+                workspaceId: ctx.workspaceId,
+                period: args.period,
+                periodStart: args.periodStart,
+            });
+            return successResult("clockify_approvals_resubmit", resubmitted, {
+                workspaceId: ctx.workspaceId,
+            });
         },
     );
 }

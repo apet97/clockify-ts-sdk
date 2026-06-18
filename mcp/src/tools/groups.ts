@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -23,7 +23,8 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
     };
     const meUserId = async (): Promise<string> =>
         String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_list",
         {
             title: "List user groups",
@@ -36,25 +37,22 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.projectId) req["project-id"] = args.projectId;
-                const items = (await ctx.client.userGroups.list(req as never)) as unknown[];
-                return successResult("clockify_groups_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_groups_list", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.projectId) req["project-id"] = args.projectId;
+            const items = (await ctx.client.userGroups.list(req as never)) as unknown[];
+            return successResult("clockify_groups_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_get",
         {
             title: "Get a user group",
@@ -63,30 +61,27 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                // The generated userGroups.get is typed `void` — Clockify has no
-                // single-GET route that returns the group — so read it from the
-                // list and scan by id (the same shape the addon found live).
-                const groups = (await ctx.client.userGroups.list({
-                    workspaceId: ctx.workspaceId,
-                    page: 1,
-                    "page-size": 200,
-                })) as Array<{ id?: string }>;
-                const group = groups.find((g) => String(g.id ?? "") === args.groupId);
-                if (!group) {
-                    return errorResult("clockify_groups_get", new Error(`no user group with id ${JSON.stringify(args.groupId)} in this workspace`));
-                }
-                return successResult("clockify_groups_get", group, {
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                });
-            } catch (err) {
-                return errorResult("clockify_groups_get", err);
+            // The generated userGroups.get is typed `void` — Clockify has no
+            // single-GET route that returns the group — so read it from the
+            // list and scan by id (the same shape the addon found live).
+            const groups = (await ctx.client.userGroups.list({
+                workspaceId: ctx.workspaceId,
+                page: 1,
+                "page-size": 200,
+            })) as Array<{ id?: string }>;
+            const group = groups.find((g) => String(g.id ?? "") === args.groupId);
+            if (!group) {
+                return errorResult("clockify_groups_get", new Error(`no user group with id ${JSON.stringify(args.groupId)} in this workspace`));
             }
+            return successResult("clockify_groups_get", group, {
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_create",
         {
             title: "Create a user group",
@@ -95,21 +90,18 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const created = await ctx.client.userGroups.create({
-                    workspaceId: ctx.workspaceId,
-                    body: { name: args.name },
-                });
-                return successResult("clockify_groups_create", created, {
-                    workspaceId: ctx.workspaceId,
-                }, writeReceipt("created", "group", { id: (created as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult("clockify_groups_create", err);
-            }
+            const created = await ctx.client.userGroups.create({
+                workspaceId: ctx.workspaceId,
+                body: { name: args.name },
+            });
+            return successResult("clockify_groups_create", created, {
+                workspaceId: ctx.workspaceId,
+            }, writeReceipt("created", "group", { id: (created as { id?: string }).id, name: args.name }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_update",
         {
             title: "Update a user group",
@@ -121,23 +113,20 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const updated = await ctx.client.userGroups.update({
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                    body: { name: args.name },
-                });
-                return successResult("clockify_groups_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                }, writeReceipt("updated", "group", args.groupId));
-            } catch (err) {
-                return errorResult("clockify_groups_update", err);
-            }
+            const updated = await ctx.client.userGroups.update({
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+                body: { name: args.name },
+            });
+            return successResult("clockify_groups_update", updated, {
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+            }, writeReceipt("updated", "group", args.groupId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_delete",
         {
             title: "Delete a user group",
@@ -151,27 +140,24 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "group", id: args.groupId };
-                const confirmation = requireConfirmation(ctx, "clockify_groups_delete", "group_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.userGroups.delete({
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                });
-                return successResult(
-                    "clockify_groups_delete",
-                    { deleted: true, groupId: args.groupId },
-                    { workspaceId: ctx.workspaceId, groupId: args.groupId },
-                    writeReceipt("deleted", "group", args.groupId),
-                );
-            } catch (err) {
-                return errorResult("clockify_groups_delete", err);
-            }
+            const preview = { action: "delete", entity: "group", id: args.groupId };
+            const confirmation = requireConfirmation(ctx, "clockify_groups_delete", "group_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.userGroups.delete({
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+            });
+            return successResult(
+                "clockify_groups_delete",
+                { deleted: true, groupId: args.groupId },
+                { workspaceId: ctx.workspaceId, groupId: args.groupId },
+                writeReceipt("deleted", "group", args.groupId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_list_members",
         {
             title: "List members of a user group",
@@ -180,22 +166,19 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const members = await ctx.client.userGroups.listMembers({
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                });
-                return successResult("clockify_groups_list_members", members, {
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                });
-            } catch (err) {
-                return errorResult("clockify_groups_list_members", err);
-            }
+            const members = await ctx.client.userGroups.listMembers({
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+            });
+            return successResult("clockify_groups_list_members", members, {
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_add_member",
         {
             title: "Add a user to a group",
@@ -207,29 +190,26 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const u = await resolveUserRef(
-                    { id: args.userId },
-                    { verb: "add to the group", meUserId: await meUserId(), listUsers, trustIds: false },
-                );
-                if (!u.ok) return clarifyResult("clockify_groups_add_member", "userId", "user", u.clarify);
-                const result = await ctx.client.userGroups.addMembers({
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                    userId: u.userId,
-                });
-                return successResult("clockify_groups_add_member", result, {
-                    workspaceId: ctx.workspaceId,
-                    groupId: args.groupId,
-                    userId: u.userId,
-                }, writeReceipt("updated", "group_member", { id: u.userId }));
-            } catch (err) {
-                return errorResult("clockify_groups_add_member", err);
-            }
+            const u = await resolveUserRef(
+                { id: args.userId },
+                { verb: "add to the group", meUserId: await meUserId(), listUsers, trustIds: false },
+            );
+            if (!u.ok) return clarifyResult("clockify_groups_add_member", "userId", "user", u.clarify);
+            const result = await ctx.client.userGroups.addMembers({
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+                userId: u.userId,
+            });
+            return successResult("clockify_groups_add_member", result, {
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+                userId: u.userId,
+            }, writeReceipt("updated", "group_member", { id: u.userId }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_groups_remove_member",
         {
             title: "Remove a user from a group",
@@ -244,33 +224,29 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = {
-                    action: "remove",
-                    entity: "group_member",
-                    groupId: args.groupId,
-                    userId: args.userId,
-                };
-                const confirmation = requireConfirmation(ctx, "clockify_groups_remove_member", "group_member_remove", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.userGroups.removeMember({
+            const preview = {
+                action: "remove",
+                entity: "group_member",
+                groupId: args.groupId,
+                userId: args.userId,
+            };
+            const confirmation = requireConfirmation(ctx, "clockify_groups_remove_member", "group_member_remove", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.userGroups.removeMember({
+                workspaceId: ctx.workspaceId,
+                groupId: args.groupId,
+                userId: args.userId,
+            });
+            return successResult(
+                "clockify_groups_remove_member",
+                { removed: true, groupId: args.groupId, userId: args.userId },
+                {
                     workspaceId: ctx.workspaceId,
                     groupId: args.groupId,
                     userId: args.userId,
-                });
-                return successResult(
-                    "clockify_groups_remove_member",
-                    { removed: true, groupId: args.groupId, userId: args.userId },
-                    {
-                        workspaceId: ctx.workspaceId,
-                        groupId: args.groupId,
-                        userId: args.userId,
-                    },
-                    writeReceipt("deleted", "group_member", args.userId),
-                );
-            } catch (err) {
-                return errorResult("clockify_groups_remove_member", err);
-            }
+                },
+                writeReceipt("deleted", "group_member", args.userId),
+            );
         },
     );
 }

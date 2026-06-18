@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { searchAgentDocs } from "../agent-docs/search.js";
-import { errorResult, successResult } from "../result.js";
+import { defineTool, errorResult, successResult } from "../result.js";
 
 const SNIPPETS = {
     status: {
@@ -36,7 +36,8 @@ type SnippetTopic = keyof typeof SNIPPETS;
 type SnippetSurface = keyof (typeof SNIPPETS)[SnippetTopic];
 
 export function registerAgentDocsTools(server: McpServer): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_docs_search",
         {
             title: "Search Clockify agent docs",
@@ -75,7 +76,8 @@ export function registerAgentDocsTools(server: McpServer): void {
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_operation_guide",
         {
             title: "Clockify operation guide",
@@ -121,7 +123,8 @@ export function registerAgentDocsTools(server: McpServer): void {
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_sdk_snippet",
         {
             title: "Clockify SDK/CLI/MCP snippet",

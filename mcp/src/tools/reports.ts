@@ -8,7 +8,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { errorResult, successResult } from "../result.js";
+import { defineTool, successResult } from "../result.js";
 
 const reportCore = {
     dateRangeStart: z.string().describe("ISO start, e.g. 2026-06-01T00:00:00Z"),
@@ -25,7 +25,8 @@ function reportRequest(ctx: Context, args: { extra?: Record<string, unknown> } &
 }
 
 export function registerReportsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_reports_summary",
         {
             title: "Summary report",
@@ -37,19 +38,17 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const data = await ctx.client.reports.summary(reportRequest(ctx, args) as never);
-                return successResult("clockify_reports_summary", data, undefined, {
-                    entity: "report",
-                    next: [{ tool: "clockify_reports_detailed", reason: "Drill into the time entries behind these totals." }],
-                });
-            } catch (err) {
-                return errorResult("clockify_reports_summary", err, "Confirm the date range and that summaryFilter.groups is set.");
-            }
+            const data = await ctx.client.reports.summary(reportRequest(ctx, args) as never);
+            return successResult("clockify_reports_summary", data, undefined, {
+                entity: "report",
+                next: [{ tool: "clockify_reports_detailed", reason: "Drill into the time entries behind these totals." }],
+            });
         },
+        "Confirm the date range and that summaryFilter.groups is set.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_reports_detailed",
         {
             title: "Detailed report",
@@ -61,16 +60,14 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const data = await ctx.client.reports.detailed(reportRequest(ctx, args) as never);
-                return successResult("clockify_reports_detailed", data, undefined, { entity: "report" });
-            } catch (err) {
-                return errorResult("clockify_reports_detailed", err, "Confirm the date range and that detailedFilter is set.");
-            }
+            const data = await ctx.client.reports.detailed(reportRequest(ctx, args) as never);
+            return successResult("clockify_reports_detailed", data, undefined, { entity: "report" });
         },
+        "Confirm the date range and that detailedFilter is set.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_reports_weekly",
         {
             title: "Weekly report",
@@ -82,16 +79,14 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const data = await ctx.client.reports.weekly(reportRequest(ctx, args) as never);
-                return successResult("clockify_reports_weekly", data, undefined, { entity: "report" });
-            } catch (err) {
-                return errorResult("clockify_reports_weekly", err, "Confirm the date range and that weeklyFilter is set.");
-            }
+            const data = await ctx.client.reports.weekly(reportRequest(ctx, args) as never);
+            return successResult("clockify_reports_weekly", data, undefined, { entity: "report" });
         },
+        "Confirm the date range and that weeklyFilter is set.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_reports_attendance",
         {
             title: "Attendance report",
@@ -103,12 +98,9 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const data = await ctx.client.reports.attendance(reportRequest(ctx, args) as never);
-                return successResult("clockify_reports_attendance", data, undefined, { entity: "report" });
-            } catch (err) {
-                return errorResult("clockify_reports_attendance", err, "Confirm the date range and that attendanceFilter is set.");
-            }
+            const data = await ctx.client.reports.attendance(reportRequest(ctx, args) as never);
+            return successResult("clockify_reports_attendance", data, undefined, { entity: "report" });
         },
+        "Confirm the date range and that attendanceFilter is set.",
     );
 }
