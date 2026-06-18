@@ -1142,6 +1142,22 @@
       "perfectFull": true
     },
     {
+      "id": "mcp-tool-manifest",
+      "target": "mcp-tool-manifest-drift",
+      "checker": "mcp/scripts/generate-tool-manifest.mjs",
+      "policies": [
+        "docs/gate-tiers.md"
+      ],
+      "contracts": [
+        "docs/mcp-tool-manifest.json"
+      ],
+      "auditIds": [
+        "contract-inventory"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "cli-contract",
       "target": "cli-contract",
       "checker": "scripts/check-cli-contract.mjs",

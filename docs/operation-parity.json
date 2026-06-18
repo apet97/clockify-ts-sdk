@@ -3,7 +3,7 @@
   "purpose": "Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScript MCP tools, and GOCLMCP tools.",
   "sources": {
     "openapi": "docs/openapi-operations.json",
-    "tsMcp": "mcp/src/tools/*.ts",
+    "tsMcp": "docs/mcp-tool-manifest.json",
     "goMcp": "../GOCLMCP/docs/tool-catalog.json",
     "overrides": "docs/operation-parity-overrides.json"
   },

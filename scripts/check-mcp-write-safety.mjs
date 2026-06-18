@@ -6,6 +6,13 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const contract = await readJson("docs/mcp-write-safety-contract.json", "contractPath");
+// Tool-set discovery comes from the generated structural manifest, not from
+// regex-scanning mcp/src/tools/*.ts. Per-tool body markers are still scanned on
+// source after the manifest has supplied the destructive tool names.
+const toolManifest = await readJson(
+    contract.wiring?.toolManifest ?? "docs/mcp-tool-manifest.json",
+    "toolManifest",
+);
 
 function fail(label, message) {
     failures.push(`${label}: ${message}`);
@@ -184,6 +191,7 @@ function validateContractShape() {
         assertNonEmptyString("wiring.qualityGate", contract.wiring.qualityGate);
         assertNonEmptyString("wiring.inventoryId", contract.wiring.inventoryId);
         assertNonEmptyString("wiring.auditId", contract.wiring.auditId);
+        safeRelativePath("wiring.toolManifest", contract.wiring.toolManifest);
     }
 }
 
@@ -412,33 +420,25 @@ function nextRegistrationIndex(text, from) {
 }
 
 async function discoverDestructiveTools() {
-    const toolsDirectory = safeRelativePath("wiring.toolsDirectory", contract.wiring?.toolsDirectory) ?? "mcp/src/tools";
-    const dir = path.join(root, toolsDirectory);
-    const files = await listTypeScriptFiles(dir);
+    const destructiveNames = (toolManifest.tools ?? [])
+        .filter((tool) => tool && tool.destructiveHint === true && typeof tool.name === "string")
+        .map((tool) => tool.name);
     const tools = [];
-
-    const nameMatcher = new RegExp(`${REGISTRATION_OPENER}"([^"]+)"`);
-    for (const file of files) {
-        const relPath = path.relative(root, file);
-        const text = await readRel(relPath);
-        let offset = 0;
-        while (offset < text.length) {
-            const start = nextRegistrationIndex(text, offset);
-            if (start === -1) break;
-            const next = nextRegistrationIndex(text, start + 1);
-            const whole = text.slice(start, next === -1 ? text.length : next);
-            offset = start + 1;
-
-            if (!/destructiveHint:\s*true/.test(whole)) continue;
-            const nameMatch = whole.match(nameMatcher);
-            if (!nameMatch) continue;
-            const callbackStart = whole.indexOf("async (args");
-            const registration = callbackStart === -1 ? whole.slice(0, 1600) : whole.slice(0, callbackStart);
-            const body = callbackStart === -1 ? whole : whole.slice(callbackStart);
-            tools.push({ name: nameMatch[1], file: relPath, registration, body });
+    for (const name of destructiveNames) {
+        const text = findToolFile(name);
+        if (!text) {
+            fail("toolManifest", `destructive tool ${name} from manifest has no matching source file`);
+            continue;
         }
+        const match = text.match(toolRegistrationRegExp(name));
+        const start = match?.index ?? 0;
+        const next = nextRegistrationIndex(text, start + 1);
+        const whole = text.slice(start, next === -1 ? text.length : next);
+        const callbackStart = whole.indexOf("async (args");
+        const registration = callbackStart === -1 ? whole.slice(0, 1600) : whole.slice(0, callbackStart);
+        const body = callbackStart === -1 ? whole : whole.slice(callbackStart);
+        tools.push({ name, file: "(manifest-keyed)", registration, body });
     }
-
     return tools;
 }
 

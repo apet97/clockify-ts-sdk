@@ -71,6 +71,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Maintenance Playbook | `make maintenance-playbook` | yes |
 | Mcp Agent Ux | `make mcp-agent-ux` | yes |
 | Mcp Contract | `make mcp-contract` | yes |
+| Mcp Tool Manifest | `make mcp-tool-manifest-drift` | yes |
 | Mcp Write Safety | `make mcp-write-safety` | yes |
 | Mock Contract | `make mock-contract` | yes |
 | Mutation Safety | `make mutation-safety` | yes |
@@ -104,4 +105,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 71.
+Total gates: 72.
