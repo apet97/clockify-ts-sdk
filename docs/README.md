@@ -16,6 +16,10 @@ Then, regardless of surface:
 
 - [`install-personas.md`](./install-personas.md) — which install path fits you, and the mock vs. live boundary.
 - [`quickstart-receipt.md`](./quickstart-receipt.md) — a diagnostics-first first run (no live calls required).
+- **Make your first SDK API call:** set `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID`,
+  then use `createClockifyClient()` and `client.tags.list({ workspaceId })`; the
+  [SDK README](../wrapper/README.md) auth section and
+  [`quickstart-receipt.md`](./quickstart-receipt.md) walk the first run safely.
 - [`workflow-cookbook.md`](./workflow-cookbook.md) — common cross-surface recipes (set up work → log it, invoice a client, review a timesheet).
 - [`agent-tasks/README.md`](./agent-tasks/README.md) — task-scoped playbooks for agents (fix a helper, add a tool/command, handle drift) with files-to-edit, tests, and checklists.
 - [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
@@ -26,6 +30,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 "yesterday" / "next Monday" / period keywords to the instants the API wants.
 
 ## Operator docs
+
+### User-facing
 
 | Document | Purpose |
 |---|---|
@@ -41,6 +47,11 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`operator-toolbox.md`](./operator-toolbox.md) | No-network helper command catalogue for orientation, workflow, maintenance, release, performance, risk, and support planning. |
 | [`quickstart-receipt.md`](./quickstart-receipt.md) | Diagnostics-first quickstart receipt for SDK, CLI, MCP, mock/live split, and first live probes. |
 | [`migration-guide.md`](./migration-guide.md) | Package naming, import, auth, CLI, and MCP migration notes. |
+
+### Internal governance
+
+| Document | Purpose |
+|---|---|
 | [`dependency-policy.md`](./dependency-policy.md) | Local codegen tooling, runtime floors, and dependency update rules. |
 | [`dependency-license-policy.md`](./dependency-license-policy.md) | Runtime dependency license ledger, purpose map, and dependency-change evidence rules. |
 | [`config-precedence-policy.md`](./config-precedence-policy.md) | SDK/CLI/MCP configuration precedence, rc-file, env, flag, and base URL override rules. |
@@ -190,6 +201,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Generator config | `make generator-config` | Check local TypeScript generator input, output, command, and wrapper sync paths. |
 | Generator independence | `make generator-independence` | Keep generated SDK output behind wrapper seams. |
 | Generator comparison | `make generator-comparison` | Compare OpenAPI SDK stamps to generated TypeScript methods. |
+| Doc correctness anchor | `make doc-correctness-anchor` | Compare the documented OpenAPI operation count to emitted generated SDK methods. |
 | Generator portability | `make generator-portability` | Check no-paid-generator, local-regeneration, and vendor-exit boundaries. |
 | Package contract | `make package-contract` | Compare SDK/CLI/MCP manifests to the public package contract snapshot. |
 | Pack smoke | `make pack-smoke` | Pack SDK/CLI/MCP tarballs, install them into clean temporary consumer projects, and check import/binary entrypoints against the smoke contract. |

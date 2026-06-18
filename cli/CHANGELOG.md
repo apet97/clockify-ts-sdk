@@ -14,6 +14,10 @@ All notable changes to `@clockify115/cli` are documented here.
   single-id `as { id?: string }` response casts across commands. CLI source now
   enables `exactOptionalPropertyTypes`, and clean list requests use generated
   `ClockifyApi.List*Request` types instead of bare `as never` casts.
+- Expanded shared error-code registry coverage for CLI JSON output and generated
+  troubleshooting docs: rate-limit headers, add-on-token scope, host routing,
+  active-delete, dead-route, and delete-name-reservation failures now have
+  stable vocabulary.
 
 ### Fixed
 

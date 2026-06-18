@@ -25,6 +25,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check generator config | `make generator-config` | Local TypeScript generator input, output, command, and wrapper sync paths stay intentional. |
 | Check generator independence | `make generator-independence` | Generated local SDK output remains behind the wrapper package seam and is not imported by CLI/MCP as product code. |
 | Check generator comparison | `make generator-comparison` | Corrected OpenAPI SDK method stamps still exist in generated TypeScript client files. |
+| Check doc correctness anchor | `make doc-correctness-anchor` | Documented OpenAPI operation count matches the public methods emitted in the generated TypeScript client. |
 | Check generator portability | `make generator-portability` | No-paid-generator, local-regeneration, and vendor-exit boundaries stay explicit. |
 | Check package contract | `make package-contract` | SDK/CLI/MCP manifests keep the expected public package names, bins, exports, pack files, and publish-safety rails. |
 | Check examples contract | `make examples-contract` | SDK examples import the public package name, stay catalogued, avoid local source imports, and avoid committed secret-shaped values. |

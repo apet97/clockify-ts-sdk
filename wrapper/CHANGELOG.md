@@ -48,6 +48,10 @@ once v1.0.0 ships.
   `ws.iterProjects` / `ws.iterTags` / `ws.iterClients` — auto-paginating
   `iterAll` wrappers with the workspaceId and fetcher wired for you, no `.bind`
   ritual. (These are instance methods, not new root exports.)
+- Expanded the shared error-code registry from 10 to 16 entries so SDK, CLI,
+  MCP, troubleshooting, and recovery docs name rate-limit headers, add-on token
+  scope, host routing, active-delete, dead-route, and delete-name-reservation
+  failures consistently.
 
 ### Changed
 
