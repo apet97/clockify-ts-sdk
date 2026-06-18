@@ -303,20 +303,34 @@ for (const budget of budgets.fileSize ?? []) {
     else console.log(`${budget.path}: ${size}/${budget.maxBytes} bytes`);
 }
 
+// Set CLOCKIFY_PERF_TIMING=0 to keep running each startup smoke (so a crash or
+// a wrong tool count still reds) while suppressing the wall-clock comparison.
+// Shared CI runners show large per-run startup variance under contention, which
+// would otherwise red the canonical proof on noise rather than a real
+// regression. File-size ceilings and the in-smoke count assertion stay fatal.
+const ENFORCE_TIMING = process.env.CLOCKIFY_PERF_TIMING !== "0";
+
 function timed(name, maxMs, fn) {
     const failureCountBefore = failures.length;
     const start = Date.now();
     fn();
     const elapsed = Date.now() - start;
+    const overBudget = elapsed > maxMs;
     record({
         kind: "timing",
         name,
         actualMs: elapsed,
         maxMs,
-        ok: failures.length === failureCountBefore && elapsed <= maxMs,
+        timingEnforced: ENFORCE_TIMING,
+        ok: failures.length === failureCountBefore && (!ENFORCE_TIMING || !overBudget),
     });
-    if (elapsed > maxMs) fail(`${name}: ${elapsed}ms exceeds ${maxMs}ms`);
-    else console.log(`${name}: ${elapsed}/${maxMs}ms`);
+    if (overBudget && ENFORCE_TIMING) {
+        fail(`${name}: ${elapsed}ms exceeds ${maxMs}ms`);
+    } else if (overBudget) {
+        console.log(`${name}: ${elapsed}/${maxMs}ms (over budget; timing not enforced, CLOCKIFY_PERF_TIMING=0)`);
+    } else {
+        console.log(`${name}: ${elapsed}/${maxMs}ms`);
+    }
 }
 
 function runNode(name, maxMs, args, options = {}) {

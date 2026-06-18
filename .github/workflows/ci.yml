@@ -296,3 +296,49 @@ jobs:
       - name: Run Deno smoke (import + name resolution)
         working-directory: wrapper
         run: deno run --allow-env --allow-read --allow-write --node-modules-dir=auto scripts/deno-smoke.ts
+
+  cross-gate:
+    name: Cross-gate composite (parity + openapi + surface drift)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        run: npm ci
+
+      # The cross-gate drift checks join OpenAPI operations, SDK method stamps,
+      # and MCP tool names. operation-parity-drift scans mcp/src/tools and the
+      # SDK stamps, so the generated SDK must be present.
+      - name: Generate + build wrapper + mcp
+        run: |
+          make sdk-codegen
+          npm run build -w clockify-sdk-ts-115
+          npm run build -w @clockify115/mcp-server
+
+      # Catches the per-package-green-but-cross-gate-broken gap: a tool rename
+      # or SDK naming change can pass every per-package suite yet break the
+      # parity/openapi/surface joins.
+      - name: Operation parity drift
+        run: make operation-parity-drift
+
+      - name: OpenAPI operations drift
+        run: make openapi-operations-drift
+
+      - name: OpenAPI contract lint
+        run: make openapi-lint
+
+      - name: Product surface drift
+        run: make product-surface-drift
