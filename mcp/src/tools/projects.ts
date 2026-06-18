@@ -1,10 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -23,7 +24,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListProjectsRequest = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
@@ -31,7 +32,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.name) req.name = args.name;
             if (args.archived !== undefined) req.archived = args.archived;
             if (args.clientId) req.clients = [args.clientId];
-            const projects = (await ctx.client.projects.list(req as never)) as unknown[];
+            const projects = await ctx.client.projects.list(req);
             return successResult("clockify_projects_list", projects, {
                 workspaceId: ctx.workspaceId,
                 count: projects.length,
@@ -64,8 +65,9 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.color) body.color = args.color;
             if (args.billable !== undefined) body.billable = args.billable;
             if (args.isPublic !== undefined) body.isPublic = args.isPublic;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const project = await ctx.client.projects.create(body as never);
-            return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: (project as { id?: string }).id, name: args.name }));
+            return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: entityId(project), name: args.name }));
         },
         "Reuse an existing client ID or check for an existing project with this name.",
     );
@@ -121,6 +123,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.isPublic !== undefined) body.isPublic = args.isPublic;
             if (args.archived !== undefined) body.archived = args.archived;
             if (args.note !== undefined) body.note = args.note;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = await ctx.client.projects.update(body as never);
             return successResult("clockify_projects_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -201,7 +204,9 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     ? await ctx.client.projects.updateUserCostRate(req as never)
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     : await ctx.client.projects.updateUserHourlyRate(req as never);
             return successResult("clockify_projects_set_member_rate", updated, {
                 workspaceId: ctx.workspaceId,

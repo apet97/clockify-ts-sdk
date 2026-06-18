@@ -52,6 +52,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             };
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const response = (await client.expenses.list(req as never)) as {
                 expenses?: { expenses?: unknown[] } | unknown[];
             };
@@ -133,6 +134,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 userId: opts.user,
                 expenseId: id,
                 workspaceId,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never)) as { id?: string };
             const data = { id: updated.id ?? id };
             printReceipt(

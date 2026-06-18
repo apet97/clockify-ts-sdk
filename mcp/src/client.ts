@@ -52,7 +52,11 @@ export function loadContext(
     // resolved base URL, so a malicious CLOCKIFY_BASE_URL is rejected
     // here before any request leaves the process.
     return {
-        client: createClockifyClient({ apiKey, environment, ...options }),
+        client: createClockifyClient({
+            apiKey,
+            ...(environment !== undefined ? { environment } : {}),
+            ...options,
+        }),
         workspaceId,
         confirmationTokens: new ConfirmationTokenStore(),
     };

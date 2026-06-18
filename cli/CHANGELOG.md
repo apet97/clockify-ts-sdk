@@ -4,6 +4,13 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- New `cli/src/sdk-narrow.ts` `entityId()` helper replacing the inline
+  single-id `as { id?: string }` response casts across commands. CLI source now
+  enables `exactOptionalPropertyTypes`, and clean list requests use generated
+  `ClockifyApi.List*Request` types instead of bare `as never` casts.
+
 ### Fixed
 
 - `clk115 stop` now stops the running timer through the live, bound route: it detects a

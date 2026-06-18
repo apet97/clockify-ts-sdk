@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 const SHARED_REPORT_TYPES = [
     "SUMMARY",
@@ -86,8 +86,9 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
         async (args) => {
             const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
             if (args.public !== undefined) body.public = args.public;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = await ctx.client.sharedReports.create({ workspaceId: ctx.workspaceId, body } as never);
-            const id = String((created as { id?: string }).id ?? "");
+            const id = String(entityId(created) ?? "");
             return successResult(
                 "clockify_shared_reports_create",
                 created,
@@ -120,6 +121,7 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
                 workspaceId: ctx.workspaceId,
                 sharedReportId: args.shared_report_id,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult(
                 "clockify_shared_reports_update",

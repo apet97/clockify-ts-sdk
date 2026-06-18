@@ -9,7 +9,7 @@ import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -33,7 +33,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+        entityId(await ctx.client.users.getCurrentUser()) ?? "";
 
     defineTool(
         server,
@@ -174,7 +174,9 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     ? await ctx.client.workspaces.updateUserCostRate(req as never)
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     : await ctx.client.workspaces.updateUserHourlyRate(req as never);
             return successResult("clockify_users_set_member_rate", updated, {
                 workspaceId: ctx.workspaceId,
@@ -204,6 +206,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 "send-email": (args.sendEmail ?? true) ? "true" : "false",
                 email: args.email,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult(
                 "clockify_users_invite",

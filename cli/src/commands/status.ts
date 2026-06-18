@@ -5,8 +5,10 @@
  */
 import type { Command } from "commander";
 
+
 import { formatIsoDuration } from "../duration.js";
 import { printObject } from "../output.js";
+import { entityId } from "../sdk-narrow.js";
 
 import { resolveBaseContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -27,7 +29,7 @@ export const registerStatusCommand: Registrar = (program, services) => {
                 const workspaces = (await client.workspaces.list()) as Array<{ id?: string; name?: string }>;
                 printObject(
                     {
-                        userId: (user as { id?: string }).id ?? "",
+                        userId: entityId(user) ?? "",
                         email: (user as { email?: string }).email ?? "",
                         workspaceId: "(not set)",
                         availableWorkspaces: workspaces.map((w) => ({ id: w.id ?? "", name: w.name ?? "" })),
@@ -46,12 +48,12 @@ export const registerStatusCommand: Registrar = (program, services) => {
             printObject(
                 {
                     workspaceId,
-                    userId: (user as { id?: string }).id ?? "",
+                    userId: entityId(user) ?? "",
                     email: (user as { email?: string }).email ?? "",
                     name: (user as { name?: string }).name ?? "",
                     runningEntry: running
                         ? {
-                              id: (running as { id?: string }).id,
+                              id: entityId(running),
                               description: (running as { description?: string }).description ?? "",
                               projectId: (running as { projectId?: string | null }).projectId ?? "",
                               startedAt: extractStart(running),
@@ -75,7 +77,7 @@ function normaliseEntries(resp: unknown): unknown[] {
 
 function isOwn(entry: unknown, user: unknown): boolean {
     const entryUserId = (entry as { userId?: string }).userId;
-    const userId = (user as { id?: string }).id;
+    const userId = entityId(user);
     return entryUserId !== undefined && userId !== undefined && entryUserId === userId;
 }
 

@@ -2,6 +2,7 @@
  * Timesheet approval workflow tools.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -25,13 +26,13 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListApprovalsRequest = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
-            if (args.status) req.status = args.status;
-            const items = (await ctx.client.approvals.list(req as never)) as unknown[];
+            if (args.status) req.status = args.status as ClockifyApi.ApprovalRequestFilterState;
+            const items = await ctx.client.approvals.list(req);
             return successResult("clockify_approvals_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -55,6 +56,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             const submitted = await ctx.client.approvals.submit({
                 workspaceId: ctx.workspaceId,
                 body: { period: args.period, periodStart: args.periodStart },
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_approvals_submit", submitted, {
                 workspaceId: ctx.workspaceId,
@@ -81,6 +83,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 approvalRequestId: args.approvalRequestId,
                 state: args.state,
                 note: args.note,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_approvals_update_state", updated, {
                 workspaceId: ctx.workspaceId,

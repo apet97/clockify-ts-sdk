@@ -67,6 +67,7 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
     };
     const confirmation = maybeConfirm(ctx, "clockify_record_expense", "expense_write", args, preview);
     if (confirmation) return confirmation;
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const expense = await ctx.client.expenses.create(preview as never);
     return successResult("clockify_record_expense", expense, { workspaceId: ctx.workspaceId }, {
         entity: "expense",
@@ -93,6 +94,7 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
     };
     const confirmation = maybeConfirm(ctx, "clockify_request_time_off", "time_off_write", args, preview);
     if (confirmation) return confirmation;
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const request = await ctx.client.timeOff.submit(preview as never);
     return successResult("clockify_request_time_off", request, { workspaceId: ctx.workspaceId }, {
         entity: "time_off_request",
@@ -122,6 +124,7 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
     };
     const confirmation = maybeConfirm(ctx, "clockify_schedule_work", "scheduling_write", args, preview);
     if (confirmation) return confirmation;
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const assignment = await ctx.client.scheduling.create(preview as never);
     return successResult("clockify_schedule_work", assignment, { workspaceId: ctx.workspaceId }, {
         entity: "assignment",
@@ -152,6 +155,7 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
     };
     const confirmation = maybeConfirm(ctx, "clockify_setup_webhook", "external_side_effect", args, preview);
     if (confirmation) return confirmation;
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const webhook = await ctx.client.webhooks.create({ workspaceId: ctx.workspaceId, body: preview } as never);
     return successResult("clockify_setup_webhook", webhook, { workspaceId: ctx.workspaceId }, {
         entity: "webhook",

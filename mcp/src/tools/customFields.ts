@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerCustomFieldsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -61,10 +61,11 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             const created = await ctx.client.customFields.createForWorkspace({
                 workspaceId: ctx.workspaceId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_custom_fields_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "custom_field", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "custom_field", { id: entityId(created), name: args.name }));
         },
     );
 
@@ -97,6 +98,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 workspaceId: ctx.workspaceId,
                 customFieldId: args.customFieldId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_custom_fields_update", updated, {
                 workspaceId: ctx.workspaceId,

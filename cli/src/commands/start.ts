@@ -6,6 +6,8 @@
 import type { Command } from "commander";
 
 import { printReceipt } from "../receipt.js";
+import { entityId } from "../sdk-narrow.js";
+
 
 import { resolveContext } from "./helpers.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
@@ -30,7 +32,7 @@ export const registerStartCommand: Registrar = (program, services) => {
         .action(async function (this: Command, description: string | undefined, opts: StartOpts) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const user = await client.users.getCurrentUser();
-            const userId = (user as { id?: string }).id;
+            const userId = entityId(user);
             if (!userId) {
                 throw new Error("could not determine user ID from getCurrentUser response");
             }
@@ -52,6 +54,7 @@ export const registerStartCommand: Registrar = (program, services) => {
             if (tagIds && tagIds.length > 0) body.tagIds = tagIds;
             if (opts.billable) body.billable = true;
 
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = await client.timeEntries.create({ workspaceId, ...body } as never);
             const entry = created as { id?: string; description?: string; projectId?: string | null; timeInterval?: { start?: string } };
             const data = {

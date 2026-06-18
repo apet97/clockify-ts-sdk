@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Every `as never` in cli/src + mcp/src must be eliminated or annotated `KEEP as never` (documented generated-type bug). The residual unannotated budget ratchets to 0; the two forwarding seams (result.ts, output-schema.ts) are exempt by path.",
+  "allowedRequestCastBudget": 0,
+  "exemptPathSuffixes": [
+    "result.ts",
+    "output-schema.ts"
+  ],
+  "strictness": {
+    "wrapper": {
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "isolatedModules": true,
+      "noImplicitOverride": false,
+      "exactOptionalPropertyTypes": false,
+      "blockedBy": "generated wrapper/src/** (TS4114 ClockifyApiError.cause; 10 EOPT errors)"
+    },
+    "cli": {
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "isolatedModules": true,
+      "noImplicitOverride": true,
+      "exactOptionalPropertyTypes": true
+    },
+    "mcp": {
+      "strict": true,
+      "noUncheckedIndexedAccess": true,
+      "isolatedModules": true,
+      "noImplicitOverride": true,
+      "exactOptionalPropertyTypes": true
+    }
+  },
+  "wiring": {
+    "makeTarget": "consumer-cast-budget",
+    "checker": "scripts/check-consumer-cast-budget.mjs"
+  }
+}

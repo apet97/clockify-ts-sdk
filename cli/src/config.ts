@@ -32,14 +32,17 @@ export interface GlobalFlags {
  */
 export function loadConfig(flags: GlobalFlags = {}, env: NodeJS.ProcessEnv = process.env): CliConfig {
     const file = loadRcFile(env);
+    const apiKey = firstPresent(flags.apiKey, env.CLOCKIFY_API_KEY, file.apiKey);
+    const workspaceId = firstPresent(flags.workspace, env.CLOCKIFY_WORKSPACE_ID, file.workspaceId);
+    const baseUrl = firstPresent(flags.baseUrl, env.CLOCKIFY_BASE_URL, file.baseUrl);
     // firstPresent treats an empty/whitespace value as absent, so a blank env var
     // (e.g. the `CLOCKIFY_API_KEY=''` deterministic-gate convention) does not shadow a
     // real rc-file value — matching doctor's isPresent() trim semantics. Precedence
     // is unchanged: flags ?? env ?? file (highest → lowest).
     return {
-        apiKey: firstPresent(flags.apiKey, env.CLOCKIFY_API_KEY, file.apiKey),
-        workspaceId: firstPresent(flags.workspace, env.CLOCKIFY_WORKSPACE_ID, file.workspaceId),
-        baseUrl: firstPresent(flags.baseUrl, env.CLOCKIFY_BASE_URL, file.baseUrl),
+        ...(apiKey !== undefined ? { apiKey } : {}),
+        ...(workspaceId !== undefined ? { workspaceId } : {}),
+        ...(baseUrl !== undefined ? { baseUrl } : {}),
     };
 }
 

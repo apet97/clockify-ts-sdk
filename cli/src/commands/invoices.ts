@@ -67,6 +67,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                 dueDate: normaliseInvoiceDate(opts.due, "due"),
             };
             if (opts.timeViewMode) body.timeViewMode = opts.timeViewMode;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.invoices.create(body as never)) as {
                 id?: string;
                 number?: string;

@@ -23,6 +23,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
             // the typed SDK return is wider than the runtime shape, so we
             // normalise here rather than upstream.
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const response = (await client.webhooks.list(req as never)) as
                 | unknown[]
                 | { webhooks?: unknown[] };
@@ -76,6 +77,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                     .map((s) => s.trim())
                     .filter((s) => s.length > 0);
             }
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.webhooks.create({ workspaceId, body } as never)) as {
                 id?: string;
                 name?: string;

@@ -2,6 +2,7 @@
  * `clk115 tasks {list,create,get,update,delete}` — tasks are project-scoped,
  * so every subcommand takes a `<projectId>` first.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -22,14 +23,14 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--name <text>", "Filter by task name substring.")
         .action(async function (this: Command, projectId: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListTasksRequest = {
                 workspaceId,
                 projectId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
             if (opts.name) req.name = opts.name;
-            const items = (await client.tasks.list(req as never)) as unknown[];
+            const items = await client.tasks.list(req);
             const rows = items.map((raw) => {
                 const t = raw as { id?: string; name?: string; status?: string; billable?: boolean };
                 return {
@@ -56,6 +57,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             if (opts.billable !== undefined) body.billable = opts.billable;
             if (opts.estimate) body.estimate = opts.estimate;
             if (Array.isArray(opts.assignee) && opts.assignee.length > 0) body.assigneeIds = opts.assignee;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.tasks.create(body as never)) as { id?: string; name?: string };
             const data = { id: created.id ?? "", name: created.name ?? name };
             printReceipt(
@@ -102,6 +104,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             if (opts.estimate) body.estimate = opts.estimate;
             if (opts.billable !== undefined) body.billable = opts.billable;
             if (Array.isArray(opts.assignee) && opts.assignee.length > 0) body.assigneeIds = opts.assignee;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = (await client.tasks.update(body as never)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(
@@ -135,6 +138,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
                 taskId: id,
                 name: String(current.name ?? ""),
                 status: "DONE",
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             await client.tasks.delete({ workspaceId, projectId, taskId: id });
             printReceipt(

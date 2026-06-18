@@ -1,6 +1,7 @@
 /**
  * `clk115 clients {list,create,get,update,delete}`.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -21,14 +22,14 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .option("--archived", "Include archived clients.", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListClientsRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
             if (opts.name) req.name = opts.name;
             if (opts.archived) req.archived = true;
-            const items = (await client.clients.list(req as never)) as unknown[];
+            const items = await client.clients.list(req);
             const rows = items.map((raw) => {
                 const c = raw as {
                     id?: string;
@@ -55,6 +56,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             const { client, workspaceId, output } = resolveContext(this, services);
             const body: Record<string, unknown> = { workspaceId, name };
             if (opts.note) body.note = opts.note;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.clients.create(body as never)) as {
                 id?: string;
                 name?: string;
@@ -105,6 +107,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             if (opts.note !== undefined) body.note = opts.note;
             if (opts.address !== undefined) body.address = opts.address;
             if (opts.archived !== undefined) body.archived = opts.archived;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = (await client.clients.update({ workspaceId, clientId: id, body } as never)) as {
                 id?: string;
                 name?: string;
@@ -141,6 +144,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             if (!name) {
                 throw new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT.");
             }
+            // KEEP as never: UpdateClientsRequestBody omits archived; only the body envelope reaches the wire.
             await client.clients.update({ workspaceId, clientId: id, body: { name, archived: true } } as never);
             await client.clients.delete({ workspaceId, clientId: id });
             printReceipt(

@@ -102,7 +102,10 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
-        async (args) => runWorkflow("clockify_plan_change", args, () => planChange(ctx, args)),
+        async (args) => {
+            const planArgs = { goal: args.goal, ...(args.entity !== undefined ? { entity: args.entity } : {}) };
+            return runWorkflow("clockify_plan_change", planArgs, () => planChange(ctx, planArgs));
+        },
     );
 
     defineTool(

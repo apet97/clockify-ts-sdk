@@ -120,6 +120,7 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
                 workspaceId: ctx.workspaceId,
                 clientId: idOf(client),
                 body: { name: str(client.name), archived: true },
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,

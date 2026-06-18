@@ -93,6 +93,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             // `view` is NOT workspace-scoped — pass only the shared-report id.
             const { client, output } = resolveContext(this, services);
             const exportType = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const response = await client.sharedReports.view({ sharedReportId: id, exportType } as never);
             printObject(await readReportBody(response), output);
         });
@@ -112,6 +113,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 filter: parseFilter(opts.filter),
             };
             if (opts.public) body.public = true;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.sharedReports.create({ workspaceId, body } as never)) as {
                 id?: string;
                 name?: string;
@@ -151,6 +153,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 workspaceId,
                 sharedReportId: id,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? opts.name };
             printReceipt(

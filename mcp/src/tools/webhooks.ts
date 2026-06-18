@@ -8,7 +8,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -83,10 +83,11 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             const created = await ctx.client.webhooks.create({
                 workspaceId: ctx.workspaceId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_webhooks_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "webhook", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "webhook", { id: entityId(created), name: args.name }));
         },
     );
 
@@ -117,6 +118,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 webhookId: args.webhookId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_webhooks_update", updated, {
                 workspaceId: ctx.workspaceId,

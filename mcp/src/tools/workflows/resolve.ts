@@ -54,6 +54,7 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active client delete 400s — archive (body envelope) then delete
+                        // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                         await ctx.client.clients.update({ workspaceId: ctx.workspaceId, clientId: cid, body: { name: clientName, archived: true } } as never);
                         await ctx.client.clients.delete({ workspaceId: ctx.workspaceId, clientId: cid });
                     },
@@ -90,6 +91,7 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 ...(args.color ? { color: args.color } : {}),
                 ...(args.billable !== undefined ? { billable: args.billable } : {}),
                 ...(args.is_public !== undefined ? { isPublic: args.is_public } : {}),
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             projectId = idOf(created);
             data.project = created;
@@ -136,6 +138,7 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active task delete 400s — mark DONE then delete
+                        // KEEP as never: UpdateTasksRequest drops the DONE status overlay required for archive-before-delete.
                         await ctx.client.tasks.update({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid, status: "DONE" } as never);
                         await ctx.client.tasks.delete({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid });
                     },
@@ -254,6 +257,7 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
     // matches a stale duplicate. iterAll honors the Last-Page header.
     const entries: AnyRecord[] = [];
     for await (const entry of iterAll<AnyRecord, AnyRecord>(
+        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         (req) => ctx.client.timeEntries.listForUser(req as never) as never,
         {
             workspaceId: ctx.workspaceId,
@@ -291,7 +295,7 @@ export function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
     const maxRows = typeof args.max_rows === "number" && args.max_rows > 0 ? args.max_rows : 15;
     const suggestedActions = issues.slice(0, maxRows).map((issue) => ({
         tool: issue.code === "running_entry" ? "clockify_stop_work" : "clockify_fix_entry",
-        args: issue.entry_id ? { entry_id: issue.entry_id } : undefined,
+        ...(issue.entry_id ? { args: { entry_id: issue.entry_id } } : {}),
         reason: `Resolve ${issue.code}.`,
     }));
     return {
@@ -327,7 +331,9 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
     const rawInput = str(args.date) || str(args.week_start);
     // Resolve relative words ("yesterday", "last monday") + YYYY-MM-DD server-side;
     // an empty input means today.
-    const raw = (resolveRelativeDay(new Date(), { date: rawInput || undefined }) ?? rawInput) || new Date().toISOString().slice(0, 10);
+    const raw =
+        (resolveRelativeDay(new Date(), rawInput ? { date: rawInput } : {}) ?? rawInput) ||
+        new Date().toISOString().slice(0, 10);
     const day = new Date(`${raw}T00:00:00.000Z`);
     if (Number.isNaN(day.getTime())) {
         // Reject unparseable input with a clear, field-named message instead of
@@ -397,11 +403,13 @@ export function resolveTagId(ctx: Context, value: string): Promise<string> {
 
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "expense category", () =>
+        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         ctx.client.expenseCategories.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
 }
 
 export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "time-off policy", () =>
+        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         ctx.client.timeOffPolicies.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
 }
 
@@ -482,7 +490,8 @@ export function normalizeDate(value: string): string {
 
 export function ref(type: string, value: unknown, fallbackName?: string): EntityRef {
     const row = (value ?? {}) as AnyRecord;
-    return { type, id: idOf(value), ...(str(row.name) || str(row.description) || fallbackName ? { name: str(row.name) || str(row.description) || fallbackName } : {}) };
+    const name = str(row.name) || str(row.description) || fallbackName;
+    return { type, id: idOf(value), ...(name ? { name } : {}) };
 }
 
 function pushChanged(changed: ChangeSet, bucket: Bucket, value: EntityRef): void {

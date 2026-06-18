@@ -45,6 +45,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
+            // KEEP as never: audit search request is assembled dynamically from validated filters.
             const result = await ctx.client.auditLogReport.search(req as never);
             return successResult("clockify_audit_log_search", result, {
                 workspaceId: ctx.workspaceId,

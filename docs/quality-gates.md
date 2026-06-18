@@ -83,6 +83,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check MCP write safety | `make mcp-write-safety` | Destructive MCP tools advertise risk, high-risk workflows require `dry_run` plus `confirm_token`, and receipts stay recoverable. |
 | Check CLI contract | `make cli-contract` | CLI command metadata, README table, global flags, completion shells, binaries, and exit-code tests stay aligned. |
 | Check CLI write safety | `make cli-write-safety` | CLI write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
+| Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
 | Check test matrix contract | `make test-matrix` | SDK/CLI/MCP required test files, package test/build scripts, exact `prepublishOnly` command shape, and root gate targets remain present. |
 | Check mock Clockify contract | `make mock-contract` | Mock Clockify server routes, headers, docs, and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Check maintenance playbook | `make maintenance-playbook` | Maintainer cadence, generated maintenance-plan shape, dependency updates, Fern/generator bumps, Clockify API drift response, release rehearsal, rollback, and receipts stay explicit. |
