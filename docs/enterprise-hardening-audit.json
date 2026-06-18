@@ -3067,6 +3067,27 @@
       ]
     },
     {
+      "id": "coverage",
+      "requirement": "Keep measured hand-written-surface coverage for SDK/CLI/MCP at or above pinned floors that ratchet monotonically upward, with generated wrapper/src/** excluded.",
+      "evidence": [
+        {
+          "path": "scripts/check-coverage-floor.mjs",
+          "markers": [
+            "coverage floor check failed",
+            "monotonic-up",
+            "below pinned floor"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "coverage: sdk-codegen",
+            "node scripts/check-coverage-floor.mjs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "test-matrix",
       "requirement": "Keep SDK/CLI/MCP package test/build scripts, exact last-resort package gate commands, and required unit/mock/live test files present.",
       "evidence": [

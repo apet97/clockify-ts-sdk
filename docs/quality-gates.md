@@ -85,6 +85,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check CLI write safety | `make cli-write-safety` | CLI write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
 | Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
 | Check test matrix contract | `make test-matrix` | SDK/CLI/MCP required test files, package test/build scripts, exact `prepublishOnly` command shape, and root gate targets remain present. |
+| Check coverage floors | `make coverage` | Measured SDK/CLI/MCP hand-written-surface coverage stays at or above the pinned floors in `docs/coverage-contract.json`. |
 | Check mock Clockify contract | `make mock-contract` | Mock Clockify server routes, headers, docs, and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Check maintenance playbook | `make maintenance-playbook` | Maintainer cadence, generated maintenance-plan shape, dependency updates, Fern/generator bumps, Clockify API drift response, release rehearsal, rollback, and receipts stay explicit. |
 | Print maintenance plan | `make maintenance-plan` | Static no-network upkeep plan for weekly, monthly, dependency, generator, drift, release, and rollback paths, backed by the maintenance-playbook contract. |

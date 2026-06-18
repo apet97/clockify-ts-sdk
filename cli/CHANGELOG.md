@@ -6,6 +6,10 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- Measured code coverage: `@vitest/coverage-v8` (v2, version-matched) wired
+  into `vitest.config.ts` over `src/**`. New `npm run test:coverage` script;
+  floors pinned in `docs/coverage-contract.json` and enforced by
+  `make coverage`.
 - New `cli/src/sdk-narrow.ts` `entityId()` helper replacing the inline
   single-id `as { id?: string }` response casts across commands. CLI source now
   enables `exactOptionalPropertyTypes`, and clean list requests use generated
