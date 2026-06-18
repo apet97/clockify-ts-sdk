@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { fakeContext as introspectContext } from "../scripts/introspect-harness.mjs";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
@@ -11,15 +12,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const manifestPath = path.resolve(here, "..", "..", "docs", "mcp-tool-manifest.json");
 
 function fakeContext(): Context {
-    const guard = new Proxy(function () {
-        throw new Error("handler must not be called");
-    }, {
-        get: () => guard,
-        apply: () => {
-            throw new Error("handler must not be called");
-        },
-    });
-    return { workspaceId: "ws-test", client: guard } as unknown as Context;
+    return introspectContext() as unknown as Context;
 }
 
 function liveNames(): string[] {
@@ -42,5 +35,9 @@ describe("mcp tool manifest", () => {
         expect(manifest.summary.workflowTools).toBe(21);
         expect(manifest.summary.domainTools).toBe(113);
         expect(manifest.summary.destructiveTools).toBe(23);
+    });
+
+    it("generator floor is satisfied by the live server", () => {
+        expect(liveNames().length).toBeGreaterThanOrEqual(134);
     });
 });

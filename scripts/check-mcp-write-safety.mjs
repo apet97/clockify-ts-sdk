@@ -418,6 +418,19 @@ for (const tool of destructiveTools) {
     );
 }
 
+// Converse of the loop above: each confirm-guarded domain tool must still be
+// present in the structural destructive set. This catches a guarded tool losing
+// destructiveHint:true, while the reverse check catches new unguarded deletes.
+const destructiveNameSet = new Set(destructiveTools.map((tool) => tool.name));
+for (const guardedName of contract.confirmationGuardedDomainTools) {
+    if (!destructiveNameSet.has(guardedName)) {
+        failures.push(
+            `confirmationGuardedDomainTools entry ${guardedName} is not in the manifest destructive set ` +
+                "(missing destructiveHint:true) — confirm-guarded tools MUST be destructive",
+        );
+    }
+}
+
 if (!confirmGuard.includes("confirm_token: issued.confirmToken")) {
     failures.push("confirmation preview does not expose confirm_token in receipt data");
 }
