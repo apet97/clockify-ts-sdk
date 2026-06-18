@@ -18,6 +18,7 @@ import { registerExpensesCommand } from "./commands/expenses.js";
 import { registerInvoicesCommand } from "./commands/invoices.js";
 import { registerLogCommand } from "./commands/log.js";
 import { registerProjectsCommand } from "./commands/projects.js";
+import { registerReportsCommand } from "./commands/reports.js";
 import { registerSchedulingCommand } from "./commands/scheduling.js";
 import { registerStartCommand } from "./commands/start.js";
 import { registerStatusCommand } from "./commands/status.js";
@@ -25,6 +26,7 @@ import { registerStopCommand } from "./commands/stop.js";
 import { registerTagsCommand } from "./commands/tags.js";
 import { registerTasksCommand } from "./commands/tasks.js";
 import { registerTimeOffCommand } from "./commands/timeoff.js";
+import { registerUsersCommand } from "./commands/users.js";
 import { registerWebhooksCommand } from "./commands/webhooks.js";
 import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
@@ -79,6 +81,8 @@ export function buildProgram(): Command {
     registerTimeOffCommand(program, services);
     registerSchedulingCommand(program, services);
     registerAuditLogCommand(program, services);
+    registerReportsCommand(program, services);
+    registerUsersCommand(program, services);
 
     program
         .command("completion")

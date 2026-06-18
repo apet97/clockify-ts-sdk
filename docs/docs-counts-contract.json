@@ -2,13 +2,41 @@
   "schemaVersion": 1,
   "purpose": "Headline-count contract: the generated count sources must stay internally consistent, and hand-written docs must not hardcode a stale headline count. Catches both generator drift and prose that contradicts the generated metadata.",
   "authoritativeCounts": [
-    { "label": "operations", "source": "docs/openapi-operations.json", "pointer": "operationCount" },
-    { "label": "MCP tools (total)", "source": "docs/mcp-tools.json", "pointer": "summary.totalTools" },
-    { "label": "MCP workflow tools", "source": "docs/mcp-tools.json", "pointer": "summary.workflowTools" },
-    { "label": "MCP domain tools", "source": "docs/mcp-tools.json", "pointer": "summary.domainTools" },
-    { "label": "CLI commands", "source": "docs/cli-commands.json", "pointer": "commands#length" },
-    { "label": "SDK public names", "source": "docs/sdk-public-api.json", "pointer": "rootSymbols#length" },
-    { "label": "SDK subpaths", "source": "docs/sdk-public-api.json", "pointer": "subpaths#keys" }
+    {
+      "label": "operations",
+      "source": "docs/openapi-operations.json",
+      "pointer": "operationCount"
+    },
+    {
+      "label": "MCP tools (total)",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.totalTools"
+    },
+    {
+      "label": "MCP workflow tools",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.workflowTools"
+    },
+    {
+      "label": "MCP domain tools",
+      "source": "docs/mcp-tools.json",
+      "pointer": "summary.domainTools"
+    },
+    {
+      "label": "CLI commands",
+      "source": "docs/cli-commands.json",
+      "pointer": "commands#length"
+    },
+    {
+      "label": "SDK public names",
+      "source": "docs/sdk-public-api.json",
+      "pointer": "rootSymbols#length"
+    },
+    {
+      "label": "SDK subpaths",
+      "source": "docs/sdk-public-api.json",
+      "pointer": "subpaths#keys"
+    }
   ],
   "consistencyChecks": [
     "openapi-operations.operationCount == operation-parity.summary.operations",
@@ -40,7 +68,8 @@
     "89 tools",
     "123 tools",
     "227 tests",
-    "(currently 691)"
+    "(currently 691)",
+    "29 commands"
   ],
   "wiring": {
     "makeTarget": "docs-counts",
@@ -48,6 +77,8 @@
     "qualityGate": "make docs-counts",
     "inventoryId": "docs-counts",
     "auditId": "docs-counts",
-    "docsIndex": ["docs-counts-contract.json"]
+    "docsIndex": [
+      "docs-counts-contract.json"
+    ]
   }
 }

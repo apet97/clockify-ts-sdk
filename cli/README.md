@@ -92,6 +92,12 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
 | `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment. Drafts by default; pass `--publish` to publish. |
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |
+| `clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name\|id…] [--client name\|id…]` | Summary report totals over a date range, grouped per --groups. Read-only. |
+| `clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]` | Detailed report listing individual time entries over a date range. Read-only. |
+| `clk115 reports weekly [--period p] [--from date] [--to date] [--group USER\|PROJECT] [--subgroup TIME]` | Weekly report aggregating tracked time per week over a date range. Read-only. |
+| `clk115 reports attendance [--period p] [--from date] [--to date]` | Attendance report of clock-in/out activity over a date range. Read-only. |
+| `clk115 users me` | Show the current authenticated user (the API-key owner). Read-only. |
+| `clk115 users list [--page N] [--page-size N] [--name text]` | List members of the workspace. Read-only. |
 | `clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json\|@file\|-] [--all] [--page-size N] [--max-pages N] [--include-headers]` | Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID. |
 | `clk115 completion [zsh\|bash\|fish]` | Print a shell completion script for zsh, bash, or fish. |
 | `clk115 help [command]` | Print per-command help. |

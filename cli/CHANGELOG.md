@@ -42,6 +42,14 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- `clk115 reports {summary,detailed,weekly,attendance}` — read-only Clockify reports
+  over a date range. The range comes from a named `--period` (default `this_month`)
+  with `--from`/`--to` overrides (day, ISO, or period keyword), and `reports summary`
+  resolves `--project` / `--client` names to ids. Built on the new
+  `clockify-sdk-ts-115/reports` filter builders and `clockify-sdk-ts-115/dates`.
+- `clk115 users me` (the API-key owner) and `clk115 users list [--page N]
+  [--page-size N] [--name text]` — read-only user inspection. (CLI grows 29 → 35
+  commands.)
 - `clk115 log` now accepts project/task/tag NAMES, not just ids — resolving them the
   same way `clk115 start` does (a 24-hex id still passes straight through). The two
   sibling write commands now share one `resolve-refs` module so they can't drift apart.

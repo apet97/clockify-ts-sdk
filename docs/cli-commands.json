@@ -102,6 +102,30 @@
       "description": "Search the workspace audit log. Window must be ≤ 31 days."
     },
     {
+      "command": "clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name|id…] [--client name|id…]",
+      "description": "Summary report totals over a date range, grouped per --groups. Read-only."
+    },
+    {
+      "command": "clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]",
+      "description": "Detailed report listing individual time entries over a date range. Read-only."
+    },
+    {
+      "command": "clk115 reports weekly [--period p] [--from date] [--to date] [--group USER|PROJECT] [--subgroup TIME]",
+      "description": "Weekly report aggregating tracked time per week over a date range. Read-only."
+    },
+    {
+      "command": "clk115 reports attendance [--period p] [--from date] [--to date]",
+      "description": "Attendance report of clock-in/out activity over a date range. Read-only."
+    },
+    {
+      "command": "clk115 users me",
+      "description": "Show the current authenticated user (the API-key owner). Read-only."
+    },
+    {
+      "command": "clk115 users list [--page N] [--page-size N] [--name text]",
+      "description": "List members of the workspace. Read-only."
+    },
+    {
       "command": "clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json|@file|-] [--all] [--page-size N] [--max-pages N] [--include-headers]",
       "description": "Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID."
     },
