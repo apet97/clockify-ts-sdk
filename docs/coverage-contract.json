@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Measured code-coverage floor contract for the hand-written SDK/CLI/MCP surface. Floors are pinned to the honest measured baseline minus a small margin and ratchet monotonically upward; generated wrapper/src/** is excluded by every package vitest config. Live-key sandbox suites contribute no coverage in CI.",
+  "ratchet": "monotonic-up",
+  "packages": [
+    {
+      "id": "wrapper",
+      "summary": "wrapper/coverage/coverage-summary.json",
+      "floors": {
+        "lines": 90,
+        "functions": 81,
+        "branches": 81,
+        "statements": 89
+      }
+    },
+    {
+      "id": "cli",
+      "summary": "cli/coverage/coverage-summary.json",
+      "floors": {
+        "lines": 69,
+        "functions": 88,
+        "branches": 74,
+        "statements": 69
+      }
+    },
+    {
+      "id": "mcp",
+      "summary": "mcp/coverage/coverage-summary.json",
+      "floors": {
+        "lines": 79,
+        "functions": 91,
+        "branches": 74,
+        "statements": 79
+      }
+    }
+  ],
+  "wiring": {
+    "makeTarget": "coverage",
+    "checker": "scripts/check-coverage-floor.mjs",
+    "qualityGate": "make coverage",
+    "inventoryId": "coverage",
+    "auditId": "coverage",
+    "docsIndex": [
+      "coverage-contract.json"
+    ]
+  }
+}

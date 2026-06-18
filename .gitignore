@@ -15,6 +15,7 @@ spec/evidence/probes/*.hdr
 # Build artifacts inside wrapper/ are managed by wrapper/.gitignore;
 # this rule pins node_modules at any nesting level just in case.
 **/node_modules/
+**/coverage/
 **/*.tsbuildinfo
 
 # Local TypeScript generator output. Regenerable from spec/corrected/ via

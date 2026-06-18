@@ -6,6 +6,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Measured code coverage: `@vitest/coverage-v8` (v2, version-matched) wired
+  into `vitest.config.ts` over `src/**`. New `npm run test:coverage` script;
+  floors pinned in `docs/coverage-contract.json` and enforced by
+  `make coverage`.
 - Typed the consumer->SDK list-request boundary:
   `projects/clients/tags/tasks/entries/groups/approvals/scheduling` list calls
   now pass generated `ClockifyApi.List*Request` types instead of

@@ -1183,6 +1183,19 @@
       "perfectFull": true
     },
     {
+      "id": "coverage",
+      "target": "coverage",
+      "checker": "scripts/check-coverage-floor.mjs",
+      "contracts": [
+        "docs/coverage-contract.json"
+      ],
+      "auditIds": [
+        "coverage"
+      ],
+      "perfectFast": false,
+      "perfectFull": true
+    },
+    {
       "id": "mock-contract",
       "target": "mock-contract",
       "checker": "scripts/check-mock-clockify-contract.mjs",

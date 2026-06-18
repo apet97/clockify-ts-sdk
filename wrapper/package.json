@@ -303,7 +303,7 @@
   "scripts": {
     "sync": "bash scripts/sync-sdk.sh",
     "type-check": "tsc -p tsconfig.json --noEmit",
-        "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
     "build:smoke": "bash scripts/verify-dual-build.sh",
     "docs": "typedoc",
     "docs:resources": "tsx scripts/gen-resource-docs.ts",
@@ -313,6 +313,7 @@
     "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:types": "vitest --typecheck.only --run",
     "size": "size-limit",
@@ -321,6 +322,7 @@
   "devDependencies": {
     "@size-limit/file": "^12.1.0",
     "@types/node": "^25",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.5.0",
     "eslint-plugin-import-x": "^4.16.2",
     "prettier": "^3.8.3",

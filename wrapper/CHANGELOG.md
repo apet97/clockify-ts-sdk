@@ -9,6 +9,11 @@ once v1.0.0 ships.
 
 ### Added
 
+- Measured code coverage: `@vitest/coverage-v8` (v4, version-matched) wired
+  into `vitest.config.ts` over the hand-written wrapper surface (`*.ts` root;
+  generated `src/**` and the flat `webhook-events.ts` catalog excluded). New
+  `npm run test:coverage` script; floors pinned in
+  `docs/coverage-contract.json` and enforced by `make coverage`.
 - Documented (inline in `tsconfig.json`) why `noImplicitOverride` and
   `exactOptionalPropertyTypes` stay disabled on the wrapper package: both red on
   generated `src/**` the hard stop forbids editing. No behavioral change.
