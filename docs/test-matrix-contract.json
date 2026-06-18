@@ -82,6 +82,7 @@
         "mcp/tests/confirm-guard-matrix.test.ts",
         "mcp/tests/groups-get.test.ts",
         "mcp/tests/mock-clockify.test.ts",
+        "mcp/tests/operation-parity.behavioral.test.ts",
         "mcp/tests/result.test.ts",
         "mcp/tests/sandbox.test.ts",
         "mcp/tests/server.test.ts",
