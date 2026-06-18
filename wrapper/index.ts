@@ -192,6 +192,7 @@ export {
 // clients) plus archive-then-delete for projects (active delete 400s on the wire).
 export {
     archiveThenDeleteProject,
+    ensureClient,
     ensureProject,
     ensureTag,
     findOrCreateClient,
