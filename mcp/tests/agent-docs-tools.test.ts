@@ -103,4 +103,30 @@ describe("agent discovery tools", () => {
             }
         }
     });
+
+    it("clockify_sdk_snippet pagination/sdk names a real method and request-object iterAll", async () => {
+        const client = await connect();
+        const res = await client.callTool({
+            name: "clockify_sdk_snippet",
+            arguments: { topic: "pagination", surface: "sdk" },
+        });
+        expect(res.isError).toBeFalsy();
+        const snippet = (envelope(res).data as { snippet: string }).snippet;
+        expect(snippet).toContain("clockify.tags.list");
+        expect(snippet).toContain("iterAll(listTags, { workspaceId }");
+        expect(snippet).not.toContain("getTags");
+    });
+
+    it("clockify_sdk_snippet webhook/sdk uses the single-object constructEvent signature", async () => {
+        const client = await connect();
+        const res = await client.callTool({
+            name: "clockify_sdk_snippet",
+            arguments: { topic: "webhook", surface: "sdk" },
+        });
+        expect(res.isError).toBeFalsy();
+        const snippet = (envelope(res).data as { snippet: string }).snippet;
+        expect(snippet).toContain("constructEvent({");
+        expect(snippet).toContain("expectedToken");
+        expect(snippet).not.toContain("signatureTokenHeader");
+    });
 });

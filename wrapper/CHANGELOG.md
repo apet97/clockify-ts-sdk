@@ -51,6 +51,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Removed deprecated `findOrCreateClient` from the root barrel (root public
+  surface 93 -> 92 names). It remains available from the
+  `clockify-sdk-ts-115/ensure` subpath; prefer `ensureClient`.
 - `tsconfig.json` now sets `isolatedModules: true`, aligning the wrapper
   with the cli/mcp strictness baseline. (`noImplicitOverride` was held
   back: the generated `src/errors/*` classes override `Error.cause` /

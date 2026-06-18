@@ -114,6 +114,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`examples-contract.json`](./examples-contract.json) | edit intentionally | Runnable SDK example inventory and import/secret-safety contract. |
 | [`examples-matrix-contract.json`](./examples-matrix-contract.json) | edit intentionally | SDK/CLI/MCP examples matrix, generated examples-plan, mock/live boundary, and receipt contract. |
 | [`snippet-safety-contract.json`](./snippet-safety-contract.json) | edit intentionally | Copy-paste snippet safety contract. |
+| [`snippet-method-parity-policy.md`](./snippet-method-parity-policy.md) | edit intentionally | Agent-facing SDK snippet method-name parity rules. |
+| [`snippet-method-parity-contract.json`](./snippet-method-parity-contract.json) | edit intentionally | Contract for checking SDK snippet method names against the generated client. |
 | [`docs-drift-contract.json`](./docs-drift-contract.json) | edit intentionally | Allowlisted docs drift scan roots, rules, and intentional exceptions. |
 | [`runtime-support.json`](./runtime-support.json) | edit intentionally | Package engine and runtime support contract. |
 | [`env-contract.json`](./env-contract.json) | edit intentionally | Environment/configuration variable and secret-hygiene contract. |
@@ -194,6 +196,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Examples contract | `make examples-contract` | Check runnable SDK examples against the public package/import contract. |
 | Examples matrix | `make examples-matrix` | Check SDK/CLI/MCP examples matrix and generated examples-plan shape, mock/live boundaries, mutation safety, and receipt expectations. |
 | Snippet safety | `make snippet-safety` | Check SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
+| Snippet method parity | `make snippet-method-parity` | Check MCP agent-facing SDK snippets against generated SDK method names. |
 | Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 20+. |
 | Env/config contract | `make env-contract` | Check SDK/CLI/MCP environment variables and mock/replay base URL docs. |
 | Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety. |

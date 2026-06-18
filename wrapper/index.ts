@@ -195,7 +195,6 @@ export {
     ensureClient,
     ensureProject,
     ensureTag,
-    findOrCreateClient,
     type ArchiveThenDeleteResult,
     type EnsureResult,
     type FindOrCreateOptions,
