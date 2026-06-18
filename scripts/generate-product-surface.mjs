@@ -77,7 +77,7 @@ const workflows = [
         id: "first-run-support",
         userGoal: "Diagnose first-run setup issues and prepare a safe support handoff before mock or live proof.",
         sdk: ["clockifyDiagnostics", "docs/quickstart-receipt.md", "scripts/create-support-bundle.mjs"],
-        cli: ["clk115 doctor", "clk115 status", "make quickstart-receipt", "make support-bundle"],
+        cli: ["clk115 doctor", "clk115 status", "make diagnostics", "make support-bundle"],
         tsMcp: ["clockify://mcp/doctor"],
         goMcp: ["clockify://mcp/doctor"],
         proof: [

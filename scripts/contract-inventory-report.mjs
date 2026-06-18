@@ -161,7 +161,9 @@ export async function buildReport() {
     const docsIndexText = await readFile(path.join(root, "docs/README.md"), "utf8");
     const qualityGatesText = await readFile(path.join(root, "docs/quality-gates.md"), "utf8");
     const entries = Array.isArray(inventory.entries)
-        ? inventory.entries.filter((entry) => entry != null && typeof entry === "object" && !Array.isArray(entry))
+        ? inventory.entries.filter(
+              (entry) => entry != null && typeof entry === "object" && !Array.isArray(entry) && !entry.retired,
+          )
         : [];
     const missingFiles = [];
     const contractTextByPath = new Map();

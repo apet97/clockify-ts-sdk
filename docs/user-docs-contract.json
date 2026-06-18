@@ -510,9 +510,9 @@
     },
     {
       "id": "quickstart-receipt-contract",
-      "path": "docs/quickstart-receipt-contract.json",
+      "path": "docs/quickstart-receipt.md",
       "mustContain": [
-        "quickstart-receipt",
+        "Quickstart Receipt",
         "clockifyDiagnostics",
         "clk115 --json status",
         "clockify_status"

@@ -169,7 +169,7 @@
       "cli": [
         "clk115 doctor",
         "clk115 status",
-        "make quickstart-receipt",
+        "make diagnostics",
         "make support-bundle"
       ],
       "tsMcp": [

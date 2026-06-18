@@ -1190,7 +1190,7 @@
           "markers": [
             "first-run-diagnostics-support",
             "clockify://mcp/doctor",
-            "make quickstart-receipt"
+            "make diagnostics"
           ]
         },
         {
@@ -1200,7 +1200,7 @@
             "clockifyDiagnostics()",
             "clk115 doctor --json",
             "clockify://mcp/doctor",
-            "make quickstart-receipt",
+            "make diagnostics",
             "safeCommandHints"
           ]
         },
@@ -1976,40 +1976,6 @@
             "SDK correlation",
             "Agent receipts"
           ]
-        },
-        {
-          "path": "docs/receipts-contract.json",
-          "contains": [
-            "X-Request-Id",
-            "structuredContent",
-            "retryable",
-            "wiring",
-            "receipts-contract",
-            "scripts/check-receipts-contract.mjs"
-          ]
-        },
-        {
-          "path": "scripts/check-receipts-contract.mjs",
-          "contains": [
-            "receipts contract passed",
-            "supportingContracts",
-            "validateContractShape",
-            "safeRelativePath",
-            "validateMarkerEntry",
-            "receipts contract shape failed",
-            "contract.requiredMakeTargets",
-            "contract.docsIndex",
-            "wiring.makeTarget",
-            "wiring.checker",
-            "receipts-contract",
-            "scripts/check-receipts-contract.mjs"
-          ]
-        },
-        {
-          "path": "Makefile",
-          "contains": [
-            "receipts-contract:"
-          ]
         }
       ]
     },
@@ -2159,38 +2125,6 @@
             "Surface used: SDK | CLI | MCP",
             "Raw secrets printed: no",
             "Live workspace type: sacrificial sandbox | not run"
-          ]
-        },
-        {
-          "path": "docs/quickstart-receipt-contract.json",
-          "contains": [
-            "clockifyDiagnostics",
-            "node dist/index.js --json doctor",
-            "clockify://mcp/doctor",
-            "draft blocker",
-            "deferred live proof as final readiness",
-            "receiptTemplate",
-            "forbiddenMarkers",
-            "npm publish"
-          ]
-        },
-        {
-          "path": "scripts/check-quickstart-receipt.mjs",
-          "contains": [
-            "Quickstart receipt contract passed",
-            "validateContractShape",
-            "safeRelativePath",
-            "validateMarkerEntry",
-            "Quickstart receipt contract shape failed",
-            "receiptTemplate.requiredFields",
-            "forbidden quickstart marker"
-          ]
-        },
-        {
-          "path": "Makefile",
-          "contains": [
-            "quickstart-receipt:",
-            "node scripts/check-quickstart-receipt.mjs"
           ]
         },
         {
@@ -3276,33 +3210,6 @@
             "retryable",
             "recovery"
           ]
-        },
-        {
-          "path": "docs/receipt-examples-contract.json",
-          "contains": [
-            "sdk-success",
-            "cli-error",
-            "mcp-recovery",
-            "supportingEvidence"
-          ]
-        },
-        {
-          "path": "scripts/check-receipt-examples.mjs",
-          "contains": [
-            "Receipt examples contract passed",
-            "examplesDocument",
-            "supportingEvidence",
-            "validateContractShape",
-            "safeRelativePath",
-            "validateMarkerEntry",
-            "Receipt examples contract shape failed"
-          ]
-        },
-        {
-          "path": "Makefile",
-          "contains": [
-            "receipt-examples:"
-          ]
         }
       ]
     },
@@ -3328,7 +3235,7 @@
             "draft with a concrete deferral reason",
             "Deferred live proof is not final readiness",
             "Quickstart and diagnostics handoff",
-            "make quickstart-receipt",
+            "make diagnostics",
             "node scripts/plan.mjs workflow --workflow first-run-support",
             "safeCommandHints",
             "clockifyDiagnostics()"
@@ -3356,7 +3263,7 @@
             "What must not be retried automatically",
             "requiredDiagnosticSurfaces",
             "requiredSafeCommandHints",
-            "make quickstart-receipt",
+            "make diagnostics",
             "node scripts/plan.mjs workflow --workflow first-run-support"
           ]
         },

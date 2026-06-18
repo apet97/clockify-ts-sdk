@@ -69,6 +69,6 @@ Run or include the relevant checked surface before claiming snippet safety:
 
 - `make examples-contract` for SDK example inventory and import safety.
 - `make user-docs` for README and onboarding snippet coverage.
-- `make receipt-examples` for output-shape examples.
+- `make observability` for output-shape examples.
 - `make support-bundle` for redaction and escalation examples.
 - `make live-safety` when a snippet mutates live Clockify state.

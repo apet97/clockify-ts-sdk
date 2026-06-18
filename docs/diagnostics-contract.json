@@ -165,6 +165,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "quickstart-receipt",
+      "files": [
+        {
+          "path": "docs/quickstart-receipt.md",
+          "contains": [
+            "Local diagnostics, no network",
+            "clockifyDiagnostics",
+            "node dist/index.js --json doctor",
+            "clockify://mcp/doctor",
+            "make mock-clockify",
+            "client.health()",
+            "clk115 --json status",
+            "clockify_status",
+            "Quickstart Receipt",
+            "Raw secrets printed: no",
+            "Workspace ID printed raw: no",
+            "Copy-paste safety",
+            "Stop conditions",
+            "draft blocker",
+            "deferred live proof as final readiness",
+            "Date: YYYY-MM-DD",
+            "Operator:",
+            "Surface used: SDK | CLI | MCP",
+            "Local diagnostic command/resource:",
+            "Local diagnostic status: ready | incomplete | conflict | unsupported",
+            "Mock proof used: yes | no",
+            "First live probe attempted: yes | no",
+            "Live workspace type: sacrificial sandbox | not run",
+            "Next action:",
+            "Residual risk:"
+          ]
+        },
+        {
+          "path": "docs/operator-onboarding.md",
+          "contains": [
+            "Mock versus live",
+            "final proof"
+          ]
+        },
+        {
+          "path": "docs/live-tests.md",
+          "contains": [
+            "sacrificial Clockify sandbox",
+            "Mock/replay proof never replaces live sandbox proof"
+          ]
+        }
+      ]
     }
   ],
   "noNetworkEvidence": [

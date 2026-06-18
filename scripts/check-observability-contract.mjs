@@ -103,7 +103,7 @@ function validateContractShape() {
 
 
     validateMarkerEntry("policyDocument", contract.policyDocument);
-    for (const section of ["sdk", "cli", "mcp", "support", "redaction"]) {
+    for (const section of ["sdk", "cli", "mcp", "support", "redaction", "supportingContracts"]) {
         if (!Array.isArray(contract[section]) || contract[section].length === 0) {
             fail(section, "must be a non-empty array");
             continue;
@@ -142,7 +142,7 @@ if (failures.length > 0) {
 }
 
 checkEntry(contract.policyDocument);
-for (const section of ["sdk", "cli", "mcp", "support", "redaction"]) {
+for (const section of ["sdk", "cli", "mcp", "support", "redaction", "supportingContracts"]) {
     for (const entry of contract[section] ?? []) checkEntry(entry);
 }
 

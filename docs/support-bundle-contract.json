@@ -22,7 +22,7 @@
       "draft with a concrete deferral reason",
       "Deferred live proof is not final readiness",
       "Quickstart and diagnostics handoff",
-      "make quickstart-receipt",
+      "make diagnostics",
       "node scripts/plan.mjs workflow --workflow first-run-support",
       "safeCommandHints",
       "clockifyDiagnostics()"
@@ -60,7 +60,7 @@
       "diagnosticsSurfaces",
       "safeCommandHints",
       "node scripts/plan.mjs workflow --workflow first-run-support",
-      "make quickstart-receipt"
+      "make diagnostics"
     ],
     "forbiddenMarkers": [
       "resolved",
@@ -132,7 +132,6 @@
     ],
     "requiredSafeCommandHints": [
       "make diagnostics",
-      "make quickstart-receipt",
       "make support-bundle",
       "make mock-clockify"
     ]

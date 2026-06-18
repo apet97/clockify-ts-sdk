@@ -52,7 +52,7 @@ const examples = {
         cli: ["retry at caller shell level only after checking receipts"],
         mcp: ["MCP recovery hints instead of blind retries"],
         safety: "Non-idempotent creates are not auto-retried by default.",
-        proof: ["make mutation-safety", "make receipts-contract", "make receipt-examples"],
+        proof: ["make mutation-safety", "make observability"],
     },
     observability: {
         job: "Observability and support",
@@ -60,7 +60,7 @@ const examples = {
         cli: ["--json receipts and exit codes"],
         mcp: ["structuredContent", "changed", "warnings", "next", "recovery"],
         safety: "Preserve request IDs and stable error codes.",
-        proof: ["make observability", "make support-bundle", "make receipt-examples"],
+        proof: ["make observability", "make support-bundle"],
     },
     webhooks: {
         job: "Webhook handling",

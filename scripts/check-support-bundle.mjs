@@ -5,6 +5,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildBundle } from "./create-support-bundle.mjs";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -261,8 +262,9 @@ for (const evidence of contract.supportingEvidence ?? []) {
     includesAll(await readRel(evidence.path), evidence.contains, evidence.path);
 }
 
+const retiredGates = await loadRetiredGates();
 for (const target of contract.requiredTargets ?? []) {
-    if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
+    if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
 if (!makefile.includes("perfect-fast:") || !makefile.includes("support-bundle")) {

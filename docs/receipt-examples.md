@@ -110,7 +110,8 @@ workspace already authorized the operation.
 
 ## Review rule
 
-When a change alters output shape, update this file, `docs/receipt-examples-contract.json`,
-and the relevant runtime tests or package README in the same change. A receipt
+When a change alters output shape, update this file, `docs/observability-contract.json`
+(which now governs these golden receipt markers), and the relevant runtime tests or
+package README in the same change. A receipt
 that looks friendly but omits identifiers, `changed`, `retryable`, or recovery
 is not enterprise-quality output.

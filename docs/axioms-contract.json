@@ -212,7 +212,7 @@
     },
     {
       "id": "receipts-contract",
-      "path": "docs/receipts-contract.json",
+      "path": "docs/observability-contract.json",
       "contains": [
         "changed",
         "recovery",

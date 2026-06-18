@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // check-doc-index: enforces docs/README.md links and required generated surfaces.
-// Required entries include diagnostics-policy.md, diagnostics-contract.json,
-// quickstart-receipt.md, and quickstart-receipt-contract.json so the contracts
-// stay discoverable from the docs index.
+// Required entries include diagnostics-policy.md and diagnostics-contract.json so
+// the contracts stay discoverable from the docs index. (quickstart-receipt and
+// receipt-examples were folded into diagnostics/observability; their kept .md docs
+// remain linked, their retired -contract.json files are gone.)
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

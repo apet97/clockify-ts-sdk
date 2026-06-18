@@ -25,7 +25,7 @@ Collect these items before escalating an issue:
   `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, `CLOCKIFY_BASE_URL`, or
   `CLOCKIFY_ADDON_TOKEN`.
 - Proof attempted: the narrowest relevant command, such as
-  `make receipt-examples`, `make troubleshooting`, `make mock-contract`, or a
+  `make observability`, `make troubleshooting`, `make mock-contract`, or a
   package test command.
 
 ## Generated support bundle command
@@ -60,7 +60,7 @@ bundle.
 
 ## Quickstart and diagnostics handoff
 
-Before escalating first-run setup confusion, run or cite `make quickstart-receipt`
+Before escalating first-run setup confusion, run or cite `make diagnostics`
 and capture which no-network diagnostic surface was used: `clockifyDiagnostics()`,
 `clk115 doctor --json`, or `clockify://mcp/doctor`. The generated support bundle
 includes these diagnostic entrypoints with `network: "none"` and safe command

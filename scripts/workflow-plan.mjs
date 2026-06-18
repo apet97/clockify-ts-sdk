@@ -13,7 +13,7 @@ const workflows = {
         cli: [
             "clk115 doctor --json",
             "clk115 status --json",
-            "make quickstart-receipt",
+            "make diagnostics",
             "make support-bundle",
         ],
         mcp: ["clockify://mcp/doctor"],

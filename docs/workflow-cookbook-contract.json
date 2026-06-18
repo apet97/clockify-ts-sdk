@@ -155,7 +155,7 @@
       "contains": [
         "readinessContext",
         "safeCommandHints",
-        "make quickstart-receipt"
+        "make diagnostics"
       ]
     },
     {
