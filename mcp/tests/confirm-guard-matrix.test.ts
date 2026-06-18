@@ -115,7 +115,7 @@ const guarded: GuardCase[] = [
 
 const workflows: GuardCase[] = [
     { tool: "clockify_invoice_client_work", group: "invoices", method: "create", args: { client_id: id(21), currency: "USD" }, echo: { clientId: id(21) } },
-    { tool: "clockify_record_expense", group: "expenses", method: "create", args: { category_id: id(22), amount: 10, user_id: id(23) }, echo: { categoryId: id(22) } },
+    { tool: "clockify_record_expense", group: "expenses", method: "create", args: { category_id: id(22), amount: 10, date: "2026-07-01T00:00:00.000Z", user_id: id(23) }, echo: { categoryId: id(22) } },
     { tool: "clockify_request_time_off", group: "timeOff", method: "submit", args: { policy_id: id(24), start: "2026-07-01T00:00:00.000Z", end: "2026-07-02T00:00:00.000Z" }, echo: { policyId: id(24) } },
     { tool: "clockify_schedule_work", group: "scheduling", method: "create", args: { user_id: id(25), project_id: id(26), start: "2026-07-01T00:00:00.000Z", end: "2026-07-02T00:00:00.000Z", hours_per_day: 8 }, echo: { projectId: id(26) } },
     { tool: "clockify_setup_webhook", group: "webhooks", method: "create", args: { name: "Audit", url: "https://example.com/hook", event: "NEW_TIME_ENTRY" }, echo: {} },
