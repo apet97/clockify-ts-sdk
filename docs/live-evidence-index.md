@@ -33,6 +33,7 @@ policy).
 | `deletes.archive-first.projects-tasks` | `compensated-in-tool-layer` |
 | `deletes.archive-first.clients-blocked` | `compensated-in-tool-layer` |
 | `user-groups.get.returns-void` | `compensated-in-tool-layer` |
+| `scheduling.list-per-project.start-end-required-camel-pagesize` | `compensated-in-tool-layer` |
 
 ## Live-probed operations (live-success)
 
