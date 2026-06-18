@@ -379,12 +379,24 @@ describe("createClockifyClient", () => {
         it("allows the reports / audit-log / pto Clockify API hosts over HTTPS", () => {
             for (const url of [
                 "https://reports.api.clockify.me/v1",
-                "https://auditlog.api.clockify.me/v1",
+                "https://auditlog-api.api.clockify.me/v1",
                 "https://pto.api.clockify.me/v1",
             ]) {
                 const client = createClockifyClient({ apiKey: "k", environment: url });
                 expect(client).toBeInstanceOf(ClockifyApiClient);
             }
+        });
+
+        it("rejects the non-existent no-hyphen audit-log host (regression for the allowlist typo)", () => {
+            // The real audit-log host is `auditlog-api.api.clockify.me`;
+            // the hyphenless `auditlog.api.clockify.me` does not exist and
+            // must NOT be auto-accepted (it was, before the typo fix).
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: "https://auditlog.api.clockify.me/v1",
+                }),
+            ).toThrow(/not an allowlisted Clockify host/);
         });
 
         it("allows localhost / 127.0.0.1 / ::1 (IPv6) loopback on any port", () => {

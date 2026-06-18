@@ -108,7 +108,7 @@ export interface ClockifyClientEnhancements {
      *
      * By default the factory only accepts the official Clockify API
      * hosts (`api.clockify.me`, `reports.api.clockify.me`,
-     * `auditlog.api.clockify.me`, `pto.api.clockify.me`,
+     * `auditlog-api.api.clockify.me`, `pto.api.clockify.me`,
      * `developer.clockify.me`) and loopback hosts (`localhost`,
      * `127.0.0.1`, `::1`) for testing/mocking — every other host is
      * rejected so a tampered env var or config file cannot redirect
@@ -186,7 +186,7 @@ function readEnv(name: string): string | undefined {
 const CLOCKIFY_PROD_HOSTS = new Set([
     "api.clockify.me",
     "reports.api.clockify.me",
-    "auditlog.api.clockify.me",
+    "auditlog-api.api.clockify.me",
     "pto.api.clockify.me",
     "developer.clockify.me",
 ]);
