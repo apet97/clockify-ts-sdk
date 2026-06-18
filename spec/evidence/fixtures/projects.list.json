@@ -1,0 +1,16 @@
+{
+  "comment": "WS3 golden fixture (redacted, NOT a raw live probe). GET /workspaces/{id}/projects returns a bare array of project objects. Placeholder IDs per scripts/mock-clockify-server.mjs. Re-probe live (READ-ONLY) with CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID set, then run node scripts/probe-and-stamp.mjs. Ledgered in docs/live-probe-ledger.json (getWorkspaceProjects).",
+  "_redactions": ["ids -> placeholders", "name -> synthetic"],
+  "operationId": "getWorkspaceProjects",
+  "wire": [
+    {
+      "id": "000000000000000000000301",
+      "name": "Example Project",
+      "clientId": "000000000000000000000201",
+      "archived": false
+    }
+  ],
+  "assert": {
+    "isArray": true
+  }
+}

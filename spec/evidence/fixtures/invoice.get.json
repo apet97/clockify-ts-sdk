@@ -1,0 +1,22 @@
+{
+  "comment": "WS3 golden fixture (redacted, NOT a raw live probe). GET /invoices/{id} wire shape: tax/discount are x100-scaled integers (10% reads back as 1000, 5% as 500); note/subject are present on a real fetched invoice (POST drops them). Byte-identical to scripts/mock-clockify-server.mjs so it is the single source of truth shared with the mock-contract gate. Replayed offline: invoiceUpdateBodyFromExisting maps tax 1000 -> taxPercent 10, discount 500 -> discountPercent 5.",
+  "_redactions": ["ids -> placeholders", "subject/note -> synthetic"],
+  "operationId": "getInvoice",
+  "wire": {
+    "id": "000000000000000000000401",
+    "number": "INV-1",
+    "clientId": "000000000000000000000201",
+    "currency": "USD",
+    "note": "Net 30 terms",
+    "subject": "Website redesign",
+    "discount": 500,
+    "tax": 1000,
+    "tax2": 0,
+    "amount": 120000,
+    "status": "UNSENT"
+  },
+  "assert": {
+    "helper": "invoiceUpdateBodyFromExisting",
+    "expectPercent": { "taxPercent": 10, "discountPercent": 5, "tax2Percent": 0 }
+  }
+}

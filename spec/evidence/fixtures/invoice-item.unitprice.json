@@ -1,0 +1,18 @@
+{
+  "comment": "WS3 golden fixture (redacted, NOT a raw live probe). One invoice item as Clockify returns it on the wire: `unitPrice` is minor*100 (hundredths of a cent) so amount = unitPrice*quantity/100. A $1000 item => 100000 minor => 10000000 on the wire. Replayed offline by make replay-fixtures asserting invoiceItemUnitPriceFromWire(10000000) === 100000. See spec/evidence/discrepancies.md `invoices.items-unit-price-scale`.",
+  "_redactions": ["invoiceId -> placeholder", "itemId -> placeholder", "description -> synthetic"],
+  "operationId": "addInvoiceItem",
+  "wire": {
+    "id": "000000000000000000000601",
+    "invoiceId": "000000000000000000000401",
+    "description": "Example line item",
+    "quantity": 1,
+    "unitPrice": 10000000,
+    "amount": 10000000
+  },
+  "assert": {
+    "helper": "invoiceItemUnitPriceFromWire",
+    "input": 10000000,
+    "expect": 100000
+  }
+}

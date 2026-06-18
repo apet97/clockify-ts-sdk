@@ -557,6 +557,20 @@
       "perfectFull": true
     },
     {
+      "id": "replay-fixtures",
+      "target": "replay-fixtures",
+      "checker": "scripts/check-replay-fixtures.mjs",
+      "contracts": [
+        "docs/replay-fixtures-contract.json",
+        "docs/live-probe-ledger.json"
+      ],
+      "auditIds": [
+        "replay-fixtures"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "data-handling",
       "target": "data-handling",
       "checker": "scripts/check-data-handling.mjs",

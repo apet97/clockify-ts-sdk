@@ -1936,8 +1936,13 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Actual behavior (addon live-verified 2026-06-12):** holiday assignments and
   time-off **policy** scope share the `{contains:"CONTAINS", ids, status}` filter
   shape but use DIFFERENT `status` values — holidays send `status:"ALL"`
-  (`ai-assistant-addon/src/clockify/rest/holidays.ts:7`) while policies send
-  `status:"ACTIVE"` (`ai-assistant-addon/src/clockify/rest/time-off.ts:13`). The
+  (`ai-assistant-addon/src/clockify/rest/holidays.ts:7`, corroboration only)
+  while policies send `status:"ACTIVE"`
+  (`ai-assistant-addon/src/clockify/rest/time-off.ts:13`, corroboration only).
+  **In-repo source of record:** `docs/live-probe-ledger.json`
+  (`getTimeOffRequests`/`getWorkspaceProjects` fixture rows, recorded
+  2026-06-18) plus the committed fixture
+  `spec/evidence/fixtures/timeoff.requests.search.json`. The
   SDK's shared `mcp/src/scope-filter.ts` previously hard-coded `"ALL"` for both,
   so the policy create/update path sent the wrong status.
 - **Live evidence:** addon `src/clockify/rest/time-off.ts:11-14` (`filter()` →
@@ -2019,7 +2024,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Status:** `open`. Port the get-by-scan / POST-search shapes from the addon
   `src/clockify/rest/{time-off,users}.ts`.
 
-### `invoices.items-unit-price-scale` + `invoices.payments.post-returns-invoice` — OPEN (no tools yet)
+### `invoices.items-unit-price-scale` — COMPENSATED-LATENT 2026-06-18 (boundary-guarded)
 
 - **1. What official docs claim:** `AddInvoiceItemRequest.unitPrice`
   (`POST /workspaces/{workspaceId}/invoices/{invoiceId}/items`, operationId
@@ -2039,9 +2044,12 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `wrapper/tests/money.test.ts:46-58` and `wrapper/tests/wire-shape.test.ts:126-129`
   pin `invoiceItemUnitPriceToWire(100000) === 10000000` (a $1000 item) and the ÷100
   read-back. The wire scale matches addon `src/clockify/rest/invoices.ts:83`
-  (`UNIT_PRICE_WIRE_SCALE = 100`), `:90` (read `/100`), `:254` (write `×100`). No live
-  probe fixture ships here (raw probe payloads stay out of git per the data-handling
-  policy); the addon's June-2026 live probe is the source of record.
+  (`UNIT_PRICE_WIRE_SCALE = 100`), `:90` (read `/100`), `:254` (write `×100`),
+  kept as corroboration only. **In-repo source of record:** committed redacted
+  golden `spec/evidence/fixtures/invoice-item.unitprice.json` (`unitPrice:
+  10000000`), replayed offline by `make replay-fixtures` asserting
+  `invoiceItemUnitPriceFromWire(10000000) === 100000`, plus the unit pin
+  `wrapper/tests/wire-shape.test.ts`. Ledgered in `docs/live-probe-ledger.json`.
 - **4. Which `clockify_*` tool depends on it:** **none today.** The MCP surface has no
   invoice item-add tool and no payment-create tool — the 8 invoices tools are
   `clockify_invoices_{list,get,create,update,delete,update_status,export,import_time}`
@@ -2058,9 +2066,28 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `invoiceItemUnitPriceFromWire` on read-back, and a payment-create tool MUST list-diff
   the payments list around the POST to recover the new payment id (the POST response is
   the invoice, not the payment).
-- **Status:** `open` (no tools yet — latent only). When item/payment tools land, port the
-  shapes from addon `src/clockify/rest/invoices.ts:249-277` and add a COMPENSATED entry
-  + test coverage at that time.
+- **Boundary guard (2026-06-18):** `make replay-fixtures`
+  (`scripts/check-replay-fixtures.mjs`) runs a source-grep tripwire: if any file
+  under `mcp/src/` references `addInvoiceItem`, `invoiceItems.create`, or a
+  payment-create op, that same file must also reference
+  `invoiceItemUnitPriceToWire`. It passes vacuously today (no such tool) and
+  reds the day someone wires one without the scale.
+- **Status:** `compensated-latent` (2026-06-18 — no tool yet,
+  boundary-guarded). When item tools land, port the shapes from addon
+  `src/clockify/rest/invoices.ts:249-277` and promote this to a full
+  COMPENSATED entry.
+
+### `invoices.payments.post-returns-invoice` — OPEN (no tools yet)
+
+- **Actual behavior (addon live-probe 2026-06-10):** `POST
+  /invoices/{id}/payments` returns the updated **invoice** document, not the
+  created payment. To recover the new payment id, GET the payments list before
+  and after the POST and take the new id (list-diff).
+- **MCP tool affected:** none today — the MCP surface has no payment-create
+  tool.
+- **Status:** `open` (no tools yet — latent only). When a payment-create tool
+  lands it must list-diff the payments list around the POST; port from addon
+  `src/clockify/rest/invoices.ts:249-277`.
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
 
@@ -2108,9 +2135,10 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `[PENDING, APPROVED, REJECTED, ALL]` — it 400s on `WITHDRAWN` (code 501,
   "Value must be from the following set"), even though `WITHDRAWN` IS a valid
   per-request status. So a get-by-scan must filter on `["ALL"]`, not the
-  per-request status enum. (Latent: `clockify_time_off_requests_list`'s
-  `statuses` input enum includes `WITHDRAWN`, so a caller passing it would 400 —
-  documented, not yet guarded.)
+  per-request status enum. Guarded 2026-06-18: `clockify_time_off_requests_list`'s
+  `statuses` input enum is `REQUEST_SEARCH_STATUSES` = [ALL, PENDING, APPROVED,
+  REJECTED], so `WITHDRAWN` is rejected at the input layer before the wire. Test:
+  `mcp/tests/time-off-search-statuses.test.ts`.
 - **MCP tool affected:** `clockify_time_off_requests_get`.
 - **Status:** `compensated-in-tool-layer` (2026-06-15). The tool now searches
   `timeOff.list` with `statuses:["ALL"]`, walks pages (bounded at 50×200), and

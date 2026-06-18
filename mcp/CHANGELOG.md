@@ -6,6 +6,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- `clockify_time_off_requests_list` now exposes only POST-search statuses the
+  Clockify wire accepts (`ALL`, `PENDING`, `APPROVED`, `REJECTED`); the tool
+  schema is covered by `mcp/tests/time-off-search-statuses.test.ts`.
 - Measured code coverage: `@vitest/coverage-v8` (v2, version-matched) wired
   into `vitest.config.ts` over `src/**`. New `npm run test:coverage` script;
   floors pinned in `docs/coverage-contract.json` and enforced by

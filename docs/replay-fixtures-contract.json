@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Replay-fixtures gate: committed redacted golden fixtures under spec/evidence/fixtures are replayed offline through wrapper-helper-equivalent checks to assert documented Clockify wire shapes (invoice tax/discount x100 read-back, time-off {count,requests} envelope, invoice-item unitPrice /100), re-scanned for secrets/un-redacted IDs, and a source-grep tripwire requires invoiceItemUnitPriceToWire at any future invoice-item/payment-create site. Pure Node, network-free, creds-free.",
+  "wiring": {
+    "makeTarget": "replay-fixtures",
+    "checker": "scripts/check-replay-fixtures.mjs",
+    "redactor": "scripts/build-replay-fixtures.mjs",
+    "enterpriseAuditId": "replay-fixtures"
+  },
+  "fixturesDir": "spec/evidence/fixtures",
+  "requiredFixtures": [
+    "spec/evidence/fixtures/invoice.get.json",
+    "spec/evidence/fixtures/invoice-item.unitprice.json",
+    "spec/evidence/fixtures/timeoff.requests.search.json",
+    "spec/evidence/fixtures/projects.list.json"
+  ],
+  "placeholderIdPattern": "^0{20}[0-9]{4}$|^0{21}[0-9]{3}$",
+  "sourceGrepTripwire": {
+    "scanDir": "mcp/src",
+    "triggers": ["addInvoiceItem", "invoiceItems.create", "payments.create", "createInvoicePayment"],
+    "requires": "invoiceItemUnitPriceToWire"
+  }
+}
