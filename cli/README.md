@@ -76,17 +76,33 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 entries delete <id>` | Delete a time entry. |
 | `clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]` | List projects. |
 | `clk115 projects create <name> [--client id] [--color hex] [--billable]` | Create a project. |
+| `clk115 projects get <id>` | Get one project by ID. |
+| `clk115 projects update <id> [--name text] [--client id] [--color hex] [--note text] [--billable\|--no-billable] [--archived\|--no-archived]` | Update a project. |
+| `clk115 projects delete <id>` | Delete a project (archives first; an active project cannot be deleted). |
 | `clk115 clients list [--limit N] [--page N] [--name text] [--archived]` | List clients. |
 | `clk115 clients create <name> [--note text]` | Create a client. |
+| `clk115 clients get <id>` | Get one client by ID. |
+| `clk115 clients update <id> [--name text] [--note text] [--address text] [--archived\|--no-archived]` | Update a client. |
+| `clk115 clients delete <id>` | Delete a client (archives first; an active client cannot be deleted). |
 | `clk115 tasks list <projectId> [--limit N] [--page N] [--name text]` | List tasks for a project. |
+| `clk115 tasks create <projectId> <name> [--billable] [--estimate iso] [--assignee id…]` | Create a task under a project. |
+| `clk115 tasks get <projectId> <id>` | Get one task by project ID and task ID. |
+| `clk115 tasks update <projectId> <id> [--name text] [--status ACTIVE\|DONE] [--estimate iso] [--billable\|--no-billable] [--assignee id…]` | Update a task. |
+| `clk115 tasks delete <projectId> <id>` | Delete a task (marks DONE first; an active task cannot be deleted). |
 | `clk115 tags list [--limit N] [--page N] [--name text] [--archived]` | List tags. |
 | `clk115 tags create <name>` | Create a tag. |
+| `clk115 tags get <id>` | Get one tag by ID. |
+| `clk115 tags update <id> [--name text] [--archived\|--no-archived]` | Update a tag. |
+| `clk115 tags delete <id>` | Delete a tag. |
 | `clk115 webhooks list [--type type]` | List outbound webhooks. |
 | `clk115 webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]` | Create a webhook subscription. |
 | `clk115 webhooks delete <id>` | Delete a webhook subscription. |
 | `clk115 invoices list` | List invoices in the workspace. |
 | `clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]` | Create an invoice draft. |
 | `clk115 expenses list [--limit N] [--page N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]` | List workspace expenses. |
+| `clk115 expenses get <id>` | Get one expense by ID. |
+| `clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable\|--no-billable]` | Update an expense (full replace of amount, category, date). |
+| `clk115 expenses delete <id>` | Delete an expense. |
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
 | `clk115 timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. |
 | `clk115 scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
@@ -96,8 +112,15 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]` | Detailed report listing individual time entries over a date range. Read-only. |
 | `clk115 reports weekly [--period p] [--from date] [--to date] [--group USER\|PROJECT] [--subgroup TIME]` | Weekly report aggregating tracked time per week over a date range. Read-only. |
 | `clk115 reports attendance [--period p] [--from date] [--to date]` | Attendance report of clock-in/out activity over a date range. Read-only. |
+| `clk115 shared-reports list` | List the workspace's shared (public-link) reports. Read-only. |
+| `clk115 shared-reports view <id> [--export-type JSON_V1\|JSON\|CSV\|XLSX\|PDF]` | View a shared report's rendered data by ID (not workspace-scoped). Read-only. |
+| `clk115 shared-reports create --name X --type T --filter json [--public]` | Create a shared (public-link) report. |
+| `clk115 shared-reports update <id> --name X --type T --filter json [--public]` | Replace a shared report by ID (full replace of name, type, and filter). |
+| `clk115 shared-reports delete <id>` | Delete a shared report. |
 | `clk115 users me` | Show the current authenticated user (the API-key owner). Read-only. |
 | `clk115 users list [--page N] [--page-size N] [--name text]` | List members of the workspace. Read-only. |
+| `clk115 users invite <email> [--no-send-email]` | Invite (add) a user to the workspace by email. |
+| `clk115 users update-profile <userId> [--name text] [--image-url url] [--remove-image] [--week-start day] [--work-capacity iso] [--working-days days…]` | Update one user's member profile. |
 | `clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json\|@file\|-] [--all] [--page-size N] [--max-pages N] [--include-headers]` | Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID. |
 | `clk115 completion [zsh\|bash\|fish]` | Print a shell completion script for zsh, bash, or fish. |
 | `clk115 help [command]` | Print per-command help. |

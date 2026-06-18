@@ -1,16 +1,37 @@
 /**
- * `clk115 expenses list`. Create is intentionally omitted because
- * the live Clockify create-expense endpoint expects a multipart upload
- * (a receipt file) per the synced SDK's `ExpenseCreateRequest`. A
- * future iteration can add `expenses create` with a `--file` flag once
- * the wrapper exposes the right uploadable helper to the CLI surface.
+ * `clk115 expenses {list,get,update,delete}`. Create is intentionally
+ * omitted because the live Clockify create-expense endpoint expects a
+ * multipart upload (a receipt file) per the synced SDK's
+ * `ExpenseCreateRequest`. A future iteration can add `expenses create`
+ * with a `--file` flag once the wrapper exposes the right uploadable
+ * helper to the CLI surface.
  */
 import type { Command } from "commander";
 
-import { printRecords } from "../output.js";
+import { printObject, printRecords } from "../output.js";
+import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
+
+// Clockify's expense PUT needs an explicit list of which fields to apply;
+// derive it from the scalar fields the caller actually supplied (mirrors
+// the MCP `clockify_expenses_update` tool).
+const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
+    amount: "AMOUNT",
+    date: "DATE",
+    projectId: "PROJECT",
+    taskId: "TASK",
+    categoryId: "CATEGORY",
+    notes: "NOTES",
+    billable: "BILLABLE",
+};
+
+function expenseChangeFields(fields: Record<string, unknown>): string[] {
+    return Object.entries(EXPENSE_CHANGE_FIELDS)
+        .filter(([key]) => fields[key] !== undefined)
+        .map(([, value]) => value);
+}
 
 export const registerExpensesCommand: Registrar = (program, services) => {
     const expenses = program.command("expenses").description("Inspect workspace expenses.");
@@ -70,5 +91,82 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 };
             });
             printRecords(rows, output);
+        });
+
+    expenses
+        .command("get")
+        .argument("<id>", "Expense ID.")
+        .description("Get one expense by ID.")
+        .action(async function (this: Command, id: string) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            const expense = await client.expenses.get({ workspaceId, expenseId: id });
+            printObject(expense as Record<string, unknown>, output);
+        });
+
+    expenses
+        .command("update")
+        .argument("<id>", "Expense ID.")
+        .requiredOption("--amount <n>", "Amount.", (v) => Number.parseFloat(v))
+        .requiredOption("--category <id>", "Expense category ID.")
+        .requiredOption("--date <date>", "Expense date (YYYY-MM-DD or ISO).")
+        .requiredOption("--user <id>", "Owning user ID.")
+        .option("--project <id>", "Project ID.")
+        .option("--task <id>", "Task ID.")
+        .option("--notes <text>", "Notes.")
+        .option("--billable", "Mark as billable.")
+        .option("--no-billable", "Mark as non-billable.")
+        .description("Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).")
+        .action(async function (this: Command, id: string, opts) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            const fields: Record<string, unknown> = {
+                amount: opts.amount,
+                categoryId: opts.category,
+                date: opts.date,
+            };
+            if (opts.project) fields.projectId = opts.project;
+            if (opts.task) fields.taskId = opts.task;
+            if (opts.notes !== undefined) fields.notes = opts.notes;
+            if (opts.billable !== undefined) fields.billable = opts.billable;
+            const updated = (await client.expenses.update({
+                ...fields,
+                changeFields: expenseChangeFields(fields),
+                userId: opts.user,
+                expenseId: id,
+                workspaceId,
+            } as never)) as { id?: string };
+            const data = { id: updated.id ?? id };
+            printReceipt(
+                {
+                    ok: true,
+                    action: "expenses.update",
+                    entity: "expense",
+                    ids: { expenseId: data.id },
+                    data,
+                    changed: { updated: [{ type: "expense", id: data.id }] },
+                    next: [{ command: `clk115 expenses get ${data.id} --json`, reason: "Verify the update." }],
+                },
+                output,
+            );
+        });
+
+    expenses
+        .command("delete")
+        .argument("<id>", "Expense ID.")
+        .description("Delete an expense by ID.")
+        .action(async function (this: Command, id: string) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            await client.expenses.delete({ workspaceId, expenseId: id });
+            printReceipt(
+                {
+                    ok: true,
+                    action: "expenses.delete",
+                    entity: "expense",
+                    ids: { expenseId: id },
+                    data: { id, deleted: true, message: `deleted expense ${id}` },
+                    changed: { deleted: [{ type: "expense", id }] },
+                    next: [{ command: "clk115 expenses list --json", reason: "Verify the expense no longer appears." }],
+                },
+                output,
+            );
         });
 };

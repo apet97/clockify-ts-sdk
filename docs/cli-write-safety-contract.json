@@ -170,6 +170,182 @@
         "printReceipt",
         "id:"
       ]
+    },
+    {
+      "name": "projects update",
+      "path": "cli/src/commands/projects.ts",
+      "readmeCommand": "projects update <id>",
+      "markers": [
+        ".command(\"update\")",
+        "projects.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "projects delete",
+      "path": "cli/src/commands/projects.ts",
+      "readmeCommand": "projects delete <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "projects.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "clients update",
+      "path": "cli/src/commands/clients.ts",
+      "readmeCommand": "clients update <id>",
+      "markers": [
+        ".command(\"update\")",
+        "clients.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "clients delete",
+      "path": "cli/src/commands/clients.ts",
+      "readmeCommand": "clients delete <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "clients.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "tags update",
+      "path": "cli/src/commands/tags.ts",
+      "readmeCommand": "tags update <id>",
+      "markers": [
+        ".command(\"update\")",
+        "tags.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "tags delete",
+      "path": "cli/src/commands/tags.ts",
+      "readmeCommand": "tags delete <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "tags.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "tasks create",
+      "path": "cli/src/commands/tasks.ts",
+      "readmeCommand": "tasks create <projectId> <name>",
+      "markers": [
+        ".command(\"create\")",
+        "tasks.create",
+        "printReceipt",
+        "id:"
+      ]
+    },
+    {
+      "name": "tasks update",
+      "path": "cli/src/commands/tasks.ts",
+      "readmeCommand": "tasks update <projectId> <id>",
+      "markers": [
+        ".command(\"update\")",
+        "tasks.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "tasks delete",
+      "path": "cli/src/commands/tasks.ts",
+      "readmeCommand": "tasks delete <projectId> <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "tasks.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "expenses update",
+      "path": "cli/src/commands/expenses.ts",
+      "readmeCommand": "expenses update <id>",
+      "markers": [
+        ".command(\"update\")",
+        "expenses.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "expenses delete",
+      "path": "cli/src/commands/expenses.ts",
+      "readmeCommand": "expenses delete <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "expenses.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "shared-reports create",
+      "path": "cli/src/commands/sharedReports.ts",
+      "readmeCommand": "shared-reports create",
+      "markers": [
+        ".command(\"create\")",
+        "sharedReports.create",
+        "printReceipt",
+        "id:"
+      ]
+    },
+    {
+      "name": "shared-reports update",
+      "path": "cli/src/commands/sharedReports.ts",
+      "readmeCommand": "shared-reports update <id>",
+      "markers": [
+        ".command(\"update\")",
+        "sharedReports.update",
+        "printReceipt"
+      ]
+    },
+    {
+      "name": "shared-reports delete",
+      "path": "cli/src/commands/sharedReports.ts",
+      "readmeCommand": "shared-reports delete <id>",
+      "markers": [
+        ".command(\"delete\")",
+        ".argument(\"<id>\"",
+        "sharedReports.delete",
+        "printReceipt",
+        "deleted: true"
+      ]
+    },
+    {
+      "name": "users invite",
+      "path": "cli/src/commands/users.ts",
+      "readmeCommand": "users invite <email>",
+      "markers": [
+        ".command(\"invite\")",
+        "workspaces.addUser",
+        "printReceipt",
+        "id:"
+      ]
+    },
+    {
+      "name": "users update-profile",
+      "path": "cli/src/commands/users.ts",
+      "readmeCommand": "users update-profile <userId>",
+      "markers": [
+        ".command(\"update-profile\")",
+        "memberProfiles.update",
+        "printReceipt",
+        "id:"
+      ]
     }
   ],
   "forbiddenPolicyMarkers": [

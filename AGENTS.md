@@ -23,11 +23,13 @@ subdirectory:
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **35 commands** across 20 top-level
-  groups including `reports`, `users`, `doctor`, `completion`, the
+  interface on top of the SDK. **58 commands** across 21 top-level
+  groups including `reports`, `shared-reports`, `users`, `doctor`, `completion`, the
   scriptable `api` raw command, and the workflow shortcuts (`start`, `stop`, `status`, `log`,
   `entries`, `projects`, `clients`, `tasks`, `tags`, `webhooks`,
-  `invoices`, `expenses`, `timeoff`, `scheduling`, `audit-log`).
+  `invoices`, `expenses`, `timeoff`, `scheduling`, `audit-log`). The
+  resource groups carry full CRUD (`list`/`create`/`get`/`update`/`delete`,
+  with archive-then-delete for active projects/clients/tasks).
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
