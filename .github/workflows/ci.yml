@@ -342,3 +342,34 @@ jobs:
 
       - name: Product surface drift
         run: make product-surface-drift
+
+  coverage:
+    name: Coverage ratchet (measured floors)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        run: npm ci
+
+      # `make coverage` depends on sdk-codegen, runs each package's coverage
+      # suite with blanked live creds, then enforces the monotonic floors in
+      # docs/coverage-contract.json via scripts/check-coverage-floor.mjs.
+      - name: Measure coverage + enforce floors
+        run: make coverage
+        env:
+          CLOCKIFY_API_KEY: ""
+          CLOCKIFY_WORKSPACE_ID: ""
