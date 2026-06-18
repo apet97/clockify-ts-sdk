@@ -32,6 +32,10 @@ once v1.0.0 ships.
   `ensureTag(name)` / `ensureProject(name)` / `ensureClient(name)` upsert
   helpers with the workspaceId and list/create callbacks wired for you — no DI
   boilerplate. (These are instance methods, not new root exports.)
+- A scoped `Workspace` now also exposes scoped per-resource iterators
+  `ws.iterProjects` / `ws.iterTags` / `ws.iterClients` — auto-paginating
+  `iterAll` wrappers with the workspaceId and fetcher wired for you, no `.bind`
+  ritual. (These are instance methods, not new root exports.)
 
 ### Deprecated
 

@@ -128,15 +128,27 @@ export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
  * @example
  * ```ts
  * import { createClockifyClient } from "clockify-sdk-ts-115";
+ *
+ * const ws = createClockifyClient().workspace(
+ *   process.env.CLOCKIFY_WORKSPACE_ID!,
+ * );
+ *
+ * // Scoped iterators wrap `iterAll` for you — no `.bind` ritual.
+ * for await (const project of ws.iterProjects({})) {
+ *   console.log(project.name);
+ * }
+ * ```
+ *
+ * @example
+ * Power-user / unscoped form — call `iterAll` directly when you need a
+ * resource without a scoped iterator, or to walk across workspaces:
+ * ```ts
  * import { iterAll } from "clockify-sdk-ts-115/iter";
  *
- * const client = createClockifyClient({
- *   apiKey: process.env.CLOCKIFY_API_KEY!,
- * });
- *
- * // `.bind()` preserves the method's full type signature so TS
- * // infers the request shape and item shape correctly. An arrow
- * // wrapper works at runtime but loses inference.
+ * const client = createClockifyClient();
+ * // `.bind()` preserves the method's full type signature so TS infers
+ * // the request shape and item shape correctly. An arrow wrapper works
+ * // at runtime but loses inference.
  * const listProjects = client.projects.list.bind(client.projects);
  *
  * for await (const project of iterAll(listProjects, {
@@ -160,6 +172,11 @@ export async function* iterAll<TRequest, TItem>(
  * Variant of {@link iterAll} that yields per-page envelopes
  * `{ items, page, pageSize, hasNextPage }` instead of flattening to
  * individual items. Use when you need page-level metadata.
+ *
+ * No scoped `ws.*` wrapper exists for `iterPages` — when you just want
+ * every record, prefer the scoped item iterators (`ws.iterProjects` /
+ * `ws.iterTags` / `ws.iterClients`); reach for `iterPages` directly only
+ * when you need the page envelope.
  *
  * @example
  * ```ts

@@ -216,6 +216,28 @@ the wrapper consumes as an authoritative end-of-pages signal.
 
 ### `iterAll` — for "give me every record"
 
+A scoped `Workspace` exposes `iterProjects` / `iterTags` /
+`iterClients`, which wrap `iterAll` with the `workspaceId` and the
+fetcher wired for you — no `.bind` ritual:
+
+```typescript
+import { createClockifyClient } from "clockify-sdk-ts-115";
+
+const ws = createClockifyClient().workspace("...");
+
+for await (const project of ws.iterProjects({})) {
+    console.log(project.name);
+}
+```
+
+`iterAll(fetcher, baseRequest, options?)` walks pages until the
+server signals end-of-pages (via `Last-Page: true` if emitted,
+else a non-full page). `options`: `pageSize` (default 50),
+`maxPages` (default ∞), `startPage` (default 1, for resume flows).
+
+For a resource without a scoped iterator (or to walk across
+workspaces), call `iterAll` directly with a bound fetcher:
+
 ```typescript
 import { createClockifyClient, iterAll } from "clockify-sdk-ts-115";
 
@@ -226,11 +248,6 @@ for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
     console.log(project.name);
 }
 ```
-
-`iterAll(fetcher, baseRequest, options?)` walks pages until the
-server signals end-of-pages (via `Last-Page: true` if emitted,
-else a non-full page). `options`: `pageSize` (default 50),
-`maxPages` (default ∞), `startPage` (default 1, for resume flows).
 
 > `.bind(client.projects)` preserves the implicit `this` and the
 > method's full type signature. Bare references lose `this`; arrow

@@ -139,3 +139,67 @@ describe("Workspace ensure helpers", () => {
         expect(result.id).toBe("c_new");
     });
 });
+
+describe("Workspace iterators", () => {
+    /** Mock that serves a different GET page each call, terminating via the
+     *  authoritative `Last-Page: true` header on the final page. */
+    function pageFetch(pages: unknown[][]): ReturnType<typeof vi.fn> {
+        let call = 0;
+        return vi.fn(async () => {
+            const body = pages[call] ?? [];
+            const last = call >= pages.length - 1;
+            call += 1;
+            return new Response(JSON.stringify(body), {
+                status: 200,
+                headers: { "content-type": "application/json", "Last-Page": last ? "true" : "false" },
+            });
+        });
+    }
+
+    it("iterProjects walks pages and yields every project (Last-Page header)", async () => {
+        const fetchMock = pageFetch([
+            [{ id: "p_1", name: "Alpha" }, { id: "p_2", name: "Beta" }],
+            [{ id: "p_3", name: "Gamma" }],
+        ]);
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-it");
+
+        const names: string[] = [];
+        for await (const project of ws.iterProjects({})) {
+            names.push((project as { name: string }).name);
+        }
+
+        expect(names).toEqual(["Alpha", "Beta", "Gamma"]);
+        expect(firstUrl(fetchMock)).toContain("/workspaces/ws-it/projects");
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it("iterTags scopes the workspace and stops on the Last-Page header", async () => {
+        const fetchMock = pageFetch([[{ id: "tg_1", name: "urgent" }]]);
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-it");
+
+        const ids: string[] = [];
+        for await (const tag of ws.iterTags({})) {
+            ids.push((tag as { id: string }).id);
+        }
+
+        expect(ids).toEqual(["tg_1"]);
+        expect(firstUrl(fetchMock)).toContain("/workspaces/ws-it/tags");
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("iterClients yields across pages scoped to the workspace", async () => {
+        const fetchMock = pageFetch([
+            [{ id: "c_1", name: "Acme" }],
+            [{ id: "c_2", name: "Globex" }],
+        ]);
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-it");
+
+        const ids: string[] = [];
+        for await (const c of ws.iterClients({})) {
+            ids.push((c as { id: string }).id);
+        }
+
+        expect(ids).toEqual(["c_1", "c_2"]);
+        expect(firstUrl(fetchMock)).toContain("/workspaces/ws-it/clients");
+    });
+});

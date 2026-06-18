@@ -25,6 +25,7 @@
  * ```
  */
 import { ensureClient as ensureClientHelper, ensureProject as ensureProjectHelper, ensureTag as ensureTagHelper, type EnsureResult, type NamedRecord } from "./ensure.js";
+import { iterAll, type IterOptions } from "./iter.js";
 import type { ApprovalsClient } from "./src/api/resources/approvals/client/Client.js";
 import type { AuditLogReportClient } from "./src/api/resources/auditLogReport/client/Client.js";
 import type { BalancesClient } from "./src/api/resources/balances/client/Client.js";
@@ -55,7 +56,7 @@ import type { UserGroupsClient } from "./src/api/resources/userGroups/client/Cli
 import type { UsersClient } from "./src/api/resources/users/client/Client.js";
 import type { WebhooksClient } from "./src/api/resources/webhooks/client/Client.js";
 import type { WorkspacesClient } from "./src/api/resources/workspaces/client/Client.js";
-import type { ClockifyApiClient } from "./src/index.js";
+import type { ClockifyApi, ClockifyApiClient } from "./src/index.js";
 
 
 /** Sub-client view of `ClockifyApiClient` with `workspaceId`
@@ -180,8 +181,8 @@ export class Workspace {
     // duplicate-name-prone resources (tags / projects / clients), with the
     // workspaceId and list/create callbacks wired for you (no DI boilerplate).
     // Idempotent; reuses a single case-insensitive match, throws on an
-    // ambiguous active-name match. (iterAll on a scoped resource is a known
-    // follow-up; for now use `iterAll(client.<r>.list.bind(client.<r>), req)`.)
+    // ambiguous active-name match. (For auto-paginated walks, see the scoped
+    // `iterProjects` / `iterTags` / `iterClients` iterators below.)
     // -----------------------------------------------------------------------
 
     /** Find a tag by name (case-insensitive) or create it. Idempotent. */
@@ -212,6 +213,41 @@ export class Workspace {
             list: async () => (await this.client.clients.list({ workspaceId })) as unknown as NamedRecord[],
             create: async (n) => (await this.client.clients.create({ workspaceId, body: { name: n } })) as unknown as NamedRecord,
         });
+    }
+
+    // -----------------------------------------------------------------------
+    // Scoped auto-paginated iterators — walk every record on the three
+    // duplicate-name-prone resources without the `iterAll(...).bind(...)`
+    // ritual. The workspaceId is re-added internally; `page` / `page-size` are
+    // owned by the iterator. Bind to the UN-proxied `this.client.<r>` so the
+    // proxy doesn't double-inject workspaceId.
+    // -----------------------------------------------------------------------
+
+    /** Walk every project in this workspace, auto-paginating. No `.bind` ritual. */
+    iterProjects(
+        request: Omit<ClockifyApi.ListProjectsRequest, "workspaceId" | "page" | "page-size"> = {},
+        options?: IterOptions,
+    ): AsyncGenerator<ClockifyApi.Project, void, void> {
+        const list = this.client.projects.list.bind(this.client.projects);
+        return iterAll(list, { ...request, workspaceId: this.workspaceId }, options);
+    }
+
+    /** Walk every tag in this workspace, auto-paginating. No `.bind` ritual. */
+    iterTags(
+        request: Omit<ClockifyApi.ListTagsRequest, "workspaceId" | "page" | "page-size"> = {},
+        options?: IterOptions,
+    ): AsyncGenerator<ClockifyApi.Tag, void, void> {
+        const list = this.client.tags.list.bind(this.client.tags);
+        return iterAll(list, { ...request, workspaceId: this.workspaceId }, options);
+    }
+
+    /** Walk every client in this workspace, auto-paginating. No `.bind` ritual. */
+    iterClients(
+        request: Omit<ClockifyApi.ListClientsRequest, "workspaceId" | "page" | "page-size"> = {},
+        options?: IterOptions,
+    ): AsyncGenerator<ClockifyApi.Client, void, void> {
+        const list = this.client.clients.list.bind(this.client.clients);
+        return iterAll(list, { ...request, workspaceId: this.workspaceId }, options);
     }
 
     /** Internal: build a Proxy over the named resource. Cached per resource
