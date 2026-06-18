@@ -11,7 +11,7 @@ const SNIPPETS = {
         mcp: "Call clockify_status with no arguments.",
     },
     pagination: {
-        sdk: "for await (const tag of iterAll(clockify.tags.getTags, workspaceId, { pageSize: 50 })) { console.log(tag.id); }",
+        sdk: "const listTags = clockify.tags.list.bind(clockify.tags); for await (const tag of iterAll(listTags, { workspaceId }, { pageSize: 50 })) { console.log(tag.id); }",
         cli: "clockify115 api GET /workspaces/{workspaceId}/tags --all --page-size 50 --output ndjson",
         mcp: "Call clockify_tags_list with page and pageSize, then continue while more pages are needed.",
     },
@@ -26,7 +26,7 @@ const SNIPPETS = {
         mcp: "Use clockify_operation_guide before choosing a domain tool for long-tail operations.",
     },
     webhook: {
-        sdk: "const event = constructEvent(rawBody, signatureTokenHeader, { secret });",
+        sdk: "const event = constructEvent({ headers, payload: rawBody, expectedToken });",
         cli: "clockify115 webhooks list --output json",
         mcp: "Call clockify_setup_webhook with dry_run: true and inspect URL safety warnings.",
     },

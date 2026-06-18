@@ -42,6 +42,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_sdk_snippet` pagination/sdk and webhook/sdk snippets now use real
+  SDK APIs: `tags.list` with request-object `iterAll`, and single-object
+  `constructEvent({ headers, payload, expectedToken })`.
 - P2-1 trap-cast corrections (live-probed 2026-06-18):
   - `clockify_scheduling_assignments_list_per_project` now sends the **required**
     `start`/`end` (the all-projects search 400s without them) and camel `pageSize`

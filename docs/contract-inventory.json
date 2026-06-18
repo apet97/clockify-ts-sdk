@@ -371,6 +371,22 @@
       "perfectFull": true
     },
     {
+      "id": "snippet-method-parity",
+      "target": "snippet-method-parity",
+      "checker": "scripts/check-snippet-method-parity.mjs",
+      "policies": [
+        "docs/snippet-method-parity-policy.md"
+      ],
+      "contracts": [
+        "docs/snippet-method-parity-contract.json"
+      ],
+      "auditIds": [
+        "snippet-method-parity"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "runtime-support",
       "target": "runtime-support",
       "checker": "scripts/check-runtime-support.mjs",

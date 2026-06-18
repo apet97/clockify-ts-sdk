@@ -1009,6 +1009,41 @@
       ]
     },
     {
+      "id": "snippet-method-parity",
+      "requirement": "Keep agent-facing SDK snippets aligned with generated SDK method names so guidance does not teach nonexistent calls.",
+      "evidence": [
+        {
+          "path": "docs/snippet-method-parity-policy.md",
+          "contains": [
+            "clockify.tags.getTags",
+            "generated Clockify client"
+          ]
+        },
+        {
+          "path": "docs/snippet-method-parity-contract.json",
+          "contains": [
+            "mcp/src/tools/agent-docs.ts",
+            "referenceRegex",
+            "ignoredMembers"
+          ]
+        },
+        {
+          "path": "scripts/check-snippet-method-parity.mjs",
+          "contains": [
+            "Snippet method parity inspected",
+            "non-generated method",
+            "snippet method parity passed"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "snippet-method-parity:"
+          ]
+        }
+      ]
+    },
+    {
       "id": "runtime-support",
       "requirement": "Keep SDK/CLI/MCP package runtime floors and docs aligned so users do not hit engine traps.",
       "evidence": [

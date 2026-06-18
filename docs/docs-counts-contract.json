@@ -65,13 +65,14 @@
     "53 public names",
     "81 public names",
     "90 public names",
-    "92 public names",
+    "93 public names",
     "89 tools",
     "123 tools",
     "227 tests",
     "(currently 691)",
     "29 commands",
-    "35 commands"
+    "35 commands",
+    "127 tools"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

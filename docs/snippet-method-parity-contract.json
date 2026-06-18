@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Snippet method parity contract: every clockify.<group>.<method> reference in agent-facing snippets must name a real generated client method.",
+  "generatedRoots": {
+    "candidates": [
+      "output/ts-sdk",
+      "wrapper/src"
+    ],
+    "resourcesPath": "api/resources",
+    "clientPath": "client/Client.ts",
+    "methodRegex": "public\\s+(?:async\\s+)?([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
+  },
+  "ignoredMembers": [
+    "fetch",
+    "health",
+    "workspace",
+    "bind"
+  ],
+  "snippetSurfaces": [
+    "mcp/src/tools/agent-docs.ts"
+  ],
+  "referenceRegex": "clockify\\.([A-Za-z_][A-Za-z0-9_]*)\\.([A-Za-z_][A-Za-z0-9_]*)",
+  "wiring": {
+    "makeTarget": "snippet-method-parity",
+    "checker": "scripts/check-snippet-method-parity.mjs",
+    "qualityGate": "make snippet-method-parity",
+    "inventoryId": "snippet-method-parity",
+    "auditId": "snippet-method-parity",
+    "docsIndex": [
+      "snippet-method-parity-policy.md",
+      "snippet-method-parity-contract.json"
+    ]
+  }
+}
