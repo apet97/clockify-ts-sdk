@@ -28,6 +28,13 @@ All notable changes to `@clockify115/cli` are documented here.
   project/task/tag **names** (not just IDs), matching the shipped behavior — the docs
   previously steered users away from the feature by claiming `log` "takes IDs".
 
+### Changed
+
+- Internal type-safety: dropped gratuitous `as unknown[]` result casts in name
+  resolution and the `projects` command (the typed path yields the generated array),
+  and removed an invented `clientId: string | null` that had drifted from the
+  generated `Project` type (`clientId?: string`). No behavior change.
+
 ### Removed
 
 - Two unreferenced internal helpers (`formatSeconds`, `completionShells`) with no call

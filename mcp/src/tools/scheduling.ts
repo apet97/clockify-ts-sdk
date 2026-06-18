@@ -58,7 +58,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     "page-size": args.pageSize ?? 50,
                 };
                 if (args.name) req.name = args.name;
-                const items = (await ctx.client.scheduling.list(req as never)) as unknown[];
+                const items = await ctx.client.scheduling.list(req as never);
                 return successResult("clockify_scheduling_assignments_list", items, {
                     workspaceId: ctx.workspaceId,
                     count: items.length,
@@ -98,6 +98,10 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                         projectId: args.projectId,
                     });
                 }
+                // TODO(P2-1 trap): the generated ListPerProjectScheduling Flattened type
+                // uses camel `pageSize` and requires `start`/`end`; this sends kebab
+                // `page-size` and omits them. The `as never` masks that mismatch — verify
+                // the live wire shape before narrowing off the cast.
                 const items = (await ctx.client.scheduling.listPerProject({
                     workspaceId: ctx.workspaceId,
                     page: args.page ?? 1,
@@ -311,13 +315,13 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         async (args) => {
             try {
                 const { extra, page, pageSize, ...rest } = args;
-                const items = (await ctx.client.scheduling.getUsersCapacityFiltered({
+                const items = await ctx.client.scheduling.getUsersCapacityFiltered({
                     ...rest,
                     page: page ?? 1,
                     pageSize: pageSize ?? 50,
                     ...(extra ?? {}),
                     workspaceId: ctx.workspaceId,
-                })) as unknown[];
+                });
                 return successResult(
                     "clockify_scheduling_capacity",
                     items,

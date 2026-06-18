@@ -7,12 +7,13 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { errorResult, successResult } from "../result.js";
+import { defineTool, successResult } from "../result.js";
 
 const AUTHORS_MODE = ["CONTAINS", "DOES_NOT_CONTAIN"] as const;
 
 export function registerAuditTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_audit_log_search",
         {
             title: "Search the workspace audit log",
@@ -32,26 +33,22 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    start: args.start,
-                    end: args.end,
-                    actions: args.actions,
-                    authors: {
-                        authorIds: args.authorIds ?? [],
-                        contains: args.authorsMode ?? "CONTAINS",
-                    },
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                const result = await ctx.client.auditLogReport.search(req as never);
-                return successResult("clockify_audit_log_search", result, {
-                    workspaceId: ctx.workspaceId,
-                });
-            } catch (err) {
-                return errorResult("clockify_audit_log_search", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                start: args.start,
+                end: args.end,
+                actions: args.actions,
+                authors: {
+                    authorIds: args.authorIds ?? [],
+                    contains: args.authorsMode ?? "CONTAINS",
+                },
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            const result = await ctx.client.auditLogReport.search(req as never);
+            return successResult("clockify_audit_log_search", result, {
+                workspaceId: ctx.workspaceId,
+            });
         },
     );
 }

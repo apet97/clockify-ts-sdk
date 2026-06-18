@@ -35,7 +35,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                 const p = raw as {
                     id?: string;
                     name?: string;
-                    clientId?: string | null;
+                    clientId?: string;
                     color?: string;
                     archived?: boolean;
                     billable?: boolean;
@@ -68,7 +68,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             const created = (await client.projects.create(body as never)) as {
                 id?: string;
                 name?: string;
-                clientId?: string | null;
+                clientId?: string;
                 color?: string;
             };
             const data = {

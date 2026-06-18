@@ -25,6 +25,18 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- Added a `defineTool` envelope helper (`result.ts`) that owns the uniform
+  `try { … } catch (err) { return errorResult(name, err) }` wrapper so a tool
+  carries only its happy path; migrated `status` / `audit` / `timer` onto it.
+  The remaining tools stay on `registerTool` pending a type-preserving generic
+  seam (the current envelope widens handler args to `Record<string,unknown>`,
+  which erases Zod arg inference). Tool count, names, and JSON Schemas unchanged.
+- Internal type-safety: dropped gratuitous `as unknown[]` result casts on the
+  `tasks` / `clients` / `scheduling` list tools (the typed path already yields
+  the generated array). The type-erasing "trap" casts on the scheduling
+  per-project and time-off list/status/policy requests are now documented with
+  `TODO(P2-1 trap)` comments naming the real latent wire-shape bugs, rather than
+  silently narrowed (which would change unproven wire behavior).
 - The SDK client the MCP server uses no longer exposes the dead
   `timeEntries.stopTimer` method (the `/stop` route 404s live and was
   quarantined out of the canonical OpenAPI upstream). The timer tools
