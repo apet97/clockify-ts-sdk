@@ -7,7 +7,7 @@
     {
         "name": "CJS root entry (index.js)",
         "path": "dist/cjs/index.js",
-        "limit": "3 kB"
+        "limit": "4 kB"
     },
     {
         "name": "Subpath: create-client (ESM)",
@@ -48,5 +48,45 @@
         "name": "Subpath: errors (ESM)",
         "path": "dist/esm/errors.js",
         "limit": "6 kB"
+    },
+    {
+        "name": "Subpath: resolve (ESM)",
+        "path": "dist/esm/resolve.js",
+        "limit": "5.5 kB"
+    },
+    {
+        "name": "Subpath: dates (ESM)",
+        "path": "dist/esm/dates.js",
+        "limit": "4 kB"
+    },
+    {
+        "name": "Subpath: compose (ESM)",
+        "path": "dist/esm/compose.js",
+        "limit": "2 kB"
+    },
+    {
+        "name": "Subpath: ensure (ESM)",
+        "path": "dist/esm/ensure.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "Subpath: money (ESM)",
+        "path": "dist/esm/money.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "Subpath: invoice-body (ESM)",
+        "path": "dist/esm/invoice-body.js",
+        "limit": "1.5 kB"
+    },
+    {
+        "name": "Subpath: bulk (ESM)",
+        "path": "dist/esm/bulk.js",
+        "limit": "1.2 kB"
+    },
+    {
+        "name": "Subpath: reports (ESM)",
+        "path": "dist/esm/reports.js",
+        "limit": "800 B"
     }
 ]

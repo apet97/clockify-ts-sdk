@@ -50,6 +50,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- README: added a "Naming" subsection explaining the two tool grammars
+  (workflow verb-phrase vs domain `clockify_<group>_<action>`) and
+  linking `docs/naming-taxonomy-policy.md` as the source of truth, plus a
+  prose note on why the `clockify_demo_seed` / `clockify_demo_cleanup`
+  tools ship by default (they back `npm run verify:live-cleanup`, create
+  only prefix-namespaced objects, and `demo_cleanup` is
+  `destructiveHint`-guarded).
 - completed the type-preserving defineTool migration across all domain +
   workflow tools (P2-2).
 - `clockify_create_work_package` is now transactional: it builds its client →

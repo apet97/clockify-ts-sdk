@@ -37,6 +37,18 @@ once v1.0.0 ships.
   `iterAll` wrappers with the workspaceId and fetcher wired for you, no `.bind`
   ritual. (These are instance methods, not new root exports.)
 
+### Changed
+
+- `tsconfig.json` now sets `isolatedModules: true`, aligning the wrapper
+  with the cli/mcp strictness baseline. (`noImplicitOverride` was held
+  back: the generated `src/errors/*` classes override `Error.cause` /
+  `Error.name` without an `override` modifier — a generator concern,
+  out of scope here.)
+- `.size-limit.json` now tracks the high-value `resolve`, `dates`,
+  `compose`, `ensure`, `money`, `invoice-body`, `bulk`, and `reports`
+  subpaths (calibrated compressed-size ceilings); the CJS root entry's
+  ceiling was recalibrated to its current measured size.
+
 ### Deprecated
 
 - `findOrCreateClient` — use `ensureClient` instead (identical behavior; the
