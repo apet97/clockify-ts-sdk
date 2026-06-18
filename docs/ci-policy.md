@@ -17,6 +17,16 @@ local package gates without becoming the source of product truth.
 | `.github/workflows/ci-cli-release.yml` | INERT CLI publish scaffold: `workflow_dispatch`-only with the publish step guarded `if: false`. Builds and dry-run packs only; cannot publish until a maintainer deliberately enables it (AGENTS.md §12.7, docs/release-support-policy.md). |
 | `.github/workflows/ci-mcp-release.yml` | INERT MCP publish scaffold: same doubly-disabled posture as the CLI scaffold. |
 
+- **`cross-gate` (ci.yml)** runs the four cross-package drift gates
+  (`operation-parity-drift`, `openapi-operations-drift`, `openapi-lint`,
+  `product-surface-drift`) so a change that passes every per-package suite but
+  breaks the OpenAPI/SDK/MCP joins is caught in CI. It does **not** publish.
+- **Performance-budget timing is de-flaked in CI** via
+  `CLOCKIFY_PERF_TIMING=0`: the startup smokes still run (a crash or a wrong
+  MCP tool count still reds) but the wall-clock comparison is suppressed
+  because shared runners show high per-run startup variance. File-size ceilings
+  stay fatal. Local `make perfect-fast` keeps timing enforced.
+
 ## CI safety rules
 
 - Do not change workflow triggers, publish/auth behavior, Pages

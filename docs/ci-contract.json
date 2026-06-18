@@ -30,6 +30,10 @@
         "make sdk-codegen",
         "make sdk-codegen-drift",
         "make openapi-lint",
+        "make operation-parity-drift",
+        "make openapi-operations-drift",
+        "make product-surface-drift",
+        "cross-gate:",
         "persist-credentials: false"
       ]
     },
