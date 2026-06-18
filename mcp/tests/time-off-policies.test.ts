@@ -31,6 +31,10 @@ function policiesContext(captured: Record<string, unknown>, policy = existingPol
         workspaceId: "ws-1",
         client: {
             timeOffPolicies: {
+                list: async (req: unknown) => {
+                    captured.list = req;
+                    return [{ id: "pol-1" }, { id: "pol-2" }];
+                },
                 get: async (req: unknown) => {
                     captured.get = req;
                     return policy;
@@ -74,6 +78,24 @@ async function connect(ctx: Context): Promise<Client> {
     };
     return client;
 }
+
+describe("clockify_time_off_policies_list — query-string page form", () => {
+    it("sends page as a string and kebab page-size (the GET serializes to query, not a body whitelist)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_policies_list",
+            arguments: {},
+        });
+        expect(res.isError).toBeFalsy();
+        const list = captured.list as Record<string, unknown>;
+        expect(list.workspaceId).toBe("ws-1");
+        // ListTimeOffPoliciesRequest declares page:string; the wire form is the
+        // query string (live-verified 200 honoring page-size, 2026-06-18).
+        expect(list.page).toBe("1");
+        expect(list["page-size"]).toBe(50);
+    });
+});
 
 describe("clockify_time_off_policies_update — replace-safe, flat body, scope reconstruction", () => {
     it("GET-then-PUTs the full body and rebuilds scope as a CONTAINS filter (flat, not nested)", async () => {

@@ -5,6 +5,7 @@
  * through errorResult.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { resolveEntityRef, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -72,9 +73,11 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         {
             title: "List scheduling assignments per project",
             description:
-                "Scheduling assignment totals grouped by project. Pass a projectId for one project's totals (a dedicated GET endpoint); otherwise all projects.",
+                "Scheduling assignment totals grouped by project. start/end are required (the all-projects search 400s without them). Pass a projectId for one project's totals (a dedicated GET endpoint that ignores start/end); otherwise all projects.",
             inputSchema: {
-                projectId: z.string().optional().describe("One project's totals. Uses the GET .../projects/totals/{projectId} endpoint."),
+                projectId: z.string().optional().describe("One project's totals. Uses the GET .../projects/totals/{projectId} endpoint (ignores start/end)."),
+                start: z.string().describe("Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search."),
+                end: z.string().describe("Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search."),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
@@ -95,15 +98,19 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     projectId: args.projectId,
                 });
             }
-            // TODO(P2-1 trap): the generated ListPerProjectScheduling Flattened type
-            // uses camel `pageSize` and requires `start`/`end`; this sends kebab
-            // `page-size` and omits them. The `as never` masks that mismatch — verify
-            // the live wire shape before narrowing off the cast.
-            const items = (await ctx.client.scheduling.listPerProject({
+            // The all-projects totals search REQUIRES start+end (omitting them
+            // 400s) and reads camel `pageSize` off the body whitelist — kebab
+            // `page-size` is silently ignored and returns ALL projects
+            // (live-verified 2026-06-18). Send the flattened request with camel
+            // pageSize; the response is a real ProjectAssignmentsTotal[].
+            const req: ClockifyApi.ListPerProjectSchedulingRequest = {
                 workspaceId: ctx.workspaceId,
+                start: args.start,
+                end: args.end,
                 page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
-            } as never)) as unknown[];
+                pageSize: args.pageSize ?? 50,
+            };
+            const items = await ctx.client.scheduling.listPerProject(req);
             return successResult("clockify_scheduling_assignments_list_per_project", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,

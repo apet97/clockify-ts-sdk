@@ -17,6 +17,20 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- P2-1 trap-cast corrections (live-probed 2026-06-18):
+  - `clockify_scheduling_assignments_list_per_project` now sends the **required**
+    `start`/`end` (the all-projects search 400s without them) and camel `pageSize`
+    instead of the silently-ignored kebab `page-size`; `start`/`end` are now
+    required tool inputs and both `as never` / `as unknown[]` casts are gone.
+  - `clockify_time_off_requests_update_status` restricts the settable status to
+    `APPROVED` / `REJECTED` (the wire rejects `PENDING` / `WITHDRAWN` as a target).
+  - `clockify_time_off_requests_list` unwraps the `{ count, requests }` search
+    envelope (it is not a bare array) and reports the server-side `count`.
+  - `clockify_time_off_policies_list` builds a typed request (`page` as a string,
+    matching the query-string wire form) instead of masking the mismatch with a
+    cast. See `spec/evidence/discrepancies.md`
+    (`scheduling.list-per-project.start-end-required-camel-pagesize`,
+    `time-off.change-status.union-and-note`).
 - `clockify_review_day` / `clockify_review_week` and `clockify_fix_entry`'s
   entry lookup now walk **all** pages of `listForUser` via the SDK's
   `iterAll` (honoring the `Last-Page` header) instead of fetching a single

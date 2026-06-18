@@ -61,6 +61,31 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
         });
         expect(captured.updateStatus).toBeUndefined();
     });
+
+    it("rejects PENDING and WITHDRAWN at the input layer (only APPROVED/REJECTED are valid targets)", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                timeOff: {
+                    changeTimeOffRequestStatus: async (r: unknown) => {
+                        captured.change = r; // must NOT be reached for invalid status
+                        return { id: "req-1" };
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        for (const statusType of ["PENDING", "WITHDRAWN"]) {
+            const res = await client.callTool({
+                name: "clockify_time_off_requests_update_status",
+                arguments: { policyId: "pol-1", requestId: "req-1", statusType },
+            });
+            expect(res.isError).toBeTruthy();
+        }
+        // The wire was never hit for either rejected status.
+        expect(captured.change).toBeUndefined();
+    });
 });
 
 describe("clockify_expenses_categories_delete — archive before delete", () => {
