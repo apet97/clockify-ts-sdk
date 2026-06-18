@@ -29,7 +29,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                     "page-size": args.pageSize ?? 50,
                 };
                 if (args.name) req.name = args.name;
-                const tasks = (await ctx.client.tasks.list(req as never)) as unknown[];
+                const tasks = await ctx.client.tasks.list(req as never);
                 return successResult("clockify_tasks_list", tasks, {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,

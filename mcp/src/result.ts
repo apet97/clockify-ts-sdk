@@ -15,8 +15,10 @@
  * Errors set `isError: true` on the CallToolResult so the MCP
  * transport flags the failure at the protocol level too.
  */
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
+import type { ZodTypeAny } from "zod";
 
 import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
 
@@ -171,4 +173,42 @@ function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {
         const values = changed[key as keyof ChangeSet];
         return Array.isArray(values) && values.length > 0;
     });
+}
+
+/** The registerTool config shape, minus the auto-injected `outputSchema`. */
+export interface ToolConfig {
+    title: string;
+    description: string;
+    inputSchema?: Record<string, ZodTypeAny>;
+    annotations?: Record<string, unknown>;
+}
+
+/** A tool handler: receives the (schema-validated) args and returns an envelope. */
+export type ToolHandler = (args: Record<string, unknown>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+
+/**
+ * Register a tool whose uniform `try { … } catch (err) { return errorResult(name, err) }`
+ * envelope is owned here, so individual tools carry only their happy path. The optional
+ * `recovery` is forwarded to `errorResult` for tools that want a tailored recovery hint.
+ *
+ * MUST go through `server.registerTool` so the `installDefaultOutputSchema` monkeypatch
+ * still injects the canonical `outputSchema`. The two casts bridge this helper's narrowed
+ * config/handler types to `registerTool`'s generic (inputSchema-inferred) signature — the
+ * same kind of sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the
+ * model sees (and `server.test.ts` asserts) is unchanged.
+ */
+export function defineTool(
+    server: McpServer,
+    name: string,
+    config: ToolConfig,
+    handler: ToolHandler,
+    recovery?: string | RecoveryHint,
+): void {
+    server.registerTool(name, config as never, (async (args: Record<string, unknown>, extra: unknown) => {
+        try {
+            return await handler(args, extra);
+        } catch (err) {
+            return errorResult(name, err, recovery);
+        }
+    }) as never);
 }

@@ -94,6 +94,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 if (args.end) req.end = args.end;
                 if (args.statuses) req.statuses = args.statuses;
                 if (users) req.users = users;
+                // TODO(P2-1 trap): timeOff.list returns the TimeOffRequestsResponse envelope,
+                // not a bare array; `as unknown[]` + `.length` assume an array. Verify the
+                // live response shape before narrowing off the cast.
                 const items = (await ctx.client.timeOff.list(req as never)) as unknown[];
                 return successResult("clockify_time_off_requests_list", items, {
                     workspaceId: ctx.workspaceId,
@@ -221,6 +224,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     status: args.statusType,
                 };
                 if (args.note) req.note = args.note;
+                // TODO(P2-1 trap): the generated ChangeTimeOffRequestStatus type marks `note`
+                // required, but it is only set when args.note is present. Confirm whether the
+                // wire actually requires `note` before narrowing off `as never`.
                 const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
                 return successResult("clockify_time_off_requests_update_status", updated, {
                     workspaceId: ctx.workspaceId,
@@ -282,6 +288,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             try {
+                // TODO(P2-1 trap): the generated ListTimeOffPolicies type declares `page` as a
+                // string, but this sends a number. The `as never` masks the mismatch — verify
+                // the wire form before narrowing.
                 const items = (await ctx.client.timeOffPolicies.list({
                     workspaceId: ctx.workspaceId,
                     page: args.page ?? 1,

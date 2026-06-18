@@ -1,7 +1,9 @@
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
-import { errorResult, successResult } from "../src/result.js";
+import { defineTool, errorResult, successResult, type ToolHandler } from "../src/result.js";
 
 describe("successResult", () => {
     it("wraps the payload in {ok:true, action, data}", () => {
@@ -158,5 +160,47 @@ describe("errorResult", () => {
             retryable: true,
         });
         expect(out.structuredContent).toEqual(parsed);
+    });
+});
+
+describe("defineTool", () => {
+    type Handler = (args: Record<string, unknown>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+    // Capture the wrapped callback defineTool hands to server.registerTool, so we can
+    // invoke it and assert the try/catch envelope behavior.
+    function register(handler: ToolHandler, recovery?: string): Handler {
+        let captured: Handler | undefined;
+        const fakeServer = {
+            registerTool: (_name: string, _config: unknown, cb: Handler) => {
+                captured = cb;
+            },
+        } as unknown as McpServer;
+        defineTool(fakeServer, "clockify_test_tool", { title: "Test", description: "Test tool envelope." }, handler, recovery);
+        if (!captured) throw new Error("registerTool was not called");
+        return captured;
+    }
+
+    it("passes a successful handler result through unchanged", async () => {
+        const run = register(async () => successResult("clockify_test_tool", { ran: true }));
+        const out = await run({}, {});
+        expect(out.isError).toBeUndefined();
+        expect(JSON.parse((out.content[0] as { text: string }).text)).toMatchObject({
+            ok: true,
+            action: "clockify_test_tool",
+            data: { ran: true },
+        });
+    });
+
+    it("converts a thrown error into an errorResult envelope with the optional recovery", async () => {
+        const run = register(async () => {
+            throw Object.assign(new Error("Not Found"), { statusCode: 404 });
+        }, "Check the id.");
+        const out = await run({}, {});
+        expect(out.isError).toBe(true);
+        expect(JSON.parse((out.content[0] as { text: string }).text)).toMatchObject({
+            ok: false,
+            action: "clockify_test_tool",
+            error: { code: "not_found", message: "Not Found" },
+            recovery: { hint: "Check the id." },
+        });
     });
 });

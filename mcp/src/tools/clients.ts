@@ -28,7 +28,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 };
                 if (args.name) req.name = args.name;
                 if (args.archived !== undefined) req.archived = args.archived;
-                const clients = (await ctx.client.clients.list(req as never)) as unknown[];
+                const clients = await ctx.client.clients.list(req as never);
                 return successResult("clockify_clients_list", clients, {
                     workspaceId: ctx.workspaceId,
                     count: clients.length,
