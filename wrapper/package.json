@@ -257,6 +257,16 @@
         "default": "./dist/cjs/ensure.js"
       }
     },
+    "./requests": {
+      "import": {
+        "types": "./dist/esm/requests.d.ts",
+        "default": "./dist/esm/requests.js"
+      },
+      "require": {
+        "types": "./dist/cjs/requests.d.ts",
+        "default": "./dist/cjs/requests.js"
+      }
+    },
     "./reports": {
       "import": {
         "types": "./dist/esm/reports.d.ts",

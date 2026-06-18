@@ -1,4 +1,10 @@
-import { printJson, printNdjson, printObject, type OutputOptions } from "./output.js";
+import {
+    printJson,
+    printNdjson,
+    printObject,
+    type OutputOptions,
+    type OutputRecord,
+} from "./output.js";
 
 export interface CliEntityRef {
     type: string;
@@ -23,7 +29,7 @@ export interface CliReceipt {
     action: string;
     entity: string;
     ids: Record<string, string>;
-    data: Record<string, unknown>;
+    data: OutputRecord;
     changed?: CliChangeSet;
     warnings?: string[];
     next?: CliNextAction[];

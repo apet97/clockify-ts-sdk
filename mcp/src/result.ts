@@ -16,11 +16,21 @@
  * transport flags the failure at the protocol level too.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ShapeOutput, ZodRawShapeCompat } from "@modelcontextprotocol/sdk/server/zod-compat.js";
+import type {
+    ShapeOutput,
+    ZodRawShapeCompat,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
 
-import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
+import {
+    errorCodeForMessage,
+    errorCodeForStatus,
+    recoveryForCode,
+    retryableForCode,
+} from "./error-codes.js";
+
+type JsonRecord = Record<string, unknown>;
 
 export interface SuccessEnvelope {
     ok: true;
@@ -28,7 +38,7 @@ export interface SuccessEnvelope {
     entity?: string;
     ids?: Record<string, string>;
     data: unknown;
-    meta?: Record<string, unknown>;
+    meta?: JsonRecord;
     changed?: ChangeSet;
     warnings?: Warning[];
     clarification?: Clarification;
@@ -77,14 +87,14 @@ export interface Warning {
 
 export interface NextAction {
     tool: string;
-    args?: Record<string, unknown>;
+    args?: JsonRecord;
     reason?: string;
 }
 
 export interface RecoveryHint {
     hint: string;
     tool?: string;
-    args?: Record<string, unknown>;
+    args?: JsonRecord;
     retryable?: boolean;
     retryAfterSeconds?: number;
 }
@@ -101,7 +111,7 @@ export interface SuccessOptions {
 export function successResult(
     action: string,
     data: unknown,
-    meta?: Record<string, unknown>,
+    meta?: JsonRecord,
     options: SuccessOptions = {},
 ): CallToolResult {
     const envelope: SuccessEnvelope = { ok: true, action, data };
@@ -115,7 +125,7 @@ export function successResult(
     if (options.next && options.next.length > 0) envelope.next = options.next;
     return {
         content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
-        structuredContent: envelope as unknown as Record<string, unknown>,
+        structuredContent: envelope as unknown as JsonRecord,
     };
 }
 
@@ -137,14 +147,21 @@ export function writeReceipt(
     return { entity, changed: { [kind]: [entityRef] }, ...extra };
 }
 
-export function errorResult(action: string, err: unknown, recovery?: string | RecoveryHint): CallToolResult {
+export function errorResult(
+    action: string,
+    err: unknown,
+    recovery?: string | RecoveryHint,
+): CallToolResult {
     const message = err instanceof Error ? err.message : String(err);
     // Prefer the SDK's cause-aware classifier: a connection/abort error (statusCode
     // null) must not be mislabeled by the message-regex fallback — e.g. a network
     // failure whose message contains "workspace" stays connection_error (retryable),
     // not auth_or_permission. Non-SDK errors classify to undefined and fall through.
     const status = (err as { statusCode?: number }).statusCode;
-    const code = classifyClockifyError(err)?.code ?? errorCodeForStatus(status) ?? errorCodeForMessage(message);
+    const code =
+        classifyClockifyError(err)?.code ??
+        errorCodeForStatus(status) ??
+        errorCodeForMessage(message);
     const envelope: ErrorEnvelope = { ok: false, action, error: { code, message } };
     if (recovery) {
         envelope.recovery = typeof recovery === "string" ? { hint: recovery } : recovery;
@@ -153,12 +170,14 @@ export function errorResult(action: string, err: unknown, recovery?: string | Re
     }
     return {
         content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
-        structuredContent: envelope as unknown as Record<string, unknown>,
+        structuredContent: envelope as unknown as JsonRecord,
         isError: true,
     };
 }
 
-function cleanIds(ids: Record<string, string | undefined> | undefined): Record<string, string> | undefined {
+function cleanIds(
+    ids: Record<string, string | undefined> | undefined,
+): Record<string, string> | undefined {
     if (!ids) return undefined;
     const out: Record<string, string> = {};
     for (const [key, value] of Object.entries(ids)) {
@@ -180,12 +199,14 @@ export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCom
     title: string;
     description: string;
     inputSchema?: InputArgs;
-    annotations?: Record<string, unknown>;
+    annotations?: JsonRecord;
 }
 
 /** A tool handler: receives the (schema-validated, per-tool-inferred) args and returns an envelope. */
-export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> =
-    (args: ShapeOutput<InputArgs>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> = (
+    args: ShapeOutput<InputArgs>,
+    extra: unknown,
+) => CallToolResult | Promise<CallToolResult>;
 
 /**
  * Register a tool whose uniform `try { … } catch (err) { return errorResult(name, err) }`
@@ -209,13 +230,17 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
     handler: ToolHandler<InputArgs>,
     recovery?: string | RecoveryHint,
 ): void {
-    server.registerTool(name, config as never, (async (args: unknown, extra: unknown) => {
-        try {
-            return await handler(args as ShapeOutput<InputArgs>, extra);
-        } catch (err) {
-            return errorResult(name, err, recovery);
-        }
-    }) as never);
+    server.registerTool(
+        name,
+        config as never,
+        (async (args: unknown, extra: unknown) => {
+            try {
+                return await handler(args as ShapeOutput<InputArgs>, extra);
+            } catch (err) {
+                return errorResult(name, err, recovery);
+            }
+        }) as never,
+    );
 }
 
 /**

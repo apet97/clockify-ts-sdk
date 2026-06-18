@@ -84,6 +84,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- Internal type-safety: domain/workflow write calls now use generated
+  `ClockifyApi.*Request` bindings and the new SDK `requests` seam where the
+  generated body-envelope arm is the real wire shape. The write-safety checker
+  also accepts multiline `maybeConfirm` / `requireConfirmation` calls, keeping
+  the guard proof stable under formatting.
 - README: added a "Naming" subsection explaining the two tool grammars
   (workflow verb-phrase vs domain `clockify_<group>_<action>`) and
   linking `docs/naming-taxonomy-policy.md` as the source of truth, plus a

@@ -5,6 +5,7 @@
  * tools stay behind the broader `clockify-sdk-ts-115` surface until enough
  * demand surfaces to justify the CLI ergonomics work.
  */
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -13,6 +14,16 @@ import { printReceipt } from "../receipt.js";
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
+interface TimeOffListRequest {
+    workspaceId: string;
+    page: number;
+    pageSize: number;
+    start?: string;
+    end?: string;
+    statuses?: string[];
+    users?: string[];
+}
+
 export const registerTimeOffCommand: Registrar = (program, services) => {
     const timeoff = program.command("timeoff").description("Time-off requests.");
 
@@ -20,7 +31,12 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .command("list")
         .description("List time-off requests in the workspace.")
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
-        .option("--limit <n>", "Items per page (default 50, max 200).", (v) => Number.parseInt(v, 10), 50)
+        .option(
+            "--limit <n>",
+            "Items per page (default 50, max 200).",
+            (v) => Number.parseInt(v, 10),
+            50,
+        )
         .option("--start <date>", "Window start (YYYY-MM-DD or RFC3339).")
         .option("--end <date>", "Window end (YYYY-MM-DD or RFC3339).")
         .option(
@@ -30,7 +46,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .option("--user <ids>", "Comma-separated user IDs to scope the search.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: TimeOffListRequest = {
                 workspaceId,
                 page: opts.page,
                 pageSize: Math.min(Math.max(1, opts.limit), 200),
@@ -52,7 +68,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 };
                 const statusValue =
                     typeof r.status === "object" && r.status !== null
-                        ? (r.status).statusType ?? ""
+                        ? (r.status.statusType ?? "")
                         : typeof r.status === "string"
                           ? r.status
                           : "";
@@ -84,25 +100,25 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const period: Record<string, unknown> = {
+            const period: ClockifyApi.PeriodV1Request = {
                 start: opts.start,
                 end: opts.end,
             };
             if (Number.isFinite(opts.days)) period.days = opts.days;
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
+                note: opts.note ?? "",
                 timeOffPeriod: {
                     isHalfDay: opts.halfDay === true,
                     halfDayPeriod: opts.halfDayPeriod ?? "NOT_DEFINED",
                     period,
                 },
             };
-            if (opts.note) body.note = opts.note;
-            const created = (await client.timeOff.submit({
+            const req: ClockifyApi.SubmitTimeOffRequest = {
                 workspaceId,
                 policyId: opts.policy,
                 body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never)) as {
+            };
+            const created = (await client.timeOff.submit(req)) as {
                 id?: string;
                 status?: { statusType?: string };
                 userId?: string;
@@ -120,7 +136,9 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                     ids: { timeOffRequestId: data.id },
                     data,
                     changed: { created: [{ type: "time_off_request", id: data.id }] },
-                    next: [{ command: "clk115 timeoff list --json", reason: "Review request status." }],
+                    next: [
+                        { command: "clk115 timeoff list --json", reason: "Review request status." },
+                    ],
                 },
                 output,
             );

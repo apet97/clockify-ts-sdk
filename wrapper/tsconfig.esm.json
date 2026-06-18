@@ -36,6 +36,7 @@
     "dates.ts",
     "resolve.ts",
     "ensure.ts",
+    "requests.ts",
     "reports.ts",
     "bulk.ts",
     "compose.ts"

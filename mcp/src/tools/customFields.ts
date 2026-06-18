@@ -4,6 +4,7 @@
  * project-scoped associations (list/update/remove).
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -44,7 +45,10 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             description: "Create a custom field definition at the workspace level.",
             inputSchema: {
                 name: z.string().min(1),
-                type: z.string().min(1).describe("Clockify field type, e.g. TXT, NUMBER, DROPDOWN_SINGLE."),
+                type: z
+                    .string()
+                    .min(1)
+                    .describe("Clockify field type, e.g. TXT, NUMBER, DROPDOWN_SINGLE."),
                 allowedValues: z.array(z.string()).optional(),
                 required: z.boolean().optional(),
                 placeholder: z.string().optional(),
@@ -58,14 +62,20 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             if (args.required !== undefined) body.required = args.required;
             if (args.placeholder) body.placeholder = args.placeholder;
             if (args.description) body.description = args.description;
-            const created = await ctx.client.customFields.createForWorkspace({
-                workspaceId: ctx.workspaceId,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_custom_fields_create", created, {
-                workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "custom_field", { id: entityId(created), name: args.name }));
+            const created = await ctx.client.customFields.createForWorkspace(
+                wireBody<ClockifyApi.CreateForWorkspaceCustomFieldsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    body,
+                }),
+            );
+            return successResult(
+                "clockify_custom_fields_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "custom_field", { id: entityId(created), name: args.name }),
+            );
         },
     );
 
@@ -94,16 +104,22 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             if (args.placeholder) body.placeholder = args.placeholder;
             if (args.description) body.description = args.description;
             if (args.status) body.status = args.status;
-            const updated = await ctx.client.customFields.updateForWorkspace({
-                workspaceId: ctx.workspaceId,
-                customFieldId: args.customFieldId,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_custom_fields_update", updated, {
-                workspaceId: ctx.workspaceId,
-                customFieldId: args.customFieldId,
-            }, writeReceipt("updated", "custom_field", args.customFieldId));
+            const updated = await ctx.client.customFields.updateForWorkspace(
+                wireBody<ClockifyApi.UpdateForWorkspaceCustomFieldsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    customFieldId: args.customFieldId,
+                    body,
+                }),
+            );
+            return successResult(
+                "clockify_custom_fields_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    customFieldId: args.customFieldId,
+                },
+                writeReceipt("updated", "custom_field", args.customFieldId),
+            );
         },
     );
 
@@ -123,7 +139,13 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         },
         async (args) => {
             const preview = { action: "delete", entity: "custom_field", id: args.customFieldId };
-            const confirmation = requireConfirmation(ctx, "clockify_custom_fields_delete", "custom_field_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_custom_fields_delete",
+                "custom_field_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.customFields.deleteForWorkspace({
                 workspaceId: ctx.workspaceId,
@@ -171,7 +193,8 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         "clockify_project_custom_fields_update",
         {
             title: "Update a project custom field",
-            description: "Update a custom field association on a project (status, defaults, allowed values).",
+            description:
+                "Update a custom field association on a project (status, defaults, allowed values).",
             inputSchema: {
                 projectId: z.string().min(1),
                 customFieldId: z.string().min(1),
@@ -192,11 +215,16 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 customFieldId: args.customFieldId,
                 body,
             });
-            return successResult("clockify_project_custom_fields_update", updated, {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                customFieldId: args.customFieldId,
-            }, writeReceipt("updated", "project_custom_field", args.customFieldId));
+            return successResult(
+                "clockify_project_custom_fields_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    customFieldId: args.customFieldId,
+                },
+                writeReceipt("updated", "project_custom_field", args.customFieldId),
+            );
         },
     );
 
@@ -222,7 +250,13 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 projectId: args.projectId,
                 customFieldId: args.customFieldId,
             };
-            const confirmation = requireConfirmation(ctx, "clockify_project_custom_fields_remove", "project_custom_field_remove", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_project_custom_fields_remove",
+                "project_custom_field_remove",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.customFields.removeFromProject({
                 workspaceId: ctx.workspaceId,

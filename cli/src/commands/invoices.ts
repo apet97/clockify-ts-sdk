@@ -1,6 +1,7 @@
 /**
  * `clk115 invoices list` / `clk115 invoices create`.
  */
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -55,11 +56,13 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
         .requiredOption("--currency <code>", "ISO currency code (e.g. USD, EUR).")
         .requiredOption("--issued <date>", "Issued date (YYYY-MM-DD or RFC3339).")
         .requiredOption("--due <date>", "Due date (YYYY-MM-DD or RFC3339).")
-        .option("--time-view-mode <mode>", "Time view mode (e.g. AGGREGATED_TIME_VIEW, DETAILED_TIME_VIEW).")
+        .option(
+            "--time-view-mode <mode>",
+            "Time view mode (e.g. AGGREGATED_TIME_VIEW, DETAILED_TIME_VIEW).",
+        )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {
-                workspaceId,
+            const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {
                 clientId: opts.client,
                 number: opts.number,
                 currency: opts.currency,
@@ -67,8 +70,8 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                 dueDate: normaliseInvoiceDate(opts.due, "due"),
             };
             if (opts.timeViewMode) body.timeViewMode = opts.timeViewMode;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.invoices.create(body as never)) as {
+            const req: ClockifyApi.InvoiceCreateRequest = { workspaceId, body };
+            const created = (await client.invoices.create(req)) as {
                 id?: string;
                 number?: string;
                 status?: string;
@@ -90,7 +93,12 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
                     ids: { invoiceId: data.id },
                     data,
                     changed: { created: [{ type: "invoice", id: data.id, name: data.number }] },
-                    next: [{ command: "clk115 invoices list --json", reason: "Verify the invoice draft appears." }],
+                    next: [
+                        {
+                            command: "clk115 invoices list --json",
+                            reason: "Verify the invoice draft appears.",
+                        },
+                    ],
                 },
                 output,
             );

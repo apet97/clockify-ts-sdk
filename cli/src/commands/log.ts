@@ -3,6 +3,7 @@
  * with an explicit duration ending now (or at --end). The most-
  * common after-the-fact entry pattern.
  */
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { parseDuration } from "../duration.js";
@@ -31,24 +32,40 @@ export const registerLogCommand: Registrar = (program, services) => {
         .option("--tag <name|id...>", "Tag name(s) or ID(s). Repeat the flag for multiple tags.")
         .option("--billable", "Mark the entry as billable.", false)
         .option("--end <iso>", "End timestamp (ISO 8601). Defaults to now.")
-        .action(async function (this: Command, duration: string, description: string, opts: LogOpts) {
+        .action(async function (
+            this: Command,
+            duration: string,
+            description: string,
+            opts: LogOpts,
+        ) {
             const { client, workspaceId, output } = resolveContext(this, services);
             if (opts.task && !opts.project) {
-                throw new Error("--task requires --project: a task entry must be scoped to its project.");
+                throw new Error(
+                    "--task requires --project: a task entry must be scoped to its project.",
+                );
             }
-            const projectId = opts.project ? await resolveProjectId(client, workspaceId, opts.project) : undefined;
+            const projectId = opts.project
+                ? await resolveProjectId(client, workspaceId, opts.project)
+                : undefined;
             const taskId =
-                opts.task && projectId ? await resolveTaskId(client, workspaceId, projectId, opts.task) : undefined;
-            const tagIds = opts.tag && opts.tag.length > 0 ? await resolveTagIds(client, workspaceId, opts.tag) : undefined;
+                opts.task && projectId
+                    ? await resolveTaskId(client, workspaceId, projectId, opts.task)
+                    : undefined;
+            const tagIds =
+                opts.tag && opts.tag.length > 0
+                    ? await resolveTagIds(client, workspaceId, opts.tag)
+                    : undefined;
             const seconds = parseDuration(duration);
             const endIso = opts.end ?? new Date().toISOString();
             const endMs = Date.parse(endIso);
             if (Number.isNaN(endMs)) {
-                throw new Error(`--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp`);
+                throw new Error(
+                    `--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp`,
+                );
             }
             const startIso = new Date(endMs - seconds * 1000).toISOString();
 
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
                 start: startIso,
                 end: endIso,
                 description,
@@ -58,9 +75,13 @@ export const registerLogCommand: Registrar = (program, services) => {
             if (tagIds && tagIds.length > 0) body.tagIds = tagIds;
             if (opts.billable) body.billable = true;
 
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = await client.timeEntries.create({ workspaceId, ...body } as never);
-            const entry = created as { id?: string; description?: string; timeInterval?: { duration?: string } };
+            const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId, body };
+            const created = await client.timeEntries.create(req);
+            const entry = created as {
+                id?: string;
+                description?: string;
+                timeInterval?: { duration?: string };
+            };
             const data = {
                 id: entry.id ?? "",
                 description: entry.description ?? "",

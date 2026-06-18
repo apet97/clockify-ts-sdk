@@ -9,6 +9,11 @@ once v1.0.0 ships.
 
 ### Added
 
+- New `clockify-sdk-ts-115/requests` subpath: re-exports the generated
+  `ClockifyApi` request namespace plus `ClockifyRequestBody<T>` and
+  `wireBody<T>()`, giving CLI/MCP and consumers a stable typed seam for
+  body-envelope request construction. Public surface is now 93 names / 27
+  subpaths.
 - Committed redacted replay fixtures plus `make replay-fixtures` to keep
   money/time-off wire-shape quirks replayable offline; `wire-shape.test.ts`
   now treats the invoice `unitPrice` scale finding as a guarded fixture-backed

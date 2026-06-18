@@ -6,7 +6,7 @@
  * (`published: false`) and surfaces the upstream 403 verbatim so the
  * caller can route the failure to an admin.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -16,12 +16,19 @@ import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerSchedulingCommand: Registrar = (program, services) => {
-    const scheduling = program.command("scheduling").description("Capacity scheduling assignments.");
+    const scheduling = program
+        .command("scheduling")
+        .description("Capacity scheduling assignments.");
 
     scheduling
         .command("list")
         .description("List scheduling assignments in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by assignment name substring.")
         .action(async function (this: Command, opts) {
@@ -61,15 +68,15 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
 
     scheduling
         .command("create")
-        .description("Create a scheduling assignment (defaults to draft; pass --publish to publish).")
+        .description(
+            "Create a scheduling assignment (defaults to draft; pass --publish to publish).",
+        )
         .requiredOption("--user <id>", "User ID to assign.")
         .requiredOption("--project <id>", "Project ID.")
         .requiredOption("--start <date>", "Period start (YYYY-MM-DD or RFC3339).")
         .requiredOption("--end <date>", "Period end (YYYY-MM-DD or RFC3339).")
-        .requiredOption(
-            "--hours-per-day <n>",
-            "Daily hour load (e.g. 6).",
-            (v) => Number.parseFloat(v),
+        .requiredOption("--hours-per-day <n>", "Daily hour load (e.g. 6).", (v) =>
+            Number.parseFloat(v),
         )
         .option("--task <id>", "Task ID.")
         .option("--note <text>", "Assignment note.")
@@ -78,8 +85,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--publish", "Publish immediately (default is draft).", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {
-                workspaceId,
+            const body: ClockifyRequestBody<ClockifyApi.CreateSchedulingRequest> = {
                 userId: opts.user,
                 projectId: opts.project,
                 hoursPerDay: opts.hoursPerDay,
@@ -90,8 +96,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
             if (opts.note) body.note = opts.note;
             if (opts.billable) body.billable = true;
             if (opts.includeNonWorkingDays) body.includeNonWorkingDays = true;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.scheduling.create(body as never)) as {
+            const req: ClockifyApi.CreateSchedulingRequest = { workspaceId, body };
+            const created = (await client.scheduling.create(req)) as {
                 id?: string;
                 userId?: string;
                 projectId?: string;
@@ -116,7 +122,12 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                     ids: { assignmentId: data.id },
                     data,
                     changed: { created: [{ type: "scheduling_assignment", id: data.id }] },
-                    next: [{ command: "clk115 scheduling list --json", reason: "Verify the assignment appears." }],
+                    next: [
+                        {
+                            command: "clk115 scheduling list --json",
+                            reason: "Verify the assignment appears.",
+                        },
+                    ],
                 },
                 output,
             );

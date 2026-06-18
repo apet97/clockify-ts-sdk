@@ -5,6 +5,7 @@
  * expose the scalar surface and default the user to the API-key owner.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
@@ -24,7 +25,9 @@ const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
     billable: "BILLABLE",
 };
 
-function expenseChangeFields(fields: Record<string, unknown>): string[] {
+type ExpenseFields = Partial<Record<keyof typeof EXPENSE_CHANGE_FIELDS, unknown>>;
+
+function expenseChangeFields(fields: ExpenseFields): string[] {
     return Object.entries(EXPENSE_CHANGE_FIELDS)
         .filter(([key]) => fields[key] !== undefined)
         .map(([, value]) => value);
@@ -52,7 +55,13 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: {
+                workspaceId: string;
+                page: number;
+                "page-size": number;
+                start?: string;
+                end?: string;
+            } = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
@@ -60,7 +69,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
             // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-            const response = (await ctx.client.expenses.list(req as never)) as
+            const response = (await ctx.client.expenses.list(req)) as
                 | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
                 | unknown[];
             // Upstream returns {expenses: {expenses: [...], count}} per
@@ -118,7 +127,13 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "expense", id: args.expenseId };
-            const confirmation = requireConfirmation(ctx, "clockify_expenses_delete", "expense_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_expenses_delete",
+                "expense_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.expenses.delete({
                 workspaceId: ctx.workspaceId,
@@ -138,7 +153,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_create",
         {
             title: "Create an expense",
-            description: "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
+            description:
+                "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
             inputSchema: {
                 amount: zNumberLike(z.number()),
                 categoryId: z.string().min(1),
@@ -148,7 +164,10 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 notes: z.string().optional(),
                 billable: z.boolean().optional(),
                 userId: z.string().optional(),
-                extra: z.record(z.unknown()).optional().describe("Additional expense fields, e.g. a receipt file reference"),
+                extra: z
+                    .record(z.unknown())
+                    .optional()
+                    .describe("Additional expense fields, e.g. a receipt file reference"),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -160,9 +179,14 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 ...(extra ?? {}),
                 userId: owner,
                 workspaceId: ctx.workspaceId,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: expense create scalar shape omits the generated multipart file.
             } as never);
-            return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: entityId(created) }));
+            return successResult(
+                "clockify_expenses_create",
+                created,
+                { workspaceId: ctx.workspaceId },
+                writeReceipt("created", "expense", { id: entityId(created) }),
+            );
         },
     );
 
@@ -171,7 +195,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_update",
         {
             title: "Update an expense",
-            description: "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
+            description:
+                "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
             inputSchema: {
                 expenseId: z.string().min(1),
                 amount: zNumberLike(z.number()),
@@ -182,7 +207,10 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 notes: z.string().optional(),
                 billable: z.boolean().optional(),
                 userId: z.string().optional(),
-                extra: z.record(z.unknown()).optional().describe("Additional expense fields to replace"),
+                extra: z
+                    .record(z.unknown())
+                    .optional()
+                    .describe("Additional expense fields to replace"),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
@@ -196,12 +224,17 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 userId: owner,
                 expenseId,
                 workspaceId: ctx.workspaceId,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: expense update scalar shape omits the generated multipart file.
             } as never);
-            return successResult("clockify_expenses_update", updated, {
-                workspaceId: ctx.workspaceId,
-                expenseId,
-            }, writeReceipt("updated", "expense", expenseId));
+            return successResult(
+                "clockify_expenses_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    expenseId,
+                },
+                writeReceipt("updated", "expense", expenseId),
+            );
         },
     );
 
@@ -222,7 +255,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: expense-category list uses live pagination not captured by generated type.
             } as never)) as unknown[];
             return successResult("clockify_expenses_categories_list", items, {
                 workspaceId: ctx.workspaceId,
@@ -236,7 +269,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         "clockify_expenses_categories_create",
         {
             title: "Create an expense category",
-            description: "Create a new expense category. Use unit/priceInCents when you want fixed-price categories.",
+            description:
+                "Create a new expense category. Use unit/priceInCents when you want fixed-price categories.",
             inputSchema: {
                 name: z.string().min(1),
                 unit: z.string().optional(),
@@ -246,15 +280,28 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
+            const body: ClockifyRequestBody<ClockifyApi.ExpenseCategoryRequest> = {
+                name: args.name,
+            };
             if (args.unit) body.unit = args.unit;
             if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
             if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = await ctx.client.expenseCategories.create(body as never);
-            return successResult("clockify_expenses_categories_create", created, {
+            const req: ClockifyApi.ExpenseCategoryRequest = {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "expense_category", { id: entityId(created), name: args.name }));
+                body,
+            };
+            const created = await ctx.client.expenseCategories.create(req);
+            return successResult(
+                "clockify_expenses_categories_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "expense_category", {
+                    id: entityId(created),
+                    name: args.name,
+                }),
+            );
         },
     );
 
@@ -274,20 +321,27 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
-                categoryId: args.categoryId,
-            };
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateExpenseCategoriesRequest>> =
+                {};
             if (args.name) body.name = args.name;
             if (args.unit) body.unit = args.unit;
             if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
             if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = await ctx.client.expenseCategories.update(body as never);
-            return successResult("clockify_expenses_categories_update", updated, {
+            const req = wireBody<ClockifyApi.UpdateExpenseCategoriesRequest>({
                 workspaceId: ctx.workspaceId,
                 categoryId: args.categoryId,
-            }, writeReceipt("updated", "expense_category", args.categoryId));
+                body,
+            });
+            const updated = await ctx.client.expenseCategories.update(req);
+            return successResult(
+                "clockify_expenses_categories_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    categoryId: args.categoryId,
+                },
+                writeReceipt("updated", "expense_category", args.categoryId),
+            );
         },
     );
 
@@ -307,7 +361,13 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "expense_category", id: args.categoryId };
-            const confirmation = requireConfirmation(ctx, "clockify_expenses_categories_delete", "expense_category_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_expenses_categories_delete",
+                "expense_category_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             // Clockify rejects deleting an ACTIVE category — archive it first
             // via the dedicated PATCH .../status endpoint (not a replace), then
@@ -348,10 +408,15 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 categoryId: args.categoryId,
                 body: { archived: args.archived },
             });
-            return successResult("clockify_expenses_categories_archive", archived, {
-                workspaceId: ctx.workspaceId,
-                categoryId: args.categoryId,
-            }, writeReceipt("updated", "expense_category", args.categoryId));
+            return successResult(
+                "clockify_expenses_categories_archive",
+                archived,
+                {
+                    workspaceId: ctx.workspaceId,
+                    categoryId: args.categoryId,
+                },
+                writeReceipt("updated", "expense_category", args.categoryId),
+            );
         },
     );
 }

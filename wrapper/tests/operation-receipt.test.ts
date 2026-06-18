@@ -11,7 +11,7 @@ function responsePromise<T>(
 ): ResponseAwarePromise<T> {
     const rawResponse = new Response(JSON.stringify(data), {
         status: init?.status ?? 200,
-        headers: init?.headers,
+        ...(init?.headers !== undefined ? { headers: init.headers } : {}),
     }) as unknown as RawResponse;
     const promise = Object.assign(Promise.resolve(data), {
         withRawResponse: async () => ({ data, rawResponse }),

@@ -4,7 +4,7 @@ import { otelHooks, type OtelLikeSpan } from "../otel-hooks.js";
 
 function mockSpan(): OtelLikeSpan & {
     attrs: Record<string, string | number | boolean>;
-    statusCode?: 1 | 2;
+    statusCode: 1 | 2 | undefined;
     exceptions: Error[];
     ended: boolean;
 } {

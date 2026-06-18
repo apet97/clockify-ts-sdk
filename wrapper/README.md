@@ -866,7 +866,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 92 public names + 26 subpaths                                                    | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 93 public names + 27 subpaths                                                    | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |

@@ -85,7 +85,8 @@ describe("scheduling assignments resolve NAME -> id", () => {
             },
         });
         expect(res.isError).toBeFalsy();
-        const create = captured.create as { userId?: string; projectId?: string };
+        const create =
+            (captured.create as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
     });
@@ -144,7 +145,8 @@ describe("scheduling assignments resolve NAME -> id", () => {
             },
         });
         expect(res.isError).toBeFalsy();
-        const create = captured.create as { userId?: string; projectId?: string };
+        const create =
+            (captured.create as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
     });

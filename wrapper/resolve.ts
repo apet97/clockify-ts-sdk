@@ -34,7 +34,10 @@ export function looksLikeClockifyId(value: string): boolean {
 }
 
 /** The outcome of matching a name against a list: exactly one, several, or none. */
-export type NameMatch<T> = { kind: "none" } | { kind: "one"; entity: T } | { kind: "many"; matches: T[] };
+export type NameMatch<T> =
+    | { kind: "none" }
+    | { kind: "one"; entity: T }
+    | { kind: "many"; matches: T[] };
 
 /**
  * Case-insensitive EXACT name match (Clockify's own `name` filter is contains+ci).
@@ -81,12 +84,14 @@ export function suggestOptions<T extends { id: string; name: string; archived?: 
     const q = query.trim().toLowerCase();
     const contains = q ? candidates.filter((item) => item.name.toLowerCase().includes(q)) : [];
     const pool = contains.length > 0 ? contains : candidates;
-    return pool.slice(0, MAX_SUGGESTIONS).map((item) => ({ id: item.id, label: optionLabel(item) }));
+    return pool
+        .slice(0, MAX_SUGGESTIONS)
+        .map((item) => ({ id: item.id, label: optionLabel(item) }));
 }
 
 /** Resolved id (+ entity) or a grounded clarify. */
 export type ResolveEntityResult<T> =
-    | { ok: true; id: string; name?: string; entity?: T }
+    | { ok: true; id: string; name?: string | undefined; entity?: T }
     | { ok: false; clarify: ClarifyResult };
 
 /**
@@ -97,7 +102,10 @@ export type ResolveEntityResult<T> =
 async function listBothArchivedStates<T extends { id: string }>(
     list: (filter?: ArchivedFilter) => Promise<T[]>,
 ): Promise<T[]> {
-    const [active, archived] = await Promise.all([list({ archived: false }), list({ archived: true })]);
+    const [active, archived] = await Promise.all([
+        list({ archived: false }),
+        list({ archived: true }),
+    ]);
     const seen = new Set(active.map((item) => item.id));
     return [...active, ...archived.filter((item) => !seen.has(item.id))];
 }
@@ -117,7 +125,7 @@ async function listBothArchivedStates<T extends { id: string }>(
  * - `notFoundHint` appends a caller-specific sentence to the none-match clarify.
  */
 export async function resolveEntityRef<T extends { id: string; name: string; archived?: boolean }>(
-    ref: { id?: string; name?: string },
+    ref: { id?: string | undefined; name?: string | undefined },
     opts: {
         noun: string;
         verb: string;
@@ -140,7 +148,12 @@ export async function resolveEntityRef<T extends { id: string; name: string; arc
         // through to matching a DIFFERENT entity by the (unverified) name.
         if (isHexId && opts.verifyId) {
             const article = /^[aeiou]/i.test(opts.noun) ? "an" : "a";
-            return { ok: false, clarify: { clarify: `I couldn't find ${article} ${opts.noun} with id ${rawId} to ${opts.verb}.` } };
+            return {
+                ok: false,
+                clarify: {
+                    clarify: `I couldn't find ${article} ${opts.noun} with id ${rawId} to ${opts.verb}.`,
+                },
+            };
         }
     }
     const match = matchByName(items, query, { includeArchived });
@@ -166,7 +179,7 @@ export async function resolveEntityRef<T extends { id: string; name: string; arc
         ok: false,
         clarify: {
             clarify: opts.notFoundHint ? `${base} ${opts.notFoundHint}` : base,
-            options: options.length ? options : undefined,
+            ...(options.length ? { options } : {}),
         },
     };
 }
@@ -181,12 +194,20 @@ export async function resolveProjectTaskRefs(
     refs: { projectId?: string; projectName?: string; taskId?: string; taskName?: string },
     opts: {
         verb: string;
-        listProjects: (filter?: ArchivedFilter) => Promise<Array<{ id: string; name: string; archived?: boolean }>>;
+        listProjects: (
+            filter?: ArchivedFilter,
+        ) => Promise<Array<{ id: string; name: string; archived?: boolean }>>;
         listTasks: (projectId: string) => Promise<Array<{ id: string; name: string }>>;
         projectNotFoundHint?: string;
     },
 ): Promise<
-    | { ok: true; projectId?: string; projectName?: string; taskId?: string; taskName?: string }
+    | {
+          ok: true;
+          projectId?: string | undefined;
+          projectName?: string | undefined;
+          taskId?: string | undefined;
+          taskName?: string | undefined;
+      }
     | { ok: false; clarify: ClarifyResult }
 > {
     let projectId: string | undefined;
@@ -194,7 +215,14 @@ export async function resolveProjectTaskRefs(
     if (refs.projectId?.trim() || refs.projectName?.trim()) {
         const project = await resolveEntityRef(
             { id: refs.projectId, name: refs.projectName },
-            { noun: "project", verb: opts.verb, list: opts.listProjects, notFoundHint: opts.projectNotFoundHint },
+            {
+                noun: "project",
+                verb: opts.verb,
+                list: opts.listProjects,
+                ...(opts.projectNotFoundHint !== undefined
+                    ? { notFoundHint: opts.projectNotFoundHint }
+                    : {}),
+            },
         );
         if (!project.ok) return project;
         projectId = project.id;
@@ -211,7 +239,12 @@ export async function resolveProjectTaskRefs(
     } else if (rawTaskId || refs.taskName?.trim()) {
         const query = (refs.taskName ?? rawTaskId ?? "").trim();
         if (!projectId) {
-            return { ok: false, clarify: { clarify: `To ${opts.verb} task "${query}" I need the project. Which project is it in?` } };
+            return {
+                ok: false,
+                clarify: {
+                    clarify: `To ${opts.verb} task "${query}" I need the project. Which project is it in?`,
+                },
+            };
         }
         const scopedProjectId = projectId;
         const task = await resolveEntityRef(
@@ -364,15 +397,23 @@ async function resolveRefList(
  */
 export async function resolveUserRefs(
     refs: string[],
-    opts: { verb: string; meUserId: string; listUsers: () => Promise<Array<{ id: string; name: string }>>; verifyIds?: boolean },
-): Promise<{ ok: true; userIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+    opts: {
+        verb: string;
+        meUserId: string;
+        listUsers: () => Promise<Array<{ id: string; name: string }>>;
+        verifyIds?: boolean;
+    },
+): Promise<
+    { ok: true; userIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }
+> {
     const r = await resolveRefList(refs, {
         verb: opts.verb,
         pluralNoun: "workspace users",
         singularPhrase: "a workspace member",
         pronoun: "them",
         list: opts.listUsers,
-        special: (ref) => (ref.toLowerCase() === "me" ? { id: opts.meUserId, label: "you" } : undefined),
+        special: (ref) =>
+            ref.toLowerCase() === "me" ? { id: opts.meUserId, label: "you" } : undefined,
         trustIds: !opts.verifyIds,
     });
     return r.ok ? { ok: true, userIds: r.ids, labels: r.labels } : r;
@@ -387,7 +428,9 @@ export async function resolveUserRefs(
 export async function resolveGroupRefs(
     refs: string[],
     opts: { verb: string; listGroups: () => Promise<Array<{ id: string; name: string }>> },
-): Promise<{ ok: true; groupIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+): Promise<
+    { ok: true; groupIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }
+> {
     const r = await resolveRefList(refs, {
         verb: opts.verb,
         pluralNoun: "user groups",
@@ -408,7 +451,9 @@ export async function resolveGroupRefs(
 export async function resolveTagRefs(
     refs: string[],
     opts: { verb: string; listTags: () => Promise<Array<{ id: string; name: string }>> },
-): Promise<{ ok: true; tagIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }> {
+): Promise<
+    { ok: true; tagIds: string[]; labels: string[] } | { ok: false; clarify: ClarifyResult }
+> {
     const r = await resolveRefList(refs, {
         verb: opts.verb,
         pluralNoun: "workspace tags",

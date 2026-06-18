@@ -1,3 +1,5 @@
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+
 import { successResult } from "../../result.js";
 
 import { createWorkPackage, idOf, mergeChanged, ref, str } from "./resolve.js";
@@ -8,29 +10,47 @@ import type { ChangeSet } from "./types.js";
 
 export async function demoSeed(ctx: Context, args: AnyRecord) {
     const prefix = str(args.prefix) || `DEMO-${str(args.run_id) || "phase1"}`;
-    const pkg = (await createWorkPackage(ctx, {
-        client: `${prefix}-client`,
-        project: `${prefix}-project`,
-        task: `${prefix}-task`,
-        tag: `${prefix}-tag`,
-        upsert: args.upsert !== false,
-    })).structuredContent as AnyRecord;
+    const pkg = (
+        await createWorkPackage(ctx, {
+            client: `${prefix}-client`,
+            project: `${prefix}-project`,
+            task: `${prefix}-task`,
+            tag: `${prefix}-tag`,
+            upsert: args.upsert !== false,
+        })
+    ).structuredContent as AnyRecord;
     const date = str(args.date) || "2026-01-02";
-    const logged = (await logWork(ctx, {
-        description: `${prefix}-entry`,
-        start: `${date}T09:00:00.000Z`,
-        end: `${date}T09:15:00.000Z`,
-        project_id: (pkg.ids as AnyRecord)?.projectId,
-        task_id: (pkg.ids as AnyRecord)?.taskId,
-        tag_ids: (pkg.ids as AnyRecord)?.tagId ? [(pkg.ids as AnyRecord).tagId] : [],
-        allow_overlap: true,
-    })).structuredContent;
-    return successResult("clockify_demo_seed", { package: pkg, entry: logged }, { workspaceId: ctx.workspaceId }, {
-        entity: "demo",
-        ids: (pkg.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
-        changed: mergeChanged(pkg.changed as ChangeSet | undefined, (logged as AnyRecord).changed as ChangeSet | undefined),
-        next: [{ tool: "clockify_demo_cleanup", args: { prefix }, reason: "Clean up deterministic demo objects." }],
-    });
+    const logged = (
+        await logWork(ctx, {
+            description: `${prefix}-entry`,
+            start: `${date}T09:00:00.000Z`,
+            end: `${date}T09:15:00.000Z`,
+            project_id: (pkg.ids as AnyRecord)?.projectId,
+            task_id: (pkg.ids as AnyRecord)?.taskId,
+            tag_ids: (pkg.ids as AnyRecord)?.tagId ? [(pkg.ids as AnyRecord).tagId] : [],
+            allow_overlap: true,
+        })
+    ).structuredContent;
+    return successResult(
+        "clockify_demo_seed",
+        { package: pkg, entry: logged },
+        { workspaceId: ctx.workspaceId },
+        {
+            entity: "demo",
+            ids: (pkg.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
+            changed: mergeChanged(
+                pkg.changed as ChangeSet | undefined,
+                (logged as AnyRecord).changed as ChangeSet | undefined,
+            ),
+            next: [
+                {
+                    tool: "clockify_demo_cleanup",
+                    args: { prefix },
+                    reason: "Clean up deterministic demo objects.",
+                },
+            ],
+        },
+    );
 }
 
 export async function demoCleanup(ctx: Context, args: AnyRecord) {
@@ -48,7 +68,10 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     })) as AnyRecord[];
     for (const entry of entries.filter((item) => str(item.description).startsWith(prefix))) {
         await cleanupEntity("entry", entry, deleted, warnings, () =>
-            ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: idOf(entry) }),
+            ctx.client.timeEntries.delete({
+                workspaceId: ctx.workspaceId,
+                timeEntryId: idOf(entry),
+            }),
         );
     }
 
@@ -116,24 +139,30 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     );
     for (const client of clients) {
         await cleanupEntity("client", client, deleted, warnings, async () => {
-            await ctx.client.clients.update({
-                workspaceId: ctx.workspaceId,
-                clientId: idOf(client),
-                body: { name: str(client.name), archived: true },
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            await ctx.client.clients.update(
+                wireBody<ClockifyApi.UpdateClientsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    clientId: idOf(client),
+                    body: { name: str(client.name), archived: true },
+                }),
+            );
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,
                 clientId: idOf(client),
             });
         });
     }
-    return successResult("clockify_demo_cleanup", { prefix, deleted: deleted.length }, { workspaceId: ctx.workspaceId }, {
-        entity: "demo",
-        ids: { workspaceId: ctx.workspaceId },
-        changed: { deleted },
-        warnings,
-    });
+    return successResult(
+        "clockify_demo_cleanup",
+        { prefix, deleted: deleted.length },
+        { workspaceId: ctx.workspaceId },
+        {
+            entity: "demo",
+            ids: { workspaceId: ctx.workspaceId },
+            changed: { deleted },
+            warnings,
+        },
+    );
 }
 
 export async function cleanupEntity(

@@ -5,7 +5,7 @@
  * through errorResult.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveEntityRef, resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -26,9 +26,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         })) as Array<{ id?: string; name?: string }>;
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
-    const listProjects = async (
-        filter?: { archived?: boolean },
-    ): Promise<Array<{ id: string; name: string; archived?: boolean }>> => {
+    const listProjects = async (filter?: {
+        archived?: boolean;
+    }): Promise<Array<{ id: string; name: string; archived?: boolean }>> => {
         const rows = (await ctx.client.projects.list({
             workspaceId: ctx.workspaceId,
             page: 1,
@@ -48,7 +48,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_list",
         {
             title: "List scheduling assignments",
-            description: "List scheduling assignments in the workspace with pagination and name filters.",
+            description:
+                "List scheduling assignments in the workspace with pagination and name filters.",
             inputSchema: {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
@@ -79,9 +80,22 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             description:
                 "Scheduling assignment totals grouped by project. start/end are required (the all-projects search 400s without them). Pass a projectId for one project's totals (a dedicated GET endpoint that ignores start/end); otherwise all projects.",
             inputSchema: {
-                projectId: z.string().optional().describe("One project's totals. Uses the GET .../projects/totals/{projectId} endpoint (ignores start/end)."),
-                start: z.string().describe("Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search."),
-                end: z.string().describe("Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search."),
+                projectId: z
+                    .string()
+                    .optional()
+                    .describe(
+                        "One project's totals. Uses the GET .../projects/totals/{projectId} endpoint (ignores start/end).",
+                    ),
+                start: z
+                    .string()
+                    .describe(
+                        "Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search.",
+                    ),
+                end: z
+                    .string()
+                    .describe(
+                        "Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search.",
+                    ),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
@@ -127,7 +141,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_create",
         {
             title: "Create a scheduling assignment",
-            description: "Create a scheduling assignment. Defaults to draft (published:false) to avoid notifying other users.",
+            description:
+                "Create a scheduling assignment. Defaults to draft (published:false) to avoid notifying other users.",
             inputSchema: {
                 userId: z.string().min(1),
                 projectId: z.string().min(1),
@@ -147,13 +162,25 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 { id: args.userId },
                 { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
             );
-            if (!u.ok) return clarifyResult("clockify_scheduling_assignments_create", "userId", "user", u.clarify);
+            if (!u.ok)
+                return clarifyResult(
+                    "clockify_scheduling_assignments_create",
+                    "userId",
+                    "user",
+                    u.clarify,
+                );
             const p = await resolveEntityRef(
                 { id: args.projectId },
                 { noun: "project", verb: "schedule against", list: listProjects },
             );
-            if (!p.ok) return clarifyResult("clockify_scheduling_assignments_create", "projectId", "project", p.clarify);
-            const body: Record<string, unknown> = {
+            if (!p.ok)
+                return clarifyResult(
+                    "clockify_scheduling_assignments_create",
+                    "projectId",
+                    "project",
+                    p.clarify,
+                );
+            const body: ClockifyRequestBody<ClockifyApi.CreateSchedulingRequest> = {
                 userId: u.userId,
                 projectId: p.id,
                 hoursPerDay: args.hoursPerDay,
@@ -165,14 +192,19 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             if (args.billable !== undefined) body.billable = args.billable;
             if (args.includeNonWorkingDays !== undefined)
                 body.includeNonWorkingDays = args.includeNonWorkingDays;
-            const created = await ctx.client.scheduling.create({
+            const req: ClockifyApi.CreateSchedulingRequest = {
                 workspaceId: ctx.workspaceId,
-                ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_scheduling_assignments_create", created, {
-                workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "scheduling_assignment", { id: entityId(created) }));
+                body,
+            };
+            const created = await ctx.client.scheduling.create(req);
+            return successResult(
+                "clockify_scheduling_assignments_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "scheduling_assignment", { id: entityId(created) }),
+            );
         },
     );
 
@@ -181,7 +213,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_assignments_update",
         {
             title: "Update a scheduling assignment",
-            description: "Update one scheduling assignment's user, project, dates, hours, or note by ID.",
+            description:
+                "Update one scheduling assignment's user, project, dates, hours, or note by ID.",
             inputSchema: {
                 assignmentId: z.string().min(1),
                 userId: z.string().optional(),
@@ -203,7 +236,13 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     { id: args.userId },
                     { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
                 );
-                if (!u.ok) return clarifyResult("clockify_scheduling_assignments_update", "userId", "user", u.clarify);
+                if (!u.ok)
+                    return clarifyResult(
+                        "clockify_scheduling_assignments_update",
+                        "userId",
+                        "user",
+                        u.clarify,
+                    );
                 resolvedUserId = u.userId;
             }
             if (args.projectId) {
@@ -211,10 +250,16 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     { id: args.projectId },
                     { noun: "project", verb: "schedule against", list: listProjects },
                 );
-                if (!p.ok) return clarifyResult("clockify_scheduling_assignments_update", "projectId", "project", p.clarify);
+                if (!p.ok)
+                    return clarifyResult(
+                        "clockify_scheduling_assignments_update",
+                        "projectId",
+                        "project",
+                        p.clarify,
+                    );
                 resolvedProjectId = p.id;
             }
-            const body: Record<string, unknown> = {};
+            const body: ClockifyRequestBody<ClockifyApi.UpdateSchedulingRequest> = {};
             if (resolvedUserId) body.userId = resolvedUserId;
             if (resolvedProjectId) body.projectId = resolvedProjectId;
             if (args.start && args.end) body.period = { start: args.start, end: args.end };
@@ -227,10 +272,15 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 assignmentId: args.assignmentId,
                 body,
             });
-            return successResult("clockify_scheduling_assignments_update", updated, {
-                workspaceId: ctx.workspaceId,
-                assignmentId: args.assignmentId,
-            }, writeReceipt("updated", "scheduling_assignment", args.assignmentId));
+            return successResult(
+                "clockify_scheduling_assignments_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    assignmentId: args.assignmentId,
+                },
+                writeReceipt("updated", "scheduling_assignment", args.assignmentId),
+            );
         },
     );
 
@@ -249,8 +299,18 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            const preview = { action: "delete", entity: "scheduling_assignment", id: args.assignmentId };
-            const confirmation = requireConfirmation(ctx, "clockify_scheduling_assignments_delete", "scheduling_assignment_delete", args, preview);
+            const preview = {
+                action: "delete",
+                entity: "scheduling_assignment",
+                id: args.assignmentId,
+            };
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_scheduling_assignments_delete",
+                "scheduling_assignment_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.scheduling.delete({
                 workspaceId: ctx.workspaceId,
@@ -270,13 +330,19 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_publish",
         {
             title: "Publish scheduling assignments",
-            description: "Publish draft scheduling assignments across a date range; set notifyUsers to alert the affected users.",
+            description:
+                "Publish draft scheduling assignments across a date range; set notifyUsers to alert the affected users.",
             inputSchema: {
                 start: z.string().min(1),
                 end: z.string().min(1),
                 notifyUsers: z.boolean().optional(),
                 search: z.string().optional(),
-                extra: z.record(z.unknown()).optional().describe("Additional publish filters, e.g. userFilter, userGroupFilter, viewType"),
+                extra: z
+                    .record(z.unknown())
+                    .optional()
+                    .describe(
+                        "Additional publish filters, e.g. userFilter, userGroupFilter, viewType",
+                    ),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -303,14 +369,20 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         "clockify_scheduling_capacity",
         {
             title: "Scheduling user capacity",
-            description: "List each user's scheduled capacity totals across a date range, filtered by user, group, or status.",
+            description:
+                "List each user's scheduled capacity totals across a date range, filtered by user, group, or status.",
             inputSchema: {
                 start: z.string().min(1),
                 end: z.string().min(1),
                 search: z.string().optional(),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
-                extra: z.record(z.unknown()).optional().describe("Additional capacity filters, e.g. userFilter, userGroupFilter, statusFilter"),
+                extra: z
+                    .record(z.unknown())
+                    .optional()
+                    .describe(
+                        "Additional capacity filters, e.g. userFilter, userGroupFilter, statusFilter",
+                    ),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -328,7 +400,12 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             return successResult(
                 "clockify_scheduling_capacity",
                 items,
-                { workspaceId: ctx.workspaceId, count: items.length, page: page ?? 1, pageSize: pageSize ?? 50 },
+                {
+                    workspaceId: ctx.workspaceId,
+                    count: items.length,
+                    page: page ?? 1,
+                    pageSize: pageSize ?? 50,
+                },
                 { entity: "scheduling" },
             );
         },

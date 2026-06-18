@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -12,7 +12,8 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_list",
         {
             title: "List time entries (current user)",
-            description: "List the current user's time entries in the pinned workspace, paginated via page and pageSize.",
+            description:
+                "List the current user's time entries in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -57,7 +58,8 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_log",
         {
             title: "Log a finished time entry",
-            description: "Create a finished time entry from an explicit start + end, or duration + end.",
+            description:
+                "Create a finished time entry from an explicit start + end, or duration + end.",
             inputSchema: {
                 description: z.string().min(1),
                 start: z.string().describe("ISO 8601 start timestamp.").optional(),
@@ -82,7 +84,9 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 if (args.durationSeconds === undefined) {
                     return errorResult(
                         "clockify_entries_log",
-                        new Error("provide either `start` or `durationSeconds` (with optional `end`)"),
+                        new Error(
+                            "provide either `start` or `durationSeconds` (with optional `end`)",
+                        ),
                         "Pass start as an ISO 8601 string, or durationSeconds to anchor against end (defaults to now).",
                     );
                 }
@@ -90,13 +94,14 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 if (Number.isNaN(endMs)) {
                     return errorResult(
                         "clockify_entries_log",
-                        new Error(`end ${JSON.stringify(args.end)} is not a valid ISO 8601 timestamp`),
+                        new Error(
+                            `end ${JSON.stringify(args.end)} is not a valid ISO 8601 timestamp`,
+                        ),
                     );
                 }
                 start = new Date(endMs - args.durationSeconds * 1000).toISOString();
             }
-            const body: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
+            const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
                 start,
                 end: endIso,
                 description: args.description,
@@ -105,9 +110,17 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             if (args.taskId) body.taskId = args.taskId;
             if (args.tagIds && args.tagIds.length > 0) body.tagIds = args.tagIds;
             if (args.billable !== undefined) body.billable = args.billable;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const entry = await ctx.client.timeEntries.create(body as never);
-            return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: entityId(entry), name: args.description }));
+            const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId: ctx.workspaceId, body };
+            const entry = await ctx.client.timeEntries.create(req);
+            return successResult(
+                "clockify_entries_log",
+                { ...(entry && typeof entry === "object" ? entry : {}), ...body },
+                undefined,
+                writeReceipt("created", "time_entry", {
+                    id: entityId(entry),
+                    name: args.description,
+                }),
+            );
         },
     );
 
@@ -127,10 +140,24 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "time_entry", id: args.timeEntryId };
-            const confirmation = requireConfirmation(ctx, "clockify_entries_delete", "entry_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_entries_delete",
+                "entry_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
-            await ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: args.timeEntryId });
-            return successResult("clockify_entries_delete", { deleted: true, timeEntryId: args.timeEntryId }, undefined, writeReceipt("deleted", "time_entry", args.timeEntryId));
+            await ctx.client.timeEntries.delete({
+                workspaceId: ctx.workspaceId,
+                timeEntryId: args.timeEntryId,
+            });
+            return successResult(
+                "clockify_entries_delete",
+                { deleted: true, timeEntryId: args.timeEntryId },
+                undefined,
+                writeReceipt("deleted", "time_entry", args.timeEntryId),
+            );
         },
     );
 
@@ -160,7 +187,8 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_update",
         {
             title: "Update a time entry",
-            description: "Update a time entry's metadata. Required fields must all be supplied to satisfy the upstream contract.",
+            description:
+                "Update a time entry's metadata. Required fields must all be supplied to satisfy the upstream contract.",
             inputSchema: {
                 timeEntryId: z.string().min(1),
                 start: z.string().min(1),
@@ -185,12 +213,17 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 timeEntryId: args.timeEntryId,
                 body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: time-entry update body is a partial live patch.
             } as never);
-            return successResult("clockify_entries_update", updated, {
-                workspaceId: ctx.workspaceId,
-                timeEntryId: args.timeEntryId,
-            }, writeReceipt("updated", "time_entry", args.timeEntryId));
+            return successResult(
+                "clockify_entries_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    timeEntryId: args.timeEntryId,
+                },
+                writeReceipt("updated", "time_entry", args.timeEntryId),
+            );
         },
     );
 
@@ -199,7 +232,8 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         "clockify_entries_mark_invoiced",
         {
             title: "Mark time entries invoiced",
-            description: "Mark the given time entries as invoiced (or clear the flag with invoiced:false) in the pinned workspace.",
+            description:
+                "Mark the given time entries as invoiced (or clear the flag with invoiced:false) in the pinned workspace.",
             inputSchema: {
                 timeEntryIds: z.array(z.string().min(1)).min(1),
                 invoiced: z.boolean().default(true).optional(),

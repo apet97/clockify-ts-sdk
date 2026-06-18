@@ -5,7 +5,7 @@
  * requests are the actual time-off events.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -40,6 +40,7 @@ const POLICY_CARRY_FIELDS = [
     "name",
     "negativeBalance",
 ] as const;
+type TimeOffPolicyObject = Record<string, unknown>;
 
 export function registerTimeOffTools(server: McpServer, ctx: Context): void {
     const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
@@ -87,7 +88,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     listUsers,
                     verifyIds: false, // read filter — a 24-hex id is trusted, no list call
                 });
-                if (!r.ok) return clarifyResult("clockify_time_off_requests_list", "users", "user", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_time_off_requests_list",
+                        "users",
+                        "user",
+                        r.clarify,
+                    );
                 users = r.userIds;
             }
             const req: ClockifyApi.ListTimeOffRequest = {
@@ -137,7 +144,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     page,
                     pageSize,
                     statuses: ["ALL"],
-                // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                    // KEEP as never: request search route uses live envelope shape.
                 } as never)) as { requests?: Array<{ id?: string }> } | Array<{ id?: string }>;
                 const requests = Array.isArray(res) ? res : (res.requests ?? []);
                 found = requests.find((r) => String(r.id ?? "") === args.requestId);
@@ -146,7 +153,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             if (!found) {
                 return errorResult(
                     "clockify_time_off_requests_get",
-                    new Error(`no time-off request with id ${JSON.stringify(args.requestId)} found in the workspace search`),
+                    new Error(
+                        `no time-off request with id ${JSON.stringify(args.requestId)} found in the workspace search`,
+                    ),
                 );
             }
             return successResult("clockify_time_off_requests_get", found, {
@@ -169,31 +178,40 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 days: zNumberLike(z.number().int()).optional(),
                 note: z.string().optional(),
                 isHalfDay: z.boolean().optional(),
-                halfDayPeriod: z.string().optional().describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
+                halfDayPeriod: z
+                    .string()
+                    .optional()
+                    .describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const period: Record<string, unknown> = { start: args.start, end: args.end };
+            const period: ClockifyApi.PeriodV1Request = { start: args.start, end: args.end };
             if (args.days !== undefined) period.days = args.days;
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
+                note: args.note ?? "",
                 timeOffPeriod: {
                     isHalfDay: args.isHalfDay === true,
-                    halfDayPeriod: args.halfDayPeriod ?? "NOT_DEFINED",
+                    halfDayPeriod: (args.halfDayPeriod ??
+                        "NOT_DEFINED") as ClockifyApi.HalfDayPeriod,
                     period,
                 },
             };
-            if (args.note) body.note = args.note;
-            const created = await ctx.client.timeOff.submit({
+            const req: ClockifyApi.SubmitTimeOffRequest = {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_time_off_requests_submit", created, {
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-            }, writeReceipt("created", "time_off_request", { id: entityId(created) }));
+            };
+            const created = await ctx.client.timeOff.submit(req);
+            return successResult(
+                "clockify_time_off_requests_submit",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                },
+                writeReceipt("created", "time_off_request", { id: entityId(created) }),
+            );
         },
     );
 
@@ -221,7 +239,17 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // field is `status` (`statusType` only appears in responses). The
             // flat /requests/{id}/status route 404s, so use
             // changeTimeOffRequestStatus, not updateStatus.
-            const req: Record<string, unknown> = {
+            const req: Partial<
+                ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>
+            > &
+                Pick<
+                    ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>,
+                    "status"
+                > & {
+                    workspaceId: string;
+                    policyId: string;
+                    requestId: string;
+                } = {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 requestId: args.requestId,
@@ -235,11 +263,16 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // See discrepancies.md (time-off.change-status.union-and-note).
             // KEEP as never: ChangeTimeOffRequestStatus has a generated status/note mismatch.
             const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
-            return successResult("clockify_time_off_requests_update_status", updated, {
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-                requestId: args.requestId,
-            }, writeReceipt("updated", "time_off_request", args.requestId));
+            return successResult(
+                "clockify_time_off_requests_update_status",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                    requestId: args.requestId,
+                },
+                writeReceipt("updated", "time_off_request", args.requestId),
+            );
         },
     );
 
@@ -259,7 +292,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "time_off_request", id: args.requestId };
-            const confirmation = requireConfirmation(ctx, "clockify_time_off_requests_delete", "time_off_request_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_time_off_requests_delete",
+                "time_off_request_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.timeOff.delete({
                 workspaceId: ctx.workspaceId,
@@ -332,13 +371,18 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         "clockify_time_off_policies_create",
         {
             title: "Create a time-off policy",
-            description: "Create a new time-off policy with optional approval and balance settings.",
+            description:
+                "Create a new time-off policy with optional approval and balance settings.",
             inputSchema: {
                 name: z.string().min(1),
                 timeUnit: z.string().optional().describe("DAYS | HOURS."),
                 negativeBalanceAllowed: z.boolean().optional(),
-                userIds: zStringList(z.array(z.string())).optional().describe("Apply to these users (sent as a CONTAINS filter)."),
-                userGroupIds: zStringList(z.array(z.string())).optional().describe("Apply to these user groups (sent as a CONTAINS filter)."),
+                userIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Apply to these users (sent as a CONTAINS filter)."),
+                userGroupIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Apply to these user groups (sent as a CONTAINS filter)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -352,7 +396,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     listUsers,
                     verifyIds: true,
                 });
-                if (!r.ok) return clarifyResult("clockify_time_off_policies_create", "userIds", "user", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_time_off_policies_create",
+                        "userIds",
+                        "user",
+                        r.clarify,
+                    );
                 resolvedUserIds = r.userIds;
             }
             if (args.userGroupIds?.length) {
@@ -360,25 +410,43 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     verb: "apply the policy to",
                     listGroups,
                 });
-                if (!r.ok) return clarifyResult("clockify_time_off_policies_create", "userGroupIds", "group", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_time_off_policies_create",
+                        "userGroupIds",
+                        "group",
+                        r.clarify,
+                    );
                 resolvedGroupIds = r.groupIds;
             }
             // The generated create reads the policy fields FLAT off the request
             // (not a nested `body`), so spread them; a nested body is silently
             // dropped.
-            const body: Record<string, unknown> = { name: args.name };
-            if (args.timeUnit) body.timeUnit = args.timeUnit;
-            if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
+            const body: Partial<ClockifyRequestBody<ClockifyApi.CreateTimeOffPolicyRequest>> &
+                Pick<ClockifyRequestBody<ClockifyApi.CreateTimeOffPolicyRequest>, "name"> = {
+                name: args.name,
+            };
+            if (args.timeUnit) body.timeUnit = args.timeUnit as "DAYS" | "HOURS";
+            if (args.negativeBalanceAllowed !== undefined)
+                body.allowNegativeBalance = args.negativeBalanceAllowed;
             if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
             if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
             const created = await ctx.client.timeOffPolicies.create({
                 workspaceId: ctx.workspaceId,
                 ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: policy create reads fields flat, not via generated body envelope.
             } as never);
-            return successResult("clockify_time_off_policies_create", created, {
-                workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "time_off_policy", { id: entityId(created), name: args.name }));
+            return successResult(
+                "clockify_time_off_policies_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "time_off_policy", {
+                    id: entityId(created),
+                    name: args.name,
+                }),
+            );
         },
     );
 
@@ -393,8 +461,12 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 policyId: z.string().min(1),
                 name: z.string().optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
-                userIds: zStringList(z.array(z.string())).optional().describe("Replace the scope with these users."),
-                userGroupIds: zStringList(z.array(z.string())).optional().describe("Replace the scope with these user groups."),
+                userIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Replace the scope with these users."),
+                userGroupIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Replace the scope with these user groups."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
@@ -410,7 +482,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     listUsers,
                     verifyIds: true,
                 });
-                if (!r.ok) return clarifyResult("clockify_time_off_policies_update", "userIds", "user", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_time_off_policies_update",
+                        "userIds",
+                        "user",
+                        r.clarify,
+                    );
                 resolvedUserIds = r.userIds;
             }
             if (args.userGroupIds?.length) {
@@ -418,7 +496,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     verb: "apply the policy to",
                     listGroups,
                 });
-                if (!r.ok) return clarifyResult("clockify_time_off_policies_update", "userGroupIds", "group", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_time_off_policies_update",
+                        "userGroupIds",
+                        "group",
+                        r.clarify,
+                    );
                 resolvedGroupIds = r.groupIds;
             }
             // PUT /time-off/policies/{id} REPLACES the policy, the generated
@@ -429,31 +513,40 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             const existing = (await ctx.client.timeOffPolicies.get({
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
-            })) as Record<string, unknown>;
-            const body: Record<string, unknown> = {};
+            })) as TimeOffPolicyObject;
+            const body: TimeOffPolicyObject = {};
             for (const k of POLICY_CARRY_FIELDS) {
                 if (existing[k] !== undefined) body[k] = existing[k];
             }
             if (args.name) body.name = args.name;
-            if (args.negativeBalanceAllowed !== undefined) body.allowNegativeBalance = args.negativeBalanceAllowed;
-            const existingUserIds = Array.isArray(existing.userIds) ? (existing.userIds as string[]) : [];
+            if (args.negativeBalanceAllowed !== undefined)
+                body.allowNegativeBalance = args.negativeBalanceAllowed;
+            const existingUserIds = Array.isArray(existing.userIds)
+                ? (existing.userIds as string[])
+                : [];
             const existingGroupIds = Array.isArray(existing.userGroupIds)
                 ? (existing.userGroupIds as string[])
                 : [];
             if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
             else if (existingUserIds.length) body.users = scopeFilter(existingUserIds, "ACTIVE");
             if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
-            else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
+            else if (existingGroupIds.length)
+                body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
             const updated = await ctx.client.timeOffPolicies.update({
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: policy replace carries forward live fields and reconstructed scope filters.
             } as never);
-            return successResult("clockify_time_off_policies_update", updated, {
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-            }, writeReceipt("updated", "time_off_policy", args.policyId));
+            return successResult(
+                "clockify_time_off_policies_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                },
+                writeReceipt("updated", "time_off_policy", args.policyId),
+            );
         },
     );
 
@@ -474,12 +567,17 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 body: { archived: args.archived },
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: policy archive uses live archived body despite generated status naming.
             } as never);
-            return successResult("clockify_time_off_policies_archive", updated, {
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-            }, writeReceipt("updated", "time_off_policy", args.policyId));
+            return successResult(
+                "clockify_time_off_policies_archive",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                },
+                writeReceipt("updated", "time_off_policy", args.policyId),
+            );
         },
     );
 
@@ -526,7 +624,12 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 listUsers,
             });
             if (!filter.ok)
-                return clarifyResult("clockify_time_off_balance_for_user", "userId", "user", filter.clarify);
+                return clarifyResult(
+                    "clockify_time_off_balance_for_user",
+                    "userId",
+                    "user",
+                    filter.clarify,
+                );
             const userId = filter.userId ?? args.userId;
             const balance = await ctx.client.balances.getForUser({
                 workspaceId: ctx.workspaceId,

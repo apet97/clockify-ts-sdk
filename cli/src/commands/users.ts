@@ -6,7 +6,7 @@
  * (receipt-shaped). The member-profile write stays under `users` (no new
  * top-level command group).
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -69,7 +69,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
                 workspaceId,
                 "send-email": sendEmail ? "true" : "false",
                 email,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: invite query/body split is generated too narrowly.
             } as never)) as { id?: string };
             printReceipt(
                 {
@@ -78,8 +78,17 @@ export const registerUsersCommand: Registrar = (program, services) => {
                     entity: "workspace_member",
                     ids: { workspaceId },
                     data: { email, sendEmail, message: `invited ${email}` },
-                    changed: { created: [{ type: "workspace_member", id: workspace.id ?? "", name: email }] },
-                    next: [{ command: "clk115 users list --json", reason: "Verify the member appears." }],
+                    changed: {
+                        created: [
+                            { type: "workspace_member", id: workspace.id ?? "", name: email },
+                        ],
+                    },
+                    next: [
+                        {
+                            command: "clk115 users list --json",
+                            reason: "Verify the member appears.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -94,26 +103,38 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .option("--week-start <day>", "Week start day, e.g. MONDAY.")
         .option("--work-capacity <iso>", "Daily work capacity, ISO-8601 duration (e.g. PT8H).")
         .option("--working-days <days...>", "Working day enums, e.g. MONDAY TUESDAY.")
-        .description("Update one user's member profile (name, image, week start, work capacity, working days).")
+        .description(
+            "Update one user's member profile (name, image, week start, work capacity, working days).",
+        )
         .action(async function (this: Command, userId: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {};
+            const body: ClockifyRequestBody<ClockifyApi.PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest> =
+                {};
             if (opts.name !== undefined) body.name = opts.name;
             if (opts.imageUrl !== undefined) body.imageUrl = opts.imageUrl;
             if (opts.removeImage) body.removeProfileImage = true;
             if (opts.weekStart !== undefined) body.weekStart = opts.weekStart;
             if (opts.workCapacity !== undefined) body.workCapacity = opts.workCapacity;
-            if (Array.isArray(opts.workingDays) && opts.workingDays.length > 0) body.workingDays = opts.workingDays;
-            const updated = (await client.memberProfiles.update({ workspaceId, userId, body })) as { id?: string };
+            if (Array.isArray(opts.workingDays) && opts.workingDays.length > 0)
+                body.workingDays = opts.workingDays;
+            const updated = (await client.memberProfiles.update({ workspaceId, userId, body })) as {
+                id?: string;
+            };
             printReceipt(
                 {
                     ok: true,
                     action: "users.update-profile",
                     entity: "member_profile",
                     ids: { workspaceId, userId },
-                    data: { id: updated.id ?? userId, userId, message: `updated profile for ${userId}` },
+                    data: {
+                        id: updated.id ?? userId,
+                        userId,
+                        message: `updated profile for ${userId}`,
+                    },
                     changed: { updated: [{ type: "member_profile", id: userId }] },
-                    next: [{ command: "clk115 users list --json", reason: "Verify the member list." }],
+                    next: [
+                        { command: "clk115 users list --json", reason: "Verify the member list." },
+                    ],
                 },
                 output,
             );

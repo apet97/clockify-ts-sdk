@@ -213,7 +213,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 92 names + 26 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 93 names + 27 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -375,7 +375,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (92 names, 26 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (93 names, 27 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
@@ -421,16 +421,17 @@ whitelists what `npm pack` includes. Do not add without a
 pack/readiness review. `CHANGELOG.md` is intentionally omitted to
 keep the tarball lean.
 
-Twenty-three subpaths in `package.json` `exports` at v0.9.0 (the root `.` plus 22 named), each with `import` +
+Twenty-seven subpaths in `package.json` `exports` at v0.9.0 (the root `.` plus 26 named), each with `import` +
 `require` conditions (modern dual-tier shape: `{ types, default }` per condition so
 TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
 `docs/sdk-public-api.json` (`subpaths` + `tsconfigAliases`), kept in lockstep with
 `package.json` exports, the tsconfig path aliases, and `verify-dual-build.sh` by
-`make sdk-public-api` — edit there, not by hand-listing here. The 22 named subpaths:
+`make sdk-public-api` — edit there, not by hand-listing here. The 26 named subpaths:
 `create-client`, `composed-fetch`, `errors`, `deprecation`, `iter`, `pagination`,
 `paginated-list`, `webhooks`, `webhook-events`, `with-response`, `scoped-client`,
 `otel-hooks`, `health`, `rate-limit`, `diagnostics`, `request-options`,
-`operation-receipt`, `money`, `invoice-body`, `resolve`, `dates`, and `ensure`.
+`operation-receipt`, `money`, `invoice-body`, `resolve`, `dates`, `ensure`,
+`requests`, `reports`, `bulk`, and `compose`.
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` for the legacy release path. Because that would

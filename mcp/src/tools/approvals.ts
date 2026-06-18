@@ -2,7 +2,7 @@
  * Timesheet approval workflow tools.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -48,16 +48,20 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             description: "Submit the current user's timesheet for approval.",
             inputSchema: {
                 period: z.enum(APPROVAL_PERIODS),
-                periodStart: z.string().min(1).describe("RFC3339 timestamp for the start of the period."),
+                periodStart: z
+                    .string()
+                    .min(1)
+                    .describe("RFC3339 timestamp for the start of the period."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const submitted = await ctx.client.approvals.submit({
-                workspaceId: ctx.workspaceId,
-                body: { period: args.period, periodStart: args.periodStart },
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            const submitted = await ctx.client.approvals.submit(
+                wireBody<ClockifyApi.SubmitApprovalsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    body: { period: args.period, periodStart: args.periodStart },
+                }),
+            );
             return successResult("clockify_approvals_submit", submitted, {
                 workspaceId: ctx.workspaceId,
             });
@@ -78,13 +82,16 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const updated = await ctx.client.approvals.updateStatus({
-                workspaceId: ctx.workspaceId,
-                approvalRequestId: args.approvalRequestId,
-                state: args.state,
-                note: args.note,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            const updated = await ctx.client.approvals.updateStatus(
+                wireBody<ClockifyApi.UpdateStatusApprovalsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    approvalRequestId: args.approvalRequestId,
+                    body: {
+                        state: args.state,
+                        ...(args.note !== undefined ? { note: args.note } : {}),
+                    },
+                }),
+            );
             return successResult("clockify_approvals_update_state", updated, {
                 workspaceId: ctx.workspaceId,
                 approvalRequestId: args.approvalRequestId,
@@ -97,10 +104,14 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
         "clockify_approvals_resubmit",
         {
             title: "Resubmit entries for approval",
-            description: "Resubmit the current user's time entries for approval for a given period and start date.",
+            description:
+                "Resubmit the current user's time entries for approval for a given period and start date.",
             inputSchema: {
                 period: z.enum(["WEEKLY", "SEMI_MONTHLY", "MONTHLY"]),
-                periodStart: z.string().min(1).describe("RFC3339 timestamp for the start of the period."),
+                periodStart: z
+                    .string()
+                    .min(1)
+                    .describe("RFC3339 timestamp for the start of the period."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },

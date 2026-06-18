@@ -8,7 +8,7 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords } from "../output.js";
+import { printObject, printRecords, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
@@ -27,9 +27,19 @@ const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
     billable: "BILLABLE",
 };
 
-function expenseChangeFields(fields: Record<string, unknown>): string[] {
+interface ExpenseUpdateFields {
+    amount: number;
+    categoryId: string;
+    date: string;
+    projectId?: string;
+    taskId?: string;
+    notes?: string;
+    billable?: boolean;
+}
+
+function expenseChangeFields(fields: ExpenseUpdateFields): string[] {
     return Object.entries(EXPENSE_CHANGE_FIELDS)
-        .filter(([key]) => fields[key] !== undefined)
+        .filter(([key]) => fields[key as keyof ExpenseUpdateFields] !== undefined)
         .map(([, value]) => value);
 }
 
@@ -39,7 +49,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     expenses
         .command("list")
         .description("List expenses in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--start <date>", "Start of the date range (YYYY-MM-DD).")
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
@@ -77,7 +92,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 };
                 const category =
                     typeof e.category === "object" && e.category !== null
-                        ? (e.category).name ?? ""
+                        ? (e.category.name ?? "")
                         : typeof e.category === "string"
                           ? e.category
                           : "";
@@ -101,7 +116,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const expense = await client.expenses.get({ workspaceId, expenseId: id });
-            printObject(expense as Record<string, unknown>, output);
+            printObject(expense as OutputRecord, output);
         });
 
     expenses
@@ -116,10 +131,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--notes <text>", "Notes.")
         .option("--billable", "Mark as billable.")
         .option("--no-billable", "Mark as non-billable.")
-        .description("Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).")
+        .description(
+            "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
+        )
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const fields: Record<string, unknown> = {
+            const fields: ExpenseUpdateFields = {
                 amount: opts.amount,
                 categoryId: opts.category,
                 date: opts.date,
@@ -134,7 +151,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 userId: opts.user,
                 expenseId: id,
                 workspaceId,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: expense update scalar shape omits the generated multipart file.
             } as never)) as { id?: string };
             const data = { id: updated.id ?? id };
             printReceipt(
@@ -145,7 +162,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     ids: { expenseId: data.id },
                     data,
                     changed: { updated: [{ type: "expense", id: data.id }] },
-                    next: [{ command: `clk115 expenses get ${data.id} --json`, reason: "Verify the update." }],
+                    next: [
+                        {
+                            command: `clk115 expenses get ${data.id} --json`,
+                            reason: "Verify the update.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -166,7 +188,12 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     ids: { expenseId: id },
                     data: { id, deleted: true, message: `deleted expense ${id}` },
                     changed: { deleted: [{ type: "expense", id }] },
-                    next: [{ command: "clk115 expenses list --json", reason: "Verify the expense no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 expenses list --json",
+                            reason: "Verify the expense no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

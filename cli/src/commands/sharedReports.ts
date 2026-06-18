@@ -6,9 +6,10 @@
  * the reports-host baseUrl) and returns the rendered report payload. Mirrors
  * the seven P1-7 MCP `clockify_shared_reports_*` tools.
  */
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
-import { printObject } from "../output.js";
+import { printObject, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
@@ -19,15 +20,15 @@ import type { Registrar } from "./types.js";
  * it as text and parse JSON when possible so the CLI prints structured data;
  * fall back to a small descriptor for non-JSON export types.
  */
-async function readReportBody(
-    response: { arrayBuffer: () => Promise<ArrayBuffer> },
-): Promise<Record<string, unknown>> {
+async function readReportBody(response: {
+    arrayBuffer: () => Promise<ArrayBuffer>;
+}): Promise<OutputRecord> {
     const text = new TextDecoder().decode(await response.arrayBuffer());
     if (!text) return { body: "" };
     try {
         const parsed: unknown = JSON.parse(text);
         if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-            return parsed as Record<string, unknown>;
+            return parsed as OutputRecord;
         }
         return { body: parsed };
     } catch {
@@ -52,28 +53,32 @@ const SHARED_REPORT_TYPES = [
     "EXPENSE_SUMMARY",
 ];
 
-function parseFilter(raw: string): Record<string, unknown> {
+function parseFilter(raw: string): ClockifyRequestBody<ClockifyApi.SharedReportCreate>["filter"] {
     try {
         const parsed: unknown = JSON.parse(raw);
         if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
             throw new Error("not an object");
         }
-        return parsed as Record<string, unknown>;
+        return parsed as ClockifyRequestBody<ClockifyApi.SharedReportCreate>["filter"];
     } catch {
-        throw new Error(`--filter must be a JSON object, e.g. '{"dateRangeStart":"…","dateRangeEnd":"…"}'`);
+        throw new Error(
+            `--filter must be a JSON object, e.g. '{"dateRangeStart":"…","dateRangeEnd":"…"}'`,
+        );
     }
 }
 
-function requireType(raw: string): string {
+function requireType(raw: string): ClockifyRequestBody<ClockifyApi.SharedReportCreate>["type"] {
     const type = String(raw).toUpperCase();
     if (!SHARED_REPORT_TYPES.includes(type)) {
         throw new Error(`Unknown --type "${raw}". Use one of: ${SHARED_REPORT_TYPES.join(", ")}.`);
     }
-    return type;
+    return type as ClockifyRequestBody<ClockifyApi.SharedReportCreate>["type"];
 }
 
 export const registerSharedReportsCommand: Registrar = (program, services) => {
-    const shared = program.command("shared-reports").description("Manage shared (public-link) reports.");
+    const shared = program
+        .command("shared-reports")
+        .description("Manage shared (public-link) reports.");
 
     shared
         .command("list")
@@ -81,20 +86,29 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const result = await client.sharedReports.list({ workspaceId });
-            printObject(result as Record<string, unknown>, output);
+            printObject(result as OutputRecord, output);
         });
 
     shared
         .command("view")
         .argument("<id>", "Shared-report ID.")
-        .option("--export-type <type>", "Export type: JSON_V1, JSON, CSV, XLSX, or PDF (default JSON_V1).")
-        .description("View a shared report's rendered data by ID (reports host; not workspace-scoped).")
+        .option(
+            "--export-type <type>",
+            "Export type: JSON_V1, JSON, CSV, XLSX, or PDF (default JSON_V1).",
+        )
+        .description(
+            "View a shared report's rendered data by ID (reports host; not workspace-scoped).",
+        )
         .action(async function (this: Command, id: string, opts) {
             // `view` is NOT workspace-scoped — pass only the shared-report id.
             const { client, output } = resolveContext(this, services);
-            const exportType = opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1";
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-            const response = await client.sharedReports.view({ sharedReportId: id, exportType } as never);
+            const exportType = (
+                opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1"
+            ) as NonNullable<ClockifyApi.ViewSharedReportsRequest["exportType"]>;
+            const response = await client.sharedReports.view({
+                sharedReportId: id,
+                exportType,
+            });
             printObject(await readReportBody(response), output);
         });
 
@@ -107,14 +121,15 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("Create a shared (public-link) report.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = {
                 name: opts.name,
                 type: requireType(opts.type),
                 filter: parseFilter(opts.filter),
             };
             if (opts.public) body.public = true;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.sharedReports.create({ workspaceId, body } as never)) as {
+            const created = (await client.sharedReports.create(
+                wireBody<ClockifyApi.SharedReportCreate>({ workspaceId, body }),
+            )) as {
                 id?: string;
                 name?: string;
             };
@@ -127,7 +142,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                     ids: { sharedReportId: data.id },
                     data,
                     changed: { created: [{ type: "shared_report", id: data.id, name: data.name }] },
-                    next: [{ command: "clk115 shared-reports list --json", reason: "Verify the report appears." }],
+                    next: [
+                        {
+                            command: "clk115 shared-reports list --json",
+                            reason: "Verify the report appears.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -143,18 +163,19 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("Replace a shared report by ID (full replace of name, type, and filter).")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> = {
                 name: opts.name,
                 type: requireType(opts.type),
                 filter: parseFilter(opts.filter),
             };
             if (opts.public) body.public = true;
-            const updated = (await client.sharedReports.update({
-                workspaceId,
-                sharedReportId: id,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never)) as { id?: string; name?: string };
+            const updated = (await client.sharedReports.update(
+                wireBody<ClockifyApi.UpdateSharedReportsRequest>({
+                    workspaceId,
+                    sharedReportId: id,
+                    body,
+                }),
+            )) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? opts.name };
             printReceipt(
                 {
@@ -164,7 +185,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                     ids: { sharedReportId: data.id },
                     data,
                     changed: { updated: [{ type: "shared_report", id: data.id, name: data.name }] },
-                    next: [{ command: "clk115 shared-reports list --json", reason: "Verify the update." }],
+                    next: [
+                        {
+                            command: "clk115 shared-reports list --json",
+                            reason: "Verify the update.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -185,7 +211,12 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                     ids: { sharedReportId: id },
                     data: { id, deleted: true, message: `deleted shared report ${id}` },
                     changed: { deleted: [{ type: "shared_report", id }] },
-                    next: [{ command: "clk115 shared-reports list --json", reason: "Verify the report no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 shared-reports list --json",
+                            reason: "Verify the report no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

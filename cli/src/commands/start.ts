@@ -3,11 +3,11 @@
  * --project / --task / --tag flags resolve names to IDs via list
  * queries so the user does not have to keep IDs at hand.
  */
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printReceipt } from "../receipt.js";
 import { entityId } from "../sdk-narrow.js";
-
 
 import { resolveContext } from "./helpers.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
@@ -23,7 +23,9 @@ interface StartOpts {
 export const registerStartCommand: Registrar = (program, services) => {
     program
         .command("start")
-        .description("Start a running time entry. Resolves project/task/tag names to IDs automatically.")
+        .description(
+            "Start a running time entry. Resolves project/task/tag names to IDs automatically.",
+        )
         .argument("[description]", "Description for the time entry.")
         .option("-p, --project <name>", "Project name or ID.")
         .option("-t, --task <name>", "Task name or ID.")
@@ -37,26 +39,39 @@ export const registerStartCommand: Registrar = (program, services) => {
                 throw new Error("could not determine user ID from getCurrentUser response");
             }
 
-            const projectId = opts.project ? await resolveProjectId(client, workspaceId, opts.project) : undefined;
+            const projectId = opts.project
+                ? await resolveProjectId(client, workspaceId, opts.project)
+                : undefined;
             if (opts.task && !projectId) {
-                throw new Error("--task requires --project: a task can only be resolved within a project.");
+                throw new Error(
+                    "--task requires --project: a task can only be resolved within a project.",
+                );
             }
             const taskId =
                 opts.task && projectId
                     ? await resolveTaskId(client, workspaceId, projectId, opts.task)
                     : undefined;
-            const tagIds = opts.tag ? await resolveTagIds(client, workspaceId, opts.tag) : undefined;
+            const tagIds = opts.tag
+                ? await resolveTagIds(client, workspaceId, opts.tag)
+                : undefined;
 
-            const body: Record<string, unknown> = { start: new Date().toISOString() };
+            const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
+                start: new Date().toISOString(),
+            };
             if (description) body.description = description;
             if (projectId) body.projectId = projectId;
             if (taskId) body.taskId = taskId;
             if (tagIds && tagIds.length > 0) body.tagIds = tagIds;
             if (opts.billable) body.billable = true;
 
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = await client.timeEntries.create({ workspaceId, ...body } as never);
-            const entry = created as { id?: string; description?: string; projectId?: string | null; timeInterval?: { start?: string } };
+            const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId, body };
+            const created = await client.timeEntries.create(req);
+            const entry = created as {
+                id?: string;
+                description?: string;
+                projectId?: string | null;
+                timeInterval?: { start?: string };
+            };
             const data = {
                 id: entry.id ?? "",
                 description: entry.description ?? "",

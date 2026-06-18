@@ -180,12 +180,15 @@ function runtimeCheck(nodeVersion: string | undefined): ClockifyDiagnosticCheck 
     }
     const major = Number.parseInt(nodeVersion.split(".")[0] ?? "0", 10);
     const ok = Number.isFinite(major) && major >= 20;
+    const recovery = ok
+        ? undefined
+        : "Install Node.js 20 or newer before using clockify-sdk-ts-115.";
     return {
         ok,
         status: ok ? "supported" : "unsupported",
         source: "env",
         value: nodeVersion,
-        recovery: ok ? undefined : "Install Node.js 20 or newer before using clockify-sdk-ts-115.",
+        ...(recovery !== undefined ? { recovery } : {}),
     };
 }
 

@@ -4,6 +4,7 @@
  * caller can route accordingly.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -17,7 +18,8 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
         "clockify_audit_log_search",
         {
             title: "Search the workspace audit log",
-            description: "Search the audit log. Window must be ≤ 31 days; actions + authors filters are required.",
+            description:
+                "Search the audit log. Window must be ≤ 31 days; actions + authors filters are required.",
             inputSchema: {
                 start: z.string().min(1).describe("RFC3339 window start."),
                 end: z.string().min(1).describe("RFC3339 window end."),
@@ -25,7 +27,10 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
                     .array(z.string().min(1))
                     .min(1)
                     .describe("Audit action names, e.g. CREATE_PROJECT, UPDATE_PROJECT."),
-                authorIds: z.array(z.string()).optional().describe("Author IDs; pass SYSTEM to include system events."),
+                authorIds: z
+                    .array(z.string())
+                    .optional()
+                    .describe("Author IDs; pass SYSTEM to include system events."),
                 authorsMode: z.enum(AUTHORS_MODE).optional().default("CONTAINS"),
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
@@ -33,7 +38,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.SearchAuditLogReportRequest = {
                 workspaceId: ctx.workspaceId,
                 start: args.start,
                 end: args.end,
@@ -45,8 +50,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
-            // KEEP as never: audit search request is assembled dynamically from validated filters.
-            const result = await ctx.client.auditLogReport.search(req as never);
+            const result = await ctx.client.auditLogReport.search(req);
             return successResult("clockify_audit_log_search", result, {
                 workspaceId: ctx.workspaceId,
             });

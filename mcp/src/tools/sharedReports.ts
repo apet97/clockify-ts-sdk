@@ -5,6 +5,7 @@
  * workspace-scoped. Delete is destructive and confirm-guarded.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -40,7 +41,9 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
         },
         async () => {
             const result = await ctx.client.sharedReports.list({ workspaceId: ctx.workspaceId });
-            return successResult("clockify_shared_reports_list", result, { workspaceId: ctx.workspaceId });
+            return successResult("clockify_shared_reports_list", result, {
+                workspaceId: ctx.workspaceId,
+            });
         },
     );
 
@@ -78,16 +81,23 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             inputSchema: {
                 name: z.string().min(1),
                 type: z.enum(SHARED_REPORT_TYPES),
-                filter: z.record(z.unknown()).describe("The report filter object (shape mirrors the reports API filter)."),
+                filter: z
+                    .record(z.unknown())
+                    .describe("The report filter object (shape mirrors the reports API filter)."),
                 public: z.boolean().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
+            const body: Record<string, unknown> = {
+                name: args.name,
+                type: args.type,
+                filter: args.filter,
+            };
             if (args.public !== undefined) body.public = args.public;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = await ctx.client.sharedReports.create({ workspaceId: ctx.workspaceId, body } as never);
+            const created = await ctx.client.sharedReports.create(
+                wireBody<ClockifyApi.SharedReportCreate>({ workspaceId: ctx.workspaceId, body }),
+            );
             const id = String(entityId(created) ?? "");
             return successResult(
                 "clockify_shared_reports_create",
@@ -115,19 +125,27 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = { name: args.name, type: args.type, filter: args.filter };
+            const body: Record<string, unknown> = {
+                name: args.name,
+                type: args.type,
+                filter: args.filter,
+            };
             if (args.public !== undefined) body.public = args.public;
-            const updated = await ctx.client.sharedReports.update({
-                workspaceId: ctx.workspaceId,
-                sharedReportId: args.shared_report_id,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            const updated = await ctx.client.sharedReports.update(
+                wireBody<ClockifyApi.UpdateSharedReportsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    sharedReportId: args.shared_report_id,
+                    body,
+                }),
+            );
             return successResult(
                 "clockify_shared_reports_update",
                 updated,
                 { workspaceId: ctx.workspaceId, sharedReportId: args.shared_report_id },
-                writeReceipt("updated", "shared_report", { id: args.shared_report_id, name: args.name }),
+                writeReceipt("updated", "shared_report", {
+                    id: args.shared_report_id,
+                    name: args.name,
+                }),
             );
         },
     );
@@ -147,8 +165,18 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            const preview = { action: "delete", entity: "shared_report", id: args.shared_report_id };
-            const confirmation = requireConfirmation(ctx, "clockify_shared_reports_delete", "shared_report_delete", args, preview);
+            const preview = {
+                action: "delete",
+                entity: "shared_report",
+                id: args.shared_report_id,
+            };
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_shared_reports_delete",
+                "shared_report_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.sharedReports.delete({
                 workspaceId: ctx.workspaceId,

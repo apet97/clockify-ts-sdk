@@ -97,6 +97,9 @@
       ],
       "clockify-sdk-ts-115/compose": [
         "./compose.ts"
+      ],
+      "clockify-sdk-ts-115/requests": [
+        "./requests.ts"
       ]
     }
   },
@@ -126,6 +129,7 @@
     "dates.ts",
     "resolve.ts",
     "ensure.ts",
+    "requests.ts",
     "tests/**/*.ts",
     "examples/**/*.ts",
     "scripts/**/*.ts"

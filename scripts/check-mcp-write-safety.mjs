@@ -60,6 +60,20 @@ function includesAll(text, markers, label) {
     }
 }
 
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function callStartsRegExp(functionName, ...args) {
+    const identifierArgs = new Set(["ctx", "toolName", "riskClass", "args", "preview"]);
+    const renderedArgs = args.map((arg) => {
+        if (arg instanceof RegExp) return arg.source;
+        if (identifierArgs.has(arg)) return escapeRegExp(arg);
+        return `"${escapeRegExp(arg)}"`;
+    });
+    return new RegExp(`${escapeRegExp(functionName)}\\(\\s*${renderedArgs.join("\\s*,\\s*")}`);
+}
+
 // Tools register either via the raw SDK call `server.registerTool("name", ...)`
 // or through the type-preserving `defineTool(server, "name", ...)` seam in
 // `mcp/src/result.ts`. Both forwarding shapes are equivalent for write-safety
@@ -127,10 +141,13 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
-
     assertPositiveInteger("minimumDestructiveToolCount", contract.minimumDestructiveToolCount);
 
-    for (const field of ["highRiskWorkflowTools", "idempotentWorkflowTools", "confirmationGuardedDomainTools"]) {
+    for (const field of [
+        "highRiskWorkflowTools",
+        "idempotentWorkflowTools",
+        "confirmationGuardedDomainTools",
+    ]) {
         const values = assertStringArray(field, contract[field], { allowEmpty: false });
         assertUnique(field, values);
     }
@@ -140,20 +157,32 @@ function validateContractShape() {
     // empty, but every entry must be a unique non-empty string, must not also
     // appear in confirmationGuardedDomainTools (a tool cannot be both guarded
     // and exempt), and a non-empty list must carry a written reason note.
-    const exemptTools = assertStringArray("confirmationExemptDestructiveTools", contract.confirmationExemptDestructiveTools, {
-        allowEmpty: true,
-    });
+    const exemptTools = assertStringArray(
+        "confirmationExemptDestructiveTools",
+        contract.confirmationExemptDestructiveTools,
+        {
+            allowEmpty: true,
+        },
+    );
     assertUnique("confirmationExemptDestructiveTools", exemptTools);
     const guardedNames = new Set(
-        Array.isArray(contract.confirmationGuardedDomainTools) ? contract.confirmationGuardedDomainTools : [],
+        Array.isArray(contract.confirmationGuardedDomainTools)
+            ? contract.confirmationGuardedDomainTools
+            : [],
     );
     for (const exemptTool of exemptTools) {
         if (guardedNames.has(exemptTool)) {
-            fail("confirmationExemptDestructiveTools", `${exemptTool} also appears in confirmationGuardedDomainTools`);
+            fail(
+                "confirmationExemptDestructiveTools",
+                `${exemptTool} also appears in confirmationGuardedDomainTools`,
+            );
         }
     }
     if (exemptTools.length > 0) {
-        assertNonEmptyString("confirmationExemptDestructiveToolsNote", contract.confirmationExemptDestructiveToolsNote);
+        assertNonEmptyString(
+            "confirmationExemptDestructiveToolsNote",
+            contract.confirmationExemptDestructiveToolsNote,
+        );
     }
 
     if (!Array.isArray(contract.requiredFiles) || contract.requiredFiles.length === 0) {
@@ -161,7 +190,9 @@ function validateContractShape() {
     }
     assertUnique(
         "requiredFiles.path",
-        (contract.requiredFiles ?? []).map((file) => file?.path).filter((filePath) => typeof filePath === "string"),
+        (contract.requiredFiles ?? [])
+            .map((file) => file?.path)
+            .filter((filePath) => typeof filePath === "string"),
     );
     for (const [index, file] of (contract.requiredFiles ?? []).entries()) {
         validateMarkerEntry(`requiredFiles[${index}]`, file);
@@ -206,20 +237,38 @@ for (const file of contract.requiredFiles) {
     const text = await readRel(file.path);
     includesAll(text, file.contains, file.path);
     for (const marker of contract.forbiddenPolicyMarkers) {
-        if (text.includes(marker)) failures.push(`${file.path} contains forbidden marker: ${marker}`);
+        if (text.includes(marker))
+            failures.push(`${file.path} contains forbidden marker: ${marker}`);
     }
 }
 
 const wiring = contract.wiring ?? {};
 const workflowFiles = contract.wiring?.workflowFiles ?? [wiring.workflowsFile];
-const workflows = (await Promise.all(workflowFiles.map((workflowFile) => readRel(workflowFile)))).join("\n");
+const workflows = (
+    await Promise.all(workflowFiles.map((workflowFile) => readRel(workflowFile)))
+).join("\n");
 // The dry_run -> confirm_token handshake lives in one shared guard so the
 // workflow surface and the destructive domain deletes cannot drift.
 const confirmGuard = await readRel(wiring.confirmGuardFile);
-includesAll(confirmGuard, contract.confirmationRequiredMarkers, `${wiring.confirmGuardFile} confirmation flow`);
+includesAll(
+    confirmGuard,
+    contract.confirmationRequiredMarkers,
+    `${wiring.confirmGuardFile} confirmation flow`,
+);
 // Workflow implementation modules must keep delegating to the shared guard via maybeConfirm.
-if (!workflows.includes("requireConfirmation(ctx, toolName, riskClass, args, preview)")) {
-    failures.push("workflow modules maybeConfirm does not delegate to the shared requireConfirmation guard");
+if (
+    !callStartsRegExp(
+        "requireConfirmation",
+        "ctx",
+        "toolName",
+        "riskClass",
+        "args",
+        "preview",
+    ).test(workflows)
+) {
+    failures.push(
+        "workflow modules maybeConfirm does not delegate to the shared requireConfirmation guard",
+    );
 }
 
 for (const toolName of contract.highRiskWorkflowTools) {
@@ -228,11 +277,15 @@ for (const toolName of contract.highRiskWorkflowTools) {
         failures.push(`workflow modules missing registration for ${toolName}`);
         continue;
     }
-    includesAll(registration, contract.workflowRequiredMarkers.filter((marker) => marker !== "maybeConfirm"), `${toolName} registration`);
-    if (!workflows.includes(`maybeConfirm(ctx, "${toolName}"`)) {
+    includesAll(
+        registration,
+        contract.workflowRequiredMarkers.filter((marker) => marker !== "maybeConfirm"),
+        `${toolName} registration`,
+    );
+    if (!callStartsRegExp("maybeConfirm", "ctx", toolName).test(workflows)) {
         failures.push(`${toolName} does not call maybeConfirm before execution`);
     }
-    if (!workflows.includes(`successResult("${toolName}"`)) {
+    if (!callStartsRegExp("successResult", toolName).test(workflows)) {
         failures.push(`${toolName} does not return a success receipt`);
     }
 }
@@ -241,7 +294,8 @@ for (const toolName of contract.highRiskWorkflowTools) {
 // dry_run + confirm_token in their schema and a requireConfirmation call
 // before the SDK delete. This closes the gap where a client that ignored
 // the destructiveHint annotation could delete with no server-side guard.
-const toolsDirectoryRel = safeRelativePath("wiring.toolsDirectory", wiring.toolsDirectory) ?? "mcp/src/tools";
+const toolsDirectoryRel =
+    safeRelativePath("wiring.toolsDirectory", wiring.toolsDirectory) ?? "mcp/src/tools";
 const toolFileTexts = [];
 {
     const dir = path.join(root, toolsDirectoryRel);
@@ -266,7 +320,7 @@ for (const toolName of contract.confirmationGuardedDomainTools) {
         contract.domainDeleteRequiredMarkers.filter((marker) => marker !== "requireConfirmation"),
         `${toolName} registration`,
     );
-    if (!text.includes(`requireConfirmation(ctx, "${toolName}"`)) {
+    if (!callStartsRegExp("requireConfirmation", "ctx", toolName).test(text)) {
         failures.push(`${toolName} does not call requireConfirmation before the delete`);
     }
 }
@@ -290,11 +344,18 @@ for (const tool of destructiveTools) {
         continue;
     }
 
-    if (!/delete|remove|archive/i.test(tool.name) && !/delete|remove|archive/i.test(tool.registration)) {
-        failures.push(`${tool.name} is destructive but does not advertise delete/remove/archive semantics`);
+    if (
+        !/delete|remove|archive/i.test(tool.name) &&
+        !/delete|remove|archive/i.test(tool.registration)
+    ) {
+        failures.push(
+            `${tool.name} is destructive but does not advertise delete/remove/archive semantics`,
+        );
     }
     if (!/deleted|removed|archived/i.test(tool.body)) {
-        failures.push(`${tool.name} is destructive but does not return a delete/remove/archive receipt`);
+        failures.push(
+            `${tool.name} is destructive but does not return a delete/remove/archive receipt`,
+        );
     }
     if (!/Id\b|Id:|id:/i.test(tool.registration)) {
         failures.push(`${tool.name} is destructive but does not appear ID-scoped`);
@@ -331,11 +392,15 @@ if (
 // `server.registerTool("...")` shape must also keep matching so the scan
 // never silently skips a destructive tool if a file reverts to the raw call.
 if (
-    !toolRegistrationRegExp("clockify_entries_delete").test('defineTool(\n        server,\n        "clockify_entries_delete",') ||
-    !toolRegistrationRegExp("clockify_entries_delete").test('server.registerTool(\n        "clockify_entries_delete",')
+    !toolRegistrationRegExp("clockify_entries_delete").test(
+        'defineTool(\n        server,\n        "clockify_entries_delete",',
+    ) ||
+    !toolRegistrationRegExp("clockify_entries_delete").test(
+        'server.registerTool(\n        "clockify_entries_delete",',
+    )
 ) {
     failures.push(
-        "tool registration matcher regressed: it must match both `defineTool(server, \"...\")` and `server.registerTool(\"...\")`",
+        'tool registration matcher regressed: it must match both `defineTool(server, "...")` and `server.registerTool("...")`',
     );
 }
 const guardedSet = new Set(contract.confirmationGuardedDomainTools);
@@ -345,7 +410,7 @@ const workflowSet = new Set([
     ...contract.idempotentWorkflowTools,
 ]);
 for (const tool of destructiveTools) {
-    if (workflowSet.has(tool.name)) continue;            // workflow writes use maybeConfirm separately
+    if (workflowSet.has(tool.name)) continue; // workflow writes use maybeConfirm separately
     if (!destructiveNamePattern.test(tool.name)) continue; // only delete/remove domain tools
     if (guardedSet.has(tool.name) || exemptSet.has(tool.name)) continue;
     failures.push(
@@ -361,10 +426,12 @@ if (!confirmGuard.includes("store.validate(str(args.confirm_token), payload)")) 
 }
 
 const makefile = await readRel("Makefile");
-if (!makefile.includes(`${wiring.makeTarget}:`)) failures.push(`Makefile missing ${wiring.makeTarget} target`);
+if (!makefile.includes(`${wiring.makeTarget}:`))
+    failures.push(`Makefile missing ${wiring.makeTarget} target`);
 for (const target of ["perfect-fast", "perfect-full"]) {
     const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) failures.push(`Makefile ${target} missing ${wiring.makeTarget}`);
+    if (!line.includes(wiring.makeTarget))
+        failures.push(`Makefile ${target} missing ${wiring.makeTarget}`);
 }
 if (!makefile.includes(`node ${wiring.checker}`)) {
     failures.push(`Makefile ${wiring.makeTarget} target does not run checker`);
@@ -399,7 +466,9 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log(`MCP write-safety contract passed (${destructiveTools.length} destructive tools checked).`);
+console.log(
+    `MCP write-safety contract passed (${destructiveTools.length} destructive tools checked).`,
+);
 
 function registrationBlock(text, toolName) {
     const match = text.match(toolRegistrationRegExp(toolName));
@@ -407,7 +476,8 @@ function registrationBlock(text, toolName) {
     const start = match.index;
     const callbackStart = text.indexOf("async (args", start);
     const fallbackEnd = nextRegistrationIndex(text, start + 1);
-    const end = callbackStart === -1 ? (fallbackEnd === -1 ? start + 1600 : fallbackEnd) : callbackStart;
+    const end =
+        callbackStart === -1 ? (fallbackEnd === -1 ? start + 1600 : fallbackEnd) : callbackStart;
     return text.slice(start, end);
 }
 
@@ -427,7 +497,10 @@ async function discoverDestructiveTools() {
     for (const name of destructiveNames) {
         const text = findToolFile(name);
         if (!text) {
-            fail("toolManifest", `destructive tool ${name} from manifest has no matching source file`);
+            fail(
+                "toolManifest",
+                `destructive tool ${name} from manifest has no matching source file`,
+            );
             continue;
         }
         const match = text.match(toolRegistrationRegExp(name));
@@ -435,7 +508,8 @@ async function discoverDestructiveTools() {
         const next = nextRegistrationIndex(text, start + 1);
         const whole = text.slice(start, next === -1 ? text.length : next);
         const callbackStart = whole.indexOf("async (args");
-        const registration = callbackStart === -1 ? whole.slice(0, 1600) : whole.slice(0, callbackStart);
+        const registration =
+            callbackStart === -1 ? whole.slice(0, 1600) : whole.slice(0, callbackStart);
         const body = callbackStart === -1 ? whole : whole.slice(callbackStart);
         tools.push({ name, file: "(manifest-keyed)", registration, body });
     }

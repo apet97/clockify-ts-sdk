@@ -80,11 +80,23 @@ describe("createClockifyClient", () => {
     it("routes report operations to the dedicated reports host", async () => {
         let capturedUrl: string | undefined;
         const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-            capturedUrl = input instanceof URL ? input.toString() : typeof input === "string" ? input : input.url;
-            return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
+            capturedUrl =
+                input instanceof URL
+                    ? input.toString()
+                    : typeof input === "string"
+                      ? input
+                      : input.url;
+            return new Response("{}", {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
         });
 
-        const client = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch, maxRetries: 0 });
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
         await client.reports.summary({
             workspaceId: "ws-1",
             dateRangeStart: "2026-06-01T00:00:00Z",
@@ -100,8 +112,16 @@ describe("createClockifyClient", () => {
     it("lets an explicit base URL override the per-operation host", async () => {
         let capturedUrl: string | undefined;
         const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-            capturedUrl = input instanceof URL ? input.toString() : typeof input === "string" ? input : input.url;
-            return new Response("{}", { status: 200, headers: { "content-type": "application/json" } });
+            capturedUrl =
+                input instanceof URL
+                    ? input.toString()
+                    : typeof input === "string"
+                      ? input
+                      : input.url;
+            return new Response("{}", {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
         });
 
         const client = createClockifyClient({
@@ -456,9 +476,11 @@ describe("createClockifyClient", () => {
             // pass it through as `environment`), but a malicious value
             // arriving by that route must still be rejected.
             vi.stubEnv("CLOCKIFY_BASE_URL", "https://evil.example.com/api/v1");
-            expect(() =>
-                createClockifyClient({ apiKey: "k", environment: process.env.CLOCKIFY_BASE_URL }),
-            ).toThrow(/not an allowlisted Clockify host/);
+            const environment = process.env.CLOCKIFY_BASE_URL;
+            if (environment === undefined) throw new Error("CLOCKIFY_BASE_URL test setup failed");
+            expect(() => createClockifyClient({ apiKey: "k", environment })).toThrow(
+                /not an allowlisted Clockify host/,
+            );
         });
 
         it("leaves a base URL Supplier (function) unvalidated — it resolves at request time", () => {

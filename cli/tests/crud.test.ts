@@ -66,7 +66,14 @@ describe("projects CRUD", () => {
     it("update emits an updated receipt", async () => {
         const { client } = makeClient();
         await makeProgram(registerProjectsCommand, client).parseAsync([
-            "node", "clk115", "--json", "projects", "update", "p-1", "--name", "Renamed",
+            "node",
+            "clk115",
+            "--json",
+            "projects",
+            "update",
+            "p-1",
+            "--name",
+            "Renamed",
         ]);
         const payload = lastPayload();
         expect(payload.action).toBe("projects.update");
@@ -76,10 +83,18 @@ describe("projects CRUD", () => {
     it("delete archives first, then deletes, with deleted:true receipt", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerProjectsCommand, client).parseAsync([
-            "node", "clk115", "--json", "projects", "delete", "p-1",
+            "node",
+            "clk115",
+            "--json",
+            "projects",
+            "delete",
+            "p-1",
         ]);
         // archive-then-delete: one update with archived:true, then a delete.
-        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ archived: true, name: "Acme" });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({
+            archived: true,
+            name: "Acme",
+        });
         expect(calls.deletes).toHaveLength(1);
         const payload = lastPayload();
         expect(payload.deleted).toBe(true);
@@ -109,10 +124,17 @@ describe("clients CRUD", () => {
     it("delete archives via the body envelope, then deletes (deleted:true)", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerClientsCommand, client).parseAsync([
-            "node", "clk115", "--json", "clients", "delete", "c-1",
+            "node",
+            "clk115",
+            "--json",
+            "clients",
+            "delete",
+            "c-1",
         ]);
         // The archive PUT must carry the name+archived inside a `body` envelope.
-        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ body: { name: "Globex", archived: true } });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({
+            body: { name: "Globex", archived: true },
+        });
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
     });
@@ -121,7 +143,11 @@ describe("clients CRUD", () => {
         const { client } = makeClient("");
         await expect(
             makeProgram(registerClientsCommand, client).parseAsync([
-                "node", "clk115", "clients", "delete", "c-1",
+                "node",
+                "clk115",
+                "clients",
+                "delete",
+                "c-1",
             ]),
         ).rejects.toThrow(/no name to carry through/);
     });
@@ -149,7 +175,12 @@ describe("tags CRUD", () => {
     it("delete is direct (no archive) and emits deleted:true", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerTagsCommand, client).parseAsync([
-            "node", "clk115", "--json", "tags", "delete", "t-1",
+            "node",
+            "clk115",
+            "--json",
+            "tags",
+            "delete",
+            "t-1",
         ]);
         expect(calls.updates).toHaveLength(0);
         expect(calls.deletes).toHaveLength(1);
@@ -183,18 +214,34 @@ describe("tasks CRUD", () => {
     it("create is project-scoped and emits a created receipt", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerTasksCommand, client).parseAsync([
-            "node", "clk115", "--json", "tasks", "create", "p-1", "Build",
+            "node",
+            "clk115",
+            "--json",
+            "tasks",
+            "create",
+            "p-1",
+            "Build",
         ]);
-        expect(calls.creates[0]).toMatchObject({ projectId: "p-1", name: "Build" });
+        expect(calls.creates[0]).toMatchObject({ projectId: "p-1", body: { name: "Build" } });
         expect(lastPayload().action).toBe("tasks.create");
     });
 
     it("delete marks DONE first, then deletes (deleted:true)", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerTasksCommand, client).parseAsync([
-            "node", "clk115", "--json", "tasks", "delete", "p-1", "tk-1",
+            "node",
+            "clk115",
+            "--json",
+            "tasks",
+            "delete",
+            "p-1",
+            "tk-1",
         ]);
-        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ status: "DONE", name: "QA", projectId: "p-1" });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({
+            status: "DONE",
+            name: "QA",
+            projectId: "p-1",
+        });
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
     });
@@ -222,8 +269,20 @@ describe("expenses CRUD", () => {
     it("update derives changeFields from the supplied scalars", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerExpensesCommand, client).parseAsync([
-            "node", "clk115", "--json", "expenses", "update", "ex-1",
-            "--amount", "12.5", "--category", "cat-1", "--date", "2026-06-18", "--user", "u-1",
+            "node",
+            "clk115",
+            "--json",
+            "expenses",
+            "update",
+            "ex-1",
+            "--amount",
+            "12.5",
+            "--category",
+            "cat-1",
+            "--date",
+            "2026-06-18",
+            "--user",
+            "u-1",
         ]);
         expect(calls.updates[0]).toMatchObject({
             amount: 12.5,
@@ -237,7 +296,12 @@ describe("expenses CRUD", () => {
     it("delete is direct and emits deleted:true", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerExpensesCommand, client).parseAsync([
-            "node", "clk115", "--json", "expenses", "delete", "ex-1",
+            "node",
+            "clk115",
+            "--json",
+            "expenses",
+            "delete",
+            "ex-1",
         ]);
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
@@ -245,7 +309,10 @@ describe("expenses CRUD", () => {
 });
 
 describe("shared-reports CRUD", () => {
-    function makeClient(): { client: ClockifyClient; calls: Calls & { views: Record<string, unknown>[] } } {
+    function makeClient(): {
+        client: ClockifyClient;
+        calls: Calls & { views: Record<string, unknown>[] };
+    } {
         const calls = { updates: [], deletes: [], creates: [], views: [] } as Calls & {
             views: Record<string, unknown>[];
         };
@@ -256,7 +323,8 @@ describe("shared-reports CRUD", () => {
                     calls.views.push(req);
                     return {
                         arrayBuffer: async () =>
-                            new TextEncoder().encode(JSON.stringify({ totals: { duration: 10 } })).buffer,
+                            new TextEncoder().encode(JSON.stringify({ totals: { duration: 10 } }))
+                                .buffer,
                     };
                 },
                 create: async (body: Record<string, unknown>) => {
@@ -279,7 +347,12 @@ describe("shared-reports CRUD", () => {
     it("view passes only the shared-report id (no workspaceId) and parses JSON", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerSharedReportsCommand, client).parseAsync([
-            "node", "clk115", "--json", "shared-reports", "view", "sr-1",
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "view",
+            "sr-1",
         ]);
         expect(calls.views[0]).not.toHaveProperty("workspaceId");
         expect(calls.views[0]).toMatchObject({ sharedReportId: "sr-1" });
@@ -289,17 +362,33 @@ describe("shared-reports CRUD", () => {
     it("create parses --filter JSON and emits a created receipt", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerSharedReportsCommand, client).parseAsync([
-            "node", "clk115", "--json", "shared-reports", "create",
-            "--name", "Weekly", "--type", "summary", "--filter", '{"dateRangeStart":"x"}',
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "create",
+            "--name",
+            "Weekly",
+            "--type",
+            "summary",
+            "--filter",
+            '{"dateRangeStart":"x"}',
         ]);
-        expect(calls.creates[0]).toMatchObject({ body: { name: "Weekly", type: "SUMMARY", filter: { dateRangeStart: "x" } } });
+        expect(calls.creates[0]).toMatchObject({
+            body: { name: "Weekly", type: "SUMMARY", filter: { dateRangeStart: "x" } },
+        });
         expect(lastPayload().action).toBe("shared-reports.create");
     });
 
     it("delete is direct and emits deleted:true", async () => {
         const { client, calls } = makeClient();
         await makeProgram(registerSharedReportsCommand, client).parseAsync([
-            "node", "clk115", "--json", "shared-reports", "delete", "sr-1",
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "delete",
+            "sr-1",
         ]);
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
@@ -334,7 +423,12 @@ describe("users P1-7 writes", () => {
     it("invite sends the send-email query and emits a created receipt", async () => {
         const { client, added } = makeClient();
         await makeProgram(registerUsersCommand, client).parseAsync([
-            "node", "clk115", "--json", "users", "invite", "new@example.com",
+            "node",
+            "clk115",
+            "--json",
+            "users",
+            "invite",
+            "new@example.com",
         ]);
         expect(added[0]).toMatchObject({ email: "new@example.com", "send-email": "true" });
         expect(lastPayload().action).toBe("users.invite");
@@ -343,7 +437,12 @@ describe("users P1-7 writes", () => {
     it("invite honours --no-send-email", async () => {
         const { client, added } = makeClient();
         await makeProgram(registerUsersCommand, client).parseAsync([
-            "node", "clk115", "users", "invite", "x@example.com", "--no-send-email",
+            "node",
+            "clk115",
+            "users",
+            "invite",
+            "x@example.com",
+            "--no-send-email",
         ]);
         expect(added[0]).toMatchObject({ "send-email": "false" });
     });
@@ -351,7 +450,14 @@ describe("users P1-7 writes", () => {
     it("update-profile patches the member profile body", async () => {
         const { client, profiles } = makeClient();
         await makeProgram(registerUsersCommand, client).parseAsync([
-            "node", "clk115", "--json", "users", "update-profile", "u-1", "--week-start", "MONDAY",
+            "node",
+            "clk115",
+            "--json",
+            "users",
+            "update-profile",
+            "u-1",
+            "--week-start",
+            "MONDAY",
         ]);
         expect(profiles[0]).toMatchObject({ userId: "u-1", body: { weekStart: "MONDAY" } });
         expect(lastPayload().action).toBe("users.update-profile");
