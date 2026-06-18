@@ -46,9 +46,11 @@ describe("clockify_scheduling_assignments_list_per_project — single vs all rou
     it("uses the single-project GET endpoint when projectId is given", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
+        // start/end are required by the schema (the all-projects search needs
+        // them); the single-project GET ignores them.
         const res = await client.callTool({
             name: "clockify_scheduling_assignments_list_per_project",
-            arguments: { projectId: "proj-1" },
+            arguments: { projectId: "proj-1", start: "2020-01-01T00:00:00Z", end: "2030-01-01T00:00:00Z" },
         });
         expect(res.isError).toBeFalsy();
         // Routes to listOnProject (GET .../projects/totals/{projectId}); NOT the
@@ -57,14 +59,33 @@ describe("clockify_scheduling_assignments_list_per_project — single vs all rou
         expect(captured.listPerProject).toBeUndefined();
     });
 
-    it("uses the all-projects endpoint when no projectId is given", async () => {
+    it("uses the all-projects endpoint when no projectId is given, with camel pageSize", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
+        // start/end are required (omitting them 400s on the wire, live-verified 2026-06-18).
         await client.callTool({
             name: "clockify_scheduling_assignments_list_per_project",
-            arguments: {},
+            arguments: { start: "2020-01-01T00:00:00Z", end: "2030-01-01T00:00:00Z" },
         });
         expect(captured.listPerProject).toBeDefined();
         expect(captured.listOnProject).toBeUndefined();
+        const req = captured.listPerProject as Record<string, unknown>;
+        // The body whitelist reads camel `pageSize`; kebab `page-size` is ignored
+        // (returns ALL projects), so the tool must NOT send it.
+        expect(req.pageSize).toBe(50);
+        expect(req["page-size"]).toBeUndefined();
+        expect(req.start).toBe("2020-01-01T00:00:00Z");
+        expect(req.end).toBe("2030-01-01T00:00:00Z");
+    });
+
+    it("requires start and end (rejects the request at the input layer)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await client.callTool({
+            name: "clockify_scheduling_assignments_list_per_project",
+            arguments: {},
+        });
+        expect(res.isError).toBeTruthy();
+        expect(captured.listPerProject).toBeUndefined();
     });
 });

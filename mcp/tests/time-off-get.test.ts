@@ -70,3 +70,18 @@ describe("clockify_time_off_requests_get scans the POST search (dead single-GET)
         expect(JSON.stringify(env)).toMatch(/no time-off request with id/);
     });
 });
+
+describe("clockify_time_off_requests_list unwraps the search envelope", () => {
+    it("returns the requests array as data with count from the envelope", async () => {
+        const client = await connect(timeOffContext());
+        const res = await client.callTool({ name: "clockify_time_off_requests_list", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env.ok).toBe(true);
+        // data is the requests array (unwrapped), NOT the { count, requests } envelope.
+        expect(Array.isArray(env.data)).toBe(true);
+        expect((env.data as unknown[]).length).toBe(2);
+        // count comes from the server-side envelope count, not items.length fallback.
+        expect((env.meta as { count?: number }).count).toBe(2);
+    });
+});

@@ -5,6 +5,7 @@
  * requests are the actual time-off events.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -85,22 +86,26 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 if (!r.ok) return clarifyResult("clockify_time_off_requests_list", "users", "user", r.clarify);
                 users = r.userIds;
             }
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListTimeOffRequest = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 pageSize: args.pageSize ?? 50,
             };
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
-            if (args.statuses) req.statuses = args.statuses;
+            // REQUEST_STATUSES carries WITHDRAWN (a per-request status), which the
+            // generated RequestStatusType omits; the search filter accepts it, so
+            // cast the validated enum array onto the wire union.
+            if (args.statuses) req.statuses = args.statuses as ClockifyApi.RequestStatusType[];
             if (users) req.users = users;
-            // TODO(P2-1 trap): timeOff.list returns the TimeOffRequestsResponse envelope,
-            // not a bare array; `as unknown[]` + `.length` assume an array. Verify the
-            // live response shape before narrowing off the cast.
-            const items = (await ctx.client.timeOff.list(req as never)) as unknown[];
+            // timeOff.list returns the TimeOffRequestsResponse envelope
+            // ({ count, requests }), NOT a bare array (live-verified 2026-06-18);
+            // unwrap `requests` and report the server-side `count`.
+            const res = await ctx.client.timeOff.list(req);
+            const items = res.requests ?? [];
             return successResult("clockify_time_off_requests_list", items, {
                 workspaceId: ctx.workspaceId,
-                count: items.length,
+                count: res.count ?? items.length,
             });
         },
     );
@@ -197,7 +202,10 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 policyId: z.string().min(1),
                 requestId: z.string().min(1),
-                statusType: z.enum(REQUEST_STATUSES),
+                // The wire `status` target accepts only APPROVED / REJECTED;
+                // PENDING and WITHDRAWN are read-only request states it rejects
+                // (live-verified 2026-06-18).
+                statusType: z.enum(["APPROVED", "REJECTED"]),
                 note: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
@@ -215,9 +223,11 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 status: args.statusType,
             };
             if (args.note) req.note = args.note;
-            // TODO(P2-1 trap): the generated ChangeTimeOffRequestStatus type marks `note`
-            // required, but it is only set when args.note is present. Confirm whether the
-            // wire actually requires `note` before narrowing off `as never`.
+            // The generated ChangeTimeOffRequestStatus type marks `note` required,
+            // but it is only set when args.note is present. The note-required
+            // branch is probe-deferred (creating a PENDING request to PATCH is a
+            // risky multi-step sandbox mutation) — leave note conditional and the
+            // `as never` in place. See discrepancies.md (time-off.change-status.union-and-note).
             const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
             return successResult("clockify_time_off_requests_update_status", updated, {
                 workspaceId: ctx.workspaceId,
@@ -273,14 +283,16 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            // TODO(P2-1 trap): the generated ListTimeOffPolicies type declares `page` as a
-            // string, but this sends a number. The `as never` masks the mismatch — verify
-            // the wire form before narrowing.
-            const items = (await ctx.client.timeOffPolicies.list({
+            // The generated ListTimeOffPolicies type declares `page` as a string
+            // (the GET serializes page/page-size to the query string, NOT a body
+            // whitelist, so kebab `page-size` is correct and the wire form is
+            // identical). Live-verified 200 honoring page-size (2026-06-18).
+            const req: ClockifyApi.ListTimeOffPoliciesRequest = {
                 workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
+                page: String(args.page ?? 1),
                 "page-size": args.pageSize ?? 50,
-            } as never)) as unknown[];
+            };
+            const items = await ctx.client.timeOffPolicies.list(req);
             return successResult("clockify_time_off_policies_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,

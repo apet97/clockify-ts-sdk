@@ -2191,3 +2191,52 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   exists but is insufficient. `ctx.client` is the unscoped client, not a
   `Workspace`. No SDK count impact. Net regression — not adopted.
 - **Status:** `wontfix` (2026-06-18).
+
+### `scheduling.list-per-project.start-end-required-camel-pagesize` — COMPENSATED 2026-06-18
+
+- **Actual behavior (live-probed 2026-06-18):** the all-projects totals search
+  **POST** `…/scheduling/assignments/projects/totals` requires `start` AND `end`
+  in the body and reads only the **camel** `pageSize` off its whitelist. Probe
+  matrix (sandbox WS):
+  - omit `start`/`end` → **400** (start+end REQUIRED).
+  - `start`+`end` + camel `pageSize` → **200** returning a real
+    `ProjectAssignmentsTotal[]` (a 2-item page honored).
+  - `start`+`end` + kebab `page-size` → **200** but **21 items** — the kebab key
+    is silently IGNORED (page size not applied), confirming the body whitelist
+    `["end","page","pageSize","search","start","statusFilter"]` (camel only).
+- **Bug found:** `clockify_scheduling_assignments_list_per_project` sent kebab
+  `page-size` and omitted `start`/`end` entirely, masked by an `as never` +
+  `as unknown[]`. Every all-projects call 400'd (no date range) and the page size
+  was never applied.
+- **MCP tools affected:** `clockify_scheduling_assignments_list_per_project`
+  (all-projects branch only; the single-project GET `listOnProject` is unaffected
+  and ignores `start`/`end`).
+- **Status:** `compensated-in-tool-layer` (2026-06-18). `start`/`end` are now
+  REQUIRED ISO-8601 `z.string()` inputs; the request is typed as
+  `ClockifyApi.ListPerProjectSchedulingRequest` with camel `pageSize` and both
+  casts dropped; `items` is `ProjectAssignmentsTotal[]`. Test:
+  `mcp/tests/scheduling-totals.test.ts` (asserts camel `pageSize`, no `page-size`,
+  and input-layer rejection when `start`/`end` are missing).
+
+### `time-off.change-status.union-and-note` — PARTIAL 2026-06-18
+
+- **Actual behavior (status union live-probed 2026-06-18):** the request-status
+  PATCH `…/time-off/policies/{policyId}/requests/{requestId}` accepts only
+  `APPROVED` / `REJECTED` as the target `status`. `PENDING` and `WITHDRAWN` are
+  read-only request states the wire rejects as a target. The generated
+  `RequestStatusType` (`PENDING|APPROVED|REJECTED|ALL`) is a search-filter union,
+  not the valid set of status TARGETS.
+- **Bug found:** `clockify_time_off_requests_update_status` exposed the full
+  `REQUEST_STATUSES` (`APPROVED|PENDING|REJECTED|WITHDRAWN`) as a settable
+  `statusType`, so an agent could submit a status the wire always rejects.
+- **MCP tools affected:** `clockify_time_off_requests_update_status`.
+- **Probe-deferred (note-required branch):** the generated
+  `ChangeTimeOffRequestStatus` type marks `note` REQUIRED, but the tool sets it
+  only when present (`as never` masks the mismatch). Whether the wire actually
+  requires `note` was NOT probed — proving it needs creating a PENDING request and
+  PATCHing it (a risky multi-step sandbox mutation). The conditional `note` and
+  the single `as never` are left exactly as-is, pending a future live probe.
+- **Status:** `partial` (2026-06-18). The status union is restricted at the input
+  layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch stays
+  probe-deferred. Test: `mcp/tests/sweep-fixes.test.ts` (asserts the input layer
+  rejects `PENDING`/`WITHDRAWN` and never reaches the wire).
