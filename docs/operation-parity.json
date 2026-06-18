@@ -8,8 +8,8 @@
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
-    "operations": 185,
-    "sdkNamed": 173,
+    "operations": 184,
+    "sdkNamed": 172,
     "tsMcpExact": 87,
     "goMcpExact": 84,
     "curated": 31
@@ -2967,24 +2967,6 @@
       "overrideReason": null,
       "parity": {
         "sdkNamed": false,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/stop",
-      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop",
-      "sdk": "client.timeEntries.stopTimer",
-      "candidateTools": [
-        "clockify_entries_stop_timer"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
         "tsMcpExact": false,
         "goMcpExact": false,
         "curated": false

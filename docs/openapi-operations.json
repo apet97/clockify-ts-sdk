@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "spec/corrected/clockify.corrected.openapi.yaml",
-  "operationCount": 185,
+  "operationCount": 184,
   "operations": [
     {
       "method": "POST",
@@ -5196,35 +5196,6 @@
           "in": "query",
           "required": true,
           "schemaType": "array"
-        }
-      ]
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/stop",
-      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop",
-      "tags": [
-        "Time Entries"
-      ],
-      "sdkGroup": "timeEntries",
-      "sdkMethod": "stopTimer",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "userId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
         }
       ]
     },

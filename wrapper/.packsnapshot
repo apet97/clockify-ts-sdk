@@ -1121,10 +1121,6 @@ dist/cjs/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequ
 dist/cjs/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.d.ts.map
 dist/cjs/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.js
 dist/cjs/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.js.map
-dist/cjs/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.d.ts
-dist/cjs/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.d.ts.map
-dist/cjs/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.js
-dist/cjs/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.js.map
 dist/cjs/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.d.ts
 dist/cjs/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.d.ts.map
 dist/cjs/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.js
@@ -3961,10 +3957,6 @@ dist/esm/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequ
 dist/esm/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.d.ts.map
 dist/esm/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.js
 dist/esm/src/api/resources/timeEntries/client/requests/StartTimerTimeEntriesRequest.js.map
-dist/esm/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.d.ts
-dist/esm/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.d.ts.map
-dist/esm/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.js
-dist/esm/src/api/resources/timeEntries/client/requests/StopTimerTimeEntriesRequest.js.map
 dist/esm/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.d.ts
 dist/esm/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.d.ts.map
 dist/esm/src/api/resources/timeEntries/client/requests/UpdateForUserTimeEntriesRequest.js

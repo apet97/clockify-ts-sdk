@@ -13,10 +13,10 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Metric | Count |
 | --- | --- |
 | Official operations | 158 |
-| Custom operations | 185 |
+| Custom operations | 184 |
 | Shared (matched) | 158 |
 | New official (missing in custom) | 0 |
-| Custom-only (not in official snapshot) | 27 |
+| Custom-only (not in official snapshot) | 26 |
 | Wire-shape conflicts (shared ops) | 13 |
 | Phantom-risk (custom op, dead live route) | 2 |
 
@@ -49,7 +49,6 @@ Operations:
 | PATCH | `/workspaces/{workspaceId}/policies/{policyId}/archive` | probe-documented |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | probe-documented |
 | PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | probe-documented |
-| PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | probe-documented |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | probe-documented |
 | POST | `/workspaces/{workspaceId}/audit-log` | live-success |
 | POST | `/workspaces/{workspaceId}/policies` | probe-documented |

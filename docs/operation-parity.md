@@ -8,8 +8,8 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 
 | Metric | Count |
 |---|---:|
-| operations | 185 |
-| sdkNamed | 173 |
+| operations | 184 |
+| sdkNamed | 172 |
 | tsMcpExact | 87 |
 | goMcpExact | 84 |
 | curated | 31 |
@@ -182,7 +182,6 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PUT | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `putWorkspacesWorkspaceIdUserUserIdTimeEntries` | `client.timeEntries.startTimer` | - | - | - | `clockify_entries_start_timer` |
 | PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntries` | `client.timeEntries.updateForUser` | - | - | - | `clockify_entries_update_for_user` |
 | DELETE | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `deleteMany` | - | - | - | - | `clockify_entries_delete_many` |
-| PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop` | `client.timeEntries.stopTimer` | - | - | - | `clockify_entries_stop_timer` |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate` | `client.timeEntries.duplicate` | - | - | - | `clockify_entries_duplicate` |
 | GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | `client.users.list` | `clockify_users_list` | `clockify_users_list` | GOCLMCP exposes workspace users through the users_list tool. | `clockify_users_list` |
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | - | - | - | `clockify_workspaces_add_user` |
