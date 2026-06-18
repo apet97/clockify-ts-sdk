@@ -26,6 +26,6 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 ## Known open wire-shape risks
 
 - `single-gets.404-405-read-from-list` — status: `open`
-- `invoices.items-unit-price-scale` — status: `open`
+- `invoices.payments.post-returns-invoice` — status: `open`
 
 Phantom/dead routes quarantined: 2.
