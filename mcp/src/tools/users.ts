@@ -9,7 +9,7 @@ import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { errorResult, successResult } from "../result.js";
+import { errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -197,6 +197,80 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 });
             } catch (err) {
                 return errorResult("clockify_users_set_member_rate", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_users_invite",
+        {
+            title: "Invite a user to the workspace",
+            description:
+                "Add (invite) a user to the pinned workspace by email; optionally send them the invitation email.",
+            inputSchema: {
+                email: z.string().min(1),
+                sendEmail: z.boolean().default(true).optional().describe("Send the invitation email (default true)."),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: false },
+        },
+        async (args) => {
+            try {
+                const workspace = await ctx.client.workspaces.addUser({
+                    workspaceId: ctx.workspaceId,
+                    "send-email": (args.sendEmail ?? true) ? "true" : "false",
+                    email: args.email,
+                } as never);
+                return successResult(
+                    "clockify_users_invite",
+                    workspace,
+                    { workspaceId: ctx.workspaceId },
+                    writeReceipt("created", "workspace_member", { name: args.email }),
+                );
+            } catch (err) {
+                return errorResult("clockify_users_invite", err);
+            }
+        },
+    );
+
+    server.registerTool(
+        "clockify_member_profile_update",
+        {
+            title: "Update a member profile",
+            description:
+                "Update one user's member profile (name, image, week start, work capacity, working days) by user ID.",
+            inputSchema: {
+                userId: z.string().min(1),
+                name: z.string().optional(),
+                imageUrl: z.string().optional(),
+                removeProfileImage: z.boolean().optional(),
+                weekStart: z.string().optional().describe("Week start day, e.g. MONDAY."),
+                workCapacity: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
+                workingDays: z.array(z.string()).optional().describe("Day enum strings, e.g. [MONDAY, TUESDAY]."),
+            },
+            annotations: { readOnlyHint: false, idempotentHint: true },
+        },
+        async (args) => {
+            try {
+                const body: Record<string, unknown> = {};
+                if (args.name !== undefined) body.name = args.name;
+                if (args.imageUrl !== undefined) body.imageUrl = args.imageUrl;
+                if (args.removeProfileImage !== undefined) body.removeProfileImage = args.removeProfileImage;
+                if (args.weekStart !== undefined) body.weekStart = args.weekStart;
+                if (args.workCapacity !== undefined) body.workCapacity = args.workCapacity;
+                if (args.workingDays !== undefined) body.workingDays = args.workingDays;
+                const updated = await ctx.client.memberProfiles.update({
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    body,
+                });
+                return successResult(
+                    "clockify_member_profile_update",
+                    updated,
+                    { workspaceId: ctx.workspaceId, userId: args.userId },
+                    writeReceipt("updated", "member_profile", args.userId),
+                );
+            } catch (err) {
+                return errorResult("clockify_member_profile_update", err);
             }
         },
     );

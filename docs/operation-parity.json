@@ -10,9 +10,9 @@
   "summary": {
     "operations": 184,
     "sdkNamed": 172,
-    "tsMcpExact": 87,
+    "tsMcpExact": 93,
     "goMcpExact": 84,
-    "curated": 31
+    "curated": 33
   },
   "operations": [
     {
@@ -41,12 +41,12 @@
       "candidateTools": [
         "clockify_shared_reports_view"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_shared_reports_view",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -276,12 +276,12 @@
       "candidateTools": [
         "clockify_audit_log_search"
       ],
-      "tsMcp": "clockify_audit_log_search",
+      "tsMcp": null,
       "goMcp": "clockify_audit_logs_search",
       "overrideReason": "GOCLMCP keeps audit logs plural in the tool name.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": true,
+        "tsMcpExact": false,
         "goMcpExact": true,
         "curated": true
       }
@@ -1195,14 +1195,14 @@
       "candidateTools": [
         "clockify_member_profiles_update"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_member_profile_update",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias).",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {
@@ -2150,12 +2150,12 @@
       "candidateTools": [
         "clockify_shared_reports_list"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_shared_reports_list",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -2168,12 +2168,12 @@
       "candidateTools": [
         "clockify_shared_reports_create"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_shared_reports_create",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -2186,12 +2186,12 @@
       "candidateTools": [
         "clockify_shared_reports_update"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_shared_reports_update",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -2204,12 +2204,12 @@
       "candidateTools": [
         "clockify_shared_reports_delete"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_shared_reports_delete",
       "goMcp": null,
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
         "curated": false
       }
@@ -3016,14 +3016,14 @@
       "candidateTools": [
         "clockify_workspaces_add_user"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_users_invite",
       "goMcp": null,
-      "overrideReason": null,
+      "overrideReason": "Adding a user to the workspace is surfaced under the users group as the invite tool.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": false,
-        "curated": false
+        "curated": true
       }
     },
     {

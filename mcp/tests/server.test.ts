@@ -189,6 +189,8 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_users_grant_role",
                 "clockify_users_revoke_role",
                 "clockify_users_set_member_rate",
+                "clockify_users_invite",
+                "clockify_member_profile_update",
                 // Scheduling
                 "clockify_scheduling_assignments_list",
                 "clockify_scheduling_assignments_list_per_project",
@@ -202,6 +204,12 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_reports_detailed",
                 "clockify_reports_weekly",
                 "clockify_reports_attendance",
+                // Shared reports
+                "clockify_shared_reports_list",
+                "clockify_shared_reports_view",
+                "clockify_shared_reports_create",
+                "clockify_shared_reports_update",
+                "clockify_shared_reports_delete",
                 // Groups
                 "clockify_groups_list",
                 "clockify_groups_get",
@@ -226,7 +234,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(127);
+        expect(names).toHaveLength(134);
     });
 
     it("advertises agent-ready metadata for every tool", async () => {

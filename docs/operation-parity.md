@@ -10,16 +10,16 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 184 |
 | sdkNamed | 172 |
-| tsMcpExact | 87 |
+| tsMcpExact | 93 |
 | goMcpExact | 84 |
-| curated | 31 |
+| curated | 33 |
 
 ## Operations
 
 | Method | Path | Operation ID | SDK | TS MCP exact | Go MCP exact | Curated reason | Candidate tools |
 |---|---|---|---|---|---|---|---|
 | POST | `/file/image` | `uploadImage` | - | - | - | - | `clockify_files_upload_image` |
-| GET | `/shared-reports/{sharedReportId}` | `getSharedReportsSharedReportId` | `client.sharedReports.view` | - | - | - | `clockify_shared_reports_view` |
+| GET | `/shared-reports/{sharedReportId}` | `getSharedReportsSharedReportId` | `client.sharedReports.view` | `clockify_shared_reports_view` | - | - | `clockify_shared_reports_view` |
 | GET | `/user` | `getCurrentUser` | - | - | - | - | `clockify_users_get_current_user` |
 | GET | `/workspaces` | `getAllMyWorkspaces` | `client.workspaces.list` | - | - | - | `clockify_workspaces_list` |
 | POST | `/workspaces` | `addWorkspace` | `client.workspaces.create` | - | - | - | `clockify_workspaces_create` |
@@ -32,7 +32,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}` | `submitApprovalRequestForUser` | `client.approvals.submitForUser` | - | - | - | `clockify_approvals_submit_for_user` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval` | `resubmitEntriesForApprovalForUser` | `client.approvals.resubmitForUser` | - | - | - | `clockify_approvals_resubmit_for_user` |
 | PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `updateApprovalRequest` | `client.approvals.updateStatus` | - | - | - | `clockify_approvals_update_status` |
-| POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | `client.auditLogReport.search` | `clockify_audit_log_search` | `clockify_audit_logs_search` | GOCLMCP keeps audit logs plural in the tool name. | `clockify_audit_log_search` |
+| POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | `client.auditLogReport.search` | - | `clockify_audit_logs_search` | GOCLMCP keeps audit logs plural in the tool name. | `clockify_audit_log_search` |
 | GET | `/workspaces/{workspaceId}/clients` | `getWorkspacesWorkspaceIdClients` | `client.clients.list` | `clockify_clients_list` | `clockify_clients_list` | - | `clockify_clients_list` |
 | POST | `/workspaces/{workspaceId}/clients` | `postWorkspacesWorkspaceIdClients` | `client.clients.create` | `clockify_clients_create` | `clockify_clients_create` | - | `clockify_clients_create` |
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | `getWorkspacesWorkspaceIdClientsClientId` | `client.clients.get` | `clockify_clients_get` | `clockify_clients_get` | - | `clockify_clients_get` |
@@ -83,7 +83,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PATCH | `/workspaces/{workspaceId}/invoices/{invoiceId}/status` | `changeInvoiceStatus` | `client.invoices.updateStatus` | `clockify_invoices_update_status` | - | - | `clockify_invoices_update_status` |
 | GET | `/workspaces/{workspaceId}/member-profile/{userId}` | `getMemberProfile` | `client.memberProfiles.get` | `clockify_member_profile_get` | `clockify_users_profile` | Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile. | `clockify_member_profiles_get` |
 | PUT | `/workspaces/{workspaceId}/member-profile/{userId}` | `putWorkspacesWorkspaceIdMemberProfileUserId` | - | - | - | - | `clockify_users_put_workspaces_workspace_id_member_profile_user_id` |
-| PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | `updateMemberProfile` | `client.memberProfiles.update` | - | - | - | `clockify_member_profiles_update` |
+| PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | `updateMemberProfile` | `client.memberProfiles.update` | `clockify_member_profile_update` | - | PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias). | `clockify_member_profiles_update` |
 | GET | `/workspaces/{workspaceId}/policies` | `getWorkspacesWorkspaceIdPolicies` | `client.policies.list` | - | - | - | `clockify_policies_list` |
 | POST | `/workspaces/{workspaceId}/policies` | `postWorkspacesWorkspaceIdPolicies` | `client.policies.create` | - | - | - | `clockify_policies_create` |
 | GET | `/workspaces/{workspaceId}/policies/{policyId}` | `getWorkspacesWorkspaceIdPoliciesPolicyId` | `client.policies.get` | - | - | - | `clockify_policies_get` |
@@ -136,10 +136,10 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.update` | - | - | - | `clockify_scheduling_update` |
 | DELETE | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.delete` | - | - | - | `clockify_scheduling_delete` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | `client.scheduling.copy` | - | - | - | `clockify_scheduling_copy` |
-| GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.list` | - | - | - | `clockify_shared_reports_list` |
-| POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.create` | - | - | - | `clockify_shared_reports_create` |
-| PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `putWorkspacesWorkspaceIdSharedReportsSharedReportId` | `client.sharedReports.update` | - | - | - | `clockify_shared_reports_update` |
-| DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `deleteWorkspacesWorkspaceIdSharedReportsSharedReportId` | `client.sharedReports.delete` | - | - | - | `clockify_shared_reports_delete` |
+| GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.list` | `clockify_shared_reports_list` | - | - | `clockify_shared_reports_list` |
+| POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.create` | `clockify_shared_reports_create` | - | - | `clockify_shared_reports_create` |
+| PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `putWorkspacesWorkspaceIdSharedReportsSharedReportId` | `client.sharedReports.update` | `clockify_shared_reports_update` | - | - | `clockify_shared_reports_update` |
+| DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | `deleteWorkspacesWorkspaceIdSharedReportsSharedReportId` | `client.sharedReports.delete` | `clockify_shared_reports_delete` | - | - | `clockify_shared_reports_delete` |
 | GET | `/workspaces/{workspaceId}/tags` | `getWorkspacesWorkspaceIdTags` | `client.tags.list` | `clockify_tags_list` | `clockify_tags_list` | - | `clockify_tags_list` |
 | POST | `/workspaces/{workspaceId}/tags` | `postWorkspacesWorkspaceIdTags` | `client.tags.create` | `clockify_tags_create` | `clockify_tags_create` | - | `clockify_tags_create` |
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | `getWorkspacesWorkspaceIdTagsTagId` | `client.tags.get` | `clockify_tags_get` | `clockify_tags_get` | - | `clockify_tags_get` |
@@ -184,7 +184,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | DELETE | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `deleteMany` | - | - | - | - | `clockify_entries_delete_many` |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate` | `client.timeEntries.duplicate` | - | - | - | `clockify_entries_duplicate` |
 | GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | `client.users.list` | `clockify_users_list` | `clockify_users_list` | GOCLMCP exposes workspace users through the users_list tool. | `clockify_users_list` |
-| POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | - | - | - | `clockify_workspaces_add_user` |
+| POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | `client.workspaces.addUser` | `clockify_users_invite` | - | Adding a user to the workspace is surfaced under the users group as the invite tool. | `clockify_workspaces_add_user` |
 | POST | `/workspaces/{workspaceId}/users/info` | `filterWorkspaceUsers` | - | - | - | - | `clockify_users_filter_workspace_users` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}` | `updateUserStatus` | - | - | - | - | `clockify_workspaces_update_user_status` |
 | PUT | `/workspaces/{workspaceId}/users/{userId}/cost-rate` | `updateUserCostRate` | - | - | - | - | `clockify_workspaces_update_user_cost_rate` |
