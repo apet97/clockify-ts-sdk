@@ -4,10 +4,15 @@
  * Fern CLI 5.37.9's `x-fern-pagination` offset mode requires a
  * dot-delimited `results: $response.<field>` path, but Clockify's list
  * endpoints return bare top-level arrays. This helper fills the gap:
- * it walks `page` / `page-size` until a non-full page comes back (or
- * `maxPages` is reached), and yields each record as it's fetched so
- * memory stays bounded.
+ * it delegates to {@link iterAll} (which walks `page` / `page-size`
+ * honoring the `Last-Page` response header, falling back to the
+ * "non-full page" heuristic only when the header is absent, bounded by
+ * `maxPages`) and yields each record as it's fetched so memory stays
+ * bounded. Keeping one page-walk means the `Last-Page` correctness lives
+ * in exactly one place.
  */
+
+import { iterAll } from "./iter.js";
 
 export interface PaginateOptions {
     /** Page size to request. Default `50`. */
@@ -45,24 +50,12 @@ export async function* paginate<T>(
     fetchPage: (page: number, pageSize: number) => Promise<readonly T[]>,
     options: PaginateOptions = {},
 ): AsyncGenerator<T, void, void> {
-    const pageSize = options.pageSize ?? 50;
-    const maxPages = options.maxPages ?? Number.POSITIVE_INFINITY;
-    const startPage = options.startPage ?? 1;
-
-    if (pageSize <= 0) {
-        throw new RangeError(`paginate: pageSize must be > 0 (got ${pageSize})`);
-    }
-    if (maxPages <= 0) {
-        throw new RangeError(`paginate: maxPages must be > 0 (got ${maxPages})`);
-    }
-    if (startPage <= 0) {
-        throw new RangeError(`paginate: startPage must be > 0 (got ${startPage})`);
-    }
-
-    const endPage = startPage + maxPages - 1;
-    for (let page = startPage; page <= endPage; page++) {
-        const items = await fetchPage(page, pageSize);
-        for (const item of items) yield item;
-        if (items.length < pageSize) return;
-    }
+    // Adapt the (page, pageSize) callback to the fetcher(request) shape
+    // iterAll expects, then delegate. iterAll validates pageSize/maxPages/
+    // startPage (> 0) and applies the same defaults (50 / unbounded / 1).
+    yield* iterAll<{ page?: number; "page-size"?: number }, T>(
+        (req) => fetchPage(req.page ?? options.startPage ?? 1, req["page-size"] ?? options.pageSize ?? 50),
+        {},
+        options,
+    );
 }

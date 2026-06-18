@@ -85,21 +85,3 @@ export function formatIsoDuration(iso: string | null | undefined): string {
     if (match[3]) parts.push(`${Number(match[3])}s`);
     return parts.length > 0 ? parts.join("") : "0s";
 }
-
-/**
- * Convert a total-seconds count into a compact human string.
- */
-export function formatSeconds(seconds: number): string {
-    if (!Number.isFinite(seconds) || seconds <= 0) {
-        return "0s";
-    }
-    const rounded = Math.round(seconds);
-    const h = Math.floor(rounded / 3600);
-    const m = Math.floor((rounded % 3600) / 60);
-    const s = rounded % 60;
-    const parts: string[] = [];
-    if (h > 0) parts.push(`${h}h`);
-    if (m > 0 || h > 0) parts.push(`${m}m`);
-    parts.push(`${s}s`);
-    return parts.join("");
-}

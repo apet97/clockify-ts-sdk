@@ -25,6 +25,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- `clockify_record_expense`'s `amount` now accepts a numeric string (e.g. `"75"`)
+  via `zNumberLike`, matching the domain expense tools; the model-visible JSON
+  Schema stays `number`.
 - The workflow name→id matcher (`findOneByName` in `workflows/resolve.ts`) now routes
   through the SDK's canonical `matchByName` (via the new `matchKeys` option) instead of
   re-deriving its own case-insensitive multi-field match. Name-matching semantics now

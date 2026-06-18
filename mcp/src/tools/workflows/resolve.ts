@@ -166,7 +166,7 @@ export function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
     return { hint: "Call clockify_status, then retry with IDs returned by previous calls.", tool: "clockify_status" };
 }
 
-export function packageNext(projectId: string, taskId: string, tagIds: string[]): NextAction[] {
+function packageNext(projectId: string, taskId: string, tagIds: string[]): NextAction[] {
     const args = { project_id: projectId, ...(taskId ? { task_id: taskId } : {}), ...(tagIds.length ? { tag_ids: tagIds } : {}) };
     return [
         { tool: "clockify_log_work", args, reason: "Log finished work against this package." },
@@ -365,7 +365,7 @@ export class AmbiguousNameError extends Error {
     }
 }
 
-export async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {
+async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {
     // Match through the SDK's canonical matchByName so name-matching semantics
     // (case-insensitive exact, multi-key) live in ONE place across the SDK, CLI, and
     // MCP — no parallel matcher to drift. includeArchived:true preserves this path's
@@ -398,11 +398,11 @@ export function reviewArgsFromEntry(entry: unknown, fallback: AnyRecord): AnyRec
     return start ? { date: start.slice(0, 10) } : undefined;
 }
 
-export function entryStart(entry: AnyRecord): string {
+function entryStart(entry: AnyRecord): string {
     return str(entry.start) || str((entry.timeInterval as AnyRecord | undefined)?.start);
 }
 
-export function entryEnd(entry: AnyRecord): string {
+function entryEnd(entry: AnyRecord): string {
     return str(entry.end) || str((entry.timeInterval as AnyRecord | undefined)?.end);
 }
 
@@ -415,7 +415,7 @@ export function ref(type: string, value: unknown, fallbackName?: string): Entity
     return { type, id: idOf(value), ...(str(row.name) || str(row.description) || fallbackName ? { name: str(row.name) || str(row.description) || fallbackName } : {}) };
 }
 
-export function pushChanged(changed: ChangeSet, bucket: Bucket, value: EntityRef): void {
+function pushChanged(changed: ChangeSet, bucket: Bucket, value: EntityRef): void {
     if (!value.id) return;
     changed[bucket] ??= [];
     changed[bucket].push(value);
