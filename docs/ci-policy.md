@@ -8,14 +8,15 @@ local package gates without becoming the source of product truth.
 | Workflow | Role |
 |---|---|
 | `.github/workflows/ci.yml` | SDK wrapper CI: local SDK codegen, type-check, build, smoke dual ESM/CJS, tests, type tests, pack snapshot, size, lint, OpenAPI/codegen checks, Bun smoke, and Deno smoke. |
-| `.github/workflows/ci-cli.yml` | CLI CI: build the wrapper first, then type-check, test, build, and dry-run pack the CLI package. |
-| `.github/workflows/ci-mcp.yml` | MCP CI: build the wrapper first, then type-check, test, build, and dry-run pack the MCP package. |
+| `.github/workflows/ci-cli.yml` | CLI CI: build the wrapper first, then type-check, test, build, and enforce the CLI pack snapshot. |
+| `.github/workflows/ci-mcp.yml` | MCP CI: build the wrapper first, then type-check, test, build, and enforce the MCP pack snapshot. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
 | `.github/workflows/release-please.yml` | Release PR automation only. |
 | `.github/workflows/release.yml` | Legacy tag-triggered npm release path; not the default local workflow and not to be changed without explicit maintainer approval. |
 | `.github/workflows/ci-cli-release.yml` | INERT CLI publish scaffold: `workflow_dispatch`-only with the publish step guarded `if: false`. Builds and dry-run packs only; cannot publish until a maintainer deliberately enables it (AGENTS.md §12.7, docs/release-support-policy.md). |
 | `.github/workflows/ci-mcp-release.yml` | INERT MCP publish scaffold: same doubly-disabled posture as the CLI scaffold. |
+| `.github/workflows/sandbox-key-health.yml` | Optional scheduled/workflow-dispatch preflight for the sandbox Clockify key; read-only checkout, no publish, skips cleanly when secrets are absent. |
 
 - **`cross-gate` (ci.yml)** runs the four cross-package drift gates
   (`operation-parity-drift`, `openapi-operations-drift`, `openapi-lint`,
@@ -35,7 +36,9 @@ local package gates without becoming the source of product truth.
   needs write access.
 - Keep package workflow matrices on Node 20 and 22 until runtime policy
   changes intentionally.
-- Keep live Clockify credentials out of GitHub-hosted CI.
+- Keep live Clockify credentials out of package CI. The only GitHub-hosted
+  workflow that reads Clockify secrets is `sandbox-key-health.yml`, and it
+  exists solely to detect an expired sandbox key without printing it.
 - Treat local `make perfect-fast`, `make perfect-full`, and
   `make perfect-live` as the operator proof surface; CI is a parallel
   safety net.
@@ -59,6 +62,7 @@ other than local tarball handoff requires explicit maintainer approval.
 Before claiming CI readiness, run or cite:
 
 - `make ci-contract`
+- `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health`
 - `make package-contract`
 - `make supply-chain`
 - `make release-support-contract`

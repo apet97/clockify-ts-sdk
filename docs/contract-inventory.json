@@ -355,6 +355,16 @@
       "perfectFull": true
     },
     {
+      "id": "sandbox-key-health",
+      "target": "sandbox-key-health",
+      "checker": "scripts/check-sandbox-key-health.mjs",
+      "auditIds": [
+        "sandbox-key-health"
+      ],
+      "perfectFast": false,
+      "perfectFull": false
+    },
+    {
       "id": "examples-contract",
       "target": "examples-contract",
       "checker": "scripts/check-examples-contract.mjs",

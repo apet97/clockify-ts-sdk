@@ -65,6 +65,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check release readiness | `make release-readiness` | Release/handoff evidence checklist, generated preflight report shape, final proof closure, and publish decision boundary stay explicit. |
 | Print release workflow decision plan | `make release-decision-plan` | Static no-network decision packet for local tarball, tag-only, npm-via-CI, or legacy-workflow retirement paths. |
 | Check CI contract | `make ci-contract` | GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary stay explicit. |
+| Check sandbox key health | `make sandbox-key-health` | Optional live preflight verifies the Clockify sandbox key when present and skips cleanly when offline. |
 | Check live safety | `make live-safety` | Sandbox-only live-test policy, env gates, cleanup prefixes, live-proof deferral rules, and mock alternative stay aligned. |
 | Check test data lifecycle | `make test-data-lifecycle` | Sandbox prefixes, create/delete pairing, cleanup scan coverage, leftover counts, and sanitized cleanup receipts stay aligned. |
 | Check risk register | `make risk-register` | Known limitations, accepted constraints, provisional states, evidence paths, closure gates, and generated risk-status report shape stay explicit. |

@@ -222,6 +222,35 @@
       ]
     },
     {
+      "id": "sandbox-key-health",
+      "requirement": "Expose an optional live preflight that detects an expired sandbox Clockify key without printing secrets or blocking offline proof.",
+      "evidence": [
+        {
+          "path": "scripts/check-sandbox-key-health.mjs",
+          "contains": [
+            "CLOCKIFY_API_KEY is blank",
+            "The key is never printed",
+            "https://api.clockify.me/api/v1/user"
+          ]
+        },
+        {
+          "path": ".github/workflows/sandbox-key-health.yml",
+          "contains": [
+            "schedule:",
+            "persist-credentials: false",
+            "secrets.CLOCKIFY_API_KEY"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "sandbox-key-health:",
+            "node scripts/check-sandbox-key-health.mjs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "shared-errors",
       "requirement": "Use a shared error/recovery vocabulary across SDK, CLI, and MCP.",
       "evidence": [

@@ -83,6 +83,4 @@ jobs:
         # node-version invariant.
         if: matrix.node-version == '22'
         working-directory: cli
-        run: |
-          npm pack --dry-run --json \
-            | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{const files=JSON.parse(s)[0].files.map(f=>f.path).sort();console.log('Tarball contents ('+files.length+' files):');console.log(files.join('\n'));});"
+        run: node ../scripts/pack-snapshot.mjs --pkg=cli --check

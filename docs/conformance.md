@@ -91,6 +91,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Replay Fixtures | `make replay-fixtures` | yes |
 | Risk Register | `make risk-register` | yes |
 | Runtime Support | `make runtime-support` | yes |
+| Sandbox Key Health | `make sandbox-key-health` | no |
 | Schema Quality | `make schema-quality` | yes |
 | Sdk Public Api | `make sdk-public-api` | yes |
 | Sdk Runtime Contract | `make sdk-runtime-contract` | yes |
@@ -107,4 +108,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 74.
+Total gates: 75.

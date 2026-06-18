@@ -1,0 +1,31 @@
+name: Sandbox key health
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox-key-health:
+    name: Check sandbox key
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Sandbox key health
+        env:
+          CLOCKIFY_API_KEY: ${{ secrets.CLOCKIFY_API_KEY }}
+          CLOCKIFY_WORKSPACE_ID: ${{ secrets.CLOCKIFY_WORKSPACE_ID }}
+        run: node scripts/check-sandbox-key-health.mjs
