@@ -14,6 +14,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   drives all 17 guarded domain deletes plus 5 high-risk workflow writes through
   `dry_run` -> `confirm_token` via the in-memory client, asserting the mutation
   fires exactly once and only on a valid token.
+- Behavioral parity-stamp test
+  (`mcp/tests/operation-parity.behavioral.test.ts`): every non-null `sdk` and
+  `tsMcp` stamp in `docs/operation-parity.json` resolves to a real callable or
+  registered tool.
 - Typed the consumer->SDK list-request boundary:
   `projects/clients/tags/tasks/entries/groups/approvals/scheduling` list calls
   now pass generated `ClockifyApi.List*Request` types instead of
