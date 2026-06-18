@@ -1,4 +1,4 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage
+.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism product-surface product-surface-drift error-docs error-docs-drift troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
@@ -178,9 +178,14 @@ goclmcp-drift:
 	cd ../GOCLMCP && $(MAKE) openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift
 	cd ../GOCLMCP && go test ./internal/tools/...
 
-sdk-codegen:
+sdk-codegen-sync:
 	node scripts/generate-sdk-from-openapi.mjs --write
 	cd wrapper && npm run sync
+
+sdk-wrapper-build: sdk-codegen-sync
+	npm run build -w clockify-sdk-ts-115
+
+sdk-codegen: sdk-codegen-sync
 	$(MAKE) pack-snapshot
 
 sdk-codegen-drift:
@@ -225,10 +230,10 @@ operation-parity:
 operation-parity-drift: mcp-tool-manifest
 	node scripts/generate-operation-parity.mjs --check
 
-mcp-tool-manifest:
+mcp-tool-manifest: sdk-wrapper-build
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --write
 
-mcp-tool-manifest-drift:
+mcp-tool-manifest-drift: sdk-wrapper-build
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check
 
 operation-coverage:

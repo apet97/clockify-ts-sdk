@@ -121,10 +121,10 @@ jobs:
 
       # Runs the deterministic, network-free contract/doc/drift suite
       # (`make contract-gates`) that previously only ran locally via
-      # `make perfect-fast`. No hosted generator or live API: the src-dependent checks
-      # (schema-quality, generator-comparison) skip their generated-TS
-      # portions with a clear warning when wrapper/src is absent. The
-      # package build/test gates stay in build-and-test / ci-cli / ci-mcp.
+      # `make perfect-fast`. No hosted generator or live API. Most src-dependent
+      # checks skip when wrapper/src is absent; the MCP tool-manifest check
+      # prepares the local wrapper build it imports. Package test gates stay
+      # in build-and-test / ci-cli / ci-mcp.
       - name: Run contract + doc drift gates
         run: make contract-gates
 
