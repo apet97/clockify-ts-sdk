@@ -79,6 +79,7 @@
       "requiredTests": [
         "mcp/tests/archive-then-delete.test.ts",
         "mcp/tests/client.test.ts",
+        "mcp/tests/confirm-guard-matrix.test.ts",
         "mcp/tests/groups-get.test.ts",
         "mcp/tests/mock-clockify.test.ts",
         "mcp/tests/result.test.ts",

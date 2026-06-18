@@ -10,6 +10,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   into `vitest.config.ts` over `src/**`. New `npm run test:coverage` script;
   floors pinned in `docs/coverage-contract.json` and enforced by
   `make coverage`.
+- Behavioral confirm-guard matrix (`mcp/tests/confirm-guard-matrix.test.ts`):
+  drives all 17 guarded domain deletes plus 5 high-risk workflow writes through
+  `dry_run` -> `confirm_token` via the in-memory client, asserting the mutation
+  fires exactly once and only on a valid token.
 - Typed the consumer->SDK list-request boundary:
   `projects/clients/tags/tasks/entries/groups/approvals/scheduling` list calls
   now pass generated `ClockifyApi.List*Request` types instead of
