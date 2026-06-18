@@ -59,13 +59,13 @@
   "fileSize": [
     {
       "path": "wrapper/dist/esm/index.js",
-      "maxBytes": 4500,
-      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application. Recalibrated from 3500 after the money/invoice-body/resolve/dates root re-exports grew the barrel to ~4008 bytes (actual + ~12% headroom)."
+      "maxBytes": 5500,
+      "rationale": "SDK root import should remain a small wrapper over generated code, not a bundled application. Recalibrated from 4500 after the reports/bulk/compose subpath root re-exports plus the ensureClient rename grew the barrel to ~4978 bytes (actual + ~10% headroom)."
     },
     {
       "path": "wrapper/dist/cjs/index.js",
-      "maxBytes": 20500,
-      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Recalibrated from 18500 after the list/filter resolver root re-exports (resolveUserRefs/resolveGroupRefs/resolveTagRefs/resolveUserFilter) plus the add-on-token error exports (AddonTokenRestrictionError/mapAddonTokenRestriction) grew the CJS barrel to ~18888 bytes (actual + ~8.5% headroom)."
+      "maxBytes": 23500,
+      "rationale": "CJS root import should stay close to ESM size after dual-build emit. Recalibrated from 20500 after the reports/bulk/compose subpath root re-exports plus the ensureClient rename grew the CJS barrel to ~21143 bytes (actual + ~11% headroom)."
     },
     {
       "path": "cli/dist/index.js",
