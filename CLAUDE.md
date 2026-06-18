@@ -141,6 +141,17 @@ make docs-drift
   create/update/delete tools populate `entity` + `changed` via the
   `writeReceipt` helper in `mcp/src/result.ts` (read-only tools stay
   receipt-free).
+- `defineTool(server, name, config, handler, recovery?)` in
+  `mcp/src/result.ts` is the registration seam every domain and
+  workflow tool now uses (no remaining raw `server.registerTool`
+  calls in `mcp/src/tools/**`). It forwards the per-tool Zod
+  `inputSchema` generic so the handler `args` keep their inferred
+  types, wraps the body in the shared `errorResult` catch, and still
+  routes through `server.registerTool` so the `output-schema.ts`
+  monkeypatch fires. `scripts/check-mcp-write-safety.mjs` matches
+  both the `defineTool(server, "...")` and legacy
+  `server.registerTool("...")` shapes — keep that matcher in sync if
+  the seam's call shape changes.
 - `mcp/src/orchestration/confirm-guard.ts` is the shared
   `dry_run` -> `confirm_token` handshake for high-risk workflow
   writes and destructive domain deletes (`entries`, `projects`,
@@ -156,7 +167,7 @@ make docs-drift
   24-hex id passes through; an ambiguous/unknown name short-circuits to
   a grounded `clarification` receipt (no API call) built in
   `mcp/src/tools/resolve-clarify.ts`. Read-filter slots stay list-free.
-  No new tools — the count stays 127.
+  This wiring added no tools (the surface is 134).
 - MCP arg-shape forgiveness: list fields accept a bare string
   (`"Bob"` -> `["Bob"]`) and number fields a numeric string
   (`"75"` -> `75`, never `""` -> `0`), via `zStringList` / `zNumberLike`
@@ -259,6 +270,7 @@ make docs-drift
 | Goal | File |
 |---|---|
 | SDK wrapper helper/export | root files in `wrapper/`, never `wrapper/src/**` |
+| Scoped `Workspace` method (`ensure*`, `iterProjects`/`iterTags`/`iterClients`) | `wrapper/scoped-client.ts` (class methods, not root exports — no `rootSymbols` change) |
 | CLI command | `cli/src/commands/*.ts`, wired in `cli/src/index.ts` |
 | CLI name→id resolution (`start`/`log`) | `cli/src/commands/resolve-refs.ts` (shared) |
 | MCP domain tool | `mcp/src/tools/*.ts`, wired in `mcp/src/server.ts` |

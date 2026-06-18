@@ -53,6 +53,16 @@ function includesAll(text, markers, label) {
     }
 }
 
+// Tools register either via the raw SDK call `server.registerTool("name", ...)`
+// or through the type-preserving `defineTool(server, "name", ...)` seam in
+// `mcp/src/result.ts`. Both forwarding shapes are equivalent for write-safety
+// purposes, so every source scan accepts either.
+const REGISTRATION_OPENER = String.raw`(?:server\.registerTool\(\s*|defineTool\(\s*server,\s*)`;
+
+function toolRegistrationRegExp(toolName) {
+    return new RegExp(`${REGISTRATION_OPENER}"${toolName}"`);
+}
+
 function assertNonEmptyString(label, value) {
     if (typeof value !== "string" || value.trim().length === 0) {
         fail(label, "must be a non-empty string");
@@ -233,9 +243,7 @@ const toolFileTexts = [];
     }
 }
 function findToolFile(toolName) {
-    return (
-        toolFileTexts.find((text) => new RegExp(`server\\.registerTool\\(\\s*"${toolName}"`).test(text)) ?? ""
-    );
+    return toolFileTexts.find((text) => toolRegistrationRegExp(toolName).test(text)) ?? "";
 }
 
 for (const toolName of contract.confirmationGuardedDomainTools) {
@@ -310,6 +318,18 @@ if (
         "destructive name coverage regex regressed: it must match `_remove_member` and plain `_delete` names and must not match a non-destructive name",
     );
 }
+// Regression self-check for the registration matcher: every tool now goes
+// through the `defineTool(server, "...")` seam, but the legacy
+// `server.registerTool("...")` shape must also keep matching so the scan
+// never silently skips a destructive tool if a file reverts to the raw call.
+if (
+    !toolRegistrationRegExp("clockify_entries_delete").test('defineTool(\n        server,\n        "clockify_entries_delete",') ||
+    !toolRegistrationRegExp("clockify_entries_delete").test('server.registerTool(\n        "clockify_entries_delete",')
+) {
+    failures.push(
+        "tool registration matcher regressed: it must match both `defineTool(server, \"...\")` and `server.registerTool(\"...\")`",
+    );
+}
 const guardedSet = new Set(contract.confirmationGuardedDomainTools);
 const exemptSet = new Set(contract.confirmationExemptDestructiveTools ?? []);
 const workflowSet = new Set([
@@ -374,19 +394,21 @@ if (failures.length > 0) {
 console.log(`MCP write-safety contract passed (${destructiveTools.length} destructive tools checked).`);
 
 function registrationBlock(text, toolName) {
-    const pattern = `server.registerTool(\n        "${toolName}"`;
-    let start = text.indexOf(pattern);
-    if (start === -1) {
-        const looser = new RegExp(`server\\.registerTool\\(\\s*"${toolName}"`);
-        const match = text.match(looser);
-        if (!match) return "";
-        start = match.index ?? -1;
-        if (start === -1) return "";
-    }
+    const match = text.match(toolRegistrationRegExp(toolName));
+    if (!match || match.index == null) return "";
+    const start = match.index;
     const callbackStart = text.indexOf("async (args", start);
-    const fallbackEnd = text.indexOf("server.registerTool", start + 1);
+    const fallbackEnd = nextRegistrationIndex(text, start + 1);
     const end = callbackStart === -1 ? (fallbackEnd === -1 ? start + 1600 : fallbackEnd) : callbackStart;
     return text.slice(start, end);
+}
+
+// Index of the next tool registration (either form) at or after `from`, or -1.
+function nextRegistrationIndex(text, from) {
+    const regex = new RegExp(REGISTRATION_OPENER, "g");
+    regex.lastIndex = from;
+    const match = regex.exec(text);
+    return match ? match.index : -1;
 }
 
 async function discoverDestructiveTools() {
@@ -395,19 +417,20 @@ async function discoverDestructiveTools() {
     const files = await listTypeScriptFiles(dir);
     const tools = [];
 
+    const nameMatcher = new RegExp(`${REGISTRATION_OPENER}"([^"]+)"`);
     for (const file of files) {
         const relPath = path.relative(root, file);
         const text = await readRel(relPath);
         let offset = 0;
         while (offset < text.length) {
-            const start = text.indexOf("server.registerTool", offset);
+            const start = nextRegistrationIndex(text, offset);
             if (start === -1) break;
-            const next = text.indexOf("server.registerTool", start + 1);
+            const next = nextRegistrationIndex(text, start + 1);
             const whole = text.slice(start, next === -1 ? text.length : next);
             offset = start + 1;
 
             if (!/destructiveHint:\s*true/.test(whole)) continue;
-            const nameMatch = whole.match(/server\.registerTool\(\s*"([^"]+)"/);
+            const nameMatch = whole.match(nameMatcher);
             if (!nameMatch) continue;
             const callbackStart = whole.indexOf("async (args");
             const registration = callbackStart === -1 ? whole.slice(0, 1600) : whole.slice(0, callbackStart);

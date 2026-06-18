@@ -334,7 +334,7 @@ end-to-end and green before push. Drift gates are non-negotiable.
     time-off **policies** scope `"ACTIVE"`, holidays keep `"ALL"`
     (`spec/evidence/discrepancies.md`
     `time-off.policies.scope.status-active-not-all`). Adds no tools
-    (still 127); arg-shape coercion (`zStringList` / `zNumberLike` in
+    (the surface is 134); arg-shape coercion (`zStringList` / `zNumberLike` in
     `mcp/src/arg-shapes.ts`) keeps the model-visible JSON Schema
     unchanged. Change the tool, its test, and the ledger together.
 
