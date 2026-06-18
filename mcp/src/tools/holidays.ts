@@ -12,7 +12,7 @@ import { z } from "zod";
 import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
@@ -36,7 +36,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+        entityId(await ctx.client.users.getCurrentUser()) ?? "";
     defineTool(
         server,
         "clockify_holidays_list",
@@ -75,7 +75,6 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 verb: "list holidays for",
                 meUserId: await meUserId(),
                 listUsers,
-                defaultTo: undefined,
             });
             if (!filter.ok)
                 return clarifyResult("clockify_holidays_list_in_period", "userId", "user", filter.clarify);
@@ -145,10 +144,11 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             const created = await ctx.client.holidays.create({
                 workspaceId: ctx.workspaceId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_holidays_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "holiday", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "holiday", { id: entityId(created), name: args.name }));
         },
     );
 
@@ -240,6 +240,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 holidayId: args.holidayId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_holidays_update", updated, {
                 workspaceId: ctx.workspaceId,

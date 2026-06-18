@@ -12,7 +12,7 @@ import { z } from "zod";
 import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
@@ -56,7 +56,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+        entityId(await ctx.client.users.getCurrentUser()) ?? "";
 
     defineTool(
         server,
@@ -134,6 +134,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     page,
                     pageSize,
                     statuses: ["ALL"],
+                // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                 } as never)) as { requests?: Array<{ id?: string }> } | Array<{ id?: string }>;
                 const requests = Array.isArray(res) ? res : (res.requests ?? []);
                 found = requests.find((r) => String(r.id ?? "") === args.requestId);
@@ -184,11 +185,12 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_time_off_requests_submit", created, {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
-            }, writeReceipt("created", "time_off_request", { id: (created as { id?: string }).id }));
+            }, writeReceipt("created", "time_off_request", { id: entityId(created) }));
         },
     );
 
@@ -226,8 +228,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // The generated ChangeTimeOffRequestStatus type marks `note` required,
             // but it is only set when args.note is present. The note-required
             // branch is probe-deferred (creating a PENDING request to PATCH is a
-            // risky multi-step sandbox mutation) — leave note conditional and the
-            // `as never` in place. See discrepancies.md (time-off.change-status.union-and-note).
+            // risky multi-step sandbox mutation), so leave note conditional.
+            // See discrepancies.md (time-off.change-status.union-and-note).
+            // KEEP as never: ChangeTimeOffRequestStatus has a generated status/note mismatch.
             const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
             return successResult("clockify_time_off_requests_update_status", updated, {
                 workspaceId: ctx.workspaceId,
@@ -368,10 +371,11 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             const created = await ctx.client.timeOffPolicies.create({
                 workspaceId: ctx.workspaceId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_time_off_policies_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "time_off_policy", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "time_off_policy", { id: entityId(created), name: args.name }));
         },
     );
 
@@ -441,6 +445,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_time_off_policies_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -466,6 +471,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
                 body: { archived: args.archived },
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_time_off_policies_archive", updated, {
                 workspaceId: ctx.workspaceId,

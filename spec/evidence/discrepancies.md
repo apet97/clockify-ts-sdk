@@ -2240,3 +2240,38 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch stays
   probe-deferred. Test: `mcp/tests/sweep-fixes.test.ts` (asserts the input layer
   rejects `PENDING`/`WITHDRAWN` and never reaches the wire).
+
+### `strictness.wrapper-eopt-noimplicitoverride-blocked` — DOCUMENTED 2026-06-18
+
+- **Blocker (offline-verifiable):** `wrapper/tsconfig.json` cannot enable
+  `noImplicitOverride` (TS4114 at `wrapper/src/errors/ClockifyApiError.ts`:
+  `public readonly cause?: unknown` shadows `Error.cause`) nor
+  `exactOptionalPropertyTypes` (10 errors across `wrapper/src/errors/*` and
+  `wrapper/src/core/request.ts`). All offending files are GENERATED — the hard
+  stop forbids editing `wrapper/src/**`.
+- **Decision:** both flags stay OFF on wrapper, ON in cli + mcp. The rationale is
+  pinned inline in `wrapper/tsconfig.json` `_blockedStrictnessFlags`. The durable
+  fix is upstream in `../GOCLMCP/`.
+- **Status:** `documented-blocked` (2026-06-18).
+
+### `consumer.cast-budget` — COMPENSATED 2026-06-18
+
+- **Action:** the consumer list-request casts (`projects.list`, `clients.list`,
+  `tags.list`, `tasks.list`, `timeEntries.listForUser`, `userGroups.list`,
+  `approvals.list`, `scheduling.list`, and the CLI mirrors) are typed with their
+  generated `ClockifyApi.List*Request` types where the generated type is clean,
+  dropping `as never` + `as unknown[]`. Inline single-id extractions collapse onto
+  `entityId()` (`mcp/src/result.ts`, `cli/src/sdk-narrow.ts`). Surviving
+  `as never` casts are an enumerated allow-list (body-envelope archive,
+  status-union, report/audit passthrough, runtime-body spreads), each
+  line-commented `// KEEP as never` and enforced by
+  `scripts/check-consumer-cast-budget.mjs`.
+- **KEEP allow-list:** `mcp/src/tools/clients.ts` + `cli/src/commands/clients.ts`
+  + `mcp/src/tools/workflows/resolve.ts` (clients.update body-envelope
+  `archived`), `mcp/src/tools/workflows/resolve.ts` (tasks.update DONE overlay),
+  `mcp/src/tools/timeOff.ts` (changeTimeOffRequestStatus union+note),
+  `mcp/src/tools/{reports,audit,invoices,expenses}.ts` and CLI mirrors
+  (passthrough/envelope lists), plus runtime body-spread writes whose generated
+  flattened request types reject locally validated bodies.
+- **Status:** `compensated-in-consumer-layer` (2026-06-18). Gate:
+  `make consumer-cast-budget` (budget 0, ratchet target 0).

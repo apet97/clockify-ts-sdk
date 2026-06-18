@@ -12,7 +12,11 @@ import type { ClockifyClient } from "../client.js";
 function asNamed(rows: unknown[]): Array<{ id: string; name: string; archived?: boolean }> {
     return rows.map((r) => {
         const row = r as { id?: string; name?: string; archived?: boolean };
-        return { id: String(row.id ?? ""), name: String(row.name ?? ""), archived: row.archived };
+        return {
+            id: String(row.id ?? ""),
+            name: String(row.name ?? ""),
+            ...(row.archived !== undefined ? { archived: row.archived } : {}),
+        };
     });
 }
 

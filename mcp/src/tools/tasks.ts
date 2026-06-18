@@ -1,10 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerTasksTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -22,14 +23,14 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListTasksRequest = {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
             if (args.name) req.name = args.name;
-            const tasks = await ctx.client.tasks.list(req as never);
+            const tasks = await ctx.client.tasks.list(req);
             return successResult("clockify_tasks_list", tasks, {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
@@ -66,11 +67,12 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_tasks_create", task, {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
-            }, writeReceipt("created", "task", { id: (task as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "task", { id: entityId(task), name: args.name }));
         },
     );
 
@@ -129,6 +131,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 projectId: args.projectId,
                 taskId: args.taskId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_tasks_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -171,6 +174,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 taskId: args.taskId,
                 name: String(current.name ?? ""),
                 status: "DONE",
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             await ctx.client.tasks.delete({
                 workspaceId: ctx.workspaceId,
@@ -217,7 +221,9 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     ? await ctx.client.tasks.updateCostRate(req as never)
+                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                     : await ctx.client.tasks.updateBillableRate(req as never);
             return successResult("clockify_tasks_set_rate", updated, {
                 workspaceId: ctx.workspaceId,

@@ -6,6 +6,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- Typed the consumer->SDK list-request boundary:
+  `projects/clients/tags/tasks/entries/groups/approvals/scheduling` list calls
+  now pass generated `ClockifyApi.List*Request` types instead of
+  `as never`/`as unknown[]`. Inline single-id extractions collapse onto a new
+  `entityId()` helper in `result.ts`. MCP source now enables
+  `exactOptionalPropertyTypes`.
 - 7 new domain tools (**127 → 134**): a `shared_reports` group
   (`clockify_shared_reports_list` / `_view` / `_create` / `_update` / `_delete`)
   for the workspace's public-link reports, plus `clockify_users_invite`

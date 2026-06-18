@@ -6,6 +6,7 @@
  * (`published: false`) and surfaces the upstream 403 verbatim so the
  * caller can route the failure to an admin.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -25,13 +26,13 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--name <text>", "Filter by assignment name substring.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListSchedulingRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
             if (opts.name) req.name = opts.name;
-            const items = (await client.scheduling.list(req as never)) as unknown[];
+            const items = await client.scheduling.list(req);
             const rows = items.map((raw) => {
                 const a = raw as {
                     id?: string;
@@ -89,6 +90,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
             if (opts.note) body.note = opts.note;
             if (opts.billable) body.billable = true;
             if (opts.includeNonWorkingDays) body.includeNonWorkingDays = true;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.scheduling.create(body as never)) as {
                 id?: string;
                 userId?: string;

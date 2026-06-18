@@ -1,9 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -21,14 +22,14 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListClientsRequest = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
             if (args.name) req.name = args.name;
             if (args.archived !== undefined) req.archived = args.archived;
-            const clients = await ctx.client.clients.list(req as never);
+            const clients = await ctx.client.clients.list(req);
             return successResult("clockify_clients_list", clients, {
                 workspaceId: ctx.workspaceId,
                 count: clients.length,
@@ -54,8 +55,9 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         async (args) => {
             const body: Record<string, unknown> = { name: args.name };
             if (args.note) body.note = args.note;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
-            return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: (client as { id?: string }).id, name: args.name }));
+            return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: entityId(client), name: args.name }));
         },
     );
 
@@ -105,6 +107,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 clientId: args.clientId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_clients_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -156,6 +159,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 clientId: args.clientId,
                 body: { name, archived: true },
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,

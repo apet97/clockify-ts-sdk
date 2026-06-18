@@ -18,7 +18,10 @@ const reportCore = {
     extra: z.record(z.unknown()).optional().describe("Any additional Clockify report filter field"),
 };
 
-function reportRequest(ctx: Context, args: { extra?: Record<string, unknown> } & Record<string, unknown>): Record<string, unknown> {
+function reportRequest(
+    ctx: Context,
+    args: { extra?: Record<string, unknown> | undefined } & Record<string, unknown>,
+): Record<string, unknown> {
     const { extra, ...rest } = args;
     // workspaceId is written last so neither `rest` nor `extra` can unpin it.
     return { ...rest, ...(extra ?? {}), workspaceId: ctx.workspaceId };
@@ -38,6 +41,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await ctx.client.reports.summary(reportRequest(ctx, args) as never);
             return successResult("clockify_reports_summary", data, undefined, {
                 entity: "report",
@@ -60,6 +64,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await ctx.client.reports.detailed(reportRequest(ctx, args) as never);
             return successResult("clockify_reports_detailed", data, undefined, { entity: "report" });
         },
@@ -79,6 +84,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await ctx.client.reports.weekly(reportRequest(ctx, args) as never);
             return successResult("clockify_reports_weekly", data, undefined, { entity: "report" });
         },
@@ -98,6 +104,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await ctx.client.reports.attendance(reportRequest(ctx, args) as never);
             return successResult("clockify_reports_attendance", data, undefined, { entity: "report" });
         },

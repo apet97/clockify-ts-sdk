@@ -58,6 +58,7 @@ export const registerLogCommand: Registrar = (program, services) => {
             if (tagIds && tagIds.length > 0) body.tagIds = tagIds;
             if (opts.billable) body.billable = true;
 
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = await client.timeEntries.create({ workspaceId, ...body } as never);
             const entry = created as { id?: string; description?: string; timeInterval?: { duration?: string } };
             const data = {

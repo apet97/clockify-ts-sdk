@@ -2,12 +2,13 @@
  * User group admin: CRUDL + membership management.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -22,7 +23,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+        entityId(await ctx.client.users.getCurrentUser()) ?? "";
     defineTool(
         server,
         "clockify_groups_list",
@@ -37,13 +38,13 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListUserGroupsRequest & { "project-id"?: string } = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
             if (args.projectId) req["project-id"] = args.projectId;
-            const items = (await ctx.client.userGroups.list(req as never)) as unknown[];
+            const items = await ctx.client.userGroups.list(req);
             return successResult("clockify_groups_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -96,7 +97,7 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             });
             return successResult("clockify_groups_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "group", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "group", { id: entityId(created), name: args.name }));
         },
     );
 

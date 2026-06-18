@@ -624,6 +624,34 @@
       ]
     },
     {
+      "id": "consumer-cast-budget",
+      "requirement": "Bound the consumer->SDK escape-hatch casts: every `as never` in cli/src + mcp/src is eliminated or KEEP-annotated, and per-package strictness (EOPT in cli+mcp) is recorded.",
+      "evidence": [
+        {
+          "path": "docs/consumer-cast-budget-contract.json",
+          "contains": [
+            "allowedRequestCastBudget",
+            "KEEP as never",
+            "exactOptionalPropertyTypes"
+          ]
+        },
+        {
+          "path": "scripts/check-consumer-cast-budget.mjs",
+          "contains": [
+            "Consumer cast budget passed",
+            "KEEP as never",
+            "annotation self-test regressed"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "consumer-cast-budget:"
+          ]
+        }
+      ]
+    },
+    {
       "id": "mcp-agent-contract",
       "requirement": "Make MCP tools agent-ready with output schemas, resources, and prompts.",
       "evidence": [

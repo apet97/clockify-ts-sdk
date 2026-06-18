@@ -1,10 +1,12 @@
 /**
  * `clk115 entries list` and `clk115 entries delete <id>`.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
+import { entityId } from "../sdk-narrow.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -23,11 +25,11 @@ export const registerEntriesCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const user = await client.users.getCurrentUser();
-            const userId = (user as { id?: string }).id;
+            const userId = entityId(user);
             if (!userId) {
                 throw new Error("could not determine user ID");
             }
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListForUserTimeEntriesRequest = {
                 workspaceId,
                 userId,
                 page: opts.page,
@@ -36,7 +38,7 @@ export const registerEntriesCommand: Registrar = (program, services) => {
             if (opts.from) req.start = opts.from;
             if (opts.to) req.end = opts.to;
             if (opts.description) req.description = opts.description;
-            const items = (await client.timeEntries.listForUser(req as never)) as unknown[];
+            const items = await client.timeEntries.listForUser(req);
             const rows = items.map((raw) => {
                 const e = raw as {
                     id?: string;

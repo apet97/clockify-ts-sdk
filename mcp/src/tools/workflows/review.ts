@@ -29,6 +29,7 @@ export async function reviewPeriod(ctx: Context, action: string, args: AnyRecord
     // count: entries.length as if complete. iterAll honors Last-Page.
     const entries: AnyRecord[] = [];
     for await (const entry of iterAll<AnyRecord, AnyRecord>(
+        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         (req) => ctx.client.timeEntries.listForUser(req as never) as never,
         { workspaceId: ctx.workspaceId, userId: idOf(user), start: range.start, end: range.end },
         { pageSize: 200 },

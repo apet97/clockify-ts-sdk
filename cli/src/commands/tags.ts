@@ -1,6 +1,7 @@
 /**
  * `clk115 tags {list,create,get,update,delete}`.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -21,14 +22,14 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .option("--archived", "Include archived tags.", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListTagsRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
             if (opts.name) req.name = opts.name;
             if (opts.archived) req.archived = true;
-            const items = (await client.tags.list(req as never)) as unknown[];
+            const items = await client.tags.list(req);
             const rows = items.map((raw) => {
                 const t = raw as { id?: string; name?: string; archived?: boolean };
                 return {
@@ -87,6 +88,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             const body: Record<string, unknown> = { workspaceId, tagId: id };
             if (opts.name) body.name = opts.name;
             if (opts.archived !== undefined) body.archived = opts.archived;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = (await client.tags.update(body as never)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(

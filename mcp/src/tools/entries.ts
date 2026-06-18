@@ -1,9 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerEntriesTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -23,14 +24,14 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const user = await ctx.client.users.getCurrentUser();
-            const userId = (user as { id?: string }).id;
+            const userId = entityId(user);
             if (!userId) {
                 return errorResult(
                     "clockify_entries_list",
                     new Error("could not determine user ID from getCurrentUser response"),
                 );
             }
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListForUserTimeEntriesRequest = {
                 workspaceId: ctx.workspaceId,
                 userId,
                 page: args.page ?? 1,
@@ -39,7 +40,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
             if (args.description) req.description = args.description;
-            const entries = (await ctx.client.timeEntries.listForUser(req as never)) as unknown[];
+            const entries = await ctx.client.timeEntries.listForUser(req);
             return successResult("clockify_entries_list", entries, {
                 workspaceId: ctx.workspaceId,
                 userId,
@@ -104,8 +105,9 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             if (args.taskId) body.taskId = args.taskId;
             if (args.tagIds && args.tagIds.length > 0) body.tagIds = args.tagIds;
             if (args.billable !== undefined) body.billable = args.billable;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const entry = await ctx.client.timeEntries.create(body as never);
-            return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: (entry as { id?: string }).id, name: args.description }));
+            return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: entityId(entry), name: args.description }));
         },
     );
 
@@ -183,6 +185,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 timeEntryId: args.timeEntryId,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_entries_update", updated, {
                 workspaceId: ctx.workspaceId,

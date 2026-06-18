@@ -55,6 +55,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
+            // KEEP as never: audit search request is assembled dynamically from validated filters.
             const response = (await client.auditLogReport.search(req as never)) as
                 | { entries?: unknown[] }
                 | unknown[];

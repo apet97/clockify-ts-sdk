@@ -36,6 +36,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         async (args) => {
             const req: Record<string, unknown> = { workspaceId: ctx.workspaceId };
             if (args.status) req.statuses = args.status;
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const response = (await ctx.client.invoices.list(req as never)) as
                 | { invoices?: unknown[]; total?: number }
                 | unknown[];
@@ -98,6 +99,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 dueDate: normaliseInvoiceDate(args.dueDate),
             };
             if (args.timeViewMode) body.timeViewMode = args.timeViewMode;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await ctx.client.invoices.create(body as never)) as { id?: string };
             // POST /invoices SILENTLY DROPS note/subject (live-verified) — apply
             // them via the verified GET-then-PUT path so the billing doc is truthful.
@@ -113,6 +115,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     invoiceId: created.id,
                     ...invoiceUpdateBodyFromExisting(existing, patch),
+                // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
                 } as never);
             }
             return successResult("clockify_invoices_create", created, {
@@ -168,6 +171,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 invoiceId: args.invoiceId,
                 ...invoiceUpdateBodyFromExisting(existing, patch),
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_invoices_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -224,6 +228,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 invoiceId: args.invoiceId,
                 body: { status: args.status },
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_invoices_update_status", updated, {
                 workspaceId: ctx.workspaceId,
@@ -286,6 +291,7 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 to,
                 invoiceId,
                 workspaceId: ctx.workspaceId,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_invoices_import_time", imported, {
                 workspaceId: ctx.workspaceId,

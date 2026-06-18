@@ -160,6 +160,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`mcp-write-safety-contract.json`](./mcp-write-safety-contract.json) | edit intentionally | MCP destructive-write confirmation, hint, and receipt contract. |
 | [`cli-contract.json`](./cli-contract.json) | edit intentionally | CLI command/global/completion/exit-code contract. |
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
+| [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Consumer `as never` cast budget, KEEP-as-never allow-list policy, and per-package strictness state. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`generator-config-contract.json`](./generator-config-contract.json) | edit intentionally | Local TypeScript generator input, output, command, and sync contract. |
 | [`generator-independence-contract.json`](./generator-independence-contract.json) | edit intentionally | Generated-core boundary contract for wrapper exports and CLI/MCP dependencies. |
@@ -236,6 +237,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | MCP write safety | `make mcp-write-safety` | Check destructive MCP tools advertise risk, high-risk writes require preview confirmation, and receipts stay recoverable. |
 | CLI contract | `make cli-contract` | Check CLI command metadata, README, globals, completion shells, binaries, and exit-code tests agree. |
 | CLI write safety | `make cli-write-safety` | Check write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
+| Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |

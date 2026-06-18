@@ -45,6 +45,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Cli Write Safety | `make cli-write-safety` | yes |
 | Compatibility Contract | `make compatibility-contract` | yes |
 | Config Precedence | `make config-precedence` | yes |
+| Consumer Cast Budget | `make consumer-cast-budget` | yes |
 | Contract Inventory | `make contract-inventory` | yes |
 | Data Handling | `make data-handling` | yes |
 | Decision Records | `make decision-records` | yes |
@@ -101,4 +102,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 68.
+Total gates: 69.

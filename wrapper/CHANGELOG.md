@@ -9,6 +9,9 @@ once v1.0.0 ships.
 
 ### Added
 
+- Documented (inline in `tsconfig.json`) why `noImplicitOverride` and
+  `exactOptionalPropertyTypes` stay disabled on the wrapper package: both red on
+  generated `src/**` the hard stop forbids editing. No behavioral change.
 - New `clockify-sdk-ts-115/reports` subpath: typed report filter builders
   (`summaryFilter`, `detailedFilter`, `weeklyFilter`) and response-narrowing
   accessors (`detailedEntries` — coalesces the `timeEntries`/`timeentries`

@@ -1,4 +1,5 @@
 {
+  "_blockedStrictnessFlags": "noImplicitOverride and exactOptionalPropertyTypes are intentionally NOT set here: they red on GENERATED files which the hard stop forbids editing. noImplicitOverride -> TS4114 at src/errors/ClockifyApiError.ts (public readonly cause shadows Error.cause). exactOptionalPropertyTypes -> 10 errors across src/errors/* and src/core/request.ts. The fix lives upstream in ../GOCLMCP/. cli and mcp DO enable both flags. See docs/consumer-cast-budget-contract.json strictness block and spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked.",
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",

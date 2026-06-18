@@ -6,6 +6,7 @@
  * (receipt-shaped). The member-profile write stays under `users` (no new
  * top-level command group).
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -36,13 +37,14 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .option("--name <text>", "Filter by name/email substring.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListUsersRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.pageSize), 200),
+                "include-roles": false,
             };
             if (opts.name) req.name = opts.name;
-            const items = (await client.users.list(req as never)) as unknown[];
+            const items = await client.users.list(req);
             const rows = items.map((raw) => {
                 const u = raw as { id?: string; name?: string; email?: string; status?: string };
                 return {
@@ -67,6 +69,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
                 workspaceId,
                 "send-email": sendEmail ? "true" : "false",
                 email,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never)) as { id?: string };
             printReceipt(
                 {

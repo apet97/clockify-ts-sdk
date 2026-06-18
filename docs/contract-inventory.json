@@ -1157,6 +1157,19 @@
       "perfectFull": true
     },
     {
+      "id": "consumer-cast-budget",
+      "target": "consumer-cast-budget",
+      "checker": "scripts/check-consumer-cast-budget.mjs",
+      "contracts": [
+        "docs/consumer-cast-budget-contract.json"
+      ],
+      "auditIds": [
+        "consumer-cast-budget"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "test-matrix",
       "target": "test-matrix",
       "checker": "scripts/check-test-matrix-contract.mjs",

@@ -76,36 +76,42 @@ function buildDoctorReceipt(
                 ok: nodeOk,
                 status: nodeOk ? "supported" : "unsupported",
                 value: process.versions.node,
-                recovery: nodeOk ? undefined : "Install Node.js 20 or newer before using @clockify115/cli.",
+                ...(nodeOk ? {} : { recovery: "Install Node.js 20 or newer before using @clockify115/cli." }),
             },
             apiKey: {
                 ok: apiKeyOk,
                 status: apiKeyOk ? "present" : "missing",
-                source: apiKeySource,
-                value: apiKeyOk ? "configured (redacted)" : undefined,
-                recovery: apiKeyOk
-                    ? undefined
-                    : "Provide --api-key, set CLOCKIFY_API_KEY, or add apiKey to ~/.clockifyrc.json.",
+                ...(apiKeySource !== undefined ? { source: apiKeySource } : {}),
+                ...(apiKeyOk ? { value: "configured (redacted)" } : {}),
+                ...(apiKeyOk
+                    ? {}
+                    : { recovery: "Provide --api-key, set CLOCKIFY_API_KEY, or add apiKey to ~/.clockifyrc.json." }),
             },
             workspaceId: {
                 ok: workspaceOk,
                 status: workspaceOk ? "present" : "missing",
-                source: workspaceSource,
-                value: workspaceOk ? maskId(config.workspaceId) : undefined,
-                recovery: workspaceOk
-                    ? undefined
-                    : "Provide --workspace, set CLOCKIFY_WORKSPACE_ID, or add workspaceId to ~/.clockifyrc.json.",
+                ...(workspaceSource !== undefined ? { source: workspaceSource } : {}),
+                ...(config.workspaceId !== undefined ? { value: maskId(config.workspaceId) ?? "" } : {}),
+                ...(workspaceOk
+                    ? {}
+                    : {
+                          recovery:
+                              "Provide --workspace, set CLOCKIFY_WORKSPACE_ID, or add workspaceId to ~/.clockifyrc.json.",
+                      }),
             },
             baseUrl: {
                 ok: baseUrlClass ? baseUrlClass.allowed : true,
                 status: config.baseUrl ? "override" : "default",
                 source: baseUrlSource,
                 value: baseUrl,
-                recovery: !config.baseUrl
-                    ? undefined
-                    : baseUrlClass && !baseUrlClass.allowed
-                      ? `${baseUrlClass.reason ?? "Base URL is outside the Clockify host allowlist."} The client will reject it — use the default Clockify API base URL, or a loopback host for mocks/replay.`
-                      : "Use the default Clockify API base URL for real work; keep overrides for mocks or replay.",
+                ...(config.baseUrl
+                    ? {
+                          recovery:
+                              baseUrlClass && !baseUrlClass.allowed
+                                  ? `${baseUrlClass.reason ?? "Base URL is outside the Clockify host allowlist."} The client will reject it — use the default Clockify API base URL, or a loopback host for mocks/replay.`
+                                  : "Use the default Clockify API base URL for real work; keep overrides for mocks or replay.",
+                      }
+                    : {}),
             },
         },
         next: nextSteps({ nodeOk, apiKeyOk, workspaceOk, hasBaseUrlOverride: isPresent(config.baseUrl) }),

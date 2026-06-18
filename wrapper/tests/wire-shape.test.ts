@@ -48,6 +48,11 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "time-off.requests.get.dead-route": ["mcp/tests/time-off-get.test.ts"],
     "deletes.archive-first.projects-tasks": ["mcp/tests/archive-then-delete.test.ts"],
     "deletes.archive-first.clients-blocked": ["mcp/tests/archive-then-delete.test.ts"],
+    "consumer.cast-budget": [
+        "scripts/check-consumer-cast-budget.mjs",
+        "cli/tests/sdk-narrow.test.ts",
+        "mcp/tests/sdk-narrow.test.ts",
+    ],
 };
 
 /**

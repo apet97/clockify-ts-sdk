@@ -30,14 +30,20 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
 
 export async function logWork(ctx: Context, args: AnyRecord) {
     const body = await prepareEntryBody(ctx, args, true);
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const entry = await ctx.client.timeEntries.create(body as never);
     const ids = entryIds(ctx, entry, body);
+    const reviewArgs = reviewArgsFromEntry(entry, body);
     return successResult("clockify_log_work", entry, { workspaceId: ctx.workspaceId }, {
         entity: "entry",
         ids,
         changed: { created: [ref("entry", entry, str(body.description))] },
         next: [
-            { tool: "clockify_review_day", args: reviewArgsFromEntry(entry, body), reason: "Review the day after logging work." },
+            {
+                tool: "clockify_review_day",
+                ...(reviewArgs ? { args: reviewArgs } : {}),
+                reason: "Review the day after logging work.",
+            },
             { tool: "clockify_fix_entry", args: { entry_id: ids.entryId }, reason: "Adjust this entry if any details are wrong." },
         ],
     });
@@ -46,6 +52,7 @@ export async function logWork(ctx: Context, args: AnyRecord) {
 export async function startWork(ctx: Context, args: AnyRecord) {
     const startWasDefaulted = !str(args.start);
     const body = await prepareEntryBody(ctx, { ...args, start: str(args.start) || new Date().toISOString() }, false);
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const entry = await ctx.client.timeEntries.create(body as never);
     const ids = entryIds(ctx, entry, body);
     return successResult(
@@ -145,13 +152,21 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     if (args.billable !== undefined) body.billable = args.billable;
     if (!body.start) throw new Error("entry start is required to update this time entry");
     const { workspaceId, timeEntryId, ...updateBody } = body;
+    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
     const updated = await ctx.client.timeEntries.update({ workspaceId, timeEntryId, body: updateBody } as never);
     const ids = entryIds(ctx, updated, body);
+    const reviewArgs = reviewArgsFromEntry(updated, body);
     return successResult("clockify_fix_entry", updated, { workspaceId: ctx.workspaceId }, {
         entity: "entry",
         ids,
         changed: { updated: [ref("entry", updated, nextDescription)] },
-        next: [{ tool: "clockify_review_day", args: reviewArgsFromEntry(updated, body), reason: "Review the affected day." }],
+        next: [
+            {
+                tool: "clockify_review_day",
+                ...(reviewArgs ? { args: reviewArgs } : {}),
+                reason: "Review the affected day.",
+            },
+        ],
     });
 }
 

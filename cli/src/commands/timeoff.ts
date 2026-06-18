@@ -39,6 +39,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             if (opts.end) req.end = opts.end;
             if (opts.status) req.statuses = splitList(opts.status);
             if (opts.user) req.users = splitList(opts.user);
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const items = (await client.timeOff.list(req as never)) as unknown[];
             const rows = items.map((raw) => {
                 const r = raw as {
@@ -100,6 +101,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
                 workspaceId,
                 policyId: opts.policy,
                 body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never)) as {
                 id?: string;
                 status?: { statusType?: string };

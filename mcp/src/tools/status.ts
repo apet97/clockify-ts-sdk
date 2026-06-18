@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { Context } from "../client.js";
-import { defineTool, successResult } from "../result.js";
+import { defineTool, entityId, successResult } from "../result.js";
 
 export function registerStatusTool(server: McpServer, ctx: Context): void {
     defineTool(
@@ -18,7 +18,7 @@ export function registerStatusTool(server: McpServer, ctx: Context): void {
             const entries = Array.isArray(inProgress)
                 ? inProgress
                 : ((inProgress as { timeEntries?: unknown[] }).timeEntries ?? []);
-            const userId = (user as { id?: string }).id ?? "";
+            const userId = entityId(user) ?? "";
             const running = entries.find((entry) => (entry as { userId?: string }).userId === userId) ?? null;
             return successResult(
                 "clockify_status",

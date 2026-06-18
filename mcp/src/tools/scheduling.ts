@@ -12,7 +12,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -35,10 +35,14 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             "page-size": 200,
             ...(filter?.archived !== undefined ? { archived: filter.archived } : {}),
         })) as Array<{ id?: string; name?: string; archived?: boolean }>;
-        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? ""), archived: r.archived }));
+        return rows.map((r) => ({
+            id: String(r.id ?? ""),
+            name: String(r.name ?? ""),
+            ...(r.archived !== undefined ? { archived: r.archived } : {}),
+        }));
     };
     const meUserId = async (): Promise<string> =>
-        String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
+        entityId(await ctx.client.users.getCurrentUser()) ?? "";
     defineTool(
         server,
         "clockify_scheduling_assignments_list",
@@ -53,13 +57,13 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListSchedulingRequest = {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
             if (args.name) req.name = args.name;
-            const items = await ctx.client.scheduling.list(req as never);
+            const items = await ctx.client.scheduling.list(req);
             return successResult("clockify_scheduling_assignments_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -164,10 +168,11 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             const created = await ctx.client.scheduling.create({
                 workspaceId: ctx.workspaceId,
                 ...body,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_scheduling_assignments_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "scheduling_assignment", { id: (created as { id?: string }).id }));
+            }, writeReceipt("created", "scheduling_assignment", { id: entityId(created) }));
         },
     );
 
@@ -276,8 +281,15 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const { extra, ...rest } = args;
-            await ctx.client.scheduling.publish({ ...rest, ...(extra ?? {}), workspaceId: ctx.workspaceId });
+            const { extra } = args;
+            await ctx.client.scheduling.publish({
+                workspaceId: ctx.workspaceId,
+                start: args.start,
+                end: args.end,
+                ...(args.notifyUsers !== undefined ? { notifyUsers: args.notifyUsers } : {}),
+                ...(args.search !== undefined ? { search: args.search } : {}),
+                ...(extra ?? {}),
+            });
             return successResult(
                 "clockify_scheduling_publish",
                 { published: true, start: args.start, end: args.end },
@@ -305,7 +317,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         async (args) => {
             const { extra, page, pageSize, ...rest } = args;
             const items = await ctx.client.scheduling.getUsersCapacityFiltered({
-                ...rest,
+                start: rest.start,
+                end: rest.end,
+                ...(rest.search !== undefined ? { search: rest.search } : {}),
                 page: page ?? 1,
                 pageSize: pageSize ?? 50,
                 ...(extra ?? {}),

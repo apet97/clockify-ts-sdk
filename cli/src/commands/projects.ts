@@ -1,6 +1,7 @@
 /**
  * `clk115 projects {list,create,get,update,delete}`.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -22,7 +23,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--client <id>", "Filter by client ID.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.ListProjectsRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
@@ -30,7 +31,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             if (opts.name) req.name = opts.name;
             if (opts.archived) req.archived = true;
             if (opts.client) req.clients = [opts.client];
-            const items = (await client.projects.list(req as never)) as unknown[];
+            const items = await client.projects.list(req);
             const rows = items.map((raw) => {
                 const p = raw as {
                     id?: string;
@@ -65,6 +66,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             if (opts.client) body.clientId = opts.client;
             if (opts.color) body.color = opts.color;
             if (opts.billable) body.billable = true;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = (await client.projects.create(body as never)) as {
                 id?: string;
                 name?: string;
@@ -122,6 +124,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             if (opts.note !== undefined) body.note = opts.note;
             if (opts.billable !== undefined) body.billable = opts.billable;
             if (opts.archived !== undefined) body.archived = opts.archived;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = (await client.projects.update(body as never)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(

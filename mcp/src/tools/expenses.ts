@@ -10,7 +10,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied.
@@ -31,7 +31,7 @@ function expenseChangeFields(fields: Record<string, unknown>): string[] {
 }
 
 async function currentUserId(ctx: Context): Promise<string> {
-    const id = (await ctx.client.users.getCurrentUser() as { id?: string }).id;
+    const id = entityId(await ctx.client.users.getCurrentUser());
     if (!id) throw new Error("Could not determine the current user ID; pass userId explicitly.");
     return id;
 }
@@ -59,6 +59,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             };
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
             const response = (await ctx.client.expenses.list(req as never)) as
                 | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
                 | unknown[];
@@ -159,8 +160,9 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 ...(extra ?? {}),
                 userId: owner,
                 workspaceId: ctx.workspaceId,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
-            return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: (created as { id?: string }).id }));
+            return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: entityId(created) }));
         },
     );
 
@@ -194,6 +196,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 userId: owner,
                 expenseId,
                 workspaceId: ctx.workspaceId,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never);
             return successResult("clockify_expenses_update", updated, {
                 workspaceId: ctx.workspaceId,
@@ -219,6 +222,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             } as never)) as unknown[];
             return successResult("clockify_expenses_categories_list", items, {
                 workspaceId: ctx.workspaceId,
@@ -246,10 +250,11 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             if (args.unit) body.unit = args.unit;
             if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
             if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const created = await ctx.client.expenseCategories.create(body as never);
             return successResult("clockify_expenses_categories_create", created, {
                 workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "expense_category", { id: (created as { id?: string }).id, name: args.name }));
+            }, writeReceipt("created", "expense_category", { id: entityId(created), name: args.name }));
         },
     );
 
@@ -277,6 +282,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             if (args.unit) body.unit = args.unit;
             if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
             if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const updated = await ctx.client.expenseCategories.update(body as never);
             return successResult("clockify_expenses_categories_update", updated, {
                 workspaceId: ctx.workspaceId,

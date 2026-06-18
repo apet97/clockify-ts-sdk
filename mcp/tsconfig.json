@@ -17,7 +17,8 @@
         "allowSyntheticDefaultImports": true,
         "isolatedModules": true,
         "noUncheckedIndexedAccess": true,
-        "noImplicitOverride": true
+        "noImplicitOverride": true,
+        "exactOptionalPropertyTypes": true
     },
     "include": ["src/**/*.ts"],
     "exclude": ["node_modules", "dist", "tests"]

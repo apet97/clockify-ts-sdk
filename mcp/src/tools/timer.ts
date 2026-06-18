@@ -2,7 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { defineTool, errorResult, successResult } from "../result.js";
+import { defineTool, entityId, errorResult, successResult } from "../result.js";
 
 import { stopRunningTimer } from "./timer-stop.js";
 
@@ -32,6 +32,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             if (args.taskId) body.taskId = args.taskId;
             if (Array.isArray(args.tagIds) && args.tagIds.length > 0) body.tagIds = args.tagIds;
             if (args.billable !== undefined) body.billable = args.billable;
+            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
             const entry = await ctx.client.timeEntries.create(body as never);
             return successResult("clockify_timer_start", entry);
         },
@@ -47,7 +48,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
         },
         async () => {
             const user = await ctx.client.users.getCurrentUser();
-            const userId = (user as { id?: string }).id;
+            const userId = entityId(user);
             if (!userId) {
                 // early-return (not a throw) so the defineTool catch isn't involved
                 return errorResult(

@@ -3,8 +3,10 @@
  */
 import type { Command } from "commander";
 
+
 import { printSuccess } from "../output.js";
 import { printReceipt } from "../receipt.js";
+import { entityId } from "../sdk-narrow.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
@@ -16,7 +18,7 @@ export const registerStopCommand: Registrar = (program, services) => {
         .action(async function (this: Command) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const user = await client.users.getCurrentUser();
-            const userId = (user as { id?: string }).id;
+            const userId = entityId(user);
             if (!userId) {
                 throw new Error("could not determine user ID from getCurrentUser response");
             }

@@ -87,6 +87,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
                 const ids = await Promise.all(opts.client.map((c: string) => resolveClientId(client, workspaceId, c)));
                 req.clients = idFilter(ids);
             }
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await client.reports.summary(req as never);
             printObject(data as Record<string, unknown>, output);
         });
@@ -108,6 +109,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
                 dateRangeEnd,
                 detailedFilter: detailedFilter({ page: opts.page, pageSize: Math.min(Math.max(1, opts.pageSize), 1000) }),
             };
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await client.reports.detailed(req as never);
             printObject(data as Record<string, unknown>, output);
         });
@@ -132,6 +134,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
                     String(opts.subgroup).toUpperCase() as Parameters<typeof weeklyFilter>[1],
                 ),
             };
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await client.reports.weekly(req as never);
             printObject(data as Record<string, unknown>, output);
         });
@@ -145,6 +148,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
+            // KEEP as never: report request uses validated passthrough fields the generated request type cannot express.
             const data = await client.reports.attendance({ workspaceId, dateRangeStart, dateRangeEnd } as never);
             printObject(data as Record<string, unknown>, output);
         });

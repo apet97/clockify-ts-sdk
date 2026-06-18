@@ -23,7 +23,9 @@ export function clarifyResult(
         clarification: {
             question: clarify.clarify,
             field,
-            candidates: clarify.options?.map((o) => ({ type: entityType, id: o.id, name: o.label })),
+            ...(clarify.options
+                ? { candidates: clarify.options.map((o) => ({ type: entityType, id: o.id, name: o.label })) }
+                : {}),
         },
     });
 }
