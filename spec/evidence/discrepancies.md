@@ -2179,3 +2179,15 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   reads `userGroups.list` and scans by id, erroring clearly on an unknown id
   (never returning void). Test: `mcp/tests/groups-get.test.ts`. The upstream
   generator/spec fix (`../GOCLMCP/`) is still the durable fix.
+
+### `compose.work-package.ensure-repoint-wontfix` — WONTFIX 2026-06-18
+
+- **Rationale:** `createWorkPackage` is already transactional via `runComposition`
+  (P1-2). Re-pointing onto `Workspace.ensure*` would (1) drop server-side
+  name/page-size:200/clients list filters — breaking `workflows.test.ts:327` and
+  forcing unbounded scans, (2) be unable to express `upsert:false` always-create
+  (`resolve.ts:13,40,80,121,159`), (3) be unable to carry the per-step `undo`
+  closures `runComposition` requires (`compose.ts:151`). `EnsureResult.created`
+  exists but is insufficient. `ctx.client` is the unscoped client, not a
+  `Workspace`. No SDK count impact. Net regression — not adopted.
+- **Status:** `wontfix` (2026-06-18).
