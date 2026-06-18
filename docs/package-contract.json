@@ -20,6 +20,8 @@
       "binKeys": [],
       "exportKeys": [
         ".",
+        "./bulk",
+        "./compose",
         "./composed-fetch",
         "./create-client",
         "./dates",
@@ -36,6 +38,7 @@
         "./paginated-list",
         "./pagination",
         "./rate-limit",
+        "./reports",
         "./request-options",
         "./resolve",
         "./scoped-client",

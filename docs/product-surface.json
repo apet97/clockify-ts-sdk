@@ -22,6 +22,7 @@
       "publicExports": [
         ".",
         "./bulk",
+        "./compose",
         "./composed-fetch",
         "./create-client",
         "./dates",

@@ -12,6 +12,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   (add a user to the workspace by email) and `clockify_member_profile_update`
   (update a member's profile). `clockify_shared_reports_delete` is
   confirm-guarded (dry_run → confirm_token) like the other destructive deletes.
+  The README intro and the agent-UX/product-surface contracts now state the
+  134-tool surface (21 workflow + 113 domain).
 
 ### Fixed
 
