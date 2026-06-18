@@ -22,6 +22,7 @@ describe("buildProgram", () => {
             "invoices",
             "log",
             "projects",
+            "reports",
             "scheduling",
             "start",
             "status",
@@ -29,6 +30,7 @@ describe("buildProgram", () => {
             "tags",
             "tasks",
             "timeoff",
+            "users",
             "webhooks",
         ]);
     });

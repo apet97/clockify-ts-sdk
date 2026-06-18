@@ -34,6 +34,12 @@ export async function resolveProjectId(client: ClockifyClient, workspaceId: stri
     return pickIdByName(list, ref, "project");
 }
 
+export async function resolveClientId(client: ClockifyClient, workspaceId: string, ref: string): Promise<string> {
+    if (looksLikeClockifyId(ref)) return ref;
+    const list = await client.clients.list({ workspaceId, name: ref, page: 1, "page-size": 200 });
+    return pickIdByName(list, ref, "client");
+}
+
 export async function resolveTaskId(
     client: ClockifyClient,
     workspaceId: string,
