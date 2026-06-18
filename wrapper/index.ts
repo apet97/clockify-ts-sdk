@@ -200,3 +200,30 @@ export {
     type FindOrCreateOptions,
     type NamedRecord,
 } from "./ensure.js";
+
+// Typed report filter builders + response-narrowing accessors (so callers stop
+// casting report responses to ad-hoc inline shapes).
+export {
+    detailedEntries,
+    detailedFilter,
+    reportTotals,
+    summaryFilter,
+    summaryGroups,
+    weeklyFilter,
+    type DetailedFilter,
+    type DetailedReportResponse,
+    type SummaryFilter,
+    type SummaryReportResponse,
+    type WeeklyFilter,
+    type WeeklyReportResponse,
+} from "./reports.js";
+
+// Bounded-parallel bulk helpers (mapBounded + thin archive/delete wrappers).
+export {
+    bulkArchiveProjects,
+    bulkDelete,
+    mapBounded,
+    type BulkFailure,
+    type BulkResult,
+    type MapBoundedOptions,
+} from "./bulk.js";

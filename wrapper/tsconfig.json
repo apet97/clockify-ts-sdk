@@ -86,6 +86,12 @@
       ],
       "clockify-sdk-ts-115/ensure": [
         "./ensure.ts"
+      ],
+      "clockify-sdk-ts-115/reports": [
+        "./reports.ts"
+      ],
+      "clockify-sdk-ts-115/bulk": [
+        "./bulk.ts"
       ]
     }
   },

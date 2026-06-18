@@ -818,6 +818,8 @@ requestId, status }` shape.
 | Encode Clockify's non-uniform money units | `toMinor`, `toMajor`, `invoiceItemUnitPrice*` | `clockify-sdk-ts-115/money` |
 | Build a safe replace-semantics invoice `PUT` body | `invoiceUpdateBodyFromExisting` | `clockify-sdk-ts-115/invoice-body` |
 | Resolve relative dates server-side ("yesterday", periods) | `resolveRelativeDay`, `resolvePeriod` | `clockify-sdk-ts-115/dates` |
+| Build typed report filters + narrow report responses | `summaryFilter`, `detailedFilter`, `detailedEntries` | `clockify-sdk-ts-115/reports` |
+| Run a bounded-parallel bulk operation with collected failures | `mapBounded`, `bulkArchiveProjects`, `bulkDelete` | `clockify-sdk-ts-115/bulk` |
 
 The `ensure` helpers are pure (you inject `list`/`create`/`archive`/`delete`),
 so they reuse instead of duplicating on a re-run — Clockify does not enforce
@@ -847,7 +849,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 81 public names + 23 subpaths                                                    | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 90 public names + 25 subpaths                                                    | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | CI `build-and-test` (Node 22)           |
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |

@@ -88,7 +88,16 @@
     "ensureTag",
     "ensureProject",
     "findOrCreateClient",
-    "archiveThenDeleteProject"
+    "archiveThenDeleteProject",
+    "summaryFilter",
+    "detailedFilter",
+    "weeklyFilter",
+    "detailedEntries",
+    "summaryGroups",
+    "reportTotals",
+    "mapBounded",
+    "bulkArchiveProjects",
+    "bulkDelete"
   ],
   "subpaths": {
     ".": [
@@ -193,6 +202,19 @@
       "ensureProject",
       "findOrCreateClient",
       "archiveThenDeleteProject"
+    ],
+    "./reports": [
+      "summaryFilter",
+      "detailedFilter",
+      "weeklyFilter",
+      "detailedEntries",
+      "summaryGroups",
+      "reportTotals"
+    ],
+    "./bulk": [
+      "mapBounded",
+      "bulkArchiveProjects",
+      "bulkDelete"
     ]
   },
   "tsconfigAliases": {
@@ -264,6 +286,12 @@
     ],
     "clockify-sdk-ts-115/ensure": [
       "./ensure.ts"
+    ],
+    "clockify-sdk-ts-115/reports": [
+      "./reports.ts"
+    ],
+    "clockify-sdk-ts-115/bulk": [
+      "./bulk.ts"
     ]
   },
   "packageMarkerScan": {
