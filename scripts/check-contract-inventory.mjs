@@ -445,6 +445,16 @@ if (inventory.reportGenerator) {
 
 for (const entry of inventory.entries ?? []) {
     const id = entry.id;
+    if (entry.retired) {
+        // Retired gates are history-only: their target/checker/contract files
+        // are gone (folded into a survivor via `retiredGates`), so skip every
+        // liveness assertion. Keep auditIds resolvable so the audit history
+        // stays wired.
+        for (const auditId of entry.auditIds ?? []) {
+            if (!audit.includes(`"id": "${auditId}"`)) fail(id, `enterprise audit missing id ${auditId}`);
+        }
+        continue;
+    }
     if (!entry.target) fail(id, "missing target");
     if (!entry.checker) fail(id, "missing checker");
     assertUnique(entry.reports, `${id}.reports`);

@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 const contract = JSON.parse(await readRel("docs/snippet-safety-contract.json"));
 const failures = [];
 const shapeFailures = [];
+// Hoisted to module top so it is in scope for both the shape-validator
+// (mechanism B, runs early) and the bottom-of-file target check (mechanism A).
+const retiredGates = await loadRetiredGates();
 
 async function readRel(relPath) {
     return readFile(path.join(root, relPath), "utf8");
@@ -133,7 +137,7 @@ function assertContractShape(value) {
         "live-safety",
         "docs-drift",
     ]) {
-        if (!requiredTargets.includes(target)) {
+        if (!requiredTargets.includes(target) && !retiredGates[target]) {
             failShape(`requiredTargets must include ${target}`);
         }
     }
@@ -257,7 +261,7 @@ for (const evidence of contract.supportingEvidence ?? []) {
 }
 
 for (const target of contract.requiredTargets ?? []) {
-    if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
+    if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
 if (!makefile.includes("perfect-fast:") || !makefile.includes("snippet-safety")) {

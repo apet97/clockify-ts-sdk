@@ -2,6 +2,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -225,8 +226,9 @@ for (const evidence of contract.supportingEvidence ?? []) {
 }
 
 const makefile = await readRel("Makefile");
+const retiredGates = await loadRetiredGates();
 for (const target of contract.requiredTargets ?? []) {
-    if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
+    if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
 const wiring = contract.wiring ?? {};
