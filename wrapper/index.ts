@@ -227,3 +227,13 @@ export {
     type BulkResult,
     type MapBoundedOptions,
 } from "./bulk.js";
+
+// Transactional multi-step composition with rollback (runComposition + leftBehindNote).
+export {
+    leftBehindNote,
+    runComposition,
+    type CompositionOutcome,
+    type CompositionStatus,
+    type CompositionStep,
+    type StepResult,
+} from "./compose.js";

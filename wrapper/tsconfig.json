@@ -92,6 +92,9 @@
       ],
       "clockify-sdk-ts-115/bulk": [
         "./bulk.ts"
+      ],
+      "clockify-sdk-ts-115/compose": [
+        "./compose.ts"
       ]
     }
   },

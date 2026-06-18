@@ -97,7 +97,9 @@
     "reportTotals",
     "mapBounded",
     "bulkArchiveProjects",
-    "bulkDelete"
+    "bulkDelete",
+    "runComposition",
+    "leftBehindNote"
   ],
   "subpaths": {
     ".": [
@@ -215,6 +217,10 @@
       "mapBounded",
       "bulkArchiveProjects",
       "bulkDelete"
+    ],
+    "./compose": [
+      "runComposition",
+      "leftBehindNote"
     ]
   },
   "tsconfigAliases": {
@@ -292,6 +298,9 @@
     ],
     "clockify-sdk-ts-115/bulk": [
       "./bulk.ts"
+    ],
+    "clockify-sdk-ts-115/compose": [
+      "./compose.ts"
     ]
   },
   "packageMarkerScan": {
