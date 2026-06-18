@@ -211,7 +211,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 92 names + 26 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 93 names + 26 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -371,7 +371,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (92 names, 26 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (93 names, 26 subpaths @ v0.9.0)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`

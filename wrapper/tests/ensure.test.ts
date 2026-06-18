@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { _resetWarnOnceForTests } from "../deprecation.js";
 import {
     archiveThenDeleteProject,
+    ensureClient,
     ensureProject,
     ensureTag,
     findOrCreateClient,
@@ -72,7 +74,7 @@ describe("ensureTag", () => {
     });
 });
 
-describe("ensureProject / findOrCreateClient", () => {
+describe("ensureProject / ensureClient", () => {
     it("ensureProject reuses by name", async () => {
         const result = await ensureProject({
             name: "Acme",
@@ -82,14 +84,36 @@ describe("ensureProject / findOrCreateClient", () => {
         expect(result).toEqual({ entity: { id: "p_1", name: "Acme" }, id: "p_1", created: false });
     });
 
-    it("findOrCreateClient creates when missing", async () => {
-        const result = await findOrCreateClient({
+    it("ensureClient creates when missing", async () => {
+        const result = await ensureClient({
             name: "New Co",
             list: async () => [],
             create: async (name) => ({ id: "c_new", name }),
         });
         expect(result.created).toBe(true);
         expect(result.entity.name).toBe("New Co");
+    });
+
+    it("findOrCreateClient is a deprecated alias that warns once and delegates to ensureClient", async () => {
+        _resetWarnOnceForTests();
+        const prevEnv = process.env.NODE_ENV;
+        delete process.env.NODE_ENV; // warnOnce is silent under NODE_ENV=test
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        try {
+            const result = await findOrCreateClient({
+                name: "Legacy Co",
+                list: async () => [],
+                create: async (name) => ({ id: "c_legacy", name }),
+            });
+            expect(result.created).toBe(true);
+            expect(result.entity.name).toBe("Legacy Co");
+            const warned = warnSpy.mock.calls.map((c) => String(c[0]));
+            expect(warned.some((m) => m.includes("findOrCreateClient") && m.includes("ensureClient"))).toBe(true);
+        } finally {
+            warnSpy.mockRestore();
+            if (prevEnv !== undefined) process.env.NODE_ENV = prevEnv;
+            _resetWarnOnceForTests();
+        }
     });
 });
 

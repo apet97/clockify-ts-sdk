@@ -100,3 +100,42 @@ describe("Workspace scoped client", () => {
         expect(wsA).not.toBe(wsB);
     });
 });
+
+describe("Workspace ensure helpers", () => {
+    /** Mock that returns a list (GET) or a created record (POST/other). */
+    function ensureFetch(listBody: unknown, createBody: unknown): ReturnType<typeof vi.fn> {
+        return vi.fn(async (_input: unknown, init?: { method?: string }) => {
+            const method = (init?.method ?? "GET").toUpperCase();
+            const body = method === "GET" ? listBody : createBody;
+            return new Response(JSON.stringify(body), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        });
+    }
+
+    it("ensureTag reuses an existing tag by name (case-insensitive, no create)", async () => {
+        const fetchMock = ensureFetch([{ id: "tg_1", name: "Acme" }], { id: "tg_new", name: "acme" });
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-e");
+        const result = await ws.ensureTag("acme");
+        expect(result.created).toBe(false);
+        expect(result.id).toBe("tg_1");
+        expect(firstUrl(fetchMock)).toContain("/workspaces/ws-e/tags");
+    });
+
+    it("ensureProject creates when no match exists", async () => {
+        const fetchMock = ensureFetch([], { id: "p_new", name: "Launch" });
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-e");
+        const result = await ws.ensureProject("Launch");
+        expect(result.created).toBe(true);
+        expect(result.entity.name).toBe("Launch");
+    });
+
+    it("ensureClient creates via the body envelope when missing", async () => {
+        const fetchMock = ensureFetch([], { id: "c_new", name: "New Co" });
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-e");
+        const result = await ws.ensureClient("New Co");
+        expect(result.created).toBe(true);
+        expect(result.id).toBe("c_new");
+    });
+});

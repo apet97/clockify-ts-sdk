@@ -87,6 +87,7 @@
     "resolveUserFilter",
     "ensureTag",
     "ensureProject",
+    "ensureClient",
     "findOrCreateClient",
     "archiveThenDeleteProject",
     "summaryFilter",
@@ -202,6 +203,7 @@
     "./ensure": [
       "ensureTag",
       "ensureProject",
+      "ensureClient",
       "findOrCreateClient",
       "archiveThenDeleteProject"
     ],

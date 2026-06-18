@@ -12,6 +12,7 @@
  * as `resolve.ts`, whose `matchByName` (case-insensitive, exact, archived-aware)
  * is reused here.
  */
+import { warnOnce } from "./deprecation.js";
 import { matchByName } from "./resolve.js";
 
 /** The minimal shape a find-or-create entity must expose. */
@@ -72,8 +73,18 @@ export function ensureProject<T extends NamedRecord>(opts: FindOrCreateOptions<T
 }
 
 /** Find a client by name (case-insensitive) or create it. Idempotent. */
-export function findOrCreateClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
+export function ensureClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
     return findOrCreate("client", opts);
+}
+
+/**
+ * @deprecated Use {@link ensureClient}. Renamed for consistency with
+ * `ensureTag` / `ensureProject`; this alias will be removed in the next
+ * major. Delegates to `ensureClient`.
+ */
+export function findOrCreateClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
+    warnOnce("findOrCreateClient", "`findOrCreateClient` is deprecated; use `ensureClient` instead (since v0.10.0).");
+    return ensureClient(opts);
 }
 
 /** The outcome of an archive-then-delete: which steps actually ran. */

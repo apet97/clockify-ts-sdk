@@ -24,6 +24,7 @@
  * const project = await ws.projects.create({ name: "Q1" });
  * ```
  */
+import { ensureClient as ensureClientHelper, ensureProject as ensureProjectHelper, ensureTag as ensureTagHelper, type EnsureResult, type NamedRecord } from "./ensure.js";
 import type { ApprovalsClient } from "./src/api/resources/approvals/client/Client.js";
 import type { AuditLogReportClient } from "./src/api/resources/auditLogReport/client/Client.js";
 import type { BalancesClient } from "./src/api/resources/balances/client/Client.js";
@@ -55,6 +56,7 @@ import type { UsersClient } from "./src/api/resources/users/client/Client.js";
 import type { WebhooksClient } from "./src/api/resources/webhooks/client/Client.js";
 import type { WorkspacesClient } from "./src/api/resources/workspaces/client/Client.js";
 import type { ClockifyApiClient } from "./src/index.js";
+
 
 /** Sub-client view of `ClockifyApiClient` with `workspaceId`
  *  pre-bound on every resource method.
@@ -171,6 +173,45 @@ export class Workspace {
     }
     get workspaces(): WorkspacesClient {
         return this.scoped("workspaces") as WorkspacesClient;
+    }
+
+    // -----------------------------------------------------------------------
+    // Ergonomic upsert helpers — find-or-create by name on the three
+    // duplicate-name-prone resources (tags / projects / clients), with the
+    // workspaceId and list/create callbacks wired for you (no DI boilerplate).
+    // Idempotent; reuses a single case-insensitive match, throws on an
+    // ambiguous active-name match. (iterAll on a scoped resource is a known
+    // follow-up; for now use `iterAll(client.<r>.list.bind(client.<r>), req)`.)
+    // -----------------------------------------------------------------------
+
+    /** Find a tag by name (case-insensitive) or create it. Idempotent. */
+    ensureTag(name: string): Promise<EnsureResult<NamedRecord>> {
+        const workspaceId = this.workspaceId;
+        return ensureTagHelper<NamedRecord>({
+            name,
+            list: async () => (await this.client.tags.list({ workspaceId })) as unknown as NamedRecord[],
+            create: async (n) => (await this.client.tags.create({ workspaceId, name: n })) as unknown as NamedRecord,
+        });
+    }
+
+    /** Find a project by name (case-insensitive) or create it. Idempotent. */
+    ensureProject(name: string): Promise<EnsureResult<NamedRecord>> {
+        const workspaceId = this.workspaceId;
+        return ensureProjectHelper<NamedRecord>({
+            name,
+            list: async () => (await this.client.projects.list({ workspaceId })) as unknown as NamedRecord[],
+            create: async (n) => (await this.client.projects.create({ workspaceId, name: n })) as unknown as NamedRecord,
+        });
+    }
+
+    /** Find a client by name (case-insensitive) or create it. Idempotent. */
+    ensureClient(name: string): Promise<EnsureResult<NamedRecord>> {
+        const workspaceId = this.workspaceId;
+        return ensureClientHelper<NamedRecord>({
+            name,
+            list: async () => (await this.client.clients.list({ workspaceId })) as unknown as NamedRecord[],
+            create: async (n) => (await this.client.clients.create({ workspaceId, body: { name: n } })) as unknown as NamedRecord,
+        });
     }
 
     /** Internal: build a Proxy over the named resource. Cached per resource

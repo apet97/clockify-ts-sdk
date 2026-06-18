@@ -25,6 +25,19 @@ once v1.0.0 ships.
   failed. Pure orchestration (injected I/O, no transport dependency). The MCP
   `clockify_create_work_package` now uses it, so a partial failure no longer
   orphans a client/project/task. (Public surface: 90→92 names, 25→26 subpaths.)
+- `ensureClient` (the `ensure` subpath) — renamed from `findOrCreateClient` for
+  consistency with `ensureTag` / `ensureProject` (the old name stays as a
+  deprecated alias, see below). (Public surface: 92→93 names.)
+- A scoped `Workspace` (`client.workspace(id)`) now exposes ergonomic
+  `ensureTag(name)` / `ensureProject(name)` / `ensureClient(name)` upsert
+  helpers with the workspaceId and list/create callbacks wired for you — no DI
+  boilerplate. (These are instance methods, not new root exports.)
+
+### Deprecated
+
+- `findOrCreateClient` — use `ensureClient` instead (identical behavior; the
+  alias warns once via `warnOnce` and delegates). Will be removed in the next
+  major. This is the deprecation subsystem's first real consumer.
 
 ### Fixed
 
