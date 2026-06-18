@@ -71,7 +71,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 doctor` | Check local CLI configuration without contacting Clockify. |
 | `clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]` | Start a timer. Resolves project, task, and tag names to IDs. |
 | `clk115 stop` | Stop the running timer for the current user. |
-| `clk115 log <duration> <description> [-p projectId] [-t taskId] [--tag tagId…] [--billable] [--end iso]` | Log a finished entry. Duration accepts `1h30m`, `90m`, or `PT1H30M`. |
+| `clk115 log <duration> <description> [-p project] [-t task] [--tag tag…] [--billable] [--end iso]` | Log a finished entry. Resolves project, task, and tag names to IDs. Duration accepts `1h30m`, `90m`, or `PT1H30M`. |
 | `clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]` | List time entries for the current user. |
 | `clk115 entries delete <id>` | Delete a time entry. |
 | `clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]` | List projects. |

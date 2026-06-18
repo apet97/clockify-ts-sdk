@@ -22,6 +22,12 @@ All notable changes to `@clockify115/cli` are documented here.
   projects/tasks/tags by name, matching the MCP resolver, so a name lookup in a large
   workspace is no longer capped at the first page.
 
+### Documentation
+
+- `clk115 log`'s usage string and `examples/log-time.sh` now state that it resolves
+  project/task/tag **names** (not just IDs), matching the shipped behavior — the docs
+  previously steered users away from the feature by claiming `log` "takes IDs".
+
 ### Removed
 
 - Two unreferenced internal helpers (`formatSeconds`, `completionShells`) with no call
