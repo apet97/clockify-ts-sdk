@@ -410,11 +410,14 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // config file must not be able to redirect authenticated requests
     // — and their auth headers — to an attacker-controlled host. String
     // suppliers resolve at request time and pass through unvalidated.
-    passthrough.environment = validateClockifyBaseUrl(
-        passthrough.environment,
-        allowInsecureBaseUrl,
-    );
-    passthrough.baseUrl = validateClockifyBaseUrl(passthrough.baseUrl, allowInsecureBaseUrl);
+    const { environment: rawEnvironment, baseUrl: rawBaseUrl, ...basePassthrough } = passthrough;
+    const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowInsecureBaseUrl);
+    const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowInsecureBaseUrl);
+    const sanitizedPassthrough = {
+        ...basePassthrough,
+        ...(validatedEnvironment !== undefined ? { environment: validatedEnvironment } : {}),
+        ...(validatedBaseUrl !== undefined ? { baseUrl: validatedBaseUrl } : {}),
+    };
 
     // Resolve effective auth. Explicit options always win over env
     // vars; among env vars, CLOCKIFY_API_KEY is preferred over
@@ -448,11 +451,11 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     const effectiveHooks = debug ? mixDebugHooks(hooks) : hooks;
 
     const wrappedFetch = composedFetch({
-        fetch: rawFetch,
-        userAgent,
-        requestId,
-        hooks: effectiveHooks,
-        retryPolicy,
+        ...(rawFetch !== undefined ? { fetch: rawFetch } : {}),
+        ...(userAgent !== undefined ? { userAgent } : {}),
+        ...(requestId !== undefined ? { requestId } : {}),
+        ...(effectiveHooks !== undefined ? { hooks: effectiveHooks } : {}),
+        ...(retryPolicy !== undefined ? { retryPolicy } : {}),
     });
 
     // When the user supplies a retry policy, our composed-fetch is
@@ -462,7 +465,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     const effectiveMaxRetries = retryPolicy !== undefined ? 0 : maxRetries;
 
     const base = {
-        ...passthrough,
+        ...sanitizedPassthrough,
         fetch: wrappedFetch,
         ...(effectiveMaxRetries !== undefined ? { maxRetries: effectiveMaxRetries } : {}),
     };

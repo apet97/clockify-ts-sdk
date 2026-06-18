@@ -6,6 +6,7 @@
  * hatch by design — see `clockify_operation_guide`).
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -77,7 +78,12 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 listUsers,
             });
             if (!filter.ok)
-                return clarifyResult("clockify_holidays_list_in_period", "userId", "user", filter.clarify);
+                return clarifyResult(
+                    "clockify_holidays_list_in_period",
+                    "userId",
+                    "user",
+                    filter.clarify,
+                );
             const assignedTo = filter.userId ?? args.userId;
             const items = (await ctx.client.holidays.listInPeriod({
                 workspaceId: ctx.workspaceId,
@@ -97,15 +103,20 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         "clockify_holidays_create",
         {
             title: "Create a holiday",
-            description: "Create a workspace holiday with date range, color, and assignment options.",
+            description:
+                "Create a workspace holiday with date range, color, and assignment options.",
             inputSchema: {
                 name: z.string().min(1),
                 startDate: z.string().min(1).describe("YYYY-MM-DD."),
                 endDate: z.string().min(1).describe("YYYY-MM-DD."),
                 occursAnnually: z.boolean().optional(),
                 everyoneIncludingNew: z.boolean().optional(),
-                userIds: zStringList(z.array(z.string())).optional().describe("Assign to these users (sent as a CONTAINS filter)."),
-                userGroupIds: zStringList(z.array(z.string())).optional().describe("Assign to these user groups (sent as a CONTAINS filter)."),
+                userIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Assign to these users (sent as a CONTAINS filter)."),
+                userGroupIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Assign to these user groups (sent as a CONTAINS filter)."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
@@ -120,7 +131,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     listUsers,
                     verifyIds: true,
                 });
-                if (!r.ok) return clarifyResult("clockify_holidays_create", "userIds", "user", r.clarify);
+                if (!r.ok)
+                    return clarifyResult("clockify_holidays_create", "userIds", "user", r.clarify);
                 resolvedUserIds = r.userIds;
             }
             if (args.userGroupIds?.length) {
@@ -128,7 +140,13 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     verb: "assign the holiday to",
                     listGroups,
                 });
-                if (!r.ok) return clarifyResult("clockify_holidays_create", "userGroupIds", "group", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_holidays_create",
+                        "userGroupIds",
+                        "group",
+                        r.clarify,
+                    );
                 resolvedGroupIds = r.groupIds;
             }
             const body: Record<string, unknown> = {
@@ -144,11 +162,15 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             const created = await ctx.client.holidays.create({
                 workspaceId: ctx.workspaceId,
                 ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_holidays_create", created, {
-                workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "holiday", { id: entityId(created), name: args.name }));
+            } as ClockifyApi.CreateHolidayRequest);
+            return successResult(
+                "clockify_holidays_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "holiday", { id: entityId(created), name: args.name }),
+            );
         },
     );
 
@@ -165,8 +187,12 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 startDate: z.string().optional(),
                 endDate: z.string().optional(),
                 occursAnnually: z.boolean().optional(),
-                userIds: zStringList(z.array(z.string())).optional().describe("Replace the assignment with these users."),
-                userGroupIds: zStringList(z.array(z.string())).optional().describe("Replace the assignment with these user groups."),
+                userIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Replace the assignment with these users."),
+                userGroupIds: zStringList(z.array(z.string()))
+                    .optional()
+                    .describe("Replace the assignment with these user groups."),
                 color: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
@@ -184,7 +210,8 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     listUsers,
                     verifyIds: true,
                 });
-                if (!r.ok) return clarifyResult("clockify_holidays_update", "userIds", "user", r.clarify);
+                if (!r.ok)
+                    return clarifyResult("clockify_holidays_update", "userIds", "user", r.clarify);
                 resolvedUserIds = r.userIds;
             }
             if (args.userGroupIds?.length) {
@@ -192,7 +219,13 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     verb: "assign the holiday to",
                     listGroups,
                 });
-                if (!r.ok) return clarifyResult("clockify_holidays_update", "userGroupIds", "group", r.clarify);
+                if (!r.ok)
+                    return clarifyResult(
+                        "clockify_holidays_update",
+                        "userGroupIds",
+                        "group",
+                        r.clarify,
+                    );
                 resolvedGroupIds = r.groupIds;
             }
             // PUT /holidays/{id} REPLACES the document (omitted fields 400 "must
@@ -218,7 +251,9 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             const color = args.color ?? existing.color;
             if (color !== undefined) body.color = color;
             // Scope reconstruction: flat userIds/userGroupIds -> CONTAINS filter.
-            const existingUserIds = Array.isArray(existing.userIds) ? (existing.userIds as string[]) : [];
+            const existingUserIds = Array.isArray(existing.userIds)
+                ? (existing.userIds as string[])
+                : [];
             const existingGroupIds = Array.isArray(existing.userGroupIds)
                 ? (existing.userGroupIds as string[])
                 : [];
@@ -240,12 +275,16 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 holidayId: args.holidayId,
                 ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_holidays_update", updated, {
-                workspaceId: ctx.workspaceId,
-                holidayId: args.holidayId,
-            }, writeReceipt("updated", "holiday", args.holidayId));
+            } as ClockifyApi.UpdateHolidaysRequest);
+            return successResult(
+                "clockify_holidays_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    holidayId: args.holidayId,
+                },
+                writeReceipt("updated", "holiday", args.holidayId),
+            );
         },
     );
 
@@ -265,7 +304,13 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "holiday", id: args.holidayId };
-            const confirmation = requireConfirmation(ctx, "clockify_holidays_delete", "holiday_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_holidays_delete",
+                "holiday_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.holidays.delete({
                 workspaceId: ctx.workspaceId,

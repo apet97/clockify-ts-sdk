@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { toMinor } from "clockify-sdk-ts-115/money";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -60,14 +60,23 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
-            if (args.clientId) body.clientId = args.clientId;
-            if (args.color) body.color = args.color;
-            if (args.billable !== undefined) body.billable = args.billable;
-            if (args.isPublic !== undefined) body.isPublic = args.isPublic;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const project = await ctx.client.projects.create(body as never);
-            return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: entityId(project), name: args.name }));
+            const req: ClockifyApi.CreateProjectRequest = {
+                workspaceId: ctx.workspaceId,
+                body: {
+                    name: args.name,
+                    ...(args.clientId ? { clientId: args.clientId } : {}),
+                    ...(args.color ? { color: args.color } : {}),
+                    ...(args.billable !== undefined ? { billable: args.billable } : {}),
+                    ...(args.isPublic !== undefined ? { isPublic: args.isPublic } : {}),
+                },
+            };
+            const project = await ctx.client.projects.create(req);
+            return successResult(
+                "clockify_projects_create",
+                project,
+                undefined,
+                writeReceipt("created", "project", { id: entityId(project), name: args.name }),
+            );
         },
         "Reuse an existing client ID or check for an existing project with this name.",
     );
@@ -98,7 +107,8 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         "clockify_projects_update",
         {
             title: "Update a project",
-            description: "Update project metadata such as name, client, visibility, color, or archive state.",
+            description:
+                "Update project metadata such as name, client, visibility, color, or archive state.",
             inputSchema: {
                 projectId: z.string().min(1),
                 name: z.string().optional(),
@@ -112,10 +122,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-            };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
             if (args.name) body.name = args.name;
             if (args.clientId) body.clientId = args.clientId;
             if (args.color) body.color = args.color;
@@ -123,12 +130,21 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.isPublic !== undefined) body.isPublic = args.isPublic;
             if (args.archived !== undefined) body.archived = args.archived;
             if (args.note !== undefined) body.note = args.note;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = await ctx.client.projects.update(body as never);
-            return successResult("clockify_projects_update", updated, {
+            const req: ClockifyApi.UpdateProjectsRequest = {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
-            }, writeReceipt("updated", "project", args.projectId));
+                body,
+            };
+            const updated = await ctx.client.projects.update(req);
+            return successResult(
+                "clockify_projects_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                },
+                writeReceipt("updated", "project", args.projectId),
+            );
         },
     );
 
@@ -148,7 +164,13 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "project", id: args.projectId };
-            const confirmation = requireConfirmation(ctx, "clockify_projects_delete", "project_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_projects_delete",
+                "project_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             // Clockify rejects DELETE of an ACTIVE project (400 "Cannot delete
             // an active project", live-verified 2026-06-15) and the dedicated
@@ -187,7 +209,9 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 projectId: z.string().min(1),
                 userId: z.string().min(1),
-                rateKind: z.enum(["HOURLY", "COST"]).describe("HOURLY = billable rate; COST = internal cost rate."),
+                rateKind: z
+                    .enum(["HOURLY", "COST"])
+                    .describe("HOURLY = billable rate; COST = internal cost rate."),
                 amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
@@ -204,18 +228,25 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    ? await ctx.client.projects.updateUserCostRate(req as never)
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    : await ctx.client.projects.updateUserHourlyRate(req as never);
-            return successResult("clockify_projects_set_member_rate", updated, {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                userId: args.userId,
-                rateKind: args.rateKind,
-                amountMajor: args.amount,
-                amountMinor,
-            }, writeReceipt("updated", "project", args.projectId));
+                    ? await ctx.client.projects.updateUserCostRate(
+                          wireBody<ClockifyApi.UpdateUserCostRateProjectsRequest>(req),
+                      )
+                    : await ctx.client.projects.updateUserHourlyRate(
+                          wireBody<ClockifyApi.UpdateUserHourlyRateProjectsRequest>(req),
+                      );
+            return successResult(
+                "clockify_projects_set_member_rate",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    userId: args.userId,
+                    rateKind: args.rateKind,
+                    amountMajor: args.amount,
+                    amountMinor,
+                },
+                writeReceipt("updated", "project", args.projectId),
+            );
         },
     );
 }

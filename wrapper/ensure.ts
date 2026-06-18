@@ -50,8 +50,15 @@ export interface FindOrCreateOptions<T extends NamedRecord> {
  * resolve the duplicate explicitly. Idempotent: a second call with the same name
  * reuses the first result.
  */
-async function findOrCreate<T extends NamedRecord>(noun: string, opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
-    const match = matchByName(await opts.list(), opts.name, { includeArchived: opts.includeArchived });
+async function findOrCreate<T extends NamedRecord>(
+    noun: string,
+    opts: FindOrCreateOptions<T>,
+): Promise<EnsureResult<T>> {
+    const match = matchByName(
+        await opts.list(),
+        opts.name,
+        opts.includeArchived !== undefined ? { includeArchived: opts.includeArchived } : {},
+    );
     if (match.kind === "one") return { entity: match.entity, id: match.entity.id, created: false };
     if (match.kind === "many") {
         throw new Error(
@@ -63,17 +70,23 @@ async function findOrCreate<T extends NamedRecord>(noun: string, opts: FindOrCre
 }
 
 /** Find a tag by name (case-insensitive) or create it. Idempotent. */
-export function ensureTag<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
+export function ensureTag<T extends NamedRecord>(
+    opts: FindOrCreateOptions<T>,
+): Promise<EnsureResult<T>> {
     return findOrCreate("tag", opts);
 }
 
 /** Find a project by name (case-insensitive) or create it. Idempotent. */
-export function ensureProject<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
+export function ensureProject<T extends NamedRecord>(
+    opts: FindOrCreateOptions<T>,
+): Promise<EnsureResult<T>> {
     return findOrCreate("project", opts);
 }
 
 /** Find a client by name (case-insensitive) or create it. Idempotent. */
-export function ensureClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
+export function ensureClient<T extends NamedRecord>(
+    opts: FindOrCreateOptions<T>,
+): Promise<EnsureResult<T>> {
     return findOrCreate("client", opts);
 }
 
@@ -82,8 +95,13 @@ export function ensureClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>
  * `ensureTag` / `ensureProject`; this alias will be removed in the next
  * major. Delegates to `ensureClient`.
  */
-export function findOrCreateClient<T extends NamedRecord>(opts: FindOrCreateOptions<T>): Promise<EnsureResult<T>> {
-    warnOnce("findOrCreateClient", "`findOrCreateClient` is deprecated; use `ensureClient` instead (since v0.10.0).");
+export function findOrCreateClient<T extends NamedRecord>(
+    opts: FindOrCreateOptions<T>,
+): Promise<EnsureResult<T>> {
+    warnOnce(
+        "findOrCreateClient",
+        "`findOrCreateClient` is deprecated; use `ensureClient` instead (since v0.10.0).",
+    );
     return ensureClient(opts);
 }
 

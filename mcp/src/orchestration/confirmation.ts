@@ -19,6 +19,8 @@ interface StoredConfirmation {
     expiresAt: number;
 }
 
+type JsonRecord = Record<string, unknown>;
+
 export class ConfirmationTokenStore {
     private readonly ttlMs: number;
     private readonly now: () => number;
@@ -68,7 +70,7 @@ export function confirmationPayload(
     toolName: string,
     workspaceId: string,
     riskClass: string,
-    args: Record<string, unknown>,
+    args: JsonRecord,
     preview: unknown,
 ): ConfirmationPayload {
     return {
@@ -91,9 +93,9 @@ export function canonicalJson(value: unknown): string {
 function sortValue(value: unknown): unknown {
     if (Array.isArray(value)) return value.map((item) => sortValue(item));
     if (!value || typeof value !== "object") return value;
-    const sorted: Record<string, unknown> = {};
+    const sorted: JsonRecord = {};
     for (const key of Object.keys(value).sort()) {
-        const next = (value as Record<string, unknown>)[key];
+        const next = (value as JsonRecord)[key];
         if (next !== undefined) sorted[key] = sortValue(next);
     }
     return sorted;

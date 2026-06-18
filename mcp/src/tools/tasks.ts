@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
 import { toMinor } from "clockify-sdk-ts-115/money";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -13,7 +13,8 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_list",
         {
             title: "List tasks",
-            description: "List tasks for a project in the pinned workspace, paginated via page and pageSize.",
+            description:
+                "List tasks for a project in the pinned workspace, paginated via page and pageSize.",
             inputSchema: {
                 projectId: z.string().min(1),
                 page: z.number().int().min(1).default(1).optional(),
@@ -52,27 +53,31 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 projectId: z.string().min(1),
                 name: z.string().min(1),
-                billable: z.boolean().optional(),
                 estimate: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
                 assigneeIds: z.array(z.string()).optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = { name: args.name };
-            if (args.billable !== undefined) body.billable = args.billable;
-            if (args.estimate) body.estimate = args.estimate;
-            if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
-            const task = await ctx.client.tasks.create({
+            const req: ClockifyApi.TaskCreateRequest = {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
-                ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_tasks_create", task, {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-            }, writeReceipt("created", "task", { id: entityId(task), name: args.name }));
+                body: {
+                    name: args.name,
+                    ...(args.estimate ? { estimate: args.estimate } : {}),
+                    ...(args.assigneeIds ? { assigneeIds: args.assigneeIds } : {}),
+                },
+            };
+            const task = await ctx.client.tasks.create(req);
+            return successResult(
+                "clockify_tasks_create",
+                task,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                },
+                writeReceipt("created", "task", { id: entityId(task), name: args.name }),
+            );
         },
     );
 
@@ -107,7 +112,8 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         "clockify_tasks_update",
         {
             title: "Update a task",
-            description: "Update task metadata such as name, status, estimate, billing, or assignees.",
+            description:
+                "Update task metadata such as name, status, estimate, billing, or assignees.",
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
@@ -120,24 +126,29 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {};
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>> = {};
             if (args.name) body.name = args.name;
             if (args.billable !== undefined) body.billable = args.billable;
             if (args.estimate) body.estimate = args.estimate;
-            if (args.status) body.status = args.status;
+            if (args.status) body.status = args.status as ClockifyApi.TaskStatus;
             if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
-            const updated = await ctx.client.tasks.update({
+            const req = wireBody<ClockifyApi.UpdateTasksRequest>({
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
                 taskId: args.taskId,
-                ...body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_tasks_update", updated, {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                taskId: args.taskId,
-            }, writeReceipt("updated", "task", args.taskId));
+                body,
+            });
+            const updated = await ctx.client.tasks.update(req);
+            return successResult(
+                "clockify_tasks_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                },
+                writeReceipt("updated", "task", args.taskId),
+            );
         },
     );
 
@@ -157,8 +168,19 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            const preview = { action: "delete", entity: "task", id: args.taskId, projectId: args.projectId };
-            const confirmation = requireConfirmation(ctx, "clockify_tasks_delete", "task_delete", args, preview);
+            const preview = {
+                action: "delete",
+                entity: "task",
+                id: args.taskId,
+                projectId: args.projectId,
+            };
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_tasks_delete",
+                "task_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             // Clockify rejects DELETE of an ACTIVE task (400 "Cannot delete an
             // active task", live-verified 2026-06-15) — mark it DONE first via
@@ -168,14 +190,15 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 projectId: args.projectId,
                 taskId: args.taskId,
             })) as { name?: string };
-            await ctx.client.tasks.update({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                taskId: args.taskId,
-                name: String(current.name ?? ""),
-                status: "DONE",
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            await ctx.client.tasks.update(
+                wireBody<ClockifyApi.UpdateTasksRequest>({
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                    name: String(current.name ?? ""),
+                    status: "DONE",
+                }),
+            );
             await ctx.client.tasks.delete({
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
@@ -204,7 +227,9 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
-                rateKind: z.enum(["HOURLY", "COST"]).describe("HOURLY = billable rate; COST = internal cost rate."),
+                rateKind: z
+                    .enum(["HOURLY", "COST"])
+                    .describe("HOURLY = billable rate; COST = internal cost rate."),
                 amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
@@ -221,18 +246,25 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    ? await ctx.client.tasks.updateCostRate(req as never)
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    : await ctx.client.tasks.updateBillableRate(req as never);
-            return successResult("clockify_tasks_set_rate", updated, {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                taskId: args.taskId,
-                rateKind: args.rateKind,
-                amountMajor: args.amount,
-                amountMinor,
-            }, writeReceipt("updated", "task", args.taskId));
+                    ? await ctx.client.tasks.updateCostRate(
+                          wireBody<ClockifyApi.UpdateCostRateTasksRequest>(req),
+                      )
+                    : await ctx.client.tasks.updateBillableRate(
+                          wireBody<ClockifyApi.UpdateBillableRateTasksRequest>(req),
+                      );
+            return successResult(
+                "clockify_tasks_set_rate",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    taskId: args.taskId,
+                    rateKind: args.rateKind,
+                    amountMajor: args.amount,
+                    amountMinor,
+                },
+                writeReceipt("updated", "task", args.taskId),
+            );
         },
     );
 }

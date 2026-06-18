@@ -1,9 +1,15 @@
 import Table from "cli-table3";
 import pc from "picocolors";
 
-import { errorCodeForMessage, errorCodeForStatus, recoveryForCode, retryableForCode } from "./error-codes.js";
+import {
+    errorCodeForMessage,
+    errorCodeForStatus,
+    recoveryForCode,
+    retryableForCode,
+} from "./error-codes.js";
 
 export type OutputMode = "table" | "json" | "ndjson";
+export type OutputRecord = Record<string, unknown>;
 
 export interface OutputOptions {
     mode: OutputMode;
@@ -18,7 +24,7 @@ export interface OutputOptions {
  * `rows` to be a uniform array of objects; non-uniform shapes fall
  * back to JSON automatically.
  */
-export function printRecords(rows: Record<string, unknown>[], opts: OutputOptions): void {
+export function printRecords(rows: OutputRecord[], opts: OutputOptions): void {
     if (opts.mode === "json") {
         printJson(rows, opts);
         return;
@@ -46,7 +52,7 @@ export function printRecords(rows: Record<string, unknown>[], opts: OutputOption
  * Print a single key/value object. In table mode it renders as a
  * two-column "field / value" layout; in JSON mode it's pretty-printed.
  */
-export function printObject(obj: Record<string, unknown>, opts: OutputOptions): void {
+export function printObject(obj: OutputRecord, opts: OutputOptions): void {
     if (opts.mode === "json") {
         printJson(obj, opts);
         return;
@@ -108,7 +114,9 @@ export function printError(message: string, opts: OutputOptions, statusCode?: nu
     // Surface the stable error code's recovery hint in human (table) mode too —
     // JSON/ndjson modes already carry `recovery`; without this the default mode
     // showed only the raw message with no next step.
-    const recovery = recoveryForCode(errorCodeForStatus(statusCode) ?? errorCodeForMessage(message));
+    const recovery = recoveryForCode(
+        errorCodeForStatus(statusCode) ?? errorCodeForMessage(message),
+    );
     if (recovery) {
         console.error(`${opts.color ? pc.dim("→") : "→"} ${recovery}`);
     }
@@ -133,7 +141,7 @@ export function selectValue(value: unknown, selector?: string): unknown {
             continue;
         }
         if (current !== null && typeof current === "object" && part in current) {
-            current = (current as Record<string, unknown>)[part];
+            current = (current as OutputRecord)[part];
             continue;
         }
         return undefined;
@@ -142,7 +150,10 @@ export function selectValue(value: unknown, selector?: string): unknown {
 }
 
 /** Print a value as JSON, honoring `--select` and `--compact`. */
-export function printJson(value: unknown, options: Pick<OutputOptions, "compact" | "select"> = {}): void {
+export function printJson(
+    value: unknown,
+    options: Pick<OutputOptions, "compact" | "select"> = {},
+): void {
     const selected = selectValue(value, options.select);
     console.log(JSON.stringify(selected, null, options.compact ? 0 : 2));
 }
@@ -159,7 +170,7 @@ export function printNdjson(value: unknown, options: Pick<OutputOptions, "select
     console.log(JSON.stringify(selected));
 }
 
-function collectHeaders(rows: Record<string, unknown>[]): string[] {
+function collectHeaders(rows: OutputRecord[]): string[] {
     const seen = new Set<string>();
     const ordered: string[] = [];
     for (const row of rows) {

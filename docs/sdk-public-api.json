@@ -99,7 +99,8 @@
     "bulkArchiveProjects",
     "bulkDelete",
     "runComposition",
-    "leftBehindNote"
+    "leftBehindNote",
+    "wireBody"
   ],
   "subpaths": {
     ".": [
@@ -206,6 +207,9 @@
       "findOrCreateClient",
       "archiveThenDeleteProject"
     ],
+    "./requests": [
+      "wireBody"
+    ],
     "./reports": [
       "summaryFilter",
       "detailedFilter",
@@ -294,6 +298,9 @@
     "clockify-sdk-ts-115/ensure": [
       "./ensure.ts"
     ],
+    "clockify-sdk-ts-115/requests": [
+      "./requests.ts"
+    ],
     "clockify-sdk-ts-115/reports": [
       "./reports.ts"
     ],
@@ -331,7 +338,9 @@
       "wrapper/tests/request-options.test.ts",
       "wrapper/tests/operation-receipt.test.ts",
       "wrapper/ensure.ts",
-      "wrapper/tests/ensure.test.ts"
+      "wrapper/requests.ts",
+      "wrapper/tests/ensure.test.ts",
+      "wrapper/tests/requests.test.ts"
     ]
   },
   "wiring": {

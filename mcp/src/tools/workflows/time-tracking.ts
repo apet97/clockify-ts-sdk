@@ -1,9 +1,22 @@
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { successResult } from "../../result.js";
 import { stopRunningTimer } from "../timer-stop.js";
 
-import { AmbiguousNameError, arrayOfStrings, entryIds, findEntryForFix, idOf, ref, resolveProjectId, resolveTagId, resolveTaskId, reviewArgsFromEntry, str } from "./resolve.js";
+import {
+    AmbiguousNameError,
+    arrayOfStrings,
+    entryIds,
+    findEntryForFix,
+    idOf,
+    ref,
+    resolveProjectId,
+    resolveTagId,
+    resolveTaskId,
+    reviewArgsFromEntry,
+    str,
+} from "./resolve.js";
 import type { AnyRecord, ChangeSet, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 
@@ -30,42 +43,66 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
 
 export async function logWork(ctx: Context, args: AnyRecord) {
     const body = await prepareEntryBody(ctx, args, true);
-    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-    const entry = await ctx.client.timeEntries.create(body as never);
+    const entry = await ctx.client.timeEntries.create(
+        wireBody<ClockifyApi.CreateTimeEntryRequest>(body),
+    );
     const ids = entryIds(ctx, entry, body);
     const reviewArgs = reviewArgsFromEntry(entry, body);
-    return successResult("clockify_log_work", entry, { workspaceId: ctx.workspaceId }, {
-        entity: "entry",
-        ids,
-        changed: { created: [ref("entry", entry, str(body.description))] },
-        next: [
-            {
-                tool: "clockify_review_day",
-                ...(reviewArgs ? { args: reviewArgs } : {}),
-                reason: "Review the day after logging work.",
-            },
-            { tool: "clockify_fix_entry", args: { entry_id: ids.entryId }, reason: "Adjust this entry if any details are wrong." },
-        ],
-    });
-}
-
-export async function startWork(ctx: Context, args: AnyRecord) {
-    const startWasDefaulted = !str(args.start);
-    const body = await prepareEntryBody(ctx, { ...args, start: str(args.start) || new Date().toISOString() }, false);
-    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-    const entry = await ctx.client.timeEntries.create(body as never);
-    const ids = entryIds(ctx, entry, body);
     return successResult(
-        "clockify_start_work",
+        "clockify_log_work",
         entry,
-        { workspaceId: ctx.workspaceId, ...(startWasDefaulted ? { startWasDefaulted: true, resolvedStart: body.start } : {}) },
+        { workspaceId: ctx.workspaceId },
         {
             entity: "entry",
             ids,
             changed: { created: [ref("entry", entry, str(body.description))] },
             next: [
-                { tool: "clockify_stop_work", reason: "Stop this timer when the work session is finished." },
-                { tool: "clockify_switch_work", reason: "Switch to another work item without manually stopping first." },
+                {
+                    tool: "clockify_review_day",
+                    ...(reviewArgs ? { args: reviewArgs } : {}),
+                    reason: "Review the day after logging work.",
+                },
+                {
+                    tool: "clockify_fix_entry",
+                    args: { entry_id: ids.entryId },
+                    reason: "Adjust this entry if any details are wrong.",
+                },
+            ],
+        },
+    );
+}
+
+export async function startWork(ctx: Context, args: AnyRecord) {
+    const startWasDefaulted = !str(args.start);
+    const body = await prepareEntryBody(
+        ctx,
+        { ...args, start: str(args.start) || new Date().toISOString() },
+        false,
+    );
+    const entry = await ctx.client.timeEntries.create(
+        wireBody<ClockifyApi.CreateTimeEntryRequest>(body),
+    );
+    const ids = entryIds(ctx, entry, body);
+    return successResult(
+        "clockify_start_work",
+        entry,
+        {
+            workspaceId: ctx.workspaceId,
+            ...(startWasDefaulted ? { startWasDefaulted: true, resolvedStart: body.start } : {}),
+        },
+        {
+            entity: "entry",
+            ids,
+            changed: { created: [ref("entry", entry, str(body.description))] },
+            next: [
+                {
+                    tool: "clockify_stop_work",
+                    reason: "Stop this timer when the work session is finished.",
+                },
+                {
+                    tool: "clockify_switch_work",
+                    reason: "Switch to another work item without manually stopping first.",
+                },
             ],
         },
     );
@@ -85,12 +122,17 @@ export async function stopWork(ctx: Context, args: AnyRecord) {
     }
     const entry = outcome.entry;
     const ids = entryIds(ctx, entry, { userId });
-    return successResult("clockify_stop_work", entry, { workspaceId: ctx.workspaceId, userId }, {
-        entity: "entry",
-        ids,
-        changed: { updated: [ref("entry", entry)] },
-        next: [{ tool: "clockify_review_day", reason: "Review the day after stopping work." }],
-    });
+    return successResult(
+        "clockify_stop_work",
+        entry,
+        { workspaceId: ctx.workspaceId, userId },
+        {
+            entity: "entry",
+            ids,
+            changed: { updated: [ref("entry", entry)] },
+            next: [{ tool: "clockify_review_day", reason: "Review the day after stopping work." }],
+        },
+    );
 }
 
 export async function switchWork(ctx: Context, args: AnyRecord) {
@@ -99,7 +141,10 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
     try {
         stopped = (await stopWork(ctx, {})).structuredContent;
     } catch {
-        warnings.push({ code: "stop_failed", message: "Could not stop the existing timer; attempting to start the new one." });
+        warnings.push({
+            code: "stop_failed",
+            message: "Could not stop the existing timer; attempting to start the new one.",
+        });
     }
     let started: AnyRecord;
     try {
@@ -116,32 +161,51 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
                 : (stopped as { stopped?: boolean }).stopped === false
                   ? "no timer was running"
                   : "the previous timer was stopped";
-        throw new Error(`switch_work: ${stopNote}, but starting the new timer failed: ${(err as Error).message}`);
+        throw new Error(
+            `switch_work: ${stopNote}, but starting the new timer failed: ${(err as Error).message}`,
+        );
     }
-    return successResult("clockify_switch_work", { status: "ok", stopped, started }, { workspaceId: ctx.workspaceId }, {
-        entity: "entry",
-        ids: (started.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
-        changed: { created: ((started.changed as ChangeSet | undefined)?.created ?? []) },
-        warnings,
-        next: [{ tool: "clockify_stop_work", reason: "Stop the newly started timer when finished." }],
-    });
+    return successResult(
+        "clockify_switch_work",
+        { status: "ok", stopped, started },
+        { workspaceId: ctx.workspaceId },
+        {
+            entity: "entry",
+            ids: (started.ids as Record<string, string>) ?? { workspaceId: ctx.workspaceId },
+            changed: { created: (started.changed as ChangeSet | undefined)?.created ?? [] },
+            warnings,
+            next: [
+                {
+                    tool: "clockify_stop_work",
+                    reason: "Stop the newly started timer when finished.",
+                },
+            ],
+        },
+    );
 }
 
 export async function fixEntry(ctx: Context, args: AnyRecord) {
     const entry = await findEntryForFix(ctx, args);
     const entryId = idOf(entry);
-    const projectId = str(args.project_id) || (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
+    const projectId =
+        str(args.project_id) ||
+        (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
     // Scope task resolution to the resolved project, falling back to the
     // entry's existing project, so a task name resolves correctly and the
     // PUT-replace update doesn't leave a stale task pointer.
     const taskScopeProjectId = projectId || str(entry.projectId);
-    const taskId = str(args.task_id) || (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
+    const taskId =
+        str(args.task_id) ||
+        (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
     const body: AnyRecord = {
         workspaceId: ctx.workspaceId,
         timeEntryId: entryId,
-        start: str(args.start) || str(entry.start) || str(entry.timeInterval && (entry.timeInterval as AnyRecord).start),
+        start:
+            str(args.start) ||
+            str(entry.start) ||
+            str(entry.timeInterval && (entry.timeInterval as AnyRecord).start),
     };
     const nextDescription = str(args.new_description) || str(args.description);
     if (nextDescription) body.description = nextDescription;
@@ -152,43 +216,68 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     if (args.billable !== undefined) body.billable = args.billable;
     if (!body.start) throw new Error("entry start is required to update this time entry");
     const { workspaceId, timeEntryId, ...updateBody } = body;
-    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-    const updated = await ctx.client.timeEntries.update({ workspaceId, timeEntryId, body: updateBody } as never);
+    const updated = await ctx.client.timeEntries.update(
+        wireBody<ClockifyApi.UpdateTimeEntriesRequest>({
+            workspaceId,
+            timeEntryId,
+            body: updateBody,
+        }),
+    );
     const ids = entryIds(ctx, updated, body);
     const reviewArgs = reviewArgsFromEntry(updated, body);
-    return successResult("clockify_fix_entry", updated, { workspaceId: ctx.workspaceId }, {
-        entity: "entry",
-        ids,
-        changed: { updated: [ref("entry", updated, nextDescription)] },
-        next: [
-            {
-                tool: "clockify_review_day",
-                ...(reviewArgs ? { args: reviewArgs } : {}),
-                reason: "Review the affected day.",
-            },
-        ],
-    });
+    return successResult(
+        "clockify_fix_entry",
+        updated,
+        { workspaceId: ctx.workspaceId },
+        {
+            entity: "entry",
+            ids,
+            changed: { updated: [ref("entry", updated, nextDescription)] },
+            next: [
+                {
+                    tool: "clockify_review_day",
+                    ...(reviewArgs ? { args: reviewArgs } : {}),
+                    reason: "Review the affected day.",
+                },
+            ],
+        },
+    );
 }
 
-export async function prepareEntryBody(ctx: Context, args: AnyRecord, requireEnd: boolean): Promise<AnyRecord> {
+export async function prepareEntryBody(
+    ctx: Context,
+    args: AnyRecord,
+    requireEnd: boolean,
+): Promise<AnyRecord> {
     let start = str(args.start);
     const end = str(args.end) || (requireEnd ? "" : undefined);
-    const durationSeconds = typeof args.duration_seconds === "number" ? args.duration_seconds : args.durationSeconds;
+    const durationSeconds =
+        typeof args.duration_seconds === "number" ? args.duration_seconds : args.durationSeconds;
     if (!start && typeof durationSeconds === "number") {
         const endMs = Date.parse(end || new Date().toISOString());
         if (Number.isNaN(endMs)) throw new Error("end is not a valid ISO 8601 timestamp");
         start = new Date(endMs - durationSeconds * 1000).toISOString();
     }
-    if (!start) throw new Error("start is required for clockify_log_work; use duration_seconds with end or clockify_start_work for a running timer");
-    if (requireEnd && !end) throw new Error("end is required for clockify_log_work; use clockify_start_work for a running timer");
+    if (!start)
+        throw new Error(
+            "start is required for clockify_log_work; use duration_seconds with end or clockify_start_work for a running timer",
+        );
+    if (requireEnd && !end)
+        throw new Error(
+            "end is required for clockify_log_work; use clockify_start_work for a running timer",
+        );
     // Validate any explicit end (the duration branch above only checks it
     // when start is derived); an unparseable end with a supplied start
     // otherwise reaches the wire as an opaque 400.
     if (typeof end === "string" && end && Number.isNaN(Date.parse(end))) {
         throw new Error(`end ${JSON.stringify(end)} is not a valid ISO 8601 timestamp`);
     }
-    const projectId = str(args.project_id) || (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
-    const taskId = str(args.task_id) || (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");
+    const projectId =
+        str(args.project_id) ||
+        (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
+    const taskId =
+        str(args.task_id) ||
+        (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
     return {

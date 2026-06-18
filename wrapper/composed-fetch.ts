@@ -320,7 +320,7 @@ function mergeRetryPolicy(
         retryableMethods: (user.retryableMethods ?? DEFAULT_RETRY_POLICY.retryableMethods).map(
             (m) => m.toUpperCase(),
         ),
-        computeDelay: user.computeDelay,
+        ...(user.computeDelay !== undefined ? { computeDelay: user.computeDelay } : {}),
     };
 }
 

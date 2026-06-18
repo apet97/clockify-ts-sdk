@@ -1,7 +1,7 @@
 /**
  * `clk115 projects {list,create,get,update,delete}`.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -16,7 +16,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
     projects
         .command("list")
         .description("List projects in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by project name substring.")
         .option("--archived", "Include archived projects.", false)
@@ -62,12 +67,16 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .description("Create a project in the workspace.")
         .action(async function (this: Command, name: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, name };
-            if (opts.client) body.clientId = opts.client;
-            if (opts.color) body.color = opts.color;
-            if (opts.billable) body.billable = true;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.projects.create(body as never)) as {
+            const req: ClockifyApi.CreateProjectRequest = {
+                workspaceId,
+                body: {
+                    name,
+                    ...(opts.client ? { clientId: opts.client } : {}),
+                    ...(opts.color ? { color: opts.color } : {}),
+                    ...(opts.billable ? { billable: true } : {}),
+                },
+            };
+            const created = (await client.projects.create(req)) as {
                 id?: string;
                 name?: string;
                 clientId?: string;
@@ -87,7 +96,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                     ids: { projectId: data.id },
                     data,
                     changed: { created: [{ type: "project", id: data.id, name: data.name }] },
-                    next: [{ command: `clk115 tasks list ${data.id} --json`, reason: "Review tasks for this project." }],
+                    next: [
+                        {
+                            command: `clk115 tasks list ${data.id} --json`,
+                            reason: "Review tasks for this project.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -117,15 +131,15 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .description("Update a project by ID.")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, projectId: id };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
             if (opts.name) body.name = opts.name;
             if (opts.client) body.clientId = opts.client;
             if (opts.color) body.color = opts.color;
             if (opts.note !== undefined) body.note = opts.note;
             if (opts.billable !== undefined) body.billable = opts.billable;
             if (opts.archived !== undefined) body.archived = opts.archived;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = (await client.projects.update(body as never)) as { id?: string; name?: string };
+            const req: ClockifyApi.UpdateProjectsRequest = { workspaceId, projectId: id, body };
+            const updated = (await client.projects.update(req)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(
                 {
@@ -135,7 +149,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                     ids: { projectId: data.id },
                     data,
                     changed: { updated: [{ type: "project", id: data.id, name: data.name }] },
-                    next: [{ command: `clk115 projects get ${data.id} --json`, reason: "Verify the update." }],
+                    next: [
+                        {
+                            command: `clk115 projects get ${data.id} --json`,
+                            reason: "Verify the update.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -144,13 +163,17 @@ export const registerProjectsCommand: Registrar = (program, services) => {
     projects
         .command("delete")
         .argument("<id>", "Project ID.")
-        .description("Delete a project by ID (archives first; an active project cannot be deleted).")
+        .description(
+            "Delete a project by ID (archives first; an active project cannot be deleted).",
+        )
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE project (400) and the
             // dedicated /archive route 404s — archive first via GET-then-PUT,
             // carrying the name the replace-PUT requires, mirroring the MCP tool.
-            const current = (await client.projects.get({ workspaceId, projectId: id })) as { name?: string };
+            const current = (await client.projects.get({ workspaceId, projectId: id })) as {
+                name?: string;
+            };
             await client.projects.update({
                 workspaceId,
                 projectId: id,
@@ -166,7 +189,12 @@ export const registerProjectsCommand: Registrar = (program, services) => {
                     ids: { projectId: id },
                     data: { id, deleted: true, message: `deleted project ${id}` },
                     changed: { deleted: [{ type: "project", id }] },
-                    next: [{ command: "clk115 projects list --json", reason: "Verify the project no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 projects list --json",
+                            reason: "Verify the project no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

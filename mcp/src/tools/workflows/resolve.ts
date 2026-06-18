@@ -1,6 +1,7 @@
 import { leftBehindNote, runComposition, type CompositionStep } from "clockify-sdk-ts-115/compose";
 import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
 import { iterAll } from "clockify-sdk-ts-115/iter";
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
@@ -33,7 +34,12 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             required: false,
             run: async () => {
                 const found = await findOneByName(
-                    await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: clientName, page: 1, "page-size": 200 }),
+                    await ctx.client.clients.list({
+                        workspaceId: ctx.workspaceId,
+                        name: clientName,
+                        page: 1,
+                        "page-size": 200,
+                    }),
                     clientName,
                     "client",
                 );
@@ -43,7 +49,10 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     pushChanged(changed, "reused", ref("client", found));
                     return { kind: "done", reused: [ref("client", found)] };
                 }
-                const created = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body: { name: clientName } });
+                const created = await ctx.client.clients.create({
+                    workspaceId: ctx.workspaceId,
+                    body: { name: clientName },
+                });
                 clientId = idOf(created);
                 data.client = created;
                 const r = ref("client", created, clientName);
@@ -54,9 +63,17 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active client delete 400s — archive (body envelope) then delete
-                        // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                        await ctx.client.clients.update({ workspaceId: ctx.workspaceId, clientId: cid, body: { name: clientName, archived: true } } as never);
-                        await ctx.client.clients.delete({ workspaceId: ctx.workspaceId, clientId: cid });
+                        await ctx.client.clients.update(
+                            wireBody<ClockifyApi.UpdateClientsRequest>({
+                                workspaceId: ctx.workspaceId,
+                                clientId: cid,
+                                body: { name: clientName, archived: true },
+                            }),
+                        );
+                        await ctx.client.clients.delete({
+                            workspaceId: ctx.workspaceId,
+                            clientId: cid,
+                        });
                     },
                 };
             },
@@ -91,7 +108,7 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 ...(args.color ? { color: args.color } : {}),
                 ...(args.billable !== undefined ? { billable: args.billable } : {}),
                 ...(args.is_public !== undefined ? { isPublic: args.is_public } : {}),
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: workflow project setup uses validated flat create fields.
             } as never);
             projectId = idOf(created);
             data.project = created;
@@ -103,8 +120,16 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 created: [r],
                 undo: async () => {
                     // active project delete 400s — archive then delete
-                    await ctx.client.projects.update({ workspaceId: ctx.workspaceId, projectId: pid, name: projectName, archived: true });
-                    await ctx.client.projects.delete({ workspaceId: ctx.workspaceId, projectId: pid });
+                    await ctx.client.projects.update({
+                        workspaceId: ctx.workspaceId,
+                        projectId: pid,
+                        name: projectName,
+                        archived: true,
+                    });
+                    await ctx.client.projects.delete({
+                        workspaceId: ctx.workspaceId,
+                        projectId: pid,
+                    });
                 },
             };
         },
@@ -118,7 +143,13 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             label: "task",
             required: true,
             run: async () => {
-                const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: taskName, page: 1, "page-size": 200 });
+                const listed = await ctx.client.tasks.list({
+                    workspaceId: ctx.workspaceId,
+                    projectId,
+                    name: taskName,
+                    page: 1,
+                    "page-size": 200,
+                });
                 const found = await findOneByName(listed, taskName, "task");
                 if (found && upsert) {
                     taskId = idOf(found);
@@ -126,7 +157,11 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     pushChanged(changed, "reused", ref("task", found));
                     return { kind: "done", reused: [ref("task", found)] };
                 }
-                const created = await ctx.client.tasks.create({ workspaceId: ctx.workspaceId, projectId, name: taskName });
+                const created = await ctx.client.tasks.create({
+                    workspaceId: ctx.workspaceId,
+                    projectId,
+                    name: taskName,
+                });
                 taskId = idOf(created);
                 data.task = created;
                 const r = ref("task", created, taskName);
@@ -138,9 +173,19 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active task delete 400s — mark DONE then delete
-                        // KEEP as never: UpdateTasksRequest drops the DONE status overlay required for archive-before-delete.
-                        await ctx.client.tasks.update({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid, status: "DONE" } as never);
-                        await ctx.client.tasks.delete({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid });
+                        await ctx.client.tasks.update(
+                            wireBody<ClockifyApi.UpdateTasksRequest>({
+                                workspaceId: ctx.workspaceId,
+                                projectId: pid,
+                                taskId: tid,
+                                status: "DONE",
+                            }),
+                        );
+                        await ctx.client.tasks.delete({
+                            workspaceId: ctx.workspaceId,
+                            projectId: pid,
+                            taskId: tid,
+                        });
                     },
                 };
             },
@@ -155,7 +200,12 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             required: false,
             run: async () => {
                 const found = await findOneByName(
-                    await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name, page: 1, "page-size": 200 }),
+                    await ctx.client.tags.list({
+                        workspaceId: ctx.workspaceId,
+                        name,
+                        page: 1,
+                        "page-size": 200,
+                    }),
                     name,
                     "tag",
                 );
@@ -165,20 +215,31 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     pushChanged(changed, "reused", ref("tag", found));
                     return { kind: "done", reused: [ref("tag", found)] };
                 }
-                const created = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name });
+                const created = await ctx.client.tags.create({
+                    workspaceId: ctx.workspaceId,
+                    name,
+                });
                 tagIds.push(idOf(created));
                 tags.push(created);
                 const r = ref("tag", created, name);
                 pushChanged(changed, "created", r);
                 const tagId = idOf(created);
-                return { kind: "done", created: [r], undo: async () => { await ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId }); } };
+                return {
+                    kind: "done",
+                    created: [r],
+                    undo: async () => {
+                        await ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId });
+                    },
+                };
             },
         });
     }
 
     const outcome = await runComposition(steps);
     if (outcome.status.kind === "failed") {
-        throw new Error(`create_work_package failed at ${outcome.status.label}: ${outcome.status.message}. ${leftBehindNote(outcome.status.rollbackWarnings)}`);
+        throw new Error(
+            `create_work_package failed at ${outcome.status.label}: ${outcome.status.message}. ${leftBehindNote(outcome.status.rollbackWarnings)}`,
+        );
     }
 
     if (clientId) ids.clientId = clientId;
@@ -190,44 +251,80 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
 
     const next = packageNext(projectId, taskId, tagIds);
     if (outcome.warnings.length > 0) {
-        return successResult("clockify_create_work_package", data, { workspaceId: ctx.workspaceId }, {
+        return successResult(
+            "clockify_create_work_package",
+            data,
+            { workspaceId: ctx.workspaceId },
+            {
+                entity: "work_package",
+                ids,
+                changed,
+                warnings: outcome.warnings,
+                next,
+            },
+        );
+    }
+    return successResult(
+        "clockify_create_work_package",
+        data,
+        { workspaceId: ctx.workspaceId },
+        {
             entity: "work_package",
             ids,
             changed,
-            warnings: outcome.warnings,
             next,
-        });
-    }
-    return successResult("clockify_create_work_package", data, { workspaceId: ctx.workspaceId }, {
-        entity: "work_package",
-        ids,
-        changed,
-        next,
-    });
+        },
+    );
 }
 
-export function maybeConfirm(ctx: Context, toolName: string, riskClass: string, args: AnyRecord, preview: AnyRecord) {
+export function maybeConfirm(
+    ctx: Context,
+    toolName: string,
+    riskClass: string,
+    args: AnyRecord,
+    preview: AnyRecord,
+) {
     return requireConfirmation(ctx, toolName, riskClass, args, preview);
 }
 
 export function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
     if (action.includes("create_work_package")) {
-        return { hint: "List clients, projects, tasks, or tags, then retry with returned IDs or exact names.", tool: "clockify_tools_guide" };
+        return {
+            hint: "List clients, projects, tasks, or tags, then retry with returned IDs or exact names.",
+            tool: "clockify_tools_guide",
+        };
     }
-    if (/(log_work|start_work|stop_work|switch_work|fix_entry|review_day|review_week)/.test(action)) {
-        return { hint: "Check entry, project, task, tag, and time fields; use returned IDs or exact names.", tool: "clockify_review_day" };
+    if (
+        /(log_work|start_work|stop_work|switch_work|fix_entry|review_day|review_week)/.test(action)
+    ) {
+        return {
+            hint: "Check entry, project, task, tag, and time fields; use returned IDs or exact names.",
+            tool: "clockify_review_day",
+        };
     }
     if (action.includes("invoice")) {
-        return { hint: "If invoicing is unavailable, report that and continue. Otherwise list clients or invoices, then retry.", tool: "clockify_invoices_list" };
+        return {
+            hint: "If invoicing is unavailable, report that and continue. Otherwise list clients or invoices, then retry.",
+            tool: "clockify_invoices_list",
+        };
     }
     if (action.includes("expense")) {
-        return { hint: "If expenses are unavailable, report that and continue. Otherwise list expense categories and retry.", tool: "clockify_expenses_categories_list" };
+        return {
+            hint: "If expenses are unavailable, report that and continue. Otherwise list expense categories and retry.",
+            tool: "clockify_expenses_categories_list",
+        };
     }
     if (action.includes("time_off")) {
-        return { hint: "If time off is unavailable, report that and continue. Otherwise list policies and retry.", tool: "clockify_time_off_policies_list" };
+        return {
+            hint: "If time off is unavailable, report that and continue. Otherwise list policies and retry.",
+            tool: "clockify_time_off_policies_list",
+        };
     }
     if (action === "clockify_schedule_work") {
-        return { hint: "Verify project and user IDs, then retry. Scheduling can be plan or role gated.", tool: "clockify_projects_list" };
+        return {
+            hint: "Verify project and user IDs, then retry. Scheduling can be plan or role gated.",
+            tool: "clockify_projects_list",
+        };
     }
     if (action.includes("webhook")) {
         return {
@@ -236,11 +333,18 @@ export function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
             args: stripConfirmationArgs(args),
         };
     }
-    return { hint: "Call clockify_status, then retry with IDs returned by previous calls.", tool: "clockify_status" };
+    return {
+        hint: "Call clockify_status, then retry with IDs returned by previous calls.",
+        tool: "clockify_status",
+    };
 }
 
 function packageNext(projectId: string, taskId: string, tagIds: string[]): NextAction[] {
-    const args = { project_id: projectId, ...(taskId ? { task_id: taskId } : {}), ...(tagIds.length ? { tag_ids: tagIds } : {}) };
+    const args = {
+        project_id: projectId,
+        ...(taskId ? { task_id: taskId } : {}),
+        ...(tagIds.length ? { tag_ids: tagIds } : {}),
+    };
     return [
         { tool: "clockify_log_work", args, reason: "Log finished work against this package." },
         { tool: "clockify_start_work", args, reason: "Start a timer against this package." },
@@ -249,7 +353,10 @@ function packageNext(projectId: string, taskId: string, tagIds: string[]): NextA
 
 export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord> {
     if (str(args.entry_id)) {
-        return (await ctx.client.timeEntries.get({ workspaceId: ctx.workspaceId, timeEntryId: str(args.entry_id) })) as AnyRecord;
+        return (await ctx.client.timeEntries.get({
+            workspaceId: ctx.workspaceId,
+            timeEntryId: str(args.entry_id),
+        })) as AnyRecord;
     }
     const user = await ctx.client.users.getCurrentUser();
     // Walk ALL pages: a real entry past row 200 must still be findable,
@@ -271,24 +378,33 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
     }
     const matches = entries.filter((entry) => {
         const description = str(entry.description);
-        if (str(args.exact_description) && description !== str(args.exact_description)) return false;
-        if (str(args.description_contains) && !description.includes(str(args.description_contains))) return false;
+        if (str(args.exact_description) && description !== str(args.exact_description))
+            return false;
+        if (str(args.description_contains) && !description.includes(str(args.description_contains)))
+            return false;
         return true;
     });
-    if (matches.length !== 1) throw new Error(`expected exactly one matching entry, found ${matches.length}; pass entry_id`);
+    if (matches.length !== 1)
+        throw new Error(
+            `expected exactly one matching entry, found ${matches.length}; pass entry_id`,
+        );
     return matches[0]!;
 }
 
 export function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
-    const sorted = [...entries].sort((a, b) => Date.parse(entryStart(a)) - Date.parse(entryStart(b)));
+    const sorted = [...entries].sort(
+        (a, b) => Date.parse(entryStart(a)) - Date.parse(entryStart(b)),
+    );
     const issues: Array<{ code: string; entry_id?: string }> = [];
     let totalSeconds = 0;
     for (const entry of sorted) {
         const startMs = Date.parse(entryStart(entry));
         const endValue = entryEnd(entry);
         const endMs = endValue ? Date.parse(endValue) : Date.now();
-        if (!Number.isNaN(startMs) && !Number.isNaN(endMs) && endMs > startMs) totalSeconds += Math.round((endMs - startMs) / 1000);
-        if (!str(entry.description)) issues.push({ code: "missing_description", entry_id: idOf(entry) });
+        if (!Number.isNaN(startMs) && !Number.isNaN(endMs) && endMs > startMs)
+            totalSeconds += Math.round((endMs - startMs) / 1000);
+        if (!str(entry.description))
+            issues.push({ code: "missing_description", entry_id: idOf(entry) });
         if (!str(entry.projectId)) issues.push({ code: "missing_project", entry_id: idOf(entry) });
         if (!endValue) issues.push({ code: "running_entry", entry_id: idOf(entry) });
     }
@@ -319,7 +435,10 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
         // a full ISO instant.
         const start = normalizeDate(str(args.start));
         const end = normalizeDate(str(args.end));
-        for (const [field, value] of [["start", start], ["end", end]] as const) {
+        for (const [field, value] of [
+            ["start", start],
+            ["end", end],
+        ] as const) {
             if (Number.isNaN(Date.parse(value))) {
                 throw new Error(
                     `invalid ${field} ${JSON.stringify(value)}; use YYYY-MM-DD or an ISO 8601 timestamp`,
@@ -364,7 +483,9 @@ export function dateRange(action: string, args: AnyRecord): { start: string; end
  * a different entity at worst.
  */
 function notFound(noun: string, value: string): Error {
-    return new Error(`no ${noun} named ${JSON.stringify(value)}; pass a 24-character id or an exact name`);
+    return new Error(
+        `no ${noun} named ${JSON.stringify(value)}; pass a 24-character id or an exact name`,
+    );
 }
 
 /**
@@ -373,7 +494,12 @@ function notFound(noun: string, value: string): Error {
  * AmbiguousNameError (→ clarification receipt) and a miss throws notFound. The
  * `list` thunk is only invoked for a name (a 24-hex id short-circuits first).
  */
-async function resolveByName(value: string, label: string, list: () => Promise<unknown>, keys?: string[]): Promise<string> {
+async function resolveByName(
+    value: string,
+    label: string,
+    list: () => Promise<unknown>,
+    keys?: string[],
+): Promise<string> {
     if (looksLikeClockifyId(value)) return value;
     const found = await findOneByName(await list(), value, label, keys);
     if (!found) throw notFound(label, value);
@@ -382,42 +508,85 @@ async function resolveByName(value: string, label: string, list: () => Promise<u
 
 export function resolveClientId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "client", () =>
-        ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
+        ctx.client.clients.list({
+            workspaceId: ctx.workspaceId,
+            name: value,
+            page: 1,
+            "page-size": 200,
+        }),
+    );
 }
 
 export function resolveProjectId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "project", () =>
-        ctx.client.projects.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
+        ctx.client.projects.list({
+            workspaceId: ctx.workspaceId,
+            name: value,
+            page: 1,
+            "page-size": 200,
+        }),
+    );
 }
 
 export function resolveTaskId(ctx: Context, projectId: string, value: string): Promise<string> {
-    if (!projectId) throw new Error("project_id or project is required when resolving task by name");
+    if (!projectId)
+        throw new Error("project_id or project is required when resolving task by name");
     return resolveByName(value, "task", () =>
-        ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: value, page: 1, "page-size": 200 }));
+        ctx.client.tasks.list({
+            workspaceId: ctx.workspaceId,
+            projectId,
+            name: value,
+            page: 1,
+            "page-size": 200,
+        }),
+    );
 }
 
 export function resolveTagId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "tag", () =>
-        ctx.client.tags.list({ workspaceId: ctx.workspaceId, name: value, page: 1, "page-size": 200 }));
+        ctx.client.tags.list({
+            workspaceId: ctx.workspaceId,
+            name: value,
+            page: 1,
+            "page-size": 200,
+        }),
+    );
 }
 
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "expense category", () =>
         // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        ctx.client.expenseCategories.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
+        ctx.client.expenseCategories.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
+        } as never),
+    );
 }
 
 export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "time-off policy", () =>
         // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        ctx.client.timeOffPolicies.list({ workspaceId: ctx.workspaceId, page: 1, "page-size": 200 } as never));
+        ctx.client.timeOffPolicies.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
+        } as never),
+    );
 }
 
 export function resolveUserId(ctx: Context, value: string): Promise<string> {
     return resolveByName(
         value,
         "user",
-        () => ctx.client.users.list({ workspaceId: ctx.workspaceId, name: value, "include-roles": false }),
+        () =>
+            ctx.client.users.list({
+                workspaceId: ctx.workspaceId,
+                name: value,
+                "include-roles": false,
+            }),
         ["name", "email"],
     );
 }
@@ -443,7 +612,12 @@ export class AmbiguousNameError extends Error {
     }
 }
 
-async function findOneByName(items: unknown, name: string, label: string, keys = ["name"]): Promise<AnyRecord | null> {
+async function findOneByName(
+    items: unknown,
+    name: string,
+    label: string,
+    keys = ["name"],
+): Promise<AnyRecord | null> {
     // Match through the SDK's canonical matchByName so name-matching semantics
     // (case-insensitive exact, multi-key) live in ONE place across the SDK, CLI, and
     // MCP — no parallel matcher to drift. includeArchived:true preserves this path's
@@ -460,7 +634,11 @@ async function findOneByName(items: unknown, name: string, label: string, keys =
     return match.kind === "one" ? match.entity : null;
 }
 
-export function entryIds(ctx: Context, entry: unknown, fallback: AnyRecord): Record<string, string | undefined> {
+export function entryIds(
+    ctx: Context,
+    entry: unknown,
+    fallback: AnyRecord,
+): Record<string, string | undefined> {
     const row = entry as AnyRecord;
     return {
         workspaceId: ctx.workspaceId,
@@ -522,5 +700,9 @@ export function str(value: unknown): string {
 }
 
 export function arrayOfStrings(value: unknown): string[] {
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim() !== "").map((item) => item.trim()) : [];
+    return Array.isArray(value)
+        ? value
+              .filter((item): item is string => typeof item === "string" && item.trim() !== "")
+              .map((item) => item.trim())
+        : [];
 }

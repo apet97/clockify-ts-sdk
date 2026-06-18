@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -12,7 +13,8 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
         "clockify_timer_start",
         {
             title: "Start a timer",
-            description: "Start a running time entry for the current user. Description and IDs are optional.",
+            description:
+                "Start a running time entry for the current user. Description and IDs are optional.",
             inputSchema: {
                 description: z.string().optional(),
                 projectId: z.string().optional(),
@@ -23,8 +25,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
+            const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
                 start: new Date().toISOString(),
             };
             if (args.description) body.description = args.description;
@@ -32,8 +33,8 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             if (args.taskId) body.taskId = args.taskId;
             if (Array.isArray(args.tagIds) && args.tagIds.length > 0) body.tagIds = args.tagIds;
             if (args.billable !== undefined) body.billable = args.billable;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const entry = await ctx.client.timeEntries.create(body as never);
+            const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId: ctx.workspaceId, body };
+            const entry = await ctx.client.timeEntries.create(req);
             return successResult("clockify_timer_start", entry);
         },
     );
@@ -43,7 +44,8 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
         "clockify_timer_stop",
         {
             title: "Stop the running timer",
-            description: "Stop the running timer for the current user. Returns ok with a note if no timer was running.",
+            description:
+                "Stop the running timer for the current user. Returns ok with a note if no timer was running.",
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async () => {
@@ -58,7 +60,10 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             }
             const outcome = await stopRunningTimer(ctx, userId, new Date().toISOString());
             if (!outcome.running) {
-                return successResult("clockify_timer_stop", { running: false, note: "no timer was running" });
+                return successResult("clockify_timer_stop", {
+                    running: false,
+                    note: "no timer was running",
+                });
             }
             return successResult("clockify_timer_stop", outcome.entry);
         },

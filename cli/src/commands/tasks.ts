@@ -2,7 +2,7 @@
  * `clk115 tasks {list,create,get,update,delete}` — tasks are project-scoped,
  * so every subcommand takes a `<projectId>` first.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -18,7 +18,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .command("list")
         .argument("<projectId>", "Project ID.")
         .description("List tasks for a project.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by task name substring.")
         .action(async function (this: Command, projectId: string, opts) {
@@ -32,7 +37,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
             if (opts.name) req.name = opts.name;
             const items = await client.tasks.list(req);
             const rows = items.map((raw) => {
-                const t = raw as { id?: string; name?: string; status?: string; billable?: boolean };
+                const t = raw as {
+                    id?: string;
+                    name?: string;
+                    status?: string;
+                    billable?: boolean;
+                };
                 return {
                     id: t.id ?? "",
                     name: t.name ?? "",
@@ -53,12 +63,19 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .description("Create a task under a project.")
         .action(async function (this: Command, projectId: string, name: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, projectId, name };
+            const body: ClockifyRequestBody<ClockifyApi.TaskCreateRequest> & {
+                billable?: boolean;
+            } = { name };
             if (opts.billable !== undefined) body.billable = opts.billable;
             if (opts.estimate) body.estimate = opts.estimate;
-            if (Array.isArray(opts.assignee) && opts.assignee.length > 0) body.assigneeIds = opts.assignee;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.tasks.create(body as never)) as { id?: string; name?: string };
+            if (Array.isArray(opts.assignee) && opts.assignee.length > 0)
+                body.assigneeIds = opts.assignee;
+            const req = wireBody<ClockifyApi.TaskCreateRequest>({
+                workspaceId,
+                projectId,
+                body,
+            });
+            const created = (await client.tasks.create(req)) as { id?: string; name?: string };
             const data = { id: created.id ?? "", name: created.name ?? name };
             printReceipt(
                 {
@@ -68,7 +85,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
                     ids: { projectId, taskId: data.id },
                     data,
                     changed: { created: [{ type: "task", id: data.id, name: data.name }] },
-                    next: [{ command: `clk115 tasks list ${projectId} --json`, reason: "Verify the task appears." }],
+                    next: [
+                        {
+                            command: `clk115 tasks list ${projectId} --json`,
+                            reason: "Verify the task appears.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -98,14 +120,21 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .description("Update a task by project ID and task ID.")
         .action(async function (this: Command, projectId: string, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, projectId, taskId: id };
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>> = {};
             if (opts.name) body.name = opts.name;
-            if (opts.status) body.status = String(opts.status).toUpperCase();
+            if (opts.status)
+                body.status = String(opts.status).toUpperCase() as ClockifyApi.TaskStatus;
             if (opts.estimate) body.estimate = opts.estimate;
             if (opts.billable !== undefined) body.billable = opts.billable;
-            if (Array.isArray(opts.assignee) && opts.assignee.length > 0) body.assigneeIds = opts.assignee;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = (await client.tasks.update(body as never)) as { id?: string; name?: string };
+            if (Array.isArray(opts.assignee) && opts.assignee.length > 0)
+                body.assigneeIds = opts.assignee;
+            const req = wireBody<ClockifyApi.UpdateTasksRequest>({
+                workspaceId,
+                projectId,
+                taskId: id,
+                body,
+            });
+            const updated = (await client.tasks.update(req)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(
                 {
@@ -115,7 +144,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
                     ids: { projectId, taskId: data.id },
                     data,
                     changed: { updated: [{ type: "task", id: data.id, name: data.name }] },
-                    next: [{ command: `clk115 tasks get ${projectId} ${data.id} --json`, reason: "Verify the update." }],
+                    next: [
+                        {
+                            command: `clk115 tasks get ${projectId} ${data.id} --json`,
+                            reason: "Verify the update.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -125,21 +159,26 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .command("delete")
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
-        .description("Delete a task by project ID and task ID (marks DONE first; an active task cannot be deleted).")
+        .description(
+            "Delete a task by project ID and task ID (marks DONE first; an active task cannot be deleted).",
+        )
         .action(async function (this: Command, projectId: string, id: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE task (400) — mark it DONE
             // first via GET-then-PUT, carrying the name the replace-PUT
             // requires, then DELETE. Mirrors the MCP tool.
-            const current = (await client.tasks.get({ workspaceId, projectId, taskId: id })) as { name?: string };
-            await client.tasks.update({
-                workspaceId,
-                projectId,
-                taskId: id,
-                name: String(current.name ?? ""),
-                status: "DONE",
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            const current = (await client.tasks.get({ workspaceId, projectId, taskId: id })) as {
+                name?: string;
+            };
+            await client.tasks.update(
+                wireBody<ClockifyApi.UpdateTasksRequest>({
+                    workspaceId,
+                    projectId,
+                    taskId: id,
+                    name: String(current.name ?? ""),
+                    status: "DONE",
+                }),
+            );
             await client.tasks.delete({ workspaceId, projectId, taskId: id });
             printReceipt(
                 {
@@ -149,7 +188,12 @@ export const registerTasksCommand: Registrar = (program, services) => {
                     ids: { projectId, taskId: id },
                     data: { id, deleted: true, message: `deleted task ${id}` },
                     changed: { deleted: [{ type: "task", id }] },
-                    next: [{ command: `clk115 tasks list ${projectId} --json`, reason: "Verify the task no longer appears." }],
+                    next: [
+                        {
+                            command: `clk115 tasks list ${projectId} --json`,
+                            reason: "Verify the task no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

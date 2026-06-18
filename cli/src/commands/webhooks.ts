@@ -1,6 +1,7 @@
 /**
  * `clk115 webhooks list` / `clk115 webhooks create` / `clk115 webhooks delete <id>`.
  */
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -18,7 +19,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         .option("--type <type>", "Filter by webhook type (e.g. WEBHOOK, ADDON_WEBHOOK).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const req: Record<string, unknown> = { workspaceId };
+            const req: { workspaceId: string; type?: string } = { workspaceId };
             if (opts.type) req.type = opts.type;
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
             // the typed SDK return is wider than the runtime shape, so we
@@ -27,7 +28,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             const response = (await client.webhooks.list(req as never)) as
                 | unknown[]
                 | { webhooks?: unknown[] };
-            const items = Array.isArray(response) ? response : response.webhooks ?? [];
+            const items = Array.isArray(response) ? response : (response.webhooks ?? []);
             const rows = items.map((raw) => {
                 const w = raw as {
                     id?: string;
@@ -65,7 +66,10 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {
+            const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
+                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
+                    webhookEvent: string;
+                } = {
                 name: opts.name,
                 url: opts.url,
                 webhookEvent: opts.event,
@@ -77,8 +81,12 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                     .map((s) => s.trim())
                     .filter((s) => s.length > 0);
             }
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.webhooks.create({ workspaceId, body } as never)) as {
+            const created = (await client.webhooks.create(
+                wireBody<ClockifyApi.WebhookRequest>({
+                    workspaceId,
+                    body,
+                }),
+            )) as {
                 id?: string;
                 name?: string;
                 url?: string;
@@ -100,7 +108,12 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                     ids: { webhookId: data.id },
                     data,
                     changed: { created: [{ type: "webhook", id: data.id, name: data.name }] },
-                    next: [{ command: "clk115 webhooks list --json", reason: "Verify the webhook appears." }],
+                    next: [
+                        {
+                            command: "clk115 webhooks list --json",
+                            reason: "Verify the webhook appears.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -121,7 +134,12 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                     ids: { webhookId: id },
                     data: { id, deleted: true, message: `deleted webhook ${id}` },
                     changed: { deleted: [{ type: "webhook", id }] },
-                    next: [{ command: "clk115 webhooks list --json", reason: "Verify the webhook no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 webhooks list --json",
+                            reason: "Verify the webhook no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

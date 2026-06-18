@@ -21,8 +21,8 @@ function mockFetch(
 ): { fn: typeof fetch; calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> } {
     const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
     const fn = (async (input, init) => {
-        calls.push({ input, init });
-        const result = await behavior({ input, init });
+        calls.push(init === undefined ? { input } : { input, init });
+        const result = await behavior(init === undefined ? { input } : { input, init });
         if (result instanceof Error) throw result;
         return result;
     }) as typeof fetch;
@@ -360,7 +360,11 @@ describe("composedFetch — retry policy", () => {
     it("treats Retry-After: 0 as an immediate (0ms) retry, not exponential backoff", async () => {
         const onRetry = vi.fn();
         const f = composedFetch({
-            fetch: (async () => new Response("rate", { status: 429, headers: { "Retry-After": "0" } })) as typeof fetch,
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "0" },
+                })) as typeof fetch,
             retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
             hooks: { onRetry },
         });
@@ -419,7 +423,7 @@ describe("composedFetch — guards", () => {
     it("throws when no fetch is available", () => {
         // Force baseFetch undefined by stubbing globalThis.fetch temporarily.
         const original = globalThis.fetch;
-        (globalThis as { fetch?: typeof fetch }).fetch = undefined;
+        Reflect.deleteProperty(globalThis, "fetch");
         try {
             expect(() => composedFetch({ fetch: undefined as unknown as typeof fetch })).toThrow(
                 /no `fetch` implementation found/,

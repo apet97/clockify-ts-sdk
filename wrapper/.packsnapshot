@@ -89,6 +89,10 @@ dist/cjs/request-options.d.ts
 dist/cjs/request-options.d.ts.map
 dist/cjs/request-options.js
 dist/cjs/request-options.js.map
+dist/cjs/requests.d.ts
+dist/cjs/requests.d.ts.map
+dist/cjs/requests.js
+dist/cjs/requests.js.map
 dist/cjs/resolve.d.ts
 dist/cjs/resolve.d.ts.map
 dist/cjs/resolve.js
@@ -2937,6 +2941,10 @@ dist/esm/request-options.d.ts
 dist/esm/request-options.d.ts.map
 dist/esm/request-options.js
 dist/esm/request-options.js.map
+dist/esm/requests.d.ts
+dist/esm/requests.d.ts.map
+dist/esm/requests.js
+dist/esm/requests.js.map
 dist/esm/resolve.d.ts
 dist/esm/resolve.d.ts.map
 dist/esm/resolve.js

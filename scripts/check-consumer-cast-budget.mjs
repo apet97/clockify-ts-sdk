@@ -2,6 +2,7 @@
 // Every `as never` in cli/src + mcp/src must be either eliminated or
 // annotated with a `KEEP as never` comment on the same line or immediately
 // above it. result.ts/output-schema.ts are forwarding seams and are exempt.
+import { spawnSync } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -72,10 +73,50 @@ if (unannotated > budget) {
     for (const o of offenders) failures.push(`  unannotated: ${o}`);
 }
 
+let eoptMessage;
+if (contract.strictness?.wrapper?.eoptHandwrittenClean === true) {
+    const result = spawnSync(
+        "npx",
+        ["tsc", "-p", "tsconfig.json", "--noEmit", "--exactOptionalPropertyTypes"],
+        {
+            cwd: path.join(root, "wrapper"),
+            encoding: "utf8",
+        },
+    );
+    if (result.error?.code === "ENOENT") {
+        console.warn("Wrapper EOPT differential skipped (npx unavailable).");
+    } else {
+        const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+        const handwrittenErrors = output
+            .split(/\r?\n/)
+            .filter(
+                (line) =>
+                    /\berror TS\d+/.test(line) &&
+                    !line.startsWith("src/") &&
+                    !line.startsWith("tests/"),
+            );
+        if (handwrittenErrors.length > 0) {
+            failures.push(
+                `wrapper hand-written EOPT errors ${handwrittenErrors.length} exceed budget 0`,
+            );
+            for (const line of handwrittenErrors) failures.push(`  eopt: ${line}`);
+        } else {
+            const totalErrors = output.match(/\berror TS\d+/g)?.length ?? 0;
+            eoptMessage = `Wrapper EOPT differential clean (0 hand-written errors, ${totalErrors} generated/test errors ignored).`;
+        }
+        if (result.status !== 0 && output.trim().length === 0) {
+            failures.push(
+                `wrapper EOPT differential failed without compiler output (exit ${result.status})`,
+            );
+        }
+    }
+}
+
 if (failures.length > 0) {
     console.error("Consumer cast budget failed:");
     for (const f of failures) console.error(`- ${f}`);
     process.exit(1);
 }
 
+if (eoptMessage) console.log(eoptMessage);
 console.log(`Consumer cast budget passed (${unannotated} unannotated \`as never\`, budget ${budget}).`);

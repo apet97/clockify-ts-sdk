@@ -41,6 +41,7 @@
         "./rate-limit",
         "./reports",
         "./request-options",
+        "./requests",
         "./resolve",
         "./scoped-client",
         "./webhook-events",

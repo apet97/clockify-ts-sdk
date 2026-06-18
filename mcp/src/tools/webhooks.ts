@@ -4,6 +4,7 @@
  * to know the wire shape.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -24,10 +25,10 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             const response = (await ctx.client.webhooks.list({
                 workspaceId: ctx.workspaceId,
             })) as unknown[] | { webhooks?: unknown[]; workspaceWebhookCount?: number };
-            const items = Array.isArray(response) ? response : response.webhooks ?? [];
+            const items = Array.isArray(response) ? response : (response.webhooks ?? []);
             const total = Array.isArray(response)
                 ? items.length
-                : response.workspaceWebhookCount ?? items.length;
+                : (response.workspaceWebhookCount ?? items.length);
             return successResult("clockify_webhooks_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -62,32 +63,47 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         "clockify_webhooks_create",
         {
             title: "Create a webhook subscription",
-            description: "Subscribe a URL to a Clockify event. URL must be HTTPS and pass workspace DNS validation.",
+            description:
+                "Subscribe a URL to a Clockify event. URL must be HTTPS and pass workspace DNS validation.",
             inputSchema: {
                 name: z.string().min(1),
                 url: z.string().url(),
-                webhookEvent: z.string().min(1).describe("Event name, e.g. NEW_TIME_ENTRY, NEW_PROJECT."),
+                webhookEvent: z
+                    .string()
+                    .min(1)
+                    .describe("Event name, e.g. NEW_TIME_ENTRY, NEW_PROJECT."),
                 triggerSourceType: z.string().optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
+            const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
+                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
+                    webhookEvent: ClockifyApi.WebhookEventType;
+                } = {
                 name: args.name,
                 url: args.url,
-                webhookEvent: args.webhookEvent,
+                webhookEvent: args.webhookEvent as ClockifyApi.WebhookEventType,
             };
-            if (args.triggerSourceType) body.triggerSourceType = args.triggerSourceType;
+            if (args.triggerSourceType)
+                body.triggerSourceType =
+                    args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;
             if (args.triggerSource) body.triggerSource = args.triggerSource;
-            const created = await ctx.client.webhooks.create({
-                workspaceId: ctx.workspaceId,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_webhooks_create", created, {
-                workspaceId: ctx.workspaceId,
-            }, writeReceipt("created", "webhook", { id: entityId(created), name: args.name }));
+            const created = await ctx.client.webhooks.create(
+                wireBody<ClockifyApi.WebhookRequest>({
+                    workspaceId: ctx.workspaceId,
+                    body,
+                }),
+            );
+            return successResult(
+                "clockify_webhooks_create",
+                created,
+                {
+                    workspaceId: ctx.workspaceId,
+                },
+                writeReceipt("created", "webhook", { id: entityId(created), name: args.name }),
+            );
         },
     );
 
@@ -108,22 +124,33 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {};
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateWebhooksRequest>> & {
+                webhookEvent?: ClockifyApi.WebhookEventType;
+            } = {};
             if (args.name) body.name = args.name;
             if (args.url) body.url = args.url;
-            if (args.webhookEvent) body.webhookEvent = args.webhookEvent;
-            if (args.triggerSourceType) body.triggerSourceType = args.triggerSourceType;
+            if (args.webhookEvent)
+                body.webhookEvent = args.webhookEvent as ClockifyApi.WebhookEventType;
+            if (args.triggerSourceType)
+                body.triggerSourceType =
+                    args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;
             if (args.triggerSource) body.triggerSource = args.triggerSource;
-            const updated = await ctx.client.webhooks.update({
-                workspaceId: ctx.workspaceId,
-                webhookId: args.webhookId,
-                body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_webhooks_update", updated, {
-                workspaceId: ctx.workspaceId,
-                webhookId: args.webhookId,
-            }, writeReceipt("updated", "webhook", args.webhookId));
+            const updated = await ctx.client.webhooks.update(
+                wireBody<ClockifyApi.UpdateWebhooksRequest>({
+                    workspaceId: ctx.workspaceId,
+                    webhookId: args.webhookId,
+                    body,
+                }),
+            );
+            return successResult(
+                "clockify_webhooks_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    webhookId: args.webhookId,
+                },
+                writeReceipt("updated", "webhook", args.webhookId),
+            );
         },
     );
 
@@ -143,7 +170,13 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "webhook", id: args.webhookId };
-            const confirmation = requireConfirmation(ctx, "clockify_webhooks_delete", "webhook_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_webhooks_delete",
+                "webhook_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.webhooks.delete({
                 workspaceId: ctx.workspaceId,

@@ -1,7 +1,7 @@
 /**
  * `clk115 tags {list,create,get,update,delete}`.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -13,10 +13,14 @@ import type { Registrar } from "./types.js";
 export const registerTagsCommand: Registrar = (program, services) => {
     const tags = program.command("tags").description("Manage tags.");
 
-    tags
-        .command("list")
+    tags.command("list")
         .description("List tags in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by tag name substring.")
         .option("--archived", "Include archived tags.", false)
@@ -41,13 +45,13 @@ export const registerTagsCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    tags
-        .command("create")
+    tags.command("create")
         .argument("<name>", "Tag name.")
         .description("Create a tag in the workspace.")
         .action(async function (this: Command, name: string) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const created = (await client.tags.create({ workspaceId, name })) as {
+            const req: ClockifyApi.TagCreate = { workspaceId, body: { name } };
+            const created = (await client.tags.create(req)) as {
                 id?: string;
                 name?: string;
             };
@@ -60,14 +64,15 @@ export const registerTagsCommand: Registrar = (program, services) => {
                     ids: { tagId: data.id },
                     data,
                     changed: { created: [{ type: "tag", id: data.id, name: data.name }] },
-                    next: [{ command: "clk115 tags list --json", reason: "Verify the tag appears." }],
+                    next: [
+                        { command: "clk115 tags list --json", reason: "Verify the tag appears." },
+                    ],
                 },
                 output,
             );
         });
 
-    tags
-        .command("get")
+    tags.command("get")
         .argument("<id>", "Tag ID.")
         .description("Get one tag by ID.")
         .action(async function (this: Command, id: string) {
@@ -76,8 +81,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             printObject(tag as Record<string, unknown>, output);
         });
 
-    tags
-        .command("update")
+    tags.command("update")
         .argument("<id>", "Tag ID.")
         .option("--name <text>", "New tag name.")
         .option("--archived", "Archive the tag.")
@@ -85,11 +89,11 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .description("Update a tag by ID.")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, tagId: id };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
             if (opts.name) body.name = opts.name;
             if (opts.archived !== undefined) body.archived = opts.archived;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = (await client.tags.update(body as never)) as { id?: string; name?: string };
+            const req: ClockifyApi.UpdateTagsRequest = { workspaceId, tagId: id, body };
+            const updated = (await client.tags.update(req)) as { id?: string; name?: string };
             const data = { id: updated.id ?? id, name: updated.name ?? "" };
             printReceipt(
                 {
@@ -105,8 +109,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             );
         });
 
-    tags
-        .command("delete")
+    tags.command("delete")
         .argument("<id>", "Tag ID.")
         .description("Delete a tag by ID.")
         .action(async function (this: Command, id: string) {
@@ -120,7 +123,12 @@ export const registerTagsCommand: Registrar = (program, services) => {
                     ids: { tagId: id },
                     data: { id, deleted: true, message: `deleted tag ${id}` },
                     changed: { deleted: [{ type: "tag", id }] },
-                    next: [{ command: "clk115 tags list --json", reason: "Verify the tag no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 tags list --json",
+                            reason: "Verify the tag no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

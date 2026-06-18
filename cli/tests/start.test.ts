@@ -85,15 +85,18 @@ describe("start command", () => {
         const { client, created, listed } = makeClient();
         await run(client, ["wrote tests", "--project", ID_A]);
         expect(listed).not.toContain("projects");
-        expect(created[0]?.projectId).toBe(ID_A);
-        expect(created[0]?.description).toBe("wrote tests");
+        const body = (created[0] as { body?: { projectId?: string; description?: string } })?.body;
+        expect(body?.projectId).toBe(ID_A);
+        expect(body?.description).toBe("wrote tests");
     });
 
     it("resolves a project name to its id via the list query", async () => {
-        const { client, created, listed } = makeClient({ projects: [{ id: "p-1", name: "Website" }] });
+        const { client, created, listed } = makeClient({
+            projects: [{ id: "p-1", name: "Website" }],
+        });
         await run(client, ["work", "--project", "Website"]);
         expect(listed).toContain("projects");
-        expect(created[0]?.projectId).toBe("p-1");
+        expect((created[0] as { body?: { projectId?: string } })?.body?.projectId).toBe("p-1");
     });
 
     it("throws a clear error when the project name does not resolve", async () => {
@@ -113,7 +116,10 @@ describe("start command", () => {
     it("resolves multiple tags, mixing ids and names", async () => {
         const { client, created } = makeClient({ tags: [{ id: "t-2", name: "Deep Work" }] });
         await run(client, ["work", "--tag", ID_A, "--tag", "Deep Work"]);
-        expect(created[0]?.tagIds).toEqual([ID_A, "t-2"]);
+        expect((created[0] as { body?: { tagIds?: string[] } })?.body?.tagIds).toEqual([
+            ID_A,
+            "t-2",
+        ]);
     });
 
     it("prints additive receipt fields while keeping top-level id", async () => {

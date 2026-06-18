@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -45,13 +45,23 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         "clockify_tags_create",
         {
             title: "Create a tag",
-            description: "Create a tag in the pinned workspace for later time-entry classification.",
+            description:
+                "Create a tag in the pinned workspace for later time-entry classification.",
             inputSchema: { name: z.string().min(1) },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const tag = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name: args.name });
-            return successResult("clockify_tags_create", tag, undefined, writeReceipt("created", "tag", { id: entityId(tag), name: args.name }));
+            const req: ClockifyApi.TagCreate = {
+                workspaceId: ctx.workspaceId,
+                body: { name: args.name },
+            };
+            const tag = await ctx.client.tags.create(req);
+            return successResult(
+                "clockify_tags_create",
+                tag,
+                undefined,
+                writeReceipt("created", "tag", { id: entityId(tag), name: args.name }),
+            );
         },
     );
 
@@ -90,14 +100,15 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
-                tagId: args.tagId,
-            };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
             if (args.name) body.name = args.name;
             if (args.archived !== undefined) body.archived = args.archived;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = await ctx.client.tags.update(body as never);
+            const req: ClockifyApi.UpdateTagsRequest = {
+                workspaceId: ctx.workspaceId,
+                tagId: args.tagId,
+                body,
+            };
+            const updated = await ctx.client.tags.update(req);
             return successResult("clockify_tags_update", updated, {
                 workspaceId: ctx.workspaceId,
                 tagId: args.tagId,
@@ -121,7 +132,13 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "tag", id: args.tagId };
-            const confirmation = requireConfirmation(ctx, "clockify_tags_delete", "tag_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_tags_delete",
+                "tag_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             await ctx.client.tags.delete({
                 workspaceId: ctx.workspaceId,

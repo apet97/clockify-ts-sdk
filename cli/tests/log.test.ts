@@ -56,20 +56,22 @@ afterEach(() => {
 });
 
 describe("log command", () => {
-    it.each([
-        ["1h30m"],
-        ["90"],
-        ["PT1H30M"],
-    ])("derives start = end - duration for %s (90 minutes)", async (duration) => {
-        const { client, created } = makeClient();
-        await run(client, [duration, "wrote tests", "--end", END]);
-        expect(created[0]?.end).toBe(END);
-        expect(created[0]?.start).toBe("2026-06-01T08:30:00.000Z");
-    });
+    it.each([["1h30m"], ["90"], ["PT1H30M"]])(
+        "derives start = end - duration for %s (90 minutes)",
+        async (duration) => {
+            const { client, created } = makeClient();
+            await run(client, [duration, "wrote tests", "--end", END]);
+            const body = (created[0] as { body?: { end?: string; start?: string } })?.body;
+            expect(body?.end).toBe(END);
+            expect(body?.start).toBe("2026-06-01T08:30:00.000Z");
+        },
+    );
 
     it("rejects an unparseable duration", async () => {
         const { client } = makeClient();
-        await expect(run(client, ["banana", "work", "--end", END])).rejects.toThrow(/cannot parse duration/);
+        await expect(run(client, ["banana", "work", "--end", END])).rejects.toThrow(
+            /cannot parse duration/,
+        );
     });
 
     it("rejects an invalid --end timestamp", async () => {
@@ -88,8 +90,22 @@ describe("log command", () => {
 
     it("passes project, tag, and billable through to the entry body", async () => {
         const { client, created } = makeClient();
-        await run(client, ["30m", "work", "--end", END, "--project", "p-1", "--tag", "t-1", "--billable"]);
-        expect(created[0]).toMatchObject({ projectId: "p-1", tagIds: ["t-1"], billable: true });
+        await run(client, [
+            "30m",
+            "work",
+            "--end",
+            END,
+            "--project",
+            "p-1",
+            "--tag",
+            "t-1",
+            "--billable",
+        ]);
+        expect((created[0] as { body?: unknown }).body).toMatchObject({
+            projectId: "p-1",
+            tagIds: ["t-1"],
+            billable: true,
+        });
     });
 
     it("prints additive receipt fields while keeping top-level id", async () => {

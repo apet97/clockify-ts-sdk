@@ -17,9 +17,9 @@ export interface ClockifyOperationReceipt<T> {
     data: T;
     status: number;
     headers: Headers;
-    requestId?: string;
-    rateLimit?: RateLimitSnapshot;
-    changed?: boolean;
+    requestId?: string | undefined;
+    rateLimit?: RateLimitSnapshot | undefined;
+    changed?: boolean | undefined;
     warnings: string[];
     next: string[];
 }
@@ -29,7 +29,7 @@ export interface ClockifyOperationErrorReceipt {
     action: string;
     code: ClockifyErrorCode | "unknown";
     message: string;
-    status?: number;
+    status?: number | undefined;
     retryable: boolean;
     recovery: string[];
 }

@@ -47,6 +47,10 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- Internal type-safety: create/update/delete/report/audit call sites now bind
+  SDK requests through generated `ClockifyApi.*Request` types and the new
+  `clockify-sdk-ts-115/requests` seam, cutting the remaining `as never`
+  surface while preserving the existing wire shapes.
 - Internal type-safety: dropped gratuitous `as unknown[]` result casts in name
   resolution and the `projects` command (the typed path yields the generated array),
   and removed an invented `clientId: string | null` that had drifted from the

@@ -2272,11 +2272,18 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 ### `strictness.wrapper-eopt-noimplicitoverride-blocked` — DOCUMENTED 2026-06-18
 
 - **Blocker (offline-verifiable):** `wrapper/tsconfig.json` cannot enable
-  `noImplicitOverride` (TS4114 at `wrapper/src/errors/ClockifyApiError.ts`:
-  `public readonly cause?: unknown` shadows `Error.cause`) nor
-  `exactOptionalPropertyTypes` (10 errors across `wrapper/src/errors/*` and
-  `wrapper/src/core/request.ts`). All offending files are GENERATED — the hard
-  stop forbids editing `wrapper/src/**`.
+  `noImplicitOverride` (TS4114 at `wrapper/src/errors/ClockifyApiError.ts` +
+  `wrapper/src/errors/ClockifyApiTimeoutError.ts`: `cause` shadows `Error.cause`)
+  nor `exactOptionalPropertyTypes` as a package compile flag — exactly 10 EOPT
+  errors remain across `wrapper/src/api/errors/*`, `wrapper/src/core/request.ts`,
+  and `wrapper/src/errors/ClockifyApiError.ts`. Those files are GENERATED (hard
+  stop forbids editing `wrapper/src/**`) and TypeScript reports them even when
+  `src` is excluded because the hand-written roots import them transitively.
+  Correction: the original note was overstated. The editable root/test files had
+  their own EOPT errors too; those are now fixed. The hand-written wrapper
+  surface is EOPT-clean and enforced by the differential check in
+  `scripts/check-consumer-cast-budget.mjs` (`tsc --exactOptionalPropertyTypes`
+  errors outside `src/` and `tests/` == 0).
 - **Decision:** both flags stay OFF on wrapper, ON in cli + mcp. The rationale is
   pinned inline in `wrapper/tsconfig.json` `_blockedStrictnessFlags`. The durable
   fix is upstream in `../GOCLMCP/`.
@@ -2287,13 +2294,16 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Action:** the consumer list-request casts (`projects.list`, `clients.list`,
   `tags.list`, `tasks.list`, `timeEntries.listForUser`, `userGroups.list`,
   `approvals.list`, `scheduling.list`, and the CLI mirrors) are typed with their
-  generated `ClockifyApi.List*Request` types where the generated type is clean,
-  dropping `as never` + `as unknown[]`. Inline single-id extractions collapse onto
-  `entityId()` (`mcp/src/result.ts`, `cli/src/sdk-narrow.ts`). Surviving
-  `as never` casts are an enumerated allow-list (body-envelope archive,
-  status-union, report/audit passthrough, runtime-body spreads), each
-  line-commented `// KEEP as never` and enforced by
-  `scripts/check-consumer-cast-budget.mjs`.
+  generated `ClockifyApi.List*Request` types where the generated type is clean.
+  Write-side create/update calls now prefer the generated request union's
+  body-envelope arm via `clockify-sdk-ts-115/requests`
+  (`ClockifyRequestBody<T>` + `wireBody<T>` only where a validated live shape is
+  genuinely outside the generated type). Inline single-id extractions collapse
+  onto `entityId()` (`mcp/src/result.ts`, `cli/src/sdk-narrow.ts`). Surviving
+  `as never` casts are an enumerated allow-list (archive-before-delete overlays,
+  status-union, report/audit passthrough, runtime body-spread writes, and
+  multipart/list envelope mismatches), each immediately line-commented
+  `// KEEP as never` and enforced by `scripts/check-consumer-cast-budget.mjs`.
 - **KEEP allow-list:** `mcp/src/tools/clients.ts` + `cli/src/commands/clients.ts`
   + `mcp/src/tools/workflows/resolve.ts` (clients.update body-envelope
   `archived`), `mcp/src/tools/workflows/resolve.ts` (tasks.update DONE overlay),
@@ -2301,5 +2311,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `mcp/src/tools/{reports,audit,invoices,expenses}.ts` and CLI mirrors
   (passthrough/envelope lists), plus runtime body-spread writes whose generated
   flattened request types reject locally validated bodies.
-- **Status:** `compensated-in-consumer-layer` (2026-06-18). Gate:
-  `make consumer-cast-budget` (budget 0, ratchet target 0).
+- **Status:** `compensated-in-consumer-layer` (updated 2026-06-19). Gate:
+  `make consumer-cast-budget` (budget 0, ratchet target 0) plus the wrapper EOPT
+  differential. Current consumer ratio: typed request bindings >= 100,
+  `Record<string, unknown>` literals <= 40, live `KEEP as never` comments <= 60.

@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -53,11 +53,20 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = { name: args.name };
-            if (args.note) body.note = args.note;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
-            return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: entityId(client), name: args.name }));
+            const req: ClockifyApi.ClientCreate = {
+                workspaceId: ctx.workspaceId,
+                body: {
+                    name: args.name,
+                    ...(args.note !== undefined ? { note: args.note } : {}),
+                },
+            };
+            const client = await ctx.client.clients.create(req);
+            return successResult(
+                "clockify_clients_create",
+                client,
+                undefined,
+                writeReceipt("created", "client", { id: entityId(client), name: args.name }),
+            );
         },
     );
 
@@ -98,21 +107,28 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {};
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>> & {
+                archived?: boolean;
+            } = {};
             if (args.name) body.name = args.name;
             if (args.note !== undefined) body.note = args.note;
             if (args.address !== undefined) body.address = args.address;
             if (args.archived !== undefined) body.archived = args.archived;
-            const updated = await ctx.client.clients.update({
+            const req = wireBody<ClockifyApi.UpdateClientsRequest>({
                 workspaceId: ctx.workspaceId,
                 clientId: args.clientId,
                 body,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
-            return successResult("clockify_clients_update", updated, {
-                workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
-            }, writeReceipt("updated", "client", args.clientId));
+            });
+            const updated = await ctx.client.clients.update(req);
+            return successResult(
+                "clockify_clients_update",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                },
+                writeReceipt("updated", "client", args.clientId),
+            );
         },
     );
 
@@ -132,7 +148,13 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             const preview = { action: "delete", entity: "client", id: args.clientId };
-            const confirmation = requireConfirmation(ctx, "clockify_clients_delete", "client_delete", args, preview);
+            const confirmation = requireConfirmation(
+                ctx,
+                "clockify_clients_delete",
+                "client_delete",
+                args,
+                preview,
+            );
             if (confirmation) return confirmation;
             // Clockify rejects DELETE of an ACTIVE client (400, live-verified
             // 2026-06-15) and the dedicated `clients.archive` route 404s. The
@@ -152,15 +174,18 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             if (!name) {
                 return errorResult(
                     "clockify_clients_delete",
-                    new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT."),
+                    new Error(
+                        "Cannot archive client before delete: the client has no name to carry through the replace-PUT.",
+                    ),
                 );
             }
-            await ctx.client.clients.update({
-                workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
-                body: { name, archived: true },
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            } as never);
+            await ctx.client.clients.update(
+                wireBody<ClockifyApi.UpdateClientsRequest>({
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                    body: { name, archived: true },
+                }),
+            );
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,
                 clientId: args.clientId,

@@ -131,7 +131,7 @@ describe("clockify_invoices_create — note/subject applied via follow-up PUT", 
             },
         });
         expect(res.isError).toBeFalsy();
-        const create = captured.create as Record<string, unknown>;
+        const create = (captured.create as { body?: Record<string, unknown> }).body ?? {};
         // The create body must NOT carry note/subject — they would be dropped.
         expect(create.note).toBeUndefined();
         expect(create.subject).toBeUndefined();

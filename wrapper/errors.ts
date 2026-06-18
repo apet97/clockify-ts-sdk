@@ -59,11 +59,30 @@ interface SubclassOpts {
      *  spirit for every other subclass (`RateLimitError`, `ConflictError`,
      *  etc.) but typed as optional so the non-status branch in
      *  `promoteApiError` can construct cleanly. */
+    statusCode?: number | undefined;
+    body?: unknown;
+    rawResponse?: RawResponse | undefined;
+    cause?: unknown;
+    message?: string | undefined;
+}
+
+function generatedErrorOptions(
+    opts: SubclassOpts,
+    message: string,
+): {
+    message: string;
     statusCode?: number;
     body?: unknown;
     rawResponse?: RawResponse;
     cause?: unknown;
-    message?: string;
+} {
+    return {
+        message,
+        ...(opts.statusCode !== undefined ? { statusCode: opts.statusCode } : {}),
+        ...(opts.body !== undefined ? { body: opts.body } : {}),
+        ...(opts.rawResponse !== undefined ? { rawResponse: opts.rawResponse } : {}),
+        ...(opts.cause !== undefined ? { cause: opts.cause } : {}),
+    };
 }
 
 export interface ClockifyErrorClassification {
@@ -100,7 +119,7 @@ export class RateLimitError extends ClockifyApiError {
     public readonly rateLimitResetAt: Date | undefined;
 
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "RateLimitError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "RateLimitError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "RateLimitError";
@@ -113,7 +132,7 @@ export class RateLimitError extends ClockifyApiError {
 /** Thrown / promoted when the server replies `409 Conflict`. */
 export class ConflictError extends ClockifyApiError {
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "ConflictError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "ConflictError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "ConflictError";
@@ -123,7 +142,7 @@ export class ConflictError extends ClockifyApiError {
 /** Thrown / promoted when the server replies `500 Internal Server Error`. */
 export class InternalServerError extends ClockifyApiError {
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "InternalServerError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "InternalServerError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "InternalServerError";
@@ -133,7 +152,7 @@ export class InternalServerError extends ClockifyApiError {
 /** Thrown / promoted when the server replies `503 Service Unavailable`. */
 export class ServiceUnavailableError extends ClockifyApiError {
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "ServiceUnavailableError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "ServiceUnavailableError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "ServiceUnavailableError";
@@ -168,7 +187,7 @@ export class ServiceUnavailableError extends ClockifyApiError {
  */
 export class ClockifyConnectionError extends ClockifyApiError {
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "ClockifyConnectionError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "ClockifyConnectionError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "ClockifyConnectionError";
@@ -212,7 +231,7 @@ export class ClockifyConnectionError extends ClockifyApiError {
  */
 export class ClockifyAbortError extends ClockifyApiError {
     constructor(opts: SubclassOpts) {
-        super({ message: opts.message ?? "ClockifyAbortError", ...opts });
+        super(generatedErrorOptions(opts, opts.message ?? "ClockifyAbortError"));
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "ClockifyAbortError";
@@ -239,12 +258,13 @@ export class AddonTokenRestrictionError extends ClockifyApiError {
     /** Stable cross-surface code for addon-token endpoint walls. */
     public readonly code: ClockifyErrorCode = "addon_token_restricted";
     constructor(opts: SubclassOpts & { method: string; path: string }) {
-        super({
-            message:
+        super(
+            generatedErrorOptions(
+                opts,
                 opts.message ??
-                `Clockify does not allow add-ons to call ${opts.method} ${opts.path} — this endpoint is outside the add-on token's reach regardless of manifest scopes.`,
-            ...opts,
-        });
+                    `Clockify does not allow add-ons to call ${opts.method} ${opts.path} — this endpoint is outside the add-on token's reach regardless of manifest scopes.`,
+            ),
+        );
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
         this.name = "AddonTokenRestrictionError";

@@ -23,7 +23,11 @@ function fakeContext(overrides?: {
                 listInProgress: overrides?.listInProgress ?? (async () => []),
                 listForUser: async () => [],
                 create: async (body: Record<string, unknown>) => ({ id: "te-1", ...body }),
-                updateForUser: async (req: Record<string, unknown>) => ({ id: "te-1", stopped: true, ...req }),
+                updateForUser: async (req: Record<string, unknown>) => ({
+                    id: "te-1",
+                    stopped: true,
+                    ...req,
+                }),
                 delete: async () => ({}),
             },
             projects: {
@@ -242,7 +246,12 @@ describe("@clockify115/mcp-server", () => {
         const tools = (await client.listTools()).tools;
 
         const weakDescriptions = tools
-            .filter((tool) => !tool.title?.trim() || !tool.description?.trim() || tool.description.length < 40)
+            .filter(
+                (tool) =>
+                    !tool.title?.trim() ||
+                    !tool.description?.trim() ||
+                    tool.description.length < 40,
+            )
             .map((tool) => ({
                 name: tool.name,
                 title: tool.title ?? "",
@@ -357,8 +366,10 @@ describe("@clockify115/mcp-server", () => {
         expect(captured).toEqual({
             workspaceId: "ws-1",
             projectId: "p1",
-            name: "Renamed",
-            archived: true,
+            body: {
+                name: "Renamed",
+                archived: true,
+            },
         });
     });
 
@@ -404,7 +415,11 @@ describe("@clockify115/mcp-server", () => {
         const client = await connect(fakeContext());
         const res = await client.callTool({
             name: "clockify_entries_log",
-            arguments: { description: "wrote tests", durationSeconds: 1800, end: "2026-05-26T10:00:00.000Z" },
+            arguments: {
+                description: "wrote tests",
+                durationSeconds: 1800,
+                end: "2026-05-26T10:00:00.000Z",
+            },
         });
         expect(res.isError).toBeFalsy();
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
@@ -435,7 +450,10 @@ describe("@clockify115/mcp-server", () => {
     it("clockify_review_week rejects an unparseable week_start with a clear, field-named error", async () => {
         const ctx = fakeContext();
         const client = await connect(ctx);
-        const res = await client.callTool({ name: "clockify_review_week", arguments: { week_start: "garbage" } });
+        const res = await client.callTool({
+            name: "clockify_review_week",
+            arguments: { week_start: "garbage" },
+        });
         expect(res.isError).toBe(true);
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
         expect(parsed.ok).toBe(false);
@@ -459,25 +477,33 @@ describe("destructive domain delete confirmation gating", () => {
 
     function projectsCtx(spy: { fn: (req: unknown) => Promise<unknown> }): Context {
         const ctx = fakeContext();
-        (ctx.client.projects as unknown as { delete: (req: unknown) => Promise<unknown> }).delete = spy.fn;
+        (ctx.client.projects as unknown as { delete: (req: unknown) => Promise<unknown> }).delete =
+            spy.fn;
         return ctx;
     }
 
     function entriesCtx(spy: { fn: (req: unknown) => Promise<unknown> }): Context {
         const ctx = fakeContext();
-        (ctx.client.timeEntries as unknown as { delete: (req: unknown) => Promise<unknown> }).delete = spy.fn;
+        (
+            ctx.client.timeEntries as unknown as { delete: (req: unknown) => Promise<unknown> }
+        ).delete = spy.fn;
         return ctx;
     }
 
     function dataOf(res: unknown): Record<string, unknown> {
-        const parsed = JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}");
+        const parsed = JSON.parse(
+            (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}",
+        );
         return parsed as Record<string, unknown>;
     }
 
     it("clockify_projects_delete refuses without dry_run/confirm_token and never calls the SDK", async () => {
         const spy = deleteSpy();
         const client = await connect(projectsCtx(spy));
-        const res = await client.callTool({ name: "clockify_projects_delete", arguments: { projectId: "p-1" } });
+        const res = await client.callTool({
+            name: "clockify_projects_delete",
+            arguments: { projectId: "p-1" },
+        });
         const json = dataOf(res);
         expect(json.ok).toBe(false);
         expect(JSON.stringify(json)).toMatch(/dry_run/i);
@@ -493,7 +519,10 @@ describe("destructive domain delete confirmation gating", () => {
         });
         const json = dataOf(res);
         expect(json.ok).toBe(true);
-        const data = json.data as { confirm_token?: string; preview?: { action?: string; id?: string } };
+        const data = json.data as {
+            confirm_token?: string;
+            preview?: { action?: string; id?: string };
+        };
         expect(data.confirm_token).toBeTruthy();
         expect(data.preview?.action).toBe("delete");
         expect(data.preview?.id).toBe("p-1");

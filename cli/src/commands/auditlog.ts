@@ -5,6 +5,7 @@
  * `actions` and `authors` filters; this surface mirrors that contract
  * so a missing flag fails locally instead of round-tripping to a 400.
  */
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -34,7 +35,12 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             "CONTAINS",
         )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
-        .option("--limit <n>", "Items per page (default 50, max 200).", (v) => Number.parseInt(v, 10), 50)
+        .option(
+            "--limit <n>",
+            "Items per page (default 50, max 200).",
+            (v) => Number.parseInt(v, 10),
+            50,
+        )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
             const actions = splitList(opts.actions);
@@ -46,7 +52,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 authorIds,
                 contains: opts.authorsMode === "DOES_NOT_CONTAIN" ? "DOES_NOT_CONTAIN" : "CONTAINS",
             };
-            const req: Record<string, unknown> = {
+            const req: ClockifyApi.SearchAuditLogReportRequest = {
                 workspaceId,
                 start: opts.start,
                 end: opts.end,
@@ -55,11 +61,10 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
-            // KEEP as never: audit search request is assembled dynamically from validated filters.
-            const response = (await client.auditLogReport.search(req as never)) as
+            const response = (await client.auditLogReport.search(req)) as
                 | { entries?: unknown[] }
                 | unknown[];
-            const items = Array.isArray(response) ? response : response.entries ?? [];
+            const items = Array.isArray(response) ? response : (response.entries ?? []);
             const rows = items.map((raw) => {
                 const e = raw as {
                     id?: string;

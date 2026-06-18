@@ -13,7 +13,8 @@
       "isolatedModules": true,
       "noImplicitOverride": false,
       "exactOptionalPropertyTypes": false,
-      "blockedBy": "generated wrapper/src/** (TS4114 ClockifyApiError.cause; 10 EOPT errors)"
+      "eoptHandwrittenClean": true,
+      "blockedBy": "GENERATED wrapper/src/** only: noImplicitOverride -> TS4114 at src/errors/ClockifyApiError.ts + src/errors/ClockifyApiTimeoutError.ts (cause shadows Error.cause); exactOptionalPropertyTypes -> exactly 10 errors across src/api/errors/*, src/core/request.ts, src/errors/ClockifyApiError.ts. Hand-written root files are EOPT-clean (0 errors); enforced by the differential gate `tsc --exactOptionalPropertyTypes | grep -v ^src/ | grep -c error == 0`. The compile flag stays off because TS checks transitively-imported src/**; the durable fix is upstream in ../GOCLMCP/."
     },
     "cli": {
       "strict": true,

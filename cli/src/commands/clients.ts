@@ -1,7 +1,7 @@
 /**
  * `clk115 clients {list,create,get,update,delete}`.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -16,7 +16,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
     clients
         .command("list")
         .description("List clients in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by client name substring.")
         .option("--archived", "Include archived clients.", false)
@@ -54,10 +59,11 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Create a client in the workspace.")
         .action(async function (this: Command, name: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = { workspaceId, name };
-            if (opts.note) body.note = opts.note;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const created = (await client.clients.create(body as never)) as {
+            const req: ClockifyApi.ClientCreate = {
+                workspaceId,
+                body: { name, ...(opts.note !== undefined ? { note: opts.note } : {}) },
+            };
+            const created = (await client.clients.create(req)) as {
                 id?: string;
                 name?: string;
             };
@@ -102,13 +108,19 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Update a client by ID.")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = resolveContext(this, services);
-            const body: Record<string, unknown> = {};
+            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>> & {
+                archived?: boolean;
+            } = {};
             if (opts.name) body.name = opts.name;
             if (opts.note !== undefined) body.note = opts.note;
             if (opts.address !== undefined) body.address = opts.address;
             if (opts.archived !== undefined) body.archived = opts.archived;
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-            const updated = (await client.clients.update({ workspaceId, clientId: id, body } as never)) as {
+            const req = wireBody<ClockifyApi.UpdateClientsRequest>({
+                workspaceId,
+                clientId: id,
+                body,
+            });
+            const updated = (await client.clients.update(req)) as {
                 id?: string;
                 name?: string;
             };
@@ -121,7 +133,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
                     ids: { clientId: data.id },
                     data,
                     changed: { updated: [{ type: "client", id: data.id, name: data.name }] },
-                    next: [{ command: `clk115 clients get ${data.id} --json`, reason: "Verify the update." }],
+                    next: [
+                        {
+                            command: `clk115 clients get ${data.id} --json`,
+                            reason: "Verify the update.",
+                        },
+                    ],
                 },
                 output,
             );
@@ -139,13 +156,22 @@ export const registerClientsCommand: Registrar = (program, services) => {
             // body-envelope form bypasses it via core.bodyFromRequest — so
             // archive first via GET-then-PUT (body envelope), carrying the
             // name the replace-PUT requires, then DELETE. Mirrors the MCP tool.
-            const current = (await client.clients.get({ workspaceId, clientId: id })) as { name?: string };
+            const current = (await client.clients.get({ workspaceId, clientId: id })) as {
+                name?: string;
+            };
             const name = String(current.name ?? "");
             if (!name) {
-                throw new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT.");
+                throw new Error(
+                    "Cannot archive client before delete: the client has no name to carry through the replace-PUT.",
+                );
             }
-            // KEEP as never: UpdateClientsRequestBody omits archived; only the body envelope reaches the wire.
-            await client.clients.update({ workspaceId, clientId: id, body: { name, archived: true } } as never);
+            await client.clients.update(
+                wireBody<ClockifyApi.UpdateClientsRequest>({
+                    workspaceId,
+                    clientId: id,
+                    body: { name, archived: true },
+                }),
+            );
             await client.clients.delete({ workspaceId, clientId: id });
             printReceipt(
                 {
@@ -155,7 +181,12 @@ export const registerClientsCommand: Registrar = (program, services) => {
                     ids: { clientId: id },
                     data: { id, deleted: true, message: `deleted client ${id}` },
                     changed: { deleted: [{ type: "client", id }] },
-                    next: [{ command: "clk115 clients list --json", reason: "Verify the client no longer appears." }],
+                    next: [
+                        {
+                            command: "clk115 clients list --json",
+                            reason: "Verify the client no longer appears.",
+                        },
+                    ],
                 },
                 output,
             );

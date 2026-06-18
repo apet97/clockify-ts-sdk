@@ -5,6 +5,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { toMinor } from "clockify-sdk-ts-115/money";
+import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -18,7 +19,10 @@ const WORKSPACE_ROLES = ["WORKSPACE_ADMIN", "TEAM_MANAGER", "PROJECT_MANAGER"] a
 const roleInput = {
     userId: z.string().min(1),
     role: z.enum(WORKSPACE_ROLES),
-    entityId: z.string().min(1).describe("Entity the role scopes to: the workspace, project, or group id."),
+    entityId: z
+        .string()
+        .min(1)
+        .describe("Entity the role scopes to: the workspace, project, or group id."),
     sourceType: z.enum(["USER_GROUP"]).optional(),
 };
 
@@ -69,7 +73,8 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         "clockify_member_profile_get",
         {
             title: "Get a member profile",
-            description: "Fetch one user's member profile (week start, work capacity, working days) by user ID.",
+            description:
+                "Fetch one user's member profile (week start, work capacity, working days) by user ID.",
             inputSchema: { userId: z.string().min(1) },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -95,16 +100,23 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         "clockify_users_grant_role",
         {
             title: "Grant a workspace role",
-            description: "Grants a workspace role (admin, team manager, project manager) to a user — privileged.",
+            description:
+                "Grants a workspace role (admin, team manager, project manager) to a user — privileged.",
             inputSchema: roleInput,
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const u = await resolveUserRef(
                 { id: args.userId },
-                { verb: "grant the role to", meUserId: await meUserId(), listUsers, trustIds: false },
+                {
+                    verb: "grant the role to",
+                    meUserId: await meUserId(),
+                    listUsers,
+                    trustIds: false,
+                },
             );
-            if (!u.ok) return clarifyResult("clockify_users_grant_role", "userId", "user", u.clarify);
+            if (!u.ok)
+                return clarifyResult("clockify_users_grant_role", "userId", "user", u.clarify);
             const assignments = await ctx.client.users.giveRole({
                 workspaceId: ctx.workspaceId,
                 userId: u.userId,
@@ -124,16 +136,23 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         "clockify_users_revoke_role",
         {
             title: "Revoke a workspace role",
-            description: "Revokes a workspace role (admin, team manager, project manager) from a user — privileged.",
+            description:
+                "Revokes a workspace role (admin, team manager, project manager) from a user — privileged.",
             inputSchema: roleInput,
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const u = await resolveUserRef(
                 { id: args.userId },
-                { verb: "revoke the role from", meUserId: await meUserId(), listUsers, trustIds: false },
+                {
+                    verb: "revoke the role from",
+                    meUserId: await meUserId(),
+                    listUsers,
+                    trustIds: false,
+                },
             );
-            if (!u.ok) return clarifyResult("clockify_users_revoke_role", "userId", "user", u.clarify);
+            if (!u.ok)
+                return clarifyResult("clockify_users_revoke_role", "userId", "user", u.clarify);
             await ctx.client.users.removeRole({
                 workspaceId: ctx.workspaceId,
                 userId: u.userId,
@@ -158,7 +177,9 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 "Set a user's workspace-level hourly (billable) or cost rate — the Team-section rate that applies across the workspace. Amount is in MAJOR units (e.g. 75 = $75.00); Clockify stores integer minor units.",
             inputSchema: {
                 userId: z.string().min(1),
-                rateKind: z.enum(["HOURLY", "COST"]).describe("HOURLY = billable rate; COST = internal cost rate."),
+                rateKind: z
+                    .enum(["HOURLY", "COST"])
+                    .describe("HOURLY = billable rate; COST = internal cost rate."),
                 amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
@@ -174,10 +195,12 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             if (args.since) req.since = args.since;
             const updated =
                 args.rateKind === "COST"
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    ? await ctx.client.workspaces.updateUserCostRate(req as never)
-                    // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
-                    : await ctx.client.workspaces.updateUserHourlyRate(req as never);
+                    ? await ctx.client.workspaces.updateUserCostRate(
+                          wireBody<ClockifyApi.UpdateUserCostRateWorkspacesRequest>(req),
+                      )
+                    : await ctx.client.workspaces.updateUserHourlyRate(
+                          wireBody<ClockifyApi.UpdateUserHourlyRateWorkspacesRequest>(req),
+                      );
             return successResult("clockify_users_set_member_rate", updated, {
                 workspaceId: ctx.workspaceId,
                 userId: args.userId,
@@ -197,7 +220,11 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 "Add (invite) a user to the pinned workspace by email; optionally send them the invitation email.",
             inputSchema: {
                 email: z.string().min(1),
-                sendEmail: z.boolean().default(true).optional().describe("Send the invitation email (default true)."),
+                sendEmail: z
+                    .boolean()
+                    .default(true)
+                    .optional()
+                    .describe("Send the invitation email (default true)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
@@ -206,7 +233,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 "send-email": (args.sendEmail ?? true) ? "true" : "false",
                 email: args.email,
-            // KEEP as never: runtime body object is validated locally but rejected by the generated flattened request type.
+                // KEEP as never: invite query/body split is generated too narrowly.
             } as never);
             return successResult(
                 "clockify_users_invite",
@@ -231,15 +258,20 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 removeProfileImage: z.boolean().optional(),
                 weekStart: z.string().optional().describe("Week start day, e.g. MONDAY."),
                 workCapacity: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
-                workingDays: z.array(z.string()).optional().describe("Day enum strings, e.g. [MONDAY, TUESDAY]."),
+                workingDays: z
+                    .array(z.string())
+                    .optional()
+                    .describe("Day enum strings, e.g. [MONDAY, TUESDAY]."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {};
+            const body: ClockifyRequestBody<ClockifyApi.PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest> =
+                {};
             if (args.name !== undefined) body.name = args.name;
             if (args.imageUrl !== undefined) body.imageUrl = args.imageUrl;
-            if (args.removeProfileImage !== undefined) body.removeProfileImage = args.removeProfileImage;
+            if (args.removeProfileImage !== undefined)
+                body.removeProfileImage = args.removeProfileImage;
             if (args.weekStart !== undefined) body.weekStart = args.weekStart;
             if (args.workCapacity !== undefined) body.workCapacity = args.workCapacity;
             if (args.workingDays !== undefined) body.workingDays = args.workingDays;
