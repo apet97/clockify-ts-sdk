@@ -18,8 +18,8 @@
       "description": "Stop the running timer for the current user."
     },
     {
-      "command": "clk115 log <duration> <description> [-p projectId] [-t taskId] [--tag tagId…] [--billable] [--end iso]",
-      "description": "Log a finished entry. Duration accepts `1h30m`, `90m`, or `PT1H30M`."
+      "command": "clk115 log <duration> <description> [-p project] [-t task] [--tag tag…] [--billable] [--end iso]",
+      "description": "Log a finished entry. Resolves project, task, and tag names to IDs. Duration accepts `1h30m`, `90m`, or `PT1H30M`."
     },
     {
       "command": "clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]",
