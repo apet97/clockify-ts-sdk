@@ -9,6 +9,10 @@ once v1.0.0 ships.
 
 ### Added
 
+- Committed redacted replay fixtures plus `make replay-fixtures` to keep
+  money/time-off wire-shape quirks replayable offline; `wire-shape.test.ts`
+  now treats the invoice `unitPrice` scale finding as a guarded fixture-backed
+  contract.
 - Measured code coverage: `@vitest/coverage-v8` (v4, version-matched) wired
   into `vitest.config.ts` over the hand-written wrapper surface (`*.ts` root;
   generated `src/**` and the flat `webhook-events.ts` catalog excluded). New

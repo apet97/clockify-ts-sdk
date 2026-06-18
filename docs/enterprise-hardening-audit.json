@@ -1684,6 +1684,46 @@
       ]
     },
     {
+      "id": "replay-fixtures",
+      "requirement": "Replay committed redacted Clockify fixtures offline so live API quirks stay grounded without keeping raw probes or secrets in the repo.",
+      "evidence": [
+        {
+          "path": "docs/replay-fixtures-contract.json",
+          "contains": [
+            "spec/evidence/fixtures/invoice-item.unitprice.json",
+            "unitPrice",
+            "timeoff.requests.search",
+            "placeholderIdPattern"
+          ]
+        },
+        {
+          "path": "docs/live-probe-ledger.json",
+          "contains": [
+            "getInvoice",
+            "getTimeOffRequests",
+            "timeoff.requests.search",
+            "WITHDRAWN"
+          ]
+        },
+        {
+          "path": "scripts/check-replay-fixtures.mjs",
+          "contains": [
+            "replay-fixtures gate passed",
+            "secret-hygiene pattern",
+            "unitPriceFromWire",
+            "unitPrice round trip",
+            "sourceGrepTripwire"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "replay-fixtures:"
+          ]
+        }
+      ]
+    },
+    {
       "id": "data-handling",
       "requirement": "Keep Clockify workspace data, personal data, commercial records, webhook payloads, raw live evidence, and support receipts governed by explicit redaction and handling rules.",
       "evidence": [

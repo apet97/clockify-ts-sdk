@@ -130,6 +130,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`security-threat-model-contract.json`](./security-threat-model-contract.json) | edit intentionally | SDK/CLI/MCP/OpenAPI security threat-model contract. |
 | [`version-policy.json`](./version-policy.json) | edit intentionally | Package version, changelog, product-surface, and install-example contract. |
 | [`secret-hygiene.json`](./secret-hygiene.json) | edit intentionally | Lightweight source/docs secret scanning policy. |
+| [`replay-fixtures-contract.json`](./replay-fixtures-contract.json) | edit intentionally | Required committed replay fixtures, redaction checks, and wire-shape tripwires. |
+| [`live-probe-ledger.json`](./live-probe-ledger.json) | edit intentionally | Redacted live-probe evidence ledger linking corrected API behavior to offline fixtures. |
 | [`data-handling-contract.json`](./data-handling-contract.json) | edit intentionally | Workspace data handling and redaction contract. |
 | [`supply-chain-contract.json`](./supply-chain-contract.json) | edit intentionally | Package license, provenance, tarball, and publish-safety contract. |
 | [`dependency-boundary.json`](./dependency-boundary.json) | edit intentionally | Package runtime dependency and SDK peer boundary contract. |
@@ -241,6 +243,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
+| Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |
 | Mutation safety | `make mutation-safety` | Check SDK retry defaults, CLI write rules, MCP confirmation flow, receipt shape, and ambiguous-failure recovery stay aligned. |
 

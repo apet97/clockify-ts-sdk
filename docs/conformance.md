@@ -47,6 +47,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Config Precedence | `make config-precedence` | yes |
 | Consumer Cast Budget | `make consumer-cast-budget` | yes |
 | Contract Inventory | `make contract-inventory` | yes |
+| Coverage | `make coverage` | no |
 | Data Handling | `make data-handling` | yes |
 | Decision Records | `make decision-records` | yes |
 | Dependency Boundary | `make dependency-boundary` | yes |
@@ -85,6 +86,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
+| Replay Fixtures | `make replay-fixtures` | yes |
 | Risk Register | `make risk-register` | yes |
 | Runtime Support | `make runtime-support` | yes |
 | Schema Quality | `make schema-quality` | yes |
@@ -102,4 +104,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 69.
+Total gates: 71.

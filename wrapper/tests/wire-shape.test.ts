@@ -36,6 +36,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     ],
     "invoices.create.note-subject-dropped": ["mcp/tests/invoices.test.ts", "wrapper/tests/wire-shape-http.test.ts"],
     "money.amount-units.expenses-major-invoices-minor": ["wrapper/tests/money.test.ts", "wrapper/tests/wire-shape.test.ts"],
+    "invoices.items-unit-price-scale": ["wrapper/tests/wire-shape.test.ts", "spec/evidence/fixtures/invoice-item.unitprice.json"],
     "holidays.update.replace-and-scope-filter": ["mcp/tests/holidays.test.ts", "mcp/tests/wire-shape.test.ts"],
     "time-off.policies.update.replace-and-scope-filter": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/wire-shape.test.ts"],
     "time-off.policies.scope.status-active-not-all": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/holidays.test.ts"],

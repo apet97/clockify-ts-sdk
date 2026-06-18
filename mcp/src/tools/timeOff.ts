@@ -17,7 +17,11 @@ import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
-const REQUEST_STATUSES = ["APPROVED", "PENDING", "REJECTED", "WITHDRAWN"] as const;
+// The POST-search `statuses` filter accepts only [ALL, PENDING, APPROVED,
+// REJECTED]. It 400s on WITHDRAWN (code 501, live-verified 2026-06-15; see
+// discrepancies.md `time-off.requests.get.dead-route`). WITHDRAWN is a
+// per-request response status, not a valid search filter.
+const REQUEST_SEARCH_STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED"] as const;
 
 // Policy fields the generated PUT accepts and we carry forward from the GET on a
 // replace-style update (everything except the users/userGroups scope, which is
@@ -69,7 +73,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
-                statuses: zStringList(z.array(z.enum(REQUEST_STATUSES))).optional(),
+                statuses: zStringList(z.array(z.enum(REQUEST_SEARCH_STATUSES))).optional(),
                 users: zStringList(z.array(z.string())).optional(),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
@@ -93,10 +97,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             };
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
-            // REQUEST_STATUSES carries WITHDRAWN (a per-request status), which the
-            // generated RequestStatusType omits; the search filter accepts it, so
-            // cast the validated enum array onto the wire union.
-            if (args.statuses) req.statuses = args.statuses as ClockifyApi.RequestStatusType[];
+            // Input was validated against REQUEST_SEARCH_STATUSES: the exact set
+            // the search filter accepts.
+            if (args.statuses) req.statuses = args.statuses;
             if (users) req.users = users;
             // timeOff.list returns the TimeOffRequestsResponse envelope
             // ({ count, requests }), NOT a bare array (live-verified 2026-06-18);

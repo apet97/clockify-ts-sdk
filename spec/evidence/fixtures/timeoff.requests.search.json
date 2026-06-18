@@ -1,0 +1,20 @@
+{
+  "comment": "WS3 golden fixture (redacted, NOT a raw live probe). POST /time-off/requests (the search) returns the envelope { count, requests }, not a bare array. The list tool unwraps `requests` and reports `count`. See discrepancies.md `time-off.requests.get.dead-route`.",
+  "_redactions": ["ids -> placeholders", "userName -> synthetic"],
+  "operationId": "getTimeOffRequests",
+  "wire": {
+    "count": 1,
+    "requests": [
+      {
+        "id": "000000000000000000000701",
+        "userId": "000000000000000000000002",
+        "policyId": "000000000000000000000801",
+        "status": "APPROVED"
+      }
+    ]
+  },
+  "assert": {
+    "envelope": ["count", "requests"],
+    "count": 1
+  }
+}

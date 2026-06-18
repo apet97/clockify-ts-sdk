@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "purpose": "In-repo probe/fixture ledger. Rows with a numeric status record safe read operations captured against a confirmed sandbox workspace; fixture-only rows record committed redacted golden fixtures that can be refreshed by scripts/probe-and-stamp.mjs (read-only, creds-optional) once sandbox credentials are confirmed. This replaces sole reliance on sibling-repo notes and can feed a future GOCLMCP live-status stamp bump.",
+  "bucketVocabulary": ["live-success", "permission-gated", "workspace-state-limited", "unsupported", "fixture-only", "unit-only"],
+  "rows": [
+    {
+      "operationId": "getWorkspaceProjects",
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/projects",
+      "status": null,
+      "bucket": "fixture-only",
+      "recordedAt": "2026-06-18",
+      "fixture": "spec/evidence/fixtures/projects.list.json",
+      "note": "Read-only project list fixture; refresh through scripts/probe-and-stamp.mjs projects.list only after confirming sandbox credentials."
+    },
+    {
+      "operationId": "getInvoice",
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "status": null,
+      "bucket": "fixture-only",
+      "recordedAt": "2026-06-18",
+      "fixture": "spec/evidence/fixtures/invoice.get.json",
+      "note": "Golden fixture for tax/discount x100 GET scale; unit-pinned in wrapper/tests/wire-shape.test.ts."
+    },
+    {
+      "operationId": "getTimeOffRequests",
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/requests",
+      "status": null,
+      "bucket": "fixture-only",
+      "recordedAt": "2026-06-18",
+      "fixture": "spec/evidence/fixtures/timeoff.requests.search.json",
+      "note": "Search-as-read fixture; envelope {count,requests}; statuses filter 400s on WITHDRAWN (guarded in mcp/src/tools/timeOff.ts). Refresh through scripts/probe-and-stamp.mjs timeoff.requests.search only after confirming sandbox credentials."
+    },
+    {
+      "operationId": "addInvoiceItem",
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items",
+      "status": null,
+      "bucket": "unit-only",
+      "probedAt": "2026-06-10",
+      "fixture": "spec/evidence/fixtures/invoice-item.unitprice.json",
+      "note": "Not re-probed live in-repo because it is a write op; unitPrice minor*100 scale is unit-pinned and boundary-guarded."
+    }
+  ]
+}

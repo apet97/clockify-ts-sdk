@@ -13,4 +13,9 @@ Naming: `<entity>.json` or `<entity>.<variant>.json`. Strip every
 ID/UUID/timestamp that isn't load-bearing. Keep one fixture per
 file — do not pack arrays of unrelated shapes together.
 
-Git-ignored. Promote by referencing from `../discrepancies.md`.
+Committable (only `../probes/*.json` is git-ignored, per `.gitignore`). Every
+committed fixture is replayed offline by `make replay-fixtures` and re-scanned
+by `make secret-hygiene` + `make data-handling`, so redact real IDs/secrets
+first (use the `000000000000000000000NNN` placeholder convention from
+`scripts/mock-clockify-server.mjs`). Promote by referencing from
+`../discrepancies.md` and `docs/live-probe-ledger.json`.
