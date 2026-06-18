@@ -24,20 +24,8 @@ function toSnake(value) {
 }
 
 function readTsMcpTools() {
-    const toolsDir = path.join(root, "mcp", "src", "tools");
-    const names = new Set();
-    for (const file of fs.readdirSync(toolsDir)) {
-        if (!file.endsWith(".ts")) continue;
-        const raw = fs.readFileSync(path.join(toolsDir, file), "utf8");
-        // Domain tools register either via the raw `server.registerTool("name", ...)`
-        // call or through the type-preserving `defineTool(server, "name", ...)` seam
-        // (mcp/src/result.ts). Match both forwarding shapes so the migration does not
-        // silently drop tool names from the parity table.
-        for (const match of raw.matchAll(/(?:registerTool\(\s*|defineTool\(\s*server,\s*)["']([^"']+)["']/g)) {
-            names.add(match[1]);
-        }
-    }
-    return names;
+    const manifest = readJson(path.join(root, "docs", "mcp-tool-manifest.json"));
+    return new Set((manifest.tools ?? []).map((tool) => tool.name).filter(Boolean));
 }
 
 function readGoMcpTools() {
@@ -127,7 +115,7 @@ function build() {
         purpose: "Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScript MCP tools, and GOCLMCP tools.",
         sources: {
             openapi: "docs/openapi-operations.json",
-            tsMcp: "mcp/src/tools/*.ts",
+            tsMcp: "docs/mcp-tool-manifest.json",
             goMcp: "../GOCLMCP/docs/tool-catalog.json",
             overrides: "docs/operation-parity-overrides.json",
         },

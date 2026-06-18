@@ -34,3 +34,6 @@ spec/evidence/probes/*.hdr
 .vscode/
 *.swp
 .claude/
+
+# Recon / scratch output from agent sessions.
+/.recon/

@@ -134,6 +134,7 @@
     "docsIndexContract": "mcp-write-safety-contract.json",
     "qualityGate": "make mcp-write-safety",
     "inventoryId": "mcp-write-safety",
-    "auditId": "mcp-write-safety"
+    "auditId": "mcp-write-safety",
+    "toolManifest": "docs/mcp-tool-manifest.json"
   }
 }

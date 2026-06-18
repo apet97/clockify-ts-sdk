@@ -571,13 +571,16 @@
       "id": "mcp-surface",
       "changedPaths": [
         "mcp/src/**",
+        "mcp/scripts/**",
         "mcp/tests/**",
         "mcp/README.md",
-        "docs/mcp-tools.json"
+        "docs/mcp-tools.json",
+        "docs/mcp-tool-manifest.json"
       ],
       "requiredTargets": [
         "mcp-contract",
         "mcp-write-safety",
+        "mcp-tool-manifest-drift",
         "receipts-contract",
         "workflow-cookbook",
         "mcp-gates",

@@ -35,6 +35,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`product-north-star.md`](./product-north-star.md) | Final-state quality bar for the repo. |
 | [`naming-taxonomy-policy.md`](./naming-taxonomy-policy.md) | One Clockify vocabulary across SDK, CLI, MCP, docs, examples, and OpenAPI parity. |
 | [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from validation gates to artifact evidence. |
+| [`gate-tiers.md`](./gate-tiers.md) | Human map of validation tiers, surface-to-gate routing, and intentional gate overlap. |
 | [`install-personas.md`](./install-personas.md) | Separate install paths for SDK, CLI, and MCP users. |
 | [`operator-onboarding.md`](./operator-onboarding.md) | Non-coder maintainer bootstrap path: first reads, generated onboarding-plan shape, persona choice, mock/live safety, stop conditions, and readiness boundaries. |
 | [`operator-toolbox.md`](./operator-toolbox.md) | No-network helper command catalogue for orientation, workflow, maintenance, release, performance, risk, and support planning. |
@@ -160,6 +161,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`mcp-contract.json`](./mcp-contract.json) | edit intentionally | TS MCP tools/resources/prompts/output-schema discoverability contract. |
 | [`mcp-agent-ux-contract.json`](./mcp-agent-ux-contract.json) | edit intentionally | MCP server instructions, workflow-first guidance, resources, prompts, output schema, receipt, and README UX contract. |
 | [`mcp-write-safety-contract.json`](./mcp-write-safety-contract.json) | edit intentionally | MCP destructive-write confirmation, hint, and receipt contract. |
+| [`mcp-tool-manifest.json`](./mcp-tool-manifest.json) | generated | Structural MCP tool manifest generated from `buildServer`; consumed by write-safety and operation-parity gates. |
 | [`cli-contract.json`](./cli-contract.json) | edit intentionally | CLI command/global/completion/exit-code contract. |
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
 | [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Consumer `as never` cast budget, KEEP-as-never allow-list policy, and per-package strictness state. |
@@ -238,6 +240,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | MCP contract | `make mcp-contract` | Check TS MCP tools, guide resources, prompts, output schema, README, and server tests agree. |
 | MCP agent UX | `make mcp-agent-ux` | Check MCP server instructions, workflow-first tool guidance, resources, prompts, structured receipts, safety, and README discoverability. |
 | MCP write safety | `make mcp-write-safety` | Check destructive MCP tools advertise risk, high-risk writes require preview confirmation, and receipts stay recoverable. |
+| MCP tool manifest | `make mcp-tool-manifest` | Regenerate the structural MCP tool manifest and use `make mcp-tool-manifest-drift` to check freshness. |
 | CLI contract | `make cli-contract` | Check CLI command metadata, README, globals, completion shells, binaries, and exit-code tests agree. |
 | CLI write safety | `make cli-write-safety` | Check write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
 | Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |

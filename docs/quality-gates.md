@@ -81,6 +81,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check MCP contract | `make mcp-contract` | TS MCP tool counts, guide resources, prompts, output schema, README, and server tests stay aligned. |
 | Check MCP agent UX | `make mcp-agent-ux` | MCP server instructions, workflow-first guidance, resources, prompts, structured receipts, recovery, and README discoverability stay aligned. |
 | Check MCP write safety | `make mcp-write-safety` | Destructive MCP tools advertise risk, high-risk workflows require `dry_run` plus `confirm_token`, and receipts stay recoverable. |
+| Refresh MCP tool manifest | `make mcp-tool-manifest` | `docs/mcp-tool-manifest.json` lists every registered MCP tool from `buildServer`; `make mcp-tool-manifest-drift` fails if it is stale. |
 | Check CLI contract | `make cli-contract` | CLI command metadata, README table, global flags, completion shells, binaries, and exit-code tests stay aligned. |
 | Check CLI write safety | `make cli-write-safety` | CLI write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
 | Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
