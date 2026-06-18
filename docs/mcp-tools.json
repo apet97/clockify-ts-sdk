@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 127,
+    "totalTools": 134,
     "workflowTools": 21,
-    "domainTools": 106
+    "domainTools": 113
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
@@ -40,9 +40,10 @@
     { "resourceGroup": "webhooks", "count": 5, "tools": "list, get, create, update, delete" },
     { "resourceGroup": "custom_fields", "count": 7, "tools": "workspace CRUD plus project field list/update/remove" },
     { "resourceGroup": "time_off", "count": 12, "tools": "requests, policies, and balances" },
-    { "resourceGroup": "users", "count": 5, "tools": "list, member_profile_get, grant_role, revoke_role, set_member_rate" },
+    { "resourceGroup": "users", "count": 7, "tools": "list, member_profile_get, grant_role, revoke_role, set_member_rate, invite, member_profile_update" },
     { "resourceGroup": "scheduling", "count": 7, "tools": "assignments list/create/update/delete plus publish and capacity" },
     { "resourceGroup": "reports", "count": 4, "tools": "summary, detailed, weekly, attendance" },
+    { "resourceGroup": "shared_reports", "count": 5, "tools": "list, view, create, update, delete" },
     { "resourceGroup": "groups", "count": 8, "tools": "CRUD plus membership tools" },
     { "resourceGroup": "holidays", "count": 5, "tools": "list/create/update/delete" },
     { "resourceGroup": "approvals", "count": 4, "tools": "list, submit, update state, resubmit" },

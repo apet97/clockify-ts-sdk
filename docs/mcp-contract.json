@@ -3,9 +3,9 @@
   "purpose": "MCP discoverability contract for the TypeScript Clockify MCP server. Keeps tool counts, guide resources, prompts, structuredContent output-schema expectations, and tests aligned across metadata, implementation, README, and tests.",
   "toolsMetadata": "docs/mcp-tools.json",
   "expected": {
-    "totalTools": 127,
+    "totalTools": 134,
     "workflowTools": 21,
-    "domainTools": 106,
+    "domainTools": 113,
     "resources": [
       "clockify://guide/axioms",
       "clockify://guide/workflows",

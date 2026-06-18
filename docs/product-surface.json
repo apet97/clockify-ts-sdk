@@ -21,6 +21,7 @@
       ],
       "publicExports": [
         ".",
+        "./bulk",
         "./composed-fetch",
         "./create-client",
         "./dates",
@@ -37,6 +38,7 @@
         "./paginated-list",
         "./pagination",
         "./rate-limit",
+        "./reports",
         "./request-options",
         "./resolve",
         "./scoped-client",
@@ -88,9 +90,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 127,
+      "declaredToolCount": 134,
       "declaredWorkflowToolCount": 21,
-      "declaredDomainToolCount": 106,
+      "declaredDomainToolCount": 113,
       "prepublishOnly": "npm run type-check && npm test && npm run build",
       "gates": [
         "npm run type-check",

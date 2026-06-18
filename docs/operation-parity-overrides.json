@@ -31,6 +31,8 @@
     { "operationId": "postWorkspacesWorkspaceIdTimeEntries", "tsMcp": "clockify_entries_log", "goMcp": "clockify_entries_create", "reason": "POST /time-entries is the workflow-first create exposed as clockify_entries_log." },
     { "operationId": "findWorkspaceUsers", "goMcp": "clockify_users_list", "reason": "GOCLMCP exposes workspace users through the users_list tool." },
     { "operationId": "getMemberProfile", "tsMcp": "clockify_member_profile_get", "goMcp": "clockify_users_profile", "reason": "Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile." },
+    { "operationId": "updateMemberProfile", "tsMcp": "clockify_member_profile_update", "reason": "PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias)." },
+    { "operationId": "addUserToWorkspace", "tsMcp": "clockify_users_invite", "reason": "Adding a user to the workspace is surfaced under the users group as the invite tool." },
     { "operationId": "giveUserManagerRole", "tsMcp": "clockify_users_grant_role", "goMcp": "clockify_users_role", "reason": "Grant a workspace role to a user; GOCLMCP groups role writes under users_role." },
     { "operationId": "removeUserManagerRole", "tsMcp": "clockify_users_revoke_role", "goMcp": "clockify_users_role", "reason": "Revoke a workspace role from a user; GOCLMCP groups role writes under users_role." }
   ]

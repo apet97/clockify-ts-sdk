@@ -234,9 +234,10 @@ Prompts:
 | `webhooks` | 5 | list, get, create, update, delete |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |
-| `users` | 5 | list, member_profile_get, grant_role, revoke_role, set_member_rate |
+| `users` | 7 | list, member_profile_get, grant_role, revoke_role, set_member_rate, invite, member_profile_update |
 | `scheduling` | 7 | assignments list/create/update/delete plus publish and capacity |
 | `reports` | 4 | summary, detailed, weekly, attendance |
+| `shared_reports` | 5 | list, view, create, update, delete |
 | `groups` | 8 | CRUD plus membership tools |
 | `holidays` | 5 | list/create/update/delete |
 | `approvals` | 4 | list, submit, update state, resubmit |

@@ -22,6 +22,7 @@ import { registerInvoicesTools } from "./tools/invoices.js";
 import { registerProjectsTools } from "./tools/projects.js";
 import { registerReportsTools } from "./tools/reports.js";
 import { registerSchedulingTools } from "./tools/scheduling.js";
+import { registerSharedReportsTools } from "./tools/sharedReports.js";
 import { registerStatusTool } from "./tools/status.js";
 import { registerTagsTools } from "./tools/tags.js";
 import { registerTasksTools } from "./tools/tasks.js";
@@ -73,6 +74,7 @@ export function buildServer(ctx: Context): McpServer {
     registerTimeOffTools(server, ctx);
     registerSchedulingTools(server, ctx);
     registerReportsTools(server, ctx);
+    registerSharedReportsTools(server, ctx);
     registerUsersTools(server, ctx);
     registerGroupsTools(server, ctx);
     registerHolidaysTools(server, ctx);

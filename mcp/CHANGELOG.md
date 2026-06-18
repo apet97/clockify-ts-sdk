@@ -4,6 +4,15 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- 7 new domain tools (**127 → 134**): a `shared_reports` group
+  (`clockify_shared_reports_list` / `_view` / `_create` / `_update` / `_delete`)
+  for the workspace's public-link reports, plus `clockify_users_invite`
+  (add a user to the workspace by email) and `clockify_member_profile_update`
+  (update a member's profile). `clockify_shared_reports_delete` is
+  confirm-guarded (dry_run → confirm_token) like the other destructive deletes.
+
 ### Fixed
 
 - `clockify_review_day` / `clockify_review_week` and `clockify_fix_entry`'s
@@ -35,8 +44,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   `tasks` / `clients` / `scheduling` list tools (the typed path already yields
   the generated array). The type-erasing "trap" casts on the scheduling
   per-project and time-off list/status/policy requests are now documented with
-  `TODO(P2-1 trap)` comments naming the real latent wire-shape bugs, rather than
-  silently narrowed (which would change unproven wire behavior).
+  in-code `(P2-1 trap)` comments naming the real latent wire-shape bugs, rather
+  than silently narrowed (which would change unproven wire behavior).
 - The SDK client the MCP server uses no longer exposes the dead
   `timeEntries.stopTimer` method (the `/stop` route 404s live and was
   quarantined out of the canonical OpenAPI upstream). The timer tools

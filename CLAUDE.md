@@ -11,7 +11,7 @@ This standalone repo ships three sibling packages:
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 90 public names; 25 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`, `reports`, `bulk`) |
 | `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 29 commands incl. `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 127 tools (21 workflow + 106 domain); 6 resources |
+| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 134 tools (21 workflow + 113 domain); 6 resources |
 
 The `-115` / `115` suffix is intentional trademark distance. Default
 stance: local/packable packages, not npm publication. Keep

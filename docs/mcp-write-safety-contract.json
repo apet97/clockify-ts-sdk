@@ -25,7 +25,8 @@
     "clockify_expenses_delete",
     "clockify_invoices_delete",
     "clockify_scheduling_assignments_delete",
-    "clockify_time_off_requests_delete"
+    "clockify_time_off_requests_delete",
+    "clockify_shared_reports_delete"
   ],
   "idempotentWorkflowTools": [
     "clockify_demo_seed",
