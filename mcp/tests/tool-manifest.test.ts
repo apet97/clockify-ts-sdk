@@ -30,11 +30,16 @@ describe("mcp tool manifest", () => {
         expect(manifest.tools.map((tool) => tool.name)).toEqual(liveNames());
     });
 
-    it("summary counts are 134 / 21 / 113 / 23", () => {
-        expect(manifest.summary.totalTools).toBe(134);
-        expect(manifest.summary.workflowTools).toBe(21);
-        expect(manifest.summary.domainTools).toBe(113);
-        expect(manifest.summary.destructiveTools).toBe(23);
+    it("summary is internally consistent and meets the structural floor", () => {
+        const { summary, tools } = manifest;
+        expect(summary.totalTools).toBe(tools.length);
+        expect(summary.workflowTools + summary.domainTools).toBe(summary.totalTools);
+        expect(summary.totalTools).toBeGreaterThanOrEqual(134);
+        expect(summary.workflowTools).toBeGreaterThanOrEqual(21);
+        expect(summary.domainTools).toBeGreaterThanOrEqual(113);
+        expect(summary.destructiveTools).toBeGreaterThan(0);
+        expect(summary.destructiveTools).toBeLessThanOrEqual(summary.totalTools);
+        expect(summary.destructiveTools).toBeGreaterThanOrEqual(23);
     });
 
     it("generator floor is satisfied by the live server", () => {
