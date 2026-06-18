@@ -4,7 +4,7 @@
 
 Source: `spec/corrected/clockify.corrected.openapi.yaml`
 
-Operation count: **185**
+Operation count: **184**
 
 | Method | Path | Operation ID | Tags | Fern SDK group | Fern SDK method | Last-Page | Request body | Responses |
 |---|---|---|---|---|---|---|---|---|
@@ -172,7 +172,6 @@ Operation count: **185**
 | PUT | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `putWorkspacesWorkspaceIdUserUserIdTimeEntries` | Time Entries | timeEntries | startTimer | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntries` | Time Entries | timeEntries | updateForUser | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `deleteMany` | Time Entries | - | - | - | - | 200 |
-| PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries/stop` | `patchWorkspacesWorkspaceIdUserUserIdTimeEntriesStop` | Time Entries | timeEntries | stopTimer | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | `postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate` | Time Entries | timeEntries | duplicate | - | - | 201 |
 | GET | `/workspaces/{workspaceId}/users` | `findWorkspaceUsers` | Users | users | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/users` | `addUserToWorkspace` | Workspaces | workspaces | addUser | - | yes | 200 |

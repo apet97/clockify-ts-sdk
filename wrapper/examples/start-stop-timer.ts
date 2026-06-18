@@ -3,20 +3,20 @@
  * litter. "Start" = create an entry with a start but no end (a running timer).
  *
  * Stopping a running timer: Clockify's live API stops via the user-scoped
- * `PATCH /workspaces/{ws}/user/{userId}/time-entries`. The generated SDK's
- * `timeEntries.stopTimer(...)` currently targets a `.../time-entries/stop`
- * variant that the live API returns 404 "No static resource" for (recorded in
- * spec/evidence/discrepancies.md → `entries.stoptimer.route-404-no-static-resource`).
- * Until that route is fixed at the generator, stop via the MCP `clockify_stop_work`
- * workflow, or — as here, to keep the example self-cleaning — discard the running
- * timer with `delete`.
+ * `PATCH /workspaces/{ws}/user/{userId}/time-entries` with an `{ end }` body
+ * (the generated `timeEntries.updateForUser`). The legacy `/stop` suffix route
+ * (`timeEntries.stopTimer`) 404s live and has been quarantined out of the
+ * generated SDK (spec/evidence/discrepancies.md →
+ * `entries.stoptimer.route-404-no-static-resource`). This example stops the
+ * timer that way, then deletes it so a partial run leaves no litter.
  *
  * Env: CLOCKIFY_API_KEY, CLOCKIFY_WORKSPACE_ID
  * Mode: live-only — writes to your sandbox workspace. Never run against production.
  * Cleanup: deletes the entry it created.
  * Expected output (success):
  *   Started timer <id>
- *   Stopped (discarded) timer <id>
+ *   Stopped timer <id>
+ *   Deleted timer <id>
  *
  * Run: `CLOCKIFY_API_KEY=xxx CLOCKIFY_WORKSPACE_ID=yyy npx tsx examples/start-stop-timer.ts`
  */
@@ -31,6 +31,13 @@ if (!apiKey || !workspaceId) {
 
 const client = createClockifyClient({ apiKey });
 
+const me = await client.users.getCurrentUser();
+const userId = me.id;
+if (!userId) {
+    console.error("Could not resolve the current user id.");
+    process.exit(1);
+}
+
 let entryId: string | undefined;
 try {
     // Start: a time entry with a start but no end is a running timer.
@@ -43,9 +50,13 @@ try {
     if (!entryId) throw new Error("server did not return an entry id");
     console.log(`Started timer ${entryId}`);
 
-    // Stop: discard the running timer (see header note on the live stop route).
+    // Stop: the live stop flow — PATCH the user's running entry with { end }.
+    await client.timeEntries.updateForUser({ workspaceId, userId, end: new Date().toISOString() });
+    console.log(`Stopped timer ${entryId}`);
+
+    // Clean up so the example leaves no litter.
     await client.timeEntries.delete({ workspaceId, timeEntryId: entryId });
-    console.log(`Stopped (discarded) timer ${entryId}`);
+    console.log(`Deleted timer ${entryId}`);
 } catch (err) {
     // Best-effort cleanup so a mid-flow failure never leaves a running timer.
     if (entryId) {

@@ -25,6 +25,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- The SDK client the MCP server uses no longer exposes the dead
+  `timeEntries.stopTimer` method (the `/stop` route 404s live and was
+  quarantined out of the canonical OpenAPI upstream). The timer tools
+  already stop via `timeEntries.updateForUser({ end })`; the stale
+  `stopTimer` test mock was removed. No tool name or behavior changed.
 - `clockify_record_expense`'s `amount` now accepts a numeric string (e.g. `"75"`)
   via `zNumberLike`, matching the domain expense tools; the model-visible JSON
   Schema stays `number`.

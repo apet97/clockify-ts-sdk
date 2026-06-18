@@ -1,6 +1,6 @@
 # timeEntries
 
-14 methods on `client.timeEntries`.
+13 methods on `client.timeEntries`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
 
@@ -191,16 +191,4 @@
 - `workspaceId` (`string`, required)
 - `userId` (`string`, required)
 - `timeEntryId` (`string`, required)
-
-### `stopTimer`
-
-**Request fields** (`StopTimerTimeEntriesRequest`):
-
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `end` (`string`, required)
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `body` (`StopTimerTimeEntriesRequestBody`, required)
-- `end` (`string`, required)
 

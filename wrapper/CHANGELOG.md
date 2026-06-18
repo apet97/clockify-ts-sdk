@@ -30,6 +30,12 @@ once v1.0.0 ships.
 
 ### Changed
 
+- The generated SDK no longer exposes the dead `timeEntries.stopTimer`
+  method: the `PATCH .../time-entries/stop` route 404s live and has been
+  quarantined out of the canonical OpenAPI upstream (GOCLMCP). The live
+  stop flow is `timeEntries.updateForUser({ workspaceId, userId, end })`.
+  Live surface is now **184 operations** with method-name stamps on
+  **172 of 184** (was 185 / 173 of 185). No hand-written name changed.
 - `paginate` (the `pagination` subpath, also a root export) is now a thin
   adapter over `iterAll` instead of re-implementing its own page-walk —
   one page-walk, one source of `Last-Page` correctness. The name,

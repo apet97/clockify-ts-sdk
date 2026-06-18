@@ -152,7 +152,6 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                     Object.assign(entry, body.body ?? body);
                     return entry;
                 },
-                stopTimer: async () => ({ id: "e-stopped", stopped: true }),
                 delete: async (body: { timeEntryId: string }) => {
                     state.cleanupRequests.push({ type: "entry.delete", body });
                     state.entries = state.entries.filter((entry) => entry.id !== body.timeEntryId);

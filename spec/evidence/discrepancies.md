@@ -235,7 +235,7 @@ before emitting tags.
   `timeOffPolicies` are correctly retained as separate domains.
 - **Status:** `fixed-in-canonical-generator`.
 
-### `entries.stoptimer.route-404-no-static-resource` — COMPENSATED 2026-06-17 (callers migrated to the bound route)
+### `entries.stoptimer.route-404-no-static-resource` — RESOLVED 2026-06-18 (route quarantined; callers on the bound route)
 
 - **What does official documentation claim?** The generated TypeScript SDK exposes
   `timeEntries.stopTimer({ workspaceId, userId, end })`, which issues
@@ -261,10 +261,11 @@ before emitting tags.
   (`{ end }`) — they never call the dead `stopTimer`, and "no timer running" comes
   from an empty in-progress list, not from swallowing a 404. The MCP callers share
   `mcp/src/tools/timer-stop.ts`.
-- **Status:** `compensated-in-callers` (2026-06-17). The remaining cleanup — removing
-  the dead `stopTimer` method + `/stop` route from generated output via a GOCLMCP
-  quarantine (add the route to `PHANTOM_PATHS`, drop its `SDK_METHOD_NAMES` entry,
-  regenerate) — is pending, not a blocker. Tests: `cli/tests/stop.test.ts`,
+- **Status:** `resolved` (2026-06-18). Callers were migrated to the bound route
+  (2026-06-17); the dead `stopTimer` method + `/stop` route are now removed from
+  generated output via the GOCLMCP quarantine (added to `PHANTOM_PATHS`, dropped its
+  `SDK_METHOD_NAMES` entry, regenerated — live surface 185→184 ops, SDK stamps
+  172→171). Tests: `cli/tests/stop.test.ts`,
   `mcp/tests/work-time-tracking.test.ts`, `mcp/tests/server.test.ts`.
 
 ---

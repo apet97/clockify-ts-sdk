@@ -121,11 +121,12 @@ refreshed by `cp` after every regen in GOCLMCP.
      `x-clockify-last-page-header: true` on 15 endpoints that emit
      the header
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
-     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 172 ops
+     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 171 ops
      across 28 modules
-   - `PHANTOM_PATHS` + `phantom_path?` — 9 quarantined live-404/405
+   - `PHANTOM_PATHS` + `phantom_path?` — 10 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
-     plus bare `/balance` × 2 and `/scheduling/capacity` × 1)
+     plus bare `/balance` × 2, `/scheduling/capacity` × 1, and
+     `/time-entries/stop` × 1)
    - per-operation `servers` overrides on the reports, audit-log, and
      shared/expense-report ops. `scripts/generate-sdk-from-openapi.mjs`
      reads `operation.servers[0].url` and emits `OperationSpec.baseUrl`,
@@ -181,7 +182,7 @@ upstream sources (GOCLMCP/docs/openapi/sources/**)
         │
         │  (cd ../GOCLMCP && make gen-openapi)
         ▼
-GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 185 ops, 9 quarantined sources)
+GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 184 ops, 10 quarantined sources)
         │
         │  make {openapi,catalog,selfinspect,raw-allowlist}-drift   ← all 4 must EXIT 0
         │  go test ./internal/tools/...                              ← must pass
@@ -493,12 +494,12 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    (internal evidence only — not filed).
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
-   `x-fern-sdk-method-name`. Coverage: 172 ops / 28 modules /
-   93.0% of the 185-op live surface. The other ~13 ops are
+   `x-fern-sdk-method-name`. Coverage: 171 ops / 28 modules /
+   92.9% of the 184-op live surface. The other ~13 ops are
    already-clean operationIds or per-module domain edge cases.
-   (This 172 is the fern *pairing* count. The SDK README states 173 —
+   (This 171 is the fern *pairing* count. The SDK README states 172 —
    total method-name coverage — which adds the one operationId-derived
-   method, `expenseReport.generateDetailedReportV1`, to these 172.)
+   method, `expenseReport.generateDetailedReportV1`, to these 171.)
 
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).

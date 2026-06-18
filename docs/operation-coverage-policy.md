@@ -6,12 +6,12 @@ wrapped, documented, or exposed through SDK, CLI, TS MCP, and GOCLMCP.
 
 ## Coverage baseline
 
-The current corrected snapshot has 185 operations. The operation coverage gate
+The current corrected snapshot has 184 operations. The operation coverage gate
 uses the current parity summary as a no-regression floor:
 
 | Metric | Minimum |
 |---|---:|
-| OpenAPI operations | 185 |
+| OpenAPI operations | 184 |
 | SDK-named operations | 170 |
 | TS MCP exact operation/tool matches | 69 |
 | GOCLMCP exact operation/tool matches | 84 |
