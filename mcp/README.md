@@ -199,6 +199,13 @@ Demo fixture helpers:
 { "name": "clockify_demo_cleanup", "arguments": { "run_id": "smoke" } }
 ```
 
+`clockify_demo_seed` and `clockify_demo_cleanup` ship by default rather
+than behind a flag: they back `npm run verify:live-cleanup`, the
+sandbox proof that the server leaves no objects behind. `demo_seed`
+creates only prefix-namespaced objects, and `clockify_demo_cleanup` is
+`destructiveHint`-guarded so a client surfaces it as a destructive
+action before running it.
+
 ## Resources and Prompts
 
 The server exposes guide resources for agent discovery:
@@ -217,6 +224,18 @@ or MCP path before touching live data.
 Prompts:
 
 - `clockify-workflow-plan` — interactive workflow plan for time tracking and admin flows.
+
+## Naming
+
+Tools follow two grammars. **Workflow tools** read as action
+verb-phrases (`clockify_log_work`, `clockify_review_day`,
+`clockify_create_work_package`) so an agent picks them by intent.
+**Domain tools** follow `clockify_<group>_<action>`
+(`clockify_projects_create`, `clockify_entries_delete`) to mirror the
+underlying Clockify resource. The canonical rules — and how they map to
+SDK methods, CLI commands, and OpenAPI operations — live in
+[`docs/naming-taxonomy-policy.md`](../docs/naming-taxonomy-policy.md),
+the source of truth.
 
 ## Domain Tools
 
