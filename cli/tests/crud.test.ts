@@ -40,7 +40,7 @@ afterEach(() => {
 });
 
 function lastPayload(): Record<string, unknown> {
-    const line = logSpy.mock.calls.at(-1)?.[0] as string;
+    const line = logSpy.mock.calls[logSpy.mock.calls.length - 1]?.[0] as string;
     return JSON.parse(line) as Record<string, unknown>;
 }
 
@@ -79,7 +79,7 @@ describe("projects CRUD", () => {
             "node", "clk115", "--json", "projects", "delete", "p-1",
         ]);
         // archive-then-delete: one update with archived:true, then a delete.
-        expect(calls.updates.at(-1)).toMatchObject({ archived: true, name: "Acme" });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ archived: true, name: "Acme" });
         expect(calls.deletes).toHaveLength(1);
         const payload = lastPayload();
         expect(payload.deleted).toBe(true);
@@ -112,7 +112,7 @@ describe("clients CRUD", () => {
             "node", "clk115", "--json", "clients", "delete", "c-1",
         ]);
         // The archive PUT must carry the name+archived inside a `body` envelope.
-        expect(calls.updates.at(-1)).toMatchObject({ body: { name: "Globex", archived: true } });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ body: { name: "Globex", archived: true } });
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
     });
@@ -185,7 +185,7 @@ describe("tasks CRUD", () => {
         await makeProgram(registerTasksCommand, client).parseAsync([
             "node", "clk115", "--json", "tasks", "create", "p-1", "Build",
         ]);
-        expect(calls.creates.at(0)).toMatchObject({ projectId: "p-1", name: "Build" });
+        expect(calls.creates[0]).toMatchObject({ projectId: "p-1", name: "Build" });
         expect(lastPayload().action).toBe("tasks.create");
     });
 
@@ -194,7 +194,7 @@ describe("tasks CRUD", () => {
         await makeProgram(registerTasksCommand, client).parseAsync([
             "node", "clk115", "--json", "tasks", "delete", "p-1", "tk-1",
         ]);
-        expect(calls.updates.at(-1)).toMatchObject({ status: "DONE", name: "QA", projectId: "p-1" });
+        expect(calls.updates[calls.updates.length - 1]).toMatchObject({ status: "DONE", name: "QA", projectId: "p-1" });
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
     });
@@ -225,7 +225,7 @@ describe("expenses CRUD", () => {
             "node", "clk115", "--json", "expenses", "update", "ex-1",
             "--amount", "12.5", "--category", "cat-1", "--date", "2026-06-18", "--user", "u-1",
         ]);
-        expect(calls.updates.at(0)).toMatchObject({
+        expect(calls.updates[0]).toMatchObject({
             amount: 12.5,
             categoryId: "cat-1",
             date: "2026-06-18",
@@ -281,8 +281,8 @@ describe("shared-reports CRUD", () => {
         await makeProgram(registerSharedReportsCommand, client).parseAsync([
             "node", "clk115", "--json", "shared-reports", "view", "sr-1",
         ]);
-        expect(calls.views.at(0)).not.toHaveProperty("workspaceId");
-        expect(calls.views.at(0)).toMatchObject({ sharedReportId: "sr-1" });
+        expect(calls.views[0]).not.toHaveProperty("workspaceId");
+        expect(calls.views[0]).toMatchObject({ sharedReportId: "sr-1" });
         expect(lastPayload()).toMatchObject({ totals: { duration: 10 } });
     });
 
@@ -292,7 +292,7 @@ describe("shared-reports CRUD", () => {
             "node", "clk115", "--json", "shared-reports", "create",
             "--name", "Weekly", "--type", "summary", "--filter", '{"dateRangeStart":"x"}',
         ]);
-        expect(calls.creates.at(0)).toMatchObject({ body: { name: "Weekly", type: "SUMMARY", filter: { dateRangeStart: "x" } } });
+        expect(calls.creates[0]).toMatchObject({ body: { name: "Weekly", type: "SUMMARY", filter: { dateRangeStart: "x" } } });
         expect(lastPayload().action).toBe("shared-reports.create");
     });
 
@@ -336,7 +336,7 @@ describe("users P1-7 writes", () => {
         await makeProgram(registerUsersCommand, client).parseAsync([
             "node", "clk115", "--json", "users", "invite", "new@example.com",
         ]);
-        expect(added.at(0)).toMatchObject({ email: "new@example.com", "send-email": "true" });
+        expect(added[0]).toMatchObject({ email: "new@example.com", "send-email": "true" });
         expect(lastPayload().action).toBe("users.invite");
     });
 
@@ -345,7 +345,7 @@ describe("users P1-7 writes", () => {
         await makeProgram(registerUsersCommand, client).parseAsync([
             "node", "clk115", "users", "invite", "x@example.com", "--no-send-email",
         ]);
-        expect(added.at(0)).toMatchObject({ "send-email": "false" });
+        expect(added[0]).toMatchObject({ "send-email": "false" });
     });
 
     it("update-profile patches the member profile body", async () => {
@@ -353,7 +353,7 @@ describe("users P1-7 writes", () => {
         await makeProgram(registerUsersCommand, client).parseAsync([
             "node", "clk115", "--json", "users", "update-profile", "u-1", "--week-start", "MONDAY",
         ]);
-        expect(profiles.at(0)).toMatchObject({ userId: "u-1", body: { weekStart: "MONDAY" } });
+        expect(profiles[0]).toMatchObject({ userId: "u-1", body: { weekStart: "MONDAY" } });
         expect(lastPayload().action).toBe("users.update-profile");
     });
 });
