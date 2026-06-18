@@ -10,7 +10,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied.
@@ -37,7 +37,8 @@ async function currentUserId(ctx: Context): Promise<string> {
 }
 
 export function registerExpensesTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_list",
         {
             title: "List expenses",
@@ -51,39 +52,36 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.start) req.start = args.start;
-                if (args.end) req.end = args.end;
-                const response = (await ctx.client.expenses.list(req as never)) as
-                    | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
-                    | unknown[];
-                // Upstream returns {expenses: {expenses: [...], count}} per
-                // probe evidence; tolerate the bare-array fallback too.
-                const items = (() => {
-                    if (Array.isArray(response)) return response;
-                    const inner = response.expenses;
-                    if (Array.isArray(inner)) return inner;
-                    if (inner && Array.isArray(inner.expenses)) return inner.expenses;
-                    return [] as unknown[];
-                })();
-                return successResult("clockify_expenses_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                    page: args.page ?? 1,
-                    pageSize: args.pageSize ?? 50,
-                });
-            } catch (err) {
-                return errorResult("clockify_expenses_list", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.start) req.start = args.start;
+            if (args.end) req.end = args.end;
+            const response = (await ctx.client.expenses.list(req as never)) as
+                | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
+                | unknown[];
+            // Upstream returns {expenses: {expenses: [...], count}} per
+            // probe evidence; tolerate the bare-array fallback too.
+            const items = (() => {
+                if (Array.isArray(response)) return response;
+                const inner = response.expenses;
+                if (Array.isArray(inner)) return inner;
+                if (inner && Array.isArray(inner.expenses)) return inner.expenses;
+                return [] as unknown[];
+            })();
+            return successResult("clockify_expenses_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_get",
         {
             title: "Get an expense",
@@ -92,22 +90,19 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const expense = await ctx.client.expenses.get({
-                    workspaceId: ctx.workspaceId,
-                    expenseId: args.expenseId,
-                });
-                return successResult("clockify_expenses_get", expense, {
-                    workspaceId: ctx.workspaceId,
-                    expenseId: args.expenseId,
-                });
-            } catch (err) {
-                return errorResult("clockify_expenses_get", err);
-            }
+            const expense = await ctx.client.expenses.get({
+                workspaceId: ctx.workspaceId,
+                expenseId: args.expenseId,
+            });
+            return successResult("clockify_expenses_get", expense, {
+                workspaceId: ctx.workspaceId,
+                expenseId: args.expenseId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_delete",
         {
             title: "Delete an expense",
@@ -121,27 +116,24 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "expense", id: args.expenseId };
-                const confirmation = requireConfirmation(ctx, "clockify_expenses_delete", "expense_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.expenses.delete({
-                    workspaceId: ctx.workspaceId,
-                    expenseId: args.expenseId,
-                });
-                return successResult(
-                    "clockify_expenses_delete",
-                    { deleted: true, expenseId: args.expenseId },
-                    { workspaceId: ctx.workspaceId, expenseId: args.expenseId },
-                    writeReceipt("deleted", "expense", args.expenseId),
-                );
-            } catch (err) {
-                return errorResult("clockify_expenses_delete", err);
-            }
+            const preview = { action: "delete", entity: "expense", id: args.expenseId };
+            const confirmation = requireConfirmation(ctx, "clockify_expenses_delete", "expense_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.expenses.delete({
+                workspaceId: ctx.workspaceId,
+                expenseId: args.expenseId,
+            });
+            return successResult(
+                "clockify_expenses_delete",
+                { deleted: true, expenseId: args.expenseId },
+                { workspaceId: ctx.workspaceId, expenseId: args.expenseId },
+                writeReceipt("deleted", "expense", args.expenseId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_create",
         {
             title: "Create an expense",
@@ -160,23 +152,20 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const { extra, userId, ...fields } = args;
-                const owner = userId ?? (await currentUserId(ctx));
-                const created = await ctx.client.expenses.create({
-                    ...fields,
-                    ...(extra ?? {}),
-                    userId: owner,
-                    workspaceId: ctx.workspaceId,
-                } as never);
-                return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: (created as { id?: string }).id }));
-            } catch (err) {
-                return errorResult("clockify_expenses_create", err);
-            }
+            const { extra, userId, ...fields } = args;
+            const owner = userId ?? (await currentUserId(ctx));
+            const created = await ctx.client.expenses.create({
+                ...fields,
+                ...(extra ?? {}),
+                userId: owner,
+                workspaceId: ctx.workspaceId,
+            } as never);
+            return successResult("clockify_expenses_create", created, { workspaceId: ctx.workspaceId }, writeReceipt("created", "expense", { id: (created as { id?: string }).id }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_update",
         {
             title: "Update an expense",
@@ -196,28 +185,25 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const { expenseId, extra, userId, ...fields } = args;
-                const owner = userId ?? (await currentUserId(ctx));
-                const updated = await ctx.client.expenses.update({
-                    ...fields,
-                    ...(extra ?? {}),
-                    changeFields: expenseChangeFields(fields),
-                    userId: owner,
-                    expenseId,
-                    workspaceId: ctx.workspaceId,
-                } as never);
-                return successResult("clockify_expenses_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    expenseId,
-                }, writeReceipt("updated", "expense", expenseId));
-            } catch (err) {
-                return errorResult("clockify_expenses_update", err);
-            }
+            const { expenseId, extra, userId, ...fields } = args;
+            const owner = userId ?? (await currentUserId(ctx));
+            const updated = await ctx.client.expenses.update({
+                ...fields,
+                ...(extra ?? {}),
+                changeFields: expenseChangeFields(fields),
+                userId: owner,
+                expenseId,
+                workspaceId: ctx.workspaceId,
+            } as never);
+            return successResult("clockify_expenses_update", updated, {
+                workspaceId: ctx.workspaceId,
+                expenseId,
+            }, writeReceipt("updated", "expense", expenseId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_categories_list",
         {
             title: "List expense categories",
@@ -229,23 +215,20 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const items = (await ctx.client.expenseCategories.list({
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                } as never)) as unknown[];
-                return successResult("clockify_expenses_categories_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_expenses_categories_list", err);
-            }
+            const items = (await ctx.client.expenseCategories.list({
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            } as never)) as unknown[];
+            return successResult("clockify_expenses_categories_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_categories_create",
         {
             title: "Create an expense category",
@@ -259,22 +242,19 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
-                if (args.unit) body.unit = args.unit;
-                if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
-                if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
-                const created = await ctx.client.expenseCategories.create(body as never);
-                return successResult("clockify_expenses_categories_create", created, {
-                    workspaceId: ctx.workspaceId,
-                }, writeReceipt("created", "expense_category", { id: (created as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult("clockify_expenses_categories_create", err);
-            }
+            const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
+            if (args.unit) body.unit = args.unit;
+            if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
+            if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
+            const created = await ctx.client.expenseCategories.create(body as never);
+            return successResult("clockify_expenses_categories_create", created, {
+                workspaceId: ctx.workspaceId,
+            }, writeReceipt("created", "expense_category", { id: (created as { id?: string }).id, name: args.name }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_categories_update",
         {
             title: "Update an expense category",
@@ -289,27 +269,24 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                };
-                if (args.name) body.name = args.name;
-                if (args.unit) body.unit = args.unit;
-                if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
-                if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
-                const updated = await ctx.client.expenseCategories.update(body as never);
-                return successResult("clockify_expenses_categories_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                }, writeReceipt("updated", "expense_category", args.categoryId));
-            } catch (err) {
-                return errorResult("clockify_expenses_categories_update", err);
-            }
+            const body: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+            };
+            if (args.name) body.name = args.name;
+            if (args.unit) body.unit = args.unit;
+            if (args.priceInCents !== undefined) body.priceInCents = args.priceInCents;
+            if (args.hasUnitPrice !== undefined) body.hasUnitPrice = args.hasUnitPrice;
+            const updated = await ctx.client.expenseCategories.update(body as never);
+            return successResult("clockify_expenses_categories_update", updated, {
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+            }, writeReceipt("updated", "expense_category", args.categoryId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_categories_delete",
         {
             title: "Delete an expense category",
@@ -323,35 +300,32 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "expense_category", id: args.categoryId };
-                const confirmation = requireConfirmation(ctx, "clockify_expenses_categories_delete", "expense_category_delete", args, preview);
-                if (confirmation) return confirmation;
-                // Clockify rejects deleting an ACTIVE category — archive it first
-                // via the dedicated PATCH .../status endpoint (not a replace), then
-                // delete.
-                await ctx.client.expenseCategories.archive({
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                    archived: true,
-                });
-                await ctx.client.expenseCategories.delete({
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                });
-                return successResult(
-                    "clockify_expenses_categories_delete",
-                    { deleted: true, categoryId: args.categoryId },
-                    { workspaceId: ctx.workspaceId, categoryId: args.categoryId },
-                    writeReceipt("deleted", "expense_category", args.categoryId),
-                );
-            } catch (err) {
-                return errorResult("clockify_expenses_categories_delete", err);
-            }
+            const preview = { action: "delete", entity: "expense_category", id: args.categoryId };
+            const confirmation = requireConfirmation(ctx, "clockify_expenses_categories_delete", "expense_category_delete", args, preview);
+            if (confirmation) return confirmation;
+            // Clockify rejects deleting an ACTIVE category — archive it first
+            // via the dedicated PATCH .../status endpoint (not a replace), then
+            // delete.
+            await ctx.client.expenseCategories.archive({
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+                archived: true,
+            });
+            await ctx.client.expenseCategories.delete({
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+            });
+            return successResult(
+                "clockify_expenses_categories_delete",
+                { deleted: true, categoryId: args.categoryId },
+                { workspaceId: ctx.workspaceId, categoryId: args.categoryId },
+                writeReceipt("deleted", "expense_category", args.categoryId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_expenses_categories_archive",
         {
             title: "Archive or reactivate an expense category",
@@ -363,19 +337,15 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const archived = await ctx.client.expenseCategories.archive({
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                    body: { archived: args.archived },
-                });
-                return successResult("clockify_expenses_categories_archive", archived, {
-                    workspaceId: ctx.workspaceId,
-                    categoryId: args.categoryId,
-                }, writeReceipt("updated", "expense_category", args.categoryId));
-            } catch (err) {
-                return errorResult("clockify_expenses_categories_archive", err);
-            }
+            const archived = await ctx.client.expenseCategories.archive({
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+                body: { archived: args.archived },
+            });
+            return successResult("clockify_expenses_categories_archive", archived, {
+                workspaceId: ctx.workspaceId,
+                categoryId: args.categoryId,
+            }, writeReceipt("updated", "expense_category", args.categoryId));
         },
     );
 }

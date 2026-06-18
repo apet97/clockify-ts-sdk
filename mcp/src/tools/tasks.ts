@@ -4,10 +4,11 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 export function registerTasksTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_list",
         {
             title: "List tasks",
@@ -21,30 +22,28 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.name) req.name = args.name;
-                const tasks = await ctx.client.tasks.list(req as never);
-                return successResult("clockify_tasks_list", tasks, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    count: tasks.length,
-                    page: args.page ?? 1,
-                    pageSize: args.pageSize ?? 50,
-                    hasMore: tasks.length === (args.pageSize ?? 50),
-                });
-            } catch (err) {
-                return errorResult("clockify_tasks_list", err, "Verify the projectId exists in this workspace.");
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.name) req.name = args.name;
+            const tasks = await ctx.client.tasks.list(req as never);
+            return successResult("clockify_tasks_list", tasks, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                count: tasks.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+                hasMore: tasks.length === (args.pageSize ?? 50),
+            });
         },
+        "Verify the projectId exists in this workspace.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_create",
         {
             title: "Create a task",
@@ -59,27 +58,24 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { name: args.name };
-                if (args.billable !== undefined) body.billable = args.billable;
-                if (args.estimate) body.estimate = args.estimate;
-                if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
-                const task = await ctx.client.tasks.create({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    ...body,
-                } as never);
-                return successResult("clockify_tasks_create", task, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                }, writeReceipt("created", "task", { id: (task as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult("clockify_tasks_create", err);
-            }
+            const body: Record<string, unknown> = { name: args.name };
+            if (args.billable !== undefined) body.billable = args.billable;
+            if (args.estimate) body.estimate = args.estimate;
+            if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
+            const task = await ctx.client.tasks.create({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                ...body,
+            } as never);
+            return successResult("clockify_tasks_create", task, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            }, writeReceipt("created", "task", { id: (task as { id?: string }).id, name: args.name }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_get",
         {
             title: "Get a task",
@@ -91,24 +87,21 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const task = await ctx.client.tasks.get({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                });
-                return successResult("clockify_tasks_get", task, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                });
-            } catch (err) {
-                return errorResult("clockify_tasks_get", err);
-            }
+            const task = await ctx.client.tasks.get({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+            });
+            return successResult("clockify_tasks_get", task, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_update",
         {
             title: "Update a task",
@@ -125,31 +118,28 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {};
-                if (args.name) body.name = args.name;
-                if (args.billable !== undefined) body.billable = args.billable;
-                if (args.estimate) body.estimate = args.estimate;
-                if (args.status) body.status = args.status;
-                if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
-                const updated = await ctx.client.tasks.update({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                    ...body,
-                } as never);
-                return successResult("clockify_tasks_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                }, writeReceipt("updated", "task", args.taskId));
-            } catch (err) {
-                return errorResult("clockify_tasks_update", err);
-            }
+            const body: Record<string, unknown> = {};
+            if (args.name) body.name = args.name;
+            if (args.billable !== undefined) body.billable = args.billable;
+            if (args.estimate) body.estimate = args.estimate;
+            if (args.status) body.status = args.status;
+            if (args.assigneeIds) body.assigneeIds = args.assigneeIds;
+            const updated = await ctx.client.tasks.update({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+                ...body,
+            } as never);
+            return successResult("clockify_tasks_update", updated, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+            }, writeReceipt("updated", "task", args.taskId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_delete",
         {
             title: "Delete a task",
@@ -164,47 +154,44 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "task", id: args.taskId, projectId: args.projectId };
-                const confirmation = requireConfirmation(ctx, "clockify_tasks_delete", "task_delete", args, preview);
-                if (confirmation) return confirmation;
-                // Clockify rejects DELETE of an ACTIVE task (400 "Cannot delete an
-                // active task", live-verified 2026-06-15) — mark it DONE first via
-                // GET-then-PUT, carrying the name the replace-PUT requires.
-                const current = (await ctx.client.tasks.get({
+            const preview = { action: "delete", entity: "task", id: args.taskId, projectId: args.projectId };
+            const confirmation = requireConfirmation(ctx, "clockify_tasks_delete", "task_delete", args, preview);
+            if (confirmation) return confirmation;
+            // Clockify rejects DELETE of an ACTIVE task (400 "Cannot delete an
+            // active task", live-verified 2026-06-15) — mark it DONE first via
+            // GET-then-PUT, carrying the name the replace-PUT requires.
+            const current = (await ctx.client.tasks.get({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+            })) as { name?: string };
+            await ctx.client.tasks.update({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+                name: String(current.name ?? ""),
+                status: "DONE",
+            } as never);
+            await ctx.client.tasks.delete({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+            });
+            return successResult(
+                "clockify_tasks_delete",
+                { deleted: true, projectId: args.projectId, taskId: args.taskId },
+                {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     taskId: args.taskId,
-                })) as { name?: string };
-                await ctx.client.tasks.update({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                    name: String(current.name ?? ""),
-                    status: "DONE",
-                } as never);
-                await ctx.client.tasks.delete({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                });
-                return successResult(
-                    "clockify_tasks_delete",
-                    { deleted: true, projectId: args.projectId, taskId: args.taskId },
-                    {
-                        workspaceId: ctx.workspaceId,
-                        projectId: args.projectId,
-                        taskId: args.taskId,
-                    },
-                    writeReceipt("deleted", "task", args.taskId),
-                );
-            } catch (err) {
-                return errorResult("clockify_tasks_delete", err);
-            }
+                },
+                writeReceipt("deleted", "task", args.taskId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_tasks_set_rate",
         {
             title: "Set a task's rate",
@@ -220,30 +207,26 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const amountMinor = toMinor(args.amount, "major");
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                    amount: amountMinor,
-                };
-                if (args.since) req.since = args.since;
-                const updated =
-                    args.rateKind === "COST"
-                        ? await ctx.client.tasks.updateCostRate(req as never)
-                        : await ctx.client.tasks.updateBillableRate(req as never);
-                return successResult("clockify_tasks_set_rate", updated, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
-                    rateKind: args.rateKind,
-                    amountMajor: args.amount,
-                    amountMinor,
-                }, writeReceipt("updated", "task", args.taskId));
-            } catch (err) {
-                return errorResult("clockify_tasks_set_rate", err);
-            }
+            const amountMinor = toMinor(args.amount, "major");
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+                amount: amountMinor,
+            };
+            if (args.since) req.since = args.since;
+            const updated =
+                args.rateKind === "COST"
+                    ? await ctx.client.tasks.updateCostRate(req as never)
+                    : await ctx.client.tasks.updateBillableRate(req as never);
+            return successResult("clockify_tasks_set_rate", updated, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                taskId: args.taskId,
+                rateKind: args.rateKind,
+                amountMajor: args.amount,
+                amountMinor,
+            }, writeReceipt("updated", "task", args.taskId));
         },
     );
 }

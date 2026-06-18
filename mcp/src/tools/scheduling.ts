@@ -11,7 +11,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -38,7 +38,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
     };
     const meUserId = async (): Promise<string> =>
         String(((await ctx.client.users.getCurrentUser()) as { id?: string }).id ?? "");
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_assignments_list",
         {
             title: "List scheduling assignments",
@@ -51,25 +52,22 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.name) req.name = args.name;
-                const items = await ctx.client.scheduling.list(req as never);
-                return successResult("clockify_scheduling_assignments_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_scheduling_assignments_list", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.name) req.name = args.name;
+            const items = await ctx.client.scheduling.list(req as never);
+            return successResult("clockify_scheduling_assignments_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_assignments_list_per_project",
         {
             title: "List scheduling assignments per project",
@@ -83,41 +81,38 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                // A single project's totals live at GET .../projects/totals/{projectId}.
-                // The all-projects search is a POST whose body has NO projectId field —
-                // sending one was silently dropped and returned ALL projects, so route
-                // by presence of projectId instead.
-                if (args.projectId) {
-                    const one = await ctx.client.scheduling.listOnProject({
-                        workspaceId: ctx.workspaceId,
-                        projectId: args.projectId,
-                    });
-                    return successResult("clockify_scheduling_assignments_list_per_project", one, {
-                        workspaceId: ctx.workspaceId,
-                        projectId: args.projectId,
-                    });
-                }
-                // TODO(P2-1 trap): the generated ListPerProjectScheduling Flattened type
-                // uses camel `pageSize` and requires `start`/`end`; this sends kebab
-                // `page-size` and omits them. The `as never` masks that mismatch — verify
-                // the live wire shape before narrowing off the cast.
-                const items = (await ctx.client.scheduling.listPerProject({
+            // A single project's totals live at GET .../projects/totals/{projectId}.
+            // The all-projects search is a POST whose body has NO projectId field —
+            // sending one was silently dropped and returned ALL projects, so route
+            // by presence of projectId instead.
+            if (args.projectId) {
+                const one = await ctx.client.scheduling.listOnProject({
                     workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                } as never)) as unknown[];
-                return successResult("clockify_scheduling_assignments_list_per_project", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
+                    projectId: args.projectId,
                 });
-            } catch (err) {
-                return errorResult("clockify_scheduling_assignments_list_per_project", err);
+                return successResult("clockify_scheduling_assignments_list_per_project", one, {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                });
             }
+            // TODO(P2-1 trap): the generated ListPerProjectScheduling Flattened type
+            // uses camel `pageSize` and requires `start`/`end`; this sends kebab
+            // `page-size` and omits them. The `as never` masks that mismatch — verify
+            // the live wire shape before narrowing off the cast.
+            const items = (await ctx.client.scheduling.listPerProject({
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            } as never)) as unknown[];
+            return successResult("clockify_scheduling_assignments_list_per_project", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_assignments_create",
         {
             title: "Create a scheduling assignment",
@@ -137,43 +132,40 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const u = await resolveUserRef(
-                    { id: args.userId },
-                    { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
-                );
-                if (!u.ok) return clarifyResult("clockify_scheduling_assignments_create", "userId", "user", u.clarify);
-                const p = await resolveEntityRef(
-                    { id: args.projectId },
-                    { noun: "project", verb: "schedule against", list: listProjects },
-                );
-                if (!p.ok) return clarifyResult("clockify_scheduling_assignments_create", "projectId", "project", p.clarify);
-                const body: Record<string, unknown> = {
-                    userId: u.userId,
-                    projectId: p.id,
-                    hoursPerDay: args.hoursPerDay,
-                    period: { start: args.start, end: args.end },
-                    published: args.published === true,
-                };
-                if (args.taskId) body.taskId = args.taskId;
-                if (args.note) body.note = args.note;
-                if (args.billable !== undefined) body.billable = args.billable;
-                if (args.includeNonWorkingDays !== undefined)
-                    body.includeNonWorkingDays = args.includeNonWorkingDays;
-                const created = await ctx.client.scheduling.create({
-                    workspaceId: ctx.workspaceId,
-                    ...body,
-                } as never);
-                return successResult("clockify_scheduling_assignments_create", created, {
-                    workspaceId: ctx.workspaceId,
-                }, writeReceipt("created", "scheduling_assignment", { id: (created as { id?: string }).id }));
-            } catch (err) {
-                return errorResult("clockify_scheduling_assignments_create", err);
-            }
+            const u = await resolveUserRef(
+                { id: args.userId },
+                { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
+            );
+            if (!u.ok) return clarifyResult("clockify_scheduling_assignments_create", "userId", "user", u.clarify);
+            const p = await resolveEntityRef(
+                { id: args.projectId },
+                { noun: "project", verb: "schedule against", list: listProjects },
+            );
+            if (!p.ok) return clarifyResult("clockify_scheduling_assignments_create", "projectId", "project", p.clarify);
+            const body: Record<string, unknown> = {
+                userId: u.userId,
+                projectId: p.id,
+                hoursPerDay: args.hoursPerDay,
+                period: { start: args.start, end: args.end },
+                published: args.published === true,
+            };
+            if (args.taskId) body.taskId = args.taskId;
+            if (args.note) body.note = args.note;
+            if (args.billable !== undefined) body.billable = args.billable;
+            if (args.includeNonWorkingDays !== undefined)
+                body.includeNonWorkingDays = args.includeNonWorkingDays;
+            const created = await ctx.client.scheduling.create({
+                workspaceId: ctx.workspaceId,
+                ...body,
+            } as never);
+            return successResult("clockify_scheduling_assignments_create", created, {
+                workspaceId: ctx.workspaceId,
+            }, writeReceipt("created", "scheduling_assignment", { id: (created as { id?: string }).id }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_assignments_update",
         {
             title: "Update a scheduling assignment",
@@ -192,49 +184,46 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                let resolvedUserId: string | undefined;
-                let resolvedProjectId: string | undefined;
-                if (args.userId) {
-                    const u = await resolveUserRef(
-                        { id: args.userId },
-                        { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
-                    );
-                    if (!u.ok) return clarifyResult("clockify_scheduling_assignments_update", "userId", "user", u.clarify);
-                    resolvedUserId = u.userId;
-                }
-                if (args.projectId) {
-                    const p = await resolveEntityRef(
-                        { id: args.projectId },
-                        { noun: "project", verb: "schedule against", list: listProjects },
-                    );
-                    if (!p.ok) return clarifyResult("clockify_scheduling_assignments_update", "projectId", "project", p.clarify);
-                    resolvedProjectId = p.id;
-                }
-                const body: Record<string, unknown> = {};
-                if (resolvedUserId) body.userId = resolvedUserId;
-                if (resolvedProjectId) body.projectId = resolvedProjectId;
-                if (args.start && args.end) body.period = { start: args.start, end: args.end };
-                if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
-                if (args.taskId) body.taskId = args.taskId;
-                if (args.note) body.note = args.note;
-                if (args.billable !== undefined) body.billable = args.billable;
-                const updated = await ctx.client.scheduling.update({
-                    workspaceId: ctx.workspaceId,
-                    assignmentId: args.assignmentId,
-                    body,
-                });
-                return successResult("clockify_scheduling_assignments_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    assignmentId: args.assignmentId,
-                }, writeReceipt("updated", "scheduling_assignment", args.assignmentId));
-            } catch (err) {
-                return errorResult("clockify_scheduling_assignments_update", err);
+            let resolvedUserId: string | undefined;
+            let resolvedProjectId: string | undefined;
+            if (args.userId) {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
+                );
+                if (!u.ok) return clarifyResult("clockify_scheduling_assignments_update", "userId", "user", u.clarify);
+                resolvedUserId = u.userId;
             }
+            if (args.projectId) {
+                const p = await resolveEntityRef(
+                    { id: args.projectId },
+                    { noun: "project", verb: "schedule against", list: listProjects },
+                );
+                if (!p.ok) return clarifyResult("clockify_scheduling_assignments_update", "projectId", "project", p.clarify);
+                resolvedProjectId = p.id;
+            }
+            const body: Record<string, unknown> = {};
+            if (resolvedUserId) body.userId = resolvedUserId;
+            if (resolvedProjectId) body.projectId = resolvedProjectId;
+            if (args.start && args.end) body.period = { start: args.start, end: args.end };
+            if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
+            if (args.taskId) body.taskId = args.taskId;
+            if (args.note) body.note = args.note;
+            if (args.billable !== undefined) body.billable = args.billable;
+            const updated = await ctx.client.scheduling.update({
+                workspaceId: ctx.workspaceId,
+                assignmentId: args.assignmentId,
+                body,
+            });
+            return successResult("clockify_scheduling_assignments_update", updated, {
+                workspaceId: ctx.workspaceId,
+                assignmentId: args.assignmentId,
+            }, writeReceipt("updated", "scheduling_assignment", args.assignmentId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_assignments_delete",
         {
             title: "Delete a scheduling assignment",
@@ -248,27 +237,24 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "scheduling_assignment", id: args.assignmentId };
-                const confirmation = requireConfirmation(ctx, "clockify_scheduling_assignments_delete", "scheduling_assignment_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.scheduling.delete({
-                    workspaceId: ctx.workspaceId,
-                    assignmentId: args.assignmentId,
-                });
-                return successResult(
-                    "clockify_scheduling_assignments_delete",
-                    { deleted: true, assignmentId: args.assignmentId },
-                    { workspaceId: ctx.workspaceId, assignmentId: args.assignmentId },
-                    writeReceipt("deleted", "scheduling_assignment", args.assignmentId),
-                );
-            } catch (err) {
-                return errorResult("clockify_scheduling_assignments_delete", err);
-            }
+            const preview = { action: "delete", entity: "scheduling_assignment", id: args.assignmentId };
+            const confirmation = requireConfirmation(ctx, "clockify_scheduling_assignments_delete", "scheduling_assignment_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.scheduling.delete({
+                workspaceId: ctx.workspaceId,
+                assignmentId: args.assignmentId,
+            });
+            return successResult(
+                "clockify_scheduling_assignments_delete",
+                { deleted: true, assignmentId: args.assignmentId },
+                { workspaceId: ctx.workspaceId, assignmentId: args.assignmentId },
+                writeReceipt("deleted", "scheduling_assignment", args.assignmentId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_publish",
         {
             title: "Publish scheduling assignments",
@@ -283,21 +269,18 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const { extra, ...rest } = args;
-                await ctx.client.scheduling.publish({ ...rest, ...(extra ?? {}), workspaceId: ctx.workspaceId });
-                return successResult(
-                    "clockify_scheduling_publish",
-                    { published: true, start: args.start, end: args.end },
-                    { workspaceId: ctx.workspaceId },
-                );
-            } catch (err) {
-                return errorResult("clockify_scheduling_publish", err);
-            }
+            const { extra, ...rest } = args;
+            await ctx.client.scheduling.publish({ ...rest, ...(extra ?? {}), workspaceId: ctx.workspaceId });
+            return successResult(
+                "clockify_scheduling_publish",
+                { published: true, start: args.start, end: args.end },
+                { workspaceId: ctx.workspaceId },
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_scheduling_capacity",
         {
             title: "Scheduling user capacity",
@@ -313,24 +296,20 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const { extra, page, pageSize, ...rest } = args;
-                const items = await ctx.client.scheduling.getUsersCapacityFiltered({
-                    ...rest,
-                    page: page ?? 1,
-                    pageSize: pageSize ?? 50,
-                    ...(extra ?? {}),
-                    workspaceId: ctx.workspaceId,
-                });
-                return successResult(
-                    "clockify_scheduling_capacity",
-                    items,
-                    { workspaceId: ctx.workspaceId, count: items.length, page: page ?? 1, pageSize: pageSize ?? 50 },
-                    { entity: "scheduling" },
-                );
-            } catch (err) {
-                return errorResult("clockify_scheduling_capacity", err);
-            }
+            const { extra, page, pageSize, ...rest } = args;
+            const items = await ctx.client.scheduling.getUsersCapacityFiltered({
+                ...rest,
+                page: page ?? 1,
+                pageSize: pageSize ?? 50,
+                ...(extra ?? {}),
+                workspaceId: ctx.workspaceId,
+            });
+            return successResult(
+                "clockify_scheduling_capacity",
+                items,
+                { workspaceId: ctx.workspaceId, count: items.length, page: page ?? 1, pageSize: pageSize ?? 50 },
+                { entity: "scheduling" },
+            );
         },
     );
 }

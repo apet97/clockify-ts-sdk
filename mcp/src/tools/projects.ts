@@ -4,10 +4,11 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_list",
         {
             title: "List projects",
@@ -22,34 +23,28 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.name) req.name = args.name;
-                if (args.archived !== undefined) req.archived = args.archived;
-                if (args.clientId) req.clients = [args.clientId];
-                const projects = (await ctx.client.projects.list(req as never)) as unknown[];
-                return successResult("clockify_projects_list", projects, {
-                    workspaceId: ctx.workspaceId,
-                    count: projects.length,
-                    page: args.page ?? 1,
-                    pageSize: args.pageSize ?? 50,
-                    hasMore: projects.length === (args.pageSize ?? 50),
-                });
-            } catch (err) {
-                return errorResult(
-                    "clockify_projects_list",
-                    err,
-                    "Lower pageSize or narrow filters; verify the workspace ID.",
-                );
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.name) req.name = args.name;
+            if (args.archived !== undefined) req.archived = args.archived;
+            if (args.clientId) req.clients = [args.clientId];
+            const projects = (await ctx.client.projects.list(req as never)) as unknown[];
+            return successResult("clockify_projects_list", projects, {
+                workspaceId: ctx.workspaceId,
+                count: projects.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+                hasMore: projects.length === (args.pageSize ?? 50),
+            });
         },
+        "Lower pageSize or narrow filters; verify the workspace ID.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_create",
         {
             title: "Create a project",
@@ -64,25 +59,19 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
-                if (args.clientId) body.clientId = args.clientId;
-                if (args.color) body.color = args.color;
-                if (args.billable !== undefined) body.billable = args.billable;
-                if (args.isPublic !== undefined) body.isPublic = args.isPublic;
-                const project = await ctx.client.projects.create(body as never);
-                return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: (project as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult(
-                    "clockify_projects_create",
-                    err,
-                    "Reuse an existing client ID or check for an existing project with this name.",
-                );
-            }
+            const body: Record<string, unknown> = { workspaceId: ctx.workspaceId, name: args.name };
+            if (args.clientId) body.clientId = args.clientId;
+            if (args.color) body.color = args.color;
+            if (args.billable !== undefined) body.billable = args.billable;
+            if (args.isPublic !== undefined) body.isPublic = args.isPublic;
+            const project = await ctx.client.projects.create(body as never);
+            return successResult("clockify_projects_create", project, undefined, writeReceipt("created", "project", { id: (project as { id?: string }).id, name: args.name }));
         },
+        "Reuse an existing client ID or check for an existing project with this name.",
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_get",
         {
             title: "Get a project",
@@ -91,22 +80,19 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const project = await ctx.client.projects.get({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                });
-                return successResult("clockify_projects_get", project, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                });
-            } catch (err) {
-                return errorResult("clockify_projects_get", err);
-            }
+            const project = await ctx.client.projects.get({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            });
+            return successResult("clockify_projects_get", project, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_update",
         {
             title: "Update a project",
@@ -124,30 +110,27 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                };
-                if (args.name) body.name = args.name;
-                if (args.clientId) body.clientId = args.clientId;
-                if (args.color) body.color = args.color;
-                if (args.billable !== undefined) body.billable = args.billable;
-                if (args.isPublic !== undefined) body.isPublic = args.isPublic;
-                if (args.archived !== undefined) body.archived = args.archived;
-                if (args.note !== undefined) body.note = args.note;
-                const updated = await ctx.client.projects.update(body as never);
-                return successResult("clockify_projects_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                }, writeReceipt("updated", "project", args.projectId));
-            } catch (err) {
-                return errorResult("clockify_projects_update", err);
-            }
+            const body: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            };
+            if (args.name) body.name = args.name;
+            if (args.clientId) body.clientId = args.clientId;
+            if (args.color) body.color = args.color;
+            if (args.billable !== undefined) body.billable = args.billable;
+            if (args.isPublic !== undefined) body.isPublic = args.isPublic;
+            if (args.archived !== undefined) body.archived = args.archived;
+            if (args.note !== undefined) body.note = args.note;
+            const updated = await ctx.client.projects.update(body as never);
+            return successResult("clockify_projects_update", updated, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            }, writeReceipt("updated", "project", args.projectId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_delete",
         {
             title: "Delete a project",
@@ -161,41 +144,38 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "project", id: args.projectId };
-                const confirmation = requireConfirmation(ctx, "clockify_projects_delete", "project_delete", args, preview);
-                if (confirmation) return confirmation;
-                // Clockify rejects DELETE of an ACTIVE project (400 "Cannot delete
-                // an active project", live-verified 2026-06-15) and the dedicated
-                // /archive route 404s — archive first via GET-then-PUT, carrying
-                // the name the replace-PUT requires.
-                const current = (await ctx.client.projects.get({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                })) as { name?: string };
-                await ctx.client.projects.update({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    name: String(current.name ?? ""),
-                    archived: true,
-                });
-                await ctx.client.projects.delete({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                });
-                return successResult(
-                    "clockify_projects_delete",
-                    { deleted: true, projectId: args.projectId },
-                    { workspaceId: ctx.workspaceId, projectId: args.projectId },
-                    writeReceipt("deleted", "project", args.projectId),
-                );
-            } catch (err) {
-                return errorResult("clockify_projects_delete", err);
-            }
+            const preview = { action: "delete", entity: "project", id: args.projectId };
+            const confirmation = requireConfirmation(ctx, "clockify_projects_delete", "project_delete", args, preview);
+            if (confirmation) return confirmation;
+            // Clockify rejects DELETE of an ACTIVE project (400 "Cannot delete
+            // an active project", live-verified 2026-06-15) and the dedicated
+            // /archive route 404s — archive first via GET-then-PUT, carrying
+            // the name the replace-PUT requires.
+            const current = (await ctx.client.projects.get({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            })) as { name?: string };
+            await ctx.client.projects.update({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                name: String(current.name ?? ""),
+                archived: true,
+            });
+            await ctx.client.projects.delete({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+            });
+            return successResult(
+                "clockify_projects_delete",
+                { deleted: true, projectId: args.projectId },
+                { workspaceId: ctx.workspaceId, projectId: args.projectId },
+                writeReceipt("deleted", "project", args.projectId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_projects_set_member_rate",
         {
             title: "Set a project member's rate",
@@ -211,30 +191,26 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const amountMinor = toMinor(args.amount, "major");
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    userId: args.userId,
-                    amount: amountMinor,
-                };
-                if (args.since) req.since = args.since;
-                const updated =
-                    args.rateKind === "COST"
-                        ? await ctx.client.projects.updateUserCostRate(req as never)
-                        : await ctx.client.projects.updateUserHourlyRate(req as never);
-                return successResult("clockify_projects_set_member_rate", updated, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    userId: args.userId,
-                    rateKind: args.rateKind,
-                    amountMajor: args.amount,
-                    amountMinor,
-                }, writeReceipt("updated", "project", args.projectId));
-            } catch (err) {
-                return errorResult("clockify_projects_set_member_rate", err);
-            }
+            const amountMinor = toMinor(args.amount, "major");
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                userId: args.userId,
+                amount: amountMinor,
+            };
+            if (args.since) req.since = args.since;
+            const updated =
+                args.rateKind === "COST"
+                    ? await ctx.client.projects.updateUserCostRate(req as never)
+                    : await ctx.client.projects.updateUserHourlyRate(req as never);
+            return successResult("clockify_projects_set_member_rate", updated, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                userId: args.userId,
+                rateKind: args.rateKind,
+                amountMajor: args.amount,
+                amountMinor,
+            }, writeReceipt("updated", "project", args.projectId));
         },
     );
 }

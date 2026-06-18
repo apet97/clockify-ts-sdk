@@ -8,10 +8,11 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 export function registerCustomFieldsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_custom_fields_list",
         {
             title: "List workspace custom fields",
@@ -23,23 +24,20 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const items = (await ctx.client.customFields.listForWorkspace({
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                })) as unknown[];
-                return successResult("clockify_custom_fields_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_custom_fields_list", err);
-            }
+            const items = (await ctx.client.customFields.listForWorkspace({
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            })) as unknown[];
+            return successResult("clockify_custom_fields_list", items, {
+                workspaceId: ctx.workspaceId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_custom_fields_create",
         {
             title: "Create a workspace custom field",
@@ -55,26 +53,23 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { name: args.name, type: args.type };
-                if (args.allowedValues) body.allowedValues = args.allowedValues;
-                if (args.required !== undefined) body.required = args.required;
-                if (args.placeholder) body.placeholder = args.placeholder;
-                if (args.description) body.description = args.description;
-                const created = await ctx.client.customFields.createForWorkspace({
-                    workspaceId: ctx.workspaceId,
-                    body,
-                } as never);
-                return successResult("clockify_custom_fields_create", created, {
-                    workspaceId: ctx.workspaceId,
-                }, writeReceipt("created", "custom_field", { id: (created as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult("clockify_custom_fields_create", err);
-            }
+            const body: Record<string, unknown> = { name: args.name, type: args.type };
+            if (args.allowedValues) body.allowedValues = args.allowedValues;
+            if (args.required !== undefined) body.required = args.required;
+            if (args.placeholder) body.placeholder = args.placeholder;
+            if (args.description) body.description = args.description;
+            const created = await ctx.client.customFields.createForWorkspace({
+                workspaceId: ctx.workspaceId,
+                body,
+            } as never);
+            return successResult("clockify_custom_fields_create", created, {
+                workspaceId: ctx.workspaceId,
+            }, writeReceipt("created", "custom_field", { id: (created as { id?: string }).id, name: args.name }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_custom_fields_update",
         {
             title: "Update a workspace custom field",
@@ -91,30 +86,27 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {};
-                if (args.name) body.name = args.name;
-                if (args.allowedValues) body.allowedValues = args.allowedValues;
-                if (args.required !== undefined) body.required = args.required;
-                if (args.placeholder) body.placeholder = args.placeholder;
-                if (args.description) body.description = args.description;
-                if (args.status) body.status = args.status;
-                const updated = await ctx.client.customFields.updateForWorkspace({
-                    workspaceId: ctx.workspaceId,
-                    customFieldId: args.customFieldId,
-                    body,
-                } as never);
-                return successResult("clockify_custom_fields_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    customFieldId: args.customFieldId,
-                }, writeReceipt("updated", "custom_field", args.customFieldId));
-            } catch (err) {
-                return errorResult("clockify_custom_fields_update", err);
-            }
+            const body: Record<string, unknown> = {};
+            if (args.name) body.name = args.name;
+            if (args.allowedValues) body.allowedValues = args.allowedValues;
+            if (args.required !== undefined) body.required = args.required;
+            if (args.placeholder) body.placeholder = args.placeholder;
+            if (args.description) body.description = args.description;
+            if (args.status) body.status = args.status;
+            const updated = await ctx.client.customFields.updateForWorkspace({
+                workspaceId: ctx.workspaceId,
+                customFieldId: args.customFieldId,
+                body,
+            } as never);
+            return successResult("clockify_custom_fields_update", updated, {
+                workspaceId: ctx.workspaceId,
+                customFieldId: args.customFieldId,
+            }, writeReceipt("updated", "custom_field", args.customFieldId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_custom_fields_delete",
         {
             title: "Delete a workspace custom field",
@@ -128,27 +120,24 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "custom_field", id: args.customFieldId };
-                const confirmation = requireConfirmation(ctx, "clockify_custom_fields_delete", "custom_field_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.customFields.deleteForWorkspace({
-                    workspaceId: ctx.workspaceId,
-                    customFieldId: args.customFieldId,
-                });
-                return successResult(
-                    "clockify_custom_fields_delete",
-                    { deleted: true, customFieldId: args.customFieldId },
-                    { workspaceId: ctx.workspaceId, customFieldId: args.customFieldId },
-                    writeReceipt("deleted", "custom_field", args.customFieldId),
-                );
-            } catch (err) {
-                return errorResult("clockify_custom_fields_delete", err);
-            }
+            const preview = { action: "delete", entity: "custom_field", id: args.customFieldId };
+            const confirmation = requireConfirmation(ctx, "clockify_custom_fields_delete", "custom_field_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.customFields.deleteForWorkspace({
+                workspaceId: ctx.workspaceId,
+                customFieldId: args.customFieldId,
+            });
+            return successResult(
+                "clockify_custom_fields_delete",
+                { deleted: true, customFieldId: args.customFieldId },
+                { workspaceId: ctx.workspaceId, customFieldId: args.customFieldId },
+                writeReceipt("deleted", "custom_field", args.customFieldId),
+            );
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_project_custom_fields_list",
         {
             title: "List project custom fields",
@@ -161,25 +150,22 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const items = (await ctx.client.customFields.listForProject({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                })) as unknown[];
-                return successResult("clockify_project_custom_fields_list", items, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    count: items.length,
-                });
-            } catch (err) {
-                return errorResult("clockify_project_custom_fields_list", err);
-            }
+            const items = (await ctx.client.customFields.listForProject({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            })) as unknown[];
+            return successResult("clockify_project_custom_fields_list", items, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                count: items.length,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_project_custom_fields_update",
         {
             title: "Update a project custom field",
@@ -194,29 +180,26 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {};
-                if (args.status) body.status = args.status;
-                if (args.defaultValue !== undefined) body.defaultValue = args.defaultValue;
-                if (args.allowedValues) body.allowedValues = args.allowedValues;
-                const updated = await ctx.client.customFields.updateForProject({
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    customFieldId: args.customFieldId,
-                    body,
-                });
-                return successResult("clockify_project_custom_fields_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    customFieldId: args.customFieldId,
-                }, writeReceipt("updated", "project_custom_field", args.customFieldId));
-            } catch (err) {
-                return errorResult("clockify_project_custom_fields_update", err);
-            }
+            const body: Record<string, unknown> = {};
+            if (args.status) body.status = args.status;
+            if (args.defaultValue !== undefined) body.defaultValue = args.defaultValue;
+            if (args.allowedValues) body.allowedValues = args.allowedValues;
+            const updated = await ctx.client.customFields.updateForProject({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                customFieldId: args.customFieldId,
+                body,
+            });
+            return successResult("clockify_project_custom_fields_update", updated, {
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                customFieldId: args.customFieldId,
+            }, writeReceipt("updated", "project_custom_field", args.customFieldId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_project_custom_fields_remove",
         {
             title: "Remove a custom field from a project",
@@ -231,37 +214,33 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = {
-                    action: "remove",
-                    entity: "project_custom_field",
+            const preview = {
+                action: "remove",
+                entity: "project_custom_field",
+                projectId: args.projectId,
+                customFieldId: args.customFieldId,
+            };
+            const confirmation = requireConfirmation(ctx, "clockify_project_custom_fields_remove", "project_custom_field_remove", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.customFields.removeFromProject({
+                workspaceId: ctx.workspaceId,
+                projectId: args.projectId,
+                customFieldId: args.customFieldId,
+            });
+            return successResult(
+                "clockify_project_custom_fields_remove",
+                {
+                    removed: true,
                     projectId: args.projectId,
                     customFieldId: args.customFieldId,
-                };
-                const confirmation = requireConfirmation(ctx, "clockify_project_custom_fields_remove", "project_custom_field_remove", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.customFields.removeFromProject({
+                },
+                {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     customFieldId: args.customFieldId,
-                });
-                return successResult(
-                    "clockify_project_custom_fields_remove",
-                    {
-                        removed: true,
-                        projectId: args.projectId,
-                        customFieldId: args.customFieldId,
-                    },
-                    {
-                        workspaceId: ctx.workspaceId,
-                        projectId: args.projectId,
-                        customFieldId: args.customFieldId,
-                    },
-                    writeReceipt("deleted", "project_custom_field", args.customFieldId),
-                );
-            } catch (err) {
-                return errorResult("clockify_project_custom_fields_remove", err);
-            }
+                },
+                writeReceipt("deleted", "project_custom_field", args.customFieldId),
+            );
         },
     );
 }

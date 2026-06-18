@@ -3,10 +3,11 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_clients_list",
         {
             title: "List clients",
@@ -20,29 +21,26 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.name) req.name = args.name;
-                if (args.archived !== undefined) req.archived = args.archived;
-                const clients = await ctx.client.clients.list(req as never);
-                return successResult("clockify_clients_list", clients, {
-                    workspaceId: ctx.workspaceId,
-                    count: clients.length,
-                    page: args.page ?? 1,
-                    pageSize: args.pageSize ?? 50,
-                    hasMore: clients.length === (args.pageSize ?? 50),
-                });
-            } catch (err) {
-                return errorResult("clockify_clients_list", err);
-            }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.name) req.name = args.name;
+            if (args.archived !== undefined) req.archived = args.archived;
+            const clients = await ctx.client.clients.list(req as never);
+            return successResult("clockify_clients_list", clients, {
+                workspaceId: ctx.workspaceId,
+                count: clients.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+                hasMore: clients.length === (args.pageSize ?? 50),
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_clients_create",
         {
             title: "Create a client",
@@ -54,18 +52,15 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { name: args.name };
-                if (args.note) body.note = args.note;
-                const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
-                return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: (client as { id?: string }).id, name: args.name }));
-            } catch (err) {
-                return errorResult("clockify_clients_create", err);
-            }
+            const body: Record<string, unknown> = { name: args.name };
+            if (args.note) body.note = args.note;
+            const client = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body } as never);
+            return successResult("clockify_clients_create", client, undefined, writeReceipt("created", "client", { id: (client as { id?: string }).id, name: args.name }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_clients_get",
         {
             title: "Get a client",
@@ -74,22 +69,19 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const client = await ctx.client.clients.get({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                });
-                return successResult("clockify_clients_get", client, {
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                });
-            } catch (err) {
-                return errorResult("clockify_clients_get", err);
-            }
+            const client = await ctx.client.clients.get({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            });
+            return successResult("clockify_clients_get", client, {
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_clients_update",
         {
             title: "Update a client",
@@ -104,28 +96,25 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = {};
-                if (args.name) body.name = args.name;
-                if (args.note !== undefined) body.note = args.note;
-                if (args.address !== undefined) body.address = args.address;
-                if (args.archived !== undefined) body.archived = args.archived;
-                const updated = await ctx.client.clients.update({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                    body,
-                } as never);
-                return successResult("clockify_clients_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                }, writeReceipt("updated", "client", args.clientId));
-            } catch (err) {
-                return errorResult("clockify_clients_update", err);
-            }
+            const body: Record<string, unknown> = {};
+            if (args.name) body.name = args.name;
+            if (args.note !== undefined) body.note = args.note;
+            if (args.address !== undefined) body.address = args.address;
+            if (args.archived !== undefined) body.archived = args.archived;
+            const updated = await ctx.client.clients.update({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+                body,
+            } as never);
+            return successResult("clockify_clients_update", updated, {
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            }, writeReceipt("updated", "client", args.clientId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_clients_delete",
         {
             title: "Delete a client",
@@ -139,49 +128,45 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "client", id: args.clientId };
-                const confirmation = requireConfirmation(ctx, "clockify_clients_delete", "client_delete", args, preview);
-                if (confirmation) return confirmation;
-                // Clockify rejects DELETE of an ACTIVE client (400, live-verified
-                // 2026-06-15) and the dedicated `clients.archive` route 404s. The
-                // generated `clients.update` FLATTENED form drops `archived`
-                // (whitelist [address, currencyCode, email, name, note]), but the
-                // BODY-ENVELOPE form bypasses the whitelist via core.bodyFromRequest
-                // (wrapper request.ts), landing `archived:true` on the wire. So
-                // archive first via GET-then-PUT (body envelope) — carrying the name
-                // the replace-PUT requires — then DELETE, mirroring
-                // clockify_projects_delete. See spec/evidence/discrepancies.md
-                // `deletes.archive-first.clients-blocked`.
-                const current = (await ctx.client.clients.get({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                })) as { name?: string };
-                const name = String(current.name ?? "");
-                if (!name) {
-                    return errorResult(
-                        "clockify_clients_delete",
-                        new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT."),
-                    );
-                }
-                await ctx.client.clients.update({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                    body: { name, archived: true },
-                } as never);
-                await ctx.client.clients.delete({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                });
-                return successResult(
+            const preview = { action: "delete", entity: "client", id: args.clientId };
+            const confirmation = requireConfirmation(ctx, "clockify_clients_delete", "client_delete", args, preview);
+            if (confirmation) return confirmation;
+            // Clockify rejects DELETE of an ACTIVE client (400, live-verified
+            // 2026-06-15) and the dedicated `clients.archive` route 404s. The
+            // generated `clients.update` FLATTENED form drops `archived`
+            // (whitelist [address, currencyCode, email, name, note]), but the
+            // BODY-ENVELOPE form bypasses the whitelist via core.bodyFromRequest
+            // (wrapper request.ts), landing `archived:true` on the wire. So
+            // archive first via GET-then-PUT (body envelope) — carrying the name
+            // the replace-PUT requires — then DELETE, mirroring
+            // clockify_projects_delete. See spec/evidence/discrepancies.md
+            // `deletes.archive-first.clients-blocked`.
+            const current = (await ctx.client.clients.get({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            })) as { name?: string };
+            const name = String(current.name ?? "");
+            if (!name) {
+                return errorResult(
                     "clockify_clients_delete",
-                    { deleted: true, clientId: args.clientId },
-                    { workspaceId: ctx.workspaceId, clientId: args.clientId },
-                    writeReceipt("deleted", "client", args.clientId),
+                    new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT."),
                 );
-            } catch (err) {
-                return errorResult("clockify_clients_delete", err);
             }
+            await ctx.client.clients.update({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+                body: { name, archived: true },
+            } as never);
+            await ctx.client.clients.delete({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            });
+            return successResult(
+                "clockify_clients_delete",
+                { deleted: true, clientId: args.clientId },
+                { workspaceId: ctx.workspaceId, clientId: args.clientId },
+                writeReceipt("deleted", "client", args.clientId),
+            );
         },
     );
 }

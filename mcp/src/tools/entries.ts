@@ -3,10 +3,11 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, errorResult, successResult, writeReceipt } from "../result.js";
 
 export function registerEntriesTools(server: McpServer, ctx: Context): void {
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_list",
         {
             title: "List time entries (current user)",
@@ -21,40 +22,37 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const user = await ctx.client.users.getCurrentUser();
-                const userId = (user as { id?: string }).id;
-                if (!userId) {
-                    return errorResult(
-                        "clockify_entries_list",
-                        new Error("could not determine user ID from getCurrentUser response"),
-                    );
-                }
-                const req: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    userId,
-                    page: args.page ?? 1,
-                    "page-size": args.pageSize ?? 50,
-                };
-                if (args.start) req.start = args.start;
-                if (args.end) req.end = args.end;
-                if (args.description) req.description = args.description;
-                const entries = (await ctx.client.timeEntries.listForUser(req as never)) as unknown[];
-                return successResult("clockify_entries_list", entries, {
-                    workspaceId: ctx.workspaceId,
-                    userId,
-                    count: entries.length,
-                    page: args.page ?? 1,
-                    pageSize: args.pageSize ?? 50,
-                    hasMore: entries.length === (args.pageSize ?? 50),
-                });
-            } catch (err) {
-                return errorResult("clockify_entries_list", err);
+            const user = await ctx.client.users.getCurrentUser();
+            const userId = (user as { id?: string }).id;
+            if (!userId) {
+                return errorResult(
+                    "clockify_entries_list",
+                    new Error("could not determine user ID from getCurrentUser response"),
+                );
             }
+            const req: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                userId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
+            if (args.start) req.start = args.start;
+            if (args.end) req.end = args.end;
+            if (args.description) req.description = args.description;
+            const entries = (await ctx.client.timeEntries.listForUser(req as never)) as unknown[];
+            return successResult("clockify_entries_list", entries, {
+                workspaceId: ctx.workspaceId,
+                userId,
+                count: entries.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+                hasMore: entries.length === (args.pageSize ?? 50),
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_log",
         {
             title: "Log a finished time entry",
@@ -77,45 +75,42 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            try {
-                let start = args.start;
-                const endIso = args.end ?? new Date().toISOString();
-                if (!start) {
-                    if (args.durationSeconds === undefined) {
-                        return errorResult(
-                            "clockify_entries_log",
-                            new Error("provide either `start` or `durationSeconds` (with optional `end`)"),
-                            "Pass start as an ISO 8601 string, or durationSeconds to anchor against end (defaults to now).",
-                        );
-                    }
-                    const endMs = Date.parse(endIso);
-                    if (Number.isNaN(endMs)) {
-                        return errorResult(
-                            "clockify_entries_log",
-                            new Error(`end ${JSON.stringify(args.end)} is not a valid ISO 8601 timestamp`),
-                        );
-                    }
-                    start = new Date(endMs - args.durationSeconds * 1000).toISOString();
+            let start = args.start;
+            const endIso = args.end ?? new Date().toISOString();
+            if (!start) {
+                if (args.durationSeconds === undefined) {
+                    return errorResult(
+                        "clockify_entries_log",
+                        new Error("provide either `start` or `durationSeconds` (with optional `end`)"),
+                        "Pass start as an ISO 8601 string, or durationSeconds to anchor against end (defaults to now).",
+                    );
                 }
-                const body: Record<string, unknown> = {
-                    workspaceId: ctx.workspaceId,
-                    start,
-                    end: endIso,
-                    description: args.description,
-                };
-                if (args.projectId) body.projectId = args.projectId;
-                if (args.taskId) body.taskId = args.taskId;
-                if (args.tagIds && args.tagIds.length > 0) body.tagIds = args.tagIds;
-                if (args.billable !== undefined) body.billable = args.billable;
-                const entry = await ctx.client.timeEntries.create(body as never);
-                return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: (entry as { id?: string }).id, name: args.description }));
-            } catch (err) {
-                return errorResult("clockify_entries_log", err);
+                const endMs = Date.parse(endIso);
+                if (Number.isNaN(endMs)) {
+                    return errorResult(
+                        "clockify_entries_log",
+                        new Error(`end ${JSON.stringify(args.end)} is not a valid ISO 8601 timestamp`),
+                    );
+                }
+                start = new Date(endMs - args.durationSeconds * 1000).toISOString();
             }
+            const body: Record<string, unknown> = {
+                workspaceId: ctx.workspaceId,
+                start,
+                end: endIso,
+                description: args.description,
+            };
+            if (args.projectId) body.projectId = args.projectId;
+            if (args.taskId) body.taskId = args.taskId;
+            if (args.tagIds && args.tagIds.length > 0) body.tagIds = args.tagIds;
+            if (args.billable !== undefined) body.billable = args.billable;
+            const entry = await ctx.client.timeEntries.create(body as never);
+            return successResult("clockify_entries_log", entry, undefined, writeReceipt("created", "time_entry", { id: (entry as { id?: string }).id, name: args.description }));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_delete",
         {
             title: "Delete a time entry",
@@ -129,19 +124,16 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            try {
-                const preview = { action: "delete", entity: "time_entry", id: args.timeEntryId };
-                const confirmation = requireConfirmation(ctx, "clockify_entries_delete", "entry_delete", args, preview);
-                if (confirmation) return confirmation;
-                await ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: args.timeEntryId });
-                return successResult("clockify_entries_delete", { deleted: true, timeEntryId: args.timeEntryId }, undefined, writeReceipt("deleted", "time_entry", args.timeEntryId));
-            } catch (err) {
-                return errorResult("clockify_entries_delete", err);
-            }
+            const preview = { action: "delete", entity: "time_entry", id: args.timeEntryId };
+            const confirmation = requireConfirmation(ctx, "clockify_entries_delete", "entry_delete", args, preview);
+            if (confirmation) return confirmation;
+            await ctx.client.timeEntries.delete({ workspaceId: ctx.workspaceId, timeEntryId: args.timeEntryId });
+            return successResult("clockify_entries_delete", { deleted: true, timeEntryId: args.timeEntryId }, undefined, writeReceipt("deleted", "time_entry", args.timeEntryId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_get",
         {
             title: "Get a time entry",
@@ -150,22 +142,19 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const entry = await ctx.client.timeEntries.get({
-                    workspaceId: ctx.workspaceId,
-                    timeEntryId: args.timeEntryId,
-                });
-                return successResult("clockify_entries_get", entry, {
-                    workspaceId: ctx.workspaceId,
-                    timeEntryId: args.timeEntryId,
-                });
-            } catch (err) {
-                return errorResult("clockify_entries_get", err);
-            }
+            const entry = await ctx.client.timeEntries.get({
+                workspaceId: ctx.workspaceId,
+                timeEntryId: args.timeEntryId,
+            });
+            return successResult("clockify_entries_get", entry, {
+                workspaceId: ctx.workspaceId,
+                timeEntryId: args.timeEntryId,
+            });
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_update",
         {
             title: "Update a time entry",
@@ -183,30 +172,27 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const body: Record<string, unknown> = { start: args.start };
-                if (args.end) body.end = args.end;
-                if (args.description !== undefined) body.description = args.description;
-                if (args.projectId) body.projectId = args.projectId;
-                if (args.taskId) body.taskId = args.taskId;
-                if (args.tagIds) body.tagIds = args.tagIds;
-                if (args.billable !== undefined) body.billable = args.billable;
-                const updated = await ctx.client.timeEntries.update({
-                    workspaceId: ctx.workspaceId,
-                    timeEntryId: args.timeEntryId,
-                    body,
-                } as never);
-                return successResult("clockify_entries_update", updated, {
-                    workspaceId: ctx.workspaceId,
-                    timeEntryId: args.timeEntryId,
-                }, writeReceipt("updated", "time_entry", args.timeEntryId));
-            } catch (err) {
-                return errorResult("clockify_entries_update", err);
-            }
+            const body: Record<string, unknown> = { start: args.start };
+            if (args.end) body.end = args.end;
+            if (args.description !== undefined) body.description = args.description;
+            if (args.projectId) body.projectId = args.projectId;
+            if (args.taskId) body.taskId = args.taskId;
+            if (args.tagIds) body.tagIds = args.tagIds;
+            if (args.billable !== undefined) body.billable = args.billable;
+            const updated = await ctx.client.timeEntries.update({
+                workspaceId: ctx.workspaceId,
+                timeEntryId: args.timeEntryId,
+                body,
+            } as never);
+            return successResult("clockify_entries_update", updated, {
+                workspaceId: ctx.workspaceId,
+                timeEntryId: args.timeEntryId,
+            }, writeReceipt("updated", "time_entry", args.timeEntryId));
         },
     );
 
-    server.registerTool(
+    defineTool(
+        server,
         "clockify_entries_mark_invoiced",
         {
             title: "Mark time entries invoiced",
@@ -218,22 +204,18 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            try {
-                const invoiced = args.invoiced ?? true;
-                await ctx.client.timeEntries.markInvoiced({
-                    workspaceId: ctx.workspaceId,
-                    timeEntryIds: args.timeEntryIds,
-                    invoiced,
-                });
-                return successResult(
-                    "clockify_entries_mark_invoiced",
-                    { invoiced, timeEntryIds: args.timeEntryIds },
-                    { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
-                    writeReceipt("updated", "time_entry", args.timeEntryIds.join(",")),
-                );
-            } catch (err) {
-                return errorResult("clockify_entries_mark_invoiced", err);
-            }
+            const invoiced = args.invoiced ?? true;
+            await ctx.client.timeEntries.markInvoiced({
+                workspaceId: ctx.workspaceId,
+                timeEntryIds: args.timeEntryIds,
+                invoiced,
+            });
+            return successResult(
+                "clockify_entries_mark_invoiced",
+                { invoiced, timeEntryIds: args.timeEntryIds },
+                { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
+                writeReceipt("updated", "time_entry", args.timeEntryIds.join(",")),
+            );
         },
     );
 }
