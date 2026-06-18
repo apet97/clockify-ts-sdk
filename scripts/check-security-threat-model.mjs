@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 const contract = JSON.parse(await readRel("docs/security-threat-model-contract.json"));
 const failures = [];
 const shapeFailures = [];
+// Hoisted to module top so it is in scope for both the shape-validator
+// (mechanism B, runs early) and the bottom-of-file target checks (mechanism A).
+const retiredGates = await loadRetiredGates();
 
 async function readRel(relPath) {
     return readFile(path.join(root, relPath), "utf8");
@@ -138,7 +142,7 @@ function assertContractShape(value) {
         "supply-chain",
         "receipts-contract",
     ]) {
-        if (!requiredTargets.includes(target)) {
+        if (!requiredTargets.includes(target) && !retiredGates[target]) {
             failShape(`requiredTargets must include ${target}`);
         }
     }
@@ -254,14 +258,14 @@ for (const evidence of contract.supportingEvidence ?? []) {
 
 for (const surface of contract.riskSurfaces ?? []) {
     for (const target of surface.proofTargets ?? []) {
-        if (!makefile.includes(`${target}:`) && !contract.allowedNonMakeProofTargets.includes(target)) {
+        if (!isLiveTarget(makefile, target, retiredGates) && !contract.allowedNonMakeProofTargets.includes(target)) {
             fail(surface.id, `proof target is not a Makefile target: ${target}`);
         }
     }
 }
 
 for (const target of contract.requiredTargets ?? []) {
-    if (!makefile.includes(`${target}:`)) fail("Makefile", `missing required target ${target}`);
+    if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing required target ${target}`);
 }
 
 if (!makefile.includes("perfect-fast:") || !makefile.includes("security-threat-model")) {

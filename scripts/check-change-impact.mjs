@@ -2,6 +2,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildPlan } from "./change-impact-plan.mjs";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -274,6 +275,7 @@ if (failures.length > 0) {
 
 failures = [];
 const makefile = await readRel("Makefile");
+const retiredGates = await loadRetiredGates();
 const docsIndex = await readRel("docs/README.md");
 const qualityGates = await readRel("docs/quality-gates.md");
 
@@ -393,7 +395,7 @@ for (const scope of contract.scopes ?? []) {
     }
 
     for (const target of scope.requiredTargets ?? []) {
-        if (!makefile.includes(`${target}:`) && !contract.allowedNonMakeTargets.includes(target)) {
+        if (!isLiveTarget(makefile, target, retiredGates) && !contract.allowedNonMakeTargets.includes(target)) {
             fail(scope.id, `Makefile missing target ${target}`);
         }
     }

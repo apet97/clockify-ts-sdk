@@ -1,6 +1,11 @@
 {
   "schemaVersion": 1,
   "purpose": "Inventory of enterprise hardening contracts so policy docs, contract JSON, checker scripts, Make targets, docs index rows, quality-gate rows, and audit evidence stay wired together.",
+  "retiredGates": {
+    "receipts-contract": "observability",
+    "receipt-examples": "observability",
+    "quickstart-receipt": "diagnostics"
+  },
   "reportGenerator": {
     "path": "scripts/contract-inventory-report.mjs",
     "makeTarget": "contract-inventory-report",

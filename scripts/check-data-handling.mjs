@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { isLiveTarget, loadRetiredGates } from "./lib/gate-targets.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -170,6 +171,7 @@ if (failures.length > 0) {
 
 failures = [];
 const makefile = await readRel("Makefile");
+const retiredGates = await loadRetiredGates();
 const docsIndex = await readRel("docs/README.md");
 const qualityGates = await readRel("docs/quality-gates.md");
 const contractInventory = await readRel("docs/contract-inventory.json");
@@ -198,7 +200,7 @@ for (const evidence of contract.supportingEvidence ?? []) {
 }
 
 for (const target of contract.requiredTargets ?? []) {
-    if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
+    if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
 if (!makefile.includes("perfect-fast:") || !makefile.includes("data-handling")) {
