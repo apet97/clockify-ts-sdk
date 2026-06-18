@@ -300,6 +300,19 @@
       "perfectFull": true
     },
     {
+      "id": "doc-correctness-anchor",
+      "target": "doc-correctness-anchor",
+      "checker": "scripts/check-doc-correctness-anchor.mjs",
+      "contracts": [
+        "docs/openapi-operations.json"
+      ],
+      "auditIds": [
+        "doc-correctness-anchor"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "generator-portability",
       "target": "generator-portability",
       "checker": "scripts/check-generator-portability.mjs",

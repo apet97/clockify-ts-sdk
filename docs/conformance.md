@@ -54,6 +54,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Dependency License | `make dependency-license` | yes |
 | Developer Environment | `make developer-environment` | yes |
 | Diagnostics Contract | `make diagnostics` | yes |
+| Doc Correctness Anchor | `make doc-correctness-anchor` | yes |
 | Docs Counts | `make docs-counts` | yes |
 | Docs Drift | `make docs-drift` | yes |
 | Docs Index Drift | `make docs-index-drift` | yes |
@@ -106,4 +107,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 73.
+Total gates: 74.

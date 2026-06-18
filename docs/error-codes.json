@@ -75,6 +75,54 @@
       "recovery": "Do not retry automatically; surface cancellation to the caller."
     },
     {
+      "code": "rate_limited_retry_after",
+      "httpStatus": [],
+      "retry": true,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Clockify returned 429 with a Retry-After or X-RateLimit-Reset header naming when the caller may resume.",
+      "recovery": "Read the Retry-After seconds or X-RateLimit-Reset epoch from response headers, wait that long, then retry the same request once."
+    },
+    {
+      "code": "addon_token_restricted",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "mcp"],
+      "meaning": "An X-Addon-Token request reached an endpoint outside the add-on token's allowed surface.",
+      "recovery": "Use a user API key for that endpoint, or restrict the add-on workflow to endpoints its token can call."
+    },
+    {
+      "code": "host_routing_required",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Reports, audit-log, or expense-report operations were sent to the default API host instead of their dedicated Clockify host.",
+      "recovery": "Let the typed SDK method pick its per-operation host, or pass the matching reports/audit-log base URL explicitly."
+    },
+    {
+      "code": "active_resource_delete_blocked",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "Clockify rejected a bare DELETE of an active project, task, or client before the object could be removed.",
+      "recovery": "Archive the project/client first, or mark a task done first, then issue the delete."
+    },
+    {
+      "code": "dead_route",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "A documented Clockify route is not served and returns a static-resource 404 or equivalent unsupported response.",
+      "recovery": "Use the replacement path recorded in the evidence ledger and treat the response as a quarantined route, not a transient missing object."
+    },
+    {
+      "code": "name_reserved_after_delete",
+      "httpStatus": [],
+      "retry": false,
+      "surfaces": ["sdk", "cli", "mcp"],
+      "meaning": "A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected.",
+      "recovery": "Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name."
+    },
+    {
       "code": "error",
       "httpStatus": [],
       "retry": false,

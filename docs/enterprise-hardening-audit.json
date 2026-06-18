@@ -481,6 +481,27 @@
       ]
     },
     {
+      "id": "doc-correctness-anchor",
+      "requirement": "Tie the documented OpenAPI operation count to an independent generated TypeScript method count.",
+      "evidence": [
+        {
+          "path": "scripts/check-doc-correctness-anchor.mjs",
+          "markers": [
+            "Doc correctness anchor",
+            "docs/openapi-operations.json#operationCount",
+            "emitted public methods"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "doc-correctness-anchor:",
+            "node scripts/check-doc-correctness-anchor.mjs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "generator-portability",
       "requirement": "Keep OpenAPI-to-TypeScript generation independent from paid hosted SDK generator platforms and preserve a vendor-exit path.",
       "evidence": [

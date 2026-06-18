@@ -94,6 +94,66 @@ Recovery: Do not retry automatically; surface cancellation to the caller.
 
 Surfaces: sdk, cli, mcp
 
+## `rate_limited_retry_after`
+
+Meaning: Clockify returned 429 with a Retry-After or X-RateLimit-Reset header naming when the caller may resume.
+
+Retryable: yes
+
+Recovery: Read the Retry-After seconds or X-RateLimit-Reset epoch from response headers, wait that long, then retry the same request once.
+
+Surfaces: sdk, cli, mcp
+
+## `addon_token_restricted`
+
+Meaning: An X-Addon-Token request reached an endpoint outside the add-on token's allowed surface.
+
+Retryable: no
+
+Recovery: Use a user API key for that endpoint, or restrict the add-on workflow to endpoints its token can call.
+
+Surfaces: sdk, mcp
+
+## `host_routing_required`
+
+Meaning: Reports, audit-log, or expense-report operations were sent to the default API host instead of their dedicated Clockify host.
+
+Retryable: no
+
+Recovery: Let the typed SDK method pick its per-operation host, or pass the matching reports/audit-log base URL explicitly.
+
+Surfaces: sdk, cli, mcp
+
+## `active_resource_delete_blocked`
+
+Meaning: Clockify rejected a bare DELETE of an active project, task, or client before the object could be removed.
+
+Retryable: no
+
+Recovery: Archive the project/client first, or mark a task done first, then issue the delete.
+
+Surfaces: sdk, cli, mcp
+
+## `dead_route`
+
+Meaning: A documented Clockify route is not served and returns a static-resource 404 or equivalent unsupported response.
+
+Retryable: no
+
+Recovery: Use the replacement path recorded in the evidence ledger and treat the response as a quarantined route, not a transient missing object.
+
+Surfaces: sdk, cli, mcp
+
+## `name_reserved_after_delete`
+
+Meaning: A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected.
+
+Retryable: no
+
+Recovery: Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name.
+
+Surfaces: sdk, cli, mcp
+
 ## `error`
 
 Meaning: Unknown local/runtime failure that does not fit a more specific code yet.
