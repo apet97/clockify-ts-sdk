@@ -276,6 +276,16 @@
         "types": "./dist/cjs/bulk.d.ts",
         "default": "./dist/cjs/bulk.js"
       }
+    },
+    "./compose": {
+      "import": {
+        "types": "./dist/esm/compose.d.ts",
+        "default": "./dist/esm/compose.js"
+      },
+      "require": {
+        "types": "./dist/cjs/compose.d.ts",
+        "default": "./dist/cjs/compose.js"
+      }
     }
   },
   "files": [

@@ -704,3 +704,53 @@ describe("P0 correctness — pagination + validation", () => {
         expect((env.error as { message: string }).message).toMatch(/not a valid ISO 8601 timestamp/);
     });
 });
+
+describe("create_work_package — transactional rollback (P1-2 compose)", () => {
+    it("rolls back the created client + project when the required task step fails", async () => {
+        const ctx = fakeContext();
+        // Force task creation to fail after client + project were created.
+        (ctx.client.tasks as { create: unknown }).create = async () => {
+            throw new Error("tasks.create 400 boom");
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_create_work_package",
+            arguments: { client: "Acme", project: "Launch", task: "Build" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { message: string }).message).toMatch(/failed at task/);
+        expect((env.error as { message: string }).message).toMatch(/Nothing partial was left behind/);
+        // created project rolled back via archive-then-delete (active delete 400s)
+        expect(ctx.state.cleanupRequests).toEqual(
+            expect.arrayContaining([
+                { type: "project.update", body: expect.objectContaining({ archived: true }) },
+                { type: "project.delete", body: expect.objectContaining({}) },
+                { type: "client.update", body: expect.objectContaining({ body: expect.objectContaining({ archived: true }) }) },
+                { type: "client.delete", body: expect.objectContaining({}) },
+            ]),
+        );
+        // no orphans left behind
+        expect(ctx.state.projects).toHaveLength(0);
+        expect(ctx.state.clients).toHaveLength(0);
+    });
+
+    it("does NOT roll back a REUSED project when a later step fails", async () => {
+        const ctx = fakeContext({ projects: [{ id: "p9", name: "Launch" }] });
+        (ctx.client.tasks as { create: unknown }).create = async () => {
+            throw new Error("tasks.create 400");
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_create_work_package",
+            arguments: { project: "Launch", task: "Build" }, // project reused, not created
+        });
+        expect(res.isError).toBe(true);
+        // the reused project must survive — never roll back what we didn't create
+        expect(ctx.state.projects).toEqual([{ id: "p9", name: "Launch" }]);
+        expect(ctx.state.cleanupRequests).not.toContainEqual(
+            expect.objectContaining({ type: "project.delete" }),
+        );
+    });
+});

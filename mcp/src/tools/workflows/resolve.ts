@@ -1,3 +1,4 @@
+import { leftBehindNote, runComposition, type CompositionStep } from "clockify-sdk-ts-115/compose";
 import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
 import { iterAll } from "clockify-sdk-ts-115/iter";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
@@ -15,50 +16,73 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
     const data: AnyRecord = {};
 
     let clientId = str(args.client_id);
+    let projectId = str(args.project_id);
+    let taskId = str(args.task_id);
+    const tagIds = arrayOfStrings(args.tag_ids);
+    const tags: unknown[] = [];
+
+    // Build the create-or-reuse steps and run them transactionally: if a later
+    // required step fails, the entities CREATED so far roll back (archive-first /
+    // DONE-first, since active deletes 400) so a partial run never orphans.
+    const steps: CompositionStep[] = [];
+
     if (!clientId && str(args.client)) {
-        const found = await findOneByName(
-            await ctx.client.clients.list({
+        const clientName = str(args.client);
+        steps.push({
+            label: "client",
+            required: false,
+            run: async () => {
+                const found = await findOneByName(
+                    await ctx.client.clients.list({ workspaceId: ctx.workspaceId, name: clientName, page: 1, "page-size": 200 }),
+                    clientName,
+                    "client",
+                );
+                if (found && upsert) {
+                    clientId = idOf(found);
+                    data.client = found;
+                    pushChanged(changed, "reused", ref("client", found));
+                    return { kind: "done", reused: [ref("client", found)] };
+                }
+                const created = await ctx.client.clients.create({ workspaceId: ctx.workspaceId, body: { name: clientName } });
+                clientId = idOf(created);
+                data.client = created;
+                const r = ref("client", created, clientName);
+                pushChanged(changed, "created", r);
+                const cid = clientId;
+                return {
+                    kind: "done",
+                    created: [r],
+                    undo: async () => {
+                        // active client delete 400s — archive (body envelope) then delete
+                        await ctx.client.clients.update({ workspaceId: ctx.workspaceId, clientId: cid, body: { name: clientName, archived: true } } as never);
+                        await ctx.client.clients.delete({ workspaceId: ctx.workspaceId, clientId: cid });
+                    },
+                };
+            },
+        });
+    }
+
+    steps.push({
+        label: "project",
+        required: true,
+        run: async () => {
+            if (projectId) return { kind: "done" }; // supplied by id — neither created nor reused
+            const projectName = str(args.project);
+            if (!projectName) throw new Error("project or project_id is required");
+            const listed = await ctx.client.projects.list({
                 workspaceId: ctx.workspaceId,
-                name: str(args.client),
+                name: projectName,
+                ...(clientId ? { clients: [clientId] } : {}),
                 page: 1,
                 "page-size": 200,
-            }),
-            str(args.client),
-            "client",
-        );
-        if (found && upsert) {
-            clientId = idOf(found);
-            data.client = found;
-            pushChanged(changed, "reused", ref("client", found));
-        } else {
-            const created = await ctx.client.clients.create({
-                workspaceId: ctx.workspaceId,
-                body: { name: str(args.client) },
             });
-            clientId = idOf(created);
-            data.client = created;
-            pushChanged(changed, "created", ref("client", created, str(args.client)));
-        }
-    }
-    if (clientId) ids.clientId = clientId;
-
-    let projectId = str(args.project_id);
-    if (!projectId) {
-        const projectName = str(args.project);
-        if (!projectName) throw new Error("project or project_id is required");
-        const listed = await ctx.client.projects.list({
-            workspaceId: ctx.workspaceId,
-            name: projectName,
-            ...(clientId ? { clients: [clientId] } : {}),
-            page: 1,
-            "page-size": 200,
-        });
-        const found = await findOneByName(listed, projectName, "project");
-        if (found && upsert) {
-            projectId = idOf(found);
-            data.project = found;
-            pushChanged(changed, "reused", ref("project", found));
-        } else {
+            const found = await findOneByName(listed, projectName, "project");
+            if (found && upsert) {
+                projectId = idOf(found);
+                data.project = found;
+                pushChanged(changed, "reused", ref("project", found));
+                return { kind: "done", reused: [ref("project", found)] };
+            }
             const created = await ctx.client.projects.create({
                 workspaceId: ctx.workspaceId,
                 name: projectName,
@@ -69,67 +93,113 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             } as never);
             projectId = idOf(created);
             data.project = created;
-            pushChanged(changed, "created", ref("project", created, projectName));
-        }
-    }
-    ids.projectId = projectId;
+            const r = ref("project", created, projectName);
+            pushChanged(changed, "created", r);
+            const pid = projectId;
+            return {
+                kind: "done",
+                created: [r],
+                undo: async () => {
+                    // active project delete 400s — archive then delete
+                    await ctx.client.projects.update({ workspaceId: ctx.workspaceId, projectId: pid, name: projectName, archived: true });
+                    await ctx.client.projects.delete({ workspaceId: ctx.workspaceId, projectId: pid });
+                },
+            };
+        },
+    });
 
-    let taskId = str(args.task_id);
     if (!taskId && str(args.task)) {
-        const listed = await ctx.client.tasks.list({
-            workspaceId: ctx.workspaceId,
-            projectId,
-            name: str(args.task),
-            page: 1,
-            "page-size": 200,
+        const taskName = str(args.task);
+        // required: an explicitly-requested task that can't be created rolls back the
+        // created client/project rather than leaving a half-built package behind.
+        steps.push({
+            label: "task",
+            required: true,
+            run: async () => {
+                const listed = await ctx.client.tasks.list({ workspaceId: ctx.workspaceId, projectId, name: taskName, page: 1, "page-size": 200 });
+                const found = await findOneByName(listed, taskName, "task");
+                if (found && upsert) {
+                    taskId = idOf(found);
+                    data.task = found;
+                    pushChanged(changed, "reused", ref("task", found));
+                    return { kind: "done", reused: [ref("task", found)] };
+                }
+                const created = await ctx.client.tasks.create({ workspaceId: ctx.workspaceId, projectId, name: taskName });
+                taskId = idOf(created);
+                data.task = created;
+                const r = ref("task", created, taskName);
+                pushChanged(changed, "created", r);
+                const tid = taskId;
+                const pid = projectId;
+                return {
+                    kind: "done",
+                    created: [r],
+                    undo: async () => {
+                        // active task delete 400s — mark DONE then delete
+                        await ctx.client.tasks.update({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid, status: "DONE" } as never);
+                        await ctx.client.tasks.delete({ workspaceId: ctx.workspaceId, projectId: pid, taskId: tid });
+                    },
+                };
+            },
         });
-        const found = await findOneByName(listed, str(args.task), "task");
-        if (found && upsert) {
-            taskId = idOf(found);
-            data.task = found;
-            pushChanged(changed, "reused", ref("task", found));
-        } else {
-            const created = await ctx.client.tasks.create({
-                workspaceId: ctx.workspaceId,
-                projectId,
-                name: str(args.task),
-            });
-            taskId = idOf(created);
-            data.task = created;
-            pushChanged(changed, "created", ref("task", created, str(args.task)));
-        }
     }
-    if (taskId) ids.taskId = taskId;
 
-    const tagIds = arrayOfStrings(args.tag_ids);
     const tagNames = [...arrayOfStrings(args.tags), ...(str(args.tag) ? [str(args.tag)] : [])];
-    const tags: unknown[] = [];
     for (const name of tagNames) {
-        const found = await findOneByName(
-            await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name, page: 1, "page-size": 200 }),
-            name,
-            "tag",
-        );
-        if (found && upsert) {
-            tagIds.push(idOf(found));
-            tags.push(found);
-            pushChanged(changed, "reused", ref("tag", found));
-        } else {
-            const created = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name });
-            tagIds.push(idOf(created));
-            tags.push(created);
-            pushChanged(changed, "created", ref("tag", created, name));
-        }
+        // best-effort: a tag is decorative — a tag failure warns, it never nukes the package.
+        steps.push({
+            label: `tag:${name}`,
+            required: false,
+            run: async () => {
+                const found = await findOneByName(
+                    await ctx.client.tags.list({ workspaceId: ctx.workspaceId, name, page: 1, "page-size": 200 }),
+                    name,
+                    "tag",
+                );
+                if (found && upsert) {
+                    tagIds.push(idOf(found));
+                    tags.push(found);
+                    pushChanged(changed, "reused", ref("tag", found));
+                    return { kind: "done", reused: [ref("tag", found)] };
+                }
+                const created = await ctx.client.tags.create({ workspaceId: ctx.workspaceId, name });
+                tagIds.push(idOf(created));
+                tags.push(created);
+                const r = ref("tag", created, name);
+                pushChanged(changed, "created", r);
+                const tagId = idOf(created);
+                return { kind: "done", created: [r], undo: async () => { await ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId }); } };
+            },
+        });
     }
+
+    const outcome = await runComposition(steps);
+    if (outcome.status.kind === "failed") {
+        throw new Error(`create_work_package failed at ${outcome.status.label}: ${outcome.status.message}. ${leftBehindNote(outcome.status.rollbackWarnings)}`);
+    }
+
+    if (clientId) ids.clientId = clientId;
+    ids.projectId = projectId;
+    if (taskId) ids.taskId = taskId;
     if (tagIds.length === 1) ids.tagId = tagIds[0];
     if (tagIds.length > 0) data.tagIds = tagIds;
     if (tags.length > 0) data.tags = tags;
 
+    const next = packageNext(projectId, taskId, tagIds);
+    if (outcome.warnings.length > 0) {
+        return successResult("clockify_create_work_package", data, { workspaceId: ctx.workspaceId }, {
+            entity: "work_package",
+            ids,
+            changed,
+            warnings: outcome.warnings,
+            next,
+        });
+    }
     return successResult("clockify_create_work_package", data, { workspaceId: ctx.workspaceId }, {
         entity: "work_package",
         ids,
         changed,
-        next: packageNext(projectId, taskId, tagIds),
+        next,
     });
 }
 

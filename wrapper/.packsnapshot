@@ -4,6 +4,10 @@ dist/cjs/bulk.d.ts
 dist/cjs/bulk.d.ts.map
 dist/cjs/bulk.js
 dist/cjs/bulk.js.map
+dist/cjs/compose.d.ts
+dist/cjs/compose.d.ts.map
+dist/cjs/compose.js
+dist/cjs/compose.js.map
 dist/cjs/composed-fetch.d.ts
 dist/cjs/composed-fetch.d.ts.map
 dist/cjs/composed-fetch.js
@@ -2849,6 +2853,10 @@ dist/esm/bulk.d.ts
 dist/esm/bulk.d.ts.map
 dist/esm/bulk.js
 dist/esm/bulk.js.map
+dist/esm/compose.d.ts
+dist/esm/compose.d.ts.map
+dist/esm/compose.js
+dist/esm/compose.js.map
 dist/esm/composed-fetch.d.ts
 dist/esm/composed-fetch.d.ts.map
 dist/esm/composed-fetch.js

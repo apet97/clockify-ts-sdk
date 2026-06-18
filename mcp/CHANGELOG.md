@@ -34,6 +34,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- `clockify_create_work_package` is now transactional: it builds its client →
+  project → task → tag create-or-reuse steps as a composition (the new SDK
+  `clockify-sdk-ts-115/compose`) so a failure mid-way rolls back the entities it
+  created (archive-first / DONE-first, since active deletes 400) instead of
+  orphaning a half-built package. A required-step failure returns an error
+  receipt with a truthful left-behind note; reused entities are never rolled back.
 - Added a `defineTool` envelope helper (`result.ts`) that owns the uniform
   `try { … } catch (err) { return errorResult(name, err) }` wrapper so a tool
   carries only its happy path; migrated `status` / `audit` / `timer` onto it.

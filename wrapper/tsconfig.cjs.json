@@ -38,7 +38,8 @@
     "resolve.ts",
     "ensure.ts",
     "reports.ts",
-    "bulk.ts"
+    "bulk.ts",
+    "compose.ts"
   ],
   "exclude": [
     "node_modules",

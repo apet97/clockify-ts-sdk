@@ -18,6 +18,13 @@ once v1.0.0 ships.
   continueOnError})` runs an async op over many items with bounded concurrency
   and collected per-item failures, plus thin DI `bulkArchiveProjects` /
   `bulkDelete` wrappers. (Public surface: 81→90 names, 23→25 subpaths.)
+- New `clockify-sdk-ts-115/compose` subpath: `runComposition(steps)` runs an
+  ordered set of create-or-reuse steps with transactional rollback — a failed
+  required step runs prior `undo()`s in reverse (only entities actually created,
+  never reused), and `leftBehindNote` reports truthfully when a rollback itself
+  failed. Pure orchestration (injected I/O, no transport dependency). The MCP
+  `clockify_create_work_package` now uses it, so a partial failure no longer
+  orphans a client/project/task. (Public surface: 90→92 names, 25→26 subpaths.)
 
 ### Fixed
 
