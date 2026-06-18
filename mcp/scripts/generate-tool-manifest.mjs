@@ -8,31 +8,35 @@ import { fileURLToPath } from "node:url";
 
 import { buildServer } from "../src/server.ts";
 
+import { fakeContext } from "./introspect-harness.mjs";
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outputPath = path.resolve(here, "..", "..", "docs", "mcp-tool-manifest.json");
 const mcpToolsPath = path.resolve(here, "..", "..", "docs", "mcp-tools.json");
 const args = new Set(process.argv.slice(2));
-
-function fakeContext() {
-    const guard = new Proxy(function () {
-        throw new Error("tool handler must not be called during manifest emit");
-    }, {
-        get: () => guard,
-        apply: () => {
-            throw new Error("tool handler must not be called during manifest emit");
-        },
-    });
-    return { workspaceId: "ws-manifest-emit", client: guard };
-}
 
 function workflowNames() {
     const doc = JSON.parse(fs.readFileSync(mcpToolsPath, "utf8"));
     return new Set((doc.workflowTools ?? []).map((tool) => tool.tool));
 }
 
+// Fail closed if the MCP SDK private registration map vanishes or the server
+// stops registering the known tool surface. Otherwise the generator could emit
+// an empty manifest and rely on a later drift check to notice.
+const MIN_REGISTERED_TOOLS = 134;
+
 function render() {
     const server = buildServer(fakeContext());
     const registered = server._registeredTools ?? {};
+    const registeredCount = Object.keys(registered).length;
+    if (registeredCount < MIN_REGISTERED_TOOLS) {
+        throw new Error(
+            `tool-manifest generator read ${registeredCount} registered tools (expected >= ${MIN_REGISTERED_TOOLS}). ` +
+                "The private McpServer `_registeredTools` map is missing or under-populated; " +
+                "most likely a @modelcontextprotocol/sdk upgrade renamed that internal field, " +
+                "or buildServer() stopped registering tools. Refusing to emit a silently-empty manifest.",
+        );
+    }
     const workflow = workflowNames();
     const tools = Object.keys(registered)
         .sort((a, b) => a.localeCompare(b))

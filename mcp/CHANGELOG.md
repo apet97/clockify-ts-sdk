@@ -84,6 +84,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- Tool-manifest hardening: the generator now fails closed if runtime
+  introspection drops below the known MCP tool floor, the test and generator
+  share one offline introspection harness, and write-safety now verifies every
+  confirmation-guarded domain tool still advertises `destructiveHint:true`.
 - Internal type-safety: domain/workflow write calls now use generated
   `ClockifyApi.*Request` bindings and the new SDK `requests` seam where the
   generated body-envelope arm is the real wire shape. The write-safety checker
