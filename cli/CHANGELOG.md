@@ -18,6 +18,14 @@ All notable changes to `@clockify115/cli` are documented here.
   query: an existing path query and `--query` flags are now merged into one search string.
 - `loadConfig` treats a blank/whitespace env var as absent, so `CLOCKIFY_API_KEY=''` (the
   deterministic-gate convention) no longer shadows a real `~/.clockifyrc.json` value.
+- Name→id resolution (`start` / `log`) now requests `page-size: 200` when listing
+  projects/tasks/tags by name, matching the MCP resolver, so a name lookup in a large
+  workspace is no longer capped at the first page.
+
+### Removed
+
+- Two unreferenced internal helpers (`formatSeconds`, `completionShells`) with no call
+  sites. The supported completion shells are still enforced by `parseCompletionShell`.
 
 ### Added
 

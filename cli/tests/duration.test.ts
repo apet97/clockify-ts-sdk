@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatIsoDuration, formatSeconds, parseDuration } from "../src/duration.js";
+import { formatIsoDuration, parseDuration } from "../src/duration.js";
 
 describe("parseDuration", () => {
     it("parses bare numbers as minutes", () => {
@@ -65,20 +65,5 @@ describe("formatIsoDuration", () => {
 
     it("passes through unrecognized shapes", () => {
         expect(formatIsoDuration("not-iso")).toBe("not-iso");
-    });
-});
-
-describe("formatSeconds", () => {
-    it("formats compact human strings", () => {
-        expect(formatSeconds(89)).toBe("1m29s");
-        expect(formatSeconds(3601)).toBe("1h0m1s");
-        expect(formatSeconds(7200)).toBe("2h0m0s");
-        expect(formatSeconds(45)).toBe("45s");
-    });
-
-    it("handles zero and negative inputs", () => {
-        expect(formatSeconds(0)).toBe("0s");
-        expect(formatSeconds(-10)).toBe("0s");
-        expect(formatSeconds(Number.NaN)).toBe("0s");
     });
 });

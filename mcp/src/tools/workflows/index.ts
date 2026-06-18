@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import { zNumberLike } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
 import { successResult } from "../../result.js";
 
@@ -248,7 +249,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             title: "Record expense",
             description: "Record an expense with category and project names or IDs. Supports dry_run plus confirm_token.",
             inputSchema: {
-                amount: z.number(),
+                amount: zNumberLike(z.number()),
                 date: z.string().optional(),
                 category: z.string().optional(),
                 category_id: z.string().optional(),

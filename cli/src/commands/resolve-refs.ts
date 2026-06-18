@@ -30,7 +30,7 @@ function pickIdByName(rows: unknown[], ref: string, noun: string): string {
 
 export async function resolveProjectId(client: ClockifyClient, workspaceId: string, ref: string): Promise<string> {
     if (looksLikeClockifyId(ref)) return ref;
-    const list = (await client.projects.list({ workspaceId, name: ref })) as unknown[];
+    const list = (await client.projects.list({ workspaceId, name: ref, page: 1, "page-size": 200 })) as unknown[];
     return pickIdByName(list, ref, "project");
 }
 
@@ -41,7 +41,7 @@ export async function resolveTaskId(
     ref: string,
 ): Promise<string> {
     if (looksLikeClockifyId(ref)) return ref;
-    const list = (await client.tasks.list({ workspaceId, projectId, name: ref })) as unknown[];
+    const list = (await client.tasks.list({ workspaceId, projectId, name: ref, page: 1, "page-size": 200 })) as unknown[];
     const match = matchByName(asNamed(list), ref);
     if (match.kind === "many") {
         throw new Error(`multiple tasks named ${JSON.stringify(ref)} on project ${projectId}; pass the 24-character id`);
@@ -59,7 +59,7 @@ export async function resolveTagIds(client: ClockifyClient, workspaceId: string,
             ids.push(ref);
             continue;
         }
-        const list = (await client.tags.list({ workspaceId, name: ref })) as unknown[];
+        const list = (await client.tags.list({ workspaceId, name: ref, page: 1, "page-size": 200 })) as unknown[];
         ids.push(pickIdByName(list, ref, "tag"));
     }
     return ids;

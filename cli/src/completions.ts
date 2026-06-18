@@ -22,10 +22,6 @@ const COMMANDS = [
 
 export type CompletionShell = "bash" | "zsh" | "fish";
 
-export function completionShells(): readonly CompletionShell[] {
-    return ["bash", "zsh", "fish"];
-}
-
 export function renderCompletion(shell: CompletionShell): string {
     const commands = COMMANDS.join(" ");
     if (shell === "zsh") return renderZsh(commands);

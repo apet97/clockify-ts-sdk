@@ -28,6 +28,13 @@ once v1.0.0 ships.
   instead of `undefined`, and the internal retry backoff treats `Retry-After: 0` as a 0ms
   wait rather than falling through to exponential backoff (RFC 9110 delay-seconds=0).
 
+### Changed
+
+- `paginate` (the `pagination` subpath, also a root export) is now a thin
+  adapter over `iterAll` instead of re-implementing its own page-walk —
+  one page-walk, one source of `Last-Page` correctness. The name,
+  `PaginateOptions`, signature, and observable behavior are unchanged.
+
 ### Documentation
 
 - Corrected the SDK-method coverage figure in `README.md` to 173 of 185 operations
