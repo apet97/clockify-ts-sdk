@@ -6,24 +6,24 @@ Shared recovery/error vocabulary for SDK helpers, CLI JSON, MCP envelopes, and d
 
 ## Registry
 
-| Code | HTTP status | Retry | Surfaces | Meaning | Recovery |
-|---|---|---|---|---|---|
-| `invalid_request` | 400 | no | sdk, cli, mcp | The request is malformed, missing required fields, or locally invalid before Clockify accepts it. | Fix the request fields, IDs, dates, pagination values, or enum values, then retry. |
-| `auth_or_permission` | 401, 403 | no | sdk, cli, mcp | The token is missing, invalid, expired, pointed at the wrong workspace, or lacks permission for the operation. | Check CLOCKIFY_API_KEY or addon token, workspace ID, and the user's Clockify role or plan permissions. |
-| `feature_unavailable` | 402 | no | cli, mcp | The endpoint exists but the workspace plan or feature configuration does not expose it. | Use a supported workspace plan, skip the gated workflow, or fall back to a lower-level read operation. |
-| `not_found` | 404 | no | sdk, cli, mcp | The requested object does not exist, is archived/deleted, or is outside the active workspace. | List the resource again, use returned IDs instead of names, and confirm the workspace ID. |
-| `conflict` | 409 | no | sdk, cli, mcp | Clockify rejected the write because it conflicts with existing state, uniqueness, or a concurrent update. | Fetch current state, reuse the existing object when appropriate, or retry with a different name or payload. |
-| `rate_limited` | 429 | yes | sdk, cli, mcp | Clockify rate-limited the caller. | Wait for Retry-After or X-RateLimit-Reset when present; otherwise retry with exponential backoff. |
-| `clockify_upstream_error` | 500, 502, 503, 504 | yes | sdk, cli, mcp | Clockify returned a server-side or temporary upstream failure. | Retry idempotent reads/writes with backoff; preserve request IDs for support/debugging. |
-| `connection_error` | - | yes | sdk, cli, mcp | The process could not reach Clockify before receiving an HTTP response. | Check network, proxy, DNS, TLS, base URL, and retry with backoff. |
-| `aborted` | - | no | sdk, cli, mcp | The caller cancelled the operation with an AbortSignal or equivalent stop request. | Do not retry automatically; surface cancellation to the caller. |
-| `rate_limited_retry_after` | - | yes | sdk, cli, mcp | Clockify returned 429 with a Retry-After or X-RateLimit-Reset header naming when the caller may resume. | Read the Retry-After seconds or X-RateLimit-Reset epoch from response headers, wait that long, then retry the same request once. |
-| `addon_token_restricted` | - | no | sdk, mcp | An X-Addon-Token request reached an endpoint outside the add-on token's allowed surface. | Use a user API key for that endpoint, or restrict the add-on workflow to endpoints its token can call. |
-| `host_routing_required` | - | no | sdk, cli, mcp | Reports, audit-log, or expense-report operations were sent to the default API host instead of their dedicated Clockify host. | Let the typed SDK method pick its per-operation host, or pass the matching reports/audit-log base URL explicitly. |
-| `active_resource_delete_blocked` | - | no | sdk, cli, mcp | Clockify rejected a bare DELETE of an active project, task, or client before the object could be removed. | Archive the project/client first, or mark a task done first, then issue the delete. |
-| `dead_route` | - | no | sdk, cli, mcp | A documented Clockify route is not served and returns a static-resource 404 or equivalent unsupported response. | Use the replacement path recorded in the evidence ledger and treat the response as a quarantined route, not a transient missing object. |
-| `name_reserved_after_delete` | - | no | sdk, cli, mcp | A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected. | Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name. |
-| `error` | - | no | cli, mcp | Unknown local/runtime failure that does not fit a more specific code yet. | Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior. |
+| Code | Reachable | HTTP status | Retry | Surfaces | Meaning | Recovery |
+|---|---|---|---|---|---|---|
+| `invalid_request` | yes | 400 | no | sdk, cli, mcp | The request is malformed, missing required fields, or locally invalid before Clockify accepts it. | Fix the request fields, IDs, dates, pagination values, or enum values, then retry. |
+| `auth_or_permission` | yes | 401, 403 | no | sdk, cli, mcp | The token is missing, invalid, expired, pointed at the wrong workspace, or lacks permission for the operation. | Check CLOCKIFY_API_KEY or addon token, workspace ID, and the user's Clockify role or plan permissions. |
+| `feature_unavailable` | yes | 402 | no | cli, mcp | The endpoint exists but the workspace plan or feature configuration does not expose it. | Use a supported workspace plan, skip the gated workflow, or fall back to a lower-level read operation. |
+| `not_found` | yes | 404 | no | sdk, cli, mcp | The requested object does not exist, is archived/deleted, or is outside the active workspace. | List the resource again, use returned IDs instead of names, and confirm the workspace ID. |
+| `conflict` | yes | 409 | no | sdk, cli, mcp | Clockify rejected the write because it conflicts with existing state, uniqueness, or a concurrent update. | Fetch current state, reuse the existing object when appropriate, or retry with a different name or payload. |
+| `rate_limited` | yes | 429 | yes | sdk, cli, mcp | Clockify rate-limited the caller. | Wait for Retry-After or X-RateLimit-Reset when present; otherwise retry with exponential backoff. |
+| `clockify_upstream_error` | yes | 500, 502, 503, 504 | yes | sdk, cli, mcp | Clockify returned a server-side or temporary upstream failure. | Retry idempotent reads/writes with backoff; preserve request IDs for support/debugging. |
+| `connection_error` | yes | - | yes | sdk, cli, mcp | The process could not reach Clockify before receiving an HTTP response. | Check network, proxy, DNS, TLS, base URL, and retry with backoff. |
+| `aborted` | yes | - | no | sdk, cli, mcp | The caller cancelled the operation with an AbortSignal or equivalent stop request. | Do not retry automatically; surface cancellation to the caller. |
+| `rate_limited_retry_after` | yes | - | yes | sdk, cli, mcp | Clockify returned 429 with a Retry-After or X-RateLimit-Reset header naming when the caller may resume. | Read the Retry-After seconds or X-RateLimit-Reset epoch from response headers, wait that long, then retry the same request once. |
+| `addon_token_restricted` | yes | - | no | sdk, mcp | An X-Addon-Token request reached an endpoint outside the add-on token's allowed surface. | Use a user API key for that endpoint, or restrict the add-on workflow to endpoints its token can call. |
+| `host_routing_required` | no | - | no | sdk, cli, mcp | Reports, audit-log, or expense-report operations were sent to the default API host instead of their dedicated Clockify host. | Let the typed SDK method pick its per-operation host, or pass the matching reports/audit-log base URL explicitly. |
+| `active_resource_delete_blocked` | yes | - | no | sdk, cli, mcp | Clockify rejected a bare DELETE of an active project, task, or client before the object could be removed. | Archive the project/client first, or mark a task done first, then issue the delete. |
+| `dead_route` | no | - | no | sdk, cli, mcp | A documented Clockify route is not served and returns a static-resource 404 or equivalent unsupported response. | Use the replacement path recorded in the evidence ledger and treat the response as a quarantined route, not a transient missing object. |
+| `name_reserved_after_delete` | no | - | no | sdk, cli, mcp | A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected. | Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name. |
+| `error` | yes | - | no | cli, mcp | Unknown local/runtime failure that does not fit a more specific code yet. | Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior. |
 
 ## Adoption rule
 
