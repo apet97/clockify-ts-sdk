@@ -10,7 +10,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 |---|---:|
 | operations | 184 |
 | sdkNamed | 172 |
-| tsMcpExact | 93 |
+| tsMcpExact | 94 |
 | goMcpExact | 84 |
 | curated | 33 |
 
@@ -32,7 +32,7 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}` | `submitApprovalRequestForUser` | `client.approvals.submitForUser` | - | - | - | `clockify_approvals_submit_for_user` |
 | POST | `/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval` | `resubmitEntriesForApprovalForUser` | `client.approvals.resubmitForUser` | - | - | - | `clockify_approvals_resubmit_for_user` |
 | PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | `updateApprovalRequest` | `client.approvals.updateStatus` | - | - | - | `clockify_approvals_update_status` |
-| POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | `client.auditLogReport.search` | - | `clockify_audit_logs_search` | GOCLMCP keeps audit logs plural in the tool name. | `clockify_audit_log_search` |
+| POST | `/workspaces/{workspaceId}/audit-log` | `searchAuditLogs` | `client.auditLogReport.search` | `clockify_audit_log_search` | `clockify_audit_logs_search` | GOCLMCP keeps audit logs plural in the tool name. | `clockify_audit_log_search` |
 | GET | `/workspaces/{workspaceId}/clients` | `getWorkspacesWorkspaceIdClients` | `client.clients.list` | `clockify_clients_list` | `clockify_clients_list` | - | `clockify_clients_list` |
 | POST | `/workspaces/{workspaceId}/clients` | `postWorkspacesWorkspaceIdClients` | `client.clients.create` | `clockify_clients_create` | `clockify_clients_create` | - | `clockify_clients_create` |
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | `getWorkspacesWorkspaceIdClientsClientId` | `client.clients.get` | `clockify_clients_get` | `clockify_clients_get` | - | `clockify_clients_get` |

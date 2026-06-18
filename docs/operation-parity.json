@@ -10,7 +10,7 @@
   "summary": {
     "operations": 184,
     "sdkNamed": 172,
-    "tsMcpExact": 93,
+    "tsMcpExact": 94,
     "goMcpExact": 84,
     "curated": 33
   },
@@ -276,12 +276,12 @@
       "candidateTools": [
         "clockify_audit_log_search"
       ],
-      "tsMcp": null,
+      "tsMcp": "clockify_audit_log_search",
       "goMcp": "clockify_audit_logs_search",
       "overrideReason": "GOCLMCP keeps audit logs plural in the tool name.",
       "parity": {
         "sdkNamed": true,
-        "tsMcpExact": false,
+        "tsMcpExact": true,
         "goMcpExact": true,
         "curated": true
       }
