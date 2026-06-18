@@ -173,18 +173,46 @@ describe("iterPages — Last-Page header consumption", () => {
         ]);
     });
 
-    it("stops on short page even when Last-Page: false (server-inconsistency safety)", async () => {
-        // Server claims more pages exist but only returned 1 of 2
-        // expected items — protect against an infinite loop driven by
-        // a lying / buggy server header.
+    it("continues on a short page when Last-Page: false (server is authoritative)", async () => {
+        // The server said "more pages exist" even though this page came
+        // back short (a legitimately filtered/partial page). Trusting the
+        // header avoids silently under-fetching; the next page's
+        // Last-Page: true terminates the walk.
+        const data: Record<number, [readonly number[], string]> = {
+            1: [[1], "false"],
+            2: [[2], "true"],
+        };
         const seen: number[] = [];
         const fetcher = (req: PaginatedRequest) => {
             seen.push(req.page!);
-            return fakeHttpResponsePromise([1], "false");
+            const [items, header] = data[req.page!]!;
+            return fakeHttpResponsePromise(items, header);
         };
         const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
-        expect(pages).toEqual([{ items: [1], page: 1, pageSize: 2, hasNextPage: false }]);
-        expect(seen).toEqual([1]);
+        expect(pages).toEqual([
+            { items: [1], page: 1, pageSize: 2, hasNextPage: true },
+            { items: [2], page: 2, pageSize: 2, hasNextPage: false },
+        ]);
+        expect(seen).toEqual([1, 2]);
+    });
+
+    it("maxPages still bounds the walk when Last-Page: false never flips to true", async () => {
+        // A buggy server that always claims more pages must not loop
+        // forever — the maxPages / endPage bound caps it. Each page is
+        // full + Last-Page: false, so without the bound this would run
+        // unbounded.
+        const seen: number[] = [];
+        const fetcher = (req: PaginatedRequest) => {
+            seen.push(req.page!);
+            return fakeHttpResponsePromise([1, 2], "false");
+        };
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2, maxPages: 3 }));
+        expect(pages).toHaveLength(3);
+        // Last page still reports hasNextPage:true (server lied), but the
+        // generator stopped because the maxPages bound was reached.
+        expect(pages.map((p) => p.page)).toEqual([1, 2, 3]);
+        expect(pages[2]!.hasNextPage).toBe(true);
+        expect(seen).toEqual([1, 2, 3]);
     });
 
     it("ignores Last-Page when fetcher returns a plain Promise (no .withRawResponse)", async () => {

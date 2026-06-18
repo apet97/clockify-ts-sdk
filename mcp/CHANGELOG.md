@@ -4,6 +4,25 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_review_day` / `clockify_review_week` and `clockify_fix_entry`'s
+  entry lookup now walk **all** pages of `listForUser` via the SDK's
+  `iterAll` (honoring the `Last-Page` header) instead of fetching a single
+  page of 200. A busy week no longer silently truncates its totals, and
+  `fix_entry` can find an entry past row 200 instead of failing the
+  exactly-one match.
+- `clockify_fix_entry` now resolves and applies `task` / `task_id` /
+  `tag` / `tag_ids` (the input schema was missing those fields, so Zod
+  stripped them and the handler silently ignored task/tag changes while
+  reporting success). Task resolution is scoped to the resolved or
+  existing project to avoid leaving a stale task pointer.
+- Entry and review date inputs are now validated offline with
+  field-named errors: an explicit `start`+`end` range and an explicit
+  `end` supplied alongside `start` are checked for ISO-8601 validity
+  before any API call, matching the CLI, instead of reaching the wire as
+  an opaque 400.
+
 ### Changed
 
 - The workflow name→id matcher (`findOneByName` in `workflows/resolve.ts`) now routes

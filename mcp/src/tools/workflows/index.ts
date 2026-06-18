@@ -197,7 +197,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         "clockify_fix_entry",
         {
             title: "Fix time entry",
-            description: "Find one entry by ID or strict filters, then update selected fields.",
+            description: "Find one entry by ID or strict filters, then update selected fields (description, start/end, project, task, tags, billable).",
             inputSchema: {
                 entry_id: z.string().optional(),
                 description_contains: z.string().optional(),
@@ -208,6 +208,10 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 new_description: z.string().optional(),
                 project: z.string().optional(),
                 project_id: z.string().optional(),
+                task: z.string().optional(),
+                task_id: z.string().optional(),
+                tag: z.string().optional(),
+                tag_ids: z.array(z.string()).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
                 billable: z.boolean().optional(),

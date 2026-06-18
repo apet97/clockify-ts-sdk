@@ -9,6 +9,18 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- Base-URL host allowlist now lists the **real** audit-log host
+  `auditlog-api.api.clockify.me` (with the hyphen). The prior
+  `auditlog.api.clockify.me` was a typo: it rejected the host the SDK
+  actually targets while accepting one that does not exist. The
+  no-hyphen form is now rejected (regression-tested).
+- `iterPages` (the `iter` subpath) now trusts an authoritative
+  `Last-Page: false` response header and continues paginating even when
+  a page comes back short (a legitimately filtered/partial page),
+  instead of stopping on the length heuristic and silently
+  under-fetching. The `maxPages` bound still caps a server that never
+  flips to `Last-Page: true`. The length heuristic is used only when the
+  header is absent. This also benefits `iterAll`/`paginatedList`/`toArray`.
 - `resolveUserRef` (the `resolve` subpath) now matches its exact-id fast path against the
   trimmed id (`rawId`), consistent with `resolveEntityRef`, so a padded id like `" 64ab…"`
   resolves directly instead of falling through to name matching.
@@ -99,7 +111,7 @@ once v1.0.0 ships.
 - Added `classifyClockifyError()` and `getStableErrorCode()` for SDK runtime recovery classification.
 - Added deterministic mock Clockify server coverage for SDK health and pagination flows.
 - Added `clockifyDiagnostics()` as a no-network SDK readiness receipt for auth, runtime, workspace ID, base URL override, warnings, and next steps.
-- Added a Clockify base-URL host allowlist to `createClockifyClient`: a `baseUrl` / `environment` override must target an official Clockify API host (`api.clockify.me`, `reports.api.clockify.me`, `auditlog.api.clockify.me`, `pto.api.clockify.me`, `developer.clockify.me`) or a loopback host (`localhost` / `127.0.0.1` / `::1`, any port). Arbitrary HTTPS hosts are rejected unless the new `allowInsecureBaseUrl: true` option is set (which warns); plain `http://` on non-loopback hosts is always rejected. Exposed `validateClockifyBaseUrl()` / `classifyClockifyBaseUrl()`, and `clockifyDiagnostics()` now reports `checks.baseUrl.allowlist` (`allowed` / `rejected`).
+- Added a Clockify base-URL host allowlist to `createClockifyClient`: a `baseUrl` / `environment` override must target an official Clockify API host (`api.clockify.me`, `reports.api.clockify.me`, `auditlog-api.api.clockify.me`, `pto.api.clockify.me`, `developer.clockify.me`) or a loopback host (`localhost` / `127.0.0.1` / `::1`, any port). Arbitrary HTTPS hosts are rejected unless the new `allowInsecureBaseUrl: true` option is set (which warns); plain `http://` on non-loopback hosts is always rejected. Exposed `validateClockifyBaseUrl()` / `classifyClockifyBaseUrl()`, and `clockifyDiagnostics()` now reports `checks.baseUrl.allowlist` (`allowed` / `rejected`).
 - Added a wire-shape regression suite: `wire-shape.test.ts` pins the invoice-body
   and money-unit invariants and asserts every COMPENSATED finding in
   `spec/evidence/discrepancies.md` keeps a live test (a ledger-coverage guard — it

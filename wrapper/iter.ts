@@ -177,7 +177,12 @@ export async function* iterAll<TRequest, TItem>(
 /** Internal: minimum shape we need to extract Last-Page from a
  *  generated method's return value. Matches `HttpResponsePromise<T>`
  *  produced by every method on the synced SDK; structural type so the
- *  helper works with any compatible thenable. */
+ *  helper works with any compatible thenable.
+ *
+ *  @see {@link ResponseAwarePromise} in `clockify-sdk-ts-115/with-response`
+ *  — the public, full-`RawResponse` sibling. This inline shape is
+ *  deliberately narrowed to just `headers.get` (all `iterPages` needs),
+ *  so `iter.ts` stays decoupled from the `RawResponse` type. */
 interface RawResponseAware<T> extends PromiseLike<T> {
     withRawResponse(): Promise<{
         readonly data: T;
@@ -254,13 +259,18 @@ export async function* iterPages<TRequest, TItem>(
             items = await result;
         }
 
-        // Combine signals: header `true` is authoritative stop;
-        // otherwise fall back to "did we receive a full page?"
-        // (the legacy heuristic). The two combine safely — header
-        // `false` means the server expects more, but if we also got
-        // a short page we still stop (server inconsistency edge
-        // case where Last-Page lies; safer to stop than to loop).
-        const hasNextPage = lastPageFromHeader === true ? false : items.length === pageSize;
+        // The server is authoritative on BOTH ends: `Last-Page: true`
+        // stops, `Last-Page: false` continues (the server expects more,
+        // even if this page came back short — filtered/partial pages are
+        // legitimate, so trusting `false` avoids silently under-fetching).
+        // We only fall back to the legacy `items.length === pageSize`
+        // heuristic when the header is absent (`undefined`). The
+        // `endPage`/`maxPages` bound above still caps the walk if a buggy
+        // server keeps returning `Last-Page: false` forever.
+        const hasNextPage =
+            lastPageFromHeader === true ? false
+            : lastPageFromHeader === false ? true
+            : items.length === pageSize;
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }

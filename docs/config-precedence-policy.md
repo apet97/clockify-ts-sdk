@@ -28,7 +28,7 @@ The override is not unrestricted. `createClockifyClient` (and through it the CLI
 resolved base URL via `validateClockifyBaseUrl`:
 
 - Allowed without opt-in: the official Clockify API hosts — `api.clockify.me`,
-  `reports.api.clockify.me`, `auditlog.api.clockify.me`, `pto.api.clockify.me`,
+  `reports.api.clockify.me`, `auditlog-api.api.clockify.me`, `pto.api.clockify.me`,
   `developer.clockify.me` — plus loopback hosts (`localhost`, `127.0.0.1`,
   `::1`) for local mock/replay. Loopback may use plain `http://`; every other
   host must use `https://`.

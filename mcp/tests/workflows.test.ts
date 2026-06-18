@@ -127,7 +127,15 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
             },
             timeEntries: {
                 listInProgress: async () => [],
-                listForUser: async () => state.entries,
+                // Page-aware so iterAll/iterPages terminate: a fetcher
+                // that returned the full array on every page would loop to
+                // maxPages. Returns the requested slice; a short page ends
+                // the walk via the length heuristic.
+                listForUser: async (req: { page?: number; "page-size"?: number } = {}) => {
+                    const page = req.page ?? 1;
+                    const size = req["page-size"] ?? 50;
+                    return state.entries.slice((page - 1) * size, page * size);
+                },
                 create: async (body: Record<string, unknown>) => {
                     const entry = { id: `e${state.entries.length + 1}`, userId: fakeUser.id, ...body };
                     state.entries.push(entry);
@@ -611,5 +619,89 @@ describe("workflow tools", () => {
         expect(ctx.state.tasks).toEqual([{ id: "ta-other", name: "Other", projectId: "p-other" }]);
         expect(ctx.state.tags).toEqual([{ id: "tg-other", name: "Other" }]);
         expect(ctx.state.entries).toEqual([{ id: "e-other", description: "Other" }]);
+    });
+});
+
+describe("P0 correctness — pagination + validation", () => {
+    function bulkEntries(n: number, overrides: (i: number) => Record<string, unknown> = () => ({})) {
+        return Array.from({ length: n }, (_, i) => ({
+            id: `e${i}`,
+            description: `entry ${i}`,
+            start: "2026-06-15T09:00:00.000Z",
+            end: "2026-06-15T10:00:00.000Z",
+            projectId: "p1",
+            ...overrides(i),
+        }));
+    }
+
+    it("review_week walks ALL pages, not just the first 200 (no silent truncation)", async () => {
+        const ctx = fakeContext({ entries: bulkEntries(250) });
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_review_week", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env.ok).toBe(true);
+        // count + totals reflect all 250 entries (2 pages of 200), proving
+        // the single-page-200 truncation is gone.
+        expect((env.meta as Record<string, unknown>).count).toBe(250);
+        expect((env.data as { totals: { entries: number } }).totals.entries).toBe(250);
+    });
+
+    it("fix_entry finds an entry past row 200 (pagination, not a 200-row cap)", async () => {
+        const ctx = fakeContext({
+            entries: bulkEntries(250, (i) => (i === 230 ? { description: "FINDME-unique" } : {})),
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { exact_description: "FINDME-unique", new_description: "fixed-past-200" },
+        });
+        expect(res.isError).toBeFalsy();
+        const env = parse(res);
+        expect(env.ok).toBe(true);
+        expect(ctx.state.entries[230]!.description).toBe("fixed-past-200");
+    });
+
+    it("fix_entry resolves task & tag names into the update body (was a silent no-op)", async () => {
+        const ctx = fakeContext({
+            entries: [{ id: "e1", description: "Work", start: "2026-06-15T09:00:00.000Z", projectId: "p9" }],
+            projects: [{ id: "p9", name: "Launch" }],
+            tasks: [{ id: "ta9", name: "Build", projectId: "p9" }],
+            tags: [{ id: "tg9", name: "Deep Work" }],
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", task: "Build", tag: "Deep Work" },
+        });
+        expect(res.isError).toBeFalsy();
+        const entry = ctx.state.entries[0]!;
+        expect(entry.taskId).toBe("ta9");
+        expect(entry.tagIds).toEqual(["tg9"]);
+    });
+
+    it("review rejects an explicit start+end range with a garbage end (offline, field-named)", async () => {
+        const client = await connect(fakeContext());
+        const res = await client.callTool({
+            name: "clockify_review_day",
+            arguments: { start: "2026-06-01T00:00:00.000Z", end: "garbage" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { code: string }).code).toBe("invalid_request");
+        expect((env.error as { message: string }).message).toMatch(/invalid end "garbage"/);
+    });
+
+    it("log_work rejects a garbage end even when start is supplied (offline, field-named)", async () => {
+        const client = await connect(fakeContext({ projects: [{ id: "p9", name: "Launch" }] }));
+        const res = await client.callTool({
+            name: "clockify_log_work",
+            arguments: { description: "x", start: "2026-06-01T09:00:00.000Z", end: "garbage", project: "Launch" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { message: string }).message).toMatch(/not a valid ISO 8601 timestamp/);
     });
 });

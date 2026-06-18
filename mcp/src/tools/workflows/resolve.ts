@@ -1,4 +1,5 @@
 import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
+import { iterAll } from "clockify-sdk-ts-115/iter";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
@@ -178,14 +179,22 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
         return (await ctx.client.timeEntries.get({ workspaceId: ctx.workspaceId, timeEntryId: str(args.entry_id) })) as AnyRecord;
     }
     const user = await ctx.client.users.getCurrentUser();
-    const entries = (await ctx.client.timeEntries.listForUser({
-        workspaceId: ctx.workspaceId,
-        userId: idOf(user),
-        start: str(args.start_after) || "1970-01-01T00:00:00.000Z",
-        end: str(args.start_before) || new Date().toISOString(),
-        page: 1,
-        "page-size": 200,
-    })) as AnyRecord[];
+    // Walk ALL pages: a real entry past row 200 must still be findable,
+    // otherwise the exactly-one assertion below fails with "found 0" or
+    // matches a stale duplicate. iterAll honors the Last-Page header.
+    const entries: AnyRecord[] = [];
+    for await (const entry of iterAll<AnyRecord, AnyRecord>(
+        (req) => ctx.client.timeEntries.listForUser(req as never) as never,
+        {
+            workspaceId: ctx.workspaceId,
+            userId: idOf(user),
+            start: str(args.start_after) || "1970-01-01T00:00:00.000Z",
+            end: str(args.start_before) || new Date().toISOString(),
+        },
+        { pageSize: 200 },
+    )) {
+        entries.push(entry);
+    }
     const matches = entries.filter((entry) => {
         const description = str(entry.description);
         if (str(args.exact_description) && description !== str(args.exact_description)) return false;
@@ -229,7 +238,22 @@ export function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
 }
 
 export function dateRange(action: string, args: AnyRecord): { start: string; end: string } {
-    if (str(args.start) && str(args.end)) return { start: str(args.start), end: str(args.end) };
+    if (str(args.start) && str(args.end)) {
+        // Validate the explicit range the same way the single-date path
+        // does, instead of letting a date-only or malformed value reach
+        // the wire as an opaque 400. normalizeDate widens "YYYY-MM-DD" to
+        // a full ISO instant.
+        const start = normalizeDate(str(args.start));
+        const end = normalizeDate(str(args.end));
+        for (const [field, value] of [["start", start], ["end", end]] as const) {
+            if (Number.isNaN(Date.parse(value))) {
+                throw new Error(
+                    `invalid ${field} ${JSON.stringify(value)}; use YYYY-MM-DD or an ISO 8601 timestamp`,
+                );
+            }
+        }
+        return { start, end };
+    }
     const rawInput = str(args.date) || str(args.week_start);
     // Resolve relative words ("yesterday", "last monday") + YYYY-MM-DD server-side;
     // an empty input means today.

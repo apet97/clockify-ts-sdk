@@ -124,6 +124,13 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     const entry = await findEntryForFix(ctx, args);
     const entryId = idOf(entry);
     const projectId = str(args.project_id) || (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
+    // Scope task resolution to the resolved project, falling back to the
+    // entry's existing project, so a task name resolves correctly and the
+    // PUT-replace update doesn't leave a stale task pointer.
+    const taskScopeProjectId = projectId || str(entry.projectId);
+    const taskId = str(args.task_id) || (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
+    const tagIds = [...arrayOfStrings(args.tag_ids)];
+    if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
     const body: AnyRecord = {
         workspaceId: ctx.workspaceId,
         timeEntryId: entryId,
@@ -133,6 +140,8 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     if (nextDescription) body.description = nextDescription;
     if (str(args.end)) body.end = str(args.end);
     if (projectId) body.projectId = projectId;
+    if (taskId) body.taskId = taskId;
+    if (tagIds.length) body.tagIds = tagIds;
     if (args.billable !== undefined) body.billable = args.billable;
     if (!body.start) throw new Error("entry start is required to update this time entry");
     const { workspaceId, timeEntryId, ...updateBody } = body;
@@ -157,6 +166,12 @@ export async function prepareEntryBody(ctx: Context, args: AnyRecord, requireEnd
     }
     if (!start) throw new Error("start is required for clockify_log_work; use duration_seconds with end or clockify_start_work for a running timer");
     if (requireEnd && !end) throw new Error("end is required for clockify_log_work; use clockify_start_work for a running timer");
+    // Validate any explicit end (the duration branch above only checks it
+    // when start is derived); an unparseable end with a supplied start
+    // otherwise reaches the wire as an opaque 400.
+    if (typeof end === "string" && end && Number.isNaN(Date.parse(end))) {
+        throw new Error(`end ${JSON.stringify(end)} is not a valid ISO 8601 timestamp`);
+    }
     const projectId = str(args.project_id) || (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
     const taskId = str(args.task_id) || (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
