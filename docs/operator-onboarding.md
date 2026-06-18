@@ -27,7 +27,7 @@ path without guessing which package, gate, or safety boundary applies.
 | Use the SDK from code | `wrapper/README.md` and the SDK user path in `docs/install-personas.md` | `make package-contract`, `make sdk-public-api`, then package gates when validation is allowed. |
 | Use terminal commands | `cli/README.md` and the CLI user path in `docs/install-personas.md` | `make cli-contract`, `make cli-write-safety`, then CLI package gates when validation is allowed. |
 | Use agent workflows | `mcp/README.md` and the MCP user path in `docs/install-personas.md` | `make mcp-contract`, `make mcp-write-safety`, then MCP package gates when validation is allowed. |
-| Diagnose first-run setup or support handoff | `docs/quickstart-receipt.md`, `docs/workflow-cookbook.md`, and `node scripts/plan.mjs workflow --workflow first-run-support` | `make quickstart-receipt`, `make diagnostics`, `make support-bundle`, `make workflow-cookbook`, and `make acceptance-scenarios` when validation is allowed. |
+| Diagnose first-run setup or support handoff | `docs/quickstart-receipt.md`, `docs/workflow-cookbook.md`, and `node scripts/plan.mjs workflow --workflow first-run-support` | `make diagnostics`, `make diagnostics`, `make support-bundle`, `make workflow-cookbook`, and `make acceptance-scenarios` when validation is allowed. |
 | Test without credentials | `make mock-clockify` plus `CLOCKIFY_BASE_URL` or SDK `environment` override | `make mock-contract` and acceptance scenarios. |
 | Prove broad readiness | `docs/release-readiness-checklist.md` | `make enterprise-audit`, `make perfect-fast`, `make perfect-full`, performance receipts, completed live sandbox proof, command receipts, enterprise audit. |
 

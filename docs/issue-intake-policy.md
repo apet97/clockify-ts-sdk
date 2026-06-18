@@ -32,7 +32,7 @@ Bug reports should include:
 - Quickstart receipt and diagnostic surface: for first-run, setup, or support
   issues, start with
   `node scripts/plan.mjs workflow --workflow first-run-support`, say whether
-  `make quickstart-receipt` was used, and name which diagnostic surface produced
+  `make diagnostics` was used, and name which diagnostic surface produced
   evidence: `clockifyDiagnostics()`, `clk115 doctor --json`, or
   `clockify://mcp/doctor`. Include only safe `safeCommandHints`, never env
   values.

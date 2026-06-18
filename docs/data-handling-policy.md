@@ -73,4 +73,4 @@ Data handling is guarded by:
 - `make support-bundle` for redacted escalation packets.
 - `make workflow-cookbook` for the no-network first-run support workflow map.
 - `make live-safety` for sandbox-only mutation and cleanup proof.
-- `make receipt-examples` for safe success/error output shapes.
+- `make observability` for safe success/error output shapes.

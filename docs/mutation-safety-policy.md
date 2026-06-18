@@ -63,4 +63,4 @@ non-idempotent mutation.
 - `make sdk-runtime-contract` checks SDK retry and recovery seams.
 - `make cli-write-safety` checks deterministic CLI writes and destructive ID scope.
 - `make mcp-write-safety` checks MCP confirmation tokens, destructive hints, and receipts.
-- `make receipts-contract` checks the shared receipt and recovery shape.
+- `make observability` checks the shared receipt and recovery shape.

@@ -98,7 +98,6 @@
         "axioms-contract",
         "workflow-cookbook",
         "acceptance-scenarios",
-        "quickstart-receipt",
         "diagnostics-contract",
         "support-bundle",
         "change-impact",
@@ -655,6 +654,7 @@
     },
     {
       "id": "receipts-contract",
+      "retired": true,
       "target": "receipts-contract",
       "checker": "scripts/check-receipts-contract.mjs",
       "policies": [
@@ -674,7 +674,8 @@
       "target": "observability",
       "checker": "scripts/check-observability-contract.mjs",
       "policies": [
-        "docs/observability-policy.md"
+        "docs/observability-policy.md",
+        "docs/receipts-policy.md"
       ],
       "contracts": [
         "docs/observability-contract.json"
@@ -703,6 +704,7 @@
     },
     {
       "id": "quickstart-receipt",
+      "retired": true,
       "target": "quickstart-receipt",
       "checker": "scripts/check-quickstart-receipt.mjs",
       "policies": [
@@ -719,6 +721,7 @@
     },
     {
       "id": "receipt-examples",
+      "retired": true,
       "target": "receipt-examples",
       "checker": "scripts/check-receipt-examples.mjs",
       "policies": [

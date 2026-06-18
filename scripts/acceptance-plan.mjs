@@ -22,7 +22,7 @@ const scenarios = {
         cli: ["clk115 doctor --json", "clk115 status --json"],
         mcp: ["clockify://mcp/doctor"],
         evidence: [
-            "make quickstart-receipt",
+            "make diagnostics",
             "make diagnostics",
             "make support-bundle",
             "make issue-intake",
@@ -97,7 +97,7 @@ const scenarios = {
         cli: ["--json error receipts with code, retryable, recovery"],
         mcp: ["structuredContent error envelope with recovery and next"],
         evidence: [
-            "make receipt-examples",
+            "make observability",
             "make observability",
             "make support-bundle",
             "make data-handling",

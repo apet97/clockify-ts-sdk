@@ -136,11 +136,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`dependency-license-contract.json`](./dependency-license-contract.json) | edit intentionally | Runtime dependency license, purpose, and manifest-ledger contract. |
 | [`compatibility-contract.json`](./compatibility-contract.json) | edit intentionally | Public compatibility and deprecation contract across SDK, CLI, MCP, and OpenAPI generation. |
 | [`breaking-change-review-contract.json`](./breaking-change-review-contract.json) | edit intentionally | Breaking-change review evidence contract for public SDK/CLI/MCP/OpenAPI/package surface changes. |
-| [`receipts-contract.json`](./receipts-contract.json) | edit intentionally | SDK/CLI/MCP receipts and observability contract. |
-| [`observability-contract.json`](./observability-contract.json) | edit intentionally | Request correlation, telemetry hook, structured receipt, and support-bundle observability contract. |
-| [`diagnostics-contract.json`](./diagnostics-contract.json) | edit intentionally | Cross-surface SDK/CLI/MCP diagnostics contract for no-network readiness and redaction. |
-| [`quickstart-receipt-contract.json`](./quickstart-receipt-contract.json) | edit intentionally | Operator quickstart receipt contract for diagnostics, mock/live boundaries, and first live probes. |
-| [`receipt-examples-contract.json`](./receipt-examples-contract.json) | edit intentionally | Golden SDK/CLI/MCP receipt example contract. |
+| [`observability-contract.json`](./observability-contract.json) | edit intentionally | Request correlation, telemetry hook, structured receipt, golden receipt examples, and support-bundle observability contract. |
+| [`diagnostics-contract.json`](./diagnostics-contract.json) | edit intentionally | Cross-surface SDK/CLI/MCP diagnostics contract for no-network readiness, redaction, and the operator quickstart-receipt path. |
 | [`support-bundle-contract.json`](./support-bundle-contract.json) | edit intentionally | Safe support bundle, generated redaction flags, prepublish-gate metadata, lockfile summary metadata, and escalation contract. |
 | [`issue-intake-contract.json`](./issue-intake-contract.json) | edit intentionally | Issue, feature, PR, support, and security intake contract. |
 | [`release-support-contract.json`](./release-support-contract.json) | edit intentionally | Release/support/security documentation contract for package readiness. |
@@ -211,11 +208,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Dependency license | `make dependency-license` | Check SDK/CLI/MCP runtime dependency ledger, known licenses, package manifests, and forbidden dependency list. |
 | Compatibility contract | `make compatibility-contract` | Check compatibility policy, deprecation helper, changelogs, migration docs, and surface contracts. |
 | Breaking-change review | `make breaking-change-review` | Check replacement-first review evidence for public SDK/CLI/MCP/OpenAPI/package breakage. |
-| Receipts contract | `make receipts-contract` | Check SDK request correlation, response metadata, OTel hooks, CLI JSON errors, and MCP structured envelopes. |
-| Observability contract | `make observability` | Check request IDs, telemetry hooks, response metadata, CLI/MCP receipts, redaction, and support-bundle evidence. |
-| Diagnostics contract | `make diagnostics` | Check SDK `clockifyDiagnostics()`, CLI `doctor`, MCP `clockify://mcp/doctor`, redaction, receipts, and product-surface discoverability. |
-| Quickstart receipt | `make quickstart-receipt` | Check diagnostics-first operator receipt, SDK/CLI/MCP paths, mock/live boundary, redaction claims, and first live probes. |
-| Receipt examples | `make receipt-examples` | Check golden SDK/CLI/MCP success and recovery receipt examples stay aligned with receipt contracts. |
+| Observability contract | `make observability` | Check request IDs, telemetry hooks, response metadata, CLI/MCP receipts, golden receipt examples, redaction, and support-bundle evidence. |
+| Diagnostics contract | `make diagnostics` | Check SDK `clockifyDiagnostics()`, CLI `doctor`, MCP `clockify://mcp/doctor`, the operator quickstart-receipt path, redaction, receipts, and product-surface discoverability. |
 | Support bundle | `make support-bundle` | Check safe diagnostic bundle, generated redaction flags, package prepublish-gate metadata, lockfile summary metadata, escalation template, and redaction guidance stay aligned. |
 | Issue intake | `make issue-intake` | Check bug, feature, PR, support, and security intake templates collect reproducible sanitized evidence. |
 | Release/support contract | `make release-support-contract` | Check release support policy, `SECURITY.md`, package names, and proof targets stay aligned. |

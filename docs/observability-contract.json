@@ -53,6 +53,19 @@
         "http.client.request.duration",
         "peer.service"
       ]
+    },
+    {
+      "path": "wrapper/tests/composed-fetch.test.ts",
+      "mustContain": [
+        "injects an X-Request-Id UUID per request by default",
+        "hook rejections do NOT block the request"
+      ]
+    },
+    {
+      "path": "wrapper/tests/with-response.test.ts",
+      "mustContain": [
+        "returns data + response + headers + requestId + status"
+      ]
     }
   ],
   "cli": [
@@ -71,6 +84,16 @@
         "--json",
         "retryable",
         "recovery"
+      ]
+    },
+    {
+      "path": "cli/src/receipt.ts",
+      "mustContain": [
+        "CliReceipt",
+        "ids",
+        "changed",
+        "warnings",
+        "next"
       ]
     }
   ],
@@ -93,6 +116,14 @@
         "structuredContent",
         "changed",
         "retryAfterSeconds"
+      ]
+    },
+    {
+      "path": "mcp/tests/server.test.ts",
+      "mustContain": [
+        "structured output schema",
+        "canonical envelope",
+        "structuredContent"
       ]
     }
   ],
@@ -122,11 +153,29 @@
       "path": "docs/receipt-examples.md",
       "mustContain": [
         "SDK success receipt",
+        "SDK error receipt",
+        "CLI success receipt",
         "CLI error receipt",
+        "MCP success receipt",
         "MCP recovery receipt",
+        "Stable fields",
+        "Review rule",
         "requestId",
         "retryable",
         "recovery"
+      ],
+      "forbiddenMarkers": [
+        "sk-",
+        "PASTE TOKEN"
+      ]
+    },
+    {
+      "path": "docs/receipts-policy.md",
+      "mustContain": [
+        "X-Request-Id",
+        "withResponse",
+        "structuredContent",
+        "retryable"
       ]
     }
   ],
@@ -157,12 +206,34 @@
       ]
     }
   ],
+  "supportingContracts": [
+    {
+      "path": "docs/error-codes.json",
+      "mustContain": [
+        "retryable",
+        "recovery"
+      ]
+    },
+    {
+      "path": "docs/mcp-contract.json",
+      "mustContain": [
+        "outputSchema",
+        "resources",
+        "prompts"
+      ]
+    },
+    {
+      "path": "docs/cli-contract.json",
+      "mustContain": [
+        "exitCodes",
+        "globalFlags"
+      ]
+    }
+  ],
   "requiredMakeTargets": [
     "observability",
     "data-handling",
-    "support-bundle",
-    "receipts-contract",
-    "receipt-examples"
+    "support-bundle"
   ],
   "wiring": {
     "makeTarget": "observability",

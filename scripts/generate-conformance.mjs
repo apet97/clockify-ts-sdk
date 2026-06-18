@@ -178,7 +178,7 @@ function render() {
     );
     out.push("");
     const entries = [...inventory.entries]
-        .filter((e) => e && e.target)
+        .filter((e) => e && e.target && !e.retired)
         .sort((a, b) => a.id.localeCompare(b.id));
     out.push(
         table(

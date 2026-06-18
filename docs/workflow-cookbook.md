@@ -26,7 +26,7 @@ issues before mock proof, live sandbox proof, or final acceptance.
 | Surface | Path |
 |---|---|
 | SDK | `clockifyDiagnostics()` plus the quickstart receipt template. |
-| CLI | `clk115 doctor --json`, `clk115 status --json`, `make quickstart-receipt`, and `make support-bundle`. |
+| CLI | `clk115 doctor --json`, `clk115 status --json`, `make diagnostics`, and `make support-bundle`. |
 | MCP | `clockify://mcp/doctor` as the diagnostic resource. |
 
 Safety notes:

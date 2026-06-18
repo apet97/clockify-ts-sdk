@@ -24,7 +24,6 @@ const knownEnvNames = [
 const safeCommandHints = [
     "node scripts/plan.mjs workflow --workflow first-run-support",
     "make diagnostics",
-    "make quickstart-receipt",
     "make support-bundle",
     "make mock-clockify",
     "make perfect-live",

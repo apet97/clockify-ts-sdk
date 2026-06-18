@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 131,
+  "expectedRequiredLinkCount": 128,
   "requiredLinks": [
     "quality-gates.md",
     "axioms.md",
@@ -102,11 +102,8 @@
     "dependency-license-contract.json",
     "compatibility-contract.json",
     "breaking-change-review-contract.json",
-    "receipts-contract.json",
     "observability-contract.json",
     "diagnostics-contract.json",
-    "quickstart-receipt-contract.json",
-    "receipt-examples-contract.json",
     "support-bundle-contract.json",
     "issue-intake-contract.json",
     "release-support-contract.json",

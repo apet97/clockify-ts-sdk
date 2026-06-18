@@ -128,13 +128,13 @@ const goals = {
             "Review /tmp/clockify-support-bundle.json before attaching or pasting anything.",
         ],
         proofWhenAllowed: [
-            "make quickstart-receipt",
+            "make diagnostics",
             "make diagnostics",
             "make support-bundle",
             "make workflow-cookbook",
             "make acceptance-scenarios",
             "make issue-intake",
-            "make receipt-examples",
+            "make observability",
         ],
         stopIf: [
             "The first-run-support workflow loses safeCommandHints or no-network posture.",

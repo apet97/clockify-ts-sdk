@@ -32,7 +32,7 @@ policy and migration guide are updated.
 
 Before claiming receipt/observability readiness, run or cite:
 
-- `make receipts-contract`
+- `make observability`
 - `make sdk-public-api`
 - `make cli-contract`
 - `make mcp-contract`

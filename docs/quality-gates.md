@@ -55,11 +55,8 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check dependency license | `make dependency-license` | Runtime dependency license ledger, purpose map, package manifests, and forbidden dependency list stay aligned. |
 | Check compatibility contract | `make compatibility-contract` | Public SDK/CLI/MCP/OpenAPI compatibility policy, deprecation helper, changelogs, migration docs, and surface contracts stay aligned. |
 | Check breaking-change review | `make breaking-change-review` | Public SDK/CLI/MCP/OpenAPI/package breakage has replacement-first migration, changelog, acceptance, and proof evidence. |
-| Check receipts contract | `make receipts-contract` | SDK request correlation, response metadata, OTel hooks, CLI JSON errors, and MCP structured envelopes stay aligned. |
-| Check observability contract | `make observability` | SDK request IDs, telemetry hooks, response metadata, CLI/MCP receipts, redaction rules, and safe support bundles stay aligned. |
-| Check diagnostics contract | `make diagnostics` | SDK, CLI, and MCP no-network diagnostics stay redacted, receipt-shaped, and aligned with first live probes. |
-| Check quickstart receipt | `make quickstart-receipt` | Diagnostics-first quickstart, SDK/CLI/MCP local checks, mock/live split, first live probes, and receipt template stay aligned. |
-| Check receipt examples | `make receipt-examples` | Golden SDK/CLI/MCP success and recovery receipt examples stay aligned with receipt contracts. |
+| Check observability contract | `make observability` | SDK request IDs, telemetry hooks, response metadata, CLI/MCP receipts, golden receipt examples, redaction rules, and safe support bundles stay aligned. |
+| Check diagnostics contract | `make diagnostics` | SDK, CLI, and MCP no-network diagnostics stay redacted, receipt-shaped, aligned with the operator quickstart-receipt path, and first live probes. |
 | Check support bundle | `make support-bundle` | Safe diagnostic bundle, generated redaction flags, package prepublish-gate metadata, package-lock summary metadata, escalation template, and support evidence stay aligned. |
 | Check issue intake | `make issue-intake` | Bug, feature, PR, support, and security intake templates collect surface, version, receipt, proof, risk, and redaction evidence. |
 | Check release/support contract | `make release-support-contract` | Release support policy, `SECURITY.md`, package names, proof targets, and no-default-publish guidance stay aligned. |

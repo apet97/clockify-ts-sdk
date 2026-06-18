@@ -28,7 +28,7 @@
       "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
       "auth-status",
       "first-run-diagnostics-support",
-      "make quickstart-receipt",
+      "make diagnostics",
       "make support-bundle",
       "clockify://mcp/doctor",
       "safeCommandHints",
@@ -85,7 +85,7 @@
         "clockifyDiagnostics()",
         "clk115 doctor --json",
         "clockify://mcp/doctor",
-        "make quickstart-receipt",
+        "make diagnostics",
         "make support-bundle",
         "safeCommandHints"
       ]
@@ -206,7 +206,7 @@
       "mustContain": [
         "requiredDiagnosticSurfaces",
         "requiredSafeCommandHints",
-        "make quickstart-receipt"
+        "make diagnostics"
       ]
     },
     {

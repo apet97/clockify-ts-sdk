@@ -804,9 +804,7 @@
       "id": "receipt-examples",
       "changedPaths": [
         "docs/receipt-examples.md",
-        "docs/receipt-examples-contract.json",
-        "scripts/check-receipt-examples.mjs",
-        "docs/receipts-contract.json"
+        "docs/observability-contract.json"
       ],
       "requiredTargets": [
         "receipt-examples",
@@ -818,7 +816,6 @@
       ],
       "requiredDocs": [
         "docs/receipt-examples.md",
-        "docs/receipt-examples-contract.json",
         "docs/receipts-policy.md",
         "docs/error-codes.json"
       ],
@@ -962,8 +959,6 @@
       "id": "quickstart-receipt",
       "changedPaths": [
         "docs/quickstart-receipt.md",
-        "docs/quickstart-receipt-contract.json",
-        "scripts/check-quickstart-receipt.mjs",
         "docs/operator-onboarding.md",
         "docs/diagnostics-policy.md",
         "docs/live-tests.md",
@@ -986,7 +981,6 @@
       ],
       "requiredDocs": [
         "docs/quickstart-receipt.md",
-        "docs/quickstart-receipt-contract.json",
         "docs/diagnostics-policy.md",
         "docs/operator-onboarding.md",
         "docs/live-tests.md",

@@ -82,9 +82,6 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Pack Smoke | `make pack-smoke` | no |
 | Package Contract | `make package-contract` | yes |
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
-| Quickstart Receipt | `make quickstart-receipt` | yes |
-| Receipt Examples | `make receipt-examples` | yes |
-| Receipts Contract | `make receipts-contract` | yes |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
 | Risk Register | `make risk-register` | yes |
@@ -104,4 +101,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 71.
+Total gates: 68.

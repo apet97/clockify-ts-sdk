@@ -42,7 +42,7 @@ calls. It is a map, not proof.
 | Scenario | SDK path | CLI path | MCP path | Required evidence |
 |---|---|---|---|---|
 | Auth and status | `createClockifyClient()`, `client.health()`, and `withResponse()` for metadata | `clk115 status --json` | `clockify_status` | Mock-backed tests plus env/config and observability contracts. |
-| First-run diagnostics and support handoff | `clockifyDiagnostics()` and quickstart receipt template | `clk115 doctor --json`, `clk115 status --json` | `clockify://mcp/doctor` | `make quickstart-receipt`, `make diagnostics`, `make support-bundle`, `make issue-intake`, `safeCommandHints`, and `readinessContext`. |
+| First-run diagnostics and support handoff | `clockifyDiagnostics()` and quickstart receipt template | `clk115 doctor --json`, `clk115 status --json` | `clockify://mcp/doctor` | `make diagnostics`, `make diagnostics`, `make support-bundle`, `make issue-intake`, `safeCommandHints`, and `readinessContext`. |
 | Paginated list traversal | `paginate`, `iterAll`, `iterPages`, and `PaginatedList` | list commands such as `clk115 projects list --json` | domain list tools such as `clockify_projects_list` | Mock proof for the Last-Page header plus live sandbox coverage for real Clockify pagination. |
 | Time-entry mutation and cleanup | time-entry create/list/update/delete resource clients | `clk115 log`, `clk115 entries list`, `clk115 entries delete <id>` | `clockify_log_work`, `clockify_review_day`, `clockify_fix_entry` | Live sandbox flow with returned IDs, cleanup prefix, `changed`, and final leftover count. |
 | Work-package setup | clients, projects, tasks, and tags resource clients | `clients create`, `projects create`, `tasks list`, and `tags create` | `clockify_create_work_package` | Reuse/created receipts, explicit IDs, and workflow-cookbook parity. |
@@ -59,7 +59,7 @@ Use the narrowest proof that matches the claim:
    its supporting evidence stays wired.
 2. Mock proof: `make mock-contract` and package mock tests prove deterministic
    behavior without credentials.
-3. Quickstart/support proof: `make quickstart-receipt`, `make diagnostics`,
+3. Quickstart/support proof: `make diagnostics`, `make diagnostics`,
    `make support-bundle`, and `make issue-intake` prove the first-run support
    packet before live readiness claims.
 4. Package proof: package gates and `make pack-smoke` prove installed artifact
