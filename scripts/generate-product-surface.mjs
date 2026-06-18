@@ -34,8 +34,28 @@ const wrapperPkg = readJson("wrapper/package.json");
 const cliPkg = readJson("cli/package.json");
 const mcpPkg = readJson("mcp/package.json");
 const mcpTools = readJson("docs/mcp-tools.json");
-const goCatalog = maybeReadJson("../GOCLMCP/docs/tool-catalog.json");
-const goTools = Array.isArray(goCatalog?.tools) ? goCatalog.tools : [];
+function goMcpMetadata() {
+    const goCatalog = maybeReadJson("../GOCLMCP/docs/tool-catalog.json");
+    const goTools = Array.isArray(goCatalog?.tools) ? goCatalog.tools : [];
+    if (goTools.length > 0) {
+        const detectedCategoryCounts = goTools.reduce((acc, tool) => {
+            const category = tool.category ?? "unknown";
+            acc[category] = (acc[category] ?? 0) + 1;
+            return acc;
+        }, {});
+        return {
+            detectedToolCount: goTools.length,
+            detectedCategoryCounts,
+        };
+    }
+
+    const current = maybeReadJson("docs/product-surface.json");
+    const currentGoMcp = current?.packages?.goMcp ?? {};
+    return {
+        detectedToolCount: currentGoMcp.detectedToolCount ?? null,
+        detectedCategoryCounts: currentGoMcp.detectedCategoryCounts ?? {},
+    };
+}
 
 function requirePositiveInteger(label, value) {
     if (!Number.isInteger(value) || value <= 0) {
@@ -172,11 +192,7 @@ const workflows = [
     },
 ];
 
-const goCategoryCounts = goTools.reduce((acc, tool) => {
-    const category = tool.category ?? "unknown";
-    acc[category] = (acc[category] ?? 0) + 1;
-    return acc;
-}, {});
+const goMcp = goMcpMetadata();
 
 const surface = {
     schemaVersion: 1,
@@ -225,8 +241,8 @@ const surface = {
         goMcp: {
             folder: "../GOCLMCP",
             catalog: "../GOCLMCP/docs/tool-catalog.json",
-            detectedToolCount: goTools.length || null,
-            detectedCategoryCounts: goCategoryCounts,
+            detectedToolCount: goMcp.detectedToolCount,
+            detectedCategoryCounts: goMcp.detectedCategoryCounts,
             gates: ["make openapi-drift", "make catalog-drift", "make selfinspect-drift", "make raw-allowlist-drift", "go test ./internal/tools/..."],
         },
     },
