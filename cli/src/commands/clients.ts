@@ -1,9 +1,9 @@
 /**
- * `clk115 clients list` / `clk115 clients create <name>`.
+ * `clk115 clients {list,create,get,update,delete}`.
  */
 import type { Command } from "commander";
 
-import { printRecords } from "../output.js";
+import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
@@ -74,6 +74,84 @@ export const registerClientsCommand: Registrar = (program, services) => {
                             reason: "Create a project for this client.",
                         },
                     ],
+                },
+                output,
+            );
+        });
+
+    clients
+        .command("get")
+        .argument("<id>", "Client ID.")
+        .description("Get one client by ID.")
+        .action(async function (this: Command, id: string) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            const result = await client.clients.get({ workspaceId, clientId: id });
+            printObject(result as Record<string, unknown>, output);
+        });
+
+    clients
+        .command("update")
+        .argument("<id>", "Client ID.")
+        .option("--name <text>", "New client name.")
+        .option("--note <text>", "Client note.")
+        .option("--address <text>", "Client address.")
+        .option("--archived", "Archive the client.")
+        .option("--no-archived", "Unarchive the client.")
+        .description("Update a client by ID.")
+        .action(async function (this: Command, id: string, opts) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            const body: Record<string, unknown> = {};
+            if (opts.name) body.name = opts.name;
+            if (opts.note !== undefined) body.note = opts.note;
+            if (opts.address !== undefined) body.address = opts.address;
+            if (opts.archived !== undefined) body.archived = opts.archived;
+            const updated = (await client.clients.update({ workspaceId, clientId: id, body } as never)) as {
+                id?: string;
+                name?: string;
+            };
+            const data = { id: updated.id ?? id, name: updated.name ?? "" };
+            printReceipt(
+                {
+                    ok: true,
+                    action: "clients.update",
+                    entity: "client",
+                    ids: { clientId: data.id },
+                    data,
+                    changed: { updated: [{ type: "client", id: data.id, name: data.name }] },
+                    next: [{ command: `clk115 clients get ${data.id} --json`, reason: "Verify the update." }],
+                },
+                output,
+            );
+        });
+
+    clients
+        .command("delete")
+        .argument("<id>", "Client ID.")
+        .description("Delete a client by ID (archives first; an active client cannot be deleted).")
+        .action(async function (this: Command, id: string) {
+            const { client, workspaceId, output } = resolveContext(this, services);
+            // Clockify rejects DELETE of an ACTIVE client (400) and the
+            // dedicated `clients.archive` route 404s. The flattened
+            // `clients.update` drops `archived` (field whitelist), but the
+            // body-envelope form bypasses it via core.bodyFromRequest — so
+            // archive first via GET-then-PUT (body envelope), carrying the
+            // name the replace-PUT requires, then DELETE. Mirrors the MCP tool.
+            const current = (await client.clients.get({ workspaceId, clientId: id })) as { name?: string };
+            const name = String(current.name ?? "");
+            if (!name) {
+                throw new Error("Cannot archive client before delete: the client has no name to carry through the replace-PUT.");
+            }
+            await client.clients.update({ workspaceId, clientId: id, body: { name, archived: true } } as never);
+            await client.clients.delete({ workspaceId, clientId: id });
+            printReceipt(
+                {
+                    ok: true,
+                    action: "clients.delete",
+                    entity: "client",
+                    ids: { clientId: id },
+                    data: { id, deleted: true, message: `deleted client ${id}` },
+                    changed: { deleted: [{ type: "client", id }] },
+                    next: [{ command: "clk115 clients list --json", reason: "Verify the client no longer appears." }],
                 },
                 output,
             );

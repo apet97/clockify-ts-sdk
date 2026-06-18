@@ -24,6 +24,7 @@ describe("buildProgram", () => {
             "projects",
             "reports",
             "scheduling",
+            "shared-reports",
             "start",
             "status",
             "stop",
@@ -33,5 +34,7 @@ describe("buildProgram", () => {
             "users",
             "webhooks",
         ]);
+        // 21 top-level command groups.
+        expect(commandNames).toHaveLength(21);
     });
 });

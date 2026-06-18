@@ -20,6 +20,7 @@ import { registerLogCommand } from "./commands/log.js";
 import { registerProjectsCommand } from "./commands/projects.js";
 import { registerReportsCommand } from "./commands/reports.js";
 import { registerSchedulingCommand } from "./commands/scheduling.js";
+import { registerSharedReportsCommand } from "./commands/sharedReports.js";
 import { registerStartCommand } from "./commands/start.js";
 import { registerStatusCommand } from "./commands/status.js";
 import { registerStopCommand } from "./commands/stop.js";
@@ -82,6 +83,7 @@ export function buildProgram(): Command {
     registerSchedulingCommand(program, services);
     registerAuditLogCommand(program, services);
     registerReportsCommand(program, services);
+    registerSharedReportsCommand(program, services);
     registerUsersCommand(program, services);
 
     program

@@ -42,6 +42,20 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
+- CRUD round-out + P1-7 CLI mirror — the CLI grows 35 → 58 commands:
+  - `clk115 projects {get,update,delete}`, `clk115 clients {get,update,delete}`,
+    `clk115 tags {get,update,delete}`, `clk115 tasks {create,get,update,delete}`
+    (project-scoped: `delete <projectId> <id>`), and `clk115 expenses {get,update,delete}`
+    (no `create` — the live route is a multipart upload, intentionally omitted).
+    `projects`/`clients` delete archive first (an active record cannot be deleted —
+    400 live-verified; clients via the body-envelope replace-PUT), and `tasks` delete
+    marks the task DONE first, mirroring the MCP domain tools byte-for-byte.
+  - New `clk115 shared-reports {list,view,create,update,delete}` group — `view <id>` is
+    keyed only by the shared-report id (reports host, not workspace-scoped).
+  - `clk115 users invite <email> [--no-send-email]` and
+    `clk115 users update-profile <userId> …` — mirror the P1-7 MCP tools
+    (`clockify_users_invite`, `clockify_member_profile_update`); the member-profile
+    write stays under the `users` group (no new top-level group).
 - `clk115 reports {summary,detailed,weekly,attendance}` — read-only Clockify reports
   over a date range. The range comes from a named `--period` (default `this_month`)
   with `--from`/`--to` overrides (day, ISO, or period keyword), and `reports summary`
