@@ -28,10 +28,29 @@ function readTsMcpTools() {
     return new Set((manifest.tools ?? []).map((tool) => tool.name).filter(Boolean));
 }
 
-function readGoMcpTools() {
-    if (!fs.existsSync(goCatalogPath)) return new Set();
+function readExistingGoMcpByOperation() {
+    if (!fs.existsSync(jsonPath)) return new Map();
+    const current = readJson(jsonPath);
+    return new Map(
+        (current.operations ?? [])
+            .filter((op) => op.operationId && op.goMcp)
+            .map((op) => [op.operationId, op.goMcp]),
+    );
+}
+
+function readGoMcpSurface() {
+    if (!fs.existsSync(goCatalogPath)) {
+        const byOperation = readExistingGoMcpByOperation();
+        return {
+            tools: new Set(byOperation.values()),
+            byOperation,
+        };
+    }
     const catalog = readJson(goCatalogPath);
-    return new Set((catalog.tools ?? []).map((tool) => tool.name).filter(Boolean));
+    return {
+        tools: new Set((catalog.tools ?? []).map((tool) => tool.name).filter(Boolean)),
+        byOperation: new Map(),
+    };
 }
 
 function readOverrides() {
@@ -75,14 +94,17 @@ function candidateTools(op) {
 function build() {
     const inventory = readJson(openapiPath);
     const tsTools = readTsMcpTools();
-    const goTools = readGoMcpTools();
+    const goSurface = readGoMcpSurface();
     const overrides = readOverrides();
     const operations = inventory.operations.map((op) => {
         const candidates = candidateTools(op);
         const override = overrides.get(op.operationId) ?? {};
         const inferredSdk = op.sdkGroup && op.sdkMethod ? `client.${op.sdkGroup}.${op.sdkMethod}` : null;
         const inferredTsMcp = candidates.find((name) => tsTools.has(name)) ?? null;
-        const inferredGoMcp = candidates.find((name) => goTools.has(name)) ?? null;
+        const inferredGoMcp =
+            goSurface.byOperation.get(op.operationId) ??
+            candidates.find((name) => goSurface.tools.has(name)) ??
+            null;
         const sdk = Object.prototype.hasOwnProperty.call(override, "sdk") ? override.sdk : inferredSdk;
         const tsMcp = Object.prototype.hasOwnProperty.call(override, "tsMcp") ? override.tsMcp : inferredTsMcp;
         const goMcp = Object.prototype.hasOwnProperty.call(override, "goMcp") ? override.goMcp : inferredGoMcp;
