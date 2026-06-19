@@ -1,9 +1,9 @@
 // @ts-check
 /**
  * ESLint flat config for the @clockify115/mcp-server hand-written surface
- * (src/** plus tests/**). Type-aware rules use `projectService: true` so
- * tsconfig.json is auto-discovered. dist/, node_modules/, and scripts/
- * are excluded.
+ * (src/** plus tests/**). Type-aware rules use a dedicated
+ * `project: ["./tsconfig.lint.json"]` (which includes tests/**). dist/,
+ * node_modules/, and scripts/ are excluded.
  */
 import importPlugin from "eslint-plugin-import-x";
 import tseslint from "typescript-eslint";
