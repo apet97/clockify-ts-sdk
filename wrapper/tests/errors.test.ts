@@ -35,6 +35,19 @@ function H(map: Record<string, string>): { headers: { get(name: string): string 
     };
 }
 
+/** Case-SENSITIVE header double: `get` only matches the literal key passed in.
+ *  Used to prove the parsers fall back to the lowercase header name via `??`
+ *  (a `&&` mutant of that fallback would drop the lowercase-only value). */
+function Hexact(map: Record<string, string>): {
+    headers: { get(name: string): string | null };
+} {
+    return {
+        headers: {
+            get: (name: string) => (name in map ? (map[name] as string) : null),
+        },
+    };
+}
+
 describe("RateLimitError", () => {
     it("parses Retry-After as seconds", () => {
         const err = new RateLimitError({
@@ -126,12 +139,103 @@ describe("RateLimitError", () => {
         expect(err.retryAfterMs).toBe(15_000);
     });
 
+    it("falls back to the lowercase Retry-After header name (?? not &&)", () => {
+        // Hexact only answers the exact key; the parser must try "Retry-After"
+        // (null here) THEN "retry-after". A `&&` mutant of that fallback would
+        // short-circuit to null and lose the value.
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: Hexact({ "retry-after": "12" }) as never,
+        });
+        expect(err.retryAfterMs).toBe(12_000);
+        expect(err.rateLimitResetAt).toBeInstanceOf(Date);
+    });
+
+    it("falls back to the lowercase X-RateLimit-Reset header name (?? not &&)", () => {
+        const futureSec = Math.floor(Date.now() / 1000) + 90;
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: Hexact({ "x-ratelimit-reset": String(futureSec) }) as never,
+        });
+        expect(err.retryAfterMs).toBeGreaterThan(80_000);
+        expect(err.rateLimitResetAt!.getTime()).toBe(futureSec * 1000);
+    });
+
+    it("parseRateLimitResetAt: positive Retry-After seconds yield now + N reset date (seconds > 0 branch)", () => {
+        // The `seconds > 0` branch turns a positive delay into an absolute
+        // now + N*1000 reset. A 30s Retry-After lands ~30s in the future,
+        // distinctly different from the `new Date("30")` HTTP-date fallback.
+        const before = Date.now();
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": "30" }) as never,
+        });
+        const after = Date.now();
+        expect(err.rateLimitResetAt!.getTime()).toBeGreaterThanOrEqual(before + 30_000);
+        expect(err.rateLimitResetAt!.getTime()).toBeLessThanOrEqual(after + 30_000);
+    });
+
+    it("a negative Retry-After seconds value falls through to the HTTP-date path (>= 0 boundary)", () => {
+        // "-5" parses as a finite -5, failing `seconds >= 0`; the parser then tries
+        // it as an HTTP-date (which fails too), so retryAfterMs is undefined. A
+        // `||` mutant of that guard would wrongly accept -5 → -5000ms.
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "Retry-After": "-5" }) as never,
+        });
+        expect(err.retryAfterMs).toBeUndefined();
+    });
+
+    it("ignores a non-positive X-RateLimit-Reset delta for retryAfterMs but keeps the reset Date (dateMs > 0 boundary)", () => {
+        // A reset exactly equal to 'now' (epoch == current second) has dateMs <= 0,
+        // so retryAfterMs must stay undefined; the informational reset Date persists.
+        const nowSec = Math.floor(Date.now() / 1000);
+        const err = new RateLimitError({
+            statusCode: 429,
+            rawResponse: H({ "X-RateLimit-Reset": String(nowSec) }) as never,
+        });
+        expect(err.retryAfterMs).toBeUndefined();
+        expect(err.rateLimitResetAt!.getTime()).toBe(nowSec * 1000);
+    });
+
     it("is an instance of ClockifyApiError (preserves existing catch sites)", () => {
         const err = new RateLimitError({ statusCode: 429 });
         expect(err).toBeInstanceOf(ClockifyApiError);
         expect(err).toBeInstanceOf(RateLimitError);
         expect(err.name).toBe("RateLimitError");
         expect(err.statusCode).toBe(429);
+    });
+});
+
+describe("subclass default messages (no opts.message)", () => {
+    it("each subclass falls back to its own name as the default message", () => {
+        // Kills the `opts.message ?? "<Name>"` default-string mutants: with no
+        // message supplied, the constructed error's message must be the class name.
+        expect(new RateLimitError({ statusCode: 429 }).message).toContain("RateLimitError");
+        expect(new ConflictError({ statusCode: 409 }).message).toContain("ConflictError");
+        expect(new InternalServerError({ statusCode: 500 }).message).toContain(
+            "InternalServerError",
+        );
+        expect(new ServiceUnavailableError({ statusCode: 503 }).message).toContain(
+            "ServiceUnavailableError",
+        );
+        expect(
+            new ClockifyConnectionError({ cause: new Error("x") }).message,
+        ).toContain("ClockifyConnectionError");
+        expect(new ClockifyAbortError({ cause: new Error("x") }).message).toContain(
+            "ClockifyAbortError",
+        );
+    });
+
+    it("a supplied message overrides the default for each subclass", () => {
+        // Kills the LogicalOperator (`&&`) mutant of `opts.message ?? "<Name>"`:
+        // when a message IS provided it must win, not be replaced by the name.
+        expect(new RateLimitError({ statusCode: 429, message: "slow" }).message).toContain("slow");
+        expect(new RateLimitError({ statusCode: 429, message: "slow" }).message).not.toContain(
+            "RateLimitError:",
+        );
+        expect(new ConflictError({ statusCode: 409, message: "dup" }).message).toContain("dup");
+        expect(new ClockifyAbortError({ message: "cancelled" }).message).toContain("cancelled");
     });
 });
 
@@ -440,6 +544,77 @@ describe("stable SDK error classification", () => {
         expect(classifyClockifyError(new Error("plain"))).toBeUndefined();
         expect(getStableErrorCode(new Error("plain"))).toBeUndefined();
     });
+
+    it("a status-bearing error with an abort-shaped cause classifies by STATUS, not aborted", () => {
+        // Guards the `statusCode == null && ...` conjuncts in stableCodeForClockifyError:
+        // a 503 that happens to carry an AbortError cause must NOT be called "aborted"
+        // or "connection_error" — it has a real HTTP status.
+        const withAbortCause = new ClockifyApiError({
+            statusCode: 503,
+            message: "unavailable",
+            cause: new DOMException("aborted", "AbortError"),
+        });
+        expect(getStableErrorCode(withAbortCause)).toBe("clockify_upstream_error");
+
+        const withGenericCause = new ClockifyApiError({
+            statusCode: 500,
+            message: "boom",
+            cause: new TypeError("fetch failed"),
+        });
+        expect(getStableErrorCode(withGenericCause)).toBe("clockify_upstream_error");
+    });
+
+    it("classifies a pre-promoted ClockifyAbortError / ClockifyConnectionError instance directly", () => {
+        // Exercises the `instanceof` left operand of the L373/L376 disjunctions:
+        // a promoted subclass instance must classify even though we don't re-inspect cause.
+        expect(getStableErrorCode(new ClockifyAbortError({ message: "cancelled" }))).toBe(
+            "aborted",
+        );
+        expect(
+            getStableErrorCode(new ClockifyConnectionError({ message: "offline" })),
+        ).toBe("connection_error");
+    });
+
+    it("detects the active-delete block from an object body message (not just the top message)", () => {
+        // mentionsActiveDeleteBlock must inspect body.message when the top-level
+        // message doesn't carry the phrase — exercises the object-body branch.
+        const objBody = classifyClockifyError(
+            new ClockifyApiError({
+                statusCode: 400,
+                message: "Bad Request",
+                body: { message: "Cannot delete an active task with time entries" },
+            }),
+        );
+        expect(objBody?.code).toBe("active_resource_delete_blocked");
+
+        // String body also matches.
+        const strBody = classifyClockifyError(
+            new ClockifyApiError({
+                statusCode: 400,
+                message: "Bad Request",
+                body: "cannot delete an active client",
+            }),
+        );
+        expect(strBody?.code).toBe("active_resource_delete_blocked");
+
+        // A 400 without the phrase anywhere is NOT an active-delete block.
+        const noMatch = classifyClockifyError(
+            new ClockifyApiError({
+                statusCode: 400,
+                message: "Bad Request",
+                body: { message: "field is required" },
+            }),
+        );
+        expect(noMatch?.code).not.toBe("active_resource_delete_blocked");
+    });
+
+    it("a no-status error with no cause classifies via message, not connection/abort", () => {
+        // The cause != null conjunct (L376) matters: with cause == null the
+        // connection_error branch must NOT fire.
+        const noStatusNoCause = new ClockifyApiError({ message: "totally unknown failure" });
+        expect(getStableErrorCode(noStatusNoCause)).not.toBe("connection_error");
+        expect(getStableErrorCode(noStatusNoCause)).not.toBe("aborted");
+    });
 });
 
 describe("mapAddonTokenRestriction", () => {
@@ -468,6 +643,28 @@ describe("mapAddonTokenRestriction", () => {
         });
         const mapped = mapAddonTokenRestriction(err, { authScheme: "addonToken" });
         expect(mapped).toBeInstanceOf(AddonTokenRestrictionError);
+    });
+
+    it("detects the marker on the body.error and body.code fields too", () => {
+        // bodyMentionsAddonRestriction scans message, error, AND code — not only message.
+        const viaError = mapAddonTokenRestriction(
+            new ClockifyApiError({ statusCode: 401, body: { error: "API is not accessible" } }),
+            { authScheme: "addonToken" },
+        );
+        expect(viaError).toBeInstanceOf(AddonTokenRestrictionError);
+
+        const viaCode = mapAddonTokenRestriction(
+            new ClockifyApiError({ statusCode: 401, body: { code: "API is not accessible" } }),
+            { authScheme: "addonToken" },
+        );
+        expect(viaCode).toBeInstanceOf(AddonTokenRestrictionError);
+
+        // An object body whose fields are non-strings (or lack the marker) is left raw.
+        const noMarker = new ClockifyApiError({
+            statusCode: 401,
+            body: { code: 123, error: { nested: true } },
+        });
+        expect(mapAddonTokenRestriction(noMarker, { authScheme: "addonToken" })).toBe(noMarker);
     });
 
     it("maps a generated UnauthorizedError carrying the marker", () => {

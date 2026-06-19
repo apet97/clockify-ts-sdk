@@ -471,6 +471,373 @@ describe("composedFetch — abort during retry backoff", () => {
     });
 });
 
+describe("composedFetch — default retry policy (no override of the internals)", () => {
+    // These tests deliberately do NOT pass computeDelay/retryableMethods so the
+    // module's own DEFAULT_RETRY_POLICY + computeRetryDelay/applyJitter/mergeRetryPolicy
+    // paths run for real (the override-based tests above bypass them).
+
+    it("retries every default-idempotent method (GET/HEAD/OPTIONS/PUT/DELETE) and skips POST/PATCH", async () => {
+        for (const method of ["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] as const) {
+            let calls = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    calls++;
+                    return new Response("x", { status: 503 });
+                }) as typeof fetch,
+                // initialDelayMs:0 keeps backoff at 0ms; no retryableMethods override.
+                retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            });
+            await f("https://example.test/x", { method });
+            expect(calls, `${method} should be retried by default`).toBe(2);
+        }
+        for (const method of ["POST", "PATCH"] as const) {
+            let calls = 0;
+            const f = composedFetch({
+                fetch: (async () => {
+                    calls++;
+                    return new Response("x", { status: 503 });
+                }) as typeof fetch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            });
+            await f("https://example.test/x", { method });
+            expect(calls, `${method} should NOT be retried by default`).toBe(1);
+        }
+    });
+
+    it("uppercases caller-supplied retryableMethods so lowercase opt-in still matches", async () => {
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return new Response("x", { status: 503 });
+            }) as typeof fetch,
+            // lowercase 'post' — mergeRetryPolicy must .toUpperCase() it to match "POST".
+            retryPolicy: {
+                maxRetries: 2,
+                initialDelayMs: 0,
+                jitter: 0,
+                retryableMethods: ["post"],
+            },
+        });
+        await f("https://example.test/x", { method: "POST" });
+        expect(calls).toBe(3);
+    });
+
+    it("only retries the default status codes (408/429/5xx); a 404 is returned immediately", async () => {
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return new Response("nope", { status: 404 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 3, initialDelayMs: 0, jitter: 0 },
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(404);
+        expect(calls).toBe(1);
+        // And 408 IS in the default set.
+        let calls408 = 0;
+        const g = composedFetch({
+            fetch: (async () => {
+                calls408++;
+                return new Response("timeout", { status: 408 });
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        await g("https://example.test/x", { method: "GET" });
+        expect(calls408).toBe(2);
+    });
+
+    it("schedules the exact Retry-After (seconds) delay through the internal computeRetryDelay", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "2" },
+                })) as typeof fetch,
+            // initialDelayMs is huge so a missed Retry-After branch would be obvious;
+            // jitter:0 keeps the value exact. No computeDelay override.
+            retryPolicy: { maxRetries: 1, initialDelayMs: 99_999, maxDelayMs: 60_000, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        expect(onRetry).toHaveBeenCalledTimes(1);
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(2000);
+    });
+
+    it("caps Retry-After (seconds) at maxDelayMs", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "9999" },
+                })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, maxDelayMs: 5_000, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(5_000);
+    });
+
+    it("treats Retry-After: 0 as 0ms (not the exponential fallback) through computeRetryDelay", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("rate", {
+                    status: 429,
+                    headers: { "Retry-After": "0" },
+                })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 50_000, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(0);
+    });
+
+    it("falls back to X-RateLimit-Reset (epoch seconds, jittered) when Retry-After is absent", async () => {
+        // positiveOnly jitter branch: delay * (1 + Math.random() * jitter).
+        // random=0 → multiplier 1 (the base); random=1 → multiplier (1 + jitter).
+        // Asserting BOTH pins the `1 +` and `* jitter` arithmetic.
+        for (const [rand, lo, hi] of [
+            [0, 9_000, 10_100],
+            [1, 11_000, 12_100],
+        ] as const) {
+            vi.spyOn(Math, "random").mockReturnValue(rand);
+            try {
+                const onRetry = vi.fn();
+                const resetEpoch = Math.floor(Date.now() / 1000) + 10; // ~10s out
+                const f = composedFetch({
+                    fetch: (async () =>
+                        new Response("rate", {
+                            status: 429,
+                            headers: { "X-RateLimit-Reset": String(resetEpoch) },
+                        })) as typeof fetch,
+                    retryPolicy: {
+                        maxRetries: 1,
+                        initialDelayMs: 50_000,
+                        maxDelayMs: 60_000,
+                        jitter: 0.2,
+                    },
+                    hooks: { onRetry },
+                });
+                await f("https://example.test/x", { method: "GET" });
+                const delay = onRetry.mock.calls[0]![0].delayMs;
+                // random=1 must inflate the ~10s base by +20% (jitter 0.2) → ~12s,
+                // strictly more than the random=0 base (~10s).
+                expect(delay).toBeGreaterThan(lo);
+                expect(delay).toBeLessThan(hi);
+            } finally {
+                vi.restoreAllMocks();
+            }
+        }
+    });
+
+    it("uses exponential initialDelayMs * 2**attempt for the fallback (no headers)", async () => {
+        vi.spyOn(Math, "random").mockReturnValue(0.5); // (random-0.5)=0 → applyJitter returns delay unchanged
+        try {
+            const onRetry = vi.fn();
+            const f = composedFetch({
+                fetch: (async () => new Response("err", { status: 500 })) as typeof fetch,
+                retryPolicy: { maxRetries: 2, initialDelayMs: 100, maxDelayMs: 60_000, jitter: 0.4 },
+                hooks: { onRetry },
+            });
+            await f("https://example.test/x", { method: "GET" });
+            // attempt 0 → 100 * 2**0 = 100; attempt 1 → 100 * 2**1 = 200.
+            expect(onRetry.mock.calls[0]![0].delayMs).toBe(100);
+            expect(onRetry.mock.calls[1]![0].delayMs).toBe(200);
+        } finally {
+            vi.restoreAllMocks();
+        }
+    });
+
+    it("applyJitter is a no-op when jitter <= 0 (boundary), so the fallback delay is exact", async () => {
+        const onRetry = vi.fn();
+        const f = composedFetch({
+            fetch: (async () => new Response("err", { status: 500 })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 250, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await f("https://example.test/x", { method: "GET" });
+        // jitter 0 → applyJitter returns 250 unchanged (no randomness involved).
+        expect(onRetry.mock.calls[0]![0].delayMs).toBe(250);
+    });
+
+    it("applyJitter with a positive symmetric jitter stays within ±jitter of the base delay", async () => {
+        // Symmetric branch: delay * (1 + (random-0.5)*jitter). With random=1 the
+        // multiplier is (1 + 0.5*jitter); with random=0 it is (1 - 0.5*jitter).
+        for (const [rand, expected] of [
+            [1, 250 * (1 + 0.5 * 0.4)],
+            [0, 250 * (1 - 0.5 * 0.4)],
+        ] as const) {
+            vi.spyOn(Math, "random").mockReturnValue(rand);
+            try {
+                const onRetry = vi.fn();
+                const f = composedFetch({
+                    fetch: (async () => new Response("err", { status: 500 })) as typeof fetch,
+                    retryPolicy: { maxRetries: 1, initialDelayMs: 250, maxDelayMs: 60_000, jitter: 0.4 },
+                    hooks: { onRetry },
+                });
+                await f("https://example.test/x", { method: "GET" });
+                expect(onRetry.mock.calls[0]![0].delayMs).toBeCloseTo(expected, 5);
+            } finally {
+                vi.restoreAllMocks();
+            }
+        }
+    });
+
+    it("network-error retries report a 1-indexed nextAttempt and stop exactly at maxRetries", async () => {
+        const onRetry = vi.fn();
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                throw new Error("ETIMEDOUT");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: { onRetry },
+        });
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow("ETIMEDOUT");
+        expect(calls).toBe(3); // initial + 2 retries, then exhausted
+        expect(onRetry).toHaveBeenCalledTimes(2);
+        expect(onRetry.mock.calls[0]![0].nextAttempt).toBe(1);
+        expect(onRetry.mock.calls[1]![0].nextAttempt).toBe(2);
+        // The onRetry cause for a network error carries { error }, not { response }.
+        expect(onRetry.mock.calls[0]![0].cause).toHaveProperty("error");
+        expect((onRetry.mock.calls[0]![0].cause as { error: unknown }).error).toBeInstanceOf(Error);
+    });
+
+    it("retryPolicy: false disables wrapper-side retry (maxRetries forced to 0)", async () => {
+        let calls = 0;
+        const f = composedFetch({
+            fetch: (async () => {
+                calls++;
+                return new Response("x", { status: 503 });
+            }) as typeof fetch,
+            retryPolicy: false,
+        });
+        const res = await f("https://example.test/x", { method: "GET" });
+        expect(res.status).toBe(503);
+        expect(calls).toBe(1);
+    });
+
+    it("wraps a thrown non-Error rejection into an Error when retries exhaust", async () => {
+        const f = composedFetch({
+            fetch: (async () => {
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
+                throw "string failure";
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 0, initialDelayMs: 0, jitter: 0 },
+        });
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(
+            "string failure",
+        );
+        await f("https://example.test/x", { method: "GET" }).catch((e) => {
+            expect(e).toBeInstanceOf(Error);
+        });
+    });
+});
+
+describe("composedFetch — request shape + metrics edges", () => {
+    it("derives the URL and method from a Request object", async () => {
+        const events: RequestContext[] = [];
+        const { fn } = mockFetch(() => new Response("ok"));
+        const f = composedFetch({
+            fetch: fn,
+            hooks: { beforeRequest: (ctx) => {
+                events.push(ctx);
+            } },
+        });
+        await f(new Request("https://example.test/from-request", { method: "delete" }));
+        expect(events[0]!.url).toBe("https://example.test/from-request");
+        expect(events[0]!.method).toBe("DELETE"); // uppercased
+    });
+
+    it("derives the URL from a URL instance", async () => {
+        const events: RequestContext[] = [];
+        const { fn } = mockFetch(() => new Response("ok"));
+        const f = composedFetch({
+            fetch: fn,
+            hooks: { beforeRequest: (ctx) => {
+                events.push(ctx);
+            } },
+        });
+        await f(new URL("https://example.test/from-url?q=1"));
+        expect(events[0]!.url).toBe("https://example.test/from-url?q=1");
+        expect(events[0]!.method).toBe("GET"); // default when no init.method
+    });
+
+    it("exposes the injected requestId on the hook context", async () => {
+        const events: RequestContext[] = [];
+        const { fn } = mockFetch(() => new Response("ok"));
+        const f = composedFetch({
+            fetch: fn,
+            requestId: () => "fixed-id",
+            hooks: { beforeRequest: (ctx) => {
+                events.push(ctx);
+            } },
+        });
+        await f("https://example.test/x");
+        expect(events[0]!.requestId).toBe("fixed-id");
+    });
+
+    it("does NOT emit a rate_limit.remaining metric when the header is absent or non-numeric", async () => {
+        const names: string[] = [];
+        const f = composedFetch({
+            fetch: (async () => new Response("ok", { status: 200 })) as typeof fetch,
+            hooks: { onMetric: (m) => {
+                names.push(m.name);
+            } },
+        });
+        await f("https://example.test/x");
+        expect(names).toContain("request.duration");
+        expect(names).not.toContain("rate_limit.remaining");
+
+        const names2: string[] = [];
+        const g = composedFetch({
+            fetch: (async () =>
+                new Response("ok", {
+                    status: 200,
+                    headers: { "X-RateLimit-Remaining": "not-a-number" },
+                })) as typeof fetch,
+            hooks: { onMetric: (m) => {
+                names2.push(m.name);
+            } },
+        });
+        await g("https://example.test/x");
+        expect(names2).not.toContain("rate_limit.remaining");
+    });
+
+    it("marks the request.duration outcome as http_error for a non-ok response", async () => {
+        const metrics: Array<{ name: string; attributes?: Record<string, unknown> }> = [];
+        const f = composedFetch({
+            fetch: (async () => new Response("bad", { status: 500 })) as typeof fetch,
+            hooks: { onMetric: (m) => {
+                metrics.push(m);
+            } },
+        });
+        await f("https://example.test/x");
+        const dur = metrics.find((m) => m.name === "request.duration");
+        expect(dur?.attributes).toMatchObject({ outcome: "http_error", status: 500 });
+    });
+
+    it("marks the request.duration outcome as error on a network failure", async () => {
+        const metrics: Array<{ name: string; attributes?: Record<string, unknown> }> = [];
+        const f = composedFetch({
+            fetch: (async () => {
+                throw new Error("DNS fail");
+            }) as typeof fetch,
+            hooks: { onMetric: (m) => {
+                metrics.push(m);
+            } },
+        });
+        await expect(f("https://example.test/x")).rejects.toThrow("DNS fail");
+        const dur = metrics.find((m) => m.name === "request.duration");
+        expect(dur?.attributes).toMatchObject({ outcome: "error" });
+    });
+});
+
 describe("getRequestIdFromError", () => {
     it("returns the X-Request-Id from a Fern ClockifyApiError-shaped object", () => {
         const err = {
@@ -494,6 +861,21 @@ describe("getRequestIdFromError", () => {
         expect(getRequestIdFromError({})).toBeUndefined();
         expect(getRequestIdFromError({ rawResponse: { headers: {} } })).toBeUndefined();
         expect(getRequestIdFromError("string error" as unknown)).toBeUndefined();
+    });
+
+    it("returns undefined when a matching Record header value is not a string", () => {
+        // The case-insensitive Record branch must reject a non-string value.
+        const err = {
+            rawResponse: { headers: { "X-Request-Id": 12345 as unknown as string } },
+        };
+        expect(getRequestIdFromError(err)).toBeUndefined();
+    });
+
+    it("matches the X-Request-Id from a Headers instance with exact-case key", () => {
+        const err = {
+            rawResponse: { headers: new Headers({ "x-request-id": "lower-trace" }) },
+        };
+        expect(getRequestIdFromError(err)).toBe("lower-trace");
     });
 });
 
