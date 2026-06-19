@@ -1,6 +1,5 @@
+import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import { describe, expect, it } from "vitest";
-
-import { entityId } from "../src/sdk-narrow.js";
 
 describe("entityId", () => {
     it("returns string ids from SDK-like responses", () => {
