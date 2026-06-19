@@ -678,27 +678,35 @@ Clockify delivery includes a per-webhook 32-char shared-secret in
 the `Clockify-Signature-Token` header. Verify with constant-time
 compare:
 
-```typescript
-import express from "express";
-import { constructEvent, WebhookSignatureMismatchError } from "clockify-sdk-ts-115";
+```typescript sdk-include=webhook-express.ts
+import { WebhookSignatureMismatchError, constructEvent } from "clockify-sdk-ts-115";
 
-const app = express();
-app.post("/webhook", express.text({ type: "*/*" }), (req, res) => {
+interface ExpressLikeRequest {
+    headers: Record<string, string>;
+    rawBody: string;
+}
+interface ExpressLikeResponse {
+    status: (code: number) => { send: (body: string) => void };
+}
+
+// app.post("/clockify", express.raw({ type: "application/json" }), handler)
+export function handler(req: ExpressLikeRequest, res: ExpressLikeResponse): void {
     try {
-        const event = constructEvent({
+        const event = constructEvent<{ webhookEvent: string }>({
             headers: req.headers,
-            payload: req.body,
-            expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN!,
+            payload: req.rawBody,
+            expectedToken: process.env.CLOCKIFY_WEBHOOK_TOKEN ?? "set-CLOCKIFY_WEBHOOK_TOKEN",
         });
-        handleEvent(event);
-        res.status(200).end();
+        console.log("received event:", event.webhookEvent);
+        res.status(200).send("ok");
     } catch (err) {
         if (err instanceof WebhookSignatureMismatchError) {
-            return res.status(401).send("invalid signature");
+            res.status(401).send("invalid signature");
+            return;
         }
-        return res.status(400).send("invalid payload");
+        res.status(400).send("invalid payload");
     }
-});
+}
 ```
 
 Boolean variant:

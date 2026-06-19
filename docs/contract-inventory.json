@@ -410,6 +410,22 @@
       "perfectFull": true
     },
     {
+      "id": "snippet-compile",
+      "target": "snippet-compile",
+      "checker": "scripts/check-snippet-compile.mjs",
+      "policies": [
+        "docs/snippet-compile-policy.md"
+      ],
+      "contracts": [
+        "docs/snippet-compile-contract.json"
+      ],
+      "auditIds": [
+        "snippet-compile"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "runtime-support",
       "target": "runtime-support",
       "checker": "scripts/check-runtime-support.mjs",
