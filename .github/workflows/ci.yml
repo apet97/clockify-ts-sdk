@@ -373,3 +373,40 @@ jobs:
         env:
           CLOCKIFY_API_KEY: ""
           CLOCKIFY_WORKSPACE_ID: ""
+
+  performance-budgets:
+    name: Performance budgets (size + crash-safety; timing de-flaked)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        run: npm ci
+
+      - name: Generate + build all three packages
+        run: |
+          make sdk-codegen
+          npm run build -w clockify-sdk-ts-115
+          npm run build -w @clockify115/cli
+          npm run build -w @clockify115/mcp-server
+
+      # CLOCKIFY_PERF_TIMING=0 keeps file-size ceilings and the in-smoke MCP
+      # tool-count assertion fatal while downgrading only load-sensitive
+      # wall-clock timing to advisory output on shared CI runners.
+      - name: Performance budgets (size + crash-safety)
+        run: make performance-budgets
+        env:
+          CLOCKIFY_PERF_TIMING: "0"
