@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { archiveThenDeleteProject } from "clockify-sdk-ts-115/ensure";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
@@ -172,23 +173,15 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 preview,
             );
             if (confirmation) return confirmation;
-            // Clockify rejects DELETE of an ACTIVE project (400 "Cannot delete
-            // an active project", live-verified 2026-06-15) and the dedicated
-            // /archive route 404s — archive first via GET-then-PUT, carrying
-            // the name the replace-PUT requires.
-            const current = (await ctx.client.projects.get({
+            // archiveThenDeleteProject owns the live-verified sequence (GET name →
+            // archive PUT archived:true → DELETE) and the empty-name guard: bare
+            // DELETE of an ACTIVE project 400s ("Cannot delete an active project",
+            // live-verified 2026-06-15) and the /archive route 404s. See
+            // spec/evidence/discrepancies.md `deletes.archive-first.projects-tasks`.
+            await archiveThenDeleteProject({
                 workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-            })) as { name?: string };
-            await ctx.client.projects.update({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                name: String(current.name ?? ""),
-                archived: true,
-            });
-            await ctx.client.projects.delete({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
+                id: args.projectId,
+                resource: ctx.client.projects,
             });
             return successResult(
                 "clockify_projects_delete",

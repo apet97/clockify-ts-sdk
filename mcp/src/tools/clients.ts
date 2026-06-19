@@ -1,10 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { archiveThenDeleteClient } from "clockify-sdk-ts-115/ensure";
 import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -156,39 +157,18 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 preview,
             );
             if (confirmation) return confirmation;
-            // Clockify rejects DELETE of an ACTIVE client (400, live-verified
-            // 2026-06-15) and the dedicated `clients.archive` route 404s. The
-            // generated `clients.update` FLATTENED form drops `archived`
-            // (whitelist [address, currencyCode, email, name, note]), but the
-            // BODY-ENVELOPE form bypasses the whitelist via core.bodyFromRequest
-            // (wrapper request.ts), landing `archived:true` on the wire. So
-            // archive first via GET-then-PUT (body envelope) — carrying the name
-            // the replace-PUT requires — then DELETE, mirroring
-            // clockify_projects_delete. See spec/evidence/discrepancies.md
-            // `deletes.archive-first.clients-blocked`.
-            const current = (await ctx.client.clients.get({
+            // archiveThenDeleteClient owns the live-verified sequence (GET name →
+            // archive via the BODY-ENVELOPE PUT that bypasses the clients.update
+            // field whitelist [address, currencyCode, email, name, note] via
+            // core.bodyFromRequest, landing archived:true on the wire → DELETE)
+            // AND the empty-name guard (throws → errorResult via defineTool's
+            // catch). Bare DELETE of an ACTIVE client 400s (live-verified
+            // 2026-06-15) and clients.archive 404s. See
+            // spec/evidence/discrepancies.md `deletes.archive-first.clients-blocked`.
+            await archiveThenDeleteClient({
                 workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
-            })) as { name?: string };
-            const name = String(current.name ?? "");
-            if (!name) {
-                return errorResult(
-                    "clockify_clients_delete",
-                    new Error(
-                        "Cannot archive client before delete: the client has no name to carry through the replace-PUT.",
-                    ),
-                );
-            }
-            await ctx.client.clients.update(
-                wireBody<ClockifyApi.UpdateClientsRequest>({
-                    workspaceId: ctx.workspaceId,
-                    clientId: args.clientId,
-                    body: { name, archived: true },
-                }),
-            );
-            await ctx.client.clients.delete({
-                workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
+                id: args.clientId,
+                resource: ctx.client.clients,
             });
             return successResult(
                 "clockify_clients_delete",
