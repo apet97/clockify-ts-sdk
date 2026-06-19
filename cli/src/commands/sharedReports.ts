@@ -86,7 +86,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await client.sharedReports.list({ workspaceId });
-            printObject(result as OutputRecord, output);
+            printObject(result, output);
         });
 
     shared

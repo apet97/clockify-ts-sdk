@@ -8,7 +8,7 @@
  */
 import type { Command } from "commander";
 
-import { printObject, printRecords, type OutputRecord } from "../output.js";
+import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
@@ -116,7 +116,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const expense = await client.expenses.get({ workspaceId, expenseId: id });
-            printObject(expense as OutputRecord, output);
+            printObject(expense, output);
         });
 
     expenses

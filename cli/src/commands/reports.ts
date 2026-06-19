@@ -17,7 +17,7 @@ import { detailedFilter, summaryFilter, weeklyFilter } from "clockify-sdk-ts-115
 import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
-import { printObject, type OutputRecord } from "../output.js";
+import { printObject } from "../output.js";
 
 import { resolveContext } from "./helpers.js";
 import { resolveClientId, resolveProjectId } from "./resolve-refs.js";
@@ -113,7 +113,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             const data = await client.reports.summary(
                 wireBody<ClockifyApi.SummaryReportsRequest>(req),
             );
-            printObject(data as OutputRecord, output);
+            printObject(data, output);
         });
 
     reports
@@ -144,7 +144,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             const data = await client.reports.detailed(
                 wireBody<ClockifyApi.DetailedReportsRequest>(req),
             );
-            printObject(data as OutputRecord, output);
+            printObject(data, output);
         });
 
     reports
@@ -170,7 +170,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             const data = await client.reports.weekly(
                 wireBody<ClockifyApi.WeeklyReportsRequest>(req),
             );
-            printObject(data as OutputRecord, output);
+            printObject(data, output);
         });
 
     reports
@@ -189,6 +189,6 @@ export const registerReportsCommand: Registrar = (program, services) => {
                     dateRangeEnd,
                 }),
             );
-            printObject(data as OutputRecord, output);
+            printObject(data, output);
         });
 };

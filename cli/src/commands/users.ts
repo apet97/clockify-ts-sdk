@@ -26,7 +26,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             // `users me` works even before a workspace is configured.
             const { client, output } = await resolveBaseContext(this, services);
             const me = await client.users.getCurrentUser();
-            printObject(me as unknown as Record<string, unknown>, output);
+            printObject(me, output);
         });
 
     users
