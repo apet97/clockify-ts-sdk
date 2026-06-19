@@ -26,7 +26,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .option("--name <text>", "Filter by client name substring.")
         .option("--archived", "Include archived clients.", false)
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListClientsRequest = {
                 workspaceId,
                 page: opts.page,
@@ -58,7 +58,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .option("--note <text>", "Client note.")
         .description("Create a client in the workspace.")
         .action(async function (this: Command, name: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ClientCreate = {
                 workspaceId,
                 body: { name, ...(opts.note !== undefined ? { note: opts.note } : {}) },
@@ -92,7 +92,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .argument("<id>", "Client ID.")
         .description("Get one client by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await client.clients.get({ workspaceId, clientId: id });
             printObject(result as Record<string, unknown>, output);
         });
@@ -107,7 +107,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the client.")
         .description("Update a client by ID.")
         .action(async function (this: Command, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>> & {
                 archived?: boolean;
             } = {};
@@ -149,7 +149,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .argument("<id>", "Client ID.")
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE client (400) and the
             // dedicated `clients.archive` route 404s. The flattened
             // `clients.update` drops `archived` (field whitelist), but the

@@ -128,6 +128,16 @@ export interface RetryContext extends RequestContext {
     delayMs: number;
 }
 
+/** A single numeric metric sample emitted via {@link ComposedFetchHooks.onMetric}. */
+export interface FetchMetric {
+    /** Stable dotted metric name, such as `request.duration` or `retry.count`. */
+    name: string;
+    /** Numeric sample value. Durations are milliseconds. */
+    value: number;
+    /** Low-cardinality dimensions suitable for metrics backends. */
+    attributes?: Record<string, string | number>;
+}
+
 /** Lifecycle hook set. Hooks are best-effort: any rejection inside a
  *  hook is logged via `console.warn` but does NOT block the request. */
 export interface ComposedFetchHooks {
@@ -135,6 +145,9 @@ export interface ComposedFetchHooks {
     afterResponse?: (ctx: ResponseContext) => void | Promise<void>;
     onError?: (ctx: ErrorContext) => void | Promise<void>;
     onRetry?: (ctx: RetryContext) => void | Promise<void>;
+    /** Emit numeric samples for request duration, retry scheduling, and
+     *  rate-limit remaining headers. Zero-cost when unset. */
+    onMetric?: (metric: FetchMetric) => void | Promise<void>;
 }
 
 /** Options for {@link composedFetch}. */
@@ -335,10 +348,14 @@ async function runSingleAttempt(
     await safeHook(hooks?.beforeRequest, ctx);
     try {
         const response = await baseFetch(input, init);
-        await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs: Date.now() - start });
+        const durationMs = Date.now() - start;
+        await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs });
+        await emitResponseMetrics(hooks, ctx, response, durationMs);
         return response;
     } catch (error) {
-        await safeHook(hooks?.onError, { ...ctx, error, durationMs: Date.now() - start });
+        const durationMs = Date.now() - start;
+        await safeHook(hooks?.onError, { ...ctx, error, durationMs });
+        await emitErrorMetrics(hooks, ctx, durationMs);
         throw error;
     }
 }
@@ -372,6 +389,7 @@ async function runWithRetries(
 
         if (error != null) {
             await safeHook(hooks?.onError, { ...ctx, error, durationMs });
+            await emitErrorMetrics(hooks, ctx, durationMs);
             lastError = error;
             if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
                 throw toError(error);
@@ -383,12 +401,14 @@ async function runWithRetries(
                 nextAttempt: attempt + 1,
                 delayMs,
             });
-            await sleep(delayMs);
+            await emitRetryMetric(hooks, base.method, attempt + 1, "network_error");
+            await sleep(delayMs, init.signal);
             continue;
         }
 
         if (response != null) {
             await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs });
+            await emitResponseMetrics(hooks, ctx, response, durationMs);
             lastResponse = response;
             if (
                 attempt >= policy.maxRetries ||
@@ -404,7 +424,8 @@ async function runWithRetries(
                 nextAttempt: attempt + 1,
                 delayMs,
             });
-            await sleep(delayMs);
+            await emitRetryMetric(hooks, base.method, attempt + 1, String(response.status));
+            await sleep(delayMs, init.signal);
         }
     }
 
@@ -464,8 +485,92 @@ function applyJitter(delay: number, jitter: number, positiveOnly: boolean): numb
     return delay * (1 + (Math.random() - 0.5) * jitter);
 }
 
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal: AbortSignal | null | undefined): Promise<void> {
+    if (signal == null) return new Promise((resolve) => setTimeout(resolve, ms));
+    if (signal.aborted) return Promise.reject(abortReason(signal));
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            signal.removeEventListener("abort", onAbort);
+            resolve();
+        }, ms);
+        const onAbort = () => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", onAbort);
+            reject(abortReason(signal));
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+    });
+}
+
+function abortReason(signal: AbortSignal): Error {
+    const reason = signal.reason as unknown;
+    if (reason instanceof Error) return reason;
+    if (typeof DOMException !== "undefined") {
+        return new DOMException("The operation was aborted.", "AbortError");
+    }
+    return new Error(abortReasonMessage(reason));
+}
+
+function abortReasonMessage(reason: unknown): string {
+    if (reason == null) return "The operation was aborted.";
+    if (typeof reason === "string") return reason;
+    if (typeof reason === "number" || typeof reason === "boolean" || typeof reason === "bigint") {
+        return String(reason);
+    }
+    return "The operation was aborted.";
+}
+
+async function emitResponseMetrics(
+    hooks: ComposedFetchHooks | undefined,
+    ctx: RequestContext,
+    response: Response,
+    durationMs: number,
+): Promise<void> {
+    if (hooks?.onMetric == null) return;
+    await safeHook(hooks.onMetric, {
+        name: "request.duration",
+        value: durationMs,
+        attributes: {
+            method: ctx.method,
+            outcome: response.ok ? "success" : "http_error",
+            status: response.status,
+        },
+    });
+    const remaining = Number.parseInt(response.headers.get("X-RateLimit-Remaining") ?? "", 10);
+    if (Number.isFinite(remaining)) {
+        await safeHook(hooks.onMetric, {
+            name: "rate_limit.remaining",
+            value: remaining,
+            attributes: { method: ctx.method },
+        });
+    }
+}
+
+async function emitErrorMetrics(
+    hooks: ComposedFetchHooks | undefined,
+    ctx: RequestContext,
+    durationMs: number,
+): Promise<void> {
+    if (hooks?.onMetric == null) return;
+    await safeHook(hooks.onMetric, {
+        name: "request.duration",
+        value: durationMs,
+        attributes: { method: ctx.method, outcome: "error" },
+    });
+}
+
+async function emitRetryMetric(
+    hooks: ComposedFetchHooks | undefined,
+    method: string,
+    nextAttempt: number,
+    reason: string,
+): Promise<void> {
+    if (hooks?.onMetric == null) return;
+    await safeHook(hooks.onMetric, {
+        name: "retry.count",
+        value: nextAttempt,
+        attributes: { method, reason },
+    });
 }
 
 async function safeHook<T>(

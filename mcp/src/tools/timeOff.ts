@@ -179,7 +179,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 note: z.string().optional(),
                 isHalfDay: z.boolean().optional(),
                 halfDayPeriod: z
-                    .string()
+                    .enum(["FIRST_HALF", "SECOND_HALF", "NOT_DEFINED"])
                     .optional()
                     .describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
             },
@@ -192,8 +192,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 note: args.note ?? "",
                 timeOffPeriod: {
                     isHalfDay: args.isHalfDay === true,
-                    halfDayPeriod: (args.halfDayPeriod ??
-                        "NOT_DEFINED") as ClockifyApi.HalfDayPeriod,
+                    halfDayPeriod: args.halfDayPeriod ?? "NOT_DEFINED",
                     period,
                 },
             };

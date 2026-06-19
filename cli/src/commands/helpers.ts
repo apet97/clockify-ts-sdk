@@ -41,15 +41,15 @@ function rootProgram(cmd: Command): Command {
  * Resolve client, config, and output without requiring a workspace.
  * Used by commands (like `api`) that only need a workspace for some paths.
  */
-export function resolveBaseContext(cmd: Command, services: Services): BaseContext {
+export async function resolveBaseContext(cmd: Command, services: Services): Promise<BaseContext> {
     const program = rootProgram(cmd);
     const config = services.loadConfig(globalFlags(program));
-    const client = services.buildClient(config);
+    const client = await services.buildClient(config);
     const output = resolveFlags(program);
     return { client, config, output };
 }
 
-export function resolveContext(cmd: Command, services: Services): ResolvedContext {
-    const { client, config, output } = resolveBaseContext(cmd, services);
+export async function resolveContext(cmd: Command, services: Services): Promise<ResolvedContext> {
+    const { client, config, output } = await resolveBaseContext(cmd, services);
     return { client, workspaceId: requireWorkspaceId(config), output };
 }

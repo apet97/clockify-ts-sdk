@@ -23,7 +23,7 @@ export const registerEntriesCommand: Registrar = (program, services) => {
         .option("--to <date>", "ISO 8601 end cutoff (inclusive).")
         .option("--description <text>", "Filter by description substring.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const user = await client.users.getCurrentUser();
             const userId = entityId(user);
             if (!userId) {
@@ -67,7 +67,7 @@ export const registerEntriesCommand: Registrar = (program, services) => {
         .argument("<id>", "Time-entry ID.")
         .description("Delete a time entry by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             await client.timeEntries.delete({ workspaceId, timeEntryId: id });
             printReceipt(
                 {

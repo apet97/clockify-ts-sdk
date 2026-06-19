@@ -25,7 +25,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .option("--name <text>", "Filter by tag name substring.")
         .option("--archived", "Include archived tags.", false)
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListTagsRequest = {
                 workspaceId,
                 page: opts.page,
@@ -49,7 +49,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .argument("<name>", "Tag name.")
         .description("Create a tag in the workspace.")
         .action(async function (this: Command, name: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.TagCreate = { workspaceId, body: { name } };
             const created = (await client.tags.create(req)) as {
                 id?: string;
@@ -76,7 +76,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .argument("<id>", "Tag ID.")
         .description("Get one tag by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const tag = await client.tags.get({ workspaceId, tagId: id });
             printObject(tag as Record<string, unknown>, output);
         });
@@ -88,7 +88,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the tag.")
         .description("Update a tag by ID.")
         .action(async function (this: Command, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
             if (opts.name) body.name = opts.name;
             if (opts.archived !== undefined) body.archived = opts.archived;
@@ -113,7 +113,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .argument("<id>", "Tag ID.")
         .description("Delete a tag by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             await client.tags.delete({ workspaceId, tagId: id });
             printReceipt(
                 {

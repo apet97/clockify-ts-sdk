@@ -59,7 +59,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--start <date>", "Start of the date range (YYYY-MM-DD).")
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: Record<string, unknown> = {
                 workspaceId,
                 page: opts.page,
@@ -114,7 +114,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .argument("<id>", "Expense ID.")
         .description("Get one expense by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const expense = await client.expenses.get({ workspaceId, expenseId: id });
             printObject(expense as OutputRecord, output);
         });
@@ -135,7 +135,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             "Update an expense by ID (full replace of amount, category, date, plus any optional fields supplied).",
         )
         .action(async function (this: Command, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const fields: ExpenseUpdateFields = {
                 amount: opts.amount,
                 categoryId: opts.category,
@@ -178,7 +178,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .argument("<id>", "Expense ID.")
         .description("Delete an expense by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             await client.expenses.delete({ workspaceId, expenseId: id });
             printReceipt(
                 {

@@ -24,6 +24,7 @@
  * const project = await ws.projects.create({ name: "Q1" });
  * ```
  */
+import { warnOnce } from "./deprecation.js";
 import { ensureClient as ensureClientHelper, ensureProject as ensureProjectHelper, ensureTag as ensureTagHelper, type EnsureResult, type NamedRecord } from "./ensure.js";
 import { iterAll, type IterOptions } from "./iter.js";
 import type { ApprovalsClient } from "./src/api/resources/approvals/client/Client.js";
@@ -100,7 +101,16 @@ export class Workspace {
     get customFields(): CustomFieldsClient {
         return this.scoped("customFields") as CustomFieldsClient;
     }
+    /**
+     * @experimental
+     * @beta Clockify's entity-changes API is experimental and may change or
+     *   be withdrawn without a major-version bump on our side.
+     */
     get entityChangesExperimental(): EntityChangesExperimentalClient {
+        warnOnce(
+            "Workspace.entityChangesExperimental",
+            "`entityChangesExperimental` is experimental; the underlying Clockify API may change or be withdrawn without notice.",
+        );
         return this.scoped("entityChangesExperimental") as EntityChangesExperimentalClient;
     }
     get expenseCategories(): ExpenseCategoriesClient {

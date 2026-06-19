@@ -24,7 +24,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .action(async function (this: Command) {
             // GET /user is workspace-independent — use the base context so
             // `users me` works even before a workspace is configured.
-            const { client, output } = resolveBaseContext(this, services);
+            const { client, output } = await resolveBaseContext(this, services);
             const me = await client.users.getCurrentUser();
             printObject(me as unknown as Record<string, unknown>, output);
         });
@@ -36,7 +36,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .option("--page-size <n>", "Items per page (max 200).", (v) => Number.parseInt(v, 10), 50)
         .option("--name <text>", "Filter by name/email substring.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListUsersRequest = {
                 workspaceId,
                 page: opts.page,
@@ -63,7 +63,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
         .option("--no-send-email", "Do not send the invitation email.")
         .description("Invite (add) a user to the workspace by email.")
         .action(async function (this: Command, email: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const sendEmail = opts.sendEmail !== false;
             const workspace = (await client.workspaces.addUser({
                 workspaceId,
@@ -107,7 +107,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             "Update one user's member profile (name, image, week start, work capacity, working days).",
         )
         .action(async function (this: Command, userId: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest> =
                 {};
             if (opts.name !== undefined) body.name = opts.name;

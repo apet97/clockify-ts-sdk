@@ -1407,6 +1407,30 @@ on the bare route (the granular variants — already in
 
 ### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
 
+### `pagination.iter-known-set.envelope-and-unpaginated` — FIXED 2026-06-19
+
+`wrapper/iter.ts`'s hand-maintained `KnownPaginatedMethod` union and
+`KNOWN_PAGINATED_METHODS` runtime set must contain only methods that
+(a) return a bare `readonly TItem[]` and (b) actually honor
+`page`/`page-size`. Five entries violated this and were removed
+(set size 19 -> 14):
+
+- `balances.getForUser`, `balances.listForPolicy` return
+  `BalanceListResponse = {balances, count}` envelopes, not bare
+  arrays. Feeding either to `iterAll`/`iterPages` ran
+  `for (const item of page.items)` over a non-iterable object.
+- `customFields.listForProject`, `customFields.listForWorkspace`,
+  `holidays.list` return the full collection on every page and emit
+  no `Last-Page` header, so the `items.length === pageSize` fallback
+  could yield unbounded duplicates when the collection size equals
+  the requested page size.
+
+These routes may remain in GOCLMCP's `PAGINATED_LIST_OPS` because the
+query parameters are accepted upstream; the wrapper iterable set is
+narrower because it is a runtime safety contract. Regression coverage:
+`wrapper/tests/iter.test.ts` ("excludes envelope-returning and
+unpaginated methods").
+
 - **Official claim:** the seed-list entry near the top of this file
   (`pagination: most list endpoints return Last-Page header, not a
   total`) had not been quantified per-endpoint. G.5's brief: probe

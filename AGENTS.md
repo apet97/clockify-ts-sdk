@@ -365,7 +365,7 @@ wrapper/
 ├── iter.ts                   ← iterAll + iterPages per-resource pagination. Consumes the Last-Page
 │                                response header on the 15 endpoints that emit it (via the rawResponse
 │                                shape from the generated HttpResponsePromise); KnownPaginatedMethod union +
-│                                19-entry KNOWN_PAGINATED_METHODS drift assertion catches upstream renames.
+│                                14-entry KNOWN_PAGINATED_METHODS drift assertion catches upstream renames.
 ├── webhooks.ts               ← verifyClockifyWebhook + constructEvent for the Clockify-Signature-Token
 │                                header (simple shared-secret scheme, not HMAC).
 ├── pagination.ts             ← low-level callback iterator paginate<T> (iterAll is the recommended API).

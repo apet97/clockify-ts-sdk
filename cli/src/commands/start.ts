@@ -32,7 +32,7 @@ export const registerStartCommand: Registrar = (program, services) => {
         .option("--tag <name...>", "Tag name(s) or ID(s). Repeat the flag for multiple tags.")
         .option("--billable", "Mark the entry as billable.", false)
         .action(async function (this: Command, description: string | undefined, opts: StartOpts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const user = await client.users.getCurrentUser();
             const userId = entityId(user);
             if (!userId) {

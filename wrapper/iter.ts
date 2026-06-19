@@ -18,7 +18,7 @@
  *
  * Both compose with any list method that follows Clockify's
  * `page` + `"page-size"` convention. The {@link KnownPaginatedMethod}
- * union documents the 19 currently-known paginated `(resource,
+ * union documents the 14 currently-known paginated `(resource,
  * method)` pairs (synced from `PAGINATED_LIST_OPS` in
  * the GOCLMCP generator). Future methods that follow the same
  * convention work without changes here.
@@ -45,6 +45,9 @@ export interface IterOptions {
     maxPages?: number;
     /** 1-based page to start at. Default `1` (useful for resume flows). */
     startPage?: number;
+    /** Per-page progress callback invoked after a page is fetched and
+     *  before it is yielded. */
+    onPage?: (info: { page: number; count: number }) => void;
 }
 
 /** A single page of results plus its position metadata. */
@@ -62,7 +65,7 @@ export interface PageEnvelope<TItem> {
 }
 
 /**
- * Documentary union of the 19 known paginated `(resource, method)`
+ * Documentary union of the 14 known paginated `(resource, method)`
  * pairs on `ClockifyApiClient`. Not load-bearing for
  * `iterAll` — the helper accepts any matching call site, not just
  * these. Kept here so:
@@ -75,12 +78,7 @@ export interface PageEnvelope<TItem> {
 export type KnownPaginatedMethod =
     | { readonly resource: "approvals"; readonly method: "list" }
     | { readonly resource: "auditLogReport"; readonly method: "search" }
-    | { readonly resource: "balances"; readonly method: "getForUser" }
-    | { readonly resource: "balances"; readonly method: "listForPolicy" }
     | { readonly resource: "clients"; readonly method: "list" }
-    | { readonly resource: "customFields"; readonly method: "listForProject" }
-    | { readonly resource: "customFields"; readonly method: "listForWorkspace" }
-    | { readonly resource: "holidays"; readonly method: "list" }
     | { readonly resource: "invoicePayments"; readonly method: "list" }
     | { readonly resource: "projects"; readonly method: "list" }
     | { readonly resource: "scheduling"; readonly method: "list" }
@@ -94,19 +92,14 @@ export type KnownPaginatedMethod =
     | { readonly resource: "users"; readonly method: "list" };
 
 /**
- * Constant runtime list of the 19 known paginated `(resource,
+ * Constant runtime list of the 14 known paginated `(resource,
  * method)` pairs. Sibling of {@link KnownPaginatedMethod}; useful
  * for tests, codegen, and CI drift assertions.
  */
 export const KNOWN_PAGINATED_METHODS: ReadonlyArray<KnownPaginatedMethod> = [
     { resource: "approvals", method: "list" },
     { resource: "auditLogReport", method: "search" },
-    { resource: "balances", method: "getForUser" },
-    { resource: "balances", method: "listForPolicy" },
     { resource: "clients", method: "list" },
-    { resource: "customFields", method: "listForProject" },
-    { resource: "customFields", method: "listForWorkspace" },
-    { resource: "holidays", method: "list" },
     { resource: "invoicePayments", method: "list" },
     { resource: "projects", method: "list" },
     { resource: "scheduling", method: "list" },
@@ -288,6 +281,7 @@ export async function* iterPages<TRequest, TItem>(
             lastPageFromHeader === true ? false
             : lastPageFromHeader === false ? true
             : items.length === pageSize;
+        options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };
         if (!hasNextPage) return;
     }

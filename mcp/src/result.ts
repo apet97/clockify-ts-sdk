@@ -124,7 +124,7 @@ export function successResult(
     if (options.clarification) envelope.clarification = options.clarification;
     if (options.next && options.next.length > 0) envelope.next = options.next;
     return {
-        content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(envelope) }],
         structuredContent: envelope as unknown as JsonRecord,
     };
 }
@@ -169,7 +169,7 @@ export function errorResult(
         envelope.recovery = { hint: recoveryForCode(code), retryable: retryableForCode(code) };
     }
     return {
-        content: [{ type: "text", text: JSON.stringify(envelope, null, 2) }],
+        content: [{ type: "text", text: JSON.stringify(envelope) }],
         structuredContent: envelope as unknown as JsonRecord,
         isError: true,
     };

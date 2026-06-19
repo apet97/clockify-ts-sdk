@@ -27,7 +27,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by task name substring.")
         .action(async function (this: Command, projectId: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListTasksRequest = {
                 workspaceId,
                 projectId,
@@ -62,7 +62,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--assignee <id...>", "Assignee user ID(s).")
         .description("Create a task under a project.")
         .action(async function (this: Command, projectId: string, name: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.TaskCreateRequest> & {
                 billable?: boolean;
             } = { name };
@@ -102,7 +102,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .argument("<id>", "Task ID.")
         .description("Get one task by project ID and task ID.")
         .action(async function (this: Command, projectId: string, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const task = await client.tasks.get({ workspaceId, projectId, taskId: id });
             printObject(task as Record<string, unknown>, output);
         });
@@ -119,7 +119,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option("--assignee <id...>", "Assignee user ID(s).")
         .description("Update a task by project ID and task ID.")
         .action(async function (this: Command, projectId: string, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>> = {};
             if (opts.name) body.name = opts.name;
             if (opts.status)
@@ -163,7 +163,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             "Delete a task by project ID and task ID (marks DONE first; an active task cannot be deleted).",
         )
         .action(async function (this: Command, projectId: string, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE task (400) — mark it DONE
             // first via GET-then-PUT, carrying the name the replace-PUT
             // requires, then DELETE. Mirrors the MCP tool.

@@ -3,8 +3,8 @@
   "compilerOptions": {
     "noEmit": false,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declarationMap": false,
+    "sourceMap": false,
     "outDir": "./dist/cjs",
     "rootDir": ".",
     "module": "CommonJS",
@@ -19,6 +19,7 @@
     "iter.ts",
     "pagination.ts",
     "paginated-list.ts",
+    "webhook-url.ts",
     "webhooks.ts",
     "webhook-events.ts",
     "with-response.ts",

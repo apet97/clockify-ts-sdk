@@ -27,7 +27,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--archived", "Include archived projects.", false)
         .option("--client <id>", "Filter by client ID.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListProjectsRequest = {
                 workspaceId,
                 page: opts.page,
@@ -66,7 +66,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--billable", "Mark as billable.", false)
         .description("Create a project in the workspace.")
         .action(async function (this: Command, name: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.CreateProjectRequest = {
                 workspaceId,
                 body: {
@@ -112,7 +112,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .argument("<id>", "Project ID.")
         .description("Get one project by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const project = await client.projects.get({ workspaceId, projectId: id });
             printObject(project as Record<string, unknown>, output);
         });
@@ -130,7 +130,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--no-archived", "Unarchive the project.")
         .description("Update a project by ID.")
         .action(async function (this: Command, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
             if (opts.name) body.name = opts.name;
             if (opts.client) body.clientId = opts.client;
@@ -167,7 +167,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             "Delete a project by ID (archives first; an active project cannot be deleted).",
         )
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             // Clockify rejects DELETE of an ACTIVE project (400) and the
             // dedicated /archive route 404s — archive first via GET-then-PUT,
             // carrying the name the replace-PUT requires, mirroring the MCP tool.

@@ -229,6 +229,22 @@ describe("iterPages — Last-Page header consumption", () => {
     });
 });
 
+describe("IterOptions.onPage", () => {
+    it("fires once per page with the page number and item count", async () => {
+        const dataset: Record<number, readonly number[]> = { 1: [1, 2], 2: [3, 4], 3: [5] };
+        const calls: Array<{ page: number; count: number }> = [];
+        const fetcher = async (req: PaginatedRequest) => dataset[req.page!] ?? [];
+
+        await collect(iterAll(fetcher, {}, { pageSize: 2, onPage: (info) => calls.push(info) }));
+
+        expect(calls).toEqual([
+            { page: 1, count: 2 },
+            { page: 2, count: 2 },
+            { page: 3, count: 1 },
+        ]);
+    });
+});
+
 describe("KNOWN_PAGINATED_METHODS", () => {
     // CI drift assertion: every (resource, method) in the documented
     // list must exist on a freshly-constructed ClockifyApiClient. If a
@@ -247,7 +263,16 @@ describe("KNOWN_PAGINATED_METHODS", () => {
         });
     }
 
-    it("has exactly 19 entries", () => {
-        expect(KNOWN_PAGINATED_METHODS.length).toBe(19);
+    it("has exactly 14 entries", () => {
+        expect(KNOWN_PAGINATED_METHODS.length).toBe(14);
+    });
+
+    it("excludes envelope-returning and unpaginated methods", () => {
+        const names = new Set(KNOWN_PAGINATED_METHODS.map((m) => `${m.resource}.${m.method}`));
+        expect(names.has("balances.getForUser")).toBe(false);
+        expect(names.has("balances.listForPolicy")).toBe(false);
+        expect(names.has("customFields.listForProject")).toBe(false);
+        expect(names.has("customFields.listForWorkspace")).toBe(false);
+        expect(names.has("holidays.list")).toBe(false);
     });
 });

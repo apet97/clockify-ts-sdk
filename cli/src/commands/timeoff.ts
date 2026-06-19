@@ -45,7 +45,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         )
         .option("--user <ids>", "Comma-separated user IDs to scope the search.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: TimeOffListRequest = {
                 workspaceId,
                 page: opts.page,
@@ -99,7 +99,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             "Half-day period (FIRST_HALF, SECOND_HALF, NOT_DEFINED).",
         )
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const period: ClockifyApi.PeriodV1Request = {
                 start: opts.start,
                 end: opts.end,

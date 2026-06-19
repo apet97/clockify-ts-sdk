@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
+import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
@@ -64,7 +65,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         {
             title: "Create a webhook subscription",
             description:
-                "Subscribe a URL to a Clockify event. URL must be HTTPS and pass workspace DNS validation.",
+                "Subscribe a URL to a Clockify event. URL must be HTTPS and is rejected pre-flight if it points at a loopback, private, link-local, CGNAT, or cloud-metadata host.",
             inputSchema: {
                 name: z.string().min(1),
                 url: z.string().url(),
@@ -78,6 +79,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
+            assertSafeWebhookUrl(args.url);
             const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
                 Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
                     webhookEvent: ClockifyApi.WebhookEventType;
@@ -128,7 +130,10 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 webhookEvent?: ClockifyApi.WebhookEventType;
             } = {};
             if (args.name) body.name = args.name;
-            if (args.url) body.url = args.url;
+            if (args.url) {
+                assertSafeWebhookUrl(args.url);
+                body.url = args.url;
+            }
             if (args.webhookEvent)
                 body.webhookEvent = args.webhookEvent as ClockifyApi.WebhookEventType;
             if (args.triggerSourceType)
