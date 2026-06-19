@@ -5,6 +5,74 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
+## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/v0.9.0...v0.10.0) (2026-06-19)
+
+
+### Features
+
+* **client:** client.health() preflight check ([0cffedc](https://github.com/apet97/clockify-ts-sdk/commit/0cffedc5bca84c1d18d81baa7a0116f8a5c5df35))
+* **client:** debug: true auto-wires console.debug request logging ([da06e83](https://github.com/apet97/clockify-ts-sdk/commit/da06e830d6e9a0710964ed4e9ff6024b6e71d998))
+* **client:** scoped Workspace sub-client via client.workspace(id) ([0db4a13](https://github.com/apet97/clockify-ts-sdk/commit/0db4a13bf69a7ee518790221e984eea3332e6b6e))
+* complete A++ hardening plan ([a2c20b7](https://github.com/apet97/clockify-ts-sdk/commit/a2c20b72b59759f708204646faae95bc78c6290a))
+* drop 3 more phantom routes (G.1 edge-case follow-up post-v0.5.0) ([#7](https://github.com/apet97/clockify-ts-sdk/issues/7)) ([33d16f0](https://github.com/apet97/clockify-ts-sdk/commit/33d16f0c70536f92dd9fa0d2eebd5d7964b4fd23))
+* **errors:** add ClockifyAbortError + isAbortError guard ([e03fe7c](https://github.com/apet97/clockify-ts-sdk/commit/e03fe7c3ed32bb28774809c98f9989e0622c9692))
+* **errors:** add ClockifyConnectionError + isConnectionError guard ([1047d8f](https://github.com/apet97/clockify-ts-sdk/commit/1047d8f281aeeefdd7aacd1686d48bd679a21e98))
+* **errors:** getErrorCode(err) extracts body.code / body.error.code ([bab879d](https://github.com/apet97/clockify-ts-sdk/commit/bab879db19c303860fb27b5140b382923b16a935))
+* **errors:** map add-on-token 401 to a named restriction ([8f02822](https://github.com/apet97/clockify-ts-sdk/commit/8f0282207e7725fddf7fbe7aecabc016ada832fd))
+* **errors:** promoteApiError detects network + abort causes ([fd44009](https://github.com/apet97/clockify-ts-sdk/commit/fd44009733f3be325d2b568d64a04d7b0f4de9d7))
+* finish Clockify SDK platform polish ([66d21a3](https://github.com/apet97/clockify-ts-sdk/commit/66d21a34bd1a995f1a4d8a0713730080a3aaba8b))
+* G-track sweep — G.1 idiomatic names, G.5 last-page, env-vars ([#6](https://github.com/apet97/clockify-ts-sdk/issues/6)) ([595e054](https://github.com/apet97/clockify-ts-sdk/commit/595e05409ab4474577aca45fecc567133e75873a))
+* **gates:** pin README SDK snippets to compiled examples ([3e45462](https://github.com/apet97/clockify-ts-sdk/commit/3e454629328d01f12437cbbdbb4ed4d8b52c9d78))
+* initialize publishable clockify-sdk-ts wrapper ([62db1f1](https://github.com/apet97/clockify-ts-sdk/commit/62db1f1948cc054a4c830cf37e63a4e00454fee4))
+* land prior-session WIP — plan_change tool, ensure.ts helpers, OpenAPI-drift pipeline, docs ([6cba7d9](https://github.com/apet97/clockify-ts-sdk/commit/6cba7d99b3e5d5532c4ad8f0f983a56251c27709))
+* **mcp:** add users/roles tools with generated SDK methods ([6f31951](https://github.com/apet97/clockify-ts-sdk/commit/6f31951b5e1bea5db596a84e5e0d1e8b490aefe4))
+* **observability:** otelHooks() OTel-typed observability hooks ([179d458](https://github.com/apet97/clockify-ts-sdk/commit/179d458a87e50145416360e434261b3d0de8a4ea))
+* **pagination:** add PaginatedList&lt;T&gt; for axioms-style ergonomic ([36f2960](https://github.com/apet97/clockify-ts-sdk/commit/36f296047f8a9f6d8f876dbe3d915d7f6b2fc18a))
+* polish pass — typed errors, lint, strict tsconfig, ci matrix, bundle ceiling ([#9](https://github.com/apet97/clockify-ts-sdk/issues/9)) ([3d382e2](https://github.com/apet97/clockify-ts-sdk/commit/3d382e2d6f4ea7e4e8879fb914b8df96da66a824))
+* polish-on-polish v0.7.0 — isClockifyApiError, README rebuild, 5 new examples, test gaps ([#11](https://github.com/apet97/clockify-ts-sdk/issues/11)) ([d20c69b](https://github.com/apet97/clockify-ts-sdk/commit/d20c69b5a2f0945901fbcabef2d875ab33444d63))
+* **rate-limit:** getRateLimit + getRateLimitFromError helpers ([0db9e46](https://github.com/apet97/clockify-ts-sdk/commit/0db9e46ffde4fdf281a321b61806f450e8cbe2bc))
+* replace fern with local sdk generator ([1b34e3e](https://github.com/apet97/clockify-ts-sdk/commit/1b34e3e53b6260c5bd222bf5b01f018a5e794fea))
+* **resolve:** port list/filter resolvers (users/groups/tags/user-filter) ([6a38aff](https://github.com/apet97/clockify-ts-sdk/commit/6a38affc4778bf7e8b3ab33b5f3a2c342b5bd03e))
+* **sdk,cli,mcp:** type write boundaries ([2abd367](https://github.com/apet97/clockify-ts-sdk/commit/2abd3676c21ba58ee6ec32e7c5e97722f9ea8526))
+* **sdk,mcp:** add compose subpath + transactional createWorkPackage (P1-2); 25→26 subpaths ([48ae8ad](https://github.com/apet97/clockify-ts-sdk/commit/48ae8ad3b1932bcf9b8a9fba1d548c3678179188))
+* **sdk,mcp:** fix SDK snippets and curate root exports ([4ade140](https://github.com/apet97/clockify-ts-sdk/commit/4ade1400840c6039ae48f2874d283d526e3aa485))
+* **sdk:** add reports + bulk subpaths (P3-2, P1-3) — 23→25 subpaths, 81→90 names ([b24286a](https://github.com/apet97/clockify-ts-sdk/commit/b24286a6179794bf43b728ed4f1c78acc957a7ee))
+* **sdk:** add request options and receipt seams ([baa9c20](https://github.com/apet97/clockify-ts-sdk/commit/baa9c2081148f00d6882bf2251ba9015ae4bfbde))
+* **security:** enforce Clockify base-URL host allowlist ([de9a6f0](https://github.com/apet97/clockify-ts-sdk/commit/de9a6f050d5187a6ad67bb8d7f5a0ed53ae19b16))
+* **spec:** refresh snapshot with SharedReport → SharedReports rename ([6501acf](https://github.com/apet97/clockify-ts-sdk/commit/6501acfbdab7a2ed311fc955c7b77c7588857bae))
+* validation gates, contracts, and operator helpers ([ab6fbb1](https://github.com/apet97/clockify-ts-sdk/commit/ab6fbb16b1897128d5d6d7ab7f415de2a65dee1b))
+* **webhooks:** typed ClockifyWebhookEvent discriminated union (50 events) ([9b84c60](https://github.com/apet97/clockify-ts-sdk/commit/9b84c6000f18ac1b7197290c9d74155950b1631d))
+* **wrapper:** add Clockify webhook signature verifier ([737f5f9](https://github.com/apet97/clockify-ts-sdk/commit/737f5f9ebfbc0bb2fadd51135989175405531ffe))
+* **wrapper:** add createClockifyClient() factory + unify build ([9edd14a](https://github.com/apet97/clockify-ts-sdk/commit/9edd14a696f0186f00d189eaccd39c9994b599e7))
+* **wrapper:** add hand-written paginate() helper ([ef77703](https://github.com/apet97/clockify-ts-sdk/commit/ef777033f3a0cee009221d70ccdbd4d61b32bb89))
+* **wrapper:** add iterAll() per-resource pagination helper ([bebba5c](https://github.com/apet97/clockify-ts-sdk/commit/bebba5c39a629cc3acf7e6bfc7058283032d1717))
+* **wrapper:** add money + invoice-body amount/wire helpers ([804458c](https://github.com/apet97/clockify-ts-sdk/commit/804458c0a61e2b3793d95c050d6b9d9b5f1f1aad))
+* **wrapper:** add resolve + dates name/calendar helper subpaths ([96975df](https://github.com/apet97/clockify-ts-sdk/commit/96975df44a2e11c92d22cb87d348163adeac3af7))
+* **wrapper:** composedFetch — UA, request-id, hooks, retry policy ([134e991](https://github.com/apet97/clockify-ts-sdk/commit/134e991d48e69ab73267d955cb010ec071138a08))
+* **wrapper:** ship dual ESM + CJS build ([6f3d5a6](https://github.com/apet97/clockify-ts-sdk/commit/6f3d5a6b1d3f089baf0f016ea1ce2065008df90b))
+* **wrapper:** withResponse() shim + sandbox refactor (Phase 1.7 + 4.3) ([da63011](https://github.com/apet97/clockify-ts-sdk/commit/da630119a09040cc28644a91583fb8c64c5f2d39))
+* **ws3:** add replay-fixtures live-fidelity gate ([21a3f17](https://github.com/apet97/clockify-ts-sdk/commit/21a3f175af88e32f7798f90f8a8d84682b143c3c))
+
+
+### Bug Fixes
+
+* **ci:** raise CJS root size-limit ceiling to 3 kB for new root re-exports ([e031922](https://github.com/apet97/clockify-ts-sdk/commit/e031922842e7c562c647594f45683c97a9e77c9d))
+* **ci:** refresh pack snapshot for new SDK subpaths and satisfy stricter lint ([b3720bf](https://github.com/apet97/clockify-ts-sdk/commit/b3720bfea885f3e2e9dad685a54a00a0501ade79))
+* **ci:** regenerate pack snapshot from current codegen baseline ([a3d42fa](https://github.com/apet97/clockify-ts-sdk/commit/a3d42faa0141449922d4a874a388f3c371241717))
+* clear three eslint diagnostics and bump errors size ceiling ([bc82872](https://github.com/apet97/clockify-ts-sdk/commit/bc8287294eec5561a4854c26b88ca4584e61f559))
+* **docs:** broaden SDK snippet method parity ([912563a](https://github.com/apet97/clockify-ts-sdk/commit/912563a46c8d9fb178273717e983fbd279b0faac))
+* **generator:** route per-operation server hosts ([80b9950](https://github.com/apet97/clockify-ts-sdk/commit/80b99509223f7da6e173bf34940d390bdc5dc2dc))
+* **lint:** remove unneeded casts in PaginatedList + import group spacing ([57bea78](https://github.com/apet97/clockify-ts-sdk/commit/57bea78171fd76774e4fa24ee5604d0db21ae35c))
+* **mcp:** archive/DONE-then-delete for active projects + tasks (live-verified) ([3644057](https://github.com/apet97/clockify-ts-sdk/commit/36440575adf5a47f21f5b0507e80ea6c89f9dda5))
+* **mcp:** clockify_groups_get reads from the list (generated get is void) ([0c0b5dc](https://github.com/apet97/clockify-ts-sdk/commit/0c0b5dcbaae8bea5aeee5869cf7393c4c1c67925))
+* **mcp:** time_off_requests_get scans the POST search (dead 404 single-GET) ([faf7a18](https://github.com/apet97/clockify-ts-sdk/commit/faf7a182f732bca4c08415b06e3fe5e042a9ce44))
+* **scope:** time-off policies scope with status:ACTIVE (match live-verified addon) ([036fb15](https://github.com/apet97/clockify-ts-sdk/commit/036fb152b407a6cdf5bc43c9406b242ca70bb55a))
+* **scripts:** derive CJS subpath count in verify-dual-build smoke ([79740d6](https://github.com/apet97/clockify-ts-sdk/commit/79740d6803b9eca1edbb8d38c68915cab0404657))
+* **sdk,cli,mcp:** live timer-stop route, client archive-then-delete, audit-log refute + quality hardening ([6849476](https://github.com/apet97/clockify-ts-sdk/commit/68494763c754b3dda9e31daf25b4555d744ed589))
+* **sdk,mcp:** P0 correctness — pagination, audit-log host, fix_entry task/tag, date validation ([7383e96](https://github.com/apet97/clockify-ts-sdk/commit/7383e966f97605eb91cf4371403da0ab5fe4ae0a))
+* **sdk:** wire replay gate to real SDK helpers and reachable error codes ([24cc1e4](https://github.com/apet97/clockify-ts-sdk/commit/24cc1e4234f4ef634b029588733bab74c889b0ac))
+* **wrapper:** remove stale scoped-client casts ([b72378b](https://github.com/apet97/clockify-ts-sdk/commit/b72378bcbff707baa65dcdc2e78f26fa3da74467))
+
 ## [Unreleased]
 
 ### Added
