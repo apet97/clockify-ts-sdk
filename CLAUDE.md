@@ -59,7 +59,8 @@ Running `perfect-fast` cleanly (read before your first run):
   `type-check`/`test`/`build` do NOT — run `npm run lint -w <pkg>` before claiming green.
 - `make perfect-full` adds slow proof that does not belong in the fast loop:
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
-  packed-consumer smoke, coverage, and wrapper Stryker mutation scoring.
+  packed-consumer smoke, coverage, and wrapper + mcp Stryker mutation
+  scoring.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
@@ -259,10 +260,14 @@ make docs-drift
   `make performance-receipt` after material runtime changes.
 - `make cassettes` replays committed, redacted response cassettes
   through the typed SDK client and local mock server.
-- `make mutation` runs wrapper-scoped Stryker against hand-written
-  helper modules and enforces `docs/mutation-score-contract.json`
-  floors. MCP mutation is intentionally not part of this target while
-  MCP remains on vitest 2.
+- `make mutation` runs Stryker against the hand-written wrapper helper
+  modules and the MCP safety-critical modules
+  (`mcp/src/orchestration/confirmation.ts`,
+  `mcp/src/orchestration/confirm-guard.ts`, `mcp/src/result.ts`), then
+  enforces the `docs/mutation-score-contract.json` floors. The MCP run
+  mutates the existing Vitest 2 suite — Stryker's vitest-runner accepts
+  vitest >=2.0.0, so no upgrade is required. The contract is two
+  packages (wrapper + mcp); floors ratchet monotonic-up.
 - `make build-determinism` builds the wrapper twice and hashes
   `wrapper/dist/**`; it is wired into `perfect-full`, not
   `perfect-fast`.

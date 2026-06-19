@@ -120,8 +120,8 @@ for (const [key, expected] of [
     if (wiring[key] !== expected) fail(`wiring.${key}`, `must be ${JSON.stringify(expected)}`);
 }
 
-if (!Array.isArray(contract.packages) || contract.packages.length !== 1) {
-    fail("packages", "must be an array of exactly 1 entry (wrapper phase 1)");
+if (!Array.isArray(contract.packages) || contract.packages.length !== 2) {
+    fail("packages", "must be an array of exactly 2 entries (wrapper + mcp)");
 }
 
 const headContract = readHeadContract();
@@ -179,4 +179,4 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log("mutation score check passed (wrapper Stryker report, covered-mutant floors).");
+console.log("mutation score check passed (wrapper + mcp Stryker reports, covered-mutant floors).");

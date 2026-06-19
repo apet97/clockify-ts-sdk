@@ -98,7 +98,7 @@ help:
 	@printf '%s\n' '  make cli-write-safety    Check CLI write commands stay explicit, non-interactive, and receipt-oriented.'
 	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP consumer as-never escape hatches stay annotated and budgeted.'
 	@printf '%s\n' '  make coverage            Measure SDK/CLI/MCP coverage and enforce pinned floors.'
-	@printf '%s\n' '  make mutation            Run wrapper Stryker mutation testing and enforce pinned score floors.'
+	@printf '%s\n' '  make mutation            Run wrapper + mcp Stryker mutation testing and enforce pinned score floors.'
 	@printf '%s\n' '  make test-matrix         Check SDK/CLI/MCP test files and package scripts are present.'
 	@printf '%s\n' '  make mock-contract       Check mock Clockify server routes and mock-backed tests.'
 	@printf '%s\n' '  make replay-fixtures     Replay committed redacted fixtures and check wire-shape tripwires.'
@@ -563,9 +563,13 @@ coverage: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run test:coverage -w @clockify115/mcp-server
 	node scripts/check-coverage-floor.mjs
 
-# Mutation-score gate (Stryker, wrapper package). Proves tests catch injected
-# bugs, not just that lines ran. Slow + CPU-bound: perfect-full only, never
-# perfect-fast. Distinct from mutation-safety, which validates write policy.
+# Mutation-score gate (Stryker, wrapper + mcp packages). Proves tests catch
+# injected bugs, not just that lines ran. The mcp run mutates the
+# safety-critical confirmation/confirm-guard/result modules on the existing
+# Vitest 2 suite (Stryker's vitest-runner accepts vitest >=2.0.0). Slow +
+# CPU-bound: perfect-full only, never perfect-fast. Distinct from
+# mutation-safety, which validates write policy.
 mutation: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115
+	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @clockify115/mcp-server
 	node scripts/check-mutation-score.mjs
