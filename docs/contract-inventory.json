@@ -1378,6 +1378,17 @@
       ],
       "perfectFast": true,
       "perfectFull": true
+    },
+    {
+      "id": "fixture-mock-parity",
+      "target": "fixture-mock-parity",
+      "checker": "scripts/check-fixture-mock-parity.mjs",
+      "contracts": [
+        "docs/fixture-mock-parity-map.json"
+      ],
+      "auditIds": [],
+      "perfectFast": true,
+      "perfectFull": true
     }
   ],
   "wiring": {

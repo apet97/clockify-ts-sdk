@@ -185,6 +185,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`generator-comparison-contract.json`](./generator-comparison-contract.json) | edit intentionally | OpenAPI SDK-stamp to generated TypeScript method comparison contract. |
 | [`generator-portability-contract.json`](./generator-portability-contract.json) | edit intentionally | No-paid-generator and vendor-exit contract. |
 | [`mock-clockify-contract.json`](./mock-clockify-contract.json) | edit intentionally | Local mock Clockify route/test/docs contract. |
+| [`fixture-mock-parity-map.json`](./fixture-mock-parity-map.json) | edit intentionally | Golden fixture to mock-route parity map for served and unserved-by-design fixtures. |
 | [`maintenance-playbook-contract.json`](./maintenance-playbook-contract.json) | edit intentionally | Maintainer cadence, generated maintenance-plan, upgrade, drift, release rehearsal, and rollback contract. |
 | [`mutation-safety-contract.json`](./mutation-safety-contract.json) | edit intentionally | SDK retry, CLI write, MCP confirmation, receipt, and ambiguous-failure contract. |
 
