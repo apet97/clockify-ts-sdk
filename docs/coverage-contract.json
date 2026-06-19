@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Measured code-coverage floor contract for the hand-written SDK/CLI/MCP surface. Floors are pinned to the honest measured baseline minus a small margin and ratchet monotonically upward; generated wrapper/src/** is excluded by every package vitest config. Live-key sandbox suites contribute no coverage in CI.",
+  "purpose": "Measured code-coverage floor contract for the hand-written SDK/CLI/MCP surface. Floors are pinned to the honest measured baseline minus a small margin and ratchet monotonically upward; generated wrapper/src/** is excluded by every package vitest config. Live-key sandbox suites contribute no coverage in CI. DUAL AUTHORITY: each package's vitest.config.ts thresholds mirror these floors so a bare `vitest --coverage` enforces locally; this file (via scripts/check-coverage-floor.mjs / `make coverage`) is the canonical cross-package monotonic ratchet. When you raise a floor here, raise the matching vitest.config.ts thresholds in the same commit.",
   "ratchet": "monotonic-up",
   "packages": [
     {
@@ -17,10 +17,10 @@
       "id": "cli",
       "summary": "cli/coverage/coverage-summary.json",
       "floors": {
-        "lines": 69,
-        "functions": 88,
-        "branches": 74,
-        "statements": 69
+        "lines": 84,
+        "functions": 96,
+        "branches": 80,
+        "statements": 84
       }
     },
     {

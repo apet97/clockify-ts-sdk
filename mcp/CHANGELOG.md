@@ -91,6 +91,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Tool-manifest tests now derive summary assertions from the manifest and
   enforce structural floors instead of exact-count pins, so legitimate tool
   additions do not require a hand-bumped test.
+- Coverage thresholds in `vitest.config.ts` now mirror the measured floor in
+  `docs/coverage-contract.json`, so bare MCP coverage runs enforce the same
+  floor as the cross-package ratchet.
 - Internal type-safety: domain/workflow write calls now use generated
   `ClockifyApi.*Request` bindings and the new SDK `requests` seam where the
   generated body-envelope arm is the real wire shape. The write-safety checker

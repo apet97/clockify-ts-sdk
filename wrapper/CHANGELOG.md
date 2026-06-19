@@ -60,6 +60,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Coverage thresholds in `vitest.config.ts` now mirror the measured floor in
+  `docs/coverage-contract.json`, so a bare wrapper coverage run enforces the
+  same floor as the cross-package ratchet.
 - Removed deprecated `findOrCreateClient` from the root barrel (root public
   surface 93 -> 92 names). It remains available from the
   `clockify-sdk-ts-115/ensure` subpath; prefer `ensureClient`.
