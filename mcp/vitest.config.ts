@@ -13,11 +13,13 @@ export default defineConfig({
             reportsDirectory: "./coverage",
             include: ["src/**/*.ts"],
             exclude: ["dist/**", "tests/**", "*.config.*"],
+            // Mirror docs/coverage-contract.json (see the wrapper config for
+            // the dual-authority rationale).
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 79,
+                functions: 91,
+                branches: 74,
+                statements: 79,
             },
         },
     },

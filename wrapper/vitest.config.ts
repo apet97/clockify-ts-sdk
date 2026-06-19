@@ -34,11 +34,15 @@ export default defineConfig({
                 "*.config.*",
                 "webhook-events.ts",
             ],
+            // Mirror docs/coverage-contract.json so bare `vitest run --coverage`
+            // enforces locally too. The cross-package monotonic ratchet remains
+            // scripts/check-coverage-floor.mjs (`make coverage`); keep both in
+            // lockstep when floors change.
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 90,
+                functions: 81,
+                branches: 81,
+                statements: 89,
             },
         },
     },

@@ -49,7 +49,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 - Test coverage: added focused reports, read-command, resolver, and status
   suites that exercise real request shapes, row mapping, and branch behavior;
-  CLI coverage now measures above 80% for both branches and statements.
+  CLI coverage now measures above 80% for both branches and statements, and
+  `vitest.config.ts` thresholds now mirror the raised floor in
+  `docs/coverage-contract.json`.
 - Internal type-safety: create/update/delete/report/audit call sites now bind
   SDK requests through generated `ClockifyApi.*Request` types and the new
   `clockify-sdk-ts-115/requests` seam, cutting the remaining `as never`

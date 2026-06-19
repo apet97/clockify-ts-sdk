@@ -13,11 +13,14 @@ export default defineConfig({
             reportsDirectory: "./coverage",
             include: ["src/**/*.ts"],
             exclude: ["dist/**", "tests/**", "*.config.*"],
+            // Mirror docs/coverage-contract.json (see the wrapper config for
+            // the dual-authority rationale). Raised after the WS7 read-command
+            // suites lifted measured CLI branches/statements above 80%.
             thresholds: {
-                lines: 0,
-                functions: 0,
-                branches: 0,
-                statements: 0,
+                lines: 84,
+                functions: 96,
+                branches: 80,
+                statements: 84,
             },
         },
     },
