@@ -23,7 +23,7 @@ export const registerDoctorCommand: Registrar = (program, services) => {
             const flags = globalFlags(root);
             const config = services.loadConfig(flags);
             const output = resolveFlags(root);
-            printObject(buildDoctorReceipt(config, flags, process.env) as unknown as Record<string, unknown>, output);
+            printObject(buildDoctorReceipt(config, flags, process.env), output);
         });
 };
 
