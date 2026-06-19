@@ -1,0 +1,27 @@
+{
+    "$schema": "../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+    "packageManager": "npm",
+    "testRunner": "vitest",
+    "vitest": {
+        "configFile": "mcp/vitest.config.ts",
+        "dir": "mcp",
+        "related": false
+    },
+    "coverageAnalysis": "perTest",
+    "mutate": [
+        "mcp/src/orchestration/confirmation.ts",
+        "mcp/src/orchestration/confirm-guard.ts",
+        "mcp/src/result.ts",
+        "!mcp/dist/**",
+        "!mcp/*.config.*",
+        "!mcp/tests/**",
+        "!mcp/scripts/**"
+    ],
+    "reporters": ["json", "clear-text"],
+    "jsonReporter": {
+        "fileName": "mcp/reports/mutation/mutation.json"
+    },
+    "timeoutMS": 60000,
+    "concurrency": 4,
+    "tempDirName": "mcp/.stryker-tmp"
+}
