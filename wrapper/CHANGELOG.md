@@ -19,6 +19,13 @@ once v1.0.0 ships.
   helpers instead of hand-copying the steps across four sites. Public surface is
   now 92 names (was 91).
 
+### Tests
+
+- Added mutation-killing tests for `composed-fetch.ts`, `dates.ts`, and
+  `errors.ts`. The Stryker module floors in `docs/mutation-score-contract.json`
+  rise accordingly (`composed-fetch` 72→82, `dates` 76→84, `errors` 74→80,
+  wrapper global 77→82). No runtime code changed.
+
 ### Changed
 
 - `archiveThenDeleteProject` is now resource-driven: it takes `{workspaceId, id,
