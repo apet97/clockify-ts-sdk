@@ -2,11 +2,11 @@
  * `clk115 entries list` and `clk115 entries delete <id>`.
  */
 import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
-import { entityId } from "../sdk-narrow.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";

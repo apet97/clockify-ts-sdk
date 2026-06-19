@@ -1,12 +1,12 @@
 /**
  * `clk115 stop` — stop the running timer for the current user.
  */
+import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import type { Command } from "commander";
 
 
 import { printSuccess } from "../output.js";
 import { printReceipt } from "../receipt.js";
-import { entityId } from "../sdk-narrow.js";
 
 import { resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";

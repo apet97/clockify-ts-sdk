@@ -3,11 +3,11 @@
  * --project / --task / --tag flags resolve names to IDs via list
  * queries so the user does not have to keep IDs at hand.
  */
+import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printReceipt } from "../receipt.js";
-import { entityId } from "../sdk-narrow.js";
 
 import { resolveContext } from "./helpers.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
