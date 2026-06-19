@@ -116,7 +116,7 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             name: "clockify_expenses_create",
             arguments: {
                 amount: "75",
-                categoryId: "cat-1",
+                categoryId: "000000000000000000000101",
                 projectId: "proj-1",
                 date: "2026-01-01",
             },
@@ -133,7 +133,7 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
             name: "clockify_expenses_create",
             arguments: {
                 amount: "",
-                categoryId: "cat-1",
+                categoryId: "000000000000000000000101",
                 projectId: "proj-1",
                 date: "2026-01-01",
             },

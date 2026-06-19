@@ -8,6 +8,14 @@
     "mcp/tests",
     "wrapper"
   ],
+  "ignoredSourcePathSegments": [
+    ".stryker-tmp",
+    "coverage",
+    "dist",
+    "node_modules",
+    "reports",
+    "src"
+  ],
   "packages": [
     {
       "id": "wrapper",

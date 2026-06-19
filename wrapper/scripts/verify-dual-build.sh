@@ -93,6 +93,7 @@ if (typeof ro.withRequestTimeout !== 'function') { console.error('CJS subpath re
 const or = require('./dist/cjs/operation-receipt.js');
 if (typeof or.toOperationReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationReceipt broken'); process.exit(1); }
 if (typeof or.toOperationErrorReceipt !== 'function') { console.error('CJS subpath operation-receipt.toOperationErrorReceipt broken'); process.exit(1); }
+if (typeof or.entityId !== 'function') { console.error('CJS subpath operation-receipt.entityId broken'); process.exit(1); }
 const mn = require('./dist/cjs/money.js');
 if (typeof mn.toMinor !== 'function') { console.error('CJS subpath money.toMinor broken'); process.exit(1); }
 if (typeof mn.toMajor !== 'function') { console.error('CJS subpath money.toMajor broken'); process.exit(1); }

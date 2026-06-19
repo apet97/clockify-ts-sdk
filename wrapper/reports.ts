@@ -47,7 +47,14 @@ export function summaryFilter(
     return filter;
 }
 
-/** Build a detailed-report filter (defaults to page 1). */
+/**
+ * Build a detailed-report filter (defaults to page 1).
+ *
+ * @example
+ * ```ts
+ * const detailedReportFilter = detailedFilter({ page: 1, pageSize: 50 });
+ * ```
+ */
 export function detailedFilter(
     opts: {
         page?: number;

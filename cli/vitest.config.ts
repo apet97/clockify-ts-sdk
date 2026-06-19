@@ -17,10 +17,10 @@ export default defineConfig({
             // the dual-authority rationale). Raised after the WS7 read-command
             // suites lifted measured CLI branches/statements above 80%.
             thresholds: {
-                lines: 84,
-                functions: 96,
-                branches: 80,
-                statements: 84,
+                lines: 86,
+                functions: 97,
+                branches: 81,
+                statements: 86,
             },
         },
     },

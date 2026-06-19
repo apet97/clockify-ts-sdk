@@ -257,6 +257,9 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check touched package changelog coverage | `make changelog-drift` |
 | Check documentation index links | `make docs-index-drift` |
 | Check package size/startup budgets | `make performance-budgets` |
+| Check wrapper build-output determinism | `make build-determinism` |
+| Replay redacted typed cassettes | `make cassettes` |
+| Run wrapper mutation-score gate | `make mutation` |
 | Check package tarball snapshots | `make pack-snapshot-check` |
 | Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |
@@ -281,7 +284,7 @@ do not — run `npm run lint -w <pkg>` before claiming green.
 | `spec/fern/{generators.yml, fern.config.json}` | historical/fallback config only; do not restore it as the active TS generation path without maintainer approval |
 | `wrapper/src/**` | not allowed — wiped by `npm run sync` |
 | `wrapper/scripts/sync-sdk.sh` | run `npm run sync` and verify the synced file count is sensible (it tracks the generated tree, so the exact number moves with each regen) |
-| `wrapper/*.ts` root files (hand-written; currently 24, all of `composed-fetch.ts`, `create-client.ts`, `dates.ts`, `deprecation.ts`, `diagnostics.ts`, `ensure.ts`, `error-codes.ts`, `errors.ts`, `health.ts`, `index.ts`, `invoice-body.ts`, `iter.ts`, `money.ts`, `operation-receipt.ts`, `otel-hooks.ts`, `paginated-list.ts`, `pagination.ts`, `rate-limit.ts`, `request-options.ts`, `resolve.ts`, `scoped-client.ts`, `webhook-events.ts`, `webhooks.ts`, `with-response.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
+| `wrapper/*.ts` root files (hand-written modules; currently 29, excluding `vitest.config.ts`) | `npm run type-check` + `npm test` + `npm run build` + `npm run build:smoke` + `npm pack --dry-run`. After adding a new hand-written module: add it to `tsconfig.{json,esm.json,cjs.json}` `include`, a subpath entry in `package.json` `exports` (both `import` + `require` conditions, each with `types` + `default`), and the expected-names array in `wrapper/scripts/verify-dual-build.sh`. |
 | `wrapper/CHANGELOG.md` | edit-only, no gates — runs alongside whatever change prompted the entry |
 | `wrapper/{package.json, tsconfig*.json, README.md, LICENSE, vitest.config.ts, tests/**, examples/**}` | `npm run type-check` + `npm test` + `npm pack --dry-run`. Examples are type-checked via `tsconfig.json` `include` — drift in the synced SDK that breaks an example signature fails the type-check. |
 | `cli/**` | `cd cli && npm run type-check && npm test && npm run build && npm pack --dry-run`. Live tests skip without sandbox env. |
@@ -332,18 +335,21 @@ end-to-end and green before push. Drift gates are non-negotiable.
    Use the env-gated `describe.skip` pattern from
    `tests/sandbox.test.ts` for live tests. Never skip silently.
 10. **MCP id-slots resolve a name to an id before any write.** The
-    holidays, time-off (policy/request/balance), scheduling, groups
-    `add_member`, and users grant/revoke-role tools resolve a name in a
-    user/group/project id slot via the `resolve` subpath, returning a
-    grounded `clarification` receipt (no API call) on an ambiguous or
-    unknown name; a 24-hex id passes through and read-filter slots stay
-    list-free. The shared `mcp/src/scope-filter.ts` splits its `status`:
+    holidays, time-off (policy/request/balance/request-policy slots),
+    expenses (category slots), scheduling, groups `add_member`, and
+    users grant/revoke-role tools resolve supported names before the
+    write call. A 24-hex id passes through; unresolved or ambiguous
+    names stop before mutation as either a grounded `clarification`
+    receipt or a structured error, depending on the resolver path. Read
+    filter slots stay list-free. The shared `mcp/src/scope-filter.ts`
+    splits its `status`:
     time-off **policies** scope `"ACTIVE"`, holidays keep `"ALL"`
     (`spec/evidence/discrepancies.md`
     `time-off.policies.scope.status-active-not-all`). Adds no tools
-    (the surface is 134); arg-shape coercion (`zStringList` / `zNumberLike` in
-    `mcp/src/arg-shapes.ts`) keeps the model-visible JSON Schema
-    unchanged. Change the tool, its test, and the ledger together.
+    (the surface is 134); arg-shape coercion (`zStringList` /
+    `zNumberLike` in `mcp/src/arg-shapes.ts`) keeps the
+    model-visible JSON Schema unchanged. Change the tool, its test,
+    and the ledger together.
 
 ## 6. The wrapper layout
 
@@ -385,6 +391,8 @@ wrapper/
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
 │                                (package self-reference); live-API ones gate on CLOCKIFY_API_KEY.
+│                                `sdk-helper-cookbook.ts` is the compile-checked helper cookbook
+│                                backing `docs/cookbook.md` snippets.
 │                                NOT in the npm tarball.
 ├── docs/
 │   ├── resources/<name>.md   ← per-resource markdown (auto-gen from sync; committed)
@@ -394,7 +402,7 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; mirrored by cli/mcp package snapshots
-├── tests/                    (29 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
+├── tests/                    (43 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
 │   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
@@ -415,6 +423,10 @@ wrapper/
 │   ├── diagnostics.test.ts       ← no-network `clockifyDiagnostics` redaction + readiness
 │   ├── dual-build.test.ts        ← ESM + CJS surface assertion
 │   ├── mock-clockify.test.ts     ← scripts/mock-clockify-server.mjs–backed deterministic flows
+│   ├── generated-retry-delay.test.ts ← generator template guard for capped+jittered retry delay
+│   ├── errors.property.test.ts   ← property checks for error-code stability
+│   ├── iter.property.test.ts     ← property checks for bounded page iteration
+│   ├── webhook-url.property.test.ts ← property checks for callback URL guard rejects
 │   └── sandbox.test.ts           ← 7 live (round-trip + paginate + iterAll + withResponse + …);
 │                                    describe.skip without env creds
 ├── src/                      ← gitignored; populated by sync-sdk.sh

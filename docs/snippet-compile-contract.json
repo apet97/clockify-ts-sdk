@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Snippet compile contract: every README ```ts fence tagged sdk-include=<file> must be a byte-exact slice of a curated, already-compiled examples/<file>, so prose snippets inherit the wrapper type-check compile guarantee and cannot drift in method names or argument shapes.",
+  "purpose": "Snippet compile contract: every Markdown ```ts fence tagged sdk-include=<file> must be a byte-exact slice of a curated, already-compiled examples/<file>, so prose snippets inherit the wrapper type-check compile guarantee and cannot drift in method names or argument shapes.",
   "marker": "sdk-include=",
   "fenceLangs": [
     "typescript",
@@ -18,6 +18,10 @@
     },
     {
       "readme": "mcp/README.md",
+      "examplesDir": "wrapper/examples"
+    },
+    {
+      "readme": "docs/cookbook.md",
       "examplesDir": "wrapper/examples"
     }
   ],

@@ -29,6 +29,8 @@ function dataOf(res: unknown): Record<string, unknown> {
 }
 
 describe("clockify_time_off_requests_update_status — correct method, path, and field", () => {
+    const POLICY_ID = "000000000000000000000301";
+
     it("calls changeTimeOffRequestStatus (policy-scoped) with the `status` wire field, not updateStatus/statusType", async () => {
         const captured: Record<string, unknown> = {};
         const ctx: Context = {
@@ -49,12 +51,12 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
         const client = await connect(ctx);
         const res = await client.callTool({
             name: "clockify_time_off_requests_update_status",
-            arguments: { policyId: "pol-1", requestId: "req-1", statusType: "APPROVED", note: "ok" },
+            arguments: { policyId: POLICY_ID, requestId: "req-1", statusType: "APPROVED", note: "ok" },
         });
         expect(res.isError).toBeFalsy();
         expect(captured.change).toEqual({
             workspaceId: "ws-1",
-            policyId: "pol-1",
+            policyId: POLICY_ID,
             requestId: "req-1",
             status: "APPROVED",
             note: "ok",
@@ -79,7 +81,7 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
         for (const statusType of ["PENDING", "WITHDRAWN"]) {
             const res = await client.callTool({
                 name: "clockify_time_off_requests_update_status",
-                arguments: { policyId: "pol-1", requestId: "req-1", statusType },
+                arguments: { policyId: POLICY_ID, requestId: "req-1", statusType },
             });
             expect(res.isError).toBeTruthy();
         }

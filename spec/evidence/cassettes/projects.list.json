@@ -1,0 +1,20 @@
+{
+  "operationId": "getWorkspaceProjects",
+  "request": {
+    "workspaceId": "000000000000000000000001",
+    "page-size": 50
+  },
+  "response": [
+    {
+      "id": "000000000000000000000301",
+      "name": "Example Project",
+      "clientId": "000000000000000000000201",
+      "archived": false
+    }
+  ],
+  "expectParse": [
+    { "path": "0.id", "type": "string", "equals": "000000000000000000000301" },
+    { "path": "0.name", "type": "string", "equals": "Example Project" },
+    { "path": "0.archived", "type": "boolean", "equals": false }
+  ]
+}

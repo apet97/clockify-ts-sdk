@@ -324,6 +324,7 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "mutation": "cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run wrapper/stryker.conf.json",
     "test:watch": "vitest",
     "test:types": "vitest --typecheck.only --run",
     "size": "size-limit",
@@ -331,6 +332,8 @@
   },
   "devDependencies": {
     "@size-limit/file": "^12.1.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^25",
     "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^10.5.0",

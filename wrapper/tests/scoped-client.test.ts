@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient } from "../create-client.js";
 import { _resetWarnOnceForTests } from "../deprecation.js";
-import { Workspace } from "../scoped-client.js";
+import { Workspace, wrapResource } from "../scoped-client.js";
 import type { ClockifyApi } from "../src/index.js";
 
 /** Helper: extract the URL string from the first fetch call of a mock. */
@@ -99,6 +99,48 @@ describe("Workspace scoped client", () => {
         expect(wsA.workspaceId).toBe("a");
         expect(wsB.workspaceId).toBe("b");
         expect(wsA).not.toBe(wsB);
+    });
+
+    it("returns stable scoped resource clients for every generated resource getter", () => {
+        const client = createClockifyClient({ apiKey: "test" });
+        const ws = client.workspace("ws-getters");
+        const getters = [
+            "approvals",
+            "auditLogReport",
+            "balances",
+            "clients",
+            "customFields",
+            "expenseCategories",
+            "expenseReport",
+            "expenses",
+            "files",
+            "holidays",
+            "invoiceItems",
+            "invoicePayments",
+            "invoices",
+            "invoiceSettings",
+            "memberProfiles",
+            "policies",
+            "projects",
+            "reports",
+            "scheduling",
+            "sharedReports",
+            "tags",
+            "tasks",
+            "timeEntries",
+            "timeOff",
+            "timeOffPolicies",
+            "userGroups",
+            "users",
+            "webhooks",
+            "workspaces",
+        ];
+
+        for (const getter of getters) {
+            const scoped = (ws as unknown as Record<string, unknown>)[getter];
+            expect(scoped, getter).toBeTruthy();
+            expect(scoped, getter).toBe((ws as unknown as Record<string, unknown>)[getter]);
+        }
     });
 });
 
@@ -226,5 +268,45 @@ describe("Workspace.entityChangesExperimental stability marker", () => {
                 process.env.NODE_ENV = previousNodeEnv;
             }
         }
+    });
+});
+
+describe("wrapResource", () => {
+    it("passes through non-function properties and injects an empty request", () => {
+        const resource = {
+            label: "tags",
+            list(request?: unknown) {
+                return { request, keptThis: this === resource };
+            },
+        };
+
+        const scoped = wrapResource(resource, "ws-wrap");
+
+        expect(scoped.label).toBe("tags");
+        expect(scoped.list()).toEqual({
+            request: { workspaceId: "ws-wrap" },
+            keptThis: true,
+        });
+    });
+
+    it("overrides object workspaceId and leaves primitive first args untouched", () => {
+        const resource = {
+            call(first: unknown, second?: unknown) {
+                return { first, second, keptThis: this === resource };
+            },
+        };
+
+        const scoped = wrapResource(resource, "ws-wrap");
+
+        expect(scoped.call({ workspaceId: "other", page: 2 })).toEqual({
+            first: { workspaceId: "ws-wrap", page: 2 },
+            second: undefined,
+            keptThis: true,
+        });
+        expect(scoped.call("literal", { workspaceId: "other" })).toEqual({
+            first: "literal",
+            second: { workspaceId: "other" },
+            keptThis: true,
+        });
     });
 });

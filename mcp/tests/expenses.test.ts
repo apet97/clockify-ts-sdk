@@ -6,6 +6,7 @@ import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
 let teardown: () => Promise<void> = async () => {};
+const CATEGORY_ID = "000000000000000000000101";
 
 afterEach(async () => {
     await teardown();
@@ -25,6 +26,9 @@ function expensesContext(captured: Record<string, unknown>): Context {
                     captured.update = req;
                     return { id: "exp-1" };
                 },
+            },
+            expenseCategories: {
+                list: async () => [{ id: CATEGORY_ID, name: "Travel" }],
             },
         } as never,
     };
@@ -56,7 +60,7 @@ describe("expense create/update tools", () => {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 42.5,
-                categoryId: "cat-1",
+                categoryId: CATEGORY_ID,
                 projectId: "proj-1",
                 date: "2026-06-01T00:00:00Z",
                 notes: "Taxi",
@@ -67,7 +71,7 @@ describe("expense create/update tools", () => {
             workspaceId: "ws-1",
             userId: "user-1",
             amount: 42.5,
-            categoryId: "cat-1",
+            categoryId: CATEGORY_ID,
             projectId: "proj-1",
             date: "2026-06-01T00:00:00Z",
             notes: "Taxi",
@@ -80,9 +84,41 @@ describe("expense create/update tools", () => {
         const client = await connect(expensesContext(captured));
         await client.callTool({
             name: "clockify_expenses_create",
-            arguments: { amount: 5, categoryId: "cat-1", projectId: "proj-1", date: "d", userId: "user-9" },
+            arguments: { amount: 5, categoryId: CATEGORY_ID, projectId: "proj-1", date: "d", userId: "user-9" },
         });
         expect((captured.create as { userId?: string }).userId).toBe("user-9");
+    });
+
+    it("clockify_expenses_create resolves an exact category name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_create",
+            arguments: {
+                amount: 12,
+                categoryId: "Travel",
+                projectId: "proj-1",
+                date: "2026-06-01T00:00:00Z",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.create as { categoryId?: string }).categoryId).toBe(CATEGORY_ID);
+    });
+
+    it("clockify_expenses_create rejects an unknown category name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_create",
+            arguments: {
+                amount: 12,
+                categoryId: "Not a category",
+                projectId: "proj-1",
+                date: "2026-06-01T00:00:00Z",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
     });
 
     it("clockify_expenses_update derives changeFields from supplied fields", async () => {
@@ -93,7 +129,7 @@ describe("expense create/update tools", () => {
             arguments: {
                 expenseId: "exp-1",
                 amount: 10,
-                categoryId: "cat-1",
+                categoryId: CATEGORY_ID,
                 date: "2026-06-01T00:00:00Z",
                 billable: true,
             },
@@ -105,7 +141,7 @@ describe("expense create/update tools", () => {
             expenseId: "exp-1",
             userId: "user-1",
             amount: 10,
-            categoryId: "cat-1",
+            categoryId: CATEGORY_ID,
             date: "2026-06-01T00:00:00Z",
             billable: true,
         });
@@ -113,6 +149,24 @@ describe("expense create/update tools", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { expenseId?: string }).expenseId).toBe("exp-1");
+    });
+
+    it("clockify_expenses_update resolves an exact category name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_update",
+            arguments: {
+                expenseId: "exp-1",
+                amount: 10,
+                categoryId: "Travel",
+                date: "2026-06-01T00:00:00Z",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        const update = captured.update as Record<string, unknown> & { changeFields: string[] };
+        expect(update.categoryId).toBe(CATEGORY_ID);
+        expect(update.changeFields).toContain("CATEGORY");
     });
 
     it("clockify_expenses_categories_list unwraps the {categories,count} envelope", async () => {

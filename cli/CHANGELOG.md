@@ -50,6 +50,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- Internal id extraction now imports `entityId()` from
+  `clockify-sdk-ts-115/operation-receipt`, keeping CLI receipt narrowing on the
+  same public SDK helper used by MCP.
 - CLI object output now accepts concrete generated DTOs directly, so `get`
   commands no longer need display-boundary casts after the GOCLMCP required-field
   schema sync.

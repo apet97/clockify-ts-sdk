@@ -1,6 +1,8 @@
 node_modules/
 dist/
 src/
+.stryker-tmp/
+reports/
 *.tsbuildinfo
 .DS_Store
 

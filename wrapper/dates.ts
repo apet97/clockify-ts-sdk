@@ -135,7 +135,14 @@ export const REPORT_PERIODS = [
 
 export type ReportPeriod = (typeof REPORT_PERIODS)[number];
 
-/** Resolve a named period to a UTC date range using `now` (the caller owns the math). */
+/**
+ * Resolve a named period to a UTC date range using `now` (the caller owns the math).
+ *
+ * @example
+ * ```ts
+ * const range = resolvePeriod(new Date("2026-06-19T12:00:00.000Z"), "last_week");
+ * ```
+ */
 export function resolvePeriod(now: Date, period: ReportPeriod): { dateRangeStart: string; dateRangeEnd: string } {
     const y = now.getUTCFullYear();
     const m = now.getUTCMonth();

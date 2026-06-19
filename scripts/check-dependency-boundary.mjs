@@ -137,7 +137,13 @@ function validateContractShape() {
         assertStringMap(`${label}.devDependencies`, pkgContract.devDependencies ?? {});
     }
 
-    for (const field of ["forbiddenRuntimeDependencies", "forbiddenDependencyNames", "forbiddenImportMarkers", "sourceRoots"]) {
+    for (const field of [
+        "forbiddenRuntimeDependencies",
+        "forbiddenDependencyNames",
+        "forbiddenImportMarkers",
+        "sourceRoots",
+        "ignoredSourcePathSegments",
+    ]) {
         const values = assertStringArray(field, contract[field], { allowEmpty: false });
         assertUnique(field, values);
     }
@@ -295,7 +301,7 @@ function walk(directory, files) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
         const absolutePath = path.join(directory, entry.name);
         if (entry.isDirectory()) {
-            if (["node_modules", "dist"].includes(entry.name)) continue;
+            if ((contract.ignoredSourcePathSegments ?? []).includes(entry.name)) continue;
             if (path.relative(root, absolutePath) === path.join("wrapper", "src")) continue;
             walk(absolutePath, files);
             continue;

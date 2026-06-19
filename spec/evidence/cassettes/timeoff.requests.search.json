@@ -1,0 +1,26 @@
+{
+  "operationId": "getTimeOffRequests",
+  "request": {
+    "workspaceId": "000000000000000000000001",
+    "statuses": ["ALL"],
+    "page": 1,
+    "pageSize": 50
+  },
+  "response": {
+    "count": 1,
+    "requests": [
+      {
+        "id": "000000000000000000000701",
+        "userId": "000000000000000000000002",
+        "policyId": "000000000000000000000801",
+        "status": "APPROVED"
+      }
+    ]
+  },
+  "expectParse": [
+    { "path": "count", "type": "number", "equals": 1 },
+    { "path": "requests.0.id", "type": "string", "equals": "000000000000000000000701" },
+    { "path": "requests.0.policyId", "type": "string", "equals": "000000000000000000000801" },
+    { "path": "requests.0.status", "type": "string", "equals": "APPROVED" }
+  ]
+}

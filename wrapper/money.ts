@@ -22,6 +22,12 @@ export type AmountUnit = "minor" | "major";
  * Resolve a major/minor amount to the integer minor units (cents) Clockify
  * wants. Rounds AFTER the ×100 so float dust (e.g. `19.99 * 100`) never
  * under-bills.
+ *
+ * @example
+ * ```ts
+ * const cents = toMinor(129.5, "major");
+ * const invoiceUnitPrice = invoiceItemUnitPriceToWire(cents);
+ * ```
  */
 export function toMinor(amount: number, unit: AmountUnit): number {
     return unit === "minor" ? Math.round(amount) : Math.round(amount * 100);

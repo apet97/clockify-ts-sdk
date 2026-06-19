@@ -9,6 +9,18 @@ once v1.0.0 ships.
 
 ### Added
 
+- `operation-receipt` now exports `entityId()`, the shared safe id extractor
+  used by CLI/MCP receipts instead of each package carrying its own narrowing
+  helper.
+- Redacted typed response cassettes plus `make cassettes`, replayed through the
+  typed SDK client and local mock server.
+- Wrapper Stryker mutation scoring (`make mutation`) with pinned covered-mutant
+  floors for hand-written helper modules.
+- `wrapper/examples/sdk-helper-cookbook.ts` and `docs/cookbook.md` provide
+  compile-checked snippets for `ensure`, `resolve`, `money`, `dates`, `reports`,
+  `bulk`, and `compose`.
+- `make build-determinism` verifies that two wrapper builds emit identical
+  `dist/` bytes.
 - New `clockify-sdk-ts-115/requests` subpath: re-exports the generated
   `ClockifyApi` request namespace plus `ClockifyRequestBody<T>` and
   `wireBody<T>()`, giving CLI/MCP and consumers a stable typed seam for
@@ -66,6 +78,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Generated SDK retry delays now cap at 60 seconds and jitter exponential
+  fallback delays to avoid synchronized retry bursts while still honoring
+  server-provided retry headers.
 - Synced the corrected OpenAPI snapshot from GOCLMCP after 19 new
   live-success promotions and required-field response schema fixes; generated
   resource docs now reflect the updated expense create request shape.

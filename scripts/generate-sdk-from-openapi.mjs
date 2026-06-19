@@ -524,20 +524,27 @@ function shouldRetryError(cause: unknown, method: string, attempt: number, maxRe
     return attempt < maxRetries && RETRYABLE_METHODS.has(method);
 }
 
+const RETRY_MAX_DELAY_MS = 60_000;
+
+function jitter(ms: number): number {
+    const spread = ms * (1 + (Math.random() - 0.5) * 0.4);
+    return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, spread));
+}
+
 function retryDelayMs(response: Response | undefined, attempt: number): number {
     const retryAfter = response?.headers.get("Retry-After");
     if (retryAfter) {
         const seconds = Number.parseInt(retryAfter, 10);
-        if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+        if (Number.isFinite(seconds)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, seconds * 1000));
         const dateMs = Date.parse(retryAfter);
-        if (Number.isFinite(dateMs)) return Math.max(0, dateMs - Date.now());
+        if (Number.isFinite(dateMs)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, dateMs - Date.now()));
     }
     const reset = response?.headers.get("X-RateLimit-Reset");
     if (reset) {
         const seconds = Number.parseInt(reset, 10);
-        if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000 - Date.now());
+        if (Number.isFinite(seconds)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, seconds * 1000 - Date.now()));
     }
-    return Math.min(60_000, 1000 * 2 ** attempt);
+    return jitter(Math.min(RETRY_MAX_DELAY_MS, 1000 * 2 ** attempt));
 }
 
 function delay(ms: number): Promise<void> {

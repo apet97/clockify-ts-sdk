@@ -21,6 +21,7 @@ Then, regardless of surface:
   [SDK README](../wrapper/README.md) auth section and
   [`quickstart-receipt.md`](./quickstart-receipt.md) walk the first run safely.
 - [`workflow-cookbook.md`](./workflow-cookbook.md) — common cross-surface recipes (set up work → log it, invoice a client, review a timesheet).
+- [`cookbook.md`](./cookbook.md) — compile-checked SDK helper snippets for ensure, resolve, money, dates, reports, bulk, and composition.
 - [`agent-tasks/README.md`](./agent-tasks/README.md) — task-scoped playbooks for agents (fix a helper, add a tool/command, handle drift) with files-to-edit, tests, and checklists.
 - [`../spec/evidence/discrepancies.md`](../spec/evidence/discrepancies.md) — the live-verified Clockify wire-shape evidence ledger (why the SDK departs from the spec in places).
 
@@ -47,6 +48,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`operator-toolbox.md`](./operator-toolbox.md) | No-network helper command catalogue for orientation, workflow, maintenance, release, performance, risk, and support planning. |
 | [`quickstart-receipt.md`](./quickstart-receipt.md) | Diagnostics-first quickstart receipt for SDK, CLI, MCP, mock/live split, and first live probes. |
 | [`migration-guide.md`](./migration-guide.md) | Package naming, import, auth, CLI, and MCP migration notes. |
+| [`cookbook.md`](./cookbook.md) | Compile-checked SDK helper cookbook for the hand-written helper subpaths. |
 
 ### Internal governance
 
@@ -122,6 +124,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`cli-commands.json`](./cli-commands.json) | `make readme-tables` | Source for the generated CLI README command table. |
 | [`mcp-tools.json`](./mcp-tools.json) | `make readme-tables` | Source for the generated MCP README tool tables. |
 | [`performance-budgets.json`](./performance-budgets.json) | edit intentionally | Built artifact size/startup ceilings plus generated calibration-plan shape contract. |
+| [`build-determinism-contract.json`](./build-determinism-contract.json) | edit intentionally | Wrapper build-twice determinism contract for stable `dist/` output. |
 | [`package-contract.json`](./package-contract.json) | edit intentionally | Public package names, bins, exports, pack files, and publish-safety invariants. |
 | [`pack-consumer-smoke-contract.json`](./pack-consumer-smoke-contract.json) | edit intentionally | Packed SDK/CLI/MCP consumer proof contract for local tarball install/import/run checks. |
 | [`examples-contract.json`](./examples-contract.json) | edit intentionally | Runnable SDK example inventory and import/secret-safety contract. |
@@ -129,7 +132,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`snippet-safety-contract.json`](./snippet-safety-contract.json) | edit intentionally | Copy-paste snippet safety contract. |
 | [`snippet-method-parity-policy.md`](./snippet-method-parity-policy.md) | edit intentionally | SDK snippet method-name parity rules for MCP docs and READMEs. |
 | [`snippet-method-parity-contract.json`](./snippet-method-parity-contract.json) | edit intentionally | Contract for checking SDK snippet method names against the generated client. |
-| [`snippet-compile-contract.json`](./snippet-compile-contract.json) | edit intentionally | Contract for pinning tagged README SDK fences to compiled curated examples. |
+| [`snippet-compile-contract.json`](./snippet-compile-contract.json) | edit intentionally | Contract for pinning tagged SDK fences to compiled curated examples. |
 | [`docs-drift-contract.json`](./docs-drift-contract.json) | edit intentionally | Allowlisted docs drift scan roots, rules, and intentional exceptions. |
 | [`runtime-support.json`](./runtime-support.json) | edit intentionally | Package engine and runtime support contract. |
 | [`env-contract.json`](./env-contract.json) | edit intentionally | Environment/configuration variable and secret-hygiene contract. |
@@ -148,6 +151,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`version-policy.json`](./version-policy.json) | edit intentionally | Package version, changelog, product-surface, and install-example contract. |
 | [`secret-hygiene.json`](./secret-hygiene.json) | edit intentionally | Lightweight source/docs secret scanning policy. |
 | [`replay-fixtures-contract.json`](./replay-fixtures-contract.json) | edit intentionally | Required committed replay fixtures, redaction checks, and wire-shape tripwires. |
+| [`./spec/evidence/cassettes`](../spec/evidence/cassettes) | edit intentionally | Redacted response cassettes replayed through the typed SDK client by `make cassettes`. |
 | [`live-probe-ledger.json`](./live-probe-ledger.json) | edit intentionally | Redacted live-probe evidence ledger linking corrected API behavior to offline fixtures. |
 | [`data-handling-contract.json`](./data-handling-contract.json) | edit intentionally | Workspace data handling and redaction contract. |
 | [`supply-chain-contract.json`](./supply-chain-contract.json) | edit intentionally | Package license, provenance, tarball, and publish-safety contract. |
@@ -183,6 +187,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Consumer `as never` cast budget, KEEP-as-never allow-list policy, and per-package strictness state. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
+| [`mutation-score-contract.json`](./mutation-score-contract.json) | edit intentionally | Wrapper Stryker mutation-score floor contract for hand-written helper modules. |
 | [`generator-config-contract.json`](./generator-config-contract.json) | edit intentionally | Local TypeScript generator input, output, command, and sync contract. |
 | [`generator-independence-contract.json`](./generator-independence-contract.json) | edit intentionally | Generated-core boundary contract for wrapper exports and CLI/MCP dependencies. |
 | [`generator-comparison-contract.json`](./generator-comparison-contract.json) | edit intentionally | OpenAPI SDK-stamp to generated TypeScript method comparison contract. |
@@ -213,7 +218,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Examples matrix | `make examples-matrix` | Check SDK/CLI/MCP examples matrix and generated examples-plan shape, mock/live boundaries, mutation safety, and receipt expectations. |
 | Snippet safety | `make snippet-safety` | Check SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Snippet method parity | `make snippet-method-parity` | Check MCP and README SDK snippets against generated SDK method names. |
-| Snippet compile pins | `make snippet-compile` | Check tagged README SDK fences against compiled curated examples. |
+| Snippet compile pins | `make snippet-compile` | Check tagged SDK fences against compiled curated examples. |
 | Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 20+. |
 | Env/config contract | `make env-contract` | Check SDK/CLI/MCP environment variables and mock/replay base URL docs. |
 | Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety. |
@@ -267,7 +272,9 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
+| Mutation score | `make mutation` | Run wrapper Stryker mutation testing and enforce pinned covered-mutant score floors. |
 | Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
+| Typed cassettes | `make cassettes` | Replay redacted response cassettes through the typed SDK client and local mock server. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |
 | Mutation safety | `make mutation-safety` | Check SDK retry defaults, CLI write rules, MCP confirmation flow, receipt shape, and ambiguous-failure recovery stay aligned. |
 

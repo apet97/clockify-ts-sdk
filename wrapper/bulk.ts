@@ -35,6 +35,11 @@ export interface BulkResult<T, R> {
  * Map `fn` over `items` with bounded concurrency. With `continueOnError` (the
  * default), every item is attempted and failures are collected into `failures`;
  * with `continueOnError: false` the first rejection propagates.
+ *
+ * @example
+ * ```ts
+ * const result = await mapBounded(projectIds, archiveProject, { concurrency: 4 });
+ * ```
  */
 export async function mapBounded<T, R>(
     items: readonly T[],

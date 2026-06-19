@@ -69,6 +69,21 @@ In scope:
   `scripts/finalize-cjs.sh`, `scripts/verify-dual-build.sh`).
 - Webhook signature verification (`webhooks.ts`).
 
+### Webhook callback URL validation
+
+The SDK, CLI, and MCP server share an offline webhook callback URL guard that
+rejects non-HTTPS URLs, embedded credentials, localhost-style names, and literal
+private, loopback, link-local, metadata, or reserved IPs before registering a
+Clockify webhook.
+
+Known limitation: DNS rebinding is outside that offline guard. Clockify owns the
+outbound socket that later connects to the callback URL, so a hostname that
+passes local literal-host checks could still resolve differently for Clockify.
+For sensitive deployments, mitigate this operationally with resolve-then-pin or
+egress-allowlist controls at the receiving edge, and treat
+`webhook-url-guard-no-dns-rebinding` in the threat model as an accepted
+limitation unless a future network-aware guard is added.
+
 Out of scope (report upstream):
 - The synced Fern-generated SDK under `wrapper/src/**`. Any
   finding here belongs in the

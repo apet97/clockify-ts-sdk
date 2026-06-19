@@ -16,10 +16,10 @@ export default defineConfig({
             // Mirror docs/coverage-contract.json (see the wrapper config for
             // the dual-authority rationale).
             thresholds: {
-                lines: 79,
-                functions: 91,
-                branches: 74,
-                statements: 79,
+                lines: 84,
+                functions: 95,
+                branches: 75,
+                statements: 84,
             },
         },
     },
