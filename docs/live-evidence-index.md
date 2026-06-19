@@ -41,6 +41,7 @@ policy).
 | --- | --- | --- |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
 | GET | `/shared-reports/{sharedReportId}` | getSharedReportsSharedReportId |
+| GET | `/workspaces/{workspaceId}/clients` | getWorkspacesWorkspaceIdClients |
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | getWorkspacesWorkspaceIdClientsClientId |
 | GET | `/workspaces/{workspaceId}/custom-fields` | listWorkspaceCustomFields |
 | GET | `/workspaces/{workspaceId}/expenses/categories` | getExpenseCategories |
@@ -49,11 +50,14 @@ policy).
 | GET | `/workspaces/{workspaceId}/invoices/{invoiceId}` | getInvoiceById |
 | GET | `/workspaces/{workspaceId}/projects` | getWorkspaceProjects |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}` | getProjectById |
+| GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | findTasksOnProject |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | getTaskById |
 | GET | `/workspaces/{workspaceId}/shared-reports` | getWorkspacesWorkspaceIdSharedReports |
+| GET | `/workspaces/{workspaceId}/tags` | getWorkspacesWorkspaceIdTags |
 | GET | `/workspaces/{workspaceId}/tags/{tagId}` | getWorkspacesWorkspaceIdTagsTagId |
 | GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | getWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | GET | `/workspaces/{workspaceId}/time-off/policies` | getTimeOffPolicies |
+| GET | `/workspaces/{workspaceId}/user/{userId}/time-entries` | getWorkspacesWorkspaceIdUserUserIdTimeEntries |
 | GET | `/workspaces/{workspaceId}/webhooks` | getWebhooksOnWorkspace |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
