@@ -7,7 +7,7 @@
     {
         "name": "CJS root entry (index.js)",
         "path": "dist/cjs/index.js",
-        "limit": "4 kB"
+        "limit": "3.7 kB"
     },
     {
         "name": "Subpath: create-client (ESM)",
@@ -22,12 +22,12 @@
     {
         "name": "Subpath: iter (ESM)",
         "path": "dist/esm/iter.js",
-        "limit": "4 kB"
+        "limit": "2.6 kB"
     },
     {
         "name": "Subpath: webhooks (ESM)",
         "path": "dist/esm/webhooks.js",
-        "limit": "3 kB"
+        "limit": "2.2 kB"
     },
     {
         "name": "Subpath: webhook-events (ESM)",
@@ -37,12 +37,12 @@
     {
         "name": "Subpath: pagination (ESM)",
         "path": "dist/esm/pagination.js",
-        "limit": "1.5 kB"
+        "limit": "950 B"
     },
     {
         "name": "Subpath: with-response (ESM)",
         "path": "dist/esm/with-response.js",
-        "limit": "1.5 kB"
+        "limit": "1.05 kB"
     },
     {
         "name": "Subpath: errors (ESM)",
@@ -52,41 +52,41 @@
     {
         "name": "Subpath: resolve (ESM)",
         "path": "dist/esm/resolve.js",
-        "limit": "5.5 kB"
+        "limit": "4.7 kB"
     },
     {
         "name": "Subpath: dates (ESM)",
         "path": "dist/esm/dates.js",
-        "limit": "4 kB"
+        "limit": "3.1 kB"
     },
     {
         "name": "Subpath: compose (ESM)",
         "path": "dist/esm/compose.js",
-        "limit": "2 kB"
+        "limit": "1.65 kB"
     },
     {
         "name": "Subpath: ensure (ESM)",
         "path": "dist/esm/ensure.js",
-        "limit": "1.5 kB"
+        "limit": "1.35 kB"
     },
     {
         "name": "Subpath: money (ESM)",
         "path": "dist/esm/money.js",
-        "limit": "1.5 kB"
+        "limit": "1.15 kB"
     },
     {
         "name": "Subpath: invoice-body (ESM)",
         "path": "dist/esm/invoice-body.js",
-        "limit": "1.5 kB"
+        "limit": "1.25 kB"
     },
     {
         "name": "Subpath: bulk (ESM)",
         "path": "dist/esm/bulk.js",
-        "limit": "1.2 kB"
+        "limit": "950 B"
     },
     {
         "name": "Subpath: reports (ESM)",
         "path": "dist/esm/reports.js",
-        "limit": "800 B"
+        "limit": "600 B"
     }
 ]

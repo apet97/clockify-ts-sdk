@@ -89,6 +89,10 @@ once v1.0.0 ships.
   same floor as the cross-package ratchet.
 - Wrapper builds no longer emit `.map` files into `dist`, removing dead source
   and declaration maps from the npm dry-run package.
+- Tightened `.size-limit.json` ceilings on the root CJS entry and the `iter`,
+  `webhooks`, `pagination`, `with-response`, `resolve`, `dates`, `compose`,
+  `ensure`, `money`, `invoice-body`, `bulk`, and `reports` subpaths to track
+  measured bundle sizes more closely.
 - `Workspace.entityChangesExperimental` is now marked `@experimental` /
   `@beta` and warns once outside test runs.
 - Removed deprecated `findOrCreateClient` from the root barrel (root public
