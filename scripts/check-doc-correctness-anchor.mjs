@@ -35,9 +35,18 @@ const candidates = ["output/ts-sdk", "wrapper/src"];
 const generatedRoot = candidates
     .map((candidate) => path.join(root, candidate))
     .find((candidate) => fs.existsSync(path.join(candidate, "api/resources")));
+const strict = process.env.STRICT_DOC_ANCHOR === "1";
 
 if (!generatedRoot) {
-    console.warn(`Skipped: no generated TypeScript SDK root at ${candidates.join(" or ")}. Run make sdk-codegen to populate it.`);
+    const message = `no generated TypeScript SDK root at ${candidates.join(" or ")}. Run make sdk-codegen to populate it.`;
+    if (strict) {
+        fail(`correctness anchor: ${message} (STRICT_DOC_ANCHOR=1 forbids skipping)`);
+    } else {
+        console.warn(`Skipped (non-strict): ${message}`);
+        console.warn(
+            "This anchor only proves anything once generated code is present; perfect-full runs it with STRICT_DOC_ANCHOR=1.",
+        );
+    }
 } else {
     const resourcesRoot = path.join(generatedRoot, "api/resources");
     const methodRegex = /public\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/g;
