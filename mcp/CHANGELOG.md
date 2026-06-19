@@ -344,6 +344,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   classifier return types and the day-review issue-list typing. The ESLint
   toolchain (`eslint`, `typescript-eslint`, `eslint-plugin-import-x`) is declared
   as explicit devDependencies rather than relying on workspace hoisting.
+- Corrected the `eslint.config.mjs` header comment to describe the actual
+  type-aware setup (`project: ["./tsconfig.lint.json"]`) instead of the stale
+  `projectService: true` note.
 
 ## [0.3.0] - 2026-05-26
 

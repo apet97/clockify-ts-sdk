@@ -405,7 +405,7 @@ wrapper/
 ├── tests/                    (43 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
-│   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 19 drift assertions
+│   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 14-entry KNOWN_PAGINATED_METHODS drift assertions
 │   ├── paginated-list.test.ts    ← PaginatedList<T> async-iterable + toArray({limit}) early-stop
 │   ├── webhooks.test.ts          ← Clockify-Signature-Token verification
 │   ├── webhook-fixtures.test.ts  ← canonical webhook payload fixtures
