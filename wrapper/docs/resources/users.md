@@ -2,7 +2,7 @@
 
 8 methods on `client.users`.
 
-> Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../api/).
+> Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
 ## Methods
 

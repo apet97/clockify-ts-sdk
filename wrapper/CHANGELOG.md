@@ -183,6 +183,11 @@ once v1.0.0 ships.
   `resolveUserFilter`) and the `errors` `mapAddonTokenRestriction` /
   `AddonTokenRestrictionError` exports in `README.md` (helper table +
   error table). Surface is now 81 public names / 23 subpaths.
+- Fixed the TypeDoc cross-reference path in the generated resource docs
+  (`wrapper/docs/resources/*.md`) and their generator
+  (`gen-resource-docs.ts`): the reference now points at the repo-root
+  `docs/api/` build (`../../../docs/api/`) instead of the non-existent
+  `wrapper/docs/api/`.
 
 ### Added
 
@@ -302,6 +307,7 @@ once v1.0.0 ships.
 
 - Regenerated `wrapper/.packsnapshot` from current codegen so it matches the local generator output again: it had drifted from the renamed generated request types (e.g. `ClientCreate`, `UpdateStatusApprovalsRequest`) and now also carries the new `request-options` and `operation-receipt` subpath artifacts. Narrowed a `createClockifyClient` test's captured request body to `string` so the stricter `@typescript-eslint/no-base-to-string` rule passes.
 - Raised the `.size-limit.json` ceiling for the CJS root entry from 2.5 kB to 3 kB. The `money`/`invoice-body`/`resolve`/`dates` root re-exports grew the bundled CJS barrel to 2.74 kB brotlied; the raw-size budget in `docs/performance-budgets.json` was already recalibrated for these helpers (CJS → 18500 B, ~9% headroom) but the brotli `size-limit` gate was missed in lockstep. The ESM root stays tree-shaken at 1.48 kB.
+- Pinned the generated retry-delay template's sub-cap branch in `generated-retry-delay.test.ts`: a fake-timers `X-RateLimit-Reset` ~5s ahead now asserts the time-relative `5000ms` result (previously only the over-cap path was covered).
 
 ## [0.9.0] — 2026-05-25
 
