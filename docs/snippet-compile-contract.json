@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Snippet compile contract: every README ```ts fence tagged sdk-include=<file> must be a byte-exact slice of a curated, already-compiled examples/<file>, so prose snippets inherit the wrapper type-check compile guarantee and cannot drift in method names or argument shapes.",
+  "marker": "sdk-include=",
+  "fenceLangs": [
+    "typescript",
+    "ts"
+  ],
+  "minimumTaggedFences": 1,
+  "surfaces": [
+    {
+      "readme": "wrapper/README.md",
+      "examplesDir": "wrapper/examples"
+    },
+    {
+      "readme": "README.md",
+      "examplesDir": "wrapper/examples"
+    },
+    {
+      "readme": "mcp/README.md",
+      "examplesDir": "wrapper/examples"
+    }
+  ],
+  "compiledBy": "npm run type-check -w clockify-sdk-ts-115",
+  "wiring": {
+    "makeTarget": "snippet-compile",
+    "checker": "scripts/check-snippet-compile.mjs",
+    "qualityGate": "make snippet-compile",
+    "inventoryId": "snippet-compile",
+    "auditId": "snippet-compile",
+    "docsIndex": [
+      "snippet-compile-policy.md",
+      "snippet-compile-contract.json"
+    ]
+  }
+}

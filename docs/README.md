@@ -61,6 +61,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`acceptance-scenarios.md`](./acceptance-scenarios.md) | End-to-end SDK/CLI/MCP user journey acceptance matrix with generated plan shape, mock/live, receipt, cleanup, and OpenAPI proof expectations. |
 | [`examples-matrix.md`](./examples-matrix.md) | Cross-surface SDK/CLI/MCP examples matrix and generated examples-plan shape with mock/live boundaries and receipt expectations. |
 | [`snippet-safety-policy.md`](./snippet-safety-policy.md) | Copy-paste snippet safety rules for SDK, CLI, MCP, README, and cookbook examples. |
+| [`snippet-compile-policy.md`](./snippet-compile-policy.md) | README SDK snippet compile-pin rules for byte-exact slices of curated examples. |
 | [`decision-records-policy.md`](./decision-records-policy.md) | Rules for durable decision records that preserve source-of-truth, release, and live proof rationale. |
 | [`contract-inventory-policy.md`](./contract-inventory-policy.md) | Rules for keeping policy docs, contract JSON, checker scripts, Make targets, helper ownership, helper command coverage, and audit evidence wired together. |
 | [`change-impact-policy.md`](./change-impact-policy.md) | Change-scope to required-gate mapping and generated change-impact plan shape for SDK, CLI, MCP, OpenAPI, docs, release, live proof, and final proof changes. |
@@ -127,6 +128,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`snippet-safety-contract.json`](./snippet-safety-contract.json) | edit intentionally | Copy-paste snippet safety contract. |
 | [`snippet-method-parity-policy.md`](./snippet-method-parity-policy.md) | edit intentionally | SDK snippet method-name parity rules for MCP docs and READMEs. |
 | [`snippet-method-parity-contract.json`](./snippet-method-parity-contract.json) | edit intentionally | Contract for checking SDK snippet method names against the generated client. |
+| [`snippet-compile-contract.json`](./snippet-compile-contract.json) | edit intentionally | Contract for pinning tagged README SDK fences to compiled curated examples. |
 | [`docs-drift-contract.json`](./docs-drift-contract.json) | edit intentionally | Allowlisted docs drift scan roots, rules, and intentional exceptions. |
 | [`runtime-support.json`](./runtime-support.json) | edit intentionally | Package engine and runtime support contract. |
 | [`env-contract.json`](./env-contract.json) | edit intentionally | Environment/configuration variable and secret-hygiene contract. |
@@ -210,6 +212,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Examples matrix | `make examples-matrix` | Check SDK/CLI/MCP examples matrix and generated examples-plan shape, mock/live boundaries, mutation safety, and receipt expectations. |
 | Snippet safety | `make snippet-safety` | Check SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Snippet method parity | `make snippet-method-parity` | Check MCP and README SDK snippets against generated SDK method names. |
+| Snippet compile pins | `make snippet-compile` | Check tagged README SDK fences against compiled curated examples. |
 | Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 20+. |
 | Env/config contract | `make env-contract` | Check SDK/CLI/MCP environment variables and mock/replay base URL docs. |
 | Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety. |

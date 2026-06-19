@@ -91,6 +91,9 @@ once v1.0.0 ships.
 - Corrected the SDK README manual users-pagination example to use
   `client.users.list`, the generated SDK method, and broadened snippet method
   parity so README examples are checked against generated client methods.
+- Pinned the SDK README webhook example to the compiled
+  `examples/webhook-express.ts` source via the new `make snippet-compile`
+  gate, preventing prose/example drift in tagged TypeScript fences.
 - Base-URL host allowlist now lists the **real** audit-log host
   `auditlog-api.api.clockify.me` (with the hyphen). The prior
   `auditlog.api.clockify.me` was a typo: it rejected the host the SDK

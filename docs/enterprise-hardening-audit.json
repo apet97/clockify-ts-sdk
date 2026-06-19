@@ -1094,6 +1094,42 @@
       ]
     },
     {
+      "id": "snippet-compile",
+      "requirement": "Keep tagged README SDK fences byte-exactly pinned to curated examples that compile against the wrapper SDK types.",
+      "evidence": [
+        {
+          "path": "docs/snippet-compile-policy.md",
+          "contains": [
+            "sdk-include=<file>",
+            "byte-exact contiguous slices",
+            "npm run type-check -w clockify-sdk-ts-115"
+          ]
+        },
+        {
+          "path": "docs/snippet-compile-contract.json",
+          "contains": [
+            "minimumTaggedFences",
+            "wrapper/README.md",
+            "compiledBy"
+          ]
+        },
+        {
+          "path": "scripts/check-snippet-compile.mjs",
+          "contains": [
+            "Snippet compile parity inspected",
+            "not a byte-exact slice",
+            "snippet compile passed"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "snippet-compile:"
+          ]
+        }
+      ]
+    },
+    {
       "id": "runtime-support",
       "requirement": "Keep SDK/CLI/MCP package runtime floors and docs aligned so users do not hit engine traps.",
       "evidence": [

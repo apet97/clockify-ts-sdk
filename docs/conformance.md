@@ -98,6 +98,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Sdk Runtime Contract | `make sdk-runtime-contract` | yes |
 | Secret Hygiene | `make secret-hygiene` | yes |
 | Security Threat Model | `make security-threat-model` | yes |
+| Snippet Compile | `make snippet-compile` | yes |
 | Snippet Method Parity | `make snippet-method-parity` | yes |
 | Snippet Safety | `make snippet-safety` | yes |
 | Supply Chain | `make supply-chain` | yes |
@@ -109,4 +110,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 76.
+Total gates: 77.

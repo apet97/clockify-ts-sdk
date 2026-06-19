@@ -33,6 +33,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Print examples plan | `make examples-plan` | Static no-network SDK/CLI/MCP examples plan with safety boundaries and proof hints, backed by the examples-matrix contract. |
 | Check snippet safety | `make snippet-safety` | SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Check snippet method parity | `make snippet-method-parity` | SDK snippets in MCP docs and READMEs name real generated SDK client methods. |
+| Check snippet compile pins | `make snippet-compile` | Tagged README SDK fences stay byte-exact slices of compiled curated examples. |
 | Check runtime support | `make runtime-support` | SDK/CLI/MCP package engines and runtime support docs agree on Node 20+. |
 | Check env/config contract | `make env-contract` | SDK/CLI/MCP environment variables, mock base URL behavior, and secret-hygiene docs stay aligned. |
 | Check config precedence | `make config-precedence` | SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety stay aligned. |
