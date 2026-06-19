@@ -9,7 +9,7 @@ This standalone repo ships three sibling packages:
 
 | Folder | Package | Current surface |
 |---|---|---|
-| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 93 public names; 27 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`, `requests`, `reports`, `bulk`, `compose`) |
+| `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 92 public names; 27 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`, `requests`, `reports`, `bulk`, `compose`) |
 | `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 58 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
 | `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 134 tools (21 workflow + 113 domain); 6 resources |
 
@@ -196,14 +196,18 @@ make docs-drift
   creation. The guard is offline: it rejects non-HTTPS, embedded
   credentials, private/loopback/link-local/CGNAT/metadata IPs, and
   localhost-ish hostnames, but not DNS rebinding.
-- Deleting an ACTIVE project/task/client 400s (live-verified).
-  `clockify_projects_delete` archives first (`projects.update({archived:true})`),
-  `clockify_tasks_delete` marks DONE (`tasks.update({status:"DONE"})`), and
-  `clockify_clients_delete` archives first via the `clients.update` **body envelope**
-  (`clients.update({...,body:{name,archived:true}} as never)`) before the DELETE. The
-  client path is the subtle one: the generated `clients.update` FLATTENED form drops
-  `archived` and `clients.archive` 404s, but the body-envelope form bypasses the field
-  whitelist via `core.bodyFromRequest`, so `archived:true` reaches the wire. See
+- Deleting an ACTIVE project/task/client 400s (live-verified). The
+  project and client archive-then-delete sequences (GET name → archive →
+  DELETE, plus the empty-name guard) live once in the wrapper helpers
+  `archiveThenDeleteProject` / `archiveThenDeleteClient`
+  (`clockify-sdk-ts-115/ensure`); both the CLI (`clk115 projects/clients delete`)
+  and MCP (`clockify_projects_delete` / `clockify_clients_delete`) call them.
+  The client path is the subtle one: the generated `clients.update` FLATTENED
+  form drops `archived` and `clients.archive` 404s, so the helper archives via
+  the `clients.update` body envelope (`{...,body:{name,archived:true}}`), which
+  bypasses the field whitelist via `core.bodyFromRequest`. `clockify_tasks_delete`
+  still marks DONE inline (`tasks.update({status:"DONE"})`) — a different
+  replace-PUT shape, not folded into the helper. See
   `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
   values. Check presence, never print values. `make sandbox-key-health`
