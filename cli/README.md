@@ -118,7 +118,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 shared-reports update <id> --name X --type T --filter json [--public]` | Replace a shared report by ID (full replace of name, type, and filter). |
 | `clk115 shared-reports delete <id>` | Delete a shared report. |
 | `clk115 users me` | Show the current authenticated user (the API-key owner). Read-only. |
-| `clk115 users list [--page N] [--page-size N] [--name text]` | List members of the workspace. Read-only. |
+| `clk115 users list [--limit N] [--page N] [--name text]` | List members of the workspace. Read-only. |
 | `clk115 users invite <email> [--no-send-email]` | Invite (add) a user to the workspace by email. |
 | `clk115 users update-profile <userId> [--name text] [--image-url url] [--remove-image] [--week-start day] [--work-capacity iso] [--working-days days…]` | Update one user's member profile. |
 | `clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json\|@file\|-] [--all] [--page-size N] [--max-pages N] [--include-headers]` | Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID. |

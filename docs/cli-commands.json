@@ -206,7 +206,7 @@
       "description": "Show the current authenticated user (the API-key owner). Read-only."
     },
     {
-      "command": "clk115 users list [--page N] [--page-size N] [--name text]",
+      "command": "clk115 users list [--limit N] [--page N] [--name text]",
       "description": "List members of the workspace. Read-only."
     },
     {

@@ -32,15 +32,20 @@ export const registerUsersCommand: Registrar = (program, services) => {
     users
         .command("list")
         .description("List members of the workspace.")
+        .option(
+            "--limit <n>",
+            "Items per page (default 25, max 200).",
+            (v) => Number.parseInt(v, 10),
+            25,
+        )
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
-        .option("--page-size <n>", "Items per page (max 200).", (v) => Number.parseInt(v, 10), 50)
         .option("--name <text>", "Filter by name/email substring.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListUsersRequest = {
                 workspaceId,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.pageSize), 200),
+                "page-size": Math.min(Math.max(1, opts.limit), 200),
                 "include-roles": false,
             };
             if (opts.name) req.name = opts.name;
