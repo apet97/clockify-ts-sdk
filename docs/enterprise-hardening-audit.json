@@ -223,13 +223,13 @@
     },
     {
       "id": "sandbox-key-health",
-      "requirement": "Expose an optional live preflight that detects an expired sandbox Clockify key without printing secrets or blocking offline proof.",
+      "requirement": "Expose an optional live preflight that validates sandbox env shape offline, detects an expired sandbox Clockify key when present, and never prints secrets.",
       "evidence": [
         {
           "path": "scripts/check-sandbox-key-health.mjs",
           "contains": [
-            "CLOCKIFY_API_KEY is blank",
-            "The key is never printed",
+            "env-var contract OK",
+            "key never printed",
             "https://api.clockify.me/api/v1/user"
           ]
         },

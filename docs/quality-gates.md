@@ -52,6 +52,8 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Print change impact plan | `make change-impact-plan` | Static no-network proof plan for default docs/axioms/release scopes, backed by the change-impact contract; use the script directly with `--scope` or `--path` for focused triage. |
 | Check security threat model | `make security-threat-model` | SDK/CLI/MCP/OpenAPI risk surfaces, mitigations, supporting safety docs, and proof-gate wiring stay explicit. |
 | Check version policy | `make version-policy` | Package manifests, changelog headings, generated product surface, and install examples agree on versions. |
+| Check tag hygiene | `make tag-hygiene` | Local git tags avoid bare `v*.*.*` names that trigger the publish workflow. |
+| Check version consistency | `make version-consistency` | Package versions and the release-please manifest stay reconciled by the documented policy. |
 | Check secret hygiene | `make secret-hygiene` | Scans committed source/docs for common token-shaped secrets and verifies secret-handling docs remain present. |
 | Check data handling | `make data-handling` | Workspace data classes, redaction rules, live evidence, and support bundle boundaries stay explicit. |
 | Check supply chain | `make supply-chain` | Package licenses, provenance settings, exact `prepublishOnly` gate shape, tarball files, and supporting package/dependency contracts stay aligned. |

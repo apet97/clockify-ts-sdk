@@ -564,6 +564,26 @@
       "perfectFull": true
     },
     {
+      "id": "tag-hygiene",
+      "target": "tag-hygiene",
+      "checker": "scripts/check-tag-hygiene.mjs",
+      "contracts": [],
+      "auditIds": [],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
+      "id": "version-consistency",
+      "target": "version-consistency",
+      "checker": "scripts/check-version-consistency.mjs",
+      "contracts": [
+        "docs/version-policy.json"
+      ],
+      "auditIds": [],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "security-threat-model",
       "target": "security-threat-model",
       "checker": "scripts/check-security-threat-model.mjs",

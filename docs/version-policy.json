@@ -42,5 +42,24 @@
       "productSurfaceId": "tsMcp",
       "requireCurrentVersionHeading": true
     }
-  ]
+  ],
+  "versionConsistency": {
+    "purpose": "Each package package.json version must be clean semver, and .release-please-manifest.json must track the wrapper version exactly. cli/mcp are reconciled by hand until release-please tracks them.",
+    "releasePleaseManifest": ".release-please-manifest.json",
+    "manifestKeyForReleasePlease": "wrapper",
+    "packages": [
+      {
+        "id": "wrapper",
+        "manifest": "wrapper/package.json"
+      },
+      {
+        "id": "cli",
+        "manifest": "cli/package.json"
+      },
+      {
+        "id": "mcp",
+        "manifest": "mcp/package.json"
+      }
+    ]
+  }
 }
