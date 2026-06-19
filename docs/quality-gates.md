@@ -12,6 +12,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Live sandbox proof | `make perfect-live` | TS MCP live cleanup and GOCLMCP sacrificial-workspace live proof run with explicit live env. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
+| Check error registry integrity | `make error-registry` | The shared error-code registry keeps its code id set, required fields, mirrored package copies, and grounded reachable-code claims. |
 | Refresh troubleshooting | `make troubleshooting` | `docs/troubleshooting.md` matches the shared SDK/CLI/MCP recovery registry. |
 | Refresh operation inventory | `make openapi-operations` | `docs/openapi-operations.json` and `docs/openapi-operations.md` match the corrected OpenAPI snapshot. |
 | Refresh operation parity | `make operation-parity` | `docs/operation-parity.json` and `docs/operation-parity.md` join corrected OpenAPI operations to SDK names and MCP tool names where mechanically obvious. |

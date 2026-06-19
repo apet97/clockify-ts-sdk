@@ -531,6 +531,36 @@
       ]
     },
     {
+      "id": "error-registry",
+      "requirement": "Anchor the shared error-code registry's size, id set, per-code shape, package-copy mirroring, and reachable-code grounding so semantic regressions fail closed.",
+      "evidence": [
+        {
+          "path": "scripts/check-error-registry.mjs",
+          "markers": [
+            "error registry integrity passed",
+            "expected ${expectedCount} codes",
+            "package copy is missing code id",
+            "reachable code"
+          ]
+        },
+        {
+          "path": "docs/error-registry-contract.json",
+          "markers": [
+            "expectedCodeCount",
+            "packageCopies",
+            "reachableCodes"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "error-registry:",
+            "node scripts/check-error-registry.mjs"
+          ]
+        }
+      ]
+    },
+    {
       "id": "generator-portability",
       "requirement": "Keep OpenAPI-to-TypeScript generation independent from paid hosted SDK generator platforms and preserve a vendor-exit path.",
       "evidence": [

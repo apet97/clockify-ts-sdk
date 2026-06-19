@@ -60,6 +60,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Docs Index Drift | `make docs-index-drift` | yes |
 | Docs Quality | `make docs-quality` | yes |
 | Env Contract | `make env-contract` | yes |
+| Error Registry | `make error-registry` | yes |
 | Examples Contract | `make examples-contract` | yes |
 | Examples Matrix | `make examples-matrix` | yes |
 | Fixture Mock Parity | `make fixture-mock-parity` | yes |
@@ -110,4 +111,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 77.
+Total gates: 78.

@@ -104,6 +104,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`product-surface.json`](./product-surface.json) / [`product-surface.md`](./product-surface.md) | `make product-surface` | SDK/CLI/MCP package and workflow metadata. |
 | [`generated-edit-contract.json`](./generated-edit-contract.json) | edit intentionally | Generated/snapshot path edit guard contract. |
 | [`error-codes.json`](./error-codes.json) / [`error-codes.md`](./error-codes.md) | `make error-docs` | Shared error and recovery vocabulary. |
+| [`error-registry-contract.json`](./error-registry-contract.json) | edit intentionally | Integrity anchor for the shared error-code registry: code id set, required fields, package copies, and reachable-code grounding. |
 | [`troubleshooting.md`](./troubleshooting.md) | `make troubleshooting` | Generated recovery guide from the error registry. |
 | [`openapi-operations.json`](./openapi-operations.json) / [`openapi-operations.md`](./openapi-operations.md) | `make openapi-operations` | Corrected OpenAPI operation inventory. |
 | [`openapi-evidence-contract.json`](./openapi-evidence-contract.json) | edit intentionally | Discrepancy ledger and OpenAPI evidence contract. |
