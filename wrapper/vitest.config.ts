@@ -39,10 +39,10 @@ export default defineConfig({
             // scripts/check-coverage-floor.mjs (`make coverage`); keep both in
             // lockstep when floors change.
             thresholds: {
-                lines: 90,
-                functions: 81,
-                branches: 81,
-                statements: 89,
+                lines: 92,
+                functions: 85,
+                branches: 83,
+                statements: 90,
             },
         },
     },

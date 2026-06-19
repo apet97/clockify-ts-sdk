@@ -123,6 +123,15 @@ async function listBothArchivedStates<T extends { id: string }>(
  *   name; `verifyId` forces a list lookup even for a 24-hex id (so the preview can
  *   show the real name, or a wrong id clarifies instead of 404ing at commit).
  * - `notFoundHint` appends a caller-specific sentence to the none-match clarify.
+ *
+ * @example
+ * ```ts
+ * const project = await resolveEntityRef(
+ *   { name: "Website refresh" },
+ *   { noun: "project", verb: "log work against", list: listProjects },
+ * );
+ * if (!project.ok) return project.clarify;
+ * ```
  */
 export async function resolveEntityRef<T extends { id: string; name: string; archived?: boolean }>(
     ref: { id?: string | undefined; name?: string | undefined },

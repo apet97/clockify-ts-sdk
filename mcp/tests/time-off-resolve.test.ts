@@ -17,6 +17,7 @@ const SAM1 = "cccccccccccccccccccccccc";
 const SAM2 = "dddddddddddddddddddddddd";
 const ME = "eeeeeeeeeeeeeeeeeeeeeeee";
 const ENG = "ffffffffffffffffffffffff";
+const POLICY_ID = "000000000000000000000301";
 
 function existingPolicy(): Record<string, unknown> {
     return {
@@ -36,6 +37,7 @@ function timeOffContext(captured: Record<string, unknown>, policy = existingPoli
         workspaceId: "ws-1",
         client: {
             timeOffPolicies: {
+                list: async () => [{ id: POLICY_ID, name: "PTO" }],
                 get: async (req: unknown) => {
                     captured.get = req;
                     return policy;
@@ -53,6 +55,14 @@ function timeOffContext(captured: Record<string, unknown>, policy = existingPoli
                 list: async (req: unknown) => {
                     captured.timeOffList = req;
                     return [];
+                },
+                submit: async (req: unknown) => {
+                    captured.submit = req;
+                    return { id: "req-1" };
+                },
+                changeTimeOffRequestStatus: async (req: unknown) => {
+                    captured.status = req;
+                    return { id: "req-1" };
                 },
             },
             balances: {
@@ -190,6 +200,54 @@ describe("time-off requests list users filter resolution", () => {
         expect(captured.usersListCalled).toBeFalsy();
         const req = captured.timeOffList as { users?: string[] };
         expect(req.users).toEqual([ALICE]);
+    });
+});
+
+describe("time-off request policy resolution", () => {
+    it("time_off_requests_submit resolves a policy name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(timeOffContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_requests_submit",
+            arguments: {
+                policyId: "PTO",
+                start: "2026-07-01",
+                end: "2026-07-02",
+                note: "Vacation",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.submit as { policyId?: string }).policyId).toBe(POLICY_ID);
+    });
+
+    it("time_off_requests_submit rejects an unknown policy name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(timeOffContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_requests_submit",
+            arguments: {
+                policyId: "Not a policy",
+                start: "2026-07-01",
+                end: "2026-07-02",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.submit).toBeUndefined();
+    });
+
+    it("time_off_requests_update_status resolves a policy name before writing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(timeOffContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_requests_update_status",
+            arguments: {
+                policyId: "PTO",
+                requestId: "req-1",
+                statusType: "APPROVED",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect((captured.status as { policyId?: string }).policyId).toBe(POLICY_ID);
     });
 });
 

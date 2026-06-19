@@ -38,6 +38,8 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Api Docs | `make api-docs` | yes |
 | Axioms Contract | `make axioms-contract` | yes |
 | Breaking Change Review | `make breaking-change-review` | yes |
+| Build Determinism | `make build-determinism` | no |
+| Cassettes | `make cassettes` | yes |
 | Change Impact | `make change-impact` | yes |
 | Changelog Coverage | `make changelog-drift` | yes |
 | Ci Contract | `make ci-contract` | yes |
@@ -77,6 +79,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Mcp Tool Manifest | `make mcp-tool-manifest-drift` | yes |
 | Mcp Write Safety | `make mcp-write-safety` | yes |
 | Mock Contract | `make mock-contract` | yes |
+| Mutation | `make mutation` | no |
 | Mutation Safety | `make mutation-safety` | yes |
 | Naming Taxonomy | `make naming-taxonomy` | yes |
 | Observability | `make observability` | yes |
@@ -113,4 +116,4 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 80.
+Total gates: 83.

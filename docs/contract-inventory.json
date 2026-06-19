@@ -659,6 +659,20 @@
       "perfectFull": true
     },
     {
+      "id": "cassettes",
+      "target": "cassettes",
+      "checker": "scripts/check-cassettes.mjs",
+      "contracts": [
+        "spec/evidence/cassettes",
+        "docs/live-probe-ledger.json"
+      ],
+      "auditIds": [
+        "cassettes"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "data-handling",
       "target": "data-handling",
       "checker": "scripts/check-data-handling.mjs",
@@ -1301,6 +1315,19 @@
       "perfectFull": true
     },
     {
+      "id": "build-determinism",
+      "target": "build-determinism",
+      "checker": "scripts/check-build-determinism.mjs",
+      "contracts": [
+        "docs/build-determinism-contract.json"
+      ],
+      "auditIds": [
+        "build-determinism"
+      ],
+      "perfectFast": false,
+      "perfectFull": true
+    },
+    {
       "id": "coverage",
       "target": "coverage",
       "checker": "scripts/check-coverage-floor.mjs",
@@ -1309,6 +1336,19 @@
       ],
       "auditIds": [
         "coverage"
+      ],
+      "perfectFast": false,
+      "perfectFull": true
+    },
+    {
+      "id": "mutation",
+      "target": "mutation",
+      "checker": "scripts/check-mutation-score.mjs",
+      "contracts": [
+        "docs/mutation-score-contract.json"
+      ],
+      "auditIds": [
+        "mutation"
       ],
       "perfectFast": false,
       "perfectFull": true

@@ -39,6 +39,14 @@ export function createMockClockifyServer(options = {}) {
                 status: "UNSENT",
             },
         ],
+        timeOffRequests: [
+            {
+                id: "000000000000000000000701",
+                userId: userId,
+                policyId: "000000000000000000000801",
+                status: "APPROVED",
+            },
+        ],
         // Captures the most recent PUT /invoices/{id} body so tests can assert the
         // exact wire bytes (tax/discount name+scale, preserved fields).
         lastInvoicePut: null,
@@ -209,6 +217,13 @@ export function createMockClockifyServer(options = {}) {
                     const invoice = state.invoices.find((inv) => inv.id === id);
                     if (invoice) Object.assign(invoice, body);
                     json(res, 200, invoice ?? { id, ...body });
+                    return;
+                }
+                if (req.method === "POST" && resource === "time-off" && rest[1] === "requests") {
+                    json(res, 200, {
+                        count: state.timeOffRequests.length,
+                        requests: page(state.timeOffRequests, url),
+                    });
                     return;
                 }
                 if (

@@ -16,6 +16,7 @@ import { defineTool, entityId, errorResult, successResult, writeReceipt } from "
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
+import { resolvePolicyId } from "./workflows/resolve.js";
 
 // The POST-search `statuses` filter accepts only [ALL, PENDING, APPROVED,
 // REJECTED]. It 400s on WITHDRAWN (code 501, live-verified 2026-06-15; see
@@ -172,7 +173,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "Submit a time-off request",
             description: "Submit a time-off request against a policy.",
             inputSchema: {
-                policyId: z.string().min(1),
+                policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
                 start: z.string().min(1),
                 end: z.string().min(1),
                 days: zNumberLike(z.number().int()).optional(),
@@ -186,6 +187,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
+            const policyId = await resolvePolicyId(ctx, args.policyId);
             const period: ClockifyApi.PeriodV1Request = { start: args.start, end: args.end };
             if (args.days !== undefined) period.days = args.days;
             const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
@@ -198,7 +200,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             };
             const req: ClockifyApi.SubmitTimeOffRequest = {
                 workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
+                policyId,
                 body,
             };
             const created = await ctx.client.timeOff.submit(req);
@@ -207,7 +209,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 created,
                 {
                     workspaceId: ctx.workspaceId,
-                    policyId: args.policyId,
+                    policyId,
                 },
                 writeReceipt("created", "time_off_request", { id: entityId(created) }),
             );
@@ -222,7 +224,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             description:
                 "Approve, reject, or change the status of a time-off request. Requires policyId — the status endpoint is policy-scoped.",
             inputSchema: {
-                policyId: z.string().min(1),
+                policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
                 requestId: z.string().min(1),
                 // The wire `status` target accepts only APPROVED / REJECTED;
                 // PENDING and WITHDRAWN are read-only request states it rejects
@@ -233,6 +235,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
+            const policyId = await resolvePolicyId(ctx, args.policyId);
             // The live status endpoint is PATCH
             // /time-off/policies/{policyId}/requests/{requestId} and the WIRE
             // field is `status` (`statusType` only appears in responses). The
@@ -250,7 +253,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     requestId: string;
                 } = {
                 workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
+                policyId,
                 requestId: args.requestId,
                 status: args.statusType,
             };
@@ -267,7 +270,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 updated,
                 {
                     workspaceId: ctx.workspaceId,
-                    policyId: args.policyId,
+                    policyId,
                     requestId: args.requestId,
                 },
                 writeReceipt("updated", "time_off_request", args.requestId),

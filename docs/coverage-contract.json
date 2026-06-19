@@ -7,30 +7,30 @@
       "id": "wrapper",
       "summary": "wrapper/coverage/coverage-summary.json",
       "floors": {
-        "lines": 90,
-        "functions": 81,
-        "branches": 81,
-        "statements": 89
+        "lines": 92,
+        "functions": 85,
+        "branches": 83,
+        "statements": 90
       }
     },
     {
       "id": "cli",
       "summary": "cli/coverage/coverage-summary.json",
       "floors": {
-        "lines": 84,
-        "functions": 96,
-        "branches": 80,
-        "statements": 84
+        "lines": 86,
+        "functions": 97,
+        "branches": 81,
+        "statements": 86
       }
     },
     {
       "id": "mcp",
       "summary": "mcp/coverage/coverage-summary.json",
       "floors": {
-        "lines": 79,
-        "functions": 91,
-        "branches": 74,
-        "statements": 79
+        "lines": 84,
+        "functions": 95,
+        "branches": 75,
+        "statements": 84
       }
     }
   ],

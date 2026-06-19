@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Measured mutation-score floor for the hand-written wrapper modules Stryker mutates (generated src/** excluded). Floors ratchet monotonic-up; raise only after a real test improvement. Phase 1 is wrapper-only because wrapper uses Vitest 4 while CLI/MCP still use Vitest 2.",
+  "ratchet": "monotonic-up",
+  "packages": [
+    {
+      "id": "wrapper",
+      "report": "wrapper/reports/mutation/mutation.json",
+      "globalFloor": 77,
+      "moduleFloors": {
+        "wrapper/composed-fetch.ts": 72,
+        "wrapper/dates.ts": 76,
+        "wrapper/errors.ts": 74,
+        "wrapper/iter.ts": 95,
+        "wrapper/money.ts": 98,
+        "wrapper/webhook-url.ts": 80
+      }
+    }
+  ],
+  "wiring": {
+    "makeTarget": "mutation",
+    "checker": "scripts/check-mutation-score.mjs",
+    "qualityGate": "make mutation",
+    "inventoryId": "mutation",
+    "auditId": "mutation",
+    "docsIndex": [
+      "mutation-score-contract.json"
+    ]
+  }
+}

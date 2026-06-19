@@ -13,6 +13,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { resolveExpenseCategoryId } from "./workflows/resolve.js";
+
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied.
 const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
@@ -157,7 +159,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 "Create a workspace expense from amount, category, project, and date; defaults the user to the API-key owner.",
             inputSchema: {
                 amount: zNumberLike(z.number()),
-                categoryId: z.string().min(1),
+                categoryId: z.string().min(1).describe("Category id (24-hex) or exact category name."),
                 projectId: z.string().min(1),
                 date: z.string().min(1),
                 taskId: z.string().optional(),
@@ -172,7 +174,11 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const { extra, userId, ...fields } = args;
+            const { extra, userId, categoryId, ...rest } = args;
+            const fields = {
+                ...rest,
+                categoryId: await resolveExpenseCategoryId(ctx, categoryId),
+            };
             const owner = userId ?? (await currentUserId(ctx));
             const created = await ctx.client.expenses.create({
                 ...fields,
@@ -200,7 +206,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 expenseId: z.string().min(1),
                 amount: zNumberLike(z.number()),
-                categoryId: z.string().min(1),
+                categoryId: z.string().min(1).describe("Category id (24-hex) or exact category name."),
                 date: z.string().min(1),
                 projectId: z.string().optional(),
                 taskId: z.string().optional(),
@@ -215,7 +221,11 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const { expenseId, extra, userId, ...fields } = args;
+            const { expenseId, extra, userId, categoryId, ...rest } = args;
+            const fields = {
+                ...rest,
+                categoryId: await resolveExpenseCategoryId(ctx, categoryId),
+            };
             const owner = userId ?? (await currentUserId(ctx));
             const updated = await ctx.client.expenses.update({
                 ...fields,

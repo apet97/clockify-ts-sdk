@@ -1,0 +1,26 @@
+{
+  "operationId": "getInvoice",
+  "request": {
+    "workspaceId": "000000000000000000000001",
+    "invoiceId": "000000000000000000000401"
+  },
+  "response": {
+    "id": "000000000000000000000401",
+    "number": "INV-1",
+    "clientId": "000000000000000000000201",
+    "currency": "USD",
+    "note": "Net 30 terms",
+    "subject": "Website redesign",
+    "discount": 500,
+    "tax": 1000,
+    "tax2": 0,
+    "amount": 120000,
+    "status": "UNSENT"
+  },
+  "expectParse": [
+    { "path": "id", "type": "string", "equals": "000000000000000000000401" },
+    { "path": "tax", "type": "number", "equals": 1000 },
+    { "path": "discount", "type": "number", "equals": 500 },
+    { "path": "note", "type": "string", "equals": "Net 30 terms" }
+  ]
+}

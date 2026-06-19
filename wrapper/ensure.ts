@@ -69,7 +69,18 @@ async function findOrCreate<T extends NamedRecord>(
     return { entity, id: entity.id, created: true };
 }
 
-/** Find a tag by name (case-insensitive) or create it. Idempotent. */
+/**
+ * Find a tag by name (case-insensitive) or create it. Idempotent.
+ *
+ * @example
+ * ```ts
+ * const tag = await ensureTag({
+ *   name: "Billable",
+ *   list: () => client.tags.list({ workspaceId }),
+ *   create: (name) => client.tags.create({ workspaceId, name }),
+ * });
+ * ```
+ */
 export function ensureTag<T extends NamedRecord>(
     opts: FindOrCreateOptions<T>,
 ): Promise<EnsureResult<T>> {

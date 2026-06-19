@@ -23,6 +23,7 @@
     "pass-idempotency-key.ts",
     "per-request-overrides.ts",
     "retry-custom.ts",
+    "sdk-helper-cookbook.ts",
     "start-stop-timer.ts",
     "structured-logging.ts",
     "typed-errors.ts",

@@ -74,8 +74,8 @@
     },
     {
       "path": "mcp/dist/index.js",
-      "maxBytes": 1700,
-      "rationale": "MCP stdio entrypoint should not absorb generated SDK internals or fixture data. Calibrated from measured baseline of 1110 bytes."
+      "maxBytes": 1250,
+      "rationale": "MCP stdio entrypoint should not absorb generated SDK internals or fixture data. Tightened from 1700 to roughly 1.10x the measured 1110-byte baseline, rounded to the next practical 10-byte step."
     }
   ],
   "timing": [

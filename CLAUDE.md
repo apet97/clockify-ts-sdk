@@ -38,7 +38,7 @@ Preferred root gates:
 
 ```bash
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof
-make perfect-full   # GOCLMCP drift + local codegen + package gates + packed-consumer smoke
+make perfect-full   # GOCLMCP drift + local codegen/build determinism + package/coverage/mutation/pack smoke
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
@@ -57,6 +57,9 @@ Running `perfect-fast` cleanly (read before your first run):
   budgets. Reserve one full solo `perfect-fast` for the final proof. Note
   `perfect-fast` also runs `lint` (incl. mcp eslint), which the per-package
   `type-check`/`test`/`build` do NOT — run `npm run lint -w <pkg>` before claiming green.
+- `make perfect-full` adds slow proof that does not belong in the fast loop:
+  GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
+  packed-consumer smoke, coverage, and wrapper Stryker mutation scoring.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
@@ -165,14 +168,13 @@ make docs-drift
   `scripts/check-mcp-write-safety.mjs`, tests, and `mcp/README.md`
   together.
 - The holidays, timeOff (policy/request/balance), scheduling, groups
-  `add_member`, and users grant/revoke-role MCP tools resolve a name
-  passed where a user/group/project id is expected to a real id
-  **before any write**, via the `resolve` SDK subpath (wired in
-  `mcp/src/tools/{holidays,timeOff,scheduling,groups,users}.ts`). A
-  24-hex id passes through; an ambiguous/unknown name short-circuits to
-  a grounded `clarification` receipt (no API call) built in
-  `mcp/src/tools/resolve-clarify.ts`. Read-filter slots stay list-free.
-  This wiring added no tools (the surface is 134).
+  `add_member`, users grant/revoke-role, and expenses category MCP
+  tools resolve supported names **before any write**, via the `resolve`
+  SDK subpath and the workflow resolver helpers. A 24-hex id passes
+  through; unresolved or ambiguous names stop before mutation as either
+  a grounded `clarification` receipt or a structured error, depending
+  on the resolver path. Read-filter slots stay list-free. This wiring
+  added no tools (the surface is 134).
 - MCP arg-shape forgiveness: list fields accept a bare string
   (`"Bob"` -> `["Bob"]`) and number fields a numeric string
   (`"75"` -> `75`, never `""` -> `0`), via `zStringList` / `zNumberLike`
@@ -243,10 +245,20 @@ make docs-drift
 - `make performance-budgets` checks built package file-size and
   startup/import budgets after package build gates. Budgets are
   marked `calibrated` in `docs/performance-budgets.json`. File-size
-  ceilings sit ~1.35x measured actuals; startup-time ceilings carry
-  more headroom (~3x measured) on purpose because shared CI runners
+  ceilings are intentionally tight against current built artifacts
+  (the MCP stdio entrypoint is capped at 1250 bytes); startup-time
+  ceilings carry more headroom on purpose because shared CI runners
   show meaningful per-run variance. Recalibrate with
   `make performance-receipt` after material runtime changes.
+- `make cassettes` replays committed, redacted response cassettes
+  through the typed SDK client and local mock server.
+- `make mutation` runs wrapper-scoped Stryker against hand-written
+  helper modules and enforces `docs/mutation-score-contract.json`
+  floors. MCP mutation is intentionally not part of this target while
+  MCP remains on vitest 2.
+- `make build-determinism` builds the wrapper twice and hashes
+  `wrapper/dist/**`; it is wired into `perfect-full`, not
+  `perfect-fast`.
 - `make docs-index-drift` checks `docs/README.md` links and required
   generated surfaces.
 - `docs/install-personas.md`, `docs/migration-guide.md`, and

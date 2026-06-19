@@ -909,6 +909,38 @@
       ]
     },
     {
+      "id": "build-determinism",
+      "requirement": "Keep wrapper package build output byte-stable across consecutive builds before full release proof.",
+      "evidence": [
+        {
+          "path": "docs/build-determinism-contract.json",
+          "contains": [
+            "wrapper/dist",
+            "build-determinism",
+            "scripts/check-build-determinism.mjs",
+            "fullGateOnly"
+          ]
+        },
+        {
+          "path": "scripts/check-build-determinism.mjs",
+          "contains": [
+            "hashTree",
+            "npm",
+            "clockify-sdk-ts-115",
+            "wrapper dist stable across two builds"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "build-determinism:",
+            "node scripts/check-build-determinism.mjs",
+            "perfect-full:"
+          ]
+        }
+      ]
+    },
+    {
       "id": "changelog-coverage",
       "requirement": "Require package changelog coverage for touched public package scopes.",
       "evidence": [
@@ -1125,7 +1157,7 @@
     },
     {
       "id": "snippet-compile",
-      "requirement": "Keep tagged README SDK fences byte-exactly pinned to curated examples that compile against the wrapper SDK types.",
+      "requirement": "Keep tagged SDK fences byte-exactly pinned to curated examples that compile against the wrapper SDK types.",
       "evidence": [
         {
           "path": "docs/snippet-compile-policy.md",
@@ -1877,6 +1909,43 @@
           "path": "Makefile",
           "contains": [
             "replay-fixtures:"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cassettes",
+      "requirement": "Replay redacted Clockify response cassettes through the typed SDK client so live-verified wire shapes continue to parse against generated methods.",
+      "evidence": [
+        {
+          "path": "scripts/check-cassettes.mjs",
+          "contains": [
+            "cassettes gate passed",
+            "secret-hygiene pattern",
+            "unsupported cassette operation",
+            "typed-client replays"
+          ]
+        },
+        {
+          "path": "docs/contract-inventory.json",
+          "contains": [
+            "\"id\": \"cassettes\"",
+            "\"target\": \"cassettes\"",
+            "spec/evidence/cassettes"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "contains": [
+            "cassettes:",
+            "scripts/check-cassettes.mjs"
+          ]
+        },
+        {
+          "path": "docs/README.md",
+          "contains": [
+            "./spec/evidence/cassettes",
+            "make cassettes"
           ]
         }
       ]
@@ -3281,6 +3350,35 @@
           "markers": [
             "coverage: sdk-codegen",
             "node scripts/check-coverage-floor.mjs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mutation",
+      "requirement": "Keep wrapper hand-written helper mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
+      "evidence": [
+        {
+          "path": "docs/mutation-score-contract.json",
+          "markers": [
+            "monotonic-up",
+            "wrapper/reports/mutation/mutation.json",
+            "moduleFloors"
+          ]
+        },
+        {
+          "path": "scripts/check-mutation-score.mjs",
+          "markers": [
+            "mutation score check failed",
+            "NoCoverage",
+            "covered-mutant floors"
+          ]
+        },
+        {
+          "path": "Makefile",
+          "markers": [
+            "mutation: sdk-codegen",
+            "node scripts/check-mutation-score.mjs"
           ]
         }
       ]

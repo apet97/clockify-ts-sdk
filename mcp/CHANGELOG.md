@@ -48,6 +48,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_expenses_create` / `clockify_expenses_update` now resolve an exact
+  expense category name before writing, and `clockify_time_off_requests_submit`
+  / `clockify_time_off_requests_update_status` do the same for exact policy
+  names. A 24-hex id still passes through; an unresolved name stops before the
+  API call.
 - Workflow entry cleanup/fix helpers now materialize generated `TimeEntry` DTOs
   as plain records at the workflow boundary, keeping MCP receipts type-clean
   after the GOCLMCP required-field schema sync.

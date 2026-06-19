@@ -34,7 +34,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Print examples plan | `make examples-plan` | Static no-network SDK/CLI/MCP examples plan with safety boundaries and proof hints, backed by the examples-matrix contract. |
 | Check snippet safety | `make snippet-safety` | SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Check snippet method parity | `make snippet-method-parity` | SDK snippets in MCP docs and READMEs name real generated SDK client methods. |
-| Check snippet compile pins | `make snippet-compile` | Tagged README SDK fences stay byte-exact slices of compiled curated examples. |
+| Check snippet compile pins | `make snippet-compile` | Tagged SDK fences stay byte-exact slices of compiled curated examples. |
 | Check runtime support | `make runtime-support` | SDK/CLI/MCP package engines and runtime support docs agree on Node 20+. |
 | Check env/config contract | `make env-contract` | SDK/CLI/MCP environment variables, mock base URL behavior, and secret-hygiene docs stay aligned. |
 | Check config precedence | `make config-precedence` | SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety stay aligned. |
@@ -94,8 +94,10 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
 | Check test matrix contract | `make test-matrix` | SDK/CLI/MCP required test files, package test/build scripts, exact `prepublishOnly` command shape, and root gate targets remain present. |
 | Check coverage floors | `make coverage` | Measured SDK/CLI/MCP hand-written-surface coverage stays at or above the pinned floors in `docs/coverage-contract.json`. |
+| Check mutation score floors | `make mutation` | Wrapper Stryker mutation testing stays at or above pinned covered-mutant score floors. |
 | Check mock Clockify contract | `make mock-contract` | Mock Clockify server routes, headers, docs, and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Replay golden fixtures | `make replay-fixtures` | Committed redacted API fixtures replay offline and keep wire-shape tripwires aligned with the live-probe ledger. |
+| Replay typed cassettes | `make cassettes` | Redacted response cassettes replay through the typed SDK client and local mock server. |
 | Check fixture/mock parity | `make fixture-mock-parity` | Served golden fixtures stay byte-checked against the local mock Clockify server. |
 | Check maintenance playbook | `make maintenance-playbook` | Maintainer cadence, generated maintenance-plan shape, dependency updates, Fern/generator bumps, Clockify API drift response, release rehearsal, rollback, and receipts stay explicit. |
 | Print maintenance plan | `make maintenance-plan` | Static no-network upkeep plan for weekly, monthly, dependency, generator, drift, release, and rollback paths, backed by the maintenance-playbook contract. |
@@ -105,6 +107,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check docs index | `make docs-index-drift` | `docs/README.md` links and required generated surface references are current. |
 | Check enterprise hardening audit | `make enterprise-audit` | The hardening objective's artifact-level requirements are mapped to concrete current-state evidence. |
 | Check performance budgets | `make performance-budgets` | Built SDK/CLI/MCP artifacts stay under size/startup ceilings, and the generated calibration plan mirrors budget policy. |
+| Check build determinism | `make build-determinism` | The wrapper package emits identical `dist/` bytes across two consecutive builds. |
 | Record performance receipt | `make performance-receipt` | Writes `docs/performance-baseline-latest.json` with measured sizes/timings for budget tightening. |
 | Print performance calibration plan | `make performance-calibration-plan` | Static no-network plan from budget policy for baseline receipts, budget tightening, and final proof markers. |
 | Check generated edit discipline | `make generated-edit-check` | Local diffs do not hand-edit `spec/corrected`, `output/ts-sdk`, or `wrapper/src`. |

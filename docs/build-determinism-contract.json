@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Build-output determinism contract: the wrapper package build must emit identical dist bytes across consecutive builds from the same source tree.",
+  "scope": {
+    "package": "clockify-sdk-ts-115",
+    "artifactTree": "wrapper/dist",
+    "excluded": [
+      "node_modules",
+      "generated output outside the built dist tree",
+      "runtime startup timing"
+    ]
+  },
+  "wiring": {
+    "makeTarget": "build-determinism",
+    "checker": "scripts/check-build-determinism.mjs",
+    "fullGateOnly": true
+  },
+  "requiredBehavior": [
+    "Run the wrapper package build script twice from the repo root.",
+    "Hash file paths plus file bytes under wrapper/dist after each build.",
+    "Fail if the hash or file count differs.",
+    "Blank Clockify live-test environment variables during the checker."
+  ]
+}
