@@ -143,7 +143,10 @@ make docs-drift
   project update). Probe a write route's existence with a fake-id request (404
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
-- `mcp/src/tools/workflows.ts` is the workflow-first MCP surface.
+- `mcp/src/tools/workflows/` holds the workflow-first MCP surface
+  (`index.ts` registers the tools; `business`/`review`/`run`/
+  `time-tracking`/`resolve`/`plan`/`demo` carry the logic). The
+  `mcp/src/tools/workflows.ts` file is just a re-export barrel.
 - MCP receipts should include useful `ids`, `changed`, `warnings`,
   `next`, stable error codes, and recovery hints. Domain
   create/update/delete tools populate `entity` + `changed` via the
@@ -295,7 +298,7 @@ make docs-drift
 | CLI command | `cli/src/commands/*.ts`, wired in `cli/src/index.ts` |
 | CLI name→id resolution (`start`/`log`) | `cli/src/commands/resolve-refs.ts` (shared) |
 | MCP domain tool | `mcp/src/tools/*.ts`, wired in `mcp/src/server.ts` |
-| MCP workflow | `mcp/src/tools/workflows.ts` + `mcp/tests/workflows.test.ts` |
+| MCP workflow | `mcp/src/tools/workflows/index.ts` (+ siblings) + `mcp/tests/workflows.test.ts` |
 | Live cleanup proof | `mcp/scripts/assert-clean-prefixes.mjs` |
 | Spec/live discrepancy | `spec/evidence/discrepancies.md` |
 | Product direction | `docs/product-north-star.md` |
