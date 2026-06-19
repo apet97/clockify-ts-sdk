@@ -52,6 +52,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "mutation": "cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run mcp/stryker.conf.json",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
