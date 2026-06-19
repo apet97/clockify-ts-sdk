@@ -39,7 +39,12 @@ policy).
 
 | Method | Path | operationId |
 | --- | --- | --- |
+| DELETE | `/workspaces/{workspaceId}/clients/{clientId}` | deleteWorkspacesWorkspaceIdClientsClientId |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
+| DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | deleteProject |
+| DELETE | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | deleteTaskFromProject |
+| DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | deleteWorkspacesWorkspaceIdTagsTagId |
+| DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | GET | `/shared-reports/{sharedReportId}` | getSharedReportsSharedReportId |
 | GET | `/workspaces/{workspaceId}/clients` | getWorkspacesWorkspaceIdClients |
 | GET | `/workspaces/{workspaceId}/clients/{clientId}` | getWorkspacesWorkspaceIdClientsClientId |
