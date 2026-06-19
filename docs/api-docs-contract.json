@@ -9,11 +9,40 @@
       "clockify-sdk-ts-115",
       "make api-docs",
       "npm run docs:resources",
-      "Generated HTML identity"
+      "Generated HTML identity",
+      "Stability tag convention",
+      "Allowed vocabulary"
     ],
     "forbiddenMarkers": [
       "TODO",
       "TBD"
+    ]
+  },
+  "stabilityTags": {
+    "purpose": "Enforce the default-@public stability-tag convention: hand-written wrapper stability JSDoc tags use only the allowed vocabulary, and the two intentionally-tagged surfaces stay tagged.",
+    "directory": "wrapper",
+    "allowedTags": [
+      "@public",
+      "@beta",
+      "@experimental",
+      "@internal",
+      "@deprecated"
+    ],
+    "tagPattern": "@(public|beta|experimental|internal|alpha|deprecated)\\b",
+    "requiredTaggedFiles": [
+      {
+        "path": "wrapper/operation-receipt.ts",
+        "mustContainTags": [
+          "@public"
+        ]
+      },
+      {
+        "path": "wrapper/scoped-client.ts",
+        "mustContainTags": [
+          "@experimental",
+          "@beta"
+        ]
+      }
     ]
   },
   "typedoc": {

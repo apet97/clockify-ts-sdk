@@ -21,6 +21,37 @@ itself.
 | Published docs | GitHub Pages workflow builds TypeDoc with `npm run docs`; generated `docs/api/` is not a source-of-truth input. |
 | Package docs | `wrapper/README.md` should link users to reference docs and resource docs without contradicting package names. |
 | Generated HTML identity | If `docs/api/` exists in the checkout, its TypeDoc title, package name, and npm navigation link must match `clockify-sdk-ts-115`; stale `clockify-sdk-ts` pages must be regenerated, not hand-edited. |
+
+## Stability tag convention
+
+The public SDK surface uses a default-stable convention rather than a
+per-symbol tag on every export site:
+
+- **Default is `@public` and stable.** Every name in
+  `docs/sdk-public-api.json` is `@public` by default. Most names are
+  re-exported through barrels from the locally generated `wrapper/src/**`
+  (which must not be hand-edited), so an explicit per-name JSDoc tag at
+  the export site is neither possible nor required for the default case.
+- **Tags are explicit opt-outs only.** A hand-written export carries a
+  JSDoc stability tag only when its stability differs from the default:
+  `@beta` / `@experimental` for surfaces that may change, `@internal` for
+  names that are exported for tooling but not part of the supported
+  contract. Today two surfaces are tagged this way: the
+  `toOperationReceipt` helper family in `wrapper/operation-receipt.ts`
+  (`@public`, pinning the stable intent) and the entity-changes accessor
+  in `wrapper/scoped-client.ts` (`@experimental` / `@beta`, because
+  Clockify's entity-changes API is itself experimental).
+- **Allowed vocabulary.** Stability JSDoc tags in hand-written
+  `wrapper/*.ts` files are restricted to `@public`, `@beta`,
+  `@experimental`, `@internal`, and `@deprecated` (the lifecycle tag for
+  renamed exports such as `findOrCreateClient`). The `make api-docs` gate
+  enforces this vocabulary and asserts the two intentionally-tagged
+  surfaces stay tagged, so a typo'd or ad-hoc stability tag fails the
+  build.
+
+This keeps the convention enforced and honest without forcing ~90
+no-op tags onto generated-adjacent barrels.
+
 ## Required receipts
 
 Before claiming API-doc readiness, run or cite:

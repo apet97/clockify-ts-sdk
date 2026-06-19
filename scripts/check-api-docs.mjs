@@ -276,6 +276,59 @@ if (contract.generatedApiDocs != null) {
 }
 
 
+if (contract.stabilityTags != null && assertObject("stabilityTags", contract.stabilityTags)) {
+    const stability = contract.stabilityTags;
+    assertNonEmptyString("stabilityTags.purpose", stability.purpose);
+    const allowedTags = assertStringArray("stabilityTags.allowedTags", stability.allowedTags, {
+        allowEmpty: false,
+    });
+    const allowedSet = new Set(allowedTags);
+    assertNonEmptyString("stabilityTags.tagPattern", stability.tagPattern);
+    const dir = safeRelativePath("stabilityTags.directory", stability.directory);
+    if (dir != null && failures.length === 0) {
+        let tagRegex = null;
+        try {
+            tagRegex = new RegExp(stability.tagPattern, "g");
+        } catch (error) {
+            fail("stabilityTags.tagPattern", `invalid regex: ${error.message}`);
+        }
+        const absoluteDir = path.join(root, dir);
+        if (!fs.existsSync(absoluteDir)) {
+            fail(dir, "missing");
+        } else if (tagRegex != null) {
+            // Scan hand-written wrapper TS files (top level only; src/** is generated).
+            const tsFiles = fs
+                .readdirSync(absoluteDir)
+                .filter((entry) => entry.endsWith(".ts") && !entry.endsWith(".d.ts"));
+            for (const file of tsFiles) {
+                const relativePath = `${dir}/${file}`;
+                const text = fs.readFileSync(path.join(absoluteDir, file), "utf8");
+                for (const match of text.matchAll(tagRegex)) {
+                    const tag = match[0];
+                    if (!allowedSet.has(tag)) {
+                        fail(relativePath, `stability tag ${tag} is not in the allowed vocabulary ${JSON.stringify([...allowedSet])}`);
+                    }
+                }
+            }
+        }
+    }
+    for (const [index, required] of (stability.requiredTaggedFiles ?? []).entries()) {
+        const label = `stabilityTags.requiredTaggedFiles[${index}]`;
+        if (!assertObject(label, required)) continue;
+        const requiredPath = safeRelativePath(`${label}.path`, required.path);
+        const mustContainTags = assertStringArray(`${label}.mustContainTags`, required.mustContainTags, {
+            allowEmpty: false,
+        });
+        if (requiredPath == null) continue;
+        const text = readRelative(requiredPath, `${label}.path`);
+        for (const tag of mustContainTags) {
+            if (!text.includes(tag)) {
+                fail(requiredPath, `expected stability tag ${tag} to remain present`);
+            }
+        }
+    }
+}
+
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
