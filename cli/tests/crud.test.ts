@@ -103,10 +103,26 @@ describe("projects CRUD", () => {
 });
 
 describe("clients CRUD", () => {
-    function makeClient(name = "Globex"): { client: ClockifyClient; calls: Calls } {
-        const calls: Calls = { updates: [], deletes: [], creates: [] };
+    function makeClient(name = "Globex"): {
+        client: ClockifyClient;
+        calls: Calls & { lists: Record<string, unknown>[] };
+    } {
+        const calls: Calls & { lists: Record<string, unknown>[] } = {
+            updates: [],
+            deletes: [],
+            creates: [],
+            lists: [],
+        };
         const client = {
             clients: {
+                list: async (req: Record<string, unknown>) => {
+                    calls.lists.push(req);
+                    return [{ id: "c-1", name, note: "vip", archived: false }];
+                },
+                create: async (body: Record<string, unknown>) => {
+                    calls.creates.push(body);
+                    return { id: "c-1", name };
+                },
                 get: async () => ({ id: "c-1", name }),
                 update: async (body: Record<string, unknown>) => {
                     calls.updates.push(body);
@@ -120,6 +136,77 @@ describe("clients CRUD", () => {
         };
         return { client: client as unknown as ClockifyClient, calls };
     }
+
+    it("list prints rows and passes name/archived filters through", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerClientsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "clients",
+            "list",
+            "--name",
+            "Glob",
+            "--archived",
+        ]);
+        expect(calls.lists[0]).toMatchObject({ name: "Glob", archived: true });
+    });
+
+    it("create emits a created receipt", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerClientsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "clients",
+            "create",
+            "Globex",
+            "--note",
+            "vip",
+        ]);
+        expect(calls.creates[0]).toMatchObject({ body: { name: "Globex", note: "vip" } });
+        const payload = lastPayload();
+        expect(payload.action).toBe("clients.create");
+        expect(payload.ids).toMatchObject({ clientId: "c-1" });
+    });
+
+    it("get prints the fetched client object", async () => {
+        const { client } = makeClient();
+        await makeProgram(registerClientsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "clients",
+            "get",
+            "c-1",
+        ]);
+        expect(lastPayload()).toMatchObject({ id: "c-1", name: "Globex" });
+    });
+
+    it("update emits an updated receipt and carries fields in the body envelope", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerClientsCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "clients",
+            "update",
+            "c-1",
+            "--name",
+            "Renamed",
+            "--note",
+            "n",
+            "--address",
+            "addr",
+            "--archived",
+        ]);
+        expect(calls.updates[0]).toMatchObject({
+            body: { name: "Renamed", note: "n", address: "addr", archived: true },
+        });
+        const payload = lastPayload();
+        expect(payload.action).toBe("clients.update");
+        expect(payload.ids).toMatchObject({ clientId: "c-1" });
+    });
 
     it("delete archives via the body envelope, then deletes (deleted:true)", async () => {
         const { client, calls } = makeClient();

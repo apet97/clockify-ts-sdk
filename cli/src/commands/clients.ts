@@ -1,6 +1,7 @@
 /**
  * `clk115 clients {list,create,get,update,delete}`.
  */
+import { archiveThenDeleteClient } from "clockify-sdk-ts-115/ensure";
 import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
@@ -150,29 +151,11 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // Clockify rejects DELETE of an ACTIVE client (400) and the
-            // dedicated `clients.archive` route 404s. The flattened
-            // `clients.update` drops `archived` (field whitelist), but the
-            // body-envelope form bypasses it via core.bodyFromRequest — so
-            // archive first via GET-then-PUT (body envelope), carrying the
-            // name the replace-PUT requires, then DELETE. Mirrors the MCP tool.
-            const current = (await client.clients.get({ workspaceId, clientId: id })) as {
-                name?: string;
-            };
-            const name = String(current.name ?? "");
-            if (!name) {
-                throw new Error(
-                    "Cannot archive client before delete: the client has no name to carry through the replace-PUT.",
-                );
-            }
-            await client.clients.update(
-                wireBody<ClockifyApi.UpdateClientsRequest>({
-                    workspaceId,
-                    clientId: id,
-                    body: { name, archived: true },
-                }),
-            );
-            await client.clients.delete({ workspaceId, clientId: id });
+            // archiveThenDeleteClient owns the live-verified sequence (GET name →
+            // archive via the BODY-ENVELOPE PUT that bypasses the clients.update
+            // field whitelist → DELETE) and the empty-name guard: bare DELETE of an
+            // ACTIVE client 400s and clients.archive 404s.
+            await archiveThenDeleteClient({ workspaceId, id, resource: client.clients });
             printReceipt(
                 {
                     ok: true,

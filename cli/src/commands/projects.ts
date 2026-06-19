@@ -1,6 +1,7 @@
 /**
  * `clk115 projects {list,create,get,update,delete}`.
  */
+import { archiveThenDeleteProject } from "clockify-sdk-ts-115/ensure";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
@@ -168,19 +169,10 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // Clockify rejects DELETE of an ACTIVE project (400) and the
-            // dedicated /archive route 404s — archive first via GET-then-PUT,
-            // carrying the name the replace-PUT requires, mirroring the MCP tool.
-            const current = (await client.projects.get({ workspaceId, projectId: id })) as {
-                name?: string;
-            };
-            await client.projects.update({
-                workspaceId,
-                projectId: id,
-                name: String(current.name ?? ""),
-                archived: true,
-            });
-            await client.projects.delete({ workspaceId, projectId: id });
+            // archiveThenDeleteProject owns the live-verified sequence (GET name →
+            // archive PUT archived:true → DELETE) and the empty-name guard: bare
+            // DELETE of an ACTIVE project 400s and the /archive route 404s.
+            await archiveThenDeleteProject({ workspaceId, id, resource: client.projects });
             printReceipt(
                 {
                     ok: true,
