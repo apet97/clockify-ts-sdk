@@ -104,11 +104,13 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Snippet Safety | `make snippet-safety` | yes |
 | Supply Chain | `make supply-chain` | yes |
 | Support Bundle | `make support-bundle` | yes |
+| Tag Hygiene | `make tag-hygiene` | yes |
 | Test Data Lifecycle | `make test-data-lifecycle` | yes |
 | Test Matrix | `make test-matrix` | yes |
 | Upstream Drift | `make upstream-drift` | yes |
 | User Docs | `make user-docs` | yes |
+| Version Consistency | `make version-consistency` | yes |
 | Version Policy | `make version-policy` | yes |
 | Workflow Cookbook | `make workflow-cookbook` | yes |
 
-Total gates: 78.
+Total gates: 80.
