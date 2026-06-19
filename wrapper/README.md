@@ -290,7 +290,7 @@ arithmetic, or custom stop conditions.
 
 ```typescript
 for (let page = 1; ; page++) {
-    const records = await client.users.findWorkspaceUsers({
+    const records = await client.users.list({
         workspaceId: "...",
         page,
         "page-size": 50,

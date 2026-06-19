@@ -88,6 +88,9 @@ once v1.0.0 ships.
   remain bare arrays, invoices remain `{ invoices, total }` envelopes, and the
   in-progress time-entry route keeps `page-size` pagination wired through the
   local mock server.
+- Corrected the SDK README manual users-pagination example to use
+  `client.users.list`, the generated SDK method, and broadened snippet method
+  parity so README examples are checked against generated client methods.
 - Base-URL host allowlist now lists the **real** audit-log host
   `auditlog-api.api.clockify.me` (with the hyphen). The prior
   `auditlog.api.clockify.me` was a typo: it rejected the host the SDK
