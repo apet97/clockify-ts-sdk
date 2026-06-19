@@ -55,11 +55,20 @@ describe("generated retry delay template", () => {
         );
         expect(retryDelayMs(new Response(null, { headers: { "Retry-After": "0" } }), 0)).toBe(0);
 
+        vi.useFakeTimers();
         vi.setSystemTime(new Date("2026-06-19T00:00:00.000Z"));
         const reset = Math.floor(Date.now() / 1000) + 999999;
         expect(
             retryDelayMs(new Response(null, { headers: { "X-RateLimit-Reset": String(reset) } }), 0),
         ).toBe(RETRY_MAX_DELAY_MS);
+        // Sub-cap reset: ~5s ahead → time-relative branch returns ~5000ms (not the cap).
+        const subCapReset = Math.floor(Date.now() / 1000) + 5;
+        expect(
+            retryDelayMs(
+                new Response(null, { headers: { "X-RateLimit-Reset": String(subCapReset) } }),
+                0,
+            ),
+        ).toBe(5000);
         vi.useRealTimers();
     });
 
