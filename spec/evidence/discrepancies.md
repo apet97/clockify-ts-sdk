@@ -2190,10 +2190,18 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `archived`); a task via `tasks.update({name, status:"DONE"})` — both carrying
   the name the replace-PUT requires, GET-then-PUT.
 - **Status:** `compensated-in-tool-layer` (2026-06-15). `clockify_projects_delete`
-  and `clockify_tasks_delete` now GET-then-PUT (archive / DONE) before DELETE,
-  after the confirm gate. Verified LIVE end-to-end through the real MCP tools
-  (dry_run → confirm_token → execute): both returned `deleted:true` against a real
-  active project + task. Order pinned by `mcp/tests/archive-then-delete.test.ts`.
+  and `clockify_tasks_delete` GET-then-PUT (archive / DONE) before DELETE, after
+  the confirm gate. Verified LIVE end-to-end through the real MCP tools (dry_run →
+  confirm_token → execute): both returned `deleted:true` against a real active
+  project + task. Order pinned by `mcp/tests/archive-then-delete.test.ts`.
+- **Single source (2026-06-19):** the project GET-name → archive → DELETE sequence
+  (plus the empty-name guard) now lives once in the wrapper helper
+  `archiveThenDeleteProject` (`wrapper/ensure.ts`, subpath
+  `clockify-sdk-ts-115/ensure`); both `clockify_projects_delete`
+  (`mcp/src/tools/projects.ts`) and the CLI `clk115 projects delete`
+  (`cli/src/commands/projects.ts`) call it instead of hand-copying the steps.
+  Helper unit tests: `wrapper/tests/ensure.test.ts`. (Tasks still mark DONE inline —
+  a different replace-PUT shape, not folded into the helper.)
 
 ### `deletes.archive-first.clients-blocked` — COMPENSATED 2026-06-17 (body-envelope path)
 
@@ -2209,13 +2217,22 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   returns the `body` envelope verbatim when the whitelist has no `"body"` key, so
   `archived:true` reaches the wire. The demo cleanup already uses this path
   (`mcp/src/tools/workflows/demo.ts`).
-- **Status:** `compensated-in-tool-layer` (2026-06-17). `clockify_clients_delete` now
+- **Status:** `compensated-in-tool-layer` (2026-06-17). `clockify_clients_delete`
   GET-then-PUT (body envelope `{name, archived:true}`) to archive, then DELETE, after
   the confirm gate — mirroring `clockify_projects_delete`. Carries the client `name`
   the replace-PUT requires; errors clearly if the fetched client has no name. Order
   pinned by `mcp/tests/archive-then-delete.test.ts`. The upstream cleanup (type
   `archived` into `UpdateClientsRequestBody` so the cast isn't needed) remains a
   nice-to-have in `../GOCLMCP/` / `spec/corrected`, not a blocker.
+- **Single source (2026-06-19):** the client GET-name → archive (body-envelope) →
+  DELETE sequence, the body-envelope quirk, and the empty-name guard now live once
+  in the wrapper helper `archiveThenDeleteClient` (`wrapper/ensure.ts`, subpath
+  `clockify-sdk-ts-115/ensure`); both `clockify_clients_delete`
+  (`mcp/src/tools/clients.ts`) and the CLI `clk115 clients delete`
+  (`cli/src/commands/clients.ts`) call it instead of hand-copying the steps. The
+  helper builds the envelope `{workspaceId, clientId, body:{name, archived:true}}`
+  internally (runtime-identical to `wireBody`, an identity cast). Helper unit tests
+  (incl. the body-envelope shape + empty-name guard): `wrapper/tests/ensure.test.ts`.
 
 ### `user-groups.get.returns-void` — COMPENSATED 2026-06-15
 
@@ -2323,7 +2340,8 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   body-envelope arm via `clockify-sdk-ts-115/requests`
   (`ClockifyRequestBody<T>` + `wireBody<T>` only where a validated live shape is
   genuinely outside the generated type). Inline single-id extractions collapse
-  onto `entityId()` (`mcp/src/result.ts`, `cli/src/sdk-narrow.ts`). Surviving
+  onto `entityId()` (`mcp/src/result.ts`; CLI commands import it directly from
+  the `clockify-sdk-ts-115/operation-receipt` subpath). Surviving
   `as never` casts are an enumerated allow-list (archive-before-delete overlays,
   status-union, report/audit passthrough, runtime body-spread writes, and
   multipart/list envelope mismatches), each immediately line-commented

@@ -4,16 +4,25 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- `clk115 projects delete` and `clk115 clients delete` now call the SDK helpers
+  `archiveThenDeleteProject` / `archiveThenDeleteClient`
+  (`clockify-sdk-ts-115/ensure`) for the live-allowed GET-name → archive → DELETE
+  sequence, instead of hand-copying the steps (incl. the clients body-envelope
+  archive quirk and empty-name guard). Behavior is unchanged.
+
 ### Added
 
 - Measured code coverage: `@vitest/coverage-v8` (v2, version-matched) wired
   into `vitest.config.ts` over `src/**`. New `npm run test:coverage` script;
   floors pinned in `docs/coverage-contract.json` and enforced by
   `make coverage`.
-- New `cli/src/sdk-narrow.ts` `entityId()` helper replacing the inline
-  single-id `as { id?: string }` response casts across commands. CLI source now
-  enables `exactOptionalPropertyTypes`, and clean list requests use generated
-  `ClockifyApi.List*Request` types instead of bare `as never` casts.
+- Commands now use the SDK's `entityId()` helper (from the
+  `clockify-sdk-ts-115/operation-receipt` subpath) for safe single-id
+  extraction instead of inline `as { id?: string }` response casts. CLI source
+  also enables `exactOptionalPropertyTypes`, and clean list requests use
+  generated `ClockifyApi.List*Request` types instead of bare `as never` casts.
 - Expanded shared error-code registry coverage for CLI JSON output and generated
   troubleshooting docs: rate-limit headers, add-on-token scope, host routing,
   active-delete, dead-route, and delete-name-reservation failures now have
@@ -55,7 +64,9 @@ All notable changes to `@clockify115/cli` are documented here.
   read commands. The underlying `page-size` request field is unchanged.
 - Internal id extraction now imports `entityId()` from
   `clockify-sdk-ts-115/operation-receipt`, keeping CLI receipt narrowing on the
-  same public SDK helper used by MCP.
+  same public SDK helper used by MCP. The one-line `cli/src/sdk-narrow.ts`
+  re-export shim was removed and its four command importers now import the
+  helper from the SDK subpath directly.
 - CLI object output now accepts concrete generated DTOs directly, so `get`
   commands no longer need display-boundary casts after the GOCLMCP required-field
   schema sync.
