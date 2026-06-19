@@ -3356,13 +3356,14 @@
     },
     {
       "id": "mutation",
-      "requirement": "Keep wrapper hand-written helper mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
+      "requirement": "Keep wrapper hand-written helper and MCP safety-critical (confirmation/confirm-guard/result) mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
       "evidence": [
         {
           "path": "docs/mutation-score-contract.json",
           "markers": [
             "monotonic-up",
             "wrapper/reports/mutation/mutation.json",
+            "mcp/reports/mutation/mutation.json",
             "moduleFloors"
           ]
         },
