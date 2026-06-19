@@ -52,7 +52,7 @@ export function printRecords(rows: OutputRecord[], opts: OutputOptions): void {
  * Print a single key/value object. In table mode it renders as a
  * two-column "field / value" layout; in JSON mode it's pretty-printed.
  */
-export function printObject(obj: OutputRecord, opts: OutputOptions): void {
+export function printObject(obj: object, opts: OutputOptions): void {
     if (opts.mode === "json") {
         printJson(obj, opts);
         return;

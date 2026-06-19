@@ -48,6 +48,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Workflow entry cleanup/fix helpers now materialize generated `TimeEntry` DTOs
+  as plain records at the workflow boundary, keeping MCP receipts type-clean
+  after the GOCLMCP required-field schema sync.
 - Webhook create/update tools now reject unsafe callback URLs (non-HTTPS,
   loopback, private/link-local, metadata, and embedded-credential hosts) before
   making a Clockify API call.

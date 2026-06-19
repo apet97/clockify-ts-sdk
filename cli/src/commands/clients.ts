@@ -94,7 +94,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await client.clients.get({ workspaceId, clientId: id });
-            printObject(result as Record<string, unknown>, output);
+            printObject(result, output);
         });
 
     clients

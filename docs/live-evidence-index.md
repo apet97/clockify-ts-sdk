@@ -41,22 +41,41 @@ policy).
 | --- | --- | --- |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
 | GET | `/shared-reports/{sharedReportId}` | getSharedReportsSharedReportId |
+| GET | `/workspaces/{workspaceId}/clients/{clientId}` | getWorkspacesWorkspaceIdClientsClientId |
 | GET | `/workspaces/{workspaceId}/custom-fields` | listWorkspaceCustomFields |
 | GET | `/workspaces/{workspaceId}/expenses/categories` | getExpenseCategories |
 | GET | `/workspaces/{workspaceId}/holidays` | getWorkspaceHolidays |
 | GET | `/workspaces/{workspaceId}/holidays/in-period` | getWorkspaceHolidaysInPeriod |
 | GET | `/workspaces/{workspaceId}/invoices/{invoiceId}` | getInvoiceById |
 | GET | `/workspaces/{workspaceId}/projects` | getWorkspaceProjects |
+| GET | `/workspaces/{workspaceId}/projects/{projectId}` | getProjectById |
+| GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | getTaskById |
 | GET | `/workspaces/{workspaceId}/shared-reports` | getWorkspacesWorkspaceIdSharedReports |
+| GET | `/workspaces/{workspaceId}/tags/{tagId}` | getWorkspacesWorkspaceIdTagsTagId |
+| GET | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | getWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | GET | `/workspaces/{workspaceId}/time-off/policies` | getTimeOffPolicies |
 | GET | `/workspaces/{workspaceId}/webhooks` | getWebhooksOnWorkspace |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
+| POST | `/workspaces/{workspaceId}/clients` | postWorkspacesWorkspaceIdClients |
 | POST | `/workspaces/{workspaceId}/expenses/categories` | addExpenseCategory |
 | POST | `/workspaces/{workspaceId}/holidays` | createHoliday |
+| POST | `/workspaces/{workspaceId}/projects` | createProject |
+| POST | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | addTaskOnProject |
+| POST | `/workspaces/{workspaceId}/reports/attendance` | generateAttendanceReport |
+| POST | `/workspaces/{workspaceId}/reports/detailed` | generateDetailedReport |
+| POST | `/workspaces/{workspaceId}/reports/summary` | generateSummaryReport |
+| POST | `/workspaces/{workspaceId}/reports/weekly` | generateWeeklyReport |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | getScheduledAssignmentsPerProject |
+| POST | `/workspaces/{workspaceId}/tags` | postWorkspacesWorkspaceIdTags |
+| POST | `/workspaces/{workspaceId}/time-entries` | postWorkspacesWorkspaceIdTimeEntries |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | getAllTimeOffRequestsOnWorkspace |
+| PUT | `/workspaces/{workspaceId}/clients/{clientId}` | putWorkspacesWorkspaceIdClientsClientId |
 | PUT | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | updateExpenseCategory |
+| PUT | `/workspaces/{workspaceId}/projects/{projectId}` | updateProject |
+| PUT | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | updateTaskOnProject |
+| PUT | `/workspaces/{workspaceId}/tags/{tagId}` | putWorkspacesWorkspaceIdTagsTagId |
+| PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | putWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 
 ## Phantom / dead endpoints quarantined
 

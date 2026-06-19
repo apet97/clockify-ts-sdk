@@ -299,6 +299,11 @@ end-to-end and green before push. Drift gates are non-negotiable.
 1. **Never edit `spec/corrected/clockify.corrected.openapi.yaml`.**
    It's a regenerable snapshot. Edits land in upstream sources
    (`GOCLMCP/docs/openapi/sources/**`) or in the generator script.
+   The only legitimate local diff is a straight copy from
+   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after the GOCLMCP
+   generator and drift gates are green; for that handoff, run the final
+   full gate with `CLOCKIFY_ALLOW_GENERATED_DIFF=1` and keep the diff to
+   the copied snapshot plus regenerated SDK/package surfaces.
 2. **Never edit `output/ts-sdk/**`.** `make sdk-codegen` wipes
    the tree on every regen. Hand-written code lives in `wrapper/`.
 3. **Never edit `wrapper/src/**`.** `npm run sync` wipes + repopulates

@@ -50,6 +50,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- CLI object output now accepts concrete generated DTOs directly, so `get`
+  commands no longer need display-boundary casts after the GOCLMCP required-field
+  schema sync.
 - The CLI now lazy-loads the SDK root only when a command actually builds a
   Clockify client, keeping cold paths like `--version` lighter.
 - Test coverage: added focused reports, read-command, resolver, and status

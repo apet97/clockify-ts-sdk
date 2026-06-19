@@ -58,14 +58,14 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     const deleted: EntityRef[] = [];
     const warnings: Warning[] = [];
     const user = await ctx.client.users.getCurrentUser();
-    const entries = (await ctx.client.timeEntries.listForUser({
+    const entries: AnyRecord[] = (await ctx.client.timeEntries.listForUser({
         workspaceId: ctx.workspaceId,
         userId: idOf(user),
         start: str(args.start) || "2026-01-01T00:00:00.000Z",
         end: str(args.end) || "2026-12-31T23:59:59.999Z",
         page: 1,
         "page-size": 200,
-    })) as AnyRecord[];
+    })).map((entry) => ({ ...entry }));
     for (const entry of entries.filter((item) => str(item.description).startsWith(prefix))) {
         await cleanupEntity("entry", entry, deleted, warnings, () =>
             ctx.client.timeEntries.delete({
