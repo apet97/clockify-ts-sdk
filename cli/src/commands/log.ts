@@ -38,7 +38,7 @@ export const registerLogCommand: Registrar = (program, services) => {
             description: string,
             opts: LogOpts,
         ) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             if (opts.task && !opts.project) {
                 throw new Error(
                     "--task requires --project: a task entry must be scoped to its project.",

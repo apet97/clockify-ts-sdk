@@ -84,7 +84,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .command("list")
         .description("List the workspace's shared (public-link) reports.")
         .action(async function (this: Command) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await client.sharedReports.list({ workspaceId });
             printObject(result as OutputRecord, output);
         });
@@ -101,7 +101,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, id: string, opts) {
             // `view` is NOT workspace-scoped — pass only the shared-report id.
-            const { client, output } = resolveContext(this, services);
+            const { client, output } = await resolveContext(this, services);
             const exportType = (
                 opts.exportType ? String(opts.exportType).toUpperCase() : "JSON_V1"
             ) as NonNullable<ClockifyApi.ViewSharedReportsRequest["exportType"]>;
@@ -120,7 +120,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .option("--public", "Make the report publicly accessible.")
         .description("Create a shared (public-link) report.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = {
                 name: opts.name,
                 type: requireType(opts.type),
@@ -162,7 +162,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .option("--public", "Make the report publicly accessible.")
         .description("Replace a shared report by ID (full replace of name, type, and filter).")
         .action(async function (this: Command, id: string, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> = {
                 name: opts.name,
                 type: requireType(opts.type),
@@ -201,7 +201,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .argument("<id>", "Shared-report ID.")
         .description("Delete a shared report by ID.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             await client.sharedReports.delete({ workspaceId, sharedReportId: id });
             printReceipt(
                 {

@@ -10,7 +10,7 @@ import type { CliConfig, GlobalFlags } from "../config.js";
 
 export interface Services {
     loadConfig: (flags?: GlobalFlags, env?: NodeJS.ProcessEnv) => CliConfig;
-    buildClient: (config: CliConfig) => ClockifyClient;
+    buildClient: (config: CliConfig) => Promise<ClockifyClient>;
 }
 
 export type Registrar = (program: Command, services: Services) => void;

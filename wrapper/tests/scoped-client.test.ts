@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createClockifyClient } from "../create-client.js";
+import { _resetWarnOnceForTests } from "../deprecation.js";
 import { Workspace } from "../scoped-client.js";
 import type { ClockifyApi } from "../src/index.js";
 
@@ -201,5 +202,29 @@ describe("Workspace iterators", () => {
 
         expect(ids).toEqual(["c_1", "c_2"]);
         expect(firstUrl(fetchMock)).toContain("/workspaces/ws-it/clients");
+    });
+});
+
+describe("Workspace.entityChangesExperimental stability marker", () => {
+    it("returns a stable scoped client and warns at most once outside tests", () => {
+        const previousNodeEnv = process.env.NODE_ENV;
+        delete process.env.NODE_ENV;
+        _resetWarnOnceForTests();
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+        try {
+            const ws = createClockifyClient({ apiKey: "test" }).workspace("ws-experimental");
+
+            expect(ws.entityChangesExperimental).toBe(ws.entityChangesExperimental);
+            expect(warn).toHaveBeenCalledTimes(1);
+            expect(warn.mock.calls[0]?.[0]).toContain("entityChangesExperimental");
+        } finally {
+            warn.mockRestore();
+            _resetWarnOnceForTests();
+            if (previousNodeEnv === undefined) {
+                delete process.env.NODE_ENV;
+            } else {
+                process.env.NODE_ENV = previousNodeEnv;
+            }
+        }
     });
 });

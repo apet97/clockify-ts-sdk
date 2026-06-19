@@ -32,7 +32,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
         .option("--name <text>", "Filter by assignment name substring.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListSchedulingRequest = {
                 workspaceId,
                 page: opts.page,
@@ -84,7 +84,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--include-non-working-days", "Include weekends/non-working days.", false)
         .option("--publish", "Publish immediately (default is draft).", false)
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.CreateSchedulingRequest> = {
                 userId: opts.user,
                 projectId: opts.project,

@@ -393,6 +393,84 @@ describe("composedFetch — retry policy", () => {
     });
 });
 
+describe("composedFetch — metrics", () => {
+    it("emits request duration and rate-limit remaining metrics", async () => {
+        const metrics: Array<{ name: string; value: number; attributes?: Record<string, unknown> }> =
+            [];
+        const f = composedFetch({
+            fetch: (async () =>
+                new Response("ok", {
+                    status: 200,
+                    headers: { "X-RateLimit-Remaining": "42" },
+                })) as typeof fetch,
+            hooks: {
+                onMetric: (metric) => {
+                    metrics.push(metric);
+                },
+            },
+        });
+
+        await f("https://example.test/x");
+
+        expect(metrics).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    name: "request.duration",
+                    value: expect.any(Number),
+                    attributes: expect.objectContaining({ method: "GET", outcome: "success" }),
+                }),
+                { name: "rate_limit.remaining", value: 42, attributes: { method: "GET" } },
+            ]),
+        );
+    });
+
+    it("emits retry.count when scheduling a retry", async () => {
+        const metrics: string[] = [];
+        const f = composedFetch({
+            fetch: (async () => new Response("rate", { status: 429 })) as typeof fetch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 1, jitter: 0 },
+            hooks: {
+                onMetric: (metric) => {
+                    metrics.push(metric.name);
+                },
+            },
+        });
+
+        await f("https://example.test/x");
+
+        expect(metrics).toContain("retry.count");
+    });
+
+    it("does not require onMetric to be set", async () => {
+        const f = composedFetch({
+            fetch: (async () => new Response("ok", { status: 200 })) as typeof fetch,
+        });
+
+        await expect(f("https://example.test/x")).resolves.toHaveProperty("status", 200);
+    });
+});
+
+describe("composedFetch — abort during retry backoff", () => {
+    it("rejects promptly when the signal aborts mid-backoff", async () => {
+        const controller = new AbortController();
+        const f = composedFetch({
+            fetch: (async () => new Response("retry", { status: 503 })) as typeof fetch,
+            retryPolicy: {
+                maxRetries: 1,
+                jitter: 0,
+                computeDelay: () => 300,
+            },
+        });
+
+        const started = Date.now();
+        const request = f("https://example.test/x", { method: "GET", signal: controller.signal });
+        setTimeout(() => controller.abort(new Error("stop waiting")), 10);
+
+        await expect(request).rejects.toThrow(/stop waiting|abort/i);
+        expect(Date.now() - started).toBeLessThan(150);
+    });
+});
+
 describe("getRequestIdFromError", () => {
     it("returns the X-Request-Id from a Fern ClockifyApiError-shaped object", () => {
         const err = {

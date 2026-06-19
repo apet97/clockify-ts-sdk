@@ -114,4 +114,32 @@ describe("expense create/update tools", () => {
         expect(json.ok).toBe(true);
         expect((json.meta as { expenseId?: string }).expenseId).toBe("exp-1");
     });
+
+    it("clockify_expenses_categories_list unwraps the {categories,count} envelope", async () => {
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: async () => ({
+                        categories: [
+                            { id: "cat-1", name: "Travel" },
+                            { id: "cat-2", name: "Meals" },
+                        ],
+                        count: 2,
+                    }),
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_list",
+            arguments: {},
+        });
+        expect(res.isError).toBeFalsy();
+        const json = envelope(res);
+        expect(json.ok).toBe(true);
+        expect((json.meta as { count?: number }).count).toBe(2);
+        expect(Array.isArray(json.data)).toBe(true);
+        expect((json.data as unknown[]).length).toBe(2);
+    });
 });

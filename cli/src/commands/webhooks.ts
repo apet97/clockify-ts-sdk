@@ -2,6 +2,7 @@
  * `clk115 webhooks list` / `clk115 webhooks create` / `clk115 webhooks delete <id>`.
  */
 import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { assertSafeWebhookUrl } from "clockify-sdk-ts-115/webhooks";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -18,7 +19,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         .description("List webhooks in the workspace.")
         .option("--type <type>", "Filter by webhook type (e.g. WEBHOOK, ADDON_WEBHOOK).")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const req: { workspaceId: string; type?: string } = { workspaceId };
             if (opts.type) req.type = opts.type;
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
@@ -65,7 +66,14 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             "Comma-separated trigger source IDs (required when --trigger-source-type is set).",
         )
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
+            try {
+                assertSafeWebhookUrl(opts.url);
+            } catch (err) {
+                throw new Error(
+                    `webhooks.create: ${err instanceof Error ? err.message : String(err)}`,
+                );
+            }
             const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
                 Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
                     webhookEvent: string;
@@ -124,7 +132,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         .argument("<id>", "Webhook ID.")
         .description("Delete a webhook subscription.")
         .action(async function (this: Command, id: string) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             await client.webhooks.delete({ workspaceId, webhookId: id });
             printReceipt(
                 {

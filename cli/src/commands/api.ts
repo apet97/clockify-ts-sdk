@@ -39,7 +39,7 @@ export const registerApiCommand: Registrar = (program, services) => {
         .option("--max-pages <n>", "Maximum pages for --all.", "20")
         .option("--include-headers", "Include status and response headers in output.", false)
         .action(async function (this: Command, methodArg: string, pathArg: string, options: ApiOptions) {
-            const { client, config, output } = resolveBaseContext(this, services);
+            const { client, config, output } = await resolveBaseContext(this, services);
             const method = methodArg.toUpperCase();
             if (!METHODS.has(method)) {
                 throw new Error(`Unsupported method "${methodArg}". Use GET, POST, PUT, PATCH, or DELETE.`);

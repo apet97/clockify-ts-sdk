@@ -17,7 +17,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
         .command("list")
         .description("List invoices in the workspace.")
         .action(async function (this: Command) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const response = (await client.invoices.list({ workspaceId })) as {
                 invoices?: unknown[];
             };
@@ -61,7 +61,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
             "Time view mode (e.g. AGGREGATED_TIME_VIEW, DETAILED_TIME_VIEW).",
         )
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {
                 clientId: opts.client,
                 number: opts.number,

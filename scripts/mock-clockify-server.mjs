@@ -98,6 +98,36 @@ export function createMockClockifyServer(options = {}) {
             const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
             const parts = normalizedParts(url);
 
+            const headerStatus = Number(req.headers["x-mock-status"]);
+            const pathStatus = parts[0] === "__error" ? Number(parts[1]) : NaN;
+            const injected = Number.isFinite(pathStatus) ? pathStatus : headerStatus;
+            if (Number.isFinite(injected) && injected >= 400) {
+                if (injected === 429) {
+                    json(
+                        res,
+                        429,
+                        { code: "rate_limited", message: "Too Many Requests" },
+                        {
+                            "Retry-After": "30",
+                            "X-RateLimit-Reset": String(Math.floor(Date.now() / 1000) + 30),
+                        },
+                    );
+                    return;
+                }
+                const bodyByStatus = {
+                    401: { code: "unauthorized", message: "Unauthorized" },
+                    403: { code: "forbidden", message: "Forbidden" },
+                    500: { code: "internal_error", message: "Internal Server Error" },
+                    503: { code: "service_unavailable", message: "Service Unavailable" },
+                };
+                json(
+                    res,
+                    injected,
+                    bodyByStatus[injected] ?? { code: "error", message: `HTTP ${injected}` },
+                );
+                return;
+            }
+
             if (req.method === "GET" && parts.length === 1 && parts[0] === "user") {
                 json(res, 200, { id: userId, email: "mock@example.com", name: "Mock User" });
                 return;

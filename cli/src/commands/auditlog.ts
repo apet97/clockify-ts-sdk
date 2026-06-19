@@ -42,7 +42,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             50,
         )
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const actions = splitList(opts.actions);
             if (actions.length === 0) {
                 throw new Error("--actions must include at least one action name");

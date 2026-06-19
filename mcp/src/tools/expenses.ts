@@ -251,12 +251,15 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const items = (await ctx.client.expenseCategories.list({
+            const response = await ctx.client.expenseCategories.list({
                 workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
-                // KEEP as never: expense-category list uses live pagination not captured by generated type.
-            } as never)) as unknown[];
+            }, {
+                queryParams: {
+                    page: args.page ?? 1,
+                    "page-size": args.pageSize ?? 50,
+                },
+            });
+            const items = Array.isArray(response) ? response : (response.categories ?? []);
             return successResult("clockify_expenses_categories_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,

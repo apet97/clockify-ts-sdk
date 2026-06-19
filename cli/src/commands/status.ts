@@ -18,7 +18,7 @@ export const registerStatusCommand: Registrar = (program, services) => {
         .command("status")
         .description("Show the configured workspace, current user, and running timer.")
         .action(async function (this: Command) {
-            const { client, config, output } = resolveBaseContext(this, services);
+            const { client, config, output } = await resolveBaseContext(this, services);
             const user = await client.users.getCurrentUser();
 
             // Workspace bootstrap: with only an API key and no workspace

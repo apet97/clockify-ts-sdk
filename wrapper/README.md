@@ -304,7 +304,7 @@ for (let page = 1; ; page++) {
 ### Drift assertion
 
 The `KnownPaginatedMethod` type union exported from
-`clockify-sdk-ts-115/iter` enumerates the 19 known paginated
+`clockify-sdk-ts-115/iter` enumerates the 14 known paginated
 `(resource, method)` pairs. A CI assertion in
 `tests/iter.test.ts` verifies each one exists on a fresh client,
 catching upstream renames at build time.

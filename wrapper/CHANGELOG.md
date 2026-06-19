@@ -57,12 +57,22 @@ once v1.0.0 ships.
   MCP, troubleshooting, and recovery docs name rate-limit headers, add-on token
   scope, host routing, active-delete, dead-route, and delete-name-reservation
   failures consistently.
+- `clockify-sdk-ts-115/webhooks` now exports the shared webhook callback URL
+  safety guard used by the SDK-adjacent CLI and MCP surfaces.
+- `ComposedFetchHooks.onMetric` now emits best-effort numeric samples for
+  request duration, retry scheduling, and rate-limit remaining headers.
+- `IterOptions.onPage` adds a per-page progress callback for `iterPages`,
+  `iterAll`, and scoped workspace iterators.
 
 ### Changed
 
 - Coverage thresholds in `vitest.config.ts` now mirror the measured floor in
   `docs/coverage-contract.json`, so a bare wrapper coverage run enforces the
   same floor as the cross-package ratchet.
+- Wrapper builds no longer emit `.map` files into `dist`, removing dead source
+  and declaration maps from the npm dry-run package.
+- `Workspace.entityChangesExperimental` is now marked `@experimental` /
+  `@beta` and warns once outside test runs.
 - Removed deprecated `findOrCreateClient` from the root barrel (root public
   surface 93 -> 92 names). It remains available from the
   `clockify-sdk-ts-115/ensure` subpath; prefer `ensureClient`.
@@ -84,6 +94,15 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `iterAll` / `iterPages` now govern 14 confirmed paginated method pairs,
+  excluding envelope-returning balance lists and unpaginated custom-field /
+  holiday lists from the drift assertion.
+- `composedFetch` retry backoff sleep now rejects promptly when the request
+  `AbortSignal` aborts during the delay.
+- Webhook callback URL validation now rejects common internal-only host suffixes
+  (`.home.arpa`, `.lan`, `.corp`, `.intranet`).
+- `WebhookSignatureMismatchError` no longer stores the attacker-supplied
+  received signature token on mismatch errors.
 - Added a generated-client HTTP regression test for list wire shapes: projects
   remain bare arrays, invoices remain `{ invoices, total }` envelopes, and the
   in-progress time-entry route keeps `page-size` pagination wired through the

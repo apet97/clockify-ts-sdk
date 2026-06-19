@@ -105,7 +105,7 @@ describe("constructEvent", () => {
         ).toThrow(WebhookSignatureMismatchError);
     });
 
-    it("throws WebhookSignatureMismatchError with the received token on mismatch", () => {
+    it("throws WebhookSignatureMismatchError without echoing the received token on mismatch", () => {
         const wrong = "b".repeat(32);
         try {
             constructEvent({
@@ -116,7 +116,8 @@ describe("constructEvent", () => {
             expect.unreachable("should have thrown");
         } catch (err) {
             expect(err).toBeInstanceOf(WebhookSignatureMismatchError);
-            expect((err as WebhookSignatureMismatchError).received).toBe(wrong);
+            expect(err).not.toHaveProperty("received");
+            expect(JSON.stringify(err)).not.toContain(wrong);
         }
     });
 

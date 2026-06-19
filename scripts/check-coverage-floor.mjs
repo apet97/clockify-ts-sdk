@@ -7,6 +7,7 @@
 // ratchet direction. Run the three `npm run test:coverage` scripts first so the
 // summary files exist; `make coverage` does that for you.
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -47,6 +48,26 @@ function readJson(relPath, label) {
     }
 }
 
+function readHeadContract() {
+    try {
+        const text = execFileSync("git", ["show", "HEAD:docs/coverage-contract.json"], {
+            cwd: root,
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "ignore"],
+        });
+        return JSON.parse(text);
+    } catch {
+        return null;
+    }
+}
+
+function headFloor(headContract, id, metric) {
+    if (headContract == null || !Array.isArray(headContract.packages)) return null;
+    const pkg = headContract.packages.find((entry) => entry?.id === id);
+    const value = pkg?.floors?.[metric];
+    return Number.isInteger(value) ? value : null;
+}
+
 const contract = readJson("docs/coverage-contract.json", "contract");
 if (contract == null) {
     for (const failure of failures) console.error(`- ${failure}`);
@@ -75,6 +96,8 @@ if (!Array.isArray(contract.packages) || contract.packages.length !== 3) {
     fail("packages", "must be an array of exactly 3 entries (wrapper, cli, mcp)");
 }
 
+const headContract = readHeadContract();
+
 for (const pkg of contract.packages ?? []) {
     const id = pkg?.id ?? "(unknown)";
     const summary = readJson(pkg?.summary, `${id}.summary`);
@@ -85,6 +108,13 @@ for (const pkg of contract.packages ?? []) {
         if (!Number.isInteger(floor) || floor < 0 || floor > 100) {
             fail(`${id}.floors.${metric}`, "must be an integer in [0,100]");
             continue;
+        }
+        const prior = headFloor(headContract, id, metric);
+        if (prior != null && floor < prior) {
+            fail(
+                `${id}.floors.${metric}`,
+                `floor ${floor}% is BELOW the committed HEAD floor ${prior}% — the ratchet is monotonic-up; raise tests instead of lowering the floor.`,
+            );
         }
         const measured = total?.[metric]?.pct;
         if (typeof measured !== "number" || Number.isNaN(measured)) {

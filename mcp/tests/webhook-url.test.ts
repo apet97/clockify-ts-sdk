@@ -112,6 +112,20 @@ describe("validateWebhookUrl", () => {
         });
     }
 
+    const internalTlds = [
+        "https://printer.home.arpa/hook",
+        "https://nas.lan/hook",
+        "https://intranet.corp/hook",
+        "https://wiki.intranet/hook",
+    ];
+    for (const candidate of internalTlds) {
+        it(`rejects internal-TLD hostname: ${candidate}`, () => {
+            const result = validateWebhookUrl(candidate);
+            expect(result.ok).toBe(false);
+            if (!result.ok) expect(result.reason).toMatch(/internal|home network|TLD/i);
+        });
+    }
+
     it("names the rejected host in the reason", () => {
         const result = validateWebhookUrl("https://169.254.169.254/latest/meta-data");
         expect(result.ok).toBe(false);

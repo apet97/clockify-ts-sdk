@@ -16,7 +16,7 @@ export const registerStopCommand: Registrar = (program, services) => {
         .command("stop")
         .description("Stop the running timer for the current user.")
         .action(async function (this: Command) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const user = await client.users.getCurrentUser();
             const userId = entityId(user);
             if (!userId) {

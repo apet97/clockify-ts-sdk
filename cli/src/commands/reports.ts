@@ -85,7 +85,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--project <name|id...>", "Scope to one or more project names or ids.")
         .option("--client <name|id...>", "Scope to one or more client names or ids.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
             const groups = String(opts.groups)
                 .split(",")
@@ -130,7 +130,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             50,
         )
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
             const req: ReportRequest = {
                 workspaceId,
@@ -156,7 +156,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--group <group>", "Top grouping: USER or PROJECT.", "USER")
         .option("--subgroup <subgroup>", "Subgrouping (TIME).", "TIME")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
             const req: ReportRequest = {
                 workspaceId,
@@ -180,7 +180,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
         .action(async function (this: Command, opts) {
-            const { client, workspaceId, output } = resolveContext(this, services);
+            const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
             const data = await client.reports.attendance(
                 wireBody<ClockifyApi.AttendanceReportsRequest>({

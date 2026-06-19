@@ -30,6 +30,12 @@ import { timingSafeEqual } from "node:crypto";
 
 import type { ClockifyWebhookEvent } from "./webhook-events.js";
 
+export {
+    assertSafeWebhookUrl,
+    validateWebhookUrl,
+    type WebhookUrlValidation,
+} from "./webhook-url.js";
+
 /** The HTTP header Clockify sends on every webhook delivery,
  *  containing the per-webhook auth token. Case-insensitive per HTTP
  *  spec; the helpers in this module normalize. */
@@ -47,18 +53,13 @@ export type WebhookHeadersInput =
 /** Thrown by {@link constructEvent} when the
  *  `Clockify-Signature-Token` header is missing or doesn't match. */
 export class WebhookSignatureMismatchError extends Error {
-    /** The header value that was actually received (if any). Useful
-     *  for debugging without re-reading the request. */
-    public readonly received: string | undefined;
-
-    constructor(message: string, opts?: { received?: string }) {
+    constructor(message: string) {
         super(message);
         Object.setPrototypeOf(this, new.target.prototype);
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         }
         this.name = "WebhookSignatureMismatchError";
-        this.received = opts?.received;
     }
 }
 
@@ -192,7 +193,6 @@ export function constructEvent<TPayload = ClockifyWebhookEvent>(
     if (!constantTimeStringEqual(received, input.expectedToken)) {
         throw new WebhookSignatureMismatchError(
             `${CLOCKIFY_SIGNATURE_HEADER} header did not match the expected webhook token.`,
-            { received },
         );
     }
     const text =

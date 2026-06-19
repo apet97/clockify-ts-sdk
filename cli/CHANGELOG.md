@@ -23,6 +23,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- `clk115 webhooks create` now rejects unsafe callback URLs (non-HTTPS,
+  loopback, private/link-local, metadata, and embedded-credential hosts) before
+  making a Clockify API call.
 - `clk115 stop` now stops the running timer through the live, bound route: it detects a
   running timer via `timeEntries.listInProgress` and stops it via
   `timeEntries.updateForUser` (`{ end }`, live-verified 2026-06-17) instead of the dead
@@ -47,6 +50,8 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- The CLI now lazy-loads the SDK root only when a command actually builds a
+  Clockify client, keeping cold paths like `--version` lighter.
 - Test coverage: added focused reports, read-command, resolver, and status
   suites that exercise real request shapes, row mapping, and branch behavior;
   CLI coverage now measures above 80% for both branches and statements, and

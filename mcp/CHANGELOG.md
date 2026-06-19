@@ -48,6 +48,15 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Webhook create/update tools now reject unsafe callback URLs (non-HTTPS,
+  loopback, private/link-local, metadata, and embedded-credential hosts) before
+  making a Clockify API call.
+- `clockify_expenses_categories_list` now unwraps the generated
+  `{ categories, count }` envelope and reports the real item count.
+- `clockify_time_off_requests_submit` now rejects invalid `halfDayPeriod`
+  values at the MCP schema boundary.
+- Webhook URL validation now rejects common internal-only host suffixes
+  (`.home.arpa`, `.lan`, `.corp`, `.intranet`).
 - `clockify_sdk_snippet` pagination/sdk and webhook/sdk snippets now use real
   SDK APIs: `tags.list` with request-object `iterAll`, and single-object
   `constructEvent({ headers, payload, expectedToken })`.
@@ -84,6 +93,8 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- MCP success/error result text is now compact JSON while preserving the same
+  structured envelope shape.
 - Tool-manifest hardening: the generator now fails closed if runtime
   introspection drops below the known MCP tool floor, the test and generator
   share one offline introspection harness, and write-safety now verifies every
