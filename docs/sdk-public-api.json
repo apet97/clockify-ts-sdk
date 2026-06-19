@@ -89,6 +89,7 @@
     "ensureProject",
     "ensureClient",
     "archiveThenDeleteProject",
+    "archiveThenDeleteClient",
     "summaryFilter",
     "detailedFilter",
     "weeklyFilter",
@@ -96,8 +97,6 @@
     "summaryGroups",
     "reportTotals",
     "mapBounded",
-    "bulkArchiveProjects",
-    "bulkDelete",
     "runComposition",
     "leftBehindNote",
     "wireBody"
@@ -206,7 +205,8 @@
       "ensureProject",
       "ensureClient",
       "findOrCreateClient",
-      "archiveThenDeleteProject"
+      "archiveThenDeleteProject",
+      "archiveThenDeleteClient"
     ],
     "./requests": [
       "wireBody"
@@ -220,9 +220,7 @@
       "reportTotals"
     ],
     "./bulk": [
-      "mapBounded",
-      "bulkArchiveProjects",
-      "bulkDelete"
+      "mapBounded"
     ],
     "./compose": [
       "runComposition",

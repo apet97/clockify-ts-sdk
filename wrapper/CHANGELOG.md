@@ -9,6 +9,23 @@ once v1.0.0 ships.
 
 ### Added
 
+- `clockify-sdk-ts-115/ensure` now exports `archiveThenDeleteClient` alongside
+  `archiveThenDeleteProject`, and both own the FULL live-allowed delete sequence
+  (GET name → archive replace-PUT `archived:true` → DELETE) plus the empty-name
+  guard — the project variant uses the flattened update body, the client variant
+  the body-envelope quirk that bypasses the `clients.update` field whitelist. The
+  CLI (`clk115 projects/clients delete`) and MCP
+  (`clockify_projects_delete`/`clockify_clients_delete`) handlers now call these
+  helpers instead of hand-copying the steps across four sites. Public surface is
+  now 92 names (was 91).
+
+### Changed
+
+- `archiveThenDeleteProject` is now resource-driven: it takes `{workspaceId, id,
+  resource}` (pass `client.projects`) and owns the GET/archive/DELETE calls,
+  rather than the prior injected `archiveProject`/`deleteProject` callbacks. The
+  `ArchiveThenDeleteResult` now also carries `id` and `clientId` aliases.
+
 - `operation-receipt` now exports `entityId()`, the shared safe id extractor
   used by CLI/MCP receipts instead of each package carrying its own narrowing
   helper.
@@ -98,6 +115,10 @@ once v1.0.0 ships.
 - Removed deprecated `findOrCreateClient` from the root barrel (root public
   surface 93 -> 92 names). It remains available from the
   `clockify-sdk-ts-115/ensure` subpath; prefer `ensureClient`.
+- Removed the `bulkArchiveProjects` and `bulkDelete` aliases from the root
+  barrel and the `clockify-sdk-ts-115/bulk` subpath — they were identity
+  no-op wrappers over `mapBounded` with no internal consumers. Call
+  `mapBounded(ids, fn)` directly (root public surface 93 -> 91 names).
 - `tsconfig.json` now sets `isolatedModules: true`, aligning the wrapper
   with the cli/mcp strictness baseline. (`noImplicitOverride` was held
   back: the generated `src/errors/*` classes override `Error.cause` /
