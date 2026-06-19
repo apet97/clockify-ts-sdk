@@ -200,8 +200,8 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureTagHelper<NamedRecord>({
             name,
-            list: async () => (await this.client.tags.list({ workspaceId })) as unknown as NamedRecord[],
-            create: async (n) => (await this.client.tags.create({ workspaceId, name: n })) as unknown as NamedRecord,
+            list: async () => await this.client.tags.list({ workspaceId }),
+            create: async (n) => await this.client.tags.create({ workspaceId, name: n }),
         });
     }
 
@@ -210,8 +210,8 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureProjectHelper<NamedRecord>({
             name,
-            list: async () => (await this.client.projects.list({ workspaceId })) as unknown as NamedRecord[],
-            create: async (n) => (await this.client.projects.create({ workspaceId, name: n })) as unknown as NamedRecord,
+            list: async () => await this.client.projects.list({ workspaceId }),
+            create: async (n) => await this.client.projects.create({ workspaceId, name: n }),
         });
     }
 
@@ -220,8 +220,8 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureClientHelper<NamedRecord>({
             name,
-            list: async () => (await this.client.clients.list({ workspaceId })) as unknown as NamedRecord[],
-            create: async (n) => (await this.client.clients.create({ workspaceId, body: { name: n } })) as unknown as NamedRecord,
+            list: async () => await this.client.clients.list({ workspaceId }),
+            create: async (n) => await this.client.clients.create({ workspaceId, body: { name: n } }),
         });
     }
 
