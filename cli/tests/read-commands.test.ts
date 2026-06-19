@@ -581,7 +581,7 @@ describe("project and task read command branches", () => {
 });
 
 describe("users, tags, and shared report read branches", () => {
-    it("users list applies name and page-size filters", async () => {
+    it("users list applies name and limit filters", async () => {
         const calls: Record<string, unknown>[] = [];
         const client = {
             users: {
@@ -597,7 +597,7 @@ describe("users, tags, and shared report read branches", () => {
             "--json",
             "users",
             "list",
-            "--page-size",
+            "--limit",
             "999",
             "--name",
             "Ana",

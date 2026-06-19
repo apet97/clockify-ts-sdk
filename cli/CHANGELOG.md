@@ -50,6 +50,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- `clk115 users list` renamed its `--page-size <n>` flag to `--limit <n>`
+  (default 25, max 200), matching the page-size vocabulary used by the other
+  read commands. The underlying `page-size` request field is unchanged.
 - Internal id extraction now imports `entityId()` from
   `clockify-sdk-ts-115/operation-receipt`, keeping CLI receipt narrowing on the
   same public SDK helper used by MCP.
@@ -176,6 +179,9 @@ All notable changes to `@clockify115/cli` are documented here.
   exported `ClockifyClient` type directly instead of a type-only helper shim.
   The ESLint toolchain (`eslint`, `typescript-eslint`, `eslint-plugin-import-x`)
   is declared as explicit devDependencies rather than relying on workspace hoisting.
+- Corrected the `eslint.config.mjs` header comment to describe the actual
+  type-aware setup (`project: ["./tsconfig.lint.json"]`) instead of the stale
+  `projectService: true` note.
 
 ## [0.1.0] - 2026-05-26
 
