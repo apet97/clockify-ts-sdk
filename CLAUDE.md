@@ -122,6 +122,11 @@ make docs-drift
   Validators (schema-quality, generator-comparison) skip gracefully
   with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
+- `spec/corrected/clockify.corrected.openapi.yaml` is generated upstream by
+  GOCLMCP. The only accepted diff here is a straight copy from
+  `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator
+  and drift gates pass; in that handoff, run the final full proof as
+  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' CLOCKIFY_ALLOW_GENERATED_DIFF=1 make perfect-full`.
 - Some operations live on non-default Clockify hosts (reports →
   `reports.api.clockify.me/v1`, audit-log → `auditlog-api.api.clockify.me/v1`,
   shared/expense reports). The corrected OpenAPI carries a per-operation

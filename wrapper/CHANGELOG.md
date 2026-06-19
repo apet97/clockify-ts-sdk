@@ -66,6 +66,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Synced the corrected OpenAPI snapshot from GOCLMCP after 19 new
+  live-success promotions and required-field response schema fixes; generated
+  resource docs now reflect the updated expense create request shape.
 - Coverage thresholds in `vitest.config.ts` now mirror the measured floor in
   `docs/coverage-contract.json`, so a bare wrapper coverage run enforces the
   same floor as the cross-package ratchet.

@@ -21,9 +21,9 @@
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
-- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, optional) — Live Clockify accepts create-expense multipart requests without a file.
 - `notes` (`string`, optional) — Represents notes for an expense.
-- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `projectId` (`string`, optional)
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 - `workspaceId` (`string`, required)
@@ -32,9 +32,9 @@
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
-- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, optional) — Live Clockify accepts create-expense multipart requests without a file.
 - `notes` (`string`, optional) — Represents notes for an expense.
-- `projectId` (`string`, required) — Represents a project identifier across the system.
+- `projectId` (`string`, optional)
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 

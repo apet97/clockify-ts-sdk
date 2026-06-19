@@ -78,7 +78,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const tag = await client.tags.get({ workspaceId, tagId: id });
-            printObject(tag as Record<string, unknown>, output);
+            printObject(tag, output);
         });
 
     tags.command("update")

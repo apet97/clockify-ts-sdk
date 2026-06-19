@@ -353,10 +353,12 @@ function packageNext(projectId: string, taskId: string, tagIds: string[]): NextA
 
 export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord> {
     if (str(args.entry_id)) {
-        return (await ctx.client.timeEntries.get({
-            workspaceId: ctx.workspaceId,
-            timeEntryId: str(args.entry_id),
-        })) as AnyRecord;
+        return {
+            ...(await ctx.client.timeEntries.get({
+                workspaceId: ctx.workspaceId,
+                timeEntryId: str(args.entry_id),
+            })),
+        };
     }
     const user = await ctx.client.users.getCurrentUser();
     // Walk ALL pages: a real entry past row 200 must still be findable,
