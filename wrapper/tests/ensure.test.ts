@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { _resetWarnOnceForTests } from "../deprecation.js";
 import {
+    archiveThenDeleteClient,
     archiveThenDeleteProject,
     ensureClient,
     ensureProject,
@@ -117,36 +118,114 @@ describe("ensureProject / ensureClient", () => {
     });
 });
 
+/**
+ * A capturing fake of an SDK resource (`client.projects` / `client.clients`): it
+ * returns `name` from `get` and records every request it receives, so a test can
+ * assert BOTH the call order and the exact archive request body shape (flattened
+ * for a project, body-envelope for a client).
+ */
+function fakeResource(name: string | undefined) {
+    const order: string[] = [];
+    const updateReqs: unknown[] = [];
+    return {
+        order,
+        updateReqs,
+        resource: {
+            get: async (req: { workspaceId: string } & Record<string, unknown>) => {
+                order.push("get");
+                return { name, ...req };
+            },
+            update: async (req: unknown) => {
+                order.push("update");
+                updateReqs.push(req);
+                return req as object;
+            },
+            delete: async (_req: { workspaceId: string } & Record<string, unknown>) => {
+                order.push("delete");
+                return undefined;
+            },
+        },
+    };
+}
+
 describe("archiveThenDeleteProject", () => {
-    it("archives before deleting an active project", async () => {
-        const calls: string[] = [];
+    it("GETs the name, archives (flattened archived:true), then deletes — in that order", async () => {
+        const f = fakeResource("Acme");
         const result = await archiveThenDeleteProject({
-            projectId: "p_1",
-            archiveProject: async () => {
-                calls.push("archive");
-            },
-            deleteProject: async () => {
-                calls.push("delete");
-            },
+            workspaceId: "ws",
+            id: "p_1",
+            resource: f.resource,
         });
-        expect(calls).toEqual(["archive", "delete"]);
-        expect(result).toEqual({ projectId: "p_1", archived: true, deleted: true });
+        expect(f.order).toEqual(["get", "update", "delete"]);
+        // A project archives via the FLATTENED shape (its whitelist has `archived`),
+        // carrying the GET-ed name through the replace-PUT.
+        expect(f.updateReqs).toEqual([
+            { workspaceId: "ws", projectId: "p_1", name: "Acme", archived: true },
+        ]);
+        expect(result).toEqual({
+            id: "p_1",
+            projectId: "p_1",
+            clientId: "p_1",
+            archived: true,
+            deleted: true,
+        });
     });
 
-    it("skips the archive step when alreadyArchived is set", async () => {
-        const calls: string[] = [];
+    it("skips the GET + archive steps when alreadyArchived is set", async () => {
+        const f = fakeResource("Acme");
         const result = await archiveThenDeleteProject({
-            projectId: "p_2",
+            workspaceId: "ws",
+            id: "p_2",
+            resource: f.resource,
             alreadyArchived: true,
-            archiveProject: async () => {
-                calls.push("archive");
-            },
-            deleteProject: async () => {
-                calls.push("delete");
-            },
         });
-        expect(calls).toEqual(["delete"]);
+        expect(f.order).toEqual(["delete"]);
+        expect(f.updateReqs).toEqual([]);
         expect(result.archived).toBe(false);
         expect(result.deleted).toBe(true);
+    });
+
+    it("throws BEFORE archiving when the entity has no name to carry through the replace-PUT", async () => {
+        const f = fakeResource(undefined); // no name on the wire
+        await expect(
+            archiveThenDeleteProject({ workspaceId: "ws", id: "p_3", resource: f.resource }),
+        ).rejects.toThrow(/Cannot archive project before delete.*no name/);
+        // The guard short-circuits after the GET: no archive, no delete.
+        expect(f.order).toEqual(["get"]);
+        expect(f.updateReqs).toEqual([]);
+    });
+});
+
+describe("archiveThenDeleteClient", () => {
+    it("GETs the name, archives via the BODY-ENVELOPE quirk, then deletes — in that order", async () => {
+        const f = fakeResource("Globex");
+        const result = await archiveThenDeleteClient({
+            workspaceId: "ws",
+            id: "c_1",
+            resource: f.resource,
+        });
+        expect(f.order).toEqual(["get", "update", "delete"]);
+        // A client MUST archive via the BODY-ENVELOPE shape — the flattened
+        // clients.update drops `archived` (field whitelist), so the envelope is the
+        // only path that lands archived:true on the wire. It carries the GET-ed name.
+        expect(f.updateReqs).toEqual([
+            { workspaceId: "ws", clientId: "c_1", body: { name: "Globex", archived: true } },
+        ]);
+        expect(result).toEqual({
+            id: "c_1",
+            projectId: "c_1",
+            clientId: "c_1",
+            archived: true,
+            deleted: true,
+        });
+    });
+
+    it("throws (noun 'client') BEFORE archiving when the client has no name", async () => {
+        const f = fakeResource(""); // empty name
+        await expect(
+            archiveThenDeleteClient({ workspaceId: "ws", id: "c_2", resource: f.resource }),
+        ).rejects.toThrow(/Cannot archive client before delete.*no name/);
+        expect(f.order).toEqual(["get"]);
+        expect(f.updateReqs).toEqual([]);
     });
 });

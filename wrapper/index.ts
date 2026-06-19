@@ -189,12 +189,16 @@ export {
 } from "./resolve.js";
 
 // Safe create-or-reuse helpers for duplicate-name-prone entities (tags, projects,
-// clients) plus archive-then-delete for projects (active delete 400s on the wire).
+// clients) plus archive-then-delete for projects and clients (active delete 400s
+// on the wire; clients need the body-envelope archive quirk).
 export {
+    archiveThenDeleteClient,
     archiveThenDeleteProject,
     ensureClient,
     ensureProject,
     ensureTag,
+    type ArchiveThenDeleteEntityOptions,
+    type ArchiveThenDeleteResource,
     type ArchiveThenDeleteResult,
     type EnsureResult,
     type FindOrCreateOptions,
@@ -218,10 +222,8 @@ export {
     type WeeklyReportResponse,
 } from "./reports.js";
 
-// Bounded-parallel bulk helpers (mapBounded + thin archive/delete wrappers).
+// Bounded-parallel bulk helper.
 export {
-    bulkArchiveProjects,
-    bulkDelete,
     mapBounded,
     type BulkFailure,
     type BulkResult,

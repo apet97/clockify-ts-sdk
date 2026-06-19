@@ -4,8 +4,7 @@
  *
  * `mapBounded` runs `fn` over `items` with a capped number of in-flight calls,
  * collecting per-item failures (so one bad item doesn't tank the run) unless
- * `continueOnError` is false. The thin `bulkArchiveProjects` / `bulkDelete`
- * helpers take an injected operation so the caller wires the real route — e.g.
+ * `continueOnError` is false. The caller injects the real operation — e.g.
  * `client.projects.update({ ..., archived: true })` for archiving (the
  * dedicated `projects.archive` route is dead/404 on the live API).
  */
@@ -69,26 +68,4 @@ export async function mapBounded<T, R>(
     const poolSize = Math.min(concurrency, items.length);
     await Promise.all(Array.from({ length: poolSize }, () => worker()));
     return { ok, failures };
-}
-
-/**
- * Archive many projects with bounded concurrency. `archiveFn` must perform the
- * archive — wire it to `client.projects.update({ workspaceId, projectId: id,
- * archived: true })` (NOT `projects.archive`, whose `/archive` route is dead).
- */
-export function bulkArchiveProjects<R>(
-    ids: readonly string[],
-    archiveFn: (id: string) => Promise<R>,
-    opts?: MapBoundedOptions,
-): Promise<BulkResult<string, R>> {
-    return mapBounded(ids, (id) => archiveFn(id), opts);
-}
-
-/** Delete many entities by id with bounded concurrency via an injected `deleteFn`. */
-export function bulkDelete<R>(
-    ids: readonly string[],
-    deleteFn: (id: string) => Promise<R>,
-    opts?: MapBoundedOptions,
-): Promise<BulkResult<string, R>> {
-    return mapBounded(ids, (id) => deleteFn(id), opts);
 }

@@ -116,36 +116,179 @@ export function findOrCreateClient<T extends NamedRecord>(
     return ensureClient(opts);
 }
 
-/** The outcome of an archive-then-delete: which steps actually ran. */
+/**
+ * The outcome of an archive-then-delete: which steps actually ran, plus the id
+ * (under both a generic `id` and the entity-specific `projectId`/`clientId` alias
+ * the call sites build their receipts from).
+ */
 export interface ArchiveThenDeleteResult {
+    /** The id of the entity that was archived-then-deleted. */
+    id: string;
+    /** Convenience alias of {@link id} for project call sites. */
     projectId: string;
-    /** `true` if this call archived the project (it was active); `false` if it was skipped. */
+    /** Convenience alias of {@link id} for client call sites. */
+    clientId: string;
+    /** `true` if this call archived the entity (it was active); `false` if it was skipped. */
     archived: boolean;
     /** `true` once the DELETE succeeded. */
     deleted: boolean;
 }
 
 /**
- * Delete a project the way the live API actually allows it: archive first, then
- * delete. Deleting an ACTIVE project returns HTTP 400, so `clockify_projects_delete`
- * and any direct SDK caller must archive (PUT `archived: true`) before the DELETE.
- * Pass `alreadyArchived: true` to skip the archive step when the project is known
- * to be archived already.
+ * The minimal SDK-resource surface the archive-then-delete sequence drives. The
+ * project (`client.projects`) and client (`client.clients`) resources both satisfy
+ * this shape, so the helper takes the resource directly and owns the GET / archive
+ * / DELETE wire calls — the call site no longer re-spells them. `get`/`update`/
+ * `delete` are duck-typed loosely (see the `any` note below) so both resources fit
+ * without leaking their generated request types into this layer.
  */
-export async function archiveThenDeleteProject(opts: {
-    projectId: string;
-    /** Archive the project (PUT update with `archived: true`). */
-    archiveProject: (projectId: string) => Promise<void>;
-    /** Delete the (now archived) project. */
-    deleteProject: (projectId: string) => Promise<void>;
-    /** Skip the archive step when the project is already archived. */
+export interface ArchiveThenDeleteResource {
+    // Params are intentionally `any`: the generated `projects`/`clients` clients
+    // type `get`/`update`/`delete` with their own required request shapes
+    // (`GetProjectsRequest` etc.), and a method whose param is *narrower* than the
+    // interface's is not assignable. `any` lets both concrete resources satisfy
+    // this seam without leaking their generated request types into this layer; the
+    // helper builds correctly-keyed request objects at the call sites below.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    get: (req: any) => Promise<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    update: (req: any) => Promise<unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete: (req: any) => Promise<unknown>;
+}
+
+/** What the {@link archiveThenDelete} core needs to run the full sequence. */
+interface ArchiveThenDeleteOptions {
+    /** Human noun for error messages and the per-entity id key ("project" | "client"). */
+    noun: "project" | "client";
+    workspaceId: string;
+    /** The id of the entity to archive-then-delete. */
+    id: string;
+    /** The resource (`client.projects` / `client.clients`) whose get/update/delete to drive. */
+    resource: ArchiveThenDeleteResource;
+    /**
+     * Build the archive (PUT `archived: true`) request body, given the GET-ed name.
+     * This is the ONLY per-entity quirk: a project uses the flattened shape
+     * `{workspaceId, projectId, name, archived:true}` (the project update whitelist
+     * HAS `archived`); a client MUST use the body-envelope shape
+     * `{workspaceId, clientId, body:{name, archived:true}}` because the flattened
+     * `clients.update` drops `archived` (whitelist `[address, currencyCode, email,
+     * name, note]`) and `clients.archive` 404s — the envelope bypasses the field
+     * whitelist via `core.bodyFromRequest`, landing `archived:true` on the wire.
+     */
+    archiveRequest: (id: string, name: string) => unknown;
+    /** Skip the GET + archive steps when the entity is already known to be archived. */
     alreadyArchived?: boolean;
-}): Promise<ArchiveThenDeleteResult> {
+}
+
+/** The id key on the GET / DELETE requests for each entity. */
+const ID_KEY = { project: "projectId", client: "clientId" } as const;
+
+/**
+ * The full archive-then-delete sequence, the way the live Clockify API actually
+ * allows it: GET the name → archive (replace-PUT `archived: true`) → DELETE.
+ *
+ * Deleting an ACTIVE project/client returns HTTP 400 ("Cannot delete an active
+ * …", live-verified 2026-06-15/17) and the dedicated `/archive` routes 404, so a
+ * direct SDK caller must archive first. The archive is a *replace*-PUT, so the
+ * sequence GETs the current name and carries it through — erroring clearly when
+ * the entity has no name (otherwise the PUT would blank it). The only per-entity
+ * difference is the archive request body, supplied by `archiveRequest`; this core
+ * owns the GET-name step, the empty-name guard, the ordering, and the DELETE.
+ *
+ * @throws if the entity has no name to carry through the replace-PUT archive step.
+ */
+async function archiveThenDelete(opts: ArchiveThenDeleteOptions): Promise<ArchiveThenDeleteResult> {
+    const idKey = ID_KEY[opts.noun];
     let archived = false;
     if (!opts.alreadyArchived) {
-        await opts.archiveProject(opts.projectId);
+        const current = (await opts.resource.get({
+            workspaceId: opts.workspaceId,
+            [idKey]: opts.id,
+        })) as { name?: string };
+        const name = String(current.name ?? "");
+        if (!name) {
+            throw new Error(
+                `Cannot archive ${opts.noun} before delete: the ${opts.noun} has no name to carry through the replace-PUT.`,
+            );
+        }
+        await opts.resource.update(opts.archiveRequest(opts.id, name));
         archived = true;
     }
-    await opts.deleteProject(opts.projectId);
-    return { projectId: opts.projectId, archived, deleted: true };
+    await opts.resource.delete({ workspaceId: opts.workspaceId, [idKey]: opts.id });
+    return { id: opts.id, projectId: opts.id, clientId: opts.id, archived, deleted: true };
+}
+
+/** Options for {@link archiveThenDeleteProject} / {@link archiveThenDeleteClient}. */
+export interface ArchiveThenDeleteEntityOptions {
+    workspaceId: string;
+    /** The project/client id to archive-then-delete. */
+    id: string;
+    /** The SDK resource to drive — `client.projects` or `client.clients`. */
+    resource: ArchiveThenDeleteResource;
+    /** Skip the GET + archive steps when the entity is already archived. */
+    alreadyArchived?: boolean;
+}
+
+/**
+ * Delete a project the live-allowed way: GET the name → archive (flattened
+ * `projects.update({name, archived:true})`, since the project update whitelist HAS
+ * `archived`) → DELETE. Owns the empty-name guard. Pass `client.projects` as the
+ * `resource`. See `spec/evidence/discrepancies.md` `deletes.archive-first.*`.
+ *
+ * @example
+ * ```ts
+ * await archiveThenDeleteProject({ workspaceId, id: projectId, resource: client.projects });
+ * ```
+ */
+export function archiveThenDeleteProject(
+    opts: ArchiveThenDeleteEntityOptions,
+): Promise<ArchiveThenDeleteResult> {
+    return archiveThenDelete({
+        noun: "project",
+        workspaceId: opts.workspaceId,
+        id: opts.id,
+        resource: opts.resource,
+        ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
+        // Flattened: the project update whitelist accepts `archived` directly.
+        archiveRequest: (projectId, name) => ({
+            workspaceId: opts.workspaceId,
+            projectId,
+            name,
+            archived: true,
+        }),
+    });
+}
+
+/**
+ * Delete a client the live-allowed way: GET the name → archive → DELETE. Owns the
+ * empty-name guard AND the body-envelope quirk: the archive request is the
+ * envelope shape `clients.update({...,body:{name, archived:true}})`, because the
+ * flattened `clients.update` drops `archived` and `clients.archive` 404s — only
+ * the envelope lands `archived:true` on the wire (via `core.bodyFromRequest`).
+ * Pass `client.clients` as the `resource`. See
+ * `spec/evidence/discrepancies.md` `deletes.archive-first.clients-blocked`.
+ *
+ * @example
+ * ```ts
+ * await archiveThenDeleteClient({ workspaceId, id: clientId, resource: client.clients });
+ * ```
+ */
+export function archiveThenDeleteClient(
+    opts: ArchiveThenDeleteEntityOptions,
+): Promise<ArchiveThenDeleteResult> {
+    return archiveThenDelete({
+        noun: "client",
+        workspaceId: opts.workspaceId,
+        id: opts.id,
+        resource: opts.resource,
+        ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
+        // Body-envelope: bypasses the clients.update field whitelist so `archived`
+        // reaches the wire. Mirrors the wireBody() envelope the SDK exposes.
+        archiveRequest: (clientId, name) => ({
+            workspaceId: opts.workspaceId,
+            clientId,
+            body: { name, archived: true },
+        }),
+    });
 }

@@ -14,8 +14,8 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,bulkArchiveProjects,bulkDelete,runComposition,leftBehindNote,wireBody"
-EXPECTED_ROOT_SURFACE_COUNT=93
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote,wireBody"
+EXPECTED_ROOT_SURFACE_COUNT=92
 
 echo "==> ESM import smoke"
 SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
@@ -109,6 +109,7 @@ const en = require('./dist/cjs/ensure.js');
 if (typeof en.ensureTag !== 'function') { console.error('CJS subpath ensure.ensureTag broken'); process.exit(1); }
 if (typeof en.findOrCreateClient !== 'function') { console.error('CJS subpath ensure.findOrCreateClient broken'); process.exit(1); }
 if (typeof en.archiveThenDeleteProject !== 'function') { console.error('CJS subpath ensure.archiveThenDeleteProject broken'); process.exit(1); }
+if (typeof en.archiveThenDeleteClient !== 'function') { console.error('CJS subpath ensure.archiveThenDeleteClient broken'); process.exit(1); }
 const rq = require('./dist/cjs/requests.js');
 if (typeof rq.wireBody !== 'function') { console.error('CJS subpath requests.wireBody broken'); process.exit(1); }
 const rep = require('./dist/cjs/reports.js');
@@ -116,7 +117,6 @@ if (typeof rep.summaryFilter !== 'function') { console.error('CJS subpath report
 if (typeof rep.detailedEntries !== 'function') { console.error('CJS subpath reports.detailedEntries broken'); process.exit(1); }
 const bk = require('./dist/cjs/bulk.js');
 if (typeof bk.mapBounded !== 'function') { console.error('CJS subpath bulk.mapBounded broken'); process.exit(1); }
-if (typeof bk.bulkArchiveProjects !== 'function') { console.error('CJS subpath bulk.bulkArchiveProjects broken'); process.exit(1); }
 const cmp = require('./dist/cjs/compose.js');
 if (typeof cmp.runComposition !== 'function') { console.error('CJS subpath compose.runComposition broken'); process.exit(1); }
 if (typeof cmp.leftBehindNote !== 'function') { console.error('CJS subpath compose.leftBehindNote broken'); process.exit(1); }

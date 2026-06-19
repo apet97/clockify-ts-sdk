@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bulkArchiveProjects, bulkDelete, mapBounded } from "../bulk.js";
+import { mapBounded } from "../bulk.js";
 
 describe("mapBounded", () => {
     it("collects every success when all items succeed (continueOnError default)", async () => {
@@ -49,23 +49,5 @@ describe("mapBounded", () => {
             { concurrency: 2 },
         );
         expect(peak).toBeLessThanOrEqual(2);
-    });
-});
-
-describe("bulkArchiveProjects / bulkDelete", () => {
-    it("runs the injected operation over each id", async () => {
-        const archived: string[] = [];
-        const res = await bulkArchiveProjects(["p1", "p2"], async (id) => {
-            archived.push(id);
-            return id;
-        });
-        expect([...archived].sort()).toEqual(["p1", "p2"]);
-        expect([...res.ok].sort()).toEqual(["p1", "p2"]);
-
-        const deleted: string[] = [];
-        await bulkDelete(["t1"], async (id) => {
-            deleted.push(id);
-        });
-        expect(deleted).toEqual(["t1"]);
     });
 });
