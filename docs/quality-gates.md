@@ -92,6 +92,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check coverage floors | `make coverage` | Measured SDK/CLI/MCP hand-written-surface coverage stays at or above the pinned floors in `docs/coverage-contract.json`. |
 | Check mock Clockify contract | `make mock-contract` | Mock Clockify server routes, headers, docs, and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Replay golden fixtures | `make replay-fixtures` | Committed redacted API fixtures replay offline and keep wire-shape tripwires aligned with the live-probe ledger. |
+| Check fixture/mock parity | `make fixture-mock-parity` | Served golden fixtures stay byte-checked against the local mock Clockify server. |
 | Check maintenance playbook | `make maintenance-playbook` | Maintainer cadence, generated maintenance-plan shape, dependency updates, Fern/generator bumps, Clockify API drift response, release rehearsal, rollback, and receipts stay explicit. |
 | Print maintenance plan | `make maintenance-plan` | Static no-network upkeep plan for weekly, monthly, dependency, generator, drift, release, and rollback paths, backed by the maintenance-playbook contract. |
 | Check mutation safety | `make mutation-safety` | SDK retry defaults, CLI write rules, MCP confirmation flow, receipt shape, and ambiguous-failure recovery stay aligned. |

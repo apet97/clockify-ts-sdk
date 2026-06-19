@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Maps each committed golden fixture under spec/evidence/fixtures/*.json to the mock-clockify-server route and assertion that must agree with fixture.wire. scripts/check-fixture-mock-parity.mjs boots the mock on loopback, drives served routes, and compares the responses; fixtures not served by the mock are explicitly recorded with the static assertion that covers them.",
+  "served": [
+    {
+      "fixture": "spec/evidence/fixtures/invoice.get.json",
+      "operationId": "getInvoice",
+      "request": {
+        "method": "GET",
+        "route": "invoices/{invoiceId}",
+        "id": "000000000000000000000401"
+      },
+      "compare": "exact",
+      "note": "Mock embeds this invoice in state.invoices[0]; GET /invoices/{id} returns it verbatim."
+    },
+    {
+      "fixture": "spec/evidence/fixtures/projects.list.json",
+      "operationId": "getWorkspaceProjects",
+      "request": {
+        "method": "GET",
+        "route": "projects"
+      },
+      "compare": "memberOfArray",
+      "note": "Mock returns a bare state.projects array. The fixture wire is a one-element bare array; compare key set and per-key value shapes so seed ids can vary."
+    }
+  ],
+  "unservedByDesign": [
+    {
+      "fixture": "spec/evidence/fixtures/timeoff.requests.search.json",
+      "operationId": "getTimeOffRequests",
+      "reason": "Mock does not implement POST /time-off/requests; the {count,requests} envelope is asserted statically in scripts/check-replay-fixtures.mjs."
+    },
+    {
+      "fixture": "spec/evidence/fixtures/invoice-item.unitprice.json",
+      "operationId": "addInvoiceItem",
+      "reason": "Mock does not implement POST /invoices/{id}/items; unitPrice /100 is asserted in scripts/check-replay-fixtures.mjs plus a source-grep tripwire."
+    }
+  ]
+}

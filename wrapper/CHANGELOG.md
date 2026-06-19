@@ -84,6 +84,10 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- Added a generated-client HTTP regression test for list wire shapes: projects
+  remain bare arrays, invoices remain `{ invoices, total }` envelopes, and the
+  in-progress time-entry route keeps `page-size` pagination wired through the
+  local mock server.
 - Base-URL host allowlist now lists the **real** audit-log host
   `auditlog-api.api.clockify.me` (with the hyphen). The prior
   `auditlog.api.clockify.me` was a typo: it rejected the host the SDK
