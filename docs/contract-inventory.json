@@ -197,6 +197,19 @@
       "perfectFull": true
     },
     {
+      "id": "error-registry",
+      "target": "error-registry",
+      "checker": "scripts/check-error-registry.mjs",
+      "contracts": [
+        "docs/error-registry-contract.json"
+      ],
+      "auditIds": [
+        "error-registry"
+      ],
+      "perfectFast": true,
+      "perfectFull": true
+    },
+    {
       "id": "openapi-evidence",
       "target": "openapi-evidence",
       "checker": "scripts/check-openapi-evidence.mjs",
