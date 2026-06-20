@@ -76,6 +76,15 @@ describe("validateWebhookUrl", () => {
 
     it("accepts routable public IPv6 literals", () => {
         expect(validateWebhookUrl("https://[2606:4700:4700::1111]/hook").ok).toBe(true);
+        // first group 0xfec0 sits just ABOVE the fe80::/10 link-local band (<=0xfebf),
+        // so it must be accepted — kills the ConditionalExpression->true mutant at
+        // webhook-url.ts:189.
+        expect(validateWebhookUrl("https://[fec0::1]/hook").ok).toBe(true);
+        // 0xfebf is the EXACT top of the fe80::/10 band, so it must be REJECTED.
+        // This pins the inclusive upper bound and kills the EqualityOperator
+        // mutant (<=0xfebf -> <0xfebf) at webhook-url.ts:189, which [fec0::1]
+        // alone cannot distinguish (both <= and < are false for 0xfec0).
+        expect(validateWebhookUrl("https://[febf::1]/hook").ok).toBe(false);
     });
 
     const internalNames = [

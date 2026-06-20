@@ -75,6 +75,21 @@ describe("resolveRelativeDay", () => {
         expect(resolveRelativeDay(NOW, { date: "Mar 9" })).toBe("2026-03-09");
     });
 
+    it("parses every month name (kills MONTHS literal mutants Aug-Dec)", () => {
+        expect(resolveRelativeDay(NOW, { date: "August 15" })).toBe("2026-08-15");
+        expect(resolveRelativeDay(NOW, { date: "September 7" })).toBe("2026-09-07");
+        expect(resolveRelativeDay(NOW, { date: "October 3" })).toBe("2026-10-03");
+        expect(resolveRelativeDay(NOW, { date: "November 9" })).toBe("2026-11-09");
+        expect(resolveRelativeDay(NOW, { date: "December 25" })).toBe("2026-12-25");
+    });
+
+    it("matches every weekday name (kills WEEKDAYS literal mutants tue/thu/sat)", () => {
+        // NOW is Monday 2026-06-15; bare weekday = next occurrence on/after today.
+        expect(resolveRelativeDay(NOW, { date: "tuesday" })).toBe("2026-06-16");
+        expect(resolveRelativeDay(NOW, { date: "thursday" })).toBe("2026-06-18");
+        expect(resolveRelativeDay(NOW, { date: "saturday" })).toBe("2026-06-20");
+    });
+
     it("rejects an ISO-shaped prefix whose month/day are structurally impossible", () => {
         // Date.parse is lenient about day rollover (Feb 30 → Mar), so isRealDay only
         // rejects truly unparseable components like month 13 / day 99.
