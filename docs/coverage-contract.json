@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Measured code-coverage floor contract for the hand-written SDK/CLI/MCP surface. Floors are pinned to the honest measured baseline minus a small margin and ratchet monotonically upward; generated wrapper/src/** is excluded by every package vitest config. Live-key sandbox suites contribute no coverage in CI. DUAL AUTHORITY: each package's vitest.config.ts thresholds mirror these floors so a bare `vitest --coverage` enforces locally; this file (via scripts/check-coverage-floor.mjs / `make coverage`) is the canonical cross-package monotonic ratchet. When you raise a floor here, raise the matching vitest.config.ts thresholds in the same commit.",
+  "purpose": "Measured code-coverage floor contract for the hand-written SDK/CLI/MCP surface. Floors are pinned to the honest measured baseline minus a small margin and ratchet monotonically upward; generated wrapper/src/** is excluded by every package vitest config. Live-key sandbox suites contribute no coverage in CI. DUAL AUTHORITY: each package's vitest.config.ts thresholds mirror these floors so a bare `vitest --coverage` enforces locally; this file (via scripts/check-coverage-floor.mjs / `make coverage`) is the canonical cross-package monotonic ratchet. When you raise a floor here, raise the matching vitest.config.ts thresholds in the same commit. NOTE (2026-06-20, Deferred 4b + coverage hardening): cli/mcp moved vitest 2.x -> 4.x so all three packages share one major. The vitest 4 v8 (AST-aware) provider counts functions/branches more granularly than v2, so the v2-calibrated cli/mcp floors were not comparable to v4 totals. Rather than simply rebaseline down, new behavior tests were added for the lowest-covered handler files (cli timeoff/entries/invoices; mcp approvals/audit/tags/customFields/tasks/clients/sharedReports), lifting honest v4 functions ~+7-8pp and branches ~+9-10pp; cli lines/statements now exceed the old v2 floors. Floors below are the honest v4 measured baseline minus a small margin; the monotonic-up ratchet resumes from here. wrapper was already on vitest 4 and is unchanged.",
   "ratchet": "monotonic-up",
   "packages": [
     {
@@ -17,20 +17,20 @@
       "id": "cli",
       "summary": "cli/coverage/coverage-summary.json",
       "floors": {
-        "lines": 86,
-        "functions": 97,
-        "branches": 81,
-        "statements": 86
+        "lines": 90,
+        "functions": 87,
+        "branches": 79,
+        "statements": 88
       }
     },
     {
       "id": "mcp",
       "summary": "mcp/coverage/coverage-summary.json",
       "floors": {
-        "lines": 84,
-        "functions": 95,
-        "branches": 75,
-        "statements": 84
+        "lines": 86,
+        "functions": 85,
+        "branches": 67,
+        "statements": 82
       }
     }
   ],
