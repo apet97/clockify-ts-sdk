@@ -2287,7 +2287,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `mcp/tests/scheduling-totals.test.ts` (asserts camel `pageSize`, no `page-size`,
   and input-layer rejection when `start`/`end` are missing).
 
-### `time-off.change-status.union-and-note` — PARTIAL 2026-06-18
+### `time-off.change-status.union-and-note` — COMPENSATED 2026-06-20
 
 - **Actual behavior (status union live-probed 2026-06-18):** the request-status
   PATCH `…/time-off/policies/{policyId}/requests/{requestId}` accepts only
@@ -2299,16 +2299,24 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `REQUEST_STATUSES` (`APPROVED|PENDING|REJECTED|WITHDRAWN`) as a settable
   `statusType`, so an agent could submit a status the wire always rejects.
 - **MCP tools affected:** `clockify_time_off_requests_update_status`.
-- **Probe-deferred (note-required branch):** the generated
-  `ChangeTimeOffRequestStatus` type marks `note` REQUIRED, but the tool sets it
-  only when present (`as never` masks the mismatch). Whether the wire actually
-  requires `note` was NOT probed — proving it needs creating a PENDING request and
-  PATCHing it (a risky multi-step sandbox mutation). The conditional `note` and
-  the single `as never` are left exactly as-is, pending a future live probe.
-- **Status:** `partial` (2026-06-18). The status union is restricted at the input
-  layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch stays
-  probe-deferred. Test: `mcp/tests/sweep-fixes.test.ts` (asserts the input layer
-  rejects `PENDING`/`WITHDRAWN` and never reaches the wire).
+- **Note-required branch (live-probed 2026-06-20):** the generated
+  `ChangeTimeOffRequestStatus` type marks `note` REQUIRED, but the wire does NOT
+  require it. Probe: created a request via `period:{start,days}` (NOT `start`/`end`,
+  which 400s `"Value for number of days is not allowed"`), then PATCHed
+  `…/time-off/policies/{policyId}/requests/{requestId}` with only
+  `{"status":"REJECTED"}` (no note) → **HTTP 200**. So the tool's conditional
+  `if (args.note)` is correct and the generated required-`note` shape is wrong. The
+  masking raw `as never` is replaced by the typed
+  `wireBody<ChangeTimeOffRequestStatusTimeOffRequest>` escape
+  (`mcp/src/tools/timeOff.ts`); `note` stays optional, matching the wire. (Clockify
+  has no API path to delete a REJECTED request, so one labeled `DEFERRED-4C-probe`
+  artifact remains in the sacrificial sandbox.) The residual spec inaccuracy
+  (generated `note` marked required) is a GOCLMCP generator follow-up.
+- **Status:** `compensated` (2026-06-20). The status union is restricted at the
+  input layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch is now
+  live-verified optional and bound through the typed `wireBody` escape. Test:
+  `mcp/tests/sweep-fixes.test.ts` (asserts the input layer rejects
+  `PENDING`/`WITHDRAWN` and never reaches the wire).
 
 ### `strictness.wrapper-eopt-noimplicitoverride-blocked` — DOCUMENTED 2026-06-18
 

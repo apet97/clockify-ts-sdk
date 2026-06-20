@@ -92,6 +92,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_time_off_requests_update_status`: the note-required branch is now
+  live-verified (2026-06-20). A status PATCH with only `{status}` (no note)
+  returns 200, so `note` is optional on the wire — the generated
+  `ChangeTimeOffRequestStatus` type wrongly marks it required. The conditional
+  `note` is kept and the masking raw `as never` is replaced by the typed
+  `wireBody<ChangeTimeOffRequestStatusTimeOffRequest>` escape. The
+  `time-off.change-status.union-and-note` discrepancy is now `compensated`.
 - `clockify_expenses_create` / `clockify_expenses_update` now resolve an exact
   expense category name before writing, and `clockify_time_off_requests_submit`
   / `clockify_time_off_requests_update_status` do the same for exact policy

@@ -259,13 +259,16 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 status: args.statusType,
             };
             if (args.note) req.note = args.note;
-            // The generated ChangeTimeOffRequestStatus type marks `note` required,
-            // but it is only set when args.note is present. The note-required
-            // branch is probe-deferred (creating a PENDING request to PATCH is a
-            // risky multi-step sandbox mutation), so leave note conditional.
+            // `note` is live-verified OPTIONAL: a status PATCH at
+            // /time-off/policies/{policyId}/requests/{requestId} with only
+            // `{status}` (no note) returns 200 (probed 2026-06-20). The generated
+            // ChangeTimeOffRequestStatus type wrongly marks `note` required, so we
+            // bind through the typed `wireBody` escape rather than assert that wrong
+            // required-note shape — keeping note conditional, matching the wire.
             // See discrepancies.md (time-off.change-status.union-and-note).
-            // KEEP as never: ChangeTimeOffRequestStatus has a generated status/note mismatch.
-            const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(req as never);
+            const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(
+                wireBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>(req),
+            );
             return successResult(
                 "clockify_time_off_requests_update_status",
                 updated,
