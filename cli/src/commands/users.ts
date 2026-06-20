@@ -74,8 +74,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
                 workspaceId,
                 "send-email": sendEmail ? "true" : "false",
                 email,
-                // KEEP as never: invite query/body split is generated too narrowly.
-            } as never)) as { id?: string };
+            })) as { id?: string };
             printReceipt(
                 {
                     ok: true,

@@ -233,8 +233,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 "send-email": (args.sendEmail ?? true) ? "true" : "false",
                 email: args.email,
-                // KEEP as never: invite query/body split is generated too narrowly.
-            } as never);
+            });
             return successResult(
                 "clockify_users_invite",
                 workspace,

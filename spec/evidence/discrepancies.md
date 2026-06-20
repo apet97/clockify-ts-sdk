@@ -2357,3 +2357,35 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `make consumer-cast-budget` (budget 0, ratchet target 0) plus the wrapper EOPT
   differential. Current consumer ratio: typed request bindings >= 100,
   `Record<string, unknown>` literals <= 40, live `KEEP as never` comments <= 60.
+- **2026-06-20 reduction:** after the corrected OpenAPI re-snapshot, the residual
+  annotated `KEEP as never` count fell **cli 5->1, mcp 22->7**.
+  - *Cleanly dropped* (regenerated type now matches the literal exactly): the
+    `workspaces.addUser` flattened-invite cast in `cli/src/commands/users.ts` and
+    `mcp/src/tools/users.ts` (`AddUserWorkspacesRequestFlattened` =
+    `{workspaceId, email, send-email}`); `mcp/src/tools/entries.ts`
+    `timeEntries.update` is now a typed local `ClockifyRequestBody<UpdateTimeEntriesRequest>`;
+    `mcp/src/tools/timeOff.ts` `timeOff.list` request-search dropped BOTH its
+    request cast and response narrow (typed `ListTimeOffRequest` + `TimeOffRequestsResponse`);
+    `mcp/src/tools/expenses.ts` shed a stale KEEP comment (the request already passed
+    directly — only a response narrow remains).
+  - *Converted to the typed `wireBody<T>` escape* (request still genuinely outside
+    the generated type, but no longer a bare `as never`): the CLI list filters
+    `expenses.list` (generated `ListExpensesRequest` drops `start`/`end` on the wire
+    while `--start`/`--end` are advertised), `webhooks.list` (generated `type?` is the
+    narrow `WebhookType` literal union vs free-form `--type`), and `timeOff.list`
+    (generated `statuses?` is the narrow `RequestStatusType` union vs free-form
+    `--status` incl. `WITHDRAWN`); plus the MCP `invoices.list` (no `statuses` slot on
+    `ListInvoicesRequest`), `invoices.update` create+update (replace body from live
+    GET), `invoiceItems.import` (open `extra` passthrough), `timeOffPolicies.create`
+    (generated-required `approve` omitted), `timeOffPolicies.update` (carried-forward
+    body + untyped scopeFilter), `workflows/resolve.ts` `projects.create`
+    (conditional-spread widening under EOPT), `expenseCategories.list` (no page/page-size
+    slot), and `timeOffPolicies.list` (`page` typed as string).
+  - *Still `KEEP as never`* and why: the multipart-file omission on expense
+    create/update scalar bodies (`expenses.ts` cli+mcp), the too-narrow invoice
+    status PATCH body (`invoices.ts`), the `changeTimeOffRequestStatus` status/note
+    mismatch and the policy-archive `archived` body vs generated status naming
+    (`timeOff.ts`), and the `timeEntries.listForUser` list/search/view
+    request+response envelope mismatch (`workflows/review.ts` + `workflows/resolve.ts`).
+    These are the documented Bucket-C generated-type residue (response-narrows,
+    multipart-file, status-naming).

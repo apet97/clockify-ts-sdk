@@ -21,6 +21,14 @@ All notable changes to `@clockify115/cli` are documented here.
   (`clockify-sdk-ts-115/ensure`) for the live-allowed GET-name → archive → DELETE
   sequence, instead of hand-copying the steps (incl. the clients body-envelope
   archive quirk and empty-name guard). Behavior is unchanged.
+- Reduced the consumer `as never` cast residue after the corrected-OpenAPI
+  re-snapshot. The `users invite` (`workspaces.addUser`) cast is gone — the
+  regenerated `AddUserWorkspacesRequestFlattened` now matches the literal exactly.
+  The `expenses`, `webhooks`, and `timeoff` list commands now bind their request
+  through the sanctioned typed `wireBody<T>` escape instead of bare `as never`
+  (the generated list request still drops `--start`/`--end` or narrows
+  `--type`/`--status` to a literal union the CLI surfaces as free-form). No
+  command surface or behavior change.
 
 ### Added
 

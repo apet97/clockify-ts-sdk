@@ -101,15 +101,18 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 pushChanged(changed, "reused", ref("project", found));
                 return { kind: "done", reused: [ref("project", found)] };
             }
-            const created = await ctx.client.projects.create({
-                workspaceId: ctx.workspaceId,
-                name: projectName,
-                ...(clientId ? { clientId } : {}),
-                ...(args.color ? { color: args.color } : {}),
-                ...(args.billable !== undefined ? { billable: args.billable } : {}),
-                ...(args.is_public !== undefined ? { isPublic: args.is_public } : {}),
-                // KEEP as never: workflow project setup uses validated flat create fields.
-            } as never);
+            const created = await ctx.client.projects.create(
+                // wireBody: the optional fields are conditionally spread, which widens the inferred
+                // type beyond the generated request shape under exactOptionalPropertyTypes.
+                wireBody<ClockifyApi.CreateProjectRequest>({
+                    workspaceId: ctx.workspaceId,
+                    name: projectName,
+                    ...(clientId ? { clientId } : {}),
+                    ...(args.color ? { color: args.color } : {}),
+                    ...(args.billable !== undefined ? { billable: args.billable } : {}),
+                    ...(args.is_public !== undefined ? { isPublic: args.is_public } : {}),
+                }),
+            );
             projectId = idOf(created);
             data.project = created;
             const r = ref("project", created, projectName);
@@ -557,25 +560,29 @@ export function resolveTagId(ctx: Context, value: string): Promise<string> {
 
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "expense category", () =>
-        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        ctx.client.expenseCategories.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        } as never),
+        // wireBody: the generated list request type carries only workspaceId; the page/page-size
+        // we send for parity with the other resolvers are passed through the typed escape.
+        ctx.client.expenseCategories.list(
+            wireBody<ClockifyApi.ListExpenseCategoriesRequest>({
+                workspaceId: ctx.workspaceId,
+                page: 1,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
 export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "time-off policy", () =>
-        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        ctx.client.timeOffPolicies.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        } as never),
+        // wireBody: the generated list request types `page` as a string; we send the numeric 1 for
+        // parity with the other resolvers, so bind the request through the typed escape.
+        ctx.client.timeOffPolicies.list(
+            wireBody<ClockifyApi.ListTimeOffPoliciesRequest>({
+                workspaceId: ctx.workspaceId,
+                page: 1,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 

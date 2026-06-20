@@ -202,7 +202,9 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = { start: args.start };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
+                start: args.start,
+            };
             if (args.end) body.end = args.end;
             if (args.description !== undefined) body.description = args.description;
             if (args.projectId) body.projectId = args.projectId;
@@ -213,8 +215,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 timeEntryId: args.timeEntryId,
                 body,
-                // KEEP as never: time-entry update body is a partial live patch.
-            } as never);
+            });
             return successResult(
                 "clockify_entries_update",
                 updated,

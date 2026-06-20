@@ -6,6 +6,7 @@
  * with a `--file` flag once the wrapper exposes the right uploadable
  * helper to the CLI surface.
  */
+import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -60,15 +61,19 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const req: Record<string, unknown> = {
+            // Generated `ListExpensesRequest` carries only page/page-size; the CLI
+            // still surfaces --start/--end as date filters, so wireBody bridges the
+            // narrower request type with a sanctioned typed escape.
+            const req: ClockifyApi.ListExpensesRequest & { start?: string; end?: string } = {
                 workspaceId,
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-            const response = (await client.expenses.list(req as never)) as {
+            const response = (await client.expenses.list(
+                wireBody<ClockifyApi.ListExpensesRequest>(req),
+            )) as {
                 expenses?: { expenses?: unknown[] } | unknown[];
             };
             // Upstream returns a doubly-nested envelope
