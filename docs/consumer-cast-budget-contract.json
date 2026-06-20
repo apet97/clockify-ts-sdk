@@ -1,7 +1,23 @@
 {
   "schemaVersion": 1,
-  "purpose": "Every `as never` in cli/src + mcp/src must be eliminated or annotated `KEEP as never` (documented generated-type bug). The residual unannotated budget ratchets to 0; the two forwarding seams (result.ts, output-schema.ts) are exempt by path.",
+  "purpose": "Every `as never` in cli/src + mcp/src must be eliminated or annotated `KEEP as never` (documented generated-type bug). The residual unannotated budget ratchets to 0; the two forwarding seams (result.ts, output-schema.ts) are exempt by path. As of 2026-06-20 the expenses/invoices list-pagination casts were dropped after the corrected OpenAPI gained page/page-size on those list requests, so those requests now pass directly (only their wider live response envelopes are narrowed). The annotated `KEEP as never` residue is now small and documented: response-narrows, the multipart-file omission on expense create/update scalar bodies, and the status-naming Bucket-C mismatch on time-off / time-entry list+status writes. Request-side escapes that survive type-checking route through the sanctioned `wireBody<T>` typed bridge (clockify-sdk-ts-115/requests), not bare `as never`.",
   "allowedRequestCastBudget": 0,
+  "residueNotes": {
+    "lastReduced": "2026-06-20",
+    "annotatedKeepAsNever": {
+      "cli": [
+        "cli/src/commands/expenses.ts (expense update scalar body omits the generated multipart file)"
+      ],
+      "mcp": [
+        "mcp/src/tools/expenses.ts (expense create + update scalar bodies omit the generated multipart file)",
+        "mcp/src/tools/invoices.ts (invoice status PATCH body generated too narrowly)",
+        "mcp/src/tools/timeOff.ts (changeTimeOffRequestStatus status/note mismatch; policy archive live `archived` body vs generated status naming)",
+        "mcp/src/tools/workflows/review.ts + mcp/src/tools/workflows/resolve.ts (timeEntries.listForUser list/search/view request+response envelope does not match the wire shape)"
+      ]
+    },
+    "wireBodyEscapes": "Request casts that previously rode bare `as never` and still cannot satisfy the generated type pass through the sanctioned `wireBody<T>` typed bridge instead: invoices.list (statuses filter slot absent from ListInvoicesRequest), invoices.update on create/update (replace body rebuilt from live GET fields), invoiceItems.import (open `extra` passthrough wider than generated), timeOffPolicies.create (generated-required approve omitted) / update (carried-forward body), projects.create (conditional-spread widening under exactOptionalPropertyTypes), expenseCategories.list + timeOffPolicies.list (generated list request type lacks page/page-size or types page as string), and the CLI expenses.list / webhooks.list / timeOff.list list filters (generated request drops start/end or narrows type/statuses to a literal union the CLI surfaces as free-form).",
+    "droppedOn2026-06-20": "Both the expenses.list and invoices.list pagination casts (cli + mcp) plus the AddUserWorkspacesRequestFlattened invite cast (cli users.ts, mcp users.ts) were removed once the regenerated request types matched: the spec gained page/page-size on the expense/invoice list requests and the flattened add-user request now carries {workspaceId, email, send-email} exactly. The mcp timeEntries.update local body is now typed via ClockifyRequestBody<UpdateTimeEntriesRequest>, and the mcp timeOff.list request-search dropped BOTH its request cast and response narrow (typed ListTimeOffRequest + TimeOffRequestsResponse). Net: cli annotated KEEP-as-never 5->1, mcp 22->7."
+  },
   "exemptPathSuffixes": [
     "result.ts",
     "output-schema.ts"

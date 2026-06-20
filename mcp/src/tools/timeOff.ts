@@ -6,6 +6,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { wireBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -140,14 +141,14 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             const pageSize = 200;
             let found: { id?: string } | undefined;
             for (let page = 1; page <= 50; page++) {
-                const res = (await ctx.client.timeOff.list({
+                const searchReq: ClockifyApi.ListTimeOffRequest = {
                     workspaceId: ctx.workspaceId,
                     page,
                     pageSize,
                     statuses: ["ALL"],
-                    // KEEP as never: request search route uses live envelope shape.
-                } as never)) as { requests?: Array<{ id?: string }> } | Array<{ id?: string }>;
-                const requests = Array.isArray(res) ? res : (res.requests ?? []);
+                };
+                const res = await ctx.client.timeOff.list(searchReq);
+                const requests: Array<{ id?: string }> = res.requests ?? [];
                 found = requests.find((r) => String(r.id ?? "") === args.requestId);
                 if (found || requests.length < pageSize) break;
             }
@@ -433,11 +434,14 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 body.allowNegativeBalance = args.negativeBalanceAllowed;
             if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
             if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
-            const created = await ctx.client.timeOffPolicies.create({
-                workspaceId: ctx.workspaceId,
-                ...body,
-                // KEEP as never: policy create reads fields flat, not via generated body envelope.
-            } as never);
+            const created = await ctx.client.timeOffPolicies.create(
+                // wireBody: live create reads these fields flat and does not require the
+                // generated-required `approve`; the scope filters are built as untyped records.
+                wireBody<ClockifyApi.CreateTimeOffPolicyRequest>({
+                    workspaceId: ctx.workspaceId,
+                    ...body,
+                }),
+            );
             return successResult(
                 "clockify_time_off_policies_create",
                 created,
@@ -534,12 +538,16 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
             else if (existingGroupIds.length)
                 body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
-            const updated = await ctx.client.timeOffPolicies.update({
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-                ...body,
-                // KEEP as never: policy replace carries forward live fields and reconstructed scope filters.
-            } as never);
+            const updated = await ctx.client.timeOffPolicies.update(
+                // wireBody: replace body is carried forward from the live GET (POLICY_CARRY_FIELDS)
+                // plus reconstructed scope filters, so the generated-required fields and the
+                // untyped scopeFilter records cannot be proven statically here.
+                wireBody<ClockifyApi.UpdateTimeOffPoliciesRequest>({
+                    workspaceId: ctx.workspaceId,
+                    policyId: args.policyId,
+                    ...body,
+                }),
+            );
             return successResult(
                 "clockify_time_off_policies_update",
                 updated,

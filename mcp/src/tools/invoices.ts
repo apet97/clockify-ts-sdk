@@ -6,7 +6,11 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body";
-import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import {
+    type ClockifyApi,
+    type ClockifyRequestBody,
+    wireBody,
+} from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -39,10 +43,12 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         async (args) => {
             const req: InvoiceObject = { workspaceId: ctx.workspaceId };
             if (args.status) req.statuses = args.status;
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-            const response = (await ctx.client.invoices.list(req as never)) as
-                | { invoices?: unknown[]; total?: number }
-                | unknown[];
+            // wireBody: the live list route's request type carries only workspaceId/page/page-size;
+            // the local `statuses` filter slot is not on ListInvoicesRequest, so bind the request
+            // through the sanctioned typed escape. Response shape is narrowed below.
+            const response = (await ctx.client.invoices.list(
+                wireBody<ClockifyApi.ListInvoicesRequest>(req),
+            )) as { invoices?: unknown[]; total?: number } | unknown[];
             const invoices = Array.isArray(response) ? response : (response.invoices ?? []);
             const total = Array.isArray(response)
                 ? invoices.length
@@ -123,12 +129,15 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     invoiceId: created.id,
                 })) as InvoiceObject;
-                await ctx.client.invoices.update({
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: created.id,
-                    ...invoiceUpdateBodyFromExisting(existing, patch),
-                    // KEEP as never: invoice replace body is rebuilt from live GET fields.
-                } as never);
+                await ctx.client.invoices.update(
+                    // wireBody: the replace body is rebuilt at runtime from live GET fields, so the
+                    // generated request type's required fields cannot be proven statically here.
+                    wireBody<ClockifyApi.UpdateInvoicesRequest>({
+                        workspaceId: ctx.workspaceId,
+                        invoiceId: created.id,
+                        ...invoiceUpdateBodyFromExisting(existing, patch),
+                    }),
+                );
             }
             return successResult(
                 "clockify_invoices_create",
@@ -199,12 +208,15 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             if (args.taxPercent !== undefined) patch.taxPercent = args.taxPercent;
             if (args.tax2Percent !== undefined) patch.tax2Percent = args.tax2Percent;
             if (args.discountPercent !== undefined) patch.discountPercent = args.discountPercent;
-            const updated = await ctx.client.invoices.update({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                ...invoiceUpdateBodyFromExisting(existing, patch),
-                // KEEP as never: invoice replace body is rebuilt from live GET fields.
-            } as never);
+            const updated = await ctx.client.invoices.update(
+                // wireBody: the replace body is rebuilt at runtime from live GET fields, so the
+                // generated request type's required fields cannot be proven statically here.
+                wireBody<ClockifyApi.UpdateInvoicesRequest>({
+                    workspaceId: ctx.workspaceId,
+                    invoiceId: args.invoiceId,
+                    ...invoiceUpdateBodyFromExisting(existing, patch),
+                }),
+            );
             return successResult(
                 "clockify_invoices_update",
                 updated,
@@ -352,18 +364,21 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 from,
                 to,
             } = args;
-            const imported = await ctx.client.invoiceItems.import({
-                importExpenses: importExpenses ?? false,
-                timeEntryGroupType: timeEntryGroupType ?? "GROUPED",
-                ...(extra ?? {}),
-                // status is required upstream; default it but let the caller's filter win.
-                projectFilter: { status: "ACTIVE", ...(projectFilter ?? {}) },
-                from,
-                to,
-                invoiceId,
-                workspaceId: ctx.workspaceId,
-                // KEEP as never: invoice import-time filter is validated locally but generated incompletely.
-            } as never);
+            const imported = await ctx.client.invoiceItems.import(
+                // wireBody: validated locally, but the open `extra` grouping passthrough is wider
+                // than the generated request type can express, so bind through the typed escape.
+                wireBody<ClockifyApi.ImportInvoiceItemsRequest>({
+                    importExpenses: importExpenses ?? false,
+                    timeEntryGroupType: timeEntryGroupType ?? "GROUPED",
+                    ...(extra ?? {}),
+                    // status is required upstream; default it but let the caller's filter win.
+                    projectFilter: { status: "ACTIVE", ...(projectFilter ?? {}) },
+                    from,
+                    to,
+                    invoiceId,
+                    workspaceId: ctx.workspaceId,
+                }),
+            );
             return successResult("clockify_invoices_import_time", imported, {
                 workspaceId: ctx.workspaceId,
                 invoiceId,

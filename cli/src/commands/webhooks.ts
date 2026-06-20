@@ -25,10 +25,11 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
             // the typed SDK return is wider than the runtime shape, so we
             // normalise here rather than upstream.
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-            const response = (await client.webhooks.list(req as never)) as
-                | unknown[]
-                | { webhooks?: unknown[] };
+            // wireBody bridges the narrower generated `type` (a WebhookType literal
+            // union) since the CLI accepts a free-form --type filter string.
+            const response = (await client.webhooks.list(
+                wireBody<ClockifyApi.ListWebhooksRequest>(req),
+            )) as unknown[] | { webhooks?: unknown[] };
             const items = Array.isArray(response) ? response : (response.webhooks ?? []);
             const rows = items.map((raw) => {
                 const w = raw as {

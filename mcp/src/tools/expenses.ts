@@ -70,7 +70,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             };
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
-            // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
+            // The typed request now carries page/page-size, so it is passed directly; only the
+            // response shape is narrowed below (the live list envelope is wider than generated).
             const response = (await ctx.client.expenses.list(req)) as
                 | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
                 | unknown[];

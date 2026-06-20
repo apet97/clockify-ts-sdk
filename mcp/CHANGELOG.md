@@ -24,6 +24,20 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   archive quirk and empty-name guard, which now throws → `errorResult` via
   `defineTool`'s catch). Behavior, receipts, and the confirm gate are unchanged;
   order still pinned by `mcp/tests/archive-then-delete.test.ts`.
+- Reduced the consumer `as never` cast residue after the corrected-OpenAPI
+  re-snapshot (annotated `KEEP as never` count fell from 22 to 7). The
+  `workspaces.addUser` invite cast is gone (`AddUserWorkspacesRequestFlattened`
+  now matches); `timeEntries.update` is a typed local
+  `ClockifyRequestBody<UpdateTimeEntriesRequest>`; the `timeOff.list`
+  request-search dropped both its request cast and response narrow (typed
+  `ListTimeOffRequest` + `TimeOffRequestsResponse`); a stale `expenses` KEEP
+  comment was removed (only a response narrow remains). Surviving request escapes
+  (invoices.list/update, invoiceItems.import, time-off policy create/update,
+  projects.create, expense-categories/time-off-policy list pagination) now route
+  through the typed `wireBody<T>` bridge rather than bare `as never`. The
+  documented Bucket-C residue (multipart-file on expense create/update, invoice
+  status PATCH, time-off status/note + archive naming, `timeEntries.listForUser`
+  envelope) stays annotated. No tool surface or behavior change.
 
 ### Tests
 
