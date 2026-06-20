@@ -37,6 +37,11 @@ once v1.0.0 ships.
   resource}` (pass `client.projects`) and owns the GET/archive/DELETE calls,
   rather than the prior injected `archiveProject`/`deleteProject` callbacks. The
   `ArchiveThenDeleteResult` now also carries `id` and `clientId` aliases.
+- Corrected-OpenAPI re-snapshot: `ListExpensesRequest` and `ListInvoicesRequest`
+  now carry the optional `page` / `page-size` pagination fields (regenerated
+  resource docs updated). This lets the CLI/MCP expense and invoice list calls
+  pass their request directly instead of casting around the missing pagination
+  slot. Generated SDK types only; no hand-written wrapper code changed.
 
 - `operation-receipt` now exports `entityId()`, the shared safe id extractor
   used by CLI/MCP receipts instead of each package carrying its own narrowing
