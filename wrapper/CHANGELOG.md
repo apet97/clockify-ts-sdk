@@ -207,6 +207,11 @@ once v1.0.0 ships.
 
 ### Documentation
 
+- Updated the README pagination count to "15 of the 20 paginated endpoints"
+  (was 18) to match the corrected-OpenAPI re-snapshot: the expenses and invoices
+  list operations now carry `page` / `page-size`, so `PAGINATED_LIST_OPS` is 20.
+  The `Last-Page` header count (15) and the wrapper's `KNOWN_PAGINATED_METHODS`
+  drift list (14) are unchanged. Docs-only; no runtime code changed.
 - Corrected the SDK-method coverage figure in `README.md` to 173 of 185 operations
   (93.5%) — the prior `172 ops mapped (93.0%)` line contradicted the header's
   `173 of 185` — and clarified the `composed-fetch.ts` `PACKAGE_VERSION` JSDoc to

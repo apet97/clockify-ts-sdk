@@ -265,8 +265,9 @@ make docs-drift
   (`mcp/src/orchestration/confirmation.ts`,
   `mcp/src/orchestration/confirm-guard.ts`, `mcp/src/result.ts`), then
   enforces the `docs/mutation-score-contract.json` floors. The MCP run
-  mutates the existing Vitest 2 suite — Stryker's vitest-runner accepts
-  vitest >=2.0.0, so no upgrade is required. The contract is two
+  mutates the existing Vitest 4 suite — Stryker's vitest-runner accepts
+  vitest >=2.0.0, so the unified vitest ^4 across wrapper/cli/mcp is
+  supported without extra handling. The contract is two
   packages (wrapper + mcp); floors ratchet monotonic-up.
 - `make build-determinism` builds the wrapper twice and hashes
   `wrapper/dist/**`; it is wired into `perfect-full`, not
