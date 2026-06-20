@@ -267,6 +267,7 @@ before emitting tags.
   `SDK_METHOD_NAMES` entry, regenerated — live surface 185→184 ops, SDK stamps
   172→171). Tests: `cli/tests/stop.test.ts`,
   `mcp/tests/work-time-tracking.test.ts`, `mcp/tests/server.test.ts`.
+- Re-verified 2026-06-20: confirmed-still-holds. /stop suffix routes (user-scoped PATCH and entry-id GET/PATCH with a fake 24-hex id) all return HTTP 404 code:3000 'No static resource ...time-entries/stop.', while the bound bare user-scoped PATCH returns the domain HTTP 404 code:404 'Currently running time entry doesn't exist...' — the routing-layer 3000 vs domain 404 contrast still proves the /stop route is phantom.
 
 ---
 
@@ -1048,6 +1049,7 @@ on the bare route (the granular variants — already in
   package's `balances` module now exposes only the granular
   `getBalanceForUser` / `getBalancesForPolicy` / `updateBalance`
   operations.
+- Re-verified 2026-06-20: confirmed-still-holds. Live: bare /balance still 404 code:3000 phantom; /workspaces?page-size=1 returns full collection (30 items, page-size ignored); /holidays/in-period ignores page-size (29-item bare array); granular /time-off/balance/user/{userId} paginates (50 of 966, last-page:false). No change to PAGINATED_LIST_OPS warranted.
 
 ### `getTimeOffPolicies.sort-order.enum-tightened` — RESOLVED 2026-05-24
 
@@ -1124,6 +1126,7 @@ on the bare route (the granular variants — already in
   This entry exists so a future reviewer who reads the official
   docs paste and notices the string-vs-int divergence sees the
   decision already taken.
+- Re-verified 2026-06-20: confirmed-still-holds. Live getBalanceForUser accepts integer page-size=50 -> HTTP 200, 50 of 966 items, last-page:false; the integer (int32) shape in the source bundle/canonical YAML is correct and the docs' string rendering remains a docs artefact -- no spec change.
 
 ### `fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive` — CLOSED-BY-LOCAL-GENERATOR 2026-06-01
 
@@ -1536,6 +1539,7 @@ unpaginated methods").
      the four combinations (header true/false × page full/short)
      plus the case-insensitive parse + the no-`withRawResponse`
      fallback path.
+- Re-verified 2026-06-20: confirmed-still-holds. Live: balances.getForUser returns {balances[50],count:966} envelope (last-page:false), webhooks returns {workspaceWebhookCount:10,webhooks[10]} non-paginated envelope, holidays/in-period returns a bare array (len=29) that ignores page-size -- all three correctly stay out of KNOWN_PAGINATED_METHODS.
 
 ## Time-off request duplicate paths — investigation
 
@@ -1918,6 +1922,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   existing `clockify_expenses_create` already passes major units, consistent with
   this table; rate tools (below) should funnel through `toMinor`. Tests:
   `wrapper/tests/money.test.ts`.
+- Re-verified 2026-06-20: confirmed-still-holds. Live sandbox 65b382b606de527a7ee2b60e: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MAJOR/dollars; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense surface uses `total` (no `amount` key on expenses) on both list and single-GET.
 
 ### `holidays.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
 
@@ -1983,6 +1988,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   create/update sites in `mcp/src/tools/timeOff.ts` pass `"ACTIVE"`, holiday
   sites keep the default `"ALL"`. Tests: `mcp/tests/time-off-policies.test.ts`
   (policy → ACTIVE), `mcp/tests/holidays.test.ts` (holiday → ALL).
+- Re-verified 2026-06-20: confirmed-still-holds — GET /workspaces/65b382b606de527a7ee2b60e/time-off/policies returned HTTP 200 with 50 policy objects all carrying the userIds/userGroupIds/everyoneIncludingNew scope model; no policy echoes a {contains,status} filter (0/50), so the ACTIVE-vs-ALL split remains a write-side request-filter behavior unchanged at the read layer.
 
 ### `rates.put-minor-units-no-get` — PARTIALLY COMPENSATED 2026-06-14
 
@@ -2032,6 +2038,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   and routes to the single-project GET (`scheduling.listOnProject`); without it, the
   all-projects POST (`listPerProject`). Tests: `mcp/tests/scheduling-totals.test.ts`.
   Port from addon `src/clockify/rest/scheduling.ts:102-120`.
+- Re-verified 2026-06-20: confirmed-still-holds — live GET .../scheduling/assignments/projects/totals/{projectId}?start&end returns HTTP 200 (rich {projectId,projectName,assignments[],milestones[],totalHours} object on a project with assignments; 200 empty body when none); all-projects route stays POST (no projectId in body). Method split unchanged.
 
 ### `single-gets.404-405-read-from-list` — OPEN
 
@@ -2047,6 +2054,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   don't convert a route that actually works.
 - **Status:** `open`. Port the get-by-scan / POST-search shapes from the addon
   `src/clockify/rest/{time-off,users}.ts`.
+- Re-verified 2026-06-20: still holds. GET /user-groups/{id} 405 (this entry says 404 — correct to 405), GET /custom-fields/{id} 405, GET /time-off/requests/{id} 404 'No static resource'; all code:3000 and dead, list/POST-search remains the read path (time-off POST search -> 200 {count,requests}, count 76).
 
 ### `invoices.items-unit-price-scale` — COMPENSATED-LATENT 2026-06-18 (boundary-guarded)
 
@@ -2169,6 +2177,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   scans by id; errors clearly when the id isn't in the search. Verified live
   end-to-end through the real MCP tool against a real request id. Test:
   `mcp/tests/time-off-get.test.ts`.
+- Re-verified 2026-06-20: still holds. GET /time-off/requests/{id} -> 404 code:3000 'No static resource' (dead); POST /time-off/requests search -> 200 {count:76, requests:[...]} envelope, so the statuses:['ALL']-scan compensation remains correct.
 
 ### `single-gets.custom-field-get.dead-route` — DOCUMENTED 2026-06-15 (no tool)
 
@@ -2179,6 +2188,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Status:** `documented`. The MCP surface exposes NO custom-field single-GET
   tool (`mcp/src/tools/customFields.ts` has none), so there is nothing to
   convert; recorded so a future custom-field get tool list-scans from the start.
+- Re-verified 2026-06-20: still holds. GET /custom-fields/{realId} -> 405 code:3000 'Request method GET is not supported', GET /user-groups/{id} -> 405 (matches the 2026-06-15 405/405 re-probe); still no single-GET tool to convert.
 
 ### `deletes.archive-first.projects-tasks` — COMPENSATED 2026-06-15 (live e2e)
 
@@ -2248,6 +2258,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   reads `userGroups.list` and scans by id, erroring clearly on an unknown id
   (never returning void). Test: `mcp/tests/groups-get.test.ts`. The upstream
   generator/spec fix (`../GOCLMCP/`) is still the durable fix.
+- Re-verified 2026-06-20: still holds. GET /user-groups/{realId} -> 405 code:3000 'Request method GET is not supported' (route has no GET at all), so the void generated method is unfixable client-side; list-scan compensation remains correct.
 
 ### `compose.work-package.ensure-repoint-wontfix` — WONTFIX 2026-06-18
 
@@ -2286,6 +2297,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   casts dropped; `items` is `ProjectAssignmentsTotal[]`. Test:
   `mcp/tests/scheduling-totals.test.ts` (asserts camel `pageSize`, no `page-size`,
   and input-layer rejection when `start`/`end` are missing).
+- Re-verified 2026-06-20: confirmed-still-holds — /scheduling/assignments/all and /projects/totals are live (HTTP 200 with start/end; HTTP 400 code 3001 without), camel-pageSize-only whitelist intact; the tool's start/end-required + camel pageSize encoding still matches the wire. (Caveat: the single-project GET also 400s without start/end live, so the 'ignores start/end' note is inaccurate — GOCLMCP/tool-comment follow-up.)
 
 ### `time-off.change-status.union-and-note` — COMPENSATED 2026-06-20
 
