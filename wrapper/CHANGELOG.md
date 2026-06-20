@@ -25,6 +25,11 @@ once v1.0.0 ships.
   `errors.ts`. The Stryker module floors in `docs/mutation-score-contract.json`
   rise accordingly (`composed-fetch` 72→82, `dates` 76→84, `errors` 74→80,
   wrapper global 77→82). No runtime code changed.
+- Added tests pinning every `MONTHS`/`WEEKDAYS` literal in `dates.ts`
+  (parses August–December and tuesday/thursday/saturday) and both edges of the
+  `fe80::/10` link-local band in `webhook-url.ts` (`[fec0::1]` accepted just
+  above the band, `[febf::1]` rejected at the inclusive `0xfebf` upper bound).
+  Floors rise: `dates` 84→88, `webhook-url` 80→83. No runtime code changed.
 
 ### Changed
 
