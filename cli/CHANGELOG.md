@@ -6,6 +6,16 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- Dev-dependency bump: `vitest` and `@vitest/coverage-v8` `2.x` -> `4.x`
+  (`^4.1.4` / `^4.1.9`), unifying the vitest major across all three workspace
+  packages (wrapper was already on 4.x). No CLI source or behavior change. The
+  vitest 4 v8 (AST-aware) coverage provider counts functions/branches more
+  granularly than v2; rather than rebaseline down, new behavior tests for the
+  `timeoff`, `entries`, and `invoices` commands lifted the honest v4 coverage
+  (functions 79->88, branches 70->80), so the `cli` floors in `vitest.config.ts`
+  and `docs/coverage-contract.json` are pinned to the new measured baseline
+  (lines 90, functions 87, branches 79, statements 88 — lines and statements now
+  exceed the old v2 floors).
 - `clk115 projects delete` and `clk115 clients delete` now call the SDK helpers
   `archiveThenDeleteProject` / `archiveThenDeleteClient`
   (`clockify-sdk-ts-115/ensure`) for the live-allowed GET-name → archive → DELETE

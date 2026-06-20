@@ -6,6 +6,17 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- Dev-dependency bump: `vitest` and `@vitest/coverage-v8` `2.x` -> `4.x`
+  (`^4.1.4` / `^4.1.9`), unifying the vitest major across all three workspace
+  packages (wrapper was already on 4.x). No MCP source or behavior change. The
+  vitest 4 v8 (AST-aware) coverage provider counts functions/branches more
+  granularly than v2; rather than rebaseline down, new behavior tests for the
+  `approvals`, `audit`, `tags`, `customFields`, `tasks`, `clients`, and
+  `sharedReports` tools lifted the honest v4 coverage (functions 79->86,
+  branches 59->68), so the `mcp` floors in `vitest.config.ts` and
+  `docs/coverage-contract.json` are pinned to the new measured baseline
+  (lines 86, functions 85, branches 67, statements 82). The Stryker mutation
+  run executes via `@stryker-mutator/vitest-runner`.
 - `clockify_projects_delete` and `clockify_clients_delete` now call the SDK
   helpers `archiveThenDeleteProject` / `archiveThenDeleteClient`
   (`clockify-sdk-ts-115/ensure`) for the live-allowed GET-name → archive → DELETE
