@@ -11,8 +11,9 @@
 **Request fields** (`ListExpensesRequest`):
 
 - `workspaceId` (`string`, required)
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
+- `user-id` (`string`, optional) — Filters expenses by the user ID linked to the expense.
 
 ### `create`
 

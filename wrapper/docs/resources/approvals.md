@@ -13,8 +13,9 @@
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `status` (`ClockifyApi.ApprovalRequestFilterState`, optional) — Filters results based on the provided approval state.
 - `sort-column` (`ClockifyApi.ApprovalRequestSortColumn`, optional) — Column name to use as sorting criteria.
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `sort-order` (`ClockifyApi.SortOrder`, optional) — Represents the sorting order.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
 
 ### `submit`
 

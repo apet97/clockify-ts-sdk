@@ -219,16 +219,22 @@
           "schemaType": null
         },
         {
-          "name": "page",
-          "in": "query",
+          "name": null,
+          "in": null,
           "required": false,
-          "schemaType": "integer"
+          "schemaType": null
         },
         {
-          "name": "page-size",
-          "in": "query",
+          "name": null,
+          "in": null,
           "required": false,
-          "schemaType": "integer"
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
         }
       ]
     },
@@ -440,22 +446,22 @@
           "schemaType": "string"
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -637,6 +643,24 @@
         "401"
       ],
       "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
         {
           "name": null,
           "in": null,
@@ -918,22 +942,28 @@
       ],
       "parameters": [
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -976,22 +1006,46 @@
       ],
       "parameters": [
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -1429,22 +1483,40 @@
       ],
       "parameters": [
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -1672,6 +1744,12 @@
       ],
       "parameters": [
         {
+          "name": "userLocale",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
@@ -1680,12 +1758,6 @@
         {
           "name": "invoiceId",
           "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "userLocale",
-          "in": "query",
           "required": true,
           "schemaType": "string"
         }
@@ -1800,6 +1872,18 @@
       ],
       "parameters": [
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
@@ -1810,18 +1894,6 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -2025,6 +2097,18 @@
           "in": "query",
           "required": false,
           "schemaType": "boolean"
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
         },
         {
           "name": "workspaceId",
@@ -2561,6 +2645,18 @@
           "schemaType": null
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "projectId",
           "in": "path",
           "required": true,
@@ -2804,6 +2900,30 @@
           "schemaType": "boolean"
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
@@ -2814,18 +2934,6 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -2844,6 +2952,12 @@
         "201"
       ],
       "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
         {
           "name": "workspaceId",
           "in": "path",
@@ -2908,6 +3022,18 @@
         "200"
       ],
       "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
         {
           "name": "workspaceId",
           "in": "path",
@@ -3314,6 +3440,18 @@
           "schemaType": "string"
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "sort-column",
           "in": "query",
           "required": false,
@@ -3326,16 +3464,16 @@
           "schemaType": null
         },
         {
-          "name": "page",
-          "in": "query",
+          "name": null,
+          "in": null,
           "required": false,
-          "schemaType": "integer"
+          "schemaType": null
         },
         {
-          "name": "page-size",
-          "in": "query",
+          "name": null,
+          "in": null,
           "required": false,
-          "schemaType": "integer"
+          "schemaType": null
         }
       ]
     },
@@ -3533,6 +3671,12 @@
           "in": null,
           "required": false,
           "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
         }
       ]
     },
@@ -3626,6 +3770,30 @@
         "200"
       ],
       "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
         {
           "name": null,
           "in": null,
@@ -3742,6 +3910,18 @@
         "200"
       ],
       "parameters": [
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
         {
           "name": "workspaceId",
           "in": "path",
@@ -3871,22 +4051,22 @@
           "schemaType": "string"
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -4796,22 +4976,52 @@
       ],
       "parameters": [
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },
@@ -5100,6 +5310,18 @@
           "schemaType": "string"
         },
         {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
+          "name": null,
+          "in": null,
+          "required": false,
+          "schemaType": null
+        },
+        {
           "name": "workspaceId",
           "in": "path",
           "required": true,
@@ -5110,18 +5332,6 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
         }
       ]
     },

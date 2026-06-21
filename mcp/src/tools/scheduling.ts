@@ -53,8 +53,18 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         {
             title: "List scheduling assignments",
             description:
-                "List scheduling assignments in the workspace with pagination and name filters.",
+                "List scheduling assignments in the workspace over a date range, with pagination and name filters. start/end are required — the endpoint 400s (code 3001) without them.",
             inputSchema: {
+                start: z
+                    .string()
+                    .describe(
+                        "Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required — the endpoint 400s (code 3001) without it.",
+                    ),
+                end: z
+                    .string()
+                    .describe(
+                        "Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required — the endpoint 400s without it.",
+                    ),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
@@ -64,6 +74,8 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         async (args) => {
             const req: ClockifyApi.ListSchedulingRequest = {
                 workspaceId: ctx.workspaceId,
+                start: args.start,
+                end: args.end,
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };

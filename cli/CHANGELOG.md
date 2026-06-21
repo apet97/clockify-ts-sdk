@@ -11,6 +11,11 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- `clk115 scheduling list` now requires `--from`/`--to` and sends them as the
+  `start`/`end` query range. The underlying `GET .../scheduling/assignments/all`
+  400s (code 3001) without `start` (live-verified), so the command was previously
+  non-functional; a bare `YYYY-MM-DD` is promoted to the day's start/end edge. The
+  `promoteDateBoundary` helper moved to `commands/helpers.js`, shared with `entries`.
 - An invalid `--output` value no longer crashes the CLI's own error path: the
   happy-path `resolveMode` throw is reported as before, but `main()`'s catch
   block now resolves output flags through a non-throwing fallback

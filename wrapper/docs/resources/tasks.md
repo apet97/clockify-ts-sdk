@@ -15,8 +15,10 @@
 - `name` (`string`, optional) — If provided, you'll get a filtered list of tasks that matches the provided string in their name.
 - `strict-name-search` (`boolean`, optional) — Flag to toggle strict search mode. When true, search by name returns only exact matches.
 - `is-active` (`boolean`, optional) — Filters search results whether task is active or not.
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
+- `sort-column` (`"ID" \| "NAME"`, optional) — Represents the column as criteria for sorting tasks.
+- `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional) — Sorting mode.
 
 ### `create`
 
@@ -24,6 +26,7 @@
 
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
+- `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
 - `budgetEstimate` (`number`, optional) — Represents a task budget estimate as long.
@@ -34,6 +37,7 @@
 - `userGroupIds` (`string[]`, optional) — Represents list of user group ids for the task.
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
+- `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `body` (`TaskCreateRequestBody`, required)
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
@@ -59,6 +63,8 @@
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
+- `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
+- `membership-status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Represents a membership status.
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
 - `billable` (`boolean`, optional) — Indicates whether a task is billable or not.
@@ -70,6 +76,8 @@
 - `workspaceId` (`string`, required)
 - `projectId` (`string`, required)
 - `taskId` (`string`, required)
+- `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
+- `membership-status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Represents a membership status.
 - `body` (`UpdateTasksRequestBody`, required)
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.

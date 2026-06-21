@@ -18,6 +18,8 @@
 **Request fields** (`ListSharedReportsRequest`):
 
 - `workspaceId` (`string`, required)
+- `page` (`number`, optional)
+- `pageSize` (`number`, optional)
 
 ### `create`
 

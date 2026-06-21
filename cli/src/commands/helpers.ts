@@ -29,6 +29,25 @@ export function parseIntArg(value: string): number {
     return parsed;
 }
 
+/**
+ * Normalize a `--from` / `--to` date-range value. A bare `YYYY-MM-DD` is
+ * promoted to the day's start (`T00:00:00Z`) or end (`T23:59:59Z`) edge; any
+ * other value must be a valid RFC3339 timestamp and is returned unchanged.
+ * Anything `Date.parse` rejects throws a clear local error so the bad value
+ * never reaches the wire. Shared by `entries` and `scheduling` range filters.
+ */
+export function promoteDateBoundary(value: string, flag: string, edge: "start" | "end"): string {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
+    }
+    if (Number.isNaN(Date.parse(value))) {
+        throw new Error(
+            `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp`,
+        );
+    }
+    return value;
+}
+
 export interface BaseContext {
     client: ClockifyClient;
     config: CliConfig;

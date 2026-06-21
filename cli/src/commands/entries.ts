@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerEntriesCommand: Registrar = (program, services) => {
@@ -88,22 +88,3 @@ export const registerEntriesCommand: Registrar = (program, services) => {
             );
         });
 };
-
-/**
- * Normalize a `--from` / `--to` value for the time-entry range filter.
- * A bare `YYYY-MM-DD` is promoted to the day's start (`T00:00:00Z`) or end
- * (`T23:59:59Z`) edge; any other value is required to be a valid RFC3339
- * timestamp and is returned unchanged. Anything `Date.parse` rejects throws
- * a clear local error so the bad value never reaches the wire.
- */
-function promoteDateBoundary(value: string, flag: "from" | "to", edge: "start" | "end"): string {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
-    }
-    if (Number.isNaN(Date.parse(value))) {
-        throw new Error(
-            `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp`,
-        );
-    }
-    return value;
-}

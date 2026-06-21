@@ -1295,6 +1295,10 @@ dist/cjs/src/api/types/UserGroupDtoV1.d.ts
 dist/cjs/src/api/types/UserGroupDtoV1.js
 dist/cjs/src/api/types/UserGroupIdsSchema.d.ts
 dist/cjs/src/api/types/UserGroupIdsSchema.js
+dist/cjs/src/api/types/UserGroupSortColumn.d.ts
+dist/cjs/src/api/types/UserGroupSortColumn.js
+dist/cjs/src/api/types/UserGroupsSortOrder.d.ts
+dist/cjs/src/api/types/UserGroupsSortOrder.js
 dist/cjs/src/api/types/UserIdWithRatesRequest.d.ts
 dist/cjs/src/api/types/UserIdWithRatesRequest.js
 dist/cjs/src/api/types/UserIdsSchema.d.ts
@@ -2723,6 +2727,10 @@ dist/esm/src/api/types/UserGroupDtoV1.d.ts
 dist/esm/src/api/types/UserGroupDtoV1.js
 dist/esm/src/api/types/UserGroupIdsSchema.d.ts
 dist/esm/src/api/types/UserGroupIdsSchema.js
+dist/esm/src/api/types/UserGroupSortColumn.d.ts
+dist/esm/src/api/types/UserGroupSortColumn.js
+dist/esm/src/api/types/UserGroupsSortOrder.d.ts
+dist/esm/src/api/types/UserGroupsSortOrder.js
 dist/esm/src/api/types/UserIdWithRatesRequest.d.ts
 dist/esm/src/api/types/UserIdWithRatesRequest.js
 dist/esm/src/api/types/UserIdsSchema.d.ts

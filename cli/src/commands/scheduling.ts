@@ -12,7 +12,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerSchedulingCommand: Registrar = (program, services) => {
@@ -22,7 +22,11 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
 
     scheduling
         .command("list")
-        .description("List scheduling assignments in the workspace.")
+        .description(
+            "List scheduling assignments over a date range. --from/--to are required (the endpoint 400s without them).",
+        )
+        .requiredOption("--from <date>", "Range start (YYYY-MM-DD or RFC3339). Required.")
+        .requiredOption("--to <date>", "Range end (YYYY-MM-DD or RFC3339). Required.")
         .option(
             "--limit <n>",
             "Items per page (default 25, max 200).",
@@ -35,6 +39,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListSchedulingRequest = {
                 workspaceId,
+                start: promoteDateBoundary(opts.from, "from", "start"),
+                end: promoteDateBoundary(opts.to, "to", "end"),
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };

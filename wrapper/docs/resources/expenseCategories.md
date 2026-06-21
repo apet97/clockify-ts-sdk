@@ -11,8 +11,12 @@
 **Request fields** (`ListExpenseCategoriesRequest`):
 
 - `workspaceId` (`string`, required)
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `sort-column` (`"NAME"`, optional) — Column name to be used as sorting criteria.
+- `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional) — Sorting order.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
+- `archived` (`boolean`, optional) — Filters results based on whether the category is archived.
+- `name` (`string`, optional) — Filters expense categories by a string matched against their name.
 
 ### `create`
 
