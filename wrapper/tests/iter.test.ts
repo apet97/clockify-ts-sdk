@@ -173,6 +173,24 @@ describe("iterPages — Last-Page header consumption", () => {
         ]);
     });
 
+    it("falls back to the length heuristic on a garbage (non-true/false) Last-Page value", async () => {
+        // A non-null but unparseable header ("maybe") must be treated as ABSENT —
+        // parseLastPageHeader returns undefined — so hasNextPage comes from the
+        // items.length === pageSize heuristic, NOT from the header. This pins the
+        // `normalized === "false"` arm in iter.ts: mutating its condition to a
+        // constant would make a garbage header force hasNextPage:false even on a
+        // FULL page.
+        const fullPage = (_req: PaginatedRequest) => fakeHttpResponsePromise([1, 2], "maybe");
+        const fullPages = await collect(iterPages(fullPage, {}, { pageSize: 2, maxPages: 1 }));
+        // FULL page (length === pageSize) + garbage header -> heuristic says MORE.
+        expect(fullPages).toEqual([{ items: [1, 2], page: 1, pageSize: 2, hasNextPage: true }]);
+
+        const shortPage = (_req: PaginatedRequest) => fakeHttpResponsePromise([1], "maybe");
+        const shortPages = await collect(iterPages(shortPage, {}, { pageSize: 2 }));
+        // SHORT page (length < pageSize) + same garbage header -> heuristic says DONE.
+        expect(shortPages).toEqual([{ items: [1], page: 1, pageSize: 2, hasNextPage: false }]);
+    });
+
     it("continues on a short page when Last-Page: false (server is authoritative)", async () => {
         // The server said "more pages exist" even though this page came
         // back short (a legitimately filtered/partial page). Trusting the

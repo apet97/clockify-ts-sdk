@@ -150,6 +150,38 @@ describe("otelHooks", () => {
         expect(startSpan).not.toHaveBeenCalled();
     });
 
+    it("two concurrent requestId-less requests on the same method+url each end their span", async () => {
+        // With requestId injection off, a synthetic method+url+requestId+attempt
+        // string collides for two concurrent same-method/url requests — the second
+        // beforeRequest overwrites the first, orphaning a never-ended span. Keying
+        // on the per-request Headers instance keeps them distinct: every started
+        // span is ended.
+        const spans: ReturnType<typeof mockSpan>[] = [];
+        const startSpan = vi.fn(() => {
+            const s = mockSpan();
+            spans.push(s);
+            return s;
+        });
+        const hooks = otelHooks({ startSpan });
+
+        // Same method + url + attempt, requestId undefined; the ONLY thing that
+        // differs is the per-request Headers instance (as composedFetch builds it).
+        const url = "https://api.clockify.me/api/v1/tags";
+        const a = { url, method: "GET", headers: new Headers(), attempt: 0, requestId: undefined };
+        const b = { url, method: "GET", headers: new Headers(), attempt: 0, requestId: undefined };
+
+        // Interleave: both start before either ends (concurrent in-flight).
+        await hooks.beforeRequest?.(a);
+        await hooks.beforeRequest?.(b);
+        await hooks.afterResponse?.({ ...a, response: new Response("[]", { status: 200 }), durationMs: 5 });
+        await hooks.afterResponse?.({ ...b, response: new Response("[]", { status: 200 }), durationMs: 7 });
+
+        const started = startSpan.mock.calls.length;
+        const ended = spans.filter((s) => s.ended).length;
+        expect(started).toBe(2);
+        expect(ended).toBe(started); // no orphaned span
+    });
+
     it("retry attempts get separate spans (resend_count attr)", async () => {
         const spans: ReturnType<typeof mockSpan>[] = [];
         const startSpan = vi.fn(() => {

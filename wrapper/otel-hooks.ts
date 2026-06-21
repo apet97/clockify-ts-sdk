@@ -28,7 +28,6 @@
 import type {
     ComposedFetchHooks,
     ErrorContext,
-    RequestContext,
     ResponseContext,
 } from "./composed-fetch.js";
 
@@ -81,17 +80,19 @@ const SPAN_STATUS_ERROR = 2 as const;
  * - `onRetry` → no-op (the next attempt opens its own span)
  *
  * Each request attempt gets its own span (retry → new span). Spans
- * are tracked by `RequestContext` identity in a WeakMap, so the
- * GC reclaims them automatically.
+ * are tracked by `ctx.headers` object identity in a WeakMap, so the
+ * GC reclaims them automatically and concurrent requests never collide
+ * (a synthetic method+url+requestId+attempt string would collide when
+ * `requestId` injection is disabled and two same-method/url requests
+ * race; the per-request `Headers` instance is always unique).
  */
 export function otelHooks(options: OtelHooksOptions): ComposedFetchHooks {
-    // Map keyed by a synthetic string per (url + method + requestId + attempt)
-    // since contexts are spread copies and cannot be used as WeakMap keys.
-    const spans = new Map<string, OtelLikeSpan>();
-
-    function spanKey(ctx: RequestContext): string {
-        return `${ctx.method} ${ctx.url} [${ctx.requestId ?? "no-id"}] #${ctx.attempt}`;
-    }
+    // Keyed by the per-request `Headers` instance. `composedFetch` builds one
+    // `initHeaders` per request and preserves it across the `{...ctx}` spreads
+    // (and across sequential retry attempts, which start+end their span before
+    // the next attempt's beforeRequest), so it is a collision-proof, GC-reclaimed
+    // key — unlike a synthetic string, which collides on requestId:false.
+    const spans = new WeakMap<Headers, OtelLikeSpan>();
 
     return {
         beforeRequest(ctx) {
@@ -112,23 +113,21 @@ export function otelHooks(options: OtelHooksOptions): ComposedFetchHooks {
             for (const [k, v] of Object.entries(initialAttrs)) {
                 span.setAttribute(k, v);
             }
-            spans.set(spanKey(ctx), span);
+            spans.set(ctx.headers, span);
         },
         afterResponse(ctx: ResponseContext) {
-            const key = spanKey(ctx);
-            const span = spans.get(key);
+            const span = spans.get(ctx.headers);
             if (span == null) return;
-            spans.delete(key);
+            spans.delete(ctx.headers);
             span.setAttribute(ATTR_HTTP_STATUS, ctx.response.status);
             span.setAttribute(ATTR_DURATION_MS, ctx.durationMs);
             span.setStatus({ code: ctx.response.ok ? SPAN_STATUS_OK : SPAN_STATUS_ERROR });
             span.end();
         },
         onError(ctx: ErrorContext) {
-            const key = spanKey(ctx);
-            const span = spans.get(key);
+            const span = spans.get(ctx.headers);
             if (span == null) return;
-            spans.delete(key);
+            spans.delete(ctx.headers);
             if (ctx.error instanceof Error) {
                 span.recordException(ctx.error);
             }

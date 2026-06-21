@@ -42,6 +42,13 @@ once v1.0.0 ships.
   (`64:ff9b::/96`) literals whose embedded IPv4 is a private/loopback/metadata
   range (e.g. `64:ff9b::a9fe:a9fe` → `169.254.169.254`); these were previously
   allowed. A NAT64 address embedding a public v4 stays allowed.
+- Webhook SSRF guard (`webhook-url`) now also decodes two more IPv6→IPv4
+  embedding classes that previously slipped through: **6to4** (`2002::/16`, e.g.
+  `2002:7f00:1::` → `127.0.0.1`, `2002:a9fe:a9fe::` → `169.254.169.254`) and
+  **IPv4-compatible** (`::/96`, e.g. `::7f00:1` → `127.0.0.1`, `::a9fe:a9fe` →
+  `169.254.169.254`). Each is decoded and re-checked through the same private/
+  loopback/metadata `ipv4Reason` path as the NAT64 / IPv4-mapped branches; a 6to4
+  or IPv4-compatible literal embedding a public v4 stays allowed.
 - Corrected a false security claim in `README.md` and
   `examples/structured-logging.ts`: the SDK logging layer does **not** emit
   request/response headers, so there is no "auto-redaction" — callers that log
@@ -60,6 +67,22 @@ once v1.0.0 ships.
   "... doesn't exist") now classifies to `not_found` instead of
   `auth_or_permission`; the bare `workspace` token is dropped from the auth
   message matcher so it can no longer claim that family.
+- `resolveInstant` (`clockify-sdk-ts-115/dates`) no longer interprets a
+  zone-LESS ISO datetime (`2026-06-10T08:30:00`) in the **host** timezone, which
+  broke the module's UTC-determinism contract (the same input resolved to a
+  different instant per TZ). It now appends `Z` before parsing when the input
+  carries no explicit zone, so a zone-less datetime is always UTC; explicit-offset
+  inputs (`+02:00`, `-0500`, `Z`) keep their offset, and malformed strings still
+  return `undefined`.
+- `otelHooks` (`clockify-sdk-ts-115/otel-hooks`) no longer orphans spans for
+  concurrent same-method+url requests when `composedFetch({ requestId: false })`
+  disables X-Request-Id injection. The span store was a strong `Map` keyed by a
+  synthetic `method+url+requestId+attempt` string that collapsed to
+  `"GET <url> [no-id] #0"` for every such request, so a second `beforeRequest`
+  overwrote the first's span (never ended). It is now a `WeakMap` keyed by the
+  per-request `Headers` instance — collision-proof across concurrent requests and
+  genuinely GC-reclaimed, matching the JSDoc that already claimed a self-reclaiming
+  WeakMap.
 
 ### Tests
 
@@ -72,6 +95,15 @@ once v1.0.0 ships.
   `fe80::/10` link-local band in `webhook-url.ts` (`[fec0::1]` accepted just
   above the band, `[febf::1]` rejected at the inclusive `0xfebf` upper bound).
   Floors rise: `dates` 84→88, `webhook-url` 80→83. No runtime code changed.
+- Added regression / mutation-killing tests for the fixes above and two existing
+  surviving mutants: `dates.ts` (zone-less datetime parses as UTC; explicit
+  offset preserved), `webhook-url.ts` (6to4 / IPv4-compatible reject + public-v4
+  allow vectors in both the example and property suites; inclusive upper bounds
+  of the `172.16.0.0/12` and `100.64.0.0/10` IPv4 bands via
+  `172.31.255.255`/`100.127.255.255`), `otel-hooks.ts` (two concurrent
+  requestId-less same-method+url requests each end their span — no orphan), and
+  `iter.ts` (a garbage non-`true`/`false` `Last-Page` value falls back to the
+  length heuristic on both a full and a short page).
 
 ### Changed
 

@@ -33,9 +33,15 @@ describe("validateWebhookUrl", () => {
         "https://0.0.0.0/hook",
         "https://10.0.0.1/hook",
         "https://100.64.0.1/hook",
+        // Inclusive TOP of the CGNAT 100.64.0.0/10 band: a `b <= 127` -> `b < 127`
+        // mutant would wrongly allow 100.127.x.x. Witness the boundary.
+        "https://100.127.255.255/hook",
         "https://127.0.0.1/hook",
         "https://169.254.169.254/hook",
         "https://172.16.0.1/hook",
+        // Inclusive TOP of the private 172.16.0.0/12 band: a `b <= 31` -> `b < 31`
+        // mutant would wrongly allow 172.31.x.x. Witness the boundary.
+        "https://172.31.255.255/hook",
         "https://192.168.1.1/hook",
     ];
     for (const candidate of privateIpv4) {
@@ -66,6 +72,14 @@ describe("validateWebhookUrl", () => {
         // NAT64 well-known prefix (64:ff9b::/96) embedding a private/metadata v4.
         "https://[64:ff9b::a9fe:a9fe]/hook",
         "https://[64:ff9b::7f00:1]/hook",
+        // 6to4 prefix (2002::/16) embedding a private/metadata v4.
+        // 2002:a9fe:a9fe:: -> 169.254.169.254; 2002:7f00:1:: -> 127.0.0.1.
+        "https://[2002:a9fe:a9fe::]/hook",
+        "https://[2002:7f00:1::]/hook",
+        // IPv4-compatible IPv6 (::/96) embedding a private/metadata v4.
+        // ::a9fe:a9fe -> 169.254.169.254; ::7f00:1 -> 127.0.0.1.
+        "https://[::a9fe:a9fe]/hook",
+        "https://[::7f00:1]/hook",
     ];
     for (const candidate of privateIpv6) {
         it(`rejects private/reserved IPv6: ${candidate}`, () => {
@@ -81,6 +95,15 @@ describe("validateWebhookUrl", () => {
         // 2001:db8::a9fe:a9fe is NOT the 64:ff9b::/96 NAT64 prefix, so its tail must
         // NOT be decoded as an embedded IPv4 — locks the && in the NAT64 guard.
         expect(validateWebhookUrl("https://[2001:db8::a9fe:a9fe]/hook").ok).toBe(true);
+    });
+
+    it("accepts a 6to4 / IPv4-compatible literal embedding a PUBLIC v4", () => {
+        // 6to4 and IPv4-compatible decode like NAT64: only a private/metadata
+        // embedded v4 is blocked. 2002:0808:0808:: and ::0808:0808 both embed
+        // 8.8.8.8 (public), so they must stay allowed — kills the
+        // ConditionalExpression->true mutants on the two new decode branches.
+        expect(validateWebhookUrl("https://[2002:808:808::]/hook").ok).toBe(true);
+        expect(validateWebhookUrl("https://[::808:808]/hook").ok).toBe(true);
     });
 
     it("accepts routable public IPv6 literals", () => {
