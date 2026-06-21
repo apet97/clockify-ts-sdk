@@ -21,6 +21,10 @@ All notable changes to `@clockify115/cli` are documented here.
   usage error instead of forwarding `NaN`/`<=0` to the wire
   (`page-size: Math.max(1, NaN) === NaN`). A new shared `parseIntArg` option
   parser (in `commands/helpers.js`) mirrors `api`'s `parsePositiveInteger`.
+  The same `parseIntArg` guard now also covers the seven list commands that
+  still used the raw `(v) => Number.parseInt(v, 10)` parser:
+  `scheduling`/`auditlog`/`clients`/`tags`/`tasks`/`timeoff list` and the
+  `reports detailed --page`/`--page-size` path.
 - `clk115 expenses list` now shows the expense **total** (`total ?? amount ??
   quantity`) in the amount column instead of the per-unit quantity, so the
   figure reflects what the expense actually costs.

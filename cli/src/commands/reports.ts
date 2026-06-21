@@ -19,7 +19,7 @@ import type { Command } from "commander";
 
 import { printObject } from "../output.js";
 
-import { resolveContext } from "./helpers.js";
+import { parseIntArg, resolveContext } from "./helpers.js";
 import { resolveClientId, resolveProjectId } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
@@ -122,11 +122,11 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")
         .option("--to <date>", "Range end; overrides --period.")
-        .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
+        .option("--page <n>", "Page number.", parseIntArg, 1)
         .option(
             "--page-size <n>",
             "Entries per page (max 1000).",
-            (v) => Number.parseInt(v, 10),
+            parseIntArg,
             50,
         )
         .action(async function (this: Command, opts) {

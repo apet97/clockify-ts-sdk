@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClockifyClient } from "../src/client.js";
 import { registerExpensesCommand } from "../src/commands/expenses.js";
 import { registerProjectsCommand } from "../src/commands/projects.js";
+import { registerReportsCommand } from "../src/commands/reports.js";
 import { registerSchedulingCommand } from "../src/commands/scheduling.js";
 import { registerSharedReportsCommand } from "../src/commands/sharedReports.js";
 import { registerTagsCommand } from "../src/commands/tags.js";
 import { registerTasksCommand } from "../src/commands/tasks.js";
+import { registerTimeOffCommand } from "../src/commands/timeoff.js";
 import type { Registrar, Services } from "../src/commands/types.js";
 import { registerUsersCommand } from "../src/commands/users.js";
 import { registerWebhooksCommand } from "../src/commands/webhooks.js";
@@ -282,10 +284,8 @@ describe("scheduling read and create commands", () => {
             "--json",
             "scheduling",
             "list",
-            "--limit",
-            "0",
         ]);
-        expect(calls[0]).toMatchObject({ "page-size": 1 });
+        expect(calls[0]).toMatchObject({ "page-size": 25 });
         expect(calls[0]).not.toHaveProperty("name");
     });
 
@@ -530,14 +530,14 @@ describe("project and task read command branches", () => {
             "list",
             "p-1",
             "--limit",
-            "0",
+            "10",
             "--name",
             "QA",
         ]);
         expect(calls[0]).toMatchObject({
             workspaceId: "ws-1",
             projectId: "p-1",
-            "page-size": 1,
+            "page-size": 10,
             name: "QA",
         });
         const rows = lastJson() as Array<Record<string, unknown>>;
@@ -686,12 +686,12 @@ describe("users, tags, and shared report read branches", () => {
             "tags",
             "list",
             "--limit",
-            "0",
+            "10",
             "--name",
             "Deep",
             "--archived",
         ]);
-        expect(calls[0]).toMatchObject({ "page-size": 1, name: "Deep", archived: true });
+        expect(calls[0]).toMatchObject({ "page-size": 10, name: "Deep", archived: true });
         const rows = lastJson() as Array<Record<string, unknown>>;
         expect(rows[0]).toMatchObject({ id: "t-1", archived: true });
         expect(rows[1]).toMatchObject({ id: "", name: "", archived: false });
@@ -970,6 +970,104 @@ describe("expenses list branch coverage", () => {
                 "clk115",
                 "expenses",
                 "list",
+                "--page",
+                "0",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
+    });
+});
+
+describe("list paging flags reject non-positive integers before any wire call", () => {
+    // The shared parseIntArg parser now guards --page/--limit on these list
+    // commands; a non-numeric or zero/negative value used to flow to the wire
+    // as `page: NaN` / `page-size: NaN` (JSON.stringify serializes NaN to null).
+    it("scheduling list rejects a non-numeric --limit", async () => {
+        let listed = false;
+        const client = {
+            scheduling: {
+                list: async () => {
+                    listed = true;
+                    return [];
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "scheduling",
+                "list",
+                "--limit",
+                "abc",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
+    });
+
+    it("tasks list rejects a zero/negative --page", async () => {
+        let listed = false;
+        const client = {
+            tasks: {
+                list: async () => {
+                    listed = true;
+                    return [];
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerTasksCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "tasks",
+                "list",
+                "p-1",
+                "--page",
+                "0",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
+    });
+
+    it("timeoff list rejects a non-numeric --limit", async () => {
+        let listed = false;
+        const client = {
+            timeOff: {
+                list: async () => {
+                    listed = true;
+                    return [];
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerTimeOffCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "timeoff",
+                "list",
+                "--limit",
+                "abc",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
+    });
+
+    it("reports detailed rejects a zero/negative --page", async () => {
+        let listed = false;
+        const client = {
+            reports: {
+                detailed: async () => {
+                    listed = true;
+                    return { timeentries: [] };
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerReportsCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "detailed",
                 "--page",
                 "0",
             ]),

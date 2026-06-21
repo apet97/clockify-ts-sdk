@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerTasksCommand: Registrar = (program, services) => {
@@ -21,10 +21,10 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .option(
             "--limit <n>",
             "Items per page (default 25, max 200).",
-            (v) => Number.parseInt(v, 10),
+            parseIntArg,
             25,
         )
-        .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
+        .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by task name substring.")
         .action(async function (this: Command, projectId: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);

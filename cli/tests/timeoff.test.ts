@@ -125,18 +125,20 @@ describe("timeoff list", () => {
         expect(calls.lists[0]?.pageSize).toBe(200);
     });
 
-    it("clamps a zero/negative --limit up to 1", async () => {
+    it("rejects a zero/negative --limit before any wire call", async () => {
         const { client, calls } = makeClient({ listItems: [] });
-        await makeProgram(registerTimeOffCommand, client).parseAsync([
-            "node",
-            "clk115",
-            "--json",
-            "timeoff",
-            "list",
-            "--limit",
-            "0",
-        ]);
-        expect(calls.lists[0]?.pageSize).toBe(1);
+        await expect(
+            makeProgram(registerTimeOffCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "timeoff",
+                "list",
+                "--limit",
+                "0",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(calls.lists).toHaveLength(0);
     });
 
     it("threads --page and a within-range --limit through unchanged", async () => {
