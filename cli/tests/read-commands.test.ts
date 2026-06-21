@@ -869,6 +869,14 @@ describe("expenses list branch coverage", () => {
                                 },
                                 { id: "e-2", category: "Meals", amount: 34 },
                                 {},
+                                // Both a computed total and a per-unit quantity:
+                                // the row must show the total (3 * 50 = 150), not 3.
+                                {
+                                    id: "e-4",
+                                    category: "Supplies",
+                                    quantity: 3,
+                                    total: 150,
+                                },
                             ],
                         },
                     };
@@ -897,6 +905,8 @@ describe("expenses list branch coverage", () => {
         expect(rows[0]).toMatchObject({ category: "Travel", amount: 12, billable: true });
         expect(rows[1]).toMatchObject({ category: "Meals", amount: 34 });
         expect(rows[2]).toMatchObject({ id: "", category: "", amount: 0, billable: false });
+        // total (150) wins over the per-unit quantity (3).
+        expect(rows[3]).toMatchObject({ id: "e-4", category: "Supplies", amount: 150 });
     });
 
     it("list handles a direct expenses array envelope", async () => {
@@ -916,5 +926,54 @@ describe("expenses list branch coverage", () => {
             id: "e-3",
             category: "",
         });
+    });
+
+    it("rejects a non-numeric --limit before any wire call", async () => {
+        // Number.parseInt("abc", 10) is NaN, which used to flow to the wire as
+        // `page-size: Math.max(1, NaN) === NaN`. The shared parseIntArg parser
+        // now raises a commander usage error so the bad value never lists.
+        let listed = false;
+        const client = {
+            expenses: {
+                list: async () => {
+                    listed = true;
+                    return { expenses: [] };
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "expenses",
+                "list",
+                "--limit",
+                "abc",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
+    });
+
+    it("rejects a zero/negative --page before any wire call", async () => {
+        let listed = false;
+        const client = {
+            expenses: {
+                list: async () => {
+                    listed = true;
+                    return { expenses: [] };
+                },
+            },
+        };
+        await expect(
+            makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "expenses",
+                "list",
+                "--page",
+                "0",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(listed).toBe(false);
     });
 });

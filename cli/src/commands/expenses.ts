@@ -12,7 +12,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -50,13 +50,8 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     expenses
         .command("list")
         .description("List expenses in the workspace.")
-        .option(
-            "--limit <n>",
-            "Items per page (default 25, max 200).",
-            (v) => Number.parseInt(v, 10),
-            25,
-        )
-        .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
+        .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
+        .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--start <date>", "Start of the date range (YYYY-MM-DD).")
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
@@ -90,6 +85,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     category?: { name?: string } | string;
                     projectId?: string;
                     quantity?: number;
+                    total?: number;
                     amount?: number;
                     currency?: string;
                     date?: string;
@@ -106,7 +102,10 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     date: e.date ?? "",
                     category,
                     projectId: e.projectId ?? "",
-                    amount: e.amount ?? e.quantity ?? 0,
+                    // Prefer the computed `total` (quantity * unit amount) over the
+                    // per-unit `amount`/`quantity`, so the column shows what the
+                    // expense actually costs rather than a per-unit figure.
+                    amount: e.total ?? e.amount ?? e.quantity ?? 0,
                     currency: e.currency ?? "",
                     billable: e.billable === true,
                 };

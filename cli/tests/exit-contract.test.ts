@@ -55,6 +55,29 @@ describe("CLI exit and JSON error contract", () => {
         expect(payload.recovery).toMatch(/token|workspace|permissions/i);
     });
 
+    it("reports an invalid --output without throwing an uncaught exception", async () => {
+        // An invalid --output makes the happy-path resolveMode throw at the
+        // action site (caught + reported). main()'s own catch block then
+        // re-resolves the flags to format that error — which previously threw
+        // AGAIN on the same bad --output and escaped as an uncaught rejection.
+        // It must instead resolve to a clean non-zero exit code. A throwaway
+        // --api-key gets past the client factory so resolveMode is the first
+        // throw (no network call is made — resolveFlags throws before status
+        // reaches the wire).
+        const promise = main([
+            "node",
+            "clk115",
+            "--api-key",
+            "fake-key-for-output-test",
+            "--output",
+            "totally-bogus",
+            "status",
+        ]);
+        await expect(promise).resolves.toBeGreaterThan(0);
+        // The fall-back reporter still surfaces the underlying error message.
+        expect(errored.join("\n")).toMatch(/totally-bogus|table, json, or ndjson/i);
+    });
+
     it("returns 0 for version output", async () => {
         const writeSpy = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
         try {
