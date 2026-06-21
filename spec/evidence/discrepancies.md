@@ -2150,6 +2150,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   vs `timeOff.updateStatus` (PATCH flat, body `["note","statusType"]`).
 - **Status:** `compensated-in-tool-layer`. The tool now requires `policyId`, calls
   `changeTimeOffRequestStatus`, and sends `status`. Test: `mcp/tests/sweep-fixes.test.ts`.
+- Live note 2026-06-21: the same policy-scoped path also accepts **DELETE** — `DELETE /time-off/policies/{policyId}/requests/{requestId}` returns **200** and removes a **PENDING** request (verified live on the sandbox). The flat `DELETE /time-off/requests/{requestId}` 404s, and a `…/requests/{requestId}/status` PATCH to `WITHDRAWN` 404s. So "no API delete path for time-off requests" holds only for **terminal** states: a REJECTED request stays undeletable, and rejecting an APPROVED one only moves it into the undeletable REJECTED pile (the web-UI "withdraw" is likewise pending-only). Net: the ~196 approved/rejected sandbox time-off requests are permanent litter; only PENDING ones are removable.
 
 ### `deletes.archive-first` — COMPENSATED 2026-06-17 (all sub-entities)
 
