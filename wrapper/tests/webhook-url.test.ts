@@ -106,6 +106,37 @@ describe("validateWebhookUrl", () => {
         expect(validateWebhookUrl("https://[::808:808]/hook").ok).toBe(true);
     });
 
+    it("treats near-miss embedding prefixes as normal public literals", () => {
+        // Each host is ONE group off a private-embedding prefix, so it must NOT be
+        // decoded as that embedding — pins the prefix-match operators in ipv6Reason.
+        // 2003:: is not 6to4 (2002::/16): kills `groups[0] === 0x2002` -> true.
+        expect(validateWebhookUrl("https://[2003:a9fe:a9fe::]/hook").ok).toBe(true);
+        // 64:ff9c:: is not NAT64 (second group != 0xff9b): kills the && -> || and the
+        // `groups[1] === 0xff9b` equality mutant in the NAT64 guard.
+        expect(validateWebhookUrl("https://[64:ff9c::a9fe:a9fe]/hook").ok).toBe(true);
+        // 65:ff9b:: is not NAT64 (first group != 0x0064): kills `groups[0] === 0x0064`.
+        expect(validateWebhookUrl("https://[65:ff9b::a9fe:a9fe]/hook").ok).toBe(true);
+        // 1::7f00:1 has a non-zero leading group, so it is NOT IPv4-compatible (::/96):
+        // kills the `groups.slice(0, 6).every(g => g === 0)` -> `.some` mutant.
+        expect(validateWebhookUrl("https://[1::7f00:1]/hook").ok).toBe(true);
+    });
+
+    it("reports the specific reason for each special/embedded IPv6 form", () => {
+        // The shared reject loop uses a lenient reason regex; pin each discrimination
+        // branch to its OWN reason so a mutant that misroutes one form to another
+        // (e.g. loopback -> IPv4-compatible) flips the reason and is killed.
+        const reasonFor = (host: string) => {
+            const result = validateWebhookUrl(`https://[${host}]/hook`);
+            return result.ok ? "" : result.reason;
+        };
+        expect(reasonFor("::1")).toMatch(/loopback/);
+        expect(reasonFor("::")).toMatch(/unspecified/);
+        expect(reasonFor("::ffff:169.254.169.254")).toMatch(/IPv4-mapped/);
+        expect(reasonFor("64:ff9b::a9fe:a9fe")).toMatch(/NAT64/);
+        expect(reasonFor("2002:a9fe:a9fe::")).toMatch(/6to4/);
+        expect(reasonFor("::a9fe:a9fe")).toMatch(/IPv4-compatible/);
+    });
+
     it("accepts routable public IPv6 literals", () => {
         expect(validateWebhookUrl("https://[2606:4700:4700::1111]/hook").ok).toBe(true);
         // first group 0xfec0 sits just ABOVE the fe80::/10 link-local band (<=0xfebf),
