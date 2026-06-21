@@ -17,6 +17,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - A wrong id (live `400` "X doesn't belong to Workspace" body) now surfaces the
   `not_found` recovery hint in tool receipts instead of `auth_or_permission`
   (shared `error-codes` regenerated).
+- `clockify_groups_get` now auto-paginates `userGroups.list` (via `iterAll`)
+  instead of scanning only the first 200 groups, so a group past row 200 is no
+  longer falsely reported as not found.
+- `clockify_fix_entry` (by description) streams the user's time entries instead
+  of buffering the entire history into memory: it keeps only matches, throws the
+  moment a second match appears, and bounds the scan (asks to narrow the window
+  or pass `entry_id` past 10k entries).
 
 ### Changed
 
