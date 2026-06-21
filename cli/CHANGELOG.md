@@ -4,6 +4,12 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `printError` classifies a `400` "X doesn't belong to Workspace/Project" body
+  as `not_found` (the id is wrong) instead of `invalid_request`, and the
+  status/message classification is now computed once.
+
 ### Changed
 
 - Dev-dependency bump: `vitest` and `@vitest/coverage-v8` `2.x` -> `4.x`

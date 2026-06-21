@@ -244,7 +244,12 @@ export function errorCodeForStatus(status: number | undefined): ClockifyErrorCod
 }
 
 export function errorCodeForMessage(message: string): ClockifyErrorCode {
-    if (/(unauthorized|forbidden|permission|api[\s_-]?key|addon[\s_-]?token|CLOCKIFY_API_KEY|CLOCKIFY_ADDON_TOKEN|workspace)/i.test(message)) return "auth_or_permission";
+    // A wrong/missing id 400s with a code:501 body like "Project doesn't belong
+    // to Workspace" / "... doesn't exist" — that is a not_found, classified BEFORE
+    // the auth/invalid matchers so the bare "workspace"/"invalid" tokens can't
+    // claim it.
+    if (/does(?:n'?t| not) (?:belong to|exist)/i.test(message)) return "not_found";
+    if (/(unauthorized|forbidden|permission|api[\s_-]?key|addon[\s_-]?token|CLOCKIFY_API_KEY|CLOCKIFY_ADDON_TOKEN)/i.test(message)) return "auth_or_permission";
     if (/(required|provide|missing|invalid|unknown option|unknown command|could not parse|not valid|must use|must not|confirmation token)/i.test(message)) {
         return "invalid_request";
     }

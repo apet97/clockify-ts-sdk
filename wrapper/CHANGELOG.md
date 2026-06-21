@@ -37,6 +37,13 @@ once v1.0.0 ships.
   request/response headers, so there is no "auto-redaction" — callers that log
   `ctx.headers` via hooks must redact the auth header themselves.
 
+### Fixed
+
+- A wrong/missing id (live `400` code:501 "X doesn't belong to Workspace" /
+  "... doesn't exist") now classifies to `not_found` instead of
+  `auth_or_permission`; the bare `workspace` token is dropped from the auth
+  message matcher so it can no longer claim that family.
+
 ### Tests
 
 - Added mutation-killing tests for `composed-fetch.ts`, `dates.ts`, and

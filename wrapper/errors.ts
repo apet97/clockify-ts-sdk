@@ -390,6 +390,13 @@ function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
         return "active_resource_delete_blocked";
     }
 
+    // A wrong/missing id 400s with a code:501 "X doesn't belong to Workspace" /
+    // "... doesn't exist" body — semantically a not_found, classified before the
+    // generic 400 -> invalid_request status mapping so agents get the right hint.
+    if (err.statusCode === 400 && mentionsResourceNotFound(err.message, err.body)) {
+        return "not_found";
+    }
+
     const byStatus = errorCodeForSdkStatus(err.statusCode);
     if (byStatus != null) return byStatus;
 
@@ -398,6 +405,17 @@ function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
 
 function mentionsActiveDeleteBlock(message: string, body: unknown): boolean {
     const re = /cannot delete an active (project|task|client)/i;
+    if (re.test(message)) return true;
+    if (typeof body === "string") return re.test(body);
+    if (body != null && typeof body === "object") {
+        const bodyMessage = (body as { message?: unknown }).message;
+        if (typeof bodyMessage === "string") return re.test(bodyMessage);
+    }
+    return false;
+}
+
+function mentionsResourceNotFound(message: string, body: unknown): boolean {
+    const re = /does(?:n'?t| not) (?:belong to|exist)/i;
     if (re.test(message)) return true;
     if (typeof body === "string") return re.test(body);
     if (body != null && typeof body === "object") {

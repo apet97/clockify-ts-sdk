@@ -46,6 +46,21 @@ describe("error-code wiring: reachable codes are actually emitted", () => {
         );
     });
 
+    it("400 'doesn't belong to Workspace/Project' classifies to not_found (a wrong id)", () => {
+        // Live: a missing/wrong id 400s with a code:501 "X doesn't belong to
+        // Workspace" body — the bare "workspace" token must NOT win it for auth.
+        expect(
+            getStableErrorCode(
+                new ClockifyApiError({ statusCode: 400, message: "Project doesn't belong to Workspace" }),
+            ),
+        ).toBe("not_found");
+        expect(
+            getStableErrorCode(
+                new ClockifyApiError({ statusCode: 400, message: "Task doesn't belong to Project" }),
+            ),
+        ).toBe("not_found");
+    });
+
     it("429 with Retry-After classifies to the retry-after code", () => {
         const err = new ClockifyApiError({ statusCode: 429, rawResponse: H({ "Retry-After": "30" }) as never });
 

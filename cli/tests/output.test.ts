@@ -115,6 +115,13 @@ describe("printSuccess / printError", () => {
         printError("HTTP 404: workspace not accessible", json, 404);
         expect(JSON.parse(errored[0] ?? "").code).toBe("not_found");
     });
+
+    it("classifies a 400 'doesn't belong to' body as not_found (the id is wrong)", () => {
+        // A wrong id 400s with "X doesn't belong to Workspace"; the not_found
+        // message overrides the generic 400 -> invalid_request status mapping.
+        printError("Project doesn't belong to Workspace", json, 400);
+        expect(JSON.parse(errored[0] ?? "").code).toBe("not_found");
+    });
 });
 
 describe("selectValue", () => {

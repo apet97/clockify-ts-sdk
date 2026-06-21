@@ -94,10 +94,17 @@ export function printSuccess(message: string, opts: OutputOptions): void {
  * top-level error wrapper.
  */
 export function printError(message: string, opts: OutputOptions, statusCode?: number): void {
+    // Prefer the HTTP status when the thrower attached one; a synthetic
+    // "HTTP 404:" message would otherwise hit the message heuristic. Exception:
+    // a 400 "X doesn't belong to Workspace/Project" body is really a not_found
+    // (the id is wrong), so a not_found message classification overrides the
+    // generic 400 -> invalid_request status mapping.
+    const messageCode = errorCodeForMessage(message);
+    const code =
+        messageCode === "not_found" && statusCode === 400
+            ? "not_found"
+            : (errorCodeForStatus(statusCode) ?? messageCode);
     if (opts.mode !== "table") {
-        // Prefer the HTTP status when the thrower attached one; a synthetic
-        // "HTTP 404:" message would otherwise hit the message heuristic.
-        const code = errorCodeForStatus(statusCode) ?? errorCodeForMessage(message);
         console.error(
             JSON.stringify({
                 ok: false,
@@ -114,9 +121,7 @@ export function printError(message: string, opts: OutputOptions, statusCode?: nu
     // Surface the stable error code's recovery hint in human (table) mode too —
     // JSON/ndjson modes already carry `recovery`; without this the default mode
     // showed only the raw message with no next step.
-    const recovery = recoveryForCode(
-        errorCodeForStatus(statusCode) ?? errorCodeForMessage(message),
-    );
+    const recovery = recoveryForCode(code);
     if (recovery) {
         console.error(`${opts.color ? pc.dim("→") : "→"} ${recovery}`);
     }
