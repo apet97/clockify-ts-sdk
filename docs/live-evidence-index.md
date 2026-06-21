@@ -42,6 +42,7 @@ policy).
 | Method | Path | operationId |
 | --- | --- | --- |
 | DELETE | `/workspaces/{workspaceId}/clients/{clientId}` | deleteWorkspacesWorkspaceIdClientsClientId |
+| DELETE | `/workspaces/{workspaceId}/custom-fields/{customFieldId}` | deleteWorkspaceCustomField |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | deleteProject |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | deleteTaskFromProject |
@@ -92,6 +93,7 @@ policy).
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
 | POST | `/workspaces/{workspaceId}/clients` | postWorkspacesWorkspaceIdClients |
+| POST | `/workspaces/{workspaceId}/custom-fields` | createWorkspaceCustomField |
 | POST | `/workspaces/{workspaceId}/expenses` | createExpense |
 | POST | `/workspaces/{workspaceId}/expenses/categories` | addExpenseCategory |
 | POST | `/workspaces/{workspaceId}/holidays` | createHoliday |
@@ -108,7 +110,9 @@ policy).
 | POST | `/workspaces/{workspaceId}/user-groups` | addNewGroup |
 | POST | `/workspaces/{workspaceId}/webhooks` | createWebhook |
 | PUT | `/workspaces/{workspaceId}/clients/{clientId}` | putWorkspacesWorkspaceIdClientsClientId |
+| PUT | `/workspaces/{workspaceId}/custom-fields/{customFieldId}` | updateWorkspaceCustomField |
 | PUT | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | updateExpenseCategory |
+| PUT | `/workspaces/{workspaceId}/holidays/{holidayId}` | updateHoliday |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | updateProject |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | updateTaskOnProject |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | putWorkspacesWorkspaceIdTagsTagId |
