@@ -536,9 +536,9 @@ with honest re-pinned coverage floors and ~140 added handler tests; ten mutation
 survivors killed; the time-off status/`note` branch is live-verified (`note`
 optional, `changeTimeOffRequestStatus` bound via `wireBody`).
 
-**2026-06-21 wave (shipped).** `live-success` rose 67 → **78/184**: `createExpense`
-(orphaned findings-path fix) plus user-group + webhook + custom-field write CRUD
-and `updateHoliday` (10 ops) from fresh live probes with verified `Leftovers:0`. The two GOCLMCP follow-ups above
+**2026-06-21 wave (shipped).** `live-success` rose 67 → **81/184**: `createExpense`
+(orphaned findings-path fix) plus user-group + webhook + custom-field write CRUD,
+`updateHoliday`, and shared-reports write CRUD (13 ops) from fresh live probes with verified `Leftovers:0`. The two GOCLMCP follow-ups above
 landed: `apply_live_overrides!` drops `note` from
 `ChangeTimeOffRequestStatusRequest.required` (the `wireBody` is now a clean
 body-envelope bind), and the single-project scheduling-totals GET now carries
