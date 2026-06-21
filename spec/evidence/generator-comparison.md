@@ -72,7 +72,7 @@ conformant.
 | **Auto-pagination (bare arrays)** | ❌ not supported in CLI 5.37.9; ledger entry `fern.x-fern-pagination.bare-array-unsupported`. Wrapper ships hand-written `paginate<T>` as workaround. | Supported via `x-speakeasy-pagination` extension (suggested in ≥10 ops per validation hints). Vendor-specific annotation. | — |
 | **Error hierarchy depth** | Base `ClockifyApiError` (`statusCode`, `body`, `rawResponse`, `cause`) + `ClockifyApiTimeoutError` + per-status `BadRequest(400)`, `Unauthorized(401)`, `Forbidden(403)`, `NotFound(404)`, `MethodNotAllowed(405)`. | Configurable via `clientServerStatusCodesAsErrors: true` (default) in `gen.yaml`. Generates per-status error classes. Spec needs `4xx`/`5xx` responses declared (currently 199 ops are missing them per `generator-missing-error-response`). | — |
 | **Retry config customizability** | `maxRetries` per-request and per-client; backoff (initial 1s, max 60s), jitter (20%), retryable status codes (408/429/5xx), and `Retry-After` / `X-RateLimit-Reset` handling are hard-coded in `wrapper/src/core/fetcher/requestWithRetries.ts`. Not overridable without forking the synced fetcher (or wrapping it externally — Phase 1.6 of the plan does this). | Configurable per-op via `x-speakeasy-retries` extension. Global `Retry` strategy in `gen.yaml`. Vendor lock-in for the annotation. | — |
-| **Observability hooks** | Structured logger (debug/error) with sensitive-data redaction (15+ headers, 14+ query keys, basic-auth URL stripping). No request/response/error/retry middleware hooks. Custom `fetch` override is the closest escape hatch. | `sdkHooksConfigAccess: true` default — first-class user-extensible hooks system. | — |
+| **Observability hooks** | Structured logger (debug/error) that logs URL + status but not headers (so there is nothing to redact; callers that log headers via the lifecycle hooks redact their own). No request/response/error/retry middleware hooks. Custom `fetch` override is the closest escape hatch. | `sdkHooksConfigAccess: true` default — first-class user-extensible hooks system. | — |
 | **Dual ESM+CJS** | ESM only. `wrapper/package.json` is `"type": "module"`. Phase 2 of the plan adds dual build via `tsup`. | `moduleFormat: esm` default in `gen.yaml`. Configurable. | — |
 | **Runtime validation (Zod / similar)** | None. Types are TS-only; no runtime parse step. | Zod (`zodVersion: v4-mini` default in `gen.yaml`). Adds ~12 KB minified per resource for runtime validation. | — |
 | **MCP server generation from same spec** | Not in scope for Fern TS generator. The sister repo GOCLMCP hand-writes the MCP layer in Go. | Opt-in via `enableMCPServer: true` in `gen.yaml`. Speakeasy has a separate `mcp-typescript` language target. Could in principle generate both the SDK and the MCP server from the same spec, displacing GOCLMCP's Go MCP layer. | — |
@@ -95,8 +95,8 @@ Reasoning:
    control) or a Speakeasy-specific override annotation
    (vendor lock-in).
 2. **Fern's runtime baseline is already strong.** The features the
-   user feels (retries, redaction, error hierarchy, abort signals,
-   custom fetch, passthrough) are all present in `wrapper/src/core/`.
+   user feels (retries, error hierarchy, abort signals, custom fetch,
+   passthrough) are all present in `wrapper/src/core/`.
    See `generator-comparison.md` → "Rubric" rows 3-5 above.
 3. **The remaining gaps are wrapper-side, not generator-side.**
    Per-resource auto-pagination, `createClockifyClient()` factory,

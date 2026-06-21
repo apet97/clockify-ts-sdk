@@ -183,6 +183,21 @@ function ipv6Reason(groups: number[]): string | null {
         return null;
     }
 
+    // NAT64 well-known prefix (64:ff9b::/96, RFC 6052): the low 32 bits embed an
+    // IPv4 address, so an attacker can reach a private/metadata v4 through a
+    // NAT64 gateway (e.g. 64:ff9b::a9fe:a9fe -> 169.254.169.254). Decode and
+    // re-check exactly like the ::ffff: mapped branch above. A NAT64 address
+    // embedding a public v4 stays allowed (ipv4Reason returns null).
+    const isNat64 =
+        groups[0] === 0x0064 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0);
+    if (isNat64) {
+        const hi = groups[6]!;
+        const lo = groups[7]!;
+        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
+        if (embedded) return `NAT64-embedded IPv4 of a ${embedded}`;
+        return null;
+    }
+
     const first = groups[0]!;
     const firstByte = (first >> 8) & 0xff;
     if (firstByte === 0xfc || firstByte === 0xfd) return "private unique-local range (fc00::/7)";

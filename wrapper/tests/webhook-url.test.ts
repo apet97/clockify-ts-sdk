@@ -63,6 +63,9 @@ describe("validateWebhookUrl", () => {
         "https://[::ffff:127.0.0.1]/hook",
         "https://[::ffff:10.0.0.1]/hook",
         "https://[::ffff:169.254.169.254]/hook",
+        // NAT64 well-known prefix (64:ff9b::/96) embedding a private/metadata v4.
+        "https://[64:ff9b::a9fe:a9fe]/hook",
+        "https://[64:ff9b::7f00:1]/hook",
     ];
     for (const candidate of privateIpv6) {
         it(`rejects private/reserved IPv6: ${candidate}`, () => {
@@ -73,6 +76,12 @@ describe("validateWebhookUrl", () => {
             }
         });
     }
+
+    it("treats a non-NAT64 IPv6 with an a9fe:a9fe tail as a normal (public) literal", () => {
+        // 2001:db8::a9fe:a9fe is NOT the 64:ff9b::/96 NAT64 prefix, so its tail must
+        // NOT be decoded as an embedded IPv4 — locks the && in the NAT64 guard.
+        expect(validateWebhookUrl("https://[2001:db8::a9fe:a9fe]/hook").ok).toBe(true);
+    });
 
     it("accepts routable public IPv6 literals", () => {
         expect(validateWebhookUrl("https://[2606:4700:4700::1111]/hook").ok).toBe(true);

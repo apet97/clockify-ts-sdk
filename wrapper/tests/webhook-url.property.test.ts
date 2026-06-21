@@ -63,6 +63,8 @@ describe("webhook URL validation properties", () => {
                     "fe80::1",
                     "::ffff:127.0.0.1",
                     "::ffff:169.254.169.254",
+                    "64:ff9b::a9fe:a9fe",
+                    "64:ff9b::7f00:1",
                 ),
                 (host) => {
                     expect(validateWebhookUrl(`https://[${host}]/hook`).ok).toBe(false);

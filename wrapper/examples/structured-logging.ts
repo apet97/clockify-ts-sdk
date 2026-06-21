@@ -4,12 +4,13 @@
  * Two layers cover the use cases:
  *
  *   - `logging.logger` — coarse-grained, `ILogger`-shaped object
- *     (`debug/info/warn/error` methods). Sensitive headers (X-Api-Key,
- *     X-Addon-Token, Authorization, plus 12 more) are auto-redacted
- *     by the wrapper before they reach your logger.
+ *     (`debug/info/warn/error` methods). It logs URLs and statuses but
+ *     NOT request/response headers, so the SDK never hands your API key
+ *     or add-on token to this logger.
  *   - `hooks` — fine-grained: separate `beforeRequest`,
- *     `afterResponse`, `onError`, `onRetry`. Use when you need
- *     per-stage metrics or to enrich the log line with timing.
+ *     `afterResponse`, `onError`, `onRetry`. These DO receive the live
+ *     `ctx.headers` (including the auth header) — if you log them,
+ *     redact `X-Api-Key` / `X-Addon-Token` / `Authorization` yourself.
  *
  * Shown below: a Pino-shaped logger plugged in as the SDK's
  * `ILogger`, plus hook adapters that add latency histograms.
