@@ -1891,6 +1891,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   whitelist + name+scale ÷100 map) consumed by `clockify_invoices_update`, which
   now does GET-then-PUT. Tests: `wrapper/tests/invoice-body.test.ts`,
   `mcp/tests/invoices.test.ts`.
+- Re-verified 2026-06-21 (read-side): live GET of sandbox invoices still returns tax/discount as ×100-scaled integers — #13 `tax:1500`/`discount:800` (15%/8%), #18/#30/INV-2026-042 `tax:2500` (25%) over an integer `subtotal` (100000 = $1,000.00). The GET-then-PUT ÷100 compensator (`INVOICE_PERCENT_FIELD_MAP`) is unchanged; the destructive verbatim-sparse-PUT zeroing was not re-exercised (it would mutate live invoices).
 
 ### `invoices.create.note-subject-dropped` — COMPENSATED 2026-06-14
 
@@ -1904,6 +1905,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** none.
 - **Status:** `compensated-in-tool-layer`. `clockify_invoices_create` now accepts
   note/subject and applies them via the verified GET-then-PUT path after create.
+- Re-verified 2026-06-21 (read-side): every API-created sandbox invoice GETs back the workspace placeholder `note:"INPUT BILL INFO HERE"` / `subject:"SUBJECT EXAMPLE - CHANGABLE"` (#13/#18/#30/INV-2026-042), consistent with POST still dropping both — the post-create GET-then-PUT compensator is still required.
 
 ### `money.amount-units.expenses-major-invoices-minor` — COMPENSATED 2026-06-14
 
@@ -2017,10 +2019,13 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `mcp-agent-ux-contract.json`, `docs/docs-quality-contract.json`,
   `docs/user-docs-contract.json`, `scripts/check-performance-budgets.mjs`,
   `mcp/tests/server.test.ts`, + README/product-surface/operation-parity regen).
-  STILL OPEN: the **project-default** rate — the generated `projects.updateHourlyRate`/
-  `updateCostRate` hit `PUT /projects/{id}/hourly-rate`, but the addon found no working
-  default-rate endpoint (set `hourlyRate`/`costRate` in the project body instead). Probe
-  a fake-id request (404 vs 405) before shipping a default-rate tool.
+  RESOLVED 2026-06-21 (fresh fake-id live probe): the **project-default** rate route is
+  **absent**. `PUT /workspaces/{ws}/projects/{fakeId}/hourly-rate` and `…/cost-rate` both
+  return **404** `{"code":3000,"message":"No static resource …"}` — the dead-route shape,
+  not 405. So the generated `projects.updateHourlyRate`/`updateCostRate` target a phantom
+  path (like `projects.archive`); the project default rate is set via the project
+  create/update body, and NO default-rate tool ships. Member/task rate PUTs stay live
+  (not re-probed this round; their compensation is unchanged).
 
 ### `scheduling.project-totals.get-vs-post` — COMPENSATED 2026-06-14
 
