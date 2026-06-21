@@ -24,7 +24,11 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        entityId(await ctx.client.users.getCurrentUser()) ?? "";
+        // Lazy single-flight memo when the context provides one (fetched once per
+        // server lifetime); fall back to a direct call for hand-built contexts.
+        ctx.currentUserId
+            ? await ctx.currentUserId()
+            : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
     defineTool(
         server,
         "clockify_groups_list",
@@ -69,7 +73,10 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             // KNOWN_PAGINATED_METHODS) so a group past row 200 is still found;
             // iterAll honors the Last-Page header and stops on the first match.
             const listGroups = ctx.client.userGroups.list.bind(ctx.client.userGroups);
-            for await (const g of iterAll(listGroups, { workspaceId: ctx.workspaceId }, { pageSize: 200 })) {
+            // maxPages caps the walk so a backend that never reports the last page
+            // can't spin forever; 1000 * 200 = 200k groups is far beyond any real
+            // workspace.
+            for await (const g of iterAll(listGroups, { workspaceId: ctx.workspaceId }, { pageSize: 200, maxPages: 1000 })) {
                 if (String((g as { id?: string }).id ?? "") === args.groupId) {
                     return successResult("clockify_groups_get", g, {
                         workspaceId: ctx.workspaceId,

@@ -37,7 +37,11 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>
-        entityId(await ctx.client.users.getCurrentUser()) ?? "";
+        // Lazy single-flight memo when the context provides one (fetched once per
+        // server lifetime); fall back to a direct call for hand-built contexts.
+        ctx.currentUserId
+            ? await ctx.currentUserId()
+            : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
     defineTool(
         server,
         "clockify_holidays_list",

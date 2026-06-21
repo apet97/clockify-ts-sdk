@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { loadContext } from "../src/client.js";
+import { createCurrentUserIdMemo, loadContext } from "../src/client.js";
 import { isDirectInvocation } from "../src/index.js";
 
 describe("MCP package contract", () => {
@@ -13,6 +13,59 @@ describe("MCP package contract", () => {
         expect(isDirectInvocation("/usr/local/bin/clockify115-mcp")).toBe(true);
         expect(isDirectInvocation("/tmp/index.js")).toBe(true);
         expect(isDirectInvocation("/usr/local/bin/clockify-mcp")).toBe(false);
+    });
+});
+
+describe("createCurrentUserIdMemo (single-flight current-user memo)", () => {
+    function fakeClient(getCurrentUser: () => Promise<unknown>) {
+        return { users: { getCurrentUser } } as never;
+    }
+
+    it("fetches the current user at most once and caches the id", async () => {
+        let calls = 0;
+        const memo = createCurrentUserIdMemo(
+            fakeClient(async () => {
+                calls += 1;
+                return { id: "user-1" };
+            }),
+        );
+        expect(await memo()).toBe("user-1");
+        expect(await memo()).toBe("user-1");
+        expect(await memo()).toBe("user-1");
+        expect(calls).toBe(1);
+    });
+
+    it("dedupes concurrent callers onto a single in-flight fetch", async () => {
+        let calls = 0;
+        const memo = createCurrentUserIdMemo(
+            fakeClient(async () => {
+                calls += 1;
+                await new Promise((r) => setTimeout(r, 5));
+                return { id: "user-9" };
+            }),
+        );
+        const [a, b, c] = await Promise.all([memo(), memo(), memo()]);
+        expect([a, b, c]).toEqual(["user-9", "user-9", "user-9"]);
+        expect(calls).toBe(1);
+    });
+
+    it("does not cache a failed fetch — the next call retries", async () => {
+        let calls = 0;
+        const memo = createCurrentUserIdMemo(
+            fakeClient(async () => {
+                calls += 1;
+                if (calls === 1) throw new Error("boom");
+                return { id: "user-2" };
+            }),
+        );
+        await expect(memo()).rejects.toThrow(/boom/);
+        expect(await memo()).toBe("user-2");
+        expect(calls).toBe(2);
+    });
+
+    it("resolves to \"\" when the user has no id (matches the prior inline fallback)", async () => {
+        const memo = createCurrentUserIdMemo(fakeClient(async () => ({})));
+        expect(await memo()).toBe("");
     });
 });
 

@@ -144,6 +144,33 @@ describe("clockify_entries_log", () => {
     });
 });
 
+describe("clockify_entries_mark_invoiced", () => {
+    it("emits one EntityRef per id (not a single comma-joined ref)", async () => {
+        const markInvoiced = vi.fn(async () => ({}));
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeEntries: { markInvoiced } } as never,
+        });
+
+        const res = (await client.callTool({
+            name: "clockify_entries_mark_invoiced",
+            arguments: { timeEntryIds: ["e1", "e2", "e3"] },
+        })) as { isError?: boolean; content: Array<{ text: string }> };
+
+        expect(res.isError).toBeFalsy();
+        expect(markInvoiced).toHaveBeenCalledTimes(1);
+        const env = JSON.parse(res.content[0]?.text ?? "{}") as {
+            changed?: { updated?: Array<{ type: string; id: string }> };
+        };
+        // One ref per id — no comma-joined "e1,e2,e3" id.
+        expect(env.changed?.updated).toEqual([
+            { type: "time_entry", id: "e1" },
+            { type: "time_entry", id: "e2" },
+            { type: "time_entry", id: "e3" },
+        ]);
+    });
+});
+
 describe("clockify_entries_get / clockify_entries_update", () => {
     it("gets one entry by id", async () => {
         const get = vi.fn(async () => ({ id: "e9", description: "x" }));

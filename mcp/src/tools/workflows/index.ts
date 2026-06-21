@@ -291,8 +291,24 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 policy: z.string().optional(),
                 policy_id: z.string().optional(),
-                start: z.string().min(1),
-                end: z.string().min(1),
+                start: z
+                    .string()
+                    .min(1)
+                    .describe(
+                        "Start date. DAYS-unit policies want a date-only start (yyyy-MM-dd); HOURS-unit policies want a full RFC3339 datetime (yyyy-MM-ddThh:mm:ssZ).",
+                    ),
+                end: z
+                    .string()
+                    .min(1)
+                    .optional()
+                    .describe(
+                        "Range end (RFC3339). Required by HOURS-unit (date-range) policies; omit for DAYS-unit policies and pass `days`. Provide `end` OR `days`.",
+                    ),
+                days: zNumberLike(z.number().int())
+                    .optional()
+                    .describe(
+                        "Number of days. Required by DAYS-unit policies; omit for HOURS-unit policies and pass `end`. Provide `end` OR `days`.",
+                    ),
                 note: z.string().optional(),
                 half_day: z.boolean().optional(),
                 dry_run: z.boolean().optional(),

@@ -57,10 +57,14 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     const prefix = str(args.prefix) || `DEMO-${str(args.run_id) || "phase1"}`;
     const deleted: EntityRef[] = [];
     const warnings: Warning[] = [];
-    const user = await ctx.client.users.getCurrentUser();
+    // Use the per-server single-flight memo (fetched at most once) when present;
+    // fall back to a direct call for hand-built contexts.
+    const userId = ctx.currentUserId
+        ? await ctx.currentUserId()
+        : idOf(await ctx.client.users.getCurrentUser());
     const entries: AnyRecord[] = (await ctx.client.timeEntries.listForUser({
         workspaceId: ctx.workspaceId,
-        userId: idOf(user),
+        userId,
         start: str(args.start) || "2026-01-01T00:00:00.000Z",
         end: str(args.end) || "2026-12-31T23:59:59.999Z",
         page: 1,

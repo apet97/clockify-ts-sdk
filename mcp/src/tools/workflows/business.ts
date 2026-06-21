@@ -1,7 +1,7 @@
 import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 
 import { assertSafeWebhookUrl } from "../../orchestration/webhook-url.js";
-import { successResult } from "../../result.js";
+import { errorResult, successResult } from "../../result.js";
 
 import {
     arrayOfStrings,
@@ -101,7 +101,11 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
     const projectId =
         str(args.project_id) ||
         (str(args.project) ? await resolveProjectId(ctx, str(args.project)) : "");
-    const userId = str(args.user_id) || idOf(await ctx.client.users.getCurrentUser());
+    const userId =
+        str(args.user_id) ||
+        (ctx.currentUserId
+            ? await ctx.currentUserId()
+            : idOf(await ctx.client.users.getCurrentUser()));
     const preview = {
         workspaceId: ctx.workspaceId,
         amount: args.amount,
@@ -149,10 +153,29 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
 }
 
 export async function requestTimeOff(ctx: Context, args: AnyRecord) {
+    // The submit period shape is policy-unit dependent: DAYS-unit policies reject
+    // {start,end} and want {start,days}; HOURS-unit policies want {start,end} and
+    // reject days (live-verified 2026-06-21). The tool can't see the policy unit,
+    // so require at least one of end / days before any mutation. Mirrors the
+    // domain tool clockify_time_off_requests_submit. See discrepancies.md
+    // `time-off.submit.period-shape-is-policy-type-dependent`.
+    const end = str(args.end);
+    const days = typeof args.days === "number" ? args.days : undefined;
+    if (!end && days === undefined) {
+        return errorResult(
+            "clockify_request_time_off",
+            new Error(
+                "provide either `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies) — the live API requires one",
+            ),
+        );
+    }
     const policyId =
         str(args.policy_id) ||
         (str(args.policy) ? await resolvePolicyId(ctx, str(args.policy)) : "");
     if (!policyId) throw new Error("missing required alternative: provide policy or policy_id");
+    const period: AnyRecord = { start: str(args.start) };
+    if (end) period.end = end;
+    if (days !== undefined) period.days = days;
     const preview = {
         workspaceId: ctx.workspaceId,
         policyId,
@@ -161,7 +184,7 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
             timeOffPeriod: {
                 isHalfDay: args.half_day === true,
                 halfDayPeriod: args.half_day ? "FIRST_HALF" : "NOT_DEFINED",
-                period: { start: str(args.start), end: str(args.end) },
+                period,
             },
         },
     };

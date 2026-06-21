@@ -69,6 +69,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 },
             };
             const task = await ctx.client.tasks.create(req);
+            const taskId = entityId(task);
             return successResult(
                 "clockify_tasks_create",
                 task,
@@ -76,7 +77,23 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                 },
-                writeReceipt("created", "task", { id: entityId(task), name: args.name }),
+                writeReceipt(
+                    "created",
+                    "task",
+                    { id: taskId, name: args.name },
+                    {
+                        next: [
+                            {
+                                tool: "clockify_log_work",
+                                args: {
+                                    project_id: args.projectId,
+                                    ...(taskId ? { task_id: taskId } : {}),
+                                },
+                                reason: "Log finished work against the new task.",
+                            },
+                        ],
+                    },
+                ),
             );
         },
     );
@@ -212,7 +229,15 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                     projectId: args.projectId,
                     taskId: args.taskId,
                 },
-                writeReceipt("deleted", "task", args.taskId),
+                writeReceipt("deleted", "task", args.taskId, {
+                    next: [
+                        {
+                            tool: "clockify_tasks_list",
+                            args: { projectId: args.projectId },
+                            reason: "Verify the task no longer appears.",
+                        },
+                    ],
+                }),
             );
         },
     );

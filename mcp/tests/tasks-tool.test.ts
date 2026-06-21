@@ -182,6 +182,10 @@ describe("clockify_tasks_create", () => {
         expect(json.entity).toBe("task");
         const created = (json.changed as { created?: Array<{ type: string; id: string; name?: string }> }).created;
         expect(created).toEqual([{ type: "task", id: "task-9", name: "Build" }]);
+        // Chain-to-next hint: log work against the new task, carrying project + task ids.
+        const next = json.next as Array<{ tool?: string; args?: { project_id?: string; task_id?: string } }>;
+        expect(next[0]?.tool).toBe("clockify_log_work");
+        expect(next[0]?.args).toEqual({ project_id: "proj-1", task_id: "task-9" });
     });
 
     it("includes estimate and assigneeIds in the body when supplied", async () => {

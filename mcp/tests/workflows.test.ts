@@ -494,6 +494,60 @@ describe("workflow tools", () => {
         expect(ctx.state.webhookCreates).toBe(0);
     });
 
+    it("request_time_off (DAYS policy) builds period:{start,days} and omits end", async () => {
+        // Capture what reaches timeOff.submit so we can prove the DAYS-unit shape.
+        const ctx = fakeContext();
+        const submits: Array<Record<string, unknown>> = [];
+        (ctx.client.timeOff as { submit: unknown }).submit = async (body: Record<string, unknown>) => {
+            submits.push(body);
+            return { id: "to-1", ...body };
+        };
+        const client = await connect(ctx);
+        const args = { policy_id: "pol-1", start: "2026-07-01", days: 3 };
+        const previewRes = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { ...args, dry_run: true },
+        });
+        const preview = parse(previewRes);
+        // The previewed body carries the DAYS shape: {start, days}, no end.
+        expect(
+            (preview.data as { preview: { body: { timeOffPeriod: { period: Record<string, unknown> } } } })
+                .preview.body.timeOffPeriod.period,
+        ).toEqual({ start: "2026-07-01", days: 3 });
+
+        const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
+        const createRes = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { ...args, confirm_token: confirmToken },
+        });
+        expect(createRes.isError).toBeFalsy();
+        // The actual wire body has period:{start,days} with no `end` key.
+        const period = (
+            submits[0]?.body as { timeOffPeriod: { period: Record<string, unknown> } }
+        ).timeOffPeriod.period;
+        expect(period).toEqual({ start: "2026-07-01", days: 3 });
+        expect("end" in period).toBe(false);
+    });
+
+    it("request_time_off errors before any write when neither end nor days is given", async () => {
+        const ctx = fakeContext();
+        let submitted = 0;
+        (ctx.client.timeOff as { submit: unknown }).submit = async (body: Record<string, unknown>) => {
+            submitted += 1;
+            return { id: "to-1", ...body };
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { policy_id: "pol-1", start: "2026-07-01" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { message: string }).message).toMatch(/provide either .*end.* or .*days/);
+        expect(submitted).toBe(0);
+    });
+
     it("invoice confirmation uses stable default dates", async () => {
         const ctx = fakeContext({ clients: [{ id: "c1", name: "Acme" }] });
         const client = await connect(ctx);
@@ -659,6 +713,47 @@ describe("P0 correctness — pagination + validation", () => {
         const env = parse(res);
         expect(env.ok).toBe(true);
         expect(ctx.state.entries[230]!.description).toBe("fixed-past-200");
+    });
+
+    it("fix_entry refuses an ambiguous exact_description and never updates", async () => {
+        // Two entries share the exact description: fix_entry must NOT guess one —
+        // it errors ("found at least .." / "expected exactly one") and fires no update.
+        const ctx = fakeContext({
+            entries: bulkEntries(2, () => ({ description: "DUP" })),
+        });
+        let updates = 0;
+        const realUpdate = (ctx.client.timeEntries as unknown as { update: (b: Record<string, unknown>) => Promise<unknown> }).update;
+        (ctx.client.timeEntries as { update: unknown }).update = async (body: Record<string, unknown>) => {
+            updates += 1;
+            return realUpdate(body);
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { exact_description: "DUP", new_description: "should-not-apply" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { message: string }).message).toMatch(/found at least|expected exactly one/);
+        // No write fired and neither entry was mutated.
+        expect(updates).toBe(0);
+        expect(ctx.state.entries.map((e) => e.description)).toEqual(["DUP", "DUP"]);
+    });
+
+    it("fix_entry bounds the scan and reports a narrow-the-window error past 10k entries", async () => {
+        // >10000 non-matching entries: the scan stops at the cap and asks to narrow
+        // the window (or pass entry_id) rather than draining the whole history.
+        const ctx = fakeContext({ entries: bulkEntries(10_050) });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { exact_description: "NEVER-MATCHES", new_description: "x" },
+        });
+        expect(res.isError).toBe(true);
+        const env = parse(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { message: string }).message).toMatch(/scanned more than|narrow the window/);
     });
 
     it("fix_entry resolves task & tag names into the update body (was a silent no-op)", async () => {
