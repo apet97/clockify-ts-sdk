@@ -94,6 +94,8 @@ describe("destructive deletes archive/DONE before deleting", () => {
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["project.update:archived=true", "project.delete"]);
+        // Receipt points at the list tool to verify the project is gone.
+        expect((res.next as Array<{ tool?: string }>)[0]?.tool).toBe("clockify_projects_list");
     });
 
     it("clockify_tasks_delete marks the task DONE BEFORE deleting", async () => {
@@ -103,6 +105,10 @@ describe("destructive deletes archive/DONE before deleting", () => {
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["task.update:status=DONE", "task.delete"]);
+        // Receipt points at the (project-scoped) task list to verify the task is gone.
+        const taskNext = (res.next as Array<{ tool?: string; args?: { projectId?: string } }>)[0];
+        expect(taskNext?.tool).toBe("clockify_tasks_list");
+        expect(taskNext?.args?.projectId).toBe("p1");
     });
 
     it("clockify_clients_delete archives (body-envelope archived:true) BEFORE deleting", async () => {
@@ -112,6 +118,8 @@ describe("destructive deletes archive/DONE before deleting", () => {
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["client.update:archived=true", "client.delete"]);
+        // Receipt points at the list tool to verify the client is gone.
+        expect((res.next as Array<{ tool?: string }>)[0]?.tool).toBe("clockify_clients_list");
     });
 
     it("clockify_clients_delete errors (no update/delete) when the client has no name", async () => {

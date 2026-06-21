@@ -72,11 +72,25 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 },
             };
             const project = await ctx.client.projects.create(req);
+            const projectId = entityId(project);
             return successResult(
                 "clockify_projects_create",
                 project,
                 undefined,
-                writeReceipt("created", "project", { id: entityId(project), name: args.name }),
+                writeReceipt(
+                    "created",
+                    "project",
+                    { id: projectId, name: args.name },
+                    {
+                        next: [
+                            {
+                                tool: "clockify_tasks_create",
+                                ...(projectId ? { args: { projectId } } : {}),
+                                reason: "Add a task under the new project.",
+                            },
+                        ],
+                    },
+                ),
             );
         },
         "Reuse an existing client ID or check for an existing project with this name.",
@@ -187,7 +201,14 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 "clockify_projects_delete",
                 { deleted: true, projectId: args.projectId },
                 { workspaceId: ctx.workspaceId, projectId: args.projectId },
-                writeReceipt("deleted", "project", args.projectId),
+                writeReceipt("deleted", "project", args.projectId, {
+                    next: [
+                        {
+                            tool: "clockify_projects_list",
+                            reason: "Verify the project no longer appears.",
+                        },
+                    ],
+                }),
             );
         },
     );

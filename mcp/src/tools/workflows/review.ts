@@ -22,7 +22,11 @@ export function reviewInputSchema({ week }: { week: boolean }) {
 }
 
 export async function reviewPeriod(ctx: Context, action: string, args: AnyRecord) {
-    const user = await ctx.client.users.getCurrentUser();
+    // Use the per-server single-flight memo (fetched at most once) when present;
+    // fall back to a direct call for hand-built contexts.
+    const userId = ctx.currentUserId
+        ? await ctx.currentUserId()
+        : idOf(await ctx.client.users.getCurrentUser());
     const range = dateRange(action, args);
     // Walk ALL pages so the review covers the whole period. A single
     // page:1/200 fetch silently truncated a busy week and still reported
@@ -31,15 +35,18 @@ export async function reviewPeriod(ctx: Context, action: string, args: AnyRecord
     for await (const entry of iterAll<AnyRecord, AnyRecord>(
         // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         (req) => ctx.client.timeEntries.listForUser(req as never) as never,
-        { workspaceId: ctx.workspaceId, userId: idOf(user), start: range.start, end: range.end },
-        { pageSize: 200 },
+        { workspaceId: ctx.workspaceId, userId, start: range.start, end: range.end },
+        // maxPages caps the walk so a backend that keeps returning Last-Page:false
+        // (or full pages) can't spin forever — 1000 * 200 = 200k entries is far
+        // beyond any real review window.
+        { pageSize: 200, maxPages: 1000 },
     )) {
         entries.push(entry);
     }
     const review = summarizeEntries(entries, args);
-    return successResult(action, review, { workspaceId: ctx.workspaceId, userId: idOf(user), count: entries.length }, {
+    return successResult(action, review, { workspaceId: ctx.workspaceId, userId, count: entries.length }, {
         entity: "entry_review",
-        ids: { workspaceId: ctx.workspaceId, userId: idOf(user) },
+        ids: { workspaceId: ctx.workspaceId, userId },
         next: review.suggestedActions.length
             ? review.suggestedActions
             : [{ tool: "clockify_log_work", reason: "Log any missing work discovered during review." }],

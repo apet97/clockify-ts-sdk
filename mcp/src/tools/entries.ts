@@ -24,8 +24,11 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const user = await ctx.client.users.getCurrentUser();
-            const userId = entityId(user);
+            // Use the per-server single-flight memo (fetched at most once) when
+            // present; fall back to a direct call for hand-built contexts.
+            const userId = ctx.currentUserId
+                ? await ctx.currentUserId()
+                : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
             if (!userId) {
                 return errorResult(
                     "clockify_entries_list",
@@ -248,11 +251,20 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 timeEntryIds: args.timeEntryIds,
                 invoiced,
             });
+            // One EntityRef per id — comma-joining every id into a single ref id
+            // emitted a malformed `changed.updated[].id` that no consumer could
+            // chain on.
             return successResult(
                 "clockify_entries_mark_invoiced",
                 { invoiced, timeEntryIds: args.timeEntryIds },
                 { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
-                writeReceipt("updated", "time_entry", args.timeEntryIds.join(",")),
+                {
+                    entity: "time_entry",
+                    changed: {
+                        updated: args.timeEntryIds.map((id) => ({ type: "time_entry", id })),
+                    },
+                    ids: { workspaceId: ctx.workspaceId },
+                },
             );
         },
     );

@@ -12,6 +12,24 @@ import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+/**
+ * A webhook's `authToken` is the HMAC signing secret Clockify uses to sign every
+ * outbound payload. It must NEVER leave the tool result envelope (an agent log
+ * would expose it). Redact it (and any token-ish sibling) to a sentinel while
+ * keeping every other field (id, name, url, webhookEvent, enabled, ...) intact.
+ * Accepts a single webhook object or a list; non-objects pass through unchanged.
+ */
+const WEBHOOK_SECRET_FIELDS = ["authToken"] as const;
+function redactWebhook<T>(value: T): T {
+    if (Array.isArray(value)) return value.map((item) => redactWebhook(item)) as unknown as T;
+    if (!value || typeof value !== "object") return value;
+    const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+    for (const field of WEBHOOK_SECRET_FIELDS) {
+        if (field in out) out[field] = "***redacted***";
+    }
+    return out as unknown as T;
+}
+
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -26,10 +44,12 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             const response = (await ctx.client.webhooks.list({
                 workspaceId: ctx.workspaceId,
             })) as unknown[] | { webhooks?: unknown[]; workspaceWebhookCount?: number };
-            const items = Array.isArray(response) ? response : (response.webhooks ?? []);
+            const rawItems = Array.isArray(response) ? response : (response.webhooks ?? []);
             const total = Array.isArray(response)
-                ? items.length
-                : (response.workspaceWebhookCount ?? items.length);
+                ? rawItems.length
+                : (response.workspaceWebhookCount ?? rawItems.length);
+            // Strip the HMAC signing secret from every webhook before it leaves the tool.
+            const items = redactWebhook(rawItems);
             return successResult("clockify_webhooks_list", items, {
                 workspaceId: ctx.workspaceId,
                 count: items.length,
@@ -52,7 +72,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 webhookId: args.webhookId,
             });
-            return successResult("clockify_webhooks_get", webhook, {
+            return successResult("clockify_webhooks_get", redactWebhook(webhook), {
                 workspaceId: ctx.workspaceId,
                 webhookId: args.webhookId,
             });
@@ -100,7 +120,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             );
             return successResult(
                 "clockify_webhooks_create",
-                created,
+                redactWebhook(created),
                 {
                     workspaceId: ctx.workspaceId,
                 },
@@ -149,7 +169,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             );
             return successResult(
                 "clockify_webhooks_update",
-                updated,
+                redactWebhook(updated),
                 {
                     workspaceId: ctx.workspaceId,
                     webhookId: args.webhookId,

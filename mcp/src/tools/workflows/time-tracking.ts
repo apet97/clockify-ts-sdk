@@ -109,8 +109,11 @@ export async function startWork(ctx: Context, args: AnyRecord) {
 }
 
 export async function stopWork(ctx: Context, args: AnyRecord) {
-    const user = await ctx.client.users.getCurrentUser();
-    const userId = idOf(user);
+    // Use the per-server single-flight memo (fetched at most once) when present;
+    // fall back to a direct call for hand-built contexts.
+    const userId = ctx.currentUserId
+        ? await ctx.currentUserId()
+        : idOf(await ctx.client.users.getCurrentUser());
     const outcome = await stopRunningTimer(ctx, userId, str(args.end) || new Date().toISOString());
     if (!outcome.running) {
         return successResult(

@@ -49,8 +49,11 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async () => {
-            const user = await ctx.client.users.getCurrentUser();
-            const userId = entityId(user);
+            // Use the per-server single-flight memo (fetched at most once) when
+            // present; fall back to a direct call for hand-built contexts.
+            const userId = ctx.currentUserId
+                ? await ctx.currentUserId()
+                : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
             if (!userId) {
                 // early-return (not a throw) so the defineTool catch isn't involved
                 return errorResult(

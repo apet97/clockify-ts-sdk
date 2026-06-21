@@ -36,7 +36,11 @@ function expenseChangeFields(fields: ExpenseFields): string[] {
 }
 
 async function currentUserId(ctx: Context): Promise<string> {
-    const id = entityId(await ctx.client.users.getCurrentUser());
+    // Lazy single-flight memo when the context provides one (fetched once per
+    // server lifetime); fall back to a direct call for hand-built contexts.
+    const id = ctx.currentUserId
+        ? await ctx.currentUserId()
+        : entityId(await ctx.client.users.getCurrentUser());
     if (!id) throw new Error("Could not determine the current user ID; pass userId explicitly.");
     return id;
 }

@@ -9,6 +9,15 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - Added `mcp/tests/entries.test.ts` (list / log / get / update behavior) and
   raised the mcp coverage floors (branches 67->69, statements 82->84, lines
   86->88, functions 85->86) in `vitest.config.ts` + `docs/coverage-contract.json`.
+- Added `mcp/tests/webhooks-redact.test.ts` (no raw `authToken` leaves any webhook
+  tool), `mcp/tests/iter-maxpages.test.ts` (the review + groups_get walks stop at
+  the `maxPages` cap), `mcp/tests/projects-next.test.ts` (projects-create next
+  hint), plus cases in `workflows.test.ts` (DAYS-policy `request_time_off` period
+  shape + the neither-end-nor-days error; ambiguous/over-cap `fix_entry`),
+  `entries.test.ts` (one EntityRef per id from mark_invoiced),
+  `archive-then-delete.test.ts` + `clients-tool.test.ts` + `tasks-tool.test.ts`
+  (create/delete next-action hints), and `client.test.ts` (the single-flight
+  current-user memo).
 
 ### Fixed
 
@@ -33,9 +42,36 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 - `clockify_time_off_requests_submit` makes `end` optional and requires one of
   `{end, days}`: DAYS-unit policies want `days` (a `{start,end}` submit 400s
   "number of days is not allowed"); HOURS-unit policies want `end`.
+- **Security:** the webhook tools (`clockify_webhooks_{create,update,get,list}`)
+  no longer emit the webhook `authToken` (the HMAC signing secret) in the result
+  envelope — it is redacted to `***redacted***` before the receipt, keeping
+  id/name/url/event/enabled. The generated `Webhook` type is untouched.
+- `clockify_request_time_off` (workflow tool) now mirrors the domain tool's
+  policy-unit-aware period: `end` is optional, a new `days` field is accepted,
+  the period is built conditionally (`{start}` plus `end` and/or `days`), and the
+  handler returns a clear error before any write when neither `end` nor `days` is
+  given — previously it always sent `{start,end}` and deterministically 400'd on
+  DAYS-unit policies.
+- `clockify_entries_mark_invoiced` now emits one `changed.updated[]` EntityRef per
+  time-entry id instead of comma-joining every id into a single malformed ref id
+  that no consumer could chain on.
+- `clockify_review_day`/`clockify_review_week` and `clockify_groups_get` now cap
+  their `iterAll` page walk at `maxPages: 1000`, so a backend that keeps returning
+  full pages (or `Last-Page: false`) can no longer spin without end.
+- The MCP context now memoizes the current user's id with a per-server-lifetime
+  single-flight memo (`createCurrentUserIdMemo`): the id-only `getCurrentUser`
+  call sites (per-tool `meUserId` resolvers + entries/timer/review/stop/expense/
+  fix-entry/demo paths) share one fetch instead of re-fetching the user on every
+  tool call. The `./resolve` wrapper subpath signature is unchanged (`meUserId` is
+  still passed in as a resolved string); hand-built test contexts that omit the
+  memo fall back to a direct call.
 
 ### Changed
 
+- The projects/clients/tasks create + delete domain-WRITE receipts now carry a
+  `next` action hint (create -> the natural next tool with the new id wired in;
+  delete -> the corresponding list tool to verify removal). No signature change;
+  read-only tools stay receipt-free.
 - Re-snapshot of the corrected OpenAPI: `clockify_time_off_requests_update_status`
   binds `changeTimeOffRequestStatus` via the typed body-envelope form (no
   `wireBody`) now that the regenerated request marks `note` optional;

@@ -181,6 +181,10 @@ describe("clockify_clients_create", () => {
         expect(json.entity).toBe("client");
         const created = (json.changed as { created?: Array<{ id?: string; name?: string; type?: string }> }).created;
         expect(created?.[0]).toEqual({ type: "client", id: "c-99", name: "Acme" });
+        // Chain-to-next hint: create a project for the new client, carrying its id.
+        const next = json.next as Array<{ tool?: string; args?: { clientId?: string } }>;
+        expect(next[0]?.tool).toBe("clockify_projects_create");
+        expect(next[0]?.args?.clientId).toBe("c-99");
     });
 
     it("includes note in the body when supplied", async () => {

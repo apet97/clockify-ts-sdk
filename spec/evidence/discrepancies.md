@@ -2362,7 +2362,8 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   nothing (zero residue). Not re-reproduced as a write fixture (creating a request
   on a DAYS policy is a live mutation; the negative `{start,end}`→400 was confirmed
   without creating anything).
-- **MCP tools affected:** `clockify_time_off_requests_submit`; CLI `timeoff submit`.
+- **MCP tools affected:** `clockify_time_off_requests_submit`,
+  `clockify_request_time_off`; CLI `timeoff submit`.
 - **Status:** `compensated-in-tool-layer` (2026-06-21). `end` is now OPTIONAL and
   sent conditionally; the handler requires at least one of `{end, days}` (clear
   error before the wire otherwise), and the field descriptions explain the

@@ -42,7 +42,11 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         }));
     };
     const meUserId = async (): Promise<string> =>
-        entityId(await ctx.client.users.getCurrentUser()) ?? "";
+        // Lazy single-flight memo when the context provides one (fetched once per
+        // server lifetime); fall back to a direct call for hand-built contexts.
+        ctx.currentUserId
+            ? await ctx.currentUserId()
+            : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
     defineTool(
         server,
         "clockify_scheduling_assignments_list",

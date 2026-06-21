@@ -363,7 +363,11 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
             })),
         };
     }
-    const user = await ctx.client.users.getCurrentUser();
+    // Use the per-server single-flight memo (fetched at most once) when present;
+    // fall back to a direct call for hand-built contexts.
+    const userId = ctx.currentUserId
+        ? await ctx.currentUserId()
+        : idOf(await ctx.client.users.getCurrentUser());
     const exact = str(args.exact_description);
     const contains = str(args.description_contains);
     const matchesEntry = (entry: AnyRecord): boolean => {
@@ -384,7 +388,7 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
         (req) => ctx.client.timeEntries.listForUser(req as never) as never,
         {
             workspaceId: ctx.workspaceId,
-            userId: idOf(user),
+            userId,
             start: str(args.start_after) || "1970-01-01T00:00:00.000Z",
             end: str(args.start_before) || new Date().toISOString(),
         },

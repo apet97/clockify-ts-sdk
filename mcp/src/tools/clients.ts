@@ -62,11 +62,25 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 },
             };
             const client = await ctx.client.clients.create(req);
+            const clientId = entityId(client);
             return successResult(
                 "clockify_clients_create",
                 client,
                 undefined,
-                writeReceipt("created", "client", { id: entityId(client), name: args.name }),
+                writeReceipt(
+                    "created",
+                    "client",
+                    { id: clientId, name: args.name },
+                    {
+                        next: [
+                            {
+                                tool: "clockify_projects_create",
+                                ...(clientId ? { args: { clientId } } : {}),
+                                reason: "Create a project for the new client.",
+                            },
+                        ],
+                    },
+                ),
             );
         },
     );
@@ -174,7 +188,14 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 "clockify_clients_delete",
                 { deleted: true, clientId: args.clientId },
                 { workspaceId: ctx.workspaceId, clientId: args.clientId },
-                writeReceipt("deleted", "client", args.clientId),
+                writeReceipt("deleted", "client", args.clientId, {
+                    next: [
+                        {
+                            tool: "clockify_clients_list",
+                            reason: "Verify the client no longer appears.",
+                        },
+                    ],
+                }),
             );
         },
     );
