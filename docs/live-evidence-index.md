@@ -47,6 +47,8 @@ policy).
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | deleteTaskFromProject |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | deleteWorkspacesWorkspaceIdTagsTagId |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
+| DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | deleteGroup |
+| DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | deleteWebhook |
 | GET | `/shared-reports/{sharedReportId}` | getSharedReportsSharedReportId |
 | GET | `/user` | getCurrentUser |
 | GET | `/workspaces` | getAllMyWorkspaces |
@@ -103,12 +105,16 @@ policy).
 | POST | `/workspaces/{workspaceId}/tags` | postWorkspacesWorkspaceIdTags |
 | POST | `/workspaces/{workspaceId}/time-entries` | postWorkspacesWorkspaceIdTimeEntries |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | getAllTimeOffRequestsOnWorkspace |
+| POST | `/workspaces/{workspaceId}/user-groups` | addNewGroup |
+| POST | `/workspaces/{workspaceId}/webhooks` | createWebhook |
 | PUT | `/workspaces/{workspaceId}/clients/{clientId}` | putWorkspacesWorkspaceIdClientsClientId |
 | PUT | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | updateExpenseCategory |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | updateProject |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | updateTaskOnProject |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | putWorkspacesWorkspaceIdTagsTagId |
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | putWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
+| PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | updateGroup |
+| PUT | `/workspaces/{workspaceId}/webhooks/{webhookId}` | updateWebhook |
 
 ## Phantom / dead endpoints quarantined
 
