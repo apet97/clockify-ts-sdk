@@ -28,6 +28,16 @@ once v1.0.0 ships.
 
 ### Security
 
+- `composedFetch` (and therefore every `createClockifyClient` request, which
+  uses it as the fetch seam) now defaults `redirect: "manual"` and surfaces any
+  3xx as an explicit error instead of silently following it — a followed
+  redirect would re-send the auth headers (`X-Api-Key` / `X-Addon-Token`) to the
+  redirect target, possibly a host outside the trusted Clockify allowlist. Every
+  legitimate Clockify endpoint answers with a direct 2xx/4xx. A caller that
+  explicitly sets `redirect` keeps full control, and a blocked redirect is never
+  retried. (The generated `src/core/request.ts` builder sets no explicit
+  redirect policy of its own; tightening that at the generator level is a
+  separate GOCLMCP-template cycle.)
 - Webhook SSRF guard (`webhook-url`) now blocks NAT64 well-known-prefix
   (`64:ff9b::/96`) literals whose embedded IPv4 is a private/loopback/metadata
   range (e.g. `64:ff9b::a9fe:a9fe` → `169.254.169.254`); these were previously
@@ -39,6 +49,13 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- `mapBounded` (`clockify-sdk-ts-115/bulk`) with `continueOnError: false` no
+  longer keeps sibling workers pulling new items off the queue after the first
+  rejection. A shared abort flag now stops every worker from claiming or
+  dispatching `fn` for not-yet-started items once a sibling has failed — so a
+  fail-fast bulk run makes far fewer post-failure calls. In-flight,
+  already-dispatched calls cannot be recalled; the resolved/rejected contract is
+  unchanged.
 - A wrong/missing id (live `400` code:501 "X doesn't belong to Workspace" /
   "... doesn't exist") now classifies to `not_found` instead of
   `auth_or_permission`; the bare `workspace` token is dropped from the auth
