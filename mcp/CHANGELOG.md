@@ -30,6 +30,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_time_off_requests_delete` can now actually delete. It previously called
+  the flat `timeOff.delete` route (`DELETE /time-off/requests/{id}`), which 404s
+  live, so the tool always failed. It now requires `policyId` and calls the
+  policy-scoped `timeOff.withdraw` (`DELETE /time-off/policies/{policyId}/requests/{id}`,
+  200 on a PENDING request, live-verified 2026-06-22); the description clarifies that
+  only PENDING requests are deletable. Tool count unchanged (134).
 - `clockify_scheduling_assignments_list` now requires `start`/`end` and forwards
   them as the query range. The endpoint (`GET .../scheduling/assignments/all`) 400s
   (code 3001) without `start` (live-verified), so the tool previously failed; this
