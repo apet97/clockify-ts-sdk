@@ -17,29 +17,61 @@ fi
 SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote,wireBody"
 EXPECTED_ROOT_SURFACE_COUNT=92
 
+# Generated-core names the root barrel ALSO re-exports transitively through
+# `export * from "./src/index.js"` (index.ts), on top of the 92 curated names above.
+# They are NOT part of the curated public API (docs/sdk-public-api.json rootSymbols):
+# mostly SDK plumbing (RUNTIME, Supplier, request, bodyFromRequest, mergeHeaders, ...)
+# plus a few generated types consumers do use (ClockifyApi, ClockifyApiEnvironment,
+# HttpResponsePromise, the abort/connection error helpers). They are PINNED here so the
+# exact-surface assertion below fails on any NEW accidental leak or silent removal
+# (semver fragility). Narrowing the barrel to drop the pure-plumbing entries is a
+# deliberate public-API decision tracked in wrapper/CHANGELOG.md; until then the root
+# surface is frozen + gated rather than implicit + unchecked.
+GENERATED_CORE="CLOCKIFY_SIGNATURE_HEADER,ClockifyAbortError,ClockifyApi,ClockifyApiEnvironment,ClockifyConnectionError,Headers,HttpResponsePromise,INVOICE_ITEM_UNIT_PRICE_WIRE_SCALE,KNOWN_PAGINATED_METHODS,NoOpAuthProvider,REQUEST_ID_HEADER,RUNTIME,Supplier,USER_AGENT_HEADER,abortRawResponse,bodyFromRequest,defaultUserAgent,generateRequestId,getBinaryResponse,getClockifySignatureToken,getErrorCode,isAbortError,isAuthProvider,isConnectionError,logging,makePassthroughRequest,mergeHeaders,mergeOnlyDefinedHeaders,pickDefined,request,resolveHeaders,toRawResponse,unknownRawResponse,url"
+
 echo "==> ESM import smoke"
-SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
+SURFACE="$SURFACE" GENERATED_CORE="$GENERATED_CORE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node --input-type=module -e "
 import('./dist/esm/index.js').then(m => {
   const surface = process.env.SURFACE.split(',');
+  const generatedCore = process.env.GENERATED_CORE.split(',');
   const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
   if (missing.length) {
-    console.error('ESM missing exports:', missing);
+    console.error('ESM missing curated exports:', missing);
     process.exit(1);
   }
-  console.log('OK: ESM exposes', surface.length, 'expected names');
+  const expected = new Set([...surface, ...generatedCore]);
+  const actual = Object.keys(m).filter(name => name !== 'default');
+  const extra = actual.filter(name => !expected.has(name));
+  const removed = [...expected].filter(name => !actual.includes(name));
+  if (extra.length || removed.length) {
+    if (extra.length) console.error('ESM root surface drift — names NOT in the pinned surface (curate or pin):', extra);
+    if (removed.length) console.error('ESM root surface drift — pinned names missing from the barrel:', removed);
+    process.exit(1);
+  }
+  console.log('OK: ESM exposes', surface.length, 'curated +', generatedCore.length, 'generated-core =', actual.length, 'root names (exact)');
 });
 "
 
 echo "==> CJS require smoke"
-SURFACE="$SURFACE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node -e "
+SURFACE="$SURFACE" GENERATED_CORE="$GENERATED_CORE" EXPECTED_ROOT_SURFACE_COUNT="$EXPECTED_ROOT_SURFACE_COUNT" node -e "
 const m = require('./dist/cjs/index.js');
 const surface = process.env.SURFACE.split(',');
+const generatedCore = process.env.GENERATED_CORE.split(',');
 const missing = surface.filter(name => typeof m[name] !== 'function' && typeof m[name] !== 'object');
 if (missing.length) {
-  console.error('CJS missing exports:', missing);
+  console.error('CJS missing curated exports:', missing);
   process.exit(1);
 }
-console.log('OK: CJS exposes', surface.length, 'expected names');
+const expected = new Set([...surface, ...generatedCore]);
+const actual = Object.keys(m).filter(name => name !== 'default');
+const extra = actual.filter(name => !expected.has(name));
+const removed = [...expected].filter(name => !actual.includes(name));
+if (extra.length || removed.length) {
+  if (extra.length) console.error('CJS root surface drift — names NOT in the pinned surface (curate or pin):', extra);
+  if (removed.length) console.error('CJS root surface drift — pinned names missing from the barrel:', removed);
+  process.exit(1);
+}
+console.log('OK: CJS exposes', surface.length, 'curated +', generatedCore.length, 'generated-core =', actual.length, 'root names (exact)');
 "
 
 echo "==> CJS subpath smoke"
