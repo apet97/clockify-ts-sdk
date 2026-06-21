@@ -428,7 +428,7 @@ describe("timeoff submit", () => {
         expect(calls.submits).toHaveLength(0);
     });
 
-    it("rejects when --end is missing", async () => {
+    it("rejects when neither --end nor --days is given", async () => {
         const { client, calls } = makeClient();
         await expect(
             makeProgram(registerTimeOffCommand, client).parseAsync([
@@ -441,8 +441,29 @@ describe("timeoff submit", () => {
                 "--start",
                 "2026-08-01",
             ]),
-        ).rejects.toThrow(/--end/);
+        ).rejects.toThrow(/--end.*--days/);
         expect(calls.submits).toHaveLength(0);
+    });
+
+    it("accepts --start + --days without --end (DAYS-unit policies)", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerTimeOffCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "timeoff",
+            "submit",
+            "--policy",
+            "pol-1",
+            "--start",
+            "2026-08-01",
+            "--days",
+            "2",
+        ]);
+        const body = calls.submits[0]?.body as {
+            timeOffPeriod: { period: Record<string, unknown> };
+        };
+        expect(body.timeOffPeriod.period).toEqual({ start: "2026-08-01", days: 2 });
+        expect(body.timeOffPeriod.period).not.toHaveProperty("end");
     });
 
     it("propagates an SDK error from submit (so the top-level wrapper exits non-zero)", async () => {

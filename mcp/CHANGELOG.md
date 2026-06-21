@@ -24,6 +24,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   of buffering the entire history into memory: it keeps only matches, throws the
   moment a second match appears, and bounds the scan (asks to narrow the window
   or pass `entry_id` past 10k entries).
+- `clockify_time_off_requests_submit` makes `end` optional and requires one of
+  `{end, days}`: DAYS-unit policies want `days` (a `{start,end}` submit 400s
+  "number of days is not allowed"); HOURS-unit policies want `end`.
 
 ### Changed
 

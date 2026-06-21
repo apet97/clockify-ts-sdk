@@ -175,9 +175,24 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             description: "Submit a time-off request against a policy.",
             inputSchema: {
                 policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
-                start: z.string().min(1),
-                end: z.string().min(1),
-                days: zNumberLike(z.number().int()).optional(),
+                start: z
+                    .string()
+                    .min(1)
+                    .describe(
+                        "Start date. DAYS-unit policies want a date-only start (yyyy-MM-dd); HOURS-unit policies want a full RFC3339 datetime (yyyy-MM-ddThh:mm:ssZ).",
+                    ),
+                end: z
+                    .string()
+                    .min(1)
+                    .optional()
+                    .describe(
+                        "Range end (RFC3339). Required by HOURS-unit (date-range) policies; omit for DAYS-unit policies and pass `days`. Provide `end` OR `days`.",
+                    ),
+                days: zNumberLike(z.number().int())
+                    .optional()
+                    .describe(
+                        "Number of days. Required by DAYS-unit policies; omit for HOURS-unit policies and pass `end`. Provide `end` OR `days`.",
+                    ),
                 note: z.string().optional(),
                 isHalfDay: z.boolean().optional(),
                 halfDayPeriod: z
@@ -188,8 +203,21 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
+            // The submit period shape is policy-unit dependent: DAYS-unit policies
+            // reject {start,end} and want {start,days}; HOURS-unit policies want
+            // {start,end} and reject days (live-verified 2026-06-21). The tool
+            // can't see the policy unit, so require at least one of end / days.
+            if (args.end === undefined && args.days === undefined) {
+                return errorResult(
+                    "clockify_time_off_requests_submit",
+                    new Error(
+                        "provide either `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies) — the live API requires one",
+                    ),
+                );
+            }
             const policyId = await resolvePolicyId(ctx, args.policyId);
-            const period: ClockifyApi.PeriodV1Request = { start: args.start, end: args.end };
+            const period: ClockifyApi.PeriodV1Request = { start: args.start };
+            if (args.end !== undefined) period.end = args.end;
             if (args.days !== undefined) period.days = args.days;
             const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
                 note: args.note ?? "",

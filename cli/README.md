@@ -104,7 +104,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable\|--no-billable]` | Update an expense (full replace of amount, category, date). |
 | `clk115 expenses delete <id>` | Delete an expense. |
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
-| `clk115 timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. |
+| `clk115 timeoff submit --policy id --start date (--end date \| --days N) [--note text] [--half-day --half-day-period FIRST_HALF\|SECOND_HALF]` | Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies). |
 | `clk115 scheduling list [--limit N] [--page N] [--name text]` | List scheduling assignments. |
 | `clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]` | Create a scheduling assignment. Drafts by default; pass `--publish` to publish. |
 | `clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS\|DOES_NOT_CONTAIN --page N --limit N]` | Search the workspace audit log. Window must be ≤ 31 days. |

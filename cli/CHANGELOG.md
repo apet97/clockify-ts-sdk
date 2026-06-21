@@ -9,6 +9,9 @@ All notable changes to `@clockify115/cli` are documented here.
 - `printError` classifies a `400` "X doesn't belong to Workspace/Project" body
   as `not_found` (the id is wrong) instead of `invalid_request`, and the
   status/message classification is now computed once.
+- `timeoff submit` makes `--end` optional and requires one of `--end` / `--days`:
+  DAYS-unit policies want `--days` (a `{start,end}` submit 400s "number of days is
+  not allowed"); HOURS-unit policies want `--end`.
 
 ### Changed
 
