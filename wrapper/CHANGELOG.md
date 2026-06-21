@@ -104,6 +104,14 @@ once v1.0.0 ships.
   requestId-less same-method+url requests each end their span — no orphan), and
   `iter.ts` (a garbage non-`true`/`false` `Last-Page` value falls back to the
   length heuristic on both a full and a short page).
+- The dual-build smoke (`wrapper/scripts/verify-dual-build.sh`) now asserts the
+  EXACT root barrel surface — the 92 curated names plus the 34 generated-core
+  names re-exported transitively via `export * from "./src"` — and fails on any
+  new leak or silent removal. It previously only checked the 92 were present
+  (a subset check; `EXPECTED_ROOT_SURFACE_COUNT` was never read), so the barrel
+  could silently drift. Narrowing the barrel to drop the pure-plumbing
+  generated-core re-exports remains a deliberate public-API decision (not done
+  here).
 
 ### Changed
 
