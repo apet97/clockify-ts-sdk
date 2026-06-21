@@ -26,6 +26,17 @@ once v1.0.0 ships.
   header is now stamped on 18 of the 21 paginated list endpoints (added expenses,
   invoices, expense-categories), and `createExpense` is promoted to `live-success`.
 
+### Security
+
+- Webhook SSRF guard (`webhook-url`) now blocks NAT64 well-known-prefix
+  (`64:ff9b::/96`) literals whose embedded IPv4 is a private/loopback/metadata
+  range (e.g. `64:ff9b::a9fe:a9fe` → `169.254.169.254`); these were previously
+  allowed. A NAT64 address embedding a public v4 stays allowed.
+- Corrected a false security claim in `README.md` and
+  `examples/structured-logging.ts`: the SDK logging layer does **not** emit
+  request/response headers, so there is no "auto-redaction" — callers that log
+  `ctx.headers` via hooks must redact the auth header themselves.
+
 ### Tests
 
 - Added mutation-killing tests for `composed-fetch.ts`, `dates.ts`, and

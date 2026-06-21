@@ -649,11 +649,12 @@ const client = createClockifyClient({
 });
 ```
 
-`debug` logs every request URL + redacted headers and every
-response status; `error` logs only failures. Sensitive headers
-(`Authorization`, `X-Api-Key`, `X-Addon-Token`, plus 12 more),
-sensitive query params, and basic-auth in URLs are redacted before
-they reach your logger. For a fully-wired Pino adapter see
+`debug` logs every request URL and response status; `error` logs only
+failures. The logging layer does **not** emit request or response
+**headers**, so the SDK itself never writes `Authorization` / `X-Api-Key`
+/ `X-Addon-Token` to your logger. If you add your own header logging via
+`hooks` (whose `ctx.headers` carries the live auth credentials), redact
+them yourself. For a fully-wired Pino adapter see
 [`examples/structured-logging.ts`](./examples/structured-logging.ts).
 
 ## Custom fetch and proxies
