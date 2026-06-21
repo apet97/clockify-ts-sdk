@@ -118,6 +118,16 @@ make docs-drift
   (`workspaces: ["wrapper", "cli", "mcp"]`) with a single root
   `package-lock.json`. Run `npm ci` at the root, then per-package
   scripts work from either the root (`-w <name>`) or the package dir.
+- **Transient tsserver diagnostics during/after `npm install` are not real.**
+  Consumers resolve wrapper *types* from `wrapper/dist/**`; while npm re-links the
+  workspace (or after `make sdk-codegen` regenerates `wrapper/src/**`), the IDE
+  briefly reports `"clockify-sdk-ts-115/requests" has no exported member
+  ClockifyRequestBody`, `entityId` missing, or `Promise<ResolvedContext>` on every
+  tool. Rebuild the wrapper (`npm run build -w clockify-sdk-ts-115`) and run
+  `npm run type-check -w <pkg>` — a clean type-check is the source of truth; the
+  squiggles clear once `dist` is current. Note cli/mcp `type-check` scope `src/`
+  (tests are checked at runtime), so a stale-typed test file shows in the IDE but
+  not in `npm run type-check`.
 - `output/ts-sdk/**` and `wrapper/src/**` are **gitignored**. A fresh
   clone needs `make sdk-codegen` before SDK package gates can pass.
   The local generator reads `spec/corrected/clockify.corrected.openapi.yaml`
@@ -144,6 +154,19 @@ make docs-drift
   project update). Probe a write route's existence with a fake-id request (404
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
+- **Probe the live wire before promoting/paginating.** The corrected spec's
+  `x-clockify-live-status: live-success` count is evidence-gated (67/184 as of
+  2026-06-20, up from 46 — the Deferred.md structural wave shipped on
+  `2026-06-20`; see the per-package CHANGELOGs and `spec/evidence/discrepancies.md`
+  `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's
+  `PAGINATED_LIST_OPS`, confirm the live wire honors `page`/`page-size`: expenses
+  and invoices DO (added); the **webhooks list IGNORES them** (non-paginated
+  envelope — left out on purpose). Creating a time-off request needs
+  `period:{start,days}` (a `start`/`end` span 400s "number of days is not
+  allowed"); a REJECTED time-off request is terminal (no API delete path), so live
+  status-PATCH probes leave a residue. `changeTimeOffRequestStatus`'s `note` is
+  live-verified OPTIONAL despite the generated type marking it required (bound via
+  the typed `wireBody<T>()` escape in `wrapper/requests.ts`).
 - `mcp/src/tools/workflows/` holds the workflow-first MCP surface
   (`index.ts` registers the tools; `business`/`review`/`run`/
   `time-tracking`/`resolve`/`plan`/`demo` carry the logic). The
@@ -269,6 +292,20 @@ make docs-drift
   vitest >=2.0.0, so the unified vitest ^4 across wrapper/cli/mcp is
   supported without extra handling. The contract is two
   packages (wrapper + mcp); floors ratchet monotonic-up.
+- **Run Stryker from the repo ROOT** (`make mutation`), never
+  `cd wrapper && npx stryker run`: `wrapper/stryker.conf.json`'s
+  `mutate`/`configFile`/`tempDirName` paths are repo-root-relative, so from
+  `wrapper/` they resolve to `wrapper/wrapper/…` — the run mutates nothing useful
+  and leaves a stale `wrapper/wrapper/.stryker-tmp` plus an unchanged
+  `wrapper/reports/mutation/mutation.json`. To prove a single mutant flips, apply
+  it by hand (sed the source), build, run the test, revert — faster + unambiguous.
+- **Coverage floors re-baseline only via a commit.**
+  `scripts/check-coverage-floor.mjs` reads the prior floor from
+  `git show HEAD:docs/coverage-contract.json` and rejects any downward move, so a
+  sanctioned re-pin (e.g. a vitest-major bump's stricter AST-aware counting) reds
+  `make coverage` until it is committed — after which the monotonic ratchet
+  resumes from the new floors. Lower a floor only after a real measurement change,
+  in BOTH the package `vitest.config.ts` AND `docs/coverage-contract.json`.
 - `make build-determinism` builds the wrapper twice and hashes
   `wrapper/dist/**`; it is wired into `perfect-full`, not
   `perfect-fast`.

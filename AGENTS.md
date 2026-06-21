@@ -526,6 +526,19 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).
 
+**2026-06-20 structural wave (shipped — no longer deferred).** The structural
+items formerly tracked in `Deferred.md` landed: corrected-spec `live-success`
+rose 46 → 67/184 (21 probe-backed read-side GET promotions); expenses + invoices
+list ops joined GOCLMCP `PAGINATED_LIST_OPS` (webhooks deliberately left out —
+live-verified non-paginated); consumer `as never` residue dropped 27 → 7
+(documented Bucket-C + the typed `wireBody<T>` escape); vitest unified to `^4`
+with honest re-pinned coverage floors and ~140 added handler tests; ten mutation
+survivors killed; the time-off status/`note` branch is live-verified (`note`
+optional, `changeTimeOffRequestStatus` bound via `wireBody`). Two upstream GOCLMCP
+generator follow-ups remain (see `spec/evidence/discrepancies.md`): emit
+`ChangeTimeOffRequestStatus.note` as optional, and correct the scheduling
+single-project-GET `start`/`end`-required comment.
+
 ## 9. Secret hygiene
 
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` belong in the
