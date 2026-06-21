@@ -95,6 +95,9 @@ once v1.0.0 ships.
 
 ### Tests
 
+- `wire-shape.test.ts` LEDGER_COVERAGE now maps the new compensated ledger entry
+  `time-off.requests.delete.policy-scoped-only-pending` to its MCP test, keeping the
+  ledger-coverage gate in lockstep with `spec/evidence/discrepancies.md`.
 - Added mutation-killing tests for `composed-fetch.ts`, `dates.ts`, and
   `errors.ts`. The Stryker module floors in `docs/mutation-score-contract.json`
   rise accordingly (`composed-fetch` 72→82, `dates` 76→84, `errors` 74→80,

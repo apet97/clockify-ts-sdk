@@ -29,6 +29,7 @@ policy).
 | `scheduling.project-totals.get-vs-post` | `compensated-in-tool-layer` |
 | `single-gets.404-405-read-from-list` | `compensated-in-tool-layer` |
 | `time-off.requests.update-status.wrong-method-and-field` | `compensated-in-tool-layer` |
+| `time-off.requests.delete.policy-scoped-only-pending` | `compensated-in-tool-layer` |
 | `deletes.archive-first` | `compensated-in-tool-layer` |
 | `time-off.requests.get.dead-route` | `compensated-in-tool-layer` |
 | `deletes.archive-first.projects-tasks` | `compensated-in-tool-layer` |

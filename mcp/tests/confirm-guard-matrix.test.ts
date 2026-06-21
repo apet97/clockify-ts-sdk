@@ -109,7 +109,7 @@ const guarded: GuardCase[] = [
     { tool: "clockify_expenses_delete", group: "expenses", method: "delete", args: { expenseId: id(16) }, echo: { expenseId: id(16) } },
     { tool: "clockify_invoices_delete", group: "invoices", method: "delete", args: { invoiceId: id(17) }, echo: { invoiceId: id(17) } },
     { tool: "clockify_scheduling_assignments_delete", group: "scheduling", method: "delete", args: { assignmentId: id(18) }, echo: { assignmentId: id(18) } },
-    { tool: "clockify_time_off_requests_delete", group: "timeOff", method: "delete", args: { requestId: id(19) }, echo: { requestId: id(19) } },
+    { tool: "clockify_time_off_requests_delete", group: "timeOff", method: "withdraw", args: { policyId: id(27), requestId: id(19) }, echo: { requestId: id(19) } },
     { tool: "clockify_shared_reports_delete", group: "sharedReports", method: "delete", args: { shared_report_id: id(20) }, echo: { sharedReportId: id(20) } },
 ];
 

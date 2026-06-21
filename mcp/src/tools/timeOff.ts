@@ -309,8 +309,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         {
             title: "Delete a time-off request",
             description:
-                "Permanently delete one time-off request by ID. Run dry_run first, then retry with the returned confirm_token.",
+                "Permanently delete one PENDING time-off request. Requires policyId — the delete endpoint is policy-scoped (the flat /time-off/requests/{id} route 404s). Only PENDING requests are deletable; terminal APPROVED/REJECTED requests have no delete path. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
+                policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
                 requestId: z.string().min(1),
                 dry_run: z.boolean().optional(),
                 confirm_token: z.string().optional(),
@@ -318,7 +319,13 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             annotations: { destructiveHint: true },
         },
         async (args) => {
-            const preview = { action: "delete", entity: "time_off_request", id: args.requestId };
+            const policyId = await resolvePolicyId(ctx, args.policyId);
+            const preview = {
+                action: "delete",
+                entity: "time_off_request",
+                id: args.requestId,
+                policyId,
+            };
             const confirmation = requireConfirmation(
                 ctx,
                 "clockify_time_off_requests_delete",
@@ -327,14 +334,19 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 preview,
             );
             if (confirmation) return confirmation;
-            await ctx.client.timeOff.delete({
+            // The working delete route is policy-scoped: DELETE
+            // /time-off/policies/{policyId}/requests/{requestId} (the generated
+            // `withdraw` method). The flat timeOff.delete route 404s live — see
+            // discrepancies.md time-off.requests.delete.policy-scoped-only-pending.
+            await ctx.client.timeOff.withdraw({
                 workspaceId: ctx.workspaceId,
+                policyId,
                 requestId: args.requestId,
             });
             return successResult(
                 "clockify_time_off_requests_delete",
                 { deleted: true, requestId: args.requestId },
-                { workspaceId: ctx.workspaceId, requestId: args.requestId },
+                { workspaceId: ctx.workspaceId, policyId, requestId: args.requestId },
                 writeReceipt("deleted", "time_off_request", args.requestId),
             );
         },

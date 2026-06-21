@@ -44,6 +44,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "scheduling.project-totals.get-vs-post": ["mcp/tests/scheduling-totals.test.ts"],
     "scheduling.list-per-project.start-end-required-camel-pagesize": ["mcp/tests/scheduling-totals.test.ts"],
     "time-off.requests.update-status.wrong-method-and-field": ["mcp/tests/sweep-fixes.test.ts"],
+    "time-off.requests.delete.policy-scoped-only-pending": ["mcp/tests/timeoff-delete.test.ts"],
     "time-off.change-status.union-and-note": ["mcp/tests/sweep-fixes.test.ts"],
     "time-off.submit.period-shape-is-policy-type-dependent": [
         "mcp/tests/time-off-half-day.test.ts",

@@ -2150,7 +2150,35 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   vs `timeOff.updateStatus` (PATCH flat, body `["note","statusType"]`).
 - **Status:** `compensated-in-tool-layer`. The tool now requires `policyId`, calls
   `changeTimeOffRequestStatus`, and sends `status`. Test: `mcp/tests/sweep-fixes.test.ts`.
-- Live note 2026-06-21: the same policy-scoped path also accepts **DELETE** — `DELETE /time-off/policies/{policyId}/requests/{requestId}` returns **200** and removes a **PENDING** request (verified live on the sandbox). The flat `DELETE /time-off/requests/{requestId}` 404s, and a `…/requests/{requestId}/status` PATCH to `WITHDRAWN` 404s. So "no API delete path for time-off requests" holds only for **terminal** states: a REJECTED request stays undeletable, and rejecting an APPROVED one only moves it into the undeletable REJECTED pile (the web-UI "withdraw" is likewise pending-only). Net: the ~196 approved/rejected sandbox time-off requests are permanent litter; only PENDING ones are removable.
+- Live note: the same policy-scoped path also accepts **DELETE** of a PENDING
+  request — promoted to its own atomic entry below
+  (`time-off.requests.delete.policy-scoped-only-pending`).
+
+### `time-off.requests.delete.policy-scoped-only-pending` — COMPENSATED 2026-06-22 (live re-verified)
+
+- **Official claim:** `deleteTimeOffRequest` is bound to the policy-scoped DELETE
+  `/time-off/policies/{policyId}/requests/{requestId}` (generated `timeOff.withdraw`);
+  the SDK also carries a flat `timeOff.delete` (`/time-off/requests/{requestId}`) from
+  the source.
+- **Actual behavior (live 2026-06-22):** only the policy-scoped DELETE works — it
+  returns **200** and removes a PENDING request; the flat `DELETE
+  /time-off/requests/{requestId}` **404s** (and a `…/status` PATCH to `WITHDRAWN`
+  404s). Only PENDING is deletable; terminal APPROVED/REJECTED requests have no delete
+  path (a REJECTED request stays; rejecting an APPROVED one only moves it to the
+  undeletable REJECTED pile — the web-UI "withdraw" is likewise pending-only). Net:
+  the ~196 approved/rejected sandbox requests are permanent litter; only PENDING ones
+  are removable. `createTimeOffRequest` on a DAYS policy wants `{note,
+  timeOffPeriod:{period:{start,days}}}` and returns PENDING when the policy's
+  `approve.requiresApproval` is true.
+- **Live evidence:** probe 2026-06-22 — POST request 200 (PENDING) → policy-scoped
+  DELETE 200 → flat DELETE 404 → re-list Leftovers:0 (sandbox `65b382b6…`, policy
+  `696fd7f2…`).
+- **MCP tool affected:** `clockify_time_off_requests_delete` previously called
+  `timeOff.delete({workspaceId, requestId})` — the dead flat route — so it could never
+  delete. It now requires `policyId` and calls `timeOff.withdraw({workspaceId,
+  policyId, requestId})`, with a PENDING-only/policy-scoped description.
+- **Status:** `compensated-in-tool-layer` (2026-06-22). Test:
+  `mcp/tests/timeoff-delete.test.ts`.
 
 ### `deletes.archive-first` — COMPENSATED 2026-06-17 (all sub-entities)
 
