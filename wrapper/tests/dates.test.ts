@@ -203,6 +203,31 @@ describe("resolveInstant", () => {
         expect(resolveInstant(NOW, "2026-06-10T08:30:00Z", "start")).toBe("2026-06-10T08:30:00.000Z");
     });
 
+    it("parses a zone-LESS ISO datetime as UTC, not the host timezone", () => {
+        // A datetime with no trailing Z / offset must be anchored to UTC so the
+        // resolved instant is identical on every host TZ (module's determinism
+        // contract). Pre-fix, Date.parse used the host zone here. The result is
+        // independent of the runner's TZ — assert the concrete UTC instant.
+        expect(resolveInstant(NOW, "2026-06-10T08:30:00", "start")).toBe(
+            "2026-06-10T08:30:00.000Z",
+        );
+        // `end` edge: a full datetime passes through normalized regardless of edge.
+        expect(resolveInstant(NOW, "2026-06-10T08:30:00", "end")).toBe(
+            "2026-06-10T08:30:00.000Z",
+        );
+    });
+
+    it("preserves an explicit offset in a full ISO datetime", () => {
+        // An explicit-offset input keeps its zone: 08:30+02:00 is 06:30Z.
+        expect(resolveInstant(NOW, "2026-06-10T08:30:00+02:00", "start")).toBe(
+            "2026-06-10T06:30:00.000Z",
+        );
+        // Compact offset form (no colon) is honored too.
+        expect(resolveInstant(NOW, "2026-06-10T08:30:00-0500", "start")).toBe(
+            "2026-06-10T13:30:00.000Z",
+        );
+    });
+
     it("anchors a day reference to the start or end edge", () => {
         expect(resolveInstant(NOW, "yesterday", "start")).toBe("2026-06-14T00:00:00.000Z");
         expect(resolveInstant(NOW, "yesterday", "end")).toBe("2026-06-14T23:59:59.999Z");

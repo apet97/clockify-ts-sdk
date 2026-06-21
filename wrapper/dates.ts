@@ -238,7 +238,13 @@ export function resolvePeriod(now: Date, period: ReportPeriod): { dateRangeStart
 export function resolveInstant(now: Date, raw: string, edge: "start" | "end"): string | undefined {
     const trimmed = raw.trim();
     if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
-        const parsed = Date.parse(trimmed);
+        // `Date.parse` of a zone-LESS datetime ("…T08:30:00") interprets it in the
+        // HOST timezone, which would break this module's UTC-determinism contract
+        // (a CLI run in America/New_York would yield a different instant than in
+        // UTC). Append `Z` when the input carries no explicit zone so the parse is
+        // always UTC; explicit-offset inputs (`+02:00`, `-0500`, `Z`) keep theirs.
+        const hasZone = /[zZ]$/.test(trimmed) || /[+-]\d{2}:?\d{2}$/.test(trimmed);
+        const parsed = Date.parse(hasZone ? trimmed : `${trimmed}Z`);
         return Number.isNaN(parsed) ? undefined : new Date(parsed).toISOString();
     }
     const day = resolveRelativeDay(now, { date: trimmed });

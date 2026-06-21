@@ -198,6 +198,34 @@ function ipv6Reason(groups: number[]): string | null {
         return null;
     }
 
+    // 6to4 prefix (2002::/16, RFC 3056): groups[1]/groups[2] hold the upper/lower
+    // halves of the embedded IPv4, so a 6to4 literal can reach a private/metadata
+    // v4 through a 6to4 relay (e.g. 2002:a9fe:a9fe:: -> 169.254.169.254). Decode
+    // and re-check exactly like the NAT64 branch. A 6to4 address embedding a
+    // public v4 stays allowed (ipv4Reason returns null).
+    if (groups[0] === 0x2002) {
+        const hi = groups[1]!;
+        const lo = groups[2]!;
+        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
+        if (embedded) return `6to4-embedded IPv4 of a ${embedded}`;
+        return null;
+    }
+
+    // IPv4-compatible IPv6 (::/96, deprecated by RFC 4291 §2.5.5.1 but still
+    // routable on some stacks): the low 32 bits embed an IPv4 address with the
+    // top 96 bits zero (e.g. ::a9fe:a9fe -> 169.254.169.254). The :: and ::1
+    // early-returns above already consumed the unspecified/loopback cases, so any
+    // remaining all-zero-prefix literal carries a real embedded v4. Decode and
+    // re-check like the mapped branch; a compat address embedding a public v4
+    // stays allowed.
+    if (groups.slice(0, 6).every((g) => g === 0)) {
+        const hi = groups[6]!;
+        const lo = groups[7]!;
+        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
+        if (embedded) return `IPv4-compatible IPv6 of a ${embedded}`;
+        return null;
+    }
+
     const first = groups[0]!;
     const firstByte = (first >> 8) & 0xff;
     if (firstByte === 0xfc || firstByte === 0xfd) return "private unique-local range (fc00::/7)";
