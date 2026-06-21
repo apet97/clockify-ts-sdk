@@ -14,6 +14,9 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   *name*) now unwraps the `{count, categories}` list envelope before
   name-matching; it previously matched against the envelope object and always
   reported the category not found.
+- A wrong id (live `400` "X doesn't belong to Workspace" body) now surfaces the
+  `not_found` recovery hint in tool receipts instead of `auth_or_permission`
+  (shared `error-codes` regenerated).
 
 ### Changed
 
