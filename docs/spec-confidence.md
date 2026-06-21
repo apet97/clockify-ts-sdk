@@ -10,8 +10,8 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 
 | Confidence | live-status | Operations | Meaning |
 | --- | --- | --- | --- |
-| HIGH | live-success | 74 | live request succeeded against the sacrificial sandbox |
-| MEDIUM | probe-documented | 96 | probe-lab evidence captured; awaiting a green live call |
+| HIGH | live-success | 78 | live request succeeded against the sacrificial sandbox |
+| MEDIUM | probe-documented | 92 | probe-lab evidence captured; awaiting a green live call |
 | LOW | documented | 14 | documented only; no probe captured yet |
 | — | other/unstamped | 0 | no live-status stamp |
 
