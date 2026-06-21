@@ -403,26 +403,27 @@ function stableCodeForClockifyError(err: ClockifyApiError): ClockifyErrorCode {
     return errorCodeForMessage(err.message);
 }
 
-function mentionsActiveDeleteBlock(message: string, body: unknown): boolean {
-    const re = /cannot delete an active (project|task|client)/i;
-    if (re.test(message)) return true;
-    if (typeof body === "string") return re.test(body);
+/**
+ * Combine an error's thrown `message` with its response-body message so a
+ * single regex test covers both. Clockify sometimes surfaces the meaningful
+ * text only in the JSON body (`{ "message": "...", "code": 501 }`) while
+ * `err.message` is a generic "HTTP 400".
+ */
+function errorText(message: string, body: unknown): string {
+    if (typeof body === "string") return `${message}\n${body}`;
     if (body != null && typeof body === "object") {
         const bodyMessage = (body as { message?: unknown }).message;
-        if (typeof bodyMessage === "string") return re.test(bodyMessage);
+        if (typeof bodyMessage === "string") return `${message}\n${bodyMessage}`;
     }
-    return false;
+    return message;
+}
+
+function mentionsActiveDeleteBlock(message: string, body: unknown): boolean {
+    return /cannot delete an active (project|task|client)/i.test(errorText(message, body));
 }
 
 function mentionsResourceNotFound(message: string, body: unknown): boolean {
-    const re = /does(?:n'?t| not) (?:belong to|exist)/i;
-    if (re.test(message)) return true;
-    if (typeof body === "string") return re.test(body);
-    if (body != null && typeof body === "object") {
-        const bodyMessage = (body as { message?: unknown }).message;
-        if (typeof bodyMessage === "string") return re.test(bodyMessage);
-    }
-    return false;
+    return /does(?:n'?t| not) (?:belong to|exist)/i.test(errorText(message, body));
 }
 
 function errorCodeForSdkStatus(status: number | undefined): ClockifyErrorCode | undefined {
