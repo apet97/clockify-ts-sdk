@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerEntriesCommand: Registrar = (program, services) => {
@@ -17,8 +17,8 @@ export const registerEntriesCommand: Registrar = (program, services) => {
     entries
         .command("list")
         .description("List the current user's time entries.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", (v) => Number.parseInt(v, 10), 25)
-        .option("--page <n>", "Page number (default 1).", (v) => Number.parseInt(v, 10), 1)
+        .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
+        .option("--page <n>", "Page number (default 1).", parseIntArg, 1)
         .option("--from <date>", "ISO 8601 start cutoff (inclusive).")
         .option("--to <date>", "ISO 8601 end cutoff (inclusive).")
         .option("--description <text>", "Filter by description substring.")
@@ -35,8 +35,13 @@ export const registerEntriesCommand: Registrar = (program, services) => {
                 page: opts.page,
                 "page-size": Math.min(Math.max(1, opts.limit), 200),
             };
-            if (opts.from) req.start = opts.from;
-            if (opts.to) req.end = opts.to;
+            // Clockify's time-entry range filter needs a full RFC3339 instant, but
+            // CLI users naturally type `--from 2026-06-01`. Promote a bare date to
+            // the day's start/end edge (mirroring reports/invoices); a full RFC3339
+            // value passes through unchanged. An unparseable value errors locally
+            // rather than 400ing on the wire (mirrors log.ts's --end guard).
+            if (opts.from) req.start = promoteDateBoundary(opts.from, "from", "start");
+            if (opts.to) req.end = promoteDateBoundary(opts.to, "to", "end");
             if (opts.description) req.description = opts.description;
             const items = await client.timeEntries.listForUser(req);
             const rows = items.map((raw) => {
@@ -83,3 +88,22 @@ export const registerEntriesCommand: Registrar = (program, services) => {
             );
         });
 };
+
+/**
+ * Normalize a `--from` / `--to` value for the time-entry range filter.
+ * A bare `YYYY-MM-DD` is promoted to the day's start (`T00:00:00Z`) or end
+ * (`T23:59:59Z`) edge; any other value is required to be a valid RFC3339
+ * timestamp and is returned unchanged. Anything `Date.parse` rejects throws
+ * a clear local error so the bad value never reaches the wire.
+ */
+function promoteDateBoundary(value: string, flag: "from" | "to", edge: "start" | "end"): string {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
+    }
+    if (Number.isNaN(Date.parse(value))) {
+        throw new Error(
+            `--${flag} ${JSON.stringify(value)} is not a valid date (YYYY-MM-DD) or RFC3339 timestamp`,
+        );
+    }
+    return value;
+}

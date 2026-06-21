@@ -119,6 +119,22 @@ export function resolveFlags(program: Command): ResolvedFlags {
     return resolved;
 }
 
+/**
+ * Like {@link resolveFlags} but never throws: an invalid `--output` in the
+ * error path falls back to a plain `{ mode: "table", color }` reporter.
+ */
+function resolveFlagsSafe(program: Command): ResolvedFlags {
+    try {
+        return resolveFlags(program);
+    } catch {
+        const opts = program.opts<{ color?: boolean }>();
+        return {
+            mode: "table",
+            color: opts.color !== false && process.stdout.isTTY === true,
+        };
+    }
+}
+
 function resolveMode(output: string | undefined, json: boolean | undefined): OutputMode {
     if (output === undefined) {
         return json ? "json" : "table";
@@ -152,7 +168,7 @@ export async function main(argv: string[]): Promise<number> {
         }
         const message = err instanceof Error ? err.message : String(err);
         const statusCode = (err as { statusCode?: number }).statusCode;
-        const flags = resolveFlags(program);
+        const flags = resolveFlagsSafe(program);
         printError(message, { mode: flags.mode, color: flags.color }, statusCode);
         return isCommanderUsageError(err) ? 2 : 1;
     }

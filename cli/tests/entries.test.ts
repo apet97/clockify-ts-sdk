@@ -175,7 +175,7 @@ describe("entries list", () => {
         });
     });
 
-    it("clamps a zero --limit up to the minimum page size of 1", async () => {
+    it("promotes a bare YYYY-MM-DD --from/--to to RFC3339 day edges", async () => {
         const { client, listCalls } = makeListClient([]);
         await makeProgram(registerEntriesCommand, client).parseAsync([
             "node",
@@ -183,11 +183,72 @@ describe("entries list", () => {
             "--json",
             "entries",
             "list",
-            "--limit",
-            "0",
+            "--from",
+            "2026-06-01",
+            "--to",
+            "2026-06-30",
         ]);
-        // Math.min(Math.max(1, 0), 200) === 1.
-        expect(listCalls[0]).toMatchObject({ "page-size": 1 });
+        // A date-only value would 400 on the wire; promote to the day's edges.
+        expect(listCalls[0]).toMatchObject({
+            start: "2026-06-01T00:00:00Z",
+            end: "2026-06-30T23:59:59Z",
+        });
+    });
+
+    it("passes a full RFC3339 --from/--to through unchanged", async () => {
+        const { client, listCalls } = makeListClient([]);
+        await makeProgram(registerEntriesCommand, client).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "entries",
+            "list",
+            "--from",
+            "2026-06-01T08:30:00Z",
+            "--to",
+            "2026-06-30T17:45:00Z",
+        ]);
+        expect(listCalls[0]).toMatchObject({
+            start: "2026-06-01T08:30:00Z",
+            end: "2026-06-30T17:45:00Z",
+        });
+    });
+
+    it("rejects an unparseable --from before listing", async () => {
+        const { client, listCalls } = makeListClient([]);
+        await expect(
+            makeProgram(registerEntriesCommand, client).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "entries",
+                "list",
+                "--from",
+                "not-a-date",
+            ]),
+        ).rejects.toThrow(/--from .* is not a valid date/);
+        expect(listCalls).toHaveLength(0);
+    });
+
+    it("rejects a non-positive or non-numeric --limit before listing", async () => {
+        // parseIntArg enforces a positive integer at parse time, so a bad
+        // --limit raises a clean commander usage error instead of forwarding
+        // page-size: NaN (or a silently-clamped 1) to the wire.
+        const { client, listCalls } = makeListClient([]);
+        for (const bad of ["0", "abc", "-5"]) {
+            await expect(
+                makeProgram(registerEntriesCommand, client).parseAsync([
+                    "node",
+                    "clk115",
+                    "--json",
+                    "entries",
+                    "list",
+                    "--limit",
+                    bad,
+                ]),
+            ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        }
+        expect(listCalls).toHaveLength(0);
     });
 
     it("throws when the current user has no usable id", async () => {

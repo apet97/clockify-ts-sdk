@@ -1,4 +1,9 @@
-const COMMANDS = [
+/**
+ * Top-level command groups offered for shell completion. Exported so a
+ * contract test can assert it stays in sync with the generated
+ * `docs/cli-commands.json` surface (every documented group must complete).
+ */
+export const COMMANDS = [
     "api",
     "status",
     "doctor",
@@ -16,6 +21,9 @@ const COMMANDS = [
     "timeoff",
     "scheduling",
     "audit-log",
+    "reports",
+    "shared-reports",
+    "users",
     "completion",
     "help",
 ] as const;

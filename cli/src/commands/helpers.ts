@@ -2,7 +2,7 @@
  * Helpers shared by command modules: resolves the workspace + client
  * + output options in one call, so each handler is a short orchestration.
  */
-import type { Command } from "commander";
+import { InvalidArgumentError, type Command } from "commander";
 
 import type { ClockifyClient } from "../client.js";
 import { requireWorkspaceId } from "../config.js";
@@ -11,6 +11,23 @@ import { globalFlags, resolveFlags } from "../index.js";
 import type { OutputOptions } from "../output.js";
 
 import type { Services } from "./types.js";
+
+/**
+ * Commander option parser for integer flags like `--limit` / `--page`.
+ * A non-numeric or non-positive value (`Number.parseInt("abc", 10)` is
+ * `NaN`) previously flowed straight to the wire — `Math.max(1, NaN)` is
+ * `NaN`, so `page-size: NaN` reached Clockify. Reject it at parse time
+ * with the same contract as `api.ts`'s `parsePositiveInteger`, raising
+ * `commander.InvalidArgumentError` so commander reports a clean usage
+ * error (exit code 2) instead of an opaque downstream failure.
+ */
+export function parseIntArg(value: string): number {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        throw new InvalidArgumentError("must be a positive integer.");
+    }
+    return parsed;
+}
 
 export interface BaseContext {
     client: ClockifyClient;

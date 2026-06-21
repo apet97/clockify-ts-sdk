@@ -11,6 +11,28 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- An invalid `--output` value no longer crashes the CLI's own error path: the
+  happy-path `resolveMode` throw is reported as before, but `main()`'s catch
+  block now resolves output flags through a non-throwing fallback
+  (`{ mode: "table", color }`) so formatting that error can't re-throw and
+  escape as an uncaught exception. The CLI exits with a clean non-zero code.
+- Non-numeric or non-positive `--limit` / `--page` on `projects`/`users`/
+  `expenses`/`entries list` (and the inline callbacks they shared) now raise a commander
+  usage error instead of forwarding `NaN`/`<=0` to the wire
+  (`page-size: Math.max(1, NaN) === NaN`). A new shared `parseIntArg` option
+  parser (in `commands/helpers.js`) mirrors `api`'s `parsePositiveInteger`.
+- `clk115 expenses list` now shows the expense **total** (`total ?? amount ??
+  quantity`) in the amount column instead of the per-unit quantity, so the
+  figure reflects what the expense actually costs.
+- `clk115 entries list --from/--to` now promotes a bare `YYYY-MM-DD` to the
+  day's RFC3339 edges (`T00:00:00Z` / `T23:59:59Z`) instead of forwarding a
+  date-only value the endpoint rejects; a full RFC3339 value still passes
+  through unchanged, and an unparseable value fails locally with a clear error
+  (mirroring `log`'s `--end` guard).
+- `clk115 completion` now offers the `reports`, `shared-reports`, and `users`
+  command groups, which the shell-completion list previously omitted. A new
+  contract test asserts every top-level group in `docs/cli-commands.json`
+  appears in the completion `COMMANDS` list.
 - `printError` classifies a `400` "X doesn't belong to Workspace/Project" body
   as `not_found` (the id is wrong) instead of `invalid_request`, and the
   status/message classification is now computed once.
