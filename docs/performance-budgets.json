@@ -92,7 +92,7 @@
     {
       "name": "mcp-tools-list",
       "maxMs": 1200,
-      "rationale": "MCP clients should be able to discover the 126-tool surface quickly on local stdio startup. Calibrated from measured baseline ~440ms."
+      "rationale": "MCP clients should be able to discover the 134-tool surface quickly on local stdio startup. Calibrated from measured baseline ~440ms."
     }
   ]
 }
