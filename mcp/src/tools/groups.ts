@@ -3,6 +3,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi } from "clockify-sdk-ts-115";
+import { iterAll } from "clockify-sdk-ts-115/iter";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -63,21 +64,23 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             // The generated userGroups.get is typed `void` — Clockify has no
-            // single-GET route that returns the group — so read it from the
-            // list and scan by id (the same shape the addon found live).
-            const groups = (await ctx.client.userGroups.list({
-                workspaceId: ctx.workspaceId,
-                page: 1,
-                "page-size": 200,
-            })) as Array<{ id?: string }>;
-            const group = groups.find((g) => String(g.id ?? "") === args.groupId);
-            if (!group) {
-                return errorResult("clockify_groups_get", new Error(`no user group with id ${JSON.stringify(args.groupId)} in this workspace`));
+            // single-GET route that returns the group — so read it from the list
+            // and scan by id. Auto-paginate (userGroups.list is in
+            // KNOWN_PAGINATED_METHODS) so a group past row 200 is still found;
+            // iterAll honors the Last-Page header and stops on the first match.
+            const listGroups = ctx.client.userGroups.list.bind(ctx.client.userGroups);
+            for await (const g of iterAll(listGroups, { workspaceId: ctx.workspaceId }, { pageSize: 200 })) {
+                if (String((g as { id?: string }).id ?? "") === args.groupId) {
+                    return successResult("clockify_groups_get", g, {
+                        workspaceId: ctx.workspaceId,
+                        groupId: args.groupId,
+                    });
+                }
             }
-            return successResult("clockify_groups_get", group, {
-                workspaceId: ctx.workspaceId,
-                groupId: args.groupId,
-            });
+            return errorResult(
+                "clockify_groups_get",
+                new Error(`no user group with id ${JSON.stringify(args.groupId)} in this workspace`),
+            );
         },
     );
 

@@ -364,10 +364,21 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
         };
     }
     const user = await ctx.client.users.getCurrentUser();
-    // Walk ALL pages: a real entry past row 200 must still be findable,
-    // otherwise the exactly-one assertion below fails with "found 0" or
-    // matches a stale duplicate. iterAll honors the Last-Page header.
-    const entries: AnyRecord[] = [];
+    const exact = str(args.exact_description);
+    const contains = str(args.description_contains);
+    const matchesEntry = (entry: AnyRecord): boolean => {
+        const description = str(entry.description);
+        if (exact && description !== exact) return false;
+        if (contains && !description.includes(contains)) return false;
+        return true;
+    };
+    // Stream the user's entries instead of buffering ALL of them: keep only the
+    // matches, throw the moment a SECOND match appears (ambiguous), and bound the
+    // scan so a huge history can't drain unbounded into memory. A real entry past
+    // row 200 is still findable; iterAll honors the Last-Page header.
+    const MAX_FIX_ENTRIES = 10_000;
+    const matches: AnyRecord[] = [];
+    let scanned = 0;
     for await (const entry of iterAll<AnyRecord, AnyRecord>(
         // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
         (req) => ctx.client.timeEntries.listForUser(req as never) as never,
@@ -379,16 +390,21 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
         },
         { pageSize: 200 },
     )) {
-        entries.push(entry);
+        scanned++;
+        if (matchesEntry(entry)) {
+            matches.push(entry);
+            if (matches.length > 1) {
+                throw new Error(
+                    `expected exactly one matching entry, found at least ${matches.length}; pass entry_id`,
+                );
+            }
+        }
+        if (scanned > MAX_FIX_ENTRIES) {
+            throw new Error(
+                `scanned more than ${MAX_FIX_ENTRIES} time entries without a unique match; narrow the window with start_after/start_before, or pass entry_id`,
+            );
+        }
     }
-    const matches = entries.filter((entry) => {
-        const description = str(entry.description);
-        if (str(args.exact_description) && description !== str(args.exact_description))
-            return false;
-        if (str(args.description_contains) && !description.includes(str(args.description_contains)))
-            return false;
-        return true;
-    });
     if (matches.length !== 1)
         throw new Error(
             `expected exactly one matching entry, found ${matches.length}; pass entry_id`,
