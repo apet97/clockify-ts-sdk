@@ -10,7 +10,7 @@ import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
 
-import { resolveContext } from "./helpers.js";
+import { parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerAuditLogCommand: Registrar = (program, services) => {
@@ -34,11 +34,11 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             "Author filter mode (CONTAINS|DOES_NOT_CONTAIN). Defaults to CONTAINS when authors are provided.",
             "CONTAINS",
         )
-        .option("--page <n>", "Page number.", (v) => Number.parseInt(v, 10), 1)
+        .option("--page <n>", "Page number.", parseIntArg, 1)
         .option(
             "--limit <n>",
             "Items per page (default 50, max 200).",
-            (v) => Number.parseInt(v, 10),
+            parseIntArg,
             50,
         )
         .action(async function (this: Command, opts) {

@@ -94,14 +94,18 @@ describe("audit-log search command", () => {
         );
     });
 
-    it("clamps the page size into [1, 200]", async () => {
+    it("clamps an above-range page size down to 200", async () => {
         const high = makeClient();
         await run(high.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--limit", "500"]);
         expect((high.calls[0] as Record<string, unknown>)["page-size"]).toBe(200);
+    });
 
+    it("rejects a zero/negative --limit before any wire call", async () => {
         const low = makeClient();
-        await run(low.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--limit", "0"]);
-        expect((low.calls[0] as Record<string, unknown>)["page-size"]).toBe(1);
+        await expect(
+            run(low.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--limit", "0"]),
+        ).rejects.toMatchObject({ code: "commander.invalidArgument" });
+        expect(low.calls).toHaveLength(0);
     });
 
     it("accepts both a bare array and an { entries } response shape", async () => {
