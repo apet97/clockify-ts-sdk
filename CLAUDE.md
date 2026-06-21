@@ -164,9 +164,12 @@ make docs-drift
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
 - **Probe the live wire before promoting/paginating.** The corrected spec's
-  `x-clockify-live-status: live-success` count is evidence-gated (81/184 as of
-  2026-06-21 — createExpense + user-group/webhook/custom-field write CRUD +
-  updateHoliday + shared-reports write CRUD promoted from fresh live probes with Leftovers:0; up from 46 — the
+  `x-clockify-live-status: live-success` count is evidence-gated (87/184 as of
+  2026-06-22 — the 2026-06-22 wave added time-off request create/delete, expense
+  delete + category archive, and project-membership PATCH/POST from live probes
+  with Leftovers:0; the 2026-06-21 wave added createExpense +
+  user-group/webhook/custom-field write CRUD + updateHoliday + shared-reports
+  write CRUD; up from 46 — the
   46→67 Deferred.md wave shipped on
   `2026-06-20`; see the per-package CHANGELOGs and `spec/evidence/discrepancies.md`
   `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's

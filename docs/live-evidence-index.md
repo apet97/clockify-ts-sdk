@@ -44,12 +44,14 @@ policy).
 | --- | --- | --- |
 | DELETE | `/workspaces/{workspaceId}/clients/{clientId}` | deleteWorkspacesWorkspaceIdClientsClientId |
 | DELETE | `/workspaces/{workspaceId}/custom-fields/{customFieldId}` | deleteWorkspaceCustomField |
+| DELETE | `/workspaces/{workspaceId}/expenses/{expenseId}` | deleteExpense |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | deleteProject |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | deleteTaskFromProject |
 | DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | deleteWorkspacesWorkspaceIdSharedReportsSharedReportId |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | deleteWorkspacesWorkspaceIdTagsTagId |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
+| DELETE | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}` | deleteTimeOffRequest |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | deleteGroup |
 | DELETE | `/workspaces/{workspaceId}/webhooks/{webhookId}` | deleteWebhook |
 | GET | `/shared-reports/{sharedReportId}` | getSharedReportsSharedReportId |
@@ -93,6 +95,8 @@ policy).
 | GET | `/workspaces/{workspaceId}/users/{userId}/managers` | findUserTeamManagers |
 | GET | `/workspaces/{workspaceId}/webhooks` | getWebhooksOnWorkspace |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
+| PATCH | `/workspaces/{workspaceId}/expenses/categories/{categoryId}/status` | archiveExpenseCategory |
+| PATCH | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | updateProjectMemberships |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
 | POST | `/workspaces/{workspaceId}/clients` | postWorkspacesWorkspaceIdClients |
 | POST | `/workspaces/{workspaceId}/custom-fields` | createWorkspaceCustomField |
@@ -100,6 +104,7 @@ policy).
 | POST | `/workspaces/{workspaceId}/expenses/categories` | addExpenseCategory |
 | POST | `/workspaces/{workspaceId}/holidays` | createHoliday |
 | POST | `/workspaces/{workspaceId}/projects` | createProject |
+| POST | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | assignOrRemoveProjectUsers |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | addTaskOnProject |
 | POST | `/workspaces/{workspaceId}/reports/attendance` | generateAttendanceReport |
 | POST | `/workspaces/{workspaceId}/reports/detailed` | generateDetailedReport |
@@ -109,6 +114,7 @@ policy).
 | POST | `/workspaces/{workspaceId}/shared-reports` | postWorkspacesWorkspaceIdSharedReports |
 | POST | `/workspaces/{workspaceId}/tags` | postWorkspacesWorkspaceIdTags |
 | POST | `/workspaces/{workspaceId}/time-entries` | postWorkspacesWorkspaceIdTimeEntries |
+| POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests` | createTimeOffRequest |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | getAllTimeOffRequestsOnWorkspace |
 | POST | `/workspaces/{workspaceId}/user-groups` | addNewGroup |
 | POST | `/workspaces/{workspaceId}/webhooks` | createWebhook |

@@ -551,6 +551,17 @@ classifies `not_found`; `fix_entry`/`groups_get` scans bounded; the time-off
 submit period is policy-unit dependent (DAYS = `start`+`days`, HOURS =
 `start`+`end`). No open generator follow-ups from this wave.
 
+**2026-06-22 wave (shipped).** The GOCLMCP generator now keeps `$ref` query
+parameters (`ensure_path_parameters!` resolve-aware), restoring dropped query
+params on 15 ops — notably the live-required `start`/`end` on `scheduling.list`
+(`assignments/all`) + the schedule-totals GETs, which exposed and fixed a broken
+CLI `scheduling list` + `clockify_scheduling_assignments_list` (both now require a
+`start`/`end` range). `clockify_time_off_requests_delete` was rewired from the dead
+flat route to the policy-scoped `timeOff.withdraw` (it could never delete before).
+`live-success` rose 81 → **87/184**: time-off request create/delete, expense delete +
+category archive, and project-membership PATCH/POST, all from live probes with
+verified `Leftovers:0`.
+
 ## 9. Secret hygiene
 
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` belong in the
