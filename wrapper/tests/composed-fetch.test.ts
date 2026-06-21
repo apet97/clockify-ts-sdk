@@ -893,3 +893,90 @@ describe("composedFetch — guards", () => {
         }
     });
 });
+
+describe("composedFetch — redirect handling (auth-header safety)", () => {
+    /** A 3xx response carrying a Location header, as a real fetch would
+     *  return under `redirect: "manual"`. */
+    function redirectResponse(status: number, location = "https://evil.example/steal"): Response {
+        return new Response(null, { status, headers: { Location: location } });
+    }
+
+    it("sets redirect: 'manual' on the request init by default", async () => {
+        const { fn, calls } = mockFetch(() => new Response("ok"));
+        const f = composedFetch({ fetch: fn });
+        await f("https://example.test/x");
+        expect(calls[0]!.init?.redirect).toBe("manual");
+    });
+
+    it("surfaces a 3xx as an error instead of returning the redirect (single-shot)", async () => {
+        const { fn, calls } = mockFetch(() => redirectResponse(302));
+        const f = composedFetch({ fetch: fn });
+        await expect(f("https://example.test/x")).rejects.toThrow(/refusing to follow HTTP 302/);
+        // The underlying fetch was called exactly once and was NOT re-issued
+        // to the redirect target — auth headers never left the original host.
+        expect(calls).toHaveLength(1);
+    });
+
+    it("blocks every 3xx status code, not just 302", async () => {
+        for (const status of [301, 303, 307, 308]) {
+            const { fn } = mockFetch(() => redirectResponse(status));
+            const f = composedFetch({ fetch: fn });
+            await expect(f("https://example.test/x")).rejects.toThrow(
+                new RegExp(`refusing to follow HTTP ${status}`),
+            );
+        }
+    });
+
+    it("does NOT surface a 3xx when the caller explicitly opts into redirect: 'follow'", async () => {
+        // When the caller sets redirect: 'follow', the platform fetch would
+        // follow it itself; the wrapper must honor that and not raise.
+        const { fn, calls } = mockFetch(() => redirectResponse(302));
+        const f = composedFetch({ fetch: fn });
+        const res = await f("https://example.test/x", { redirect: "follow" });
+        expect(res.status).toBe(302);
+        expect(calls[0]!.init?.redirect).toBe("follow");
+    });
+
+    it("does not retry a blocked redirect even on a retryable method + retry policy", async () => {
+        let count = 0;
+        const { fn } = mockFetch(() => {
+            count += 1;
+            return redirectResponse(307);
+        });
+        const f = composedFetch({
+            fetch: fn,
+            // GET is retryable and 307 would normally be retryable if it were
+            // in the status list — but a blocked redirect is terminal.
+            retryPolicy: { maxRetries: 3, retryableStatusCodes: [307, 500] },
+        });
+        await expect(f("https://example.test/x", { method: "GET" })).rejects.toThrow(
+            /refusing to follow HTTP 307/,
+        );
+        expect(count).toBe(1);
+    });
+
+    it("fires the onError hook for a blocked redirect", async () => {
+        const onError = vi.fn();
+        const { fn } = mockFetch(() => redirectResponse(302));
+        const f = composedFetch({ fetch: fn, hooks: { onError } });
+        await expect(f("https://example.test/x")).rejects.toThrow();
+        expect(onError).toHaveBeenCalledTimes(1);
+        const ctx = onError.mock.calls[0]![0] as { error: unknown };
+        expect((ctx.error as Error).message).toMatch(/refusing to follow HTTP 302/);
+    });
+
+    it("still returns a normal 2xx unchanged under the default manual policy", async () => {
+        const { fn } = mockFetch(() => new Response("body", { status: 200 }));
+        const f = composedFetch({ fetch: fn });
+        const res = await f("https://example.test/x");
+        expect(res.status).toBe(200);
+        expect(await res.text()).toBe("body");
+    });
+
+    it("still surfaces a 4xx as a returned response, not an error", async () => {
+        const { fn } = mockFetch(() => new Response("nope", { status: 404 }));
+        const f = composedFetch({ fetch: fn });
+        const res = await f("https://example.test/x");
+        expect(res.status).toBe(404);
+    });
+});

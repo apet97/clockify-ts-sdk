@@ -250,7 +250,19 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
             initHeaders.set(REQUEST_ID_HEADER, requestId);
         }
 
-        const finalInit: RequestInit = { ...init, headers: initHeaders };
+        // Default redirect handling to `manual` so the underlying fetch never
+        // transparently follows a 3xx — which would re-send the auth headers
+        // (`X-Api-Key` / `X-Addon-Token`) to the redirect target, potentially a
+        // host outside the trusted Clockify allowlist. Every legitimate
+        // Clockify endpoint answers with a direct 2xx/4xx, so a redirect is
+        // surfaced as an explicit error below (see `assertNotRedirect`). A
+        // caller that deliberately sets `redirect` keeps full control.
+        const effectiveRedirect: RequestRedirect = init?.redirect ?? "manual";
+        const finalInit: RequestInit = {
+            ...init,
+            headers: initHeaders,
+            redirect: effectiveRedirect,
+        };
 
         if (retryPolicy == null) {
             // No wrapper-side retry — single shot.
@@ -261,15 +273,30 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
                 attempt: 0,
                 requestId,
             };
-            return await runSingleAttempt(baseFetch, input, finalInit, ctx, hooks);
+            return await runSingleAttempt(
+                baseFetch,
+                input,
+                finalInit,
+                ctx,
+                hooks,
+                effectiveRedirect,
+            );
         }
 
-        return await runWithRetries(baseFetch, input, finalInit, retryPolicy, hooks, {
-            url,
-            method,
-            headers: initHeaders,
-            requestId,
-        });
+        return await runWithRetries(
+            baseFetch,
+            input,
+            finalInit,
+            retryPolicy,
+            hooks,
+            {
+                url,
+                method,
+                headers: initHeaders,
+                requestId,
+            },
+            effectiveRedirect,
+        );
     } satisfies typeof fetch;
 }
 
@@ -307,6 +334,55 @@ export function getRequestIdFromError(err: unknown): string | undefined {
 
 // ---------- internals ----------
 
+/**
+ * Error surfaced when a request receives a 3xx redirect that the wrapper did
+ * not follow (the default `redirect: "manual"` policy). Internal-only — it is
+ * thrown and propagates to the caller with a descriptive message, but is not a
+ * public export, so the SDK's public-name surface is unchanged. Callers can
+ * still branch on `err.name === "RedirectNotAllowedError"`.
+ *
+ * Every legitimate Clockify endpoint answers with a direct 2xx/4xx, so a
+ * redirect off the trusted host is treated as an error rather than silently
+ * followed — following it would re-send the auth headers (`X-Api-Key` /
+ * `X-Addon-Token`) to the redirect target. With `redirect: "manual"` the
+ * platform fetch returns the 3xx WITHOUT re-issuing the request, so those
+ * headers were never re-sent before this error is raised.
+ */
+class RedirectNotAllowedError extends Error {
+    /** The 3xx status code that was blocked. */
+    readonly status: number;
+    /** The `Location` header value, when present. */
+    readonly location: string | undefined;
+    constructor(status: number, location?: string) {
+        super(
+            `composedFetch: refusing to follow HTTP ${status} redirect` +
+                (location != null ? ` to ${JSON.stringify(location)}` : "") +
+                " — auth headers are not re-sent across redirects; every Clockify endpoint answers with a direct 2xx/4xx.",
+        );
+        this.name = "RedirectNotAllowedError";
+        this.status = status;
+        this.location = location;
+    }
+}
+
+/**
+ * Throw {@link RedirectNotAllowedError} when `response` is a 3xx and we asked
+ * the underlying fetch NOT to follow it (`redirect: "manual"`). With manual
+ * redirect handling the platform fetch returns the 3xx without re-issuing the
+ * request, so the auth headers were never re-sent — surfacing it as an error
+ * (instead of returning the bare 3xx) keeps callers from mistaking it for a
+ * normal response. When the caller opted into `redirect: "follow"` the fetch
+ * already followed it and a residual 3xx is left alone; `redirect: "error"`
+ * makes the platform fetch reject before we ever see a response.
+ */
+function assertNotRedirect(response: Response, redirect: RequestRedirect): void {
+    if (redirect !== "manual") return;
+    if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get("Location") ?? undefined;
+        throw new RedirectNotAllowedError(response.status, location);
+    }
+}
+
 function resolveUserAgent(opt: boolean | string | undefined): string | null {
     if (opt === false) return null;
     if (typeof opt === "string") return opt;
@@ -343,11 +419,17 @@ async function runSingleAttempt(
     init: RequestInit,
     ctx: RequestContext,
     hooks: ComposedFetchHooks | undefined,
+    redirect: RequestRedirect,
 ): Promise<Response> {
     const start = Date.now();
     await safeHook(hooks?.beforeRequest, ctx);
     try {
         const response = await baseFetch(input, init);
+        // A blocked redirect is surfaced as an error, never returned: with
+        // `redirect: "manual"` the underlying fetch did NOT follow it, so the
+        // auth headers were not re-sent to the target. Route through the catch
+        // below so `onError` fires and error metrics are emitted.
+        assertNotRedirect(response, redirect);
         const durationMs = Date.now() - start;
         await safeHook(hooks?.afterResponse, { ...ctx, response, durationMs });
         await emitResponseMetrics(hooks, ctx, response, durationMs);
@@ -367,6 +449,7 @@ async function runWithRetries(
     policy: ReturnType<typeof mergeRetryPolicy>,
     hooks: ComposedFetchHooks | undefined,
     base: Omit<RequestContext, "attempt">,
+    redirect: RequestRedirect,
 ): Promise<Response> {
     let lastResponse: Response | undefined;
     let lastError: unknown;
@@ -381,8 +464,14 @@ async function runWithRetries(
 
         try {
             response = await baseFetch(input, init);
+            // A blocked redirect is terminal, not transient: surface it as an
+            // error (so auth headers are never re-sent to the target) and do
+            // NOT retry. Converting to the error branch routes it through the
+            // existing `onError` path and the post-loop `throw`.
+            assertNotRedirect(response, redirect);
         } catch (e) {
             error = e;
+            response = undefined;
         }
 
         const durationMs = Date.now() - start;
@@ -391,6 +480,10 @@ async function runWithRetries(
             await safeHook(hooks?.onError, { ...ctx, error, durationMs });
             await emitErrorMetrics(hooks, ctx, durationMs);
             lastError = error;
+            // A blocked redirect is never retried, even on an otherwise
+            // retryable method — it is a deliberate security stop, not a
+            // transient transport failure.
+            if (error instanceof RedirectNotAllowedError) throw error;
             if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
                 throw toError(error);
             }

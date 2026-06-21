@@ -50,16 +50,29 @@ export async function mapBounded<T, R>(
     const ok: R[] = [];
     const failures: BulkFailure<T>[] = [];
     let cursor = 0;
+    // Shared fail-fast flag for the `continueOnError: false` mode. Once any
+    // worker's `fn` rejects, this flips so sibling workers stop pulling NEW
+    // items off the queue and skip dispatching `fn` for items they had
+    // already claimed but not yet started. In-flight, already-dispatched
+    // `fn` calls cannot be recalled — only not-yet-started work is skipped —
+    // so the resolved/rejected contract is unchanged; only the count of new
+    // calls made after the first failure shrinks.
+    let aborted = false;
 
     async function worker(): Promise<void> {
         while (cursor < items.length) {
+            if (aborted) return;
             const index = cursor;
             cursor += 1;
             const item = items[index]!;
+            if (aborted) return;
             try {
                 ok.push(await fn(item, index));
             } catch (error) {
-                if (!continueOnError) throw error;
+                if (!continueOnError) {
+                    aborted = true;
+                    throw error;
+                }
                 failures.push({ item, error, index });
             }
         }
