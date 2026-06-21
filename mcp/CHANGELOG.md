@@ -4,6 +4,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Tests
+
+- Added `mcp/tests/entries.test.ts` (list / log / get / update behavior) and
+  raised the mcp coverage floors (branches 67->69, statements 82->84, lines
+  86->88, functions 85->86) in `vitest.config.ts` + `docs/coverage-contract.json`.
+
 ### Fixed
 
 - `clockify_scheduling_assignments_list_per_project` with a `projectId` now

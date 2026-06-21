@@ -4,6 +4,11 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Tests
+
+- Raised the cli branch-coverage floor 79->80 (`vitest.config.ts` +
+  `docs/coverage-contract.json`) after this session's new behavior tests.
+
 ### Fixed
 
 - `printError` classifies a `400` "X doesn't belong to Workspace/Project" body

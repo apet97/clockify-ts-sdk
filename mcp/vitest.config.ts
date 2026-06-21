@@ -21,10 +21,10 @@ export default defineConfig({
             // 87.26/85.95/67.72/83.17. Floors track that v4 baseline minus a
             // small margin.
             thresholds: {
-                lines: 86,
-                functions: 85,
-                branches: 67,
-                statements: 82,
+                lines: 88,
+                functions: 86,
+                branches: 69,
+                statements: 84,
             },
         },
     },
