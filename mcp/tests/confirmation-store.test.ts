@@ -54,6 +54,28 @@ describe("ConfirmationTokenStore TTL / expiry", () => {
         );
     });
 
+    it("substitutes the 5-minute default when ttlMs is negative", () => {
+        const { now, clock } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: -5, now });
+        const issued = store.issue(payload);
+
+        // With ttlMs honored verbatim the token would already be expired; the
+        // guard falls back to the 5-minute default, so 1ms later it still validates.
+        clock.t += 1;
+
+        expect(() => store.validate(issued.confirmToken, payload)).not.toThrow();
+    });
+
+    it("substitutes the 5-minute default when ttlMs is zero", () => {
+        const { now, clock } = makeClock();
+        const store = new ConfirmationTokenStore({ ttlMs: 0, now });
+        const issued = store.issue(payload);
+
+        clock.t += 1;
+
+        expect(() => store.validate(issued.confirmToken, payload)).not.toThrow();
+    });
+
     it("prunes expired tokens before issuing a fresh token", () => {
         const { now, clock } = makeClock();
         const store = new ConfirmationTokenStore({ ttlMs: 1000, now });

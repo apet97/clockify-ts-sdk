@@ -147,6 +147,18 @@ describe.each([...guarded, ...workflows])("confirm guard: $tool", (c) => {
         expect(token).toBeTruthy();
         expect(mutation.calls).toHaveLength(0);
 
+        // The preview must ground its workspace and hand back an executable
+        // `next` step: same tool, the issued confirm_token, and a reason.
+        const workspaceId = id(900);
+        const meta = previewJson.meta as { workspaceId?: string } | undefined;
+        const ids = previewJson.ids as { workspaceId?: string } | undefined;
+        expect(meta?.workspaceId ?? ids?.workspaceId).toBe(workspaceId);
+        const next = previewJson.next as Array<{ tool?: string; args?: { confirm_token?: string }; reason?: string }>;
+        expect(Array.isArray(next)).toBe(true);
+        expect(next[0]?.tool).toBe(c.tool);
+        expect(next[0]?.args?.confirm_token).toBe(token);
+        expect(next[0]?.reason).toBeTruthy();
+
         const executed = await client.callTool({ name: c.tool, arguments: { ...c.args, confirm_token: token } });
         expect(dataOf(executed).ok).toBe(true);
         expect(mutation.calls).toHaveLength(1);

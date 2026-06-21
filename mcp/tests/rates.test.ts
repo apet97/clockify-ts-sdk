@@ -75,6 +75,19 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
         expect(captured.projCost).toBeUndefined();
     });
 
+    it("clockify_projects_set_member_rate coerces a numeric-string amount (\"75\" → 75 → 7500 minor)", async () => {
+        // zNumberLike unwraps "75" to 75 before the number schema, so a model
+        // that emits the amount as a string still routes the right minor units.
+        const captured: Record<string, unknown> = {};
+        const client = await connect(ratesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_projects_set_member_rate",
+            arguments: { projectId: "proj-1", userId: "u1", rateKind: "HOURLY", amount: "75" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.projHourly).toEqual({ workspaceId: "ws-1", projectId: "proj-1", userId: "u1", amount: 7500 });
+    });
+
     it("clockify_projects_set_member_rate COST → updateUserCostRate, with float-safe rounding", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
