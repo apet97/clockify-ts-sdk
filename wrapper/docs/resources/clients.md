@@ -17,8 +17,8 @@
 - `note` (`string`, optional)
 - `sort-column` (`"NAME" \| "EMAIL" \| "NOTE"`, optional)
 - `sort-order` (`"ASCENDING" \| "DESCENDING"`, optional)
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `page` (`number`, optional)
+- `page-size` (`number`, optional)
 
 ### `create`
 

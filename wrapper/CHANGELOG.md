@@ -9,6 +9,15 @@ once v1.0.0 ships.
 
 ### Added
 
+- Re-snapshot of the corrected OpenAPI (from GOCLMCP): the generator now keeps
+  `$ref` query parameters instead of pruning them, so several list methods regain
+  query params that were silently dropped. `scheduling.list` (`assignments/all`)
+  and the per-user/all schedule totals now carry the live-required `start`/`end`
+  (the endpoint 400s code 3001 without them), and the policies, shared-reports,
+  custom-fields, expenses, invoices, user-groups and tasks list requests regain
+  their filter/pagination params. 184 operations (unchanged); no path parameters
+  changed. The CLI `scheduling list` and the `clockify_scheduling_assignments_list`
+  MCP tool now require a `start`/`end` range to match.
 - `clockify-sdk-ts-115/ensure` now exports `archiveThenDeleteClient` alongside
   `archiveThenDeleteProject`, and both own the FULL live-allowed delete sequence
   (GET name → archive replace-PUT `archived:true` → DELETE) plus the empty-name

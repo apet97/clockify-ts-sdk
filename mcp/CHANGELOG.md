@@ -30,6 +30,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_scheduling_assignments_list` now requires `start`/`end` and forwards
+  them as the query range. The endpoint (`GET .../scheduling/assignments/all`) 400s
+  (code 3001) without `start` (live-verified), so the tool previously failed; this
+  mirrors the already-required start/end on
+  `clockify_scheduling_assignments_list_per_project`. Tool count unchanged (134).
 - `clockify_record_expense` with the `date` omitted is now confirmable. The
   confirmation preview defaulted `date` to a millisecond wall-clock
   (`new Date().toISOString()`), which the confirm-guard re-evaluated at a

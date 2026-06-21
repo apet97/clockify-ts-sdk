@@ -11,8 +11,13 @@
 **Request fields** (`ListUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `project-id` (`string`, optional) — If provided, you'll get a filtered list of groups that matches the string provided in their project id.
+- `name` (`string`, optional) — If provided, you'll get a filtered list of groups that matches the string provided in their name.
+- `sort-column` (`ClockifyApi.UserGroupSortColumn`, optional) — Column to be used as the sorting criteria.
+- `sort-order` (`ClockifyApi.UserGroupsSortOrder`, optional) — Sorting mode.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
+- `includeTeamManagers` (`boolean`, optional) — If provided, you'll get a list of team managers assigned to this user group.
 
 ### `create`
 

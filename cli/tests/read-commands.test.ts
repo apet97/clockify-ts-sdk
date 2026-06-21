@@ -241,6 +241,10 @@ describe("scheduling read and create commands", () => {
             "--json",
             "scheduling",
             "list",
+            "--from",
+            "2026-06-01",
+            "--to",
+            "2026-06-07",
             "--limit",
             "999",
             "--name",
@@ -284,6 +288,10 @@ describe("scheduling read and create commands", () => {
             "--json",
             "scheduling",
             "list",
+            "--from",
+            "2026-06-01",
+            "--to",
+            "2026-06-30",
         ]);
         expect(calls[0]).toMatchObject({ "page-size": 25 });
         expect(calls[0]).not.toHaveProperty("name");
@@ -998,11 +1006,44 @@ describe("list paging flags reject non-positive integers before any wire call", 
                 "clk115",
                 "scheduling",
                 "list",
+                "--from",
+                "2026-06-01",
+                "--to",
+                "2026-06-30",
                 "--limit",
                 "abc",
             ]),
         ).rejects.toMatchObject({ code: "commander.invalidArgument" });
         expect(listed).toBe(false);
+    });
+
+    it("scheduling list requires --from/--to and promotes bare dates to RFC3339 edges", async () => {
+        let captured: Record<string, unknown> | undefined;
+        const client = {
+            scheduling: {
+                list: async (req: Record<string, unknown>) => {
+                    captured = req;
+                    return [];
+                },
+            },
+        };
+        // Missing --from/--to is rejected locally (the endpoint 400s without them).
+        await expect(
+            makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "scheduling",
+                "list",
+            ]),
+        ).rejects.toMatchObject({ code: "commander.missingMandatoryOptionValue" });
+        expect(captured).toBeUndefined();
+        // A bare YYYY-MM-DD is promoted to the day's start/end edge.
+        await makeProgram(
+            registerSchedulingCommand,
+            client as unknown as ClockifyClient,
+        ).parseAsync(["node", "clk115", "scheduling", "list", "--from", "2026-06-01", "--to", "2026-06-30"]);
+        expect(captured?.start).toBe("2026-06-01T00:00:00Z");
+        expect(captured?.end).toBe("2026-06-30T23:59:59Z");
     });
 
     it("tasks list rejects a zero/negative --page", async () => {

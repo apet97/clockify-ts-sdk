@@ -98,10 +98,12 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `name` (`string`, optional) — If provided, assignments will be filtered by name.
+- `start` (`string`, required) — Represents a start date in the yyyy-MM-ddThh:mm:ssZ format.
+- `end` (`string`, required) — Represents an end date in the yyyy-MM-ddThh:mm:ssZ format.
 - `sort-column` (`ClockifyApi.AssignmentSortColumn`, optional) — Represents the column as the sorting criteria.
 - `sort-order` (`ClockifyApi.SortOrder`, optional) — Represents the sorting mode.
-- `page` (`number`, optional) — 1-based page index. Default 1.
-- `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
 
 ### `listPerProject`
 
@@ -228,6 +230,7 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `assignmentId` (`string`, required) — Represents an assignment identifier across the system.
+- `seriesUpdateOption` (`ClockifyApi.SeriesUpdateOption`, optional) — Represents a series option.
 
 ### `changeRecurringPeriod`
 
@@ -273,6 +276,10 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
+- `page` (`number`, optional) — Page number.
+- `page-size` (`number`, optional) — Page size.
+- `start` (`string`, required) — Represents a start date in the yyyy-MM-ddThh:mm:ssZ format.
+- `end` (`string`, required) — Represents an end date in the yyyy-MM-ddThh:mm:ssZ format.
 
 ### `calculateUsersTotals`
 

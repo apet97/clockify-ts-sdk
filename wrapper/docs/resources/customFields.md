@@ -11,6 +11,9 @@
 **Request fields** (`ListForWorkspaceCustomFieldsRequest`):
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `name` (`string`, optional) — Filters custom fields by a string contained in the custom field name.
+- `status` (`ClockifyApi.CustomFieldStatus`, optional) — Filters custom fields by custom field status.
+- `entity-type` (`ClockifyApi.CustomFieldEntityType[]`, optional) — Filters custom fields by custom field entity type. Use repeated query parameters for more than one value, for example entity-type=TIMEENTRY&entity-type=USER.
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 
@@ -81,6 +84,8 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required)
+- `status` (`ClockifyApi.CustomFieldStatus`, optional) — Filters custom fields by custom field status.
+- `entity-type` (`ClockifyApi.CustomFieldEntityType[]`, optional) — Filters custom fields by custom field entity type. Use repeated query parameters for more than one value, for example entity-type=TIMEENTRY&entity-type=USER.
 - `page` (`number`, optional) — 1-based page index. Default 1.
 - `page-size` (`number`, optional) — Page size (number of items per page). Default 50; maximum 200.
 

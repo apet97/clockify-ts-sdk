@@ -149,7 +149,12 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         const client = await connect(minimalContext(captured));
         const res = await client.callTool({
             name: "clockify_scheduling_assignments_list",
-            arguments: { page: "2", pageSize: "10" },
+            arguments: {
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-06-30T23:59:59Z",
+                page: "2",
+                pageSize: "10",
+            },
         });
         expect(res.isError).toBeFalsy();
         const req = captured.schedulingList as Record<string, unknown>;

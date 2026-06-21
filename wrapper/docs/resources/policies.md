@@ -12,6 +12,8 @@
 
 - `workspaceId` (`string`, required)
 - `archived` (`boolean`, optional)
+- `page` (`number`, optional)
+- `page-size` (`number`, optional)
 
 ### `create`
 
