@@ -37,9 +37,9 @@ Operation count: **184**
 | GET | `/workspaces/{workspaceId}/entities/created` | `getCreatedEntityInfo` | Entity changes (Experimental) | entityChangesExperimental | listCreated | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/entities/deleted` | `getDeletedEntityInfo` | Entity changes (Experimental) | entityChangesExperimental | listDeleted | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/entities/updated` | `getUpdatedEntityInfo` | Entity changes (Experimental) | entityChangesExperimental | listUpdated | - | - | 200 |
-| GET | `/workspaces/{workspaceId}/expenses` | `getWorkspaceExpenses` | Expenses | expenses | list | - | - | 200 |
+| GET | `/workspaces/{workspaceId}/expenses` | `getWorkspaceExpenses` | Expenses | expenses | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/expenses` | `createExpense` | Expenses | expenses | create | - | yes | 201 |
-| GET | `/workspaces/{workspaceId}/expenses/categories` | `getExpenseCategories` | Expense categories | expenseCategories | list | - | - | 200 |
+| GET | `/workspaces/{workspaceId}/expenses/categories` | `getExpenseCategories` | Expense categories | expenseCategories | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/expenses/categories` | `addExpenseCategory` | Expense categories | expenseCategories | create | - | yes | 201 |
 | PUT | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | `updateExpenseCategory` | Expense categories | expenseCategories | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/expenses/categories/{categoryId}` | `deleteExpenseCategory` | Expense categories | expenseCategories | delete | - | - | 204 |
@@ -54,7 +54,7 @@ Operation count: **184**
 | PUT | `/workspaces/{workspaceId}/holidays/{holidayId}` | `updateHoliday` | Holidays | holidays | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | `deleteHoliday` | Holidays | holidays | delete | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/hourly-rate` | `updateWorkspaceBillableRate` | Workspaces | workspaces | updateBillableRate | - | yes | 200 |
-| GET | `/workspaces/{workspaceId}/invoices` | `getWorkspaceInvoices` | Invoices | invoices | list | - | - | 200 |
+| GET | `/workspaces/{workspaceId}/invoices` | `getWorkspaceInvoices` | Invoices | invoices | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/invoices` | `addInvoice` | Invoices | invoices | create | - | yes | 201 |
 | POST | `/workspaces/{workspaceId}/invoices/info` | `filterInvoices` | Invoices | invoices | filter | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/invoices/settings` | `getInvoiceSettings` | Invoice settings | invoiceSettings | get | - | - | 200 |

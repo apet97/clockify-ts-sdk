@@ -10,8 +10,8 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 
 | Confidence | live-status | Operations | Meaning |
 | --- | --- | --- | --- |
-| HIGH | live-success | 67 | live request succeeded against the sacrificial sandbox |
-| MEDIUM | probe-documented | 103 | probe-lab evidence captured; awaiting a green live call |
+| HIGH | live-success | 68 | live request succeeded against the sacrificial sandbox |
+| MEDIUM | probe-documented | 102 | probe-lab evidence captured; awaiting a green live call |
 | LOW | documented | 14 | documented only; no probe captured yet |
 | — | other/unstamped | 0 | no live-status stamp |
 
@@ -25,7 +25,6 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 
 ## Known open wire-shape risks
 
-- `single-gets.404-405-read-from-list` — status: `open`
 - `invoices.payments.post-returns-invoice` — status: `open`
 
 Phantom/dead routes quarantined: 2.

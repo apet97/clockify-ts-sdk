@@ -46,8 +46,8 @@ describe("clockify_scheduling_assignments_list_per_project — single vs all rou
     it("uses the single-project GET endpoint when projectId is given", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        // start/end are required by the schema (the all-projects search needs
-        // them); the single-project GET ignores them.
+        // start/end are required for BOTH branches (each 400s without them live);
+        // the single-project GET forwards them too.
         const res = await client.callTool({
             name: "clockify_scheduling_assignments_list_per_project",
             arguments: { projectId: "proj-1", start: "2020-01-01T00:00:00Z", end: "2030-01-01T00:00:00Z" },
@@ -55,7 +55,12 @@ describe("clockify_scheduling_assignments_list_per_project — single vs all rou
         expect(res.isError).toBeFalsy();
         // Routes to listOnProject (GET .../projects/totals/{projectId}); NOT the
         // all-projects POST (where projectId would be silently dropped).
-        expect(captured.listOnProject).toEqual({ workspaceId: "ws-1", projectId: "proj-1" });
+        expect(captured.listOnProject).toEqual({
+            workspaceId: "ws-1",
+            projectId: "proj-1",
+            start: "2020-01-01T00:00:00Z",
+            end: "2030-01-01T00:00:00Z",
+        });
         expect(captured.listPerProject).toBeUndefined();
     });
 

@@ -58,10 +58,37 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
             workspaceId: "ws-1",
             policyId: POLICY_ID,
             requestId: "req-1",
-            status: "APPROVED",
-            note: "ok",
+            body: { status: "APPROVED", note: "ok" },
         });
         expect(captured.updateStatus).toBeUndefined();
+    });
+
+    it("omits note from the body when not provided (note is live-optional)", async () => {
+        const captured: Record<string, unknown> = {};
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                timeOff: {
+                    changeTimeOffRequestStatus: async (r: unknown) => {
+                        captured.change = r;
+                        return { id: "req-1" };
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_time_off_requests_update_status",
+            arguments: { policyId: POLICY_ID, requestId: "req-1", statusType: "REJECTED" },
+        });
+        expect(res.isError).toBeFalsy();
+        // A {status}-only body reaches the wire — no note key (live-verified 200).
+        expect(captured.change).toEqual({
+            workspaceId: "ws-1",
+            policyId: POLICY_ID,
+            requestId: "req-1",
+            body: { status: "REJECTED" },
+        });
     });
 
     it("rejects PENDING and WITHDRAWN at the input layer (only APPROVED/REJECTED are valid targets)", async () => {

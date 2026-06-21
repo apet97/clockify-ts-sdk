@@ -129,6 +129,8 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `projectId` (`string`, required) — Represents a project identifier across the system.
+- `start` (`string`, required) — Required by live Clockify; the single-project schedule-totals GET 400s without an ISO-8601 start.
+- `end` (`string`, required) — Required by live Clockify; the single-project schedule-totals GET 400s without an ISO-8601 end.
 
 ### `publish`
 

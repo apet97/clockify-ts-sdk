@@ -18,6 +18,13 @@ once v1.0.0 ships.
   (`clockify_projects_delete`/`clockify_clients_delete`) handlers now call these
   helpers instead of hand-copying the steps across four sites. Public surface is
   now 92 names (was 91).
+- Re-snapshot of the corrected OpenAPI (from GOCLMCP): `scheduling.listOnProject`
+  now carries required `start`/`end` query params (the live single-project
+  schedule-totals GET 400s without them); `expenseCategories.list` carries
+  `page`/`page-size`; and `ChangeTimeOffRequestStatusTimeOffRequest.note` is now
+  optional (the live status PATCH accepts a `{status}`-only body). The `Last-Page`
+  header is now stamped on 18 of the 21 paginated list endpoints (added expenses,
+  invoices, expense-categories), and `createExpense` is promoted to `live-success`.
 
 ### Tests
 
