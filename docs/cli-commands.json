@@ -150,8 +150,8 @@
       "description": "List time-off requests."
     },
     {
-      "command": "clk115 timeoff submit --policy id --start YYYY-MM-DD --end YYYY-MM-DD [--days N] [--note text] [--half-day --half-day-period FIRST_HALF|SECOND_HALF]",
-      "description": "Submit a time-off request against a policy."
+      "command": "clk115 timeoff submit --policy id --start date (--end date | --days N) [--note text] [--half-day --half-day-period FIRST_HALF|SECOND_HALF]",
+      "description": "Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies)."
     },
     {
       "command": "clk115 scheduling list [--limit N] [--page N] [--name text]",

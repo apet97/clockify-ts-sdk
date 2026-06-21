@@ -2338,9 +2338,39 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   Mirror go test: `TestGeneratedOpenAPIChangeTimeOffRequestStatusNoteOptional`.
 - **Status:** `compensated` (2026-06-20). The status union is restricted at the
   input layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch is now
-  live-verified optional and bound through the typed `wireBody` escape. Test:
-  `mcp/tests/sweep-fixes.test.ts` (asserts the input layer rejects
-  `PENDING`/`WITHDRAWN` and never reaches the wire).
+  live-verified optional and bound through a clean typed body-envelope form (the
+  `wireBody` escape was dropped after the 2026-06-21 upstream note-optional fix).
+  Test: `mcp/tests/sweep-fixes.test.ts` (asserts the input layer rejects
+  `PENDING`/`WITHDRAWN` and never reaches the wire, and that a note-less status
+  PATCH submits a `{status}`-only body).
+
+### `time-off.submit.period-shape-is-policy-type-dependent` — COMPENSATED 2026-06-21
+
+- **Actual behavior (live-verified 2026-06-21):** the submit period shape depends
+  on the policy's time unit. A **DAYS**-unit policy rejects `{start,end}` with 400
+  "Value for number of days is not allowed" and wants `{start, days}` (date-only
+  start); an **HOURS**-unit policy accepts `{start, end}` (RFC3339, non-millisecond
+  — a `.000Z` form 400s "invalid date format") and rejects `days`. The stored
+  request always echoes a server-computed `{start,end}`.
+- **Bug found:** `clockify_time_off_requests_submit` and the CLI `clk115 timeoff
+  submit` hard-required `end` and only conditionally sent `days`, so the default
+  shape `{start,end}` always 400'd on a DAYS-unit policy (the common "N days off"
+  case). The earlier P2BUG-002 "guaranteed 400" framing was overstated — it holds
+  only for DAYS-unit policies; HOURS-unit `{start,end}` works (a stored APPROVED
+  `{start,end}` request exists in the sandbox).
+- **Live evidence:** 2026-06-21 probes on the sandbox; every 400'd probe created
+  nothing (zero residue). Not re-reproduced as a write fixture (creating a request
+  on a DAYS policy is a live mutation; the negative `{start,end}`→400 was confirmed
+  without creating anything).
+- **MCP tools affected:** `clockify_time_off_requests_submit`; CLI `timeoff submit`.
+- **Status:** `compensated-in-tool-layer` (2026-06-21). `end` is now OPTIONAL and
+  sent conditionally; the handler requires at least one of `{end, days}` (clear
+  error before the wire otherwise), and the field descriptions explain the
+  per-unit shape. No surface-count change (tool stays 134; `docs/mcp-tools.json`
+  carries no per-field requiredness). Tests:
+  `mcp/tests/time-off-half-day.test.ts`, `cli/tests/timeoff.test.ts`.
+- **Open question:** the durable fix is a per-policy-unit hint, but the tool can't
+  see the policy's time unit without an extra GET on every submit — deferred.
 
 ### `strictness.wrapper-eopt-noimplicitoverride-blocked` — DOCUMENTED 2026-06-18
 

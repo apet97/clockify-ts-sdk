@@ -161,12 +161,17 @@ make docs-drift
   `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's
   `PAGINATED_LIST_OPS`, confirm the live wire honors `page`/`page-size`: expenses
   and invoices DO (added); the **webhooks list IGNORES them** (non-paginated
-  envelope — left out on purpose). Creating a time-off request needs
-  `period:{start,days}` (a `start`/`end` span 400s "number of days is not
-  allowed"); a REJECTED time-off request is terminal (no API delete path), so live
-  status-PATCH probes leave a residue. `changeTimeOffRequestStatus`'s `note` is
-  live-verified OPTIONAL despite the generated type marking it required (bound via
-  the typed `wireBody<T>()` escape in `wrapper/requests.ts`).
+  envelope — left out on purpose). Creating a time-off request is policy-unit
+  dependent: a DAYS-unit policy wants `period:{start,days}` (a `start`/`end` span
+  400s "number of days is not allowed"), an HOURS-unit policy wants
+  `period:{start,end}` (RFC3339, non-millisecond). The submit tool + CLI now make
+  `end` optional and require one of `{end, days}` (see
+  `time-off.submit.period-shape-is-policy-type-dependent`). A REJECTED time-off
+  request is terminal (no API delete path), so live status-PATCH probes leave a
+  residue. `changeTimeOffRequestStatus`'s `note` is live-verified OPTIONAL and, as
+  of 2026-06-21, the generated type marks it `note?` (GOCLMCP
+  `apply_live_overrides!` drops it from `required[]`), so the tool binds the clean
+  body-envelope form — the `wireBody<T>()` escape was dropped.
 - `mcp/src/tools/workflows/` holds the workflow-first MCP surface
   (`index.ts` registers the tools; `business`/`review`/`run`/
   `time-tracking`/`resolve`/`plan`/`demo` carry the logic). The

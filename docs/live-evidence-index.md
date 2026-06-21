@@ -35,6 +35,7 @@ policy).
 | `deletes.archive-first.clients-blocked` | `compensated-in-tool-layer` |
 | `user-groups.get.returns-void` | `compensated-in-tool-layer` |
 | `scheduling.list-per-project.start-end-required-camel-pagesize` | `compensated-in-tool-layer` |
+| `time-off.submit.period-shape-is-policy-type-dependent` | `compensated-in-tool-layer` |
 
 ## Live-probed operations (live-success)
 

@@ -92,9 +92,19 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .command("submit")
         .description("Submit a time-off request against a policy.")
         .requiredOption("--policy <id>", "Time-off policy ID.")
-        .requiredOption("--start <date>", "Period start (YYYY-MM-DD).")
-        .requiredOption("--end <date>", "Period end (YYYY-MM-DD).")
-        .option("--days <n>", "Days requested.", (v) => Number.parseInt(v, 10))
+        .requiredOption(
+            "--start <date>",
+            "Period start (date-only YYYY-MM-DD for DAYS-unit policies, RFC3339 for HOURS-unit).",
+        )
+        .option(
+            "--end <date>",
+            "Period end (RFC3339); HOURS-unit policies need it, DAYS-unit use --days. Provide --end or --days.",
+        )
+        .option(
+            "--days <n>",
+            "Days requested; DAYS-unit policies need it. Provide --end or --days.",
+            (v) => Number.parseInt(v, 10),
+        )
         .option("--note <text>", "Optional request note.")
         .option("--half-day", "Mark as a half-day request.", false)
         .option(
@@ -102,11 +112,17 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             "Half-day period (FIRST_HALF, SECOND_HALF, NOT_DEFINED).",
         )
         .action(async function (this: Command, opts) {
+            // The submit period shape is policy-unit dependent (DAYS-unit wants
+            // start+days, HOURS-unit wants start+end, live-verified 2026-06-21);
+            // the CLI can't see the unit, so require one of --end / --days.
+            if (opts.end === undefined && !Number.isFinite(opts.days)) {
+                throw new Error(
+                    "provide --end (date-range / HOURS-unit policies) or --days (DAYS-unit policies)",
+                );
+            }
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const period: ClockifyApi.PeriodV1Request = {
-                start: opts.start,
-                end: opts.end,
-            };
+            const period: ClockifyApi.PeriodV1Request = { start: opts.start };
+            if (opts.end !== undefined) period.end = opts.end;
             if (Number.isFinite(opts.days)) period.days = opts.days;
             const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
                 note: opts.note ?? "",
