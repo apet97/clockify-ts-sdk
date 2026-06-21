@@ -534,10 +534,22 @@ live-verified non-paginated); consumer `as never` residue dropped 27 → 7
 (documented Bucket-C + the typed `wireBody<T>` escape); vitest unified to `^4`
 with honest re-pinned coverage floors and ~140 added handler tests; ten mutation
 survivors killed; the time-off status/`note` branch is live-verified (`note`
-optional, `changeTimeOffRequestStatus` bound via `wireBody`). Two upstream GOCLMCP
-generator follow-ups remain (see `spec/evidence/discrepancies.md`): emit
-`ChangeTimeOffRequestStatus.note` as optional, and correct the scheduling
-single-project-GET `start`/`end`-required comment.
+optional, `changeTimeOffRequestStatus` bound via `wireBody`).
+
+**2026-06-21 wave (shipped).** `live-success` rose 67 → **74/184**: `createExpense`
+(orphaned findings-path fix) plus user-group + webhook write CRUD (6 ops) from
+fresh live probes with verified `Leftovers:0`. The two GOCLMCP follow-ups above
+landed: `apply_live_overrides!` drops `note` from
+`ChangeTimeOffRequestStatusRequest.required` (the `wireBody` is now a clean
+body-envelope bind), and the single-project scheduling-totals GET now carries
+**required** `start`/`end` query params — it 400s (code 3001) without them, a real
+runtime bug; the tool forwards them and the "ignores start/end" prose is
+corrected. Other live-evidence fixes: `expenses/categories` paginated and
+`Last-Page` stamped on 18 of the 21 paginated ops; the webhook SSRF guard blocks
+NAT64 `64:ff9b::/96`; a wrong-id `400 code:501` "doesn't belong to Workspace"
+classifies `not_found`; `fix_entry`/`groups_get` scans bounded; the time-off
+submit period is policy-unit dependent (DAYS = `start`+`days`, HOURS =
+`start`+`end`). No open generator follow-ups from this wave.
 
 ## 9. Secret hygiene
 

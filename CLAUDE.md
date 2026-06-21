@@ -61,6 +61,15 @@ Running `perfect-fast` cleanly (read before your first run):
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
   packed-consumer smoke, coverage, and wrapper + mcp Stryker mutation
   scoring.
+- **`perfect-full` gate-order trap:** its prereq list is
+  `... wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke coverage
+  mutation ...` — so the load-sensitive `performance-budgets` runs **before**
+  pack-smoke/coverage/mutation, right after the heavy package builds. When it
+  flakes (it does, see above), make STOPS and the slow proofs **never run** — a
+  red there does NOT mean mutation/coverage failed. Validate them solo instead:
+  `make mutation`, `make coverage`, `make pack-smoke`, `make build-determinism`,
+  plus a solo `perfect-fast` (which also carries the startup budgets). Don't keep
+  re-running the whole `perfect-full` hoping the budget cooperates — it re-flakes.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
@@ -224,8 +233,21 @@ make docs-drift
 - `clockify_setup_webhook` validates callback URLs through
   `mcp/src/orchestration/webhook-url.ts` before dry-run preview or
   creation. The guard is offline: it rejects non-HTTPS, embedded
-  credentials, private/loopback/link-local/CGNAT/metadata IPs, and
-  localhost-ish hostnames, but not DNS rebinding.
+  credentials, private/loopback/link-local/CGNAT/metadata IPs (incl.
+  IPv4-mapped and NAT64 `64:ff9b::/96` embeddings — `wrapper/webhook-url.ts`
+  decodes both), and localhost-ish hostnames, but not DNS rebinding.
+  Dotless/hex/octal IPv4 literals are NOT a bypass — Node's WHATWG `URL`
+  normalizes them to dotted-decimal before the guard sees the host.
+- **Live-evidence behaviors (2026-06-21):** the single-project scheduling totals
+  GET (`scheduling.listOnProject`) **requires** `start`/`end` — it 400s (code
+  3001) without them, so `clockify_scheduling_assignments_list_per_project`
+  forwards them on the `projectId` branch. A wrong/missing id 400s with `code:501`
+  "doesn't belong to Workspace" and now classifies `not_found` (a status-first
+  branch in `wrapper/errors.ts` ahead of the generic 400→`invalid_request`; the
+  shared `errorText()` matches message OR body). The time-off submit period is
+  policy-unit dependent (DAYS = `start`+`days`, HOURS = `start`+`end`), so
+  `clockify_time_off_requests_submit` makes `end` optional and requires one of
+  `{end, days}`. See `spec/evidence/discrepancies.md`.
 - Deleting an ACTIVE project/task/client 400s (live-verified). The
   project and client archive-then-delete sequences (GET name → archive →
   DELETE, plus the empty-name guard) live once in the wrapper helpers
