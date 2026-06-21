@@ -559,30 +559,27 @@ export function resolveTagId(ctx: Context, value: string): Promise<string> {
 }
 
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
-    return resolveByName(value, "expense category", () =>
-        // wireBody: the generated list request type carries only workspaceId; the page/page-size
-        // we send for parity with the other resolvers are passed through the typed escape.
-        ctx.client.expenseCategories.list(
-            wireBody<ClockifyApi.ListExpenseCategoriesRequest>({
-                workspaceId: ctx.workspaceId,
-                page: 1,
-                "page-size": 200,
-            }),
-        ),
-    );
+    return resolveByName(value, "expense category", async () => {
+        // GET /expenses/categories returns a { count, categories } envelope, not a
+        // bare array, so unwrap before name-matching (findOneByName needs the array).
+        const res = await ctx.client.expenseCategories.list({
+            workspaceId: ctx.workspaceId,
+            page: 1,
+            "page-size": 200,
+        });
+        return Array.isArray(res) ? res : (res.categories ?? []);
+    });
 }
 
 export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "time-off policy", () =>
-        // wireBody: the generated list request types `page` as a string; we send the numeric 1 for
-        // parity with the other resolvers, so bind the request through the typed escape.
-        ctx.client.timeOffPolicies.list(
-            wireBody<ClockifyApi.ListTimeOffPoliciesRequest>({
-                workspaceId: ctx.workspaceId,
-                page: 1,
-                "page-size": 200,
-            }),
-        ),
+        // The generated request types `page` as a string (the winning source declares
+        // it so); send "1" to match, keeping a typed call without a cast.
+        ctx.client.timeOffPolicies.list({
+            workspaceId: ctx.workspaceId,
+            page: "1",
+            "page-size": 200,
+        }),
     );
 }
 

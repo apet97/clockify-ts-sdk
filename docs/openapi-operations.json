@@ -911,7 +911,7 @@
       ],
       "sdkGroup": "expenses",
       "sdkMethod": "list",
-      "lastPageHeader": false,
+      "lastPageHeader": true,
       "hasRequestBody": false,
       "responseCodes": [
         "200"
@@ -969,7 +969,7 @@
       ],
       "sdkGroup": "expenseCategories",
       "sdkMethod": "list",
-      "lastPageHeader": false,
+      "lastPageHeader": true,
       "hasRequestBody": false,
       "responseCodes": [
         "200"
@@ -980,6 +980,18 @@
           "in": "path",
           "required": true,
           "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "page-size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
         }
       ]
     },
@@ -1410,7 +1422,7 @@
       ],
       "sdkGroup": "invoices",
       "sdkMethod": "list",
-      "lastPageHeader": false,
+      "lastPageHeader": true,
       "hasRequestBody": false,
       "responseCodes": [
         "200"
@@ -3376,6 +3388,18 @@
           "in": null,
           "required": false,
           "schemaType": null
+        },
+        {
+          "name": "start",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "end",
+          "in": "query",
+          "required": true,
+          "schemaType": "string"
         }
       ]
     },

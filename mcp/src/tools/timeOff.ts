@@ -242,33 +242,22 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // field is `status` (`statusType` only appears in responses). The
             // flat /requests/{id}/status route 404s, so use
             // changeTimeOffRequestStatus, not updateStatus.
-            const req: Partial<
-                ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>
-            > &
-                Pick<
-                    ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>,
-                    "status"
-                > & {
-                    workspaceId: string;
-                    policyId: string;
-                    requestId: string;
-                } = {
-                workspaceId: ctx.workspaceId,
-                policyId,
-                requestId: args.requestId,
-                status: args.statusType,
-            };
-            if (args.note) req.note = args.note;
             // `note` is live-verified OPTIONAL: a status PATCH at
             // /time-off/policies/{policyId}/requests/{requestId} with only
             // `{status}` (no note) returns 200 (probed 2026-06-20). The generated
-            // ChangeTimeOffRequestStatus type wrongly marks `note` required, so we
-            // bind through the typed `wireBody` escape rather than assert that wrong
-            // required-note shape — keeping note conditional, matching the wire.
+            // request now marks `note` optional (GOCLMCP apply_live_overrides!), so
+            // build the typed body-envelope form — a clean bind, no cast.
             // See discrepancies.md (time-off.change-status.union-and-note).
-            const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(
-                wireBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest>(req),
-            );
+            const body: ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest> = {
+                status: args.statusType,
+            };
+            if (args.note) body.note = args.note;
+            const updated = await ctx.client.timeOff.changeTimeOffRequestStatus({
+                workspaceId: ctx.workspaceId,
+                policyId,
+                requestId: args.requestId,
+                body,
+            });
             return successResult(
                 "clockify_time_off_requests_update_status",
                 updated,

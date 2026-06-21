@@ -4,7 +4,24 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_scheduling_assignments_list_per_project` with a `projectId` now
+  forwards `start`/`end` to the single-project totals GET — the live route 400s
+  (code 3001) without them, so that branch was previously always failing; the
+  tool descriptions that claimed it "ignores start/end" are corrected.
+- `resolveExpenseCategoryId` (hit when an expenses tool is given a category
+  *name*) now unwraps the `{count, categories}` list envelope before
+  name-matching; it previously matched against the envelope object and always
+  reported the category not found.
+
 ### Changed
+
+- Re-snapshot of the corrected OpenAPI: `clockify_time_off_requests_update_status`
+  binds `changeTimeOffRequestStatus` via the typed body-envelope form (no
+  `wireBody`) now that the regenerated request marks `note` optional;
+  `resolveExpenseCategoryId` / `resolvePolicyId` drop their `wireBody` (the
+  regenerated list requests carry `page`/`page-size`). No behavior change.
 
 - Dev-dependency bump: `vitest` and `@vitest/coverage-v8` `2.x` -> `4.x`
   (`^4.1.4` / `^4.1.9`), unifying the vitest major across all three workspace

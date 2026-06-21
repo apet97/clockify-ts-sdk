@@ -120,7 +120,7 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `PAGINATED_LIST_OPS` + `ensure_pagination!` — stamps `page` +
      `page-size` on 20 list endpoints
    - `LAST_PAGE_HEADER_OPS` + `stamp_last_page_header!` — stamps
-     `x-clockify-last-page-header: true` on 15 endpoints that emit
+     `x-clockify-last-page-header: true` on 18 endpoints that emit
      the header
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
      `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 171 ops
@@ -374,7 +374,7 @@ wrapper/
 │                                When retryPolicy is set the factory passes maxRetries:0 to the
 │                                generated client to avoid nested retry loops.
 ├── iter.ts                   ← iterAll + iterPages per-resource pagination. Consumes the Last-Page
-│                                response header on the 15 endpoints that emit it (via the rawResponse
+│                                response header on the 18 endpoints that emit it (via the rawResponse
 │                                shape from the generated HttpResponsePromise); KnownPaginatedMethod union +
 │                                14-entry KNOWN_PAGINATED_METHODS drift assertion catches upstream renames.
 ├── webhooks.ts               ← verifyClockifyWebhook + constructEvent for the Clockify-Signature-Token

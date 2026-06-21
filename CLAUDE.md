@@ -155,8 +155,8 @@ make docs-drift
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
 - **Probe the live wire before promoting/paginating.** The corrected spec's
-  `x-clockify-live-status: live-success` count is evidence-gated (67/184 as of
-  2026-06-20, up from 46 — the Deferred.md structural wave shipped on
+  `x-clockify-live-status: live-success` count is evidence-gated (68/184 as of
+  2026-06-21, up from 46 — the 46→67 Deferred.md structural wave shipped on
   `2026-06-20`; see the per-package CHANGELOGs and `spec/evidence/discrepancies.md`
   `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's
   `PAGINATED_LIST_OPS`, confirm the live wire honors `page`/`page-size`: expenses

@@ -27,13 +27,13 @@
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
 - `requestId` (`string`, required)
-- `note` (`string`, required) — Provide the note you would like to use for changing the time off request.
+- `note` (`string`, optional) — Provide the note you would like to use for changing the time off request.
 - `status` (`"APPROVED" \| "REJECTED"`, required) — Provide the status you would like to use for changing the time off request.
 - `workspaceId` (`string`, required)
 - `policyId` (`string`, required)
 - `requestId` (`string`, required)
 - `body` (`ChangeTimeOffRequestStatusTimeOffRequestBody`, required)
-- `note` (`string`, required) — Provide the note you would like to use for changing the time off request.
+- `note` (`string`, optional) — Provide the note you would like to use for changing the time off request.
 - `status` (`"APPROVED" \| "REJECTED"`, required) — Provide the status you would like to use for changing the time off request.
 
 ### `withdraw`

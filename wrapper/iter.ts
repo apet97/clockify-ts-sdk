@@ -247,8 +247,9 @@ export async function* iterPages<TRequest, TItem>(
             "page-size": pageSize,
         } as TRequest;
 
-        // Audited 2026-05-25: 15 of the 18 paginated Clockify list
-        // endpoints emit a `Last-Page: true|false` response header
+        // Audited 2026-05-25 (re-counted 2026-06-21): 18 of the 21
+        // paginated Clockify list endpoints emit a `Last-Page: true|false`
+        // response header
         // (see addons-me/fern/spec/evidence/discrepancies.md →
         // `pagination.last-page-header.live-audit-2026-05-25`). When
         // present, the header is the authoritative end-of-pages

@@ -27,6 +27,7 @@ policy).
 | `time-off.policies.scope.status-active-not-all` | `compensated-in-tool-layer` |
 | `rates.put-minor-units-no-get` | `compensated-in-tool-layer` |
 | `scheduling.project-totals.get-vs-post` | `compensated-in-tool-layer` |
+| `single-gets.404-405-read-from-list` | `compensated-in-tool-layer` |
 | `time-off.requests.update-status.wrong-method-and-field` | `compensated-in-tool-layer` |
 | `deletes.archive-first` | `compensated-in-tool-layer` |
 | `time-off.requests.get.dead-route` | `compensated-in-tool-layer` |
@@ -88,6 +89,7 @@ policy).
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
 | POST | `/workspaces/{workspaceId}/clients` | postWorkspacesWorkspaceIdClients |
+| POST | `/workspaces/{workspaceId}/expenses` | createExpense |
 | POST | `/workspaces/{workspaceId}/expenses/categories` | addExpenseCategory |
 | POST | `/workspaces/{workspaceId}/holidays` | createHoliday |
 | POST | `/workspaces/{workspaceId}/projects` | createProject |

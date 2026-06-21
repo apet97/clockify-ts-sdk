@@ -78,23 +78,23 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         {
             title: "List scheduling assignments per project",
             description:
-                "Scheduling assignment totals grouped by project. start/end are required (the all-projects search 400s without them). Pass a projectId for one project's totals (a dedicated GET endpoint that ignores start/end); otherwise all projects.",
+                "Scheduling assignment totals grouped by project. start/end are required for both branches (each 400s without them). Pass a projectId for one project's totals (a dedicated GET endpoint); otherwise the all-projects search.",
             inputSchema: {
                 projectId: z
                     .string()
                     .optional()
                     .describe(
-                        "One project's totals. Uses the GET .../projects/totals/{projectId} endpoint (ignores start/end).",
+                        "One project's totals. Uses the GET .../projects/totals/{projectId} endpoint (also requires start/end).",
                     ),
                 start: z
                     .string()
                     .describe(
-                        "Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search.",
+                        "Range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for both the single-project GET and the all-projects search.",
                     ),
                 end: z
                     .string()
                     .describe(
-                        "Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for the all-projects totals search.",
+                        "Range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required for both the single-project GET and the all-projects search.",
                     ),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
@@ -107,9 +107,13 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
             // sending one was silently dropped and returned ALL projects, so route
             // by presence of projectId instead.
             if (args.projectId) {
+                // The single-project GET also REQUIRES start/end live (400s code
+                // 3001 without them); forward them like the all-projects branch.
                 const one = await ctx.client.scheduling.listOnProject({
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
+                    start: args.start,
+                    end: args.end,
                 });
                 return successResult("clockify_scheduling_assignments_list_per_project", one, {
                     workspaceId: ctx.workspaceId,

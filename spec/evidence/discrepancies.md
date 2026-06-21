@@ -2030,9 +2030,10 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   sending one was silently dropped and returned ALL projects.
 - **MCP tools affected:** the scheduling totals surface
   (`clockify_scheduling_assignments_list_per_project` / `clockify_scheduling_capacity`).
-- **Open questions:** the generated `scheduling.listOnProject` (single-project GET)
-  carries no `start`/`end` query params; if the live endpoint needs a date range,
-  that's a generator gap to widen separately.
+- **Open questions:** none. **Resolved 2026-06-21:** the single-project GET
+  **requires** `start`/`end` live (400 code:3001 without them) — the generated
+  `scheduling.listOnProject` now carries required `start`/`end` query params
+  (GOCLMCP `apply_live_overrides!`, re-snapshotted) and the tool forwards them.
 - **Status:** `compensated-in-tool-layer` (2026-06-14).
   `clockify_scheduling_assignments_list_per_project` now takes an optional `projectId`
   and routes to the single-project GET (`scheduling.listOnProject`); without it, the
@@ -2040,21 +2041,29 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   Port from addon `src/clockify/rest/scheduling.ts:102-120`.
 - Re-verified 2026-06-20: confirmed-still-holds — live GET .../scheduling/assignments/projects/totals/{projectId}?start&end returns HTTP 200 (rich {projectId,projectName,assignments[],milestones[],totalHours} object on a project with assignments; 200 empty body when none); all-projects route stays POST (no projectId in body). Method split unchanged.
 
-### `single-gets.404-405-read-from-list` — OPEN
+### `single-gets.404-405-read-from-list` — COMPENSATED (code 2026-06-15/17; ledger closed 2026-06-21)
 
 - **Actual behavior (addon live-verified):** several single-GETs are not real
   routes and must read-from-list: `GET /time-off/requests/{id}` 404 ("No static
   resource") → POST-search the requests list and scan; `GET /user-groups/{id}`
-  404 → list + scan; `GET /custom-fields/{id}` 405 → list + scan; invoice items
+  405 → list + scan; `GET /custom-fields/{id}` 405 → list + scan; invoice items
   come from the single-invoice GET (already handled). Holidays/{id} (404) is
   handled by the holidays-update list-scan above.
-- **MCP tools affected:** `clockify_time_off_requests_get` (currently a single
-  `timeOff.get` — likely 404s live), `clockify_groups_get`.
-- **Open questions:** **fake-id probe (404 vs 405) each route before converting** —
-  don't convert a route that actually works.
-- **Status:** `open`. Port the get-by-scan / POST-search shapes from the addon
-  `src/clockify/rest/{time-off,users}.ts`.
-- Re-verified 2026-06-20: still holds. GET /user-groups/{id} 405 (this entry says 404 — correct to 405), GET /custom-fields/{id} 405, GET /time-off/requests/{id} 404 'No static resource'; all code:3000 and dead, list/POST-search remains the read path (time-off POST search -> 200 {count,requests}, count 76).
+- **MCP tools affected:** `clockify_time_off_requests_get` and
+  `clockify_groups_get` — both already read-from-list (no raw single-GET).
+- **Open questions:** none. The fake-id probes were run (see the per-route
+  sub-entries); no route that actually works was converted.
+- **Status:** `compensated-in-tool-layer`. This umbrella entry split into two
+  per-route sub-entries, each with its own live evidence + test:
+  `user-groups.get.returns-void` (`clockify_groups_get` scans `userGroups.list`;
+  `GET /user-groups/{id}` is **405**, no GET route; test `groups-get.test.ts`)
+  and `time-off.requests.get.dead-route` (`clockify_time_off_requests_get`
+  POST-searches `timeOff.list` with `statuses:["ALL"]`; `GET /time-off/requests/{id}`
+  is **404**; test `time-off-get.test.ts`). `custom-fields/{id}` (405) exposes no
+  single-GET tool (`single-gets.custom-field-get.dead-route`). The earlier "404"
+  for `/user-groups/{id}` in this entry is corrected to **405** (live re-probed
+  2026-06-15 and 2026-06-20).
+- Re-verified 2026-06-20: still holds. GET /user-groups/{id} 405, GET /custom-fields/{id} 405, GET /time-off/requests/{id} 404 'No static resource'; all code:3000 and dead, list/POST-search remains the read path (time-off POST search -> 200 {count,requests}, count 76).
 
 ### `invoices.items-unit-price-scale` — COMPENSATED-LATENT 2026-06-18 (boundary-guarded)
 
@@ -2297,7 +2306,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   casts dropped; `items` is `ProjectAssignmentsTotal[]`. Test:
   `mcp/tests/scheduling-totals.test.ts` (asserts camel `pageSize`, no `page-size`,
   and input-layer rejection when `start`/`end` are missing).
-- Re-verified 2026-06-20: confirmed-still-holds — /scheduling/assignments/all and /projects/totals are live (HTTP 200 with start/end; HTTP 400 code 3001 without), camel-pageSize-only whitelist intact; the tool's start/end-required + camel pageSize encoding still matches the wire. (Caveat: the single-project GET also 400s without start/end live, so the 'ignores start/end' note is inaccurate — GOCLMCP/tool-comment follow-up.)
+- Re-verified 2026-06-20: confirmed-still-holds — /scheduling/assignments/all and /projects/totals are live (HTTP 200 with start/end; HTTP 400 code 3001 without), camel-pageSize-only whitelist intact; the tool's start/end-required + camel pageSize encoding still matches the wire. (Resolved 2026-06-21: the single-project GET requires start/end live; the generated listOnProject now carries required start/end and the tool forwards them, with the 'ignores start/end' descriptions corrected.)
 
 ### `time-off.change-status.union-and-note` — COMPENSATED 2026-06-20
 
@@ -2318,12 +2327,15 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `…/time-off/policies/{policyId}/requests/{requestId}` with only
   `{"status":"REJECTED"}` (no note) → **HTTP 200**. So the tool's conditional
   `if (args.note)` is correct and the generated required-`note` shape is wrong. The
-  masking raw `as never` is replaced by the typed
-  `wireBody<ChangeTimeOffRequestStatusTimeOffRequest>` escape
-  (`mcp/src/tools/timeOff.ts`); `note` stays optional, matching the wire. (Clockify
-  has no API path to delete a REJECTED request, so one labeled `DEFERRED-4C-probe`
-  artifact remains in the sacrificial sandbox.) The residual spec inaccuracy
-  (generated `note` marked required) is a GOCLMCP generator follow-up.
+  masking raw `as never` was first replaced by a typed
+  `wireBody<ChangeTimeOffRequestStatusTimeOffRequest>` escape; `note` stays
+  optional, matching the wire. (Clockify has no API path to delete a REJECTED
+  request, so one labeled `DEFERRED-4C-probe` artifact remains in the sacrificial
+  sandbox.) **Resolved upstream 2026-06-21:** GOCLMCP `apply_live_overrides!` now
+  drops `note` from the request schema's `required[]`, so the regenerated
+  `ChangeTimeOffRequestStatusTimeOffRequest` emits `note?` and
+  `mcp/src/tools/timeOff.ts` binds the clean body-envelope form (no `wireBody`).
+  Mirror go test: `TestGeneratedOpenAPIChangeTimeOffRequestStatusNoteOptional`.
 - **Status:** `compensated` (2026-06-20). The status union is restricted at the
   input layer to `z.enum(["APPROVED","REJECTED"])`; the note-required branch is now
   live-verified optional and bound through the typed `wireBody` escape. Test:
