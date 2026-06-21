@@ -61,6 +61,30 @@ describe("error-code wiring: reachable codes are actually emitted", () => {
         ).toBe("not_found");
     });
 
+    it("classifies not_found from the response body message (when err.message does not match)", () => {
+        expect(
+            getStableErrorCode(
+                new ClockifyApiError({
+                    statusCode: 400,
+                    message: "HTTP 400",
+                    body: { message: "Client doesn't belong to Workspace", code: 501 },
+                }),
+            ),
+        ).toBe("not_found");
+    });
+
+    it("classifies not_found from a string response body", () => {
+        expect(
+            getStableErrorCode(
+                new ClockifyApiError({
+                    statusCode: 400,
+                    message: "HTTP 400",
+                    body: "Tag doesn't exist",
+                }),
+            ),
+        ).toBe("not_found");
+    });
+
     it("429 with Retry-After classifies to the retry-after code", () => {
         const err = new ClockifyApiError({ statusCode: 429, rawResponse: H({ "Retry-After": "30" }) as never });
 
