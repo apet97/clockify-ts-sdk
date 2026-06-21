@@ -18,9 +18,38 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   `archive-then-delete.test.ts` + `clients-tool.test.ts` + `tasks-tool.test.ts`
   (create/delete next-action hints), and `client.test.ts` (the single-flight
   current-user memo).
+- Added cases for: `workflows.test.ts` (record_expense with no `date` is
+  confirmable — the defaulted date is stable across dry_run/confirm and the
+  mutation runs exactly once); `rates.test.ts` (a numeric-string `amount` "75"
+  coerces to 7500 minor units); `result.test.ts` (`cleanIds` strips
+  blank/whitespace ids and omits `ids` entirely when all are blank);
+  `confirm-guard-matrix.test.ts` (every dry_run preview grounds `workspaceId`
+  in meta/ids and carries an executable `next[0]` with the issued
+  `confirm_token` + a reason); `confirmation-store.test.ts` (a non-positive
+  `ttlMs` falls back to the 5-minute default).
 
 ### Fixed
 
+- `clockify_record_expense` with the `date` omitted is now confirmable. The
+  confirmation preview defaulted `date` to a millisecond wall-clock
+  (`new Date().toISOString()`), which the confirm-guard re-evaluated at a
+  different instant when it rebuilt-and-rehashed the preview at confirm time —
+  the `preview_hash` never matched, so the common "record a $10 expense"
+  (no date) case was un-confirmable forever. The default is now that day's
+  sliced `YYYY-MM-DD` (widened by `normalizeDate` to stable midnight-UTC, the
+  correct expense-day semantic), identical across dry_run and confirm. (The
+  sibling `clockify_invoice_client_work` already slices its default dates; its
+  bounded cross-UTC-midnight edge is left as-is.)
+- The three rate tools (`clockify_users_set_member_rate`,
+  `clockify_projects_set_member_rate`, `clockify_tasks_set_rate`) now accept a
+  numeric-string `amount` (`"75"` -> 75) via `zNumberLike`, matching every other
+  money field. The model-visible JSON Schema stays `number` (the `z.preprocess`
+  unwraps before validation), so `docs/mcp-tools.json` and the tool count are
+  unchanged.
+- `clockify_timer_start` now emits a `writeReceipt("created","time_entry",…)`
+  so an agent gets a chainable `changed.created[].id` (the blessed
+  `clockify_entries_log` already did); previously it returned a bare
+  success envelope with no change set.
 - `clockify_scheduling_assignments_list_per_project` with a `projectId` now
   forwards `start`/`end` to the single-project totals GET — the live route 400s
   (code 3001) without them, so that branch was previously always failing; the

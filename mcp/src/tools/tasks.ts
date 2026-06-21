@@ -3,6 +3,7 @@ import { toMinor } from "clockify-sdk-ts-115/money";
 import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
@@ -255,7 +256,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 rateKind: z
                     .enum(["HOURLY", "COST"])
                     .describe("HOURLY = billable rate; COST = internal cost rate."),
-                amount: z.number().describe("Rate in major units, e.g. 75 for $75/hr."),
+                amount: zNumberLike(z.number()).describe("Rate in major units, e.g. 75 for $75/hr."),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },

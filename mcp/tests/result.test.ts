@@ -57,6 +57,22 @@ describe("successResult", () => {
         expect(out.structuredContent).toEqual(parsed);
     });
 
+    it("strips blank / whitespace-only ids and keeps the real ones", () => {
+        const out = successResult("clockify_status", { ok: true }, undefined, {
+            ids: { good: "p1", blank: "   ", empty: "" },
+        });
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.ids).toEqual({ good: "p1" });
+    });
+
+    it("omits the ids property entirely when every id is blank", () => {
+        const out = successResult("clockify_status", { ok: true }, undefined, {
+            ids: { blank: "   ", empty: "" },
+        });
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed).not.toHaveProperty("ids");
+    });
+
     it("can carry workflow IDs, change sets, warnings, and next actions", () => {
         const out = successResult(
             "clockify_create_work_package",

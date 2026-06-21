@@ -583,6 +583,47 @@ describe("workflow tools", () => {
         });
     });
 
+    it("record_expense with no date is confirmable: the default date is stable across dry_run and confirm", async () => {
+        // The defaulted expense date must be that day's midnight-UTC (a sliced
+        // YYYY-MM-DD widened by normalizeDate), not a fresh ms wall-clock — else
+        // the preview hash differs between dry_run and confirm and the token never
+        // matches, making the common "record a $10 expense" (date omitted) case
+        // un-confirmable forever.
+        const ctx = fakeContext();
+        const creates: Array<Record<string, unknown>> = [];
+        (ctx.client.expenses as { create: unknown }).create = async (body: Record<string, unknown>) => {
+            creates.push(body);
+            return { id: "ex-1", ...body };
+        };
+        const client = await connect(ctx);
+        const args = { category: "Travel", amount: 10 };
+
+        const previewRes = await client.callTool({
+            name: "clockify_record_expense",
+            arguments: { ...args, dry_run: true },
+        });
+        const preview = parse(previewRes);
+        expect(preview).toMatchObject({
+            ok: true,
+            data: {
+                preview: expect.objectContaining({
+                    date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/),
+                }),
+            },
+        });
+        expect(creates).toHaveLength(0);
+
+        const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
+        const createRes = await client.callTool({
+            name: "clockify_record_expense",
+            arguments: { ...args, confirm_token: confirmToken },
+        });
+        expect(createRes.isError).toBeFalsy();
+        expect(parse(createRes)).toMatchObject({ ok: true, entity: "expense" });
+        // The mutation ran exactly once — the defaulted date survived the round-trip.
+        expect(creates).toHaveLength(1);
+    });
+
     it("recoverable workflow errors include a concrete recovery tool", async () => {
         const client = await connect(fakeContext());
         const res = await client.callTool({

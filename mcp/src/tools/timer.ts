@@ -3,7 +3,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { defineTool, entityId, errorResult, successResult } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
 import { stopRunningTimer } from "./timer-stop.js";
 
@@ -35,7 +35,12 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             if (args.billable !== undefined) body.billable = args.billable;
             const req: ClockifyApi.CreateTimeEntryRequest = { workspaceId: ctx.workspaceId, body };
             const entry = await ctx.client.timeEntries.create(req);
-            return successResult("clockify_timer_start", entry);
+            return successResult(
+                "clockify_timer_start",
+                entry,
+                undefined,
+                writeReceipt("created", "time_entry", { id: entityId(entry), name: args.description }),
+            );
         },
     );
 

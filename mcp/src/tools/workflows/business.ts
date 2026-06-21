@@ -110,7 +110,7 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
         workspaceId: ctx.workspaceId,
         amount: args.amount,
         categoryId,
-        date: normalizeDate(str(args.date) || new Date().toISOString()),
+        date: normalizeDate(str(args.date) || new Date().toISOString().slice(0, 10)),
         projectId,
         userId,
         ...(str(args.task_id) ? { taskId: str(args.task_id) } : {}),
