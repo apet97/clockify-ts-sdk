@@ -46,6 +46,7 @@ policy).
 | DELETE | `/workspaces/{workspaceId}/holidays/{holidayId}` | deleteHoliday |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | deleteProject |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | deleteTaskFromProject |
+| DELETE | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | deleteWorkspacesWorkspaceIdSharedReportsSharedReportId |
 | DELETE | `/workspaces/{workspaceId}/tags/{tagId}` | deleteWorkspacesWorkspaceIdTagsTagId |
 | DELETE | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | deleteGroup |
@@ -104,6 +105,7 @@ policy).
 | POST | `/workspaces/{workspaceId}/reports/summary` | generateSummaryReport |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | generateWeeklyReport |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | getScheduledAssignmentsPerProject |
+| POST | `/workspaces/{workspaceId}/shared-reports` | postWorkspacesWorkspaceIdSharedReports |
 | POST | `/workspaces/{workspaceId}/tags` | postWorkspacesWorkspaceIdTags |
 | POST | `/workspaces/{workspaceId}/time-entries` | postWorkspacesWorkspaceIdTimeEntries |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | getAllTimeOffRequestsOnWorkspace |
@@ -115,6 +117,7 @@ policy).
 | PUT | `/workspaces/{workspaceId}/holidays/{holidayId}` | updateHoliday |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | updateProject |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}` | updateTaskOnProject |
+| PUT | `/workspaces/{workspaceId}/shared-reports/{sharedReportId}` | putWorkspacesWorkspaceIdSharedReportsSharedReportId |
 | PUT | `/workspaces/{workspaceId}/tags/{tagId}` | putWorkspacesWorkspaceIdTagsTagId |
 | PUT | `/workspaces/{workspaceId}/time-entries/{timeEntryId}` | putWorkspacesWorkspaceIdTimeEntriesTimeEntryId |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | updateGroup |
