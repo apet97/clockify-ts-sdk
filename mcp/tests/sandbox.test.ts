@@ -347,7 +347,6 @@ describeLive("@clockify115/mcp-server live sandbox", () => {
                     end: "2026-05-26T10:10:00.000Z",
                     description: `${slug} before`,
                     project_id: ids.projectId,
-                    allow_overlap: true,
                 },
             });
             const logged = parse(logRes);
