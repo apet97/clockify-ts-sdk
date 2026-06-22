@@ -29,6 +29,19 @@ All notable changes to `@clockify115/cli` are documented here.
   `cli/dist/index.js` byte budget measures emitted code rather than JSDoc prose
   (adding a doc comment no longer reds `make performance-budgets`). The build
   emits no declarations or sourcemaps and tsc preserves the shebang.
+- Internal refactor (no behavior change): list commands clamp `--limit` /
+  `--page-size` through a shared `clampPageSize(value, max)` helper. The former
+  per-command `Math.max(1, …)` lower-clamp was dead (`parseIntArg` already rejects
+  `<= 0` at parse time), so only the upper `Math.min(…, max)` survives (200 for
+  list ops, 1000 for the detailed report).
+- Internal refactor (no behavior change): `splitList` (comma-split → trimmed,
+  non-empty) and `rootProgram` (commander root walk) now live once in
+  `commands/helpers.ts`; `timeoff`/`auditlog`/`webhooks` and `doctor` reuse them
+  instead of redefining byte-identical copies.
+- Internal refactor (no behavior change): the `reports`
+  summary/detailed/weekly/attendance handlers bind the generated union request
+  types directly and drop the `wireBody<…>()` typed-escape cast — the emitted
+  request bodies are byte-for-byte identical.
 
 ### Tests
 

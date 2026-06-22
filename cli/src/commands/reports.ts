@@ -14,12 +14,12 @@ import {
     resolvePeriod,
 } from "clockify-sdk-ts-115/dates";
 import { detailedFilter, summaryFilter, weeklyFilter } from "clockify-sdk-ts-115/reports";
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject } from "../output.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
 import { resolveClientId, resolveProjectId } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
@@ -28,8 +28,6 @@ interface RangeOpts {
     from?: string;
     to?: string;
 }
-
-type ReportRequest = Record<string, unknown>;
 
 /** Resolve a {dateRangeStart,dateRangeEnd} from --period (default this_month) + --from/--to overrides. */
 function resolveRange(opts: RangeOpts): { dateRangeStart: string; dateRangeEnd: string } {
@@ -91,7 +89,13 @@ export const registerReportsCommand: Registrar = (program, services) => {
                 .split(",")
                 .map((g) => g.trim().toUpperCase())
                 .filter(Boolean);
-            const req: ReportRequest = {
+            // Bind the generated union request directly. The object matches the
+            // flattened arm (via the `summaryFilter` key), so TS narrows `req`
+            // and the later billable/projects/clients assignments type-check —
+            // the prior `wireBody` cast is no longer needed. (The `*Flattened`
+            // arm itself is not surfaced through the generated barrel, so bind
+            // the union.)
+            const req: ClockifyApi.SummaryReportsRequest = {
                 workspaceId,
                 dateRangeStart,
                 dateRangeEnd,
@@ -110,9 +114,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
                 );
                 req.clients = idFilter(ids);
             }
-            const data = await client.reports.summary(
-                wireBody<ClockifyApi.SummaryReportsRequest>(req),
-            );
+            const data = await client.reports.summary(req);
             printObject(data, output);
         });
 
@@ -132,18 +134,16 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
-            const req: ReportRequest = {
+            const req: ClockifyApi.DetailedReportsRequest = {
                 workspaceId,
                 dateRangeStart,
                 dateRangeEnd,
                 detailedFilter: detailedFilter({
                     page: opts.page,
-                    pageSize: Math.min(Math.max(1, opts.pageSize), 1000),
+                    pageSize: clampPageSize(opts.pageSize, 1000),
                 }),
             };
-            const data = await client.reports.detailed(
-                wireBody<ClockifyApi.DetailedReportsRequest>(req),
-            );
+            const data = await client.reports.detailed(req);
             printObject(data, output);
         });
 
@@ -158,7 +158,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
-            const req: ReportRequest = {
+            const req: ClockifyApi.WeeklyReportsRequest = {
                 workspaceId,
                 dateRangeStart,
                 dateRangeEnd,
@@ -167,9 +167,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
                     String(opts.subgroup).toUpperCase() as Parameters<typeof weeklyFilter>[1],
                 ),
             };
-            const data = await client.reports.weekly(
-                wireBody<ClockifyApi.WeeklyReportsRequest>(req),
-            );
+            const data = await client.reports.weekly(req);
             printObject(data, output);
         });
 
@@ -182,18 +180,17 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
-            const data = await client.reports.attendance(
-                // attendanceFilter is REQUIRED on the wire: without it the report
-                // 400s "Please provide filters." (live-verified). An empty filter
-                // (all sub-fields optional) is accepted and returns 200, so send {}
-                // — every other report command scopes via its own filters.
-                wireBody<ClockifyApi.AttendanceReportsRequest>({
-                    workspaceId,
-                    dateRangeStart,
-                    dateRangeEnd,
-                    attendanceFilter: {},
-                }),
-            );
+            // attendanceFilter is REQUIRED on the wire: without it the report
+            // 400s "Please provide filters." (live-verified). An empty filter
+            // (all sub-fields optional) is accepted and returns 200, so send {}
+            // — every other report command scopes via its own filters.
+            const req: ClockifyApi.AttendanceReportsRequest = {
+                workspaceId,
+                dateRangeStart,
+                dateRangeEnd,
+                attendanceFilter: {},
+            };
+            const data = await client.reports.attendance(req);
             printObject(data, output);
         });
 };

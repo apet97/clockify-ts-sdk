@@ -14,7 +14,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseFloatArg, parseIntArg, resolveContext } from "./helpers.js";
+import { clampPageSize, parseFloatArg, parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -64,7 +64,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             const req: ClockifyApi.ListExpensesRequest & { start?: string; end?: string } = {
                 workspaceId,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
             };
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;

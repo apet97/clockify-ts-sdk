@@ -10,7 +10,7 @@ import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerAuditLogCommand: Registrar = (program, services) => {
@@ -59,7 +59,7 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 actions,
                 authors,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
             };
             const response = (await client.auditLogReport.search(req)) as
                 | { entries?: unknown[] }
@@ -87,10 +87,3 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 };
-
-function splitList(value: string): string[] {
-    return String(value)
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-}

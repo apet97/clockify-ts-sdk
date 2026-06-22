@@ -12,7 +12,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveBaseContext, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, resolveBaseContext, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerUsersCommand: Registrar = (program, services) => {
@@ -40,7 +40,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             const req: ClockifyApi.ListUsersRequest = {
                 workspaceId,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
                 "include-roles": false,
             };
             if (opts.name) req.name = opts.name;

@@ -45,6 +45,29 @@ export function parseFloatArg(value: string): number {
 }
 
 /**
+ * Clamp a parsed `--limit` / `--page-size` to the endpoint's upper bound.
+ * `parseIntArg` already rejects `<= 0` at parse time, so the lower edge is
+ * fixed at 1 — the former `Math.max(1, …)` lower-clamp was dead. `max` is
+ * the per-endpoint ceiling (200 for most list ops, 1000 for the detailed
+ * report). Shared by every paged list command.
+ */
+export function clampPageSize(value: number, max: number): number {
+    return Math.min(value, max);
+}
+
+/**
+ * Split a comma-separated CLI option value into a trimmed, non-empty list.
+ * Shared by the filter-list flags (`--status`, `--user`, `--actions`,
+ * `--authors`, `--trigger-source`).
+ */
+export function splitList(value: string): string[] {
+    return String(value)
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+}
+
+/**
  * Normalize a `--from` / `--to` date-range value. A bare `YYYY-MM-DD` is
  * promoted to the day's start (`T00:00:00Z`) or end (`T23:59:59Z`) edge; any
  * other value must be a valid RFC3339 timestamp and is returned unchanged.
@@ -80,7 +103,7 @@ export interface ResolvedContext {
  * flags live). Subcommands are nested via `addCommand`, so we hop
  * up parents until parent is null.
  */
-function rootProgram(cmd: Command): Command {
+export function rootProgram(cmd: Command): Command {
     let current: Command = cmd;
     while (current.parent != null) {
         current = current.parent;

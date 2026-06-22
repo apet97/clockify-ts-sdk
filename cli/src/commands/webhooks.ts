@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { resolveContext } from "./helpers.js";
+import { resolveContext, splitList } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerWebhooksCommand: Registrar = (program, services) => {
@@ -85,10 +85,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             };
             if (opts.triggerSourceType) body.triggerSourceType = opts.triggerSourceType;
             if (opts.triggerSource) {
-                body.triggerSource = String(opts.triggerSource)
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter((s) => s.length > 0);
+                body.triggerSource = splitList(String(opts.triggerSource));
             }
             const created = (await client.webhooks.create(
                 wireBody<ClockifyApi.WebhookRequest>({
