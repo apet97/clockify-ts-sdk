@@ -2408,25 +2408,39 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open question:** the durable fix is a per-policy-unit hint, but the tool can't
   see the policy's time unit without an extra GET on every submit — deferred.
 
-### `strictness.wrapper-eopt-noimplicitoverride-blocked` — DOCUMENTED 2026-06-18
+### `strictness.wrapper-eopt-noimplicitoverride-blocked` — RESOLVED 2026-06-22
 
-- **Blocker (offline-verifiable):** `wrapper/tsconfig.json` cannot enable
+- **Original blocker (2026-06-18):** `wrapper/tsconfig.json` could not enable
   `noImplicitOverride` (TS4114 at `wrapper/src/errors/ClockifyApiError.ts` +
   `wrapper/src/errors/ClockifyApiTimeoutError.ts`: `cause` shadows `Error.cause`)
-  nor `exactOptionalPropertyTypes` as a package compile flag — exactly 10 EOPT
-  errors remain across `wrapper/src/api/errors/*`, `wrapper/src/core/request.ts`,
-  and `wrapper/src/errors/ClockifyApiError.ts`. Those files are GENERATED (hard
-  stop forbids editing `wrapper/src/**`) and TypeScript reports them even when
-  `src` is excluded because the hand-written roots import them transitively.
-  Correction: the original note was overstated. The editable root/test files had
-  their own EOPT errors too; those are now fixed. The hand-written wrapper
-  surface is EOPT-clean and enforced by the differential check in
-  `scripts/check-consumer-cast-budget.mjs` (`tsc --exactOptionalPropertyTypes`
-  errors outside `src/` and `tests/` == 0).
-- **Decision:** both flags stay OFF on wrapper, ON in cli + mcp. The rationale is
-  pinned inline in `wrapper/tsconfig.json` `_blockedStrictnessFlags`. The durable
-  fix is upstream in `../GOCLMCP/`.
-- **Status:** `documented-blocked` (2026-06-18).
+  nor `exactOptionalPropertyTypes` as a package compile flag — 10 EOPT errors
+  (12 total with the two TS4114) remained across `wrapper/src/api/errors/*`,
+  `wrapper/src/core/request.ts`, and `wrapper/src/errors/ClockifyApiError.ts`.
+  Those files are GENERATED (the hard stop forbids editing `wrapper/src/**`), and
+  the hand-written roots import them transitively, so TS reported them even with
+  `src` excluded. (The hand-written roots were already EOPT-clean.)
+- **Resolution (2026-06-22):** fixed at the SOURCE — this repo's local SDK
+  generator `scripts/generate-sdk-from-openapi.mjs` (an editable scope per
+  AGENTS.md §4), **not** `../GOCLMCP/`. GOCLMCP owns only the OpenAPI spec; the
+  TypeScript error-class scaffold (`writeErrors`) and the `core/request.ts`
+  runtime (`requestRuntimeSourceWithTimeoutAndRetry`) are emitted by the local
+  generator's templates. The earlier "fix lives upstream in ../GOCLMCP/" note was
+  a Fern-era misattribution. Template fixes: `override` on the two `cause`
+  members (TS4114); explicit `| undefined` on the optional scaffold props
+  (`statusCode`, `rawResponse`, the `ClockifyApiError` constructor params, and
+  the `buildMessage` params) so EOPT accepts runtime-`undefined` values; and
+  `signal: requestOptions?.abortSignal ?? null` at the two `RequestInit` sites
+  (`null` is the canonical no-signal value — runtime-identical). After
+  `make sdk-codegen`, `tsc -p wrapper/tsconfig.json --noEmit
+  --exactOptionalPropertyTypes --noImplicitOverride` reports 0 errors; the
+  emitted JS is byte-identical (the edits are type-erased + a null coalesce).
+- **Decision:** all four strictness flags (`strict`, `noUncheckedIndexedAccess`,
+  `exactOptionalPropertyTypes`, `noImplicitOverride`) are now ON for wrapper, cli,
+  and mcp. The former hand-written-only EOPT differential in
+  `scripts/check-consumer-cast-budget.mjs` was retired — `npm run type-check` now
+  enforces both flags across the whole wrapper compile. `wrapper/tsconfig.json`
+  `_strictnessNote` and `docs/consumer-cast-budget-contract.json` record the same.
+- **Status:** `resolved` (2026-06-22).
 
 ### `consumer.cast-budget` — COMPENSATED 2026-06-18
 

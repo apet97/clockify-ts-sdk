@@ -1,6 +1,19 @@
 # Drafted upstream issue: TS generator emits patterns incompatible with `exactOptionalPropertyTypes`
 
-**Status: drafted, internal evidence only — NOT FILED upstream.**
+> **RESOLVED 2026-06-22 — this document is now HISTORICAL (Fern era).** The repo no
+> longer uses the Fern `fern-typescript-node-sdk` runtime described below; the active SDK
+> is emitted by this repo's local generator `scripts/generate-sdk-from-openapi.mjs`, which
+> uses a lean `request()` runtime (no `core.fetcher` resource clients). The residual
+> `exactOptionalPropertyTypes` + `noImplicitOverride` errors were **12** (not the ~840
+> below), all in the local generator's error-class scaffold + `core/request.ts`, and were
+> fixed in that generator on 2026-06-22; both flags are now ON for the wrapper compile and
+> the hand-written-only EOPT differential gate was retired. See
+> `spec/evidence/discrepancies.md` `strictness.wrapper-eopt-noimplicitoverride-blocked`
+> (resolved). The Fern-era analysis below (the ~840-error count, the `core.fetcher`
+> patterns, the "external maintainer dependency" / "not worth it" conclusions) no longer
+> describes the shipped code and is retained only as historical evidence.
+
+**Status: drafted, internal evidence only — NOT FILED upstream (Fern era; superseded — see banner above).**
 
 Maintainer call (apet97 2026-05-25): not pursuing. The Stainless-default
 strict-pair (`noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`)
