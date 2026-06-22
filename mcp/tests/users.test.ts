@@ -48,6 +48,16 @@ function usersContext(captured: Record<string, unknown>): Context {
                     captured.profile = req;
                     return { weekStart: "MONDAY" };
                 },
+                update: async (req: unknown) => {
+                    captured.profileUpdate = req;
+                    return { id: "user-1", weekStart: "TUESDAY" };
+                },
+            },
+            workspaces: {
+                addUser: async (req: unknown) => {
+                    captured.addUser = req;
+                    return { id: "ws-1", name: "Acme" };
+                },
             },
         } as never,
     };
@@ -98,6 +108,45 @@ describe("users and roles tools", () => {
         });
         expect(res.isError).toBeFalsy();
         expect(captured.profile).toEqual({ workspaceId: "ws-1", userId: "user-1" });
+    });
+
+    it("clockify_users_invite adds the user (send-email as string) with a created receipt", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_users_invite",
+            arguments: { email: "new@acme.test", sendEmail: false },
+        });
+        expect(res.isError).toBeFalsy();
+        // The boolean sendEmail is serialized to the "true"/"false" query string the wire wants.
+        expect(captured.addUser).toEqual({
+            workspaceId: "ws-1",
+            "send-email": "false",
+            email: "new@acme.test",
+        });
+        const changed = envelope(res).changed as { created: Array<{ type: string; name?: string }> };
+        expect(changed.created[0]).toMatchObject({ type: "workspace_member", name: "new@acme.test" });
+    });
+
+    it("clockify_member_profile_update assembles ONLY the provided fields into the body", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(usersContext(captured));
+        const res = await client.callTool({
+            name: "clockify_member_profile_update",
+            arguments: { userId: "user-1", weekStart: "TUESDAY", workCapacity: "PT8H" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.profileUpdate).toEqual({
+            workspaceId: "ws-1",
+            userId: "user-1",
+            body: { weekStart: "TUESDAY", workCapacity: "PT8H" },
+        });
+        // Omitted optional fields must not leak into the replace body.
+        const sent = captured.profileUpdate as { body: Record<string, unknown> };
+        expect("name" in sent.body).toBe(false);
+        expect("workingDays" in sent.body).toBe(false);
+        const changed = envelope(res).changed as { updated: Array<{ type: string; id: string }> };
+        expect(changed.updated[0]).toEqual({ type: "member_profile", id: "user-1" });
     });
 
     it("clockify_users_grant_role forwards the role assignment and is a privileged write", async () => {

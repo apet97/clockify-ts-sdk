@@ -247,7 +247,11 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 name: args.name ?? existing.name,
                 datePeriod: {
                     startDate: args.startDate ?? existingPeriod.startDate,
-                    endDate: args.endDate ?? args.startDate ?? existingPeriod.endDate,
+                    // Preserve the existing endDate when only startDate moves — falling
+                    // back to args.startDate before existingPeriod.endDate would collapse
+                    // a multi-day holiday to a single day on a start-only edit. Only fall
+                    // to startDate when there is genuinely no existing endDate to keep.
+                    endDate: args.endDate ?? existingPeriod.endDate ?? args.startDate,
                 },
             };
             const occursAnnually = args.occursAnnually ?? existing.occursAnnually;

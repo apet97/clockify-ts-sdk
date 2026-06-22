@@ -612,6 +612,11 @@ export function resolveUserId(ctx: Context, value: string): Promise<string> {
                 workspaceId: ctx.workspaceId,
                 name: value,
                 "include-roles": false,
+                // Match every sibling resolver: page the name filter to 200 so an
+                // exact match past the default 50-row first page is not missed on a
+                // large workspace (the name filter is contains/case-insensitive).
+                page: 1,
+                "page-size": 200,
             }),
         ["name", "email"],
     );

@@ -4,6 +4,34 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_holidays_update`: a start-only edit no longer collapses a multi-day
+  holiday to a single day. The replace-PUT body fell back to `args.startDate`
+  before the existing `endDate`, discarding it when only the start moved; the
+  fallback order is now `args.endDate ?? existingPeriod.endDate ?? args.startDate`.
+- `clockify_setup_webhook`: the workflow tool's `event`/`webhook_event` enum now
+  carries the full `WebhookEventType` set (51 events, mirrored from the generated
+  union with a compile-time exhaustiveness guard) instead of 12, so it no longer
+  hard-rejects 39 valid events (e.g. `TIME_OFF_REQUESTED`, `EXPENSE_CREATED`,
+  `NEW_INVOICE`) that the low-level `clockify_webhooks_create` already accepted.
+- `clockify_invoices_list`: added `page`/`pageSize` (forwarded as `page`/
+  `page-size`, surfaced in `meta`), matching every other list tool — a workspace
+  with more than one page of invoices was previously stuck on the first page.
+- `clockify_users_set_member_rate`: now emits a `writeReceipt` (`entity:
+  workspace_member` + `changed.updated`), matching the projects/tasks rate tools,
+  so agents can chain on the receipt.
+- `clockify_log_work`: dropped the dead `allow_overlap` argument — it was advertised
+  in the schema but never read or forwarded to any wire field (no overlap-guard
+  exists), so setting it silently did nothing.
+- `resolveUserId` (workflow name resolution): the user name lookup now sends
+  `page: 1, page-size: 200` like every sibling resolver, so an exact match past the
+  default first page on a large workspace is no longer missed.
+- Server version drift: the MCP server advertises a hand-typed `version` literal
+  in `src/server.ts`, now pinned equal to `package.json` by a test (mirrors the
+  CLI's `program.version()` assertion) so a release bump cannot leave it stale
+  silently.
+
 ### Tests
 
 - Added `mcp/tests/entries.test.ts` (list / log / get / update behavior) and

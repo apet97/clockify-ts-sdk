@@ -13,6 +13,7 @@ import {
 } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
+import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, successResult, writeReceipt } from "../result.js";
@@ -38,6 +39,8 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             description:
                 "List invoices in the pinned workspace, optionally filtered by one or more invoice statuses and sorted by a column/order.",
             inputSchema: {
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 // Accept a single status (back-compat) or several; both fold into the
                 // typed `statuses` array the GET route honours.
                 status: z.enum(INVOICE_STATUSES).optional(),
@@ -62,7 +65,11 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 ...(args.status ? [args.status] : []),
                 ...(args.statuses ?? []),
             ].filter((s, i, all) => all.indexOf(s) === i);
-            const req: ClockifyApi.ListInvoicesRequest = { workspaceId: ctx.workspaceId };
+            const req: ClockifyApi.ListInvoicesRequest = {
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            };
             if (statuses.length > 0) req.statuses = statuses;
             if (args.sortColumn) req["sort-column"] = args.sortColumn;
             if (args.sortOrder) req["sort-order"] = args.sortOrder;
@@ -77,6 +84,8 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 workspaceId: ctx.workspaceId,
                 count: invoices.length,
                 total,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
             });
         },
     );

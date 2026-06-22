@@ -128,4 +128,24 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
         });
         expect(captured.wsCost).toEqual({ workspaceId: "ws-1", userId: "u1", amount: 6000 });
     });
+
+    it("clockify_users_set_member_rate emits a writeReceipt (entity + changed.updated)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(ratesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_users_set_member_rate",
+            arguments: { userId: "u1", rateKind: "HOURLY", amount: 80 },
+        });
+        const text = (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
+        const json = JSON.parse(text) as {
+            ok: boolean;
+            entity?: string;
+            changed?: { updated?: Array<{ type: string; id: string }> };
+        };
+        // Was the only rate-write tool with no receipt — agents could not chain on
+        // changed.updated. Now it matches the projects/tasks rate siblings.
+        expect(json.ok).toBe(true);
+        expect(json.entity).toBe("workspace_member");
+        expect(json.changed?.updated).toEqual([{ type: "workspace_member", id: "u1" }]);
+    });
 });

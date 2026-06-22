@@ -206,13 +206,18 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                     : await ctx.client.workspaces.updateUserHourlyRate(
                           wireBody<ClockifyApi.UpdateUserHourlyRateWorkspacesRequest>(req),
                       );
-            return successResult("clockify_users_set_member_rate", updated, {
-                workspaceId: ctx.workspaceId,
-                userId: args.userId,
-                rateKind: args.rateKind,
-                amountMajor: args.amount,
-                amountMinor,
-            });
+            return successResult(
+                "clockify_users_set_member_rate",
+                updated,
+                {
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    rateKind: args.rateKind,
+                    amountMajor: args.amount,
+                    amountMinor,
+                },
+                writeReceipt("updated", "workspace_member", args.userId),
+            );
         },
     );
 
