@@ -2332,8 +2332,9 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `as unknown[]`. Every all-projects call 400'd (no date range) and the page size
   was never applied.
 - **MCP tools affected:** `clockify_scheduling_assignments_list_per_project`
-  (all-projects branch only; the single-project GET `listOnProject` is unaffected
-  and ignores `start`/`end`).
+  (all-projects branch only; the single-project GET `listOnProject` also REQUIRES
+  `start`/`end` live — 400 code:3001 without them — and the tool forwards them on
+  the projectId branch; see `scheduling.project-totals.get-vs-post`).
 - **Status:** `compensated-in-tool-layer` (2026-06-18). `start`/`end` are now
   REQUIRED ISO-8601 `z.string()` inputs; the request is typed as
   `ClockifyApi.ListPerProjectSchedulingRequest` with camel `pageSize` and both
