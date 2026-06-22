@@ -19,6 +19,12 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Changed
 
+- Corrected the `expenses` command header comment: it claimed `expenses create`
+  was omitted because the endpoint "expects a multipart upload (a receipt file)",
+  but the create endpoint accepts a scalar body (`ExpenseCreateRequestFlattened.
+  file` is optional) and both the MCP tool and the SDK create expenses without a
+  file. The CLI `expenses create` is now framed as a deliberate (unshipped)
+  surface expansion, not a wire limitation.
 - `cli/tsconfig.json` now sets `removeComments: true`, so the
   `cli/dist/index.js` byte budget measures emitted code rather than JSDoc prose
   (adding a doc comment no longer reds `make performance-budgets`). The build

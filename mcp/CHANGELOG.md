@@ -4,6 +4,14 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `clockify_request_time_off`: a `half_day_period` arg (`FIRST_HALF` |
+  `SECOND_HALF`) so an afternoon half-day can be requested. The workflow
+  previously hard-coded `FIRST_HALF` whenever `half_day` was true, making an
+  afternoon half-day impossible; a bare `half_day: true` still defaults to
+  `FIRST_HALF`.
+
 ### Fixed
 
 - `clockify_holidays_update`: a start-only edit no longer collapses a multi-day

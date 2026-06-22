@@ -237,7 +237,9 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
             ...(str(args.note) ? { note: str(args.note) } : {}),
             timeOffPeriod: {
                 isHalfDay: args.half_day === true,
-                halfDayPeriod: args.half_day ? "FIRST_HALF" : "NOT_DEFINED",
+                // Honor an explicit morning/afternoon choice; FIRST_HALF (morning)
+                // stays the default so a bare half_day:true is unchanged.
+                halfDayPeriod: args.half_day ? str(args.half_day_period) || "FIRST_HALF" : "NOT_DEFINED",
                 period,
             },
         },
