@@ -18,10 +18,19 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import type { createClockifyClient } from "../create-client.js";
 import { invoiceUpdateBodyFromExisting } from "../invoice-body.js";
 import { CLOCKIFY_AMOUNT_UNITS, invoiceItemUnitPriceToWire, toMinor } from "../money.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+/**
+ * Exact type-equality (NOT assignability — the all-optional invoice/payment DTOs are
+ * mutually assignable, so only an exact-equality check distinguishes them).
+ */
+type Equals<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? true
+    : false;
 
 /**
  * Every COMPENSATED / PARTIALLY COMPENSATED finding in the ported ledger section,
@@ -61,6 +70,7 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
         "cli/tests/sdk-narrow.test.ts",
         "mcp/tests/sdk-narrow.test.ts",
     ],
+    "invoices.payments.post-returns-invoice": ["wrapper/tests/wire-shape.test.ts"],
 };
 
 /**
@@ -142,6 +152,24 @@ describe("wire-shape ledger (wrapper helpers)", () => {
     it("invoice item unitPrice is the third scale (minor×100), not plain minor", () => {
         // a $1000 item = 100000 minor → 10000000 on the item wire (sending plain minor billed $10)
         expect(invoiceItemUnitPriceToWire(100000)).toBe(10000000);
+    });
+
+    it("invoice payment create returns the invoice doc (not the payment); list returns payments", () => {
+        // compensated-in-corrected-spec: POST /invoices/{id}/payments returns the updated
+        // InvoiceDtoFull, not the created payment (recover the new payment id by list-diff).
+        // The corrected spec binds addInvoicePayment's 201 to InvoiceDtoFull, so the generated
+        // SDK types invoicePayments.create() IDENTICALLY to invoices.get(). Pin that contract:
+        // a regenerated client that flips create() back to a payment shape fails type-check here.
+        type Client = ReturnType<typeof createClockifyClient>;
+        type InvoiceDoc = Awaited<ReturnType<Client["invoices"]["get"]>>;
+        type PaymentCreate = Awaited<ReturnType<Client["invoicePayments"]["create"]>>;
+        type PaymentListItem = Awaited<ReturnType<Client["invoicePayments"]["list"]>>[number];
+        // create() resolves to the exact invoice-doc type that invoices.get() returns:
+        const createReturnsInvoice: Equals<PaymentCreate, InvoiceDoc> = true;
+        // list() items are the payment type, NOT the invoice doc:
+        const listItemIsNotInvoice: Equals<PaymentListItem, InvoiceDoc> = false;
+        expect(createReturnsInvoice).toBe(true);
+        expect(listItemIsNotInvoice).toBe(false);
     });
 
     it("ledger coverage: every COMPENSATED finding maps to a test file that exists", () => {
