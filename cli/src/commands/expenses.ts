@@ -1,10 +1,12 @@
 /**
- * `clk115 expenses {list,get,update,delete}`. Create is intentionally
- * omitted because the live Clockify create-expense endpoint expects a
- * multipart upload (a receipt file) per the synced SDK's
- * `ExpenseCreateRequest`. A future iteration can add `expenses create`
- * with a `--file` flag once the wrapper exposes the right uploadable
- * helper to the CLI surface.
+ * `clk115 expenses {list,get,update,delete}`. There is no `expenses create`
+ * yet — but NOT because a receipt upload is required: the live create-expense
+ * endpoint accepts a scalar body (the synced SDK's
+ * `ExpenseCreateRequestFlattened.file` is OPTIONAL), and both the MCP
+ * `clockify_expenses_create` tool and the raw SDK `expenses.create` already
+ * create expenses without a file. Adding a CLI `expenses create` is therefore a
+ * deliberate surface expansion (it bumps the headline command count and the
+ * generated command tables), tracked as a follow-up rather than bundled here.
  */
 import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";

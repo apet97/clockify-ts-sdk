@@ -311,6 +311,12 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                     ),
                 note: z.string().optional(),
                 half_day: z.boolean().optional(),
+                half_day_period: z
+                    .enum(["FIRST_HALF", "SECOND_HALF"])
+                    .optional()
+                    .describe(
+                        "Which half to take when half_day is true: FIRST_HALF (morning, default) or SECOND_HALF (afternoon).",
+                    ),
                 dry_run: z.boolean().optional(),
                 confirm_token: z.string().optional(),
             },

@@ -88,3 +88,60 @@ describe("clockify_time_off_requests_submit halfDayPeriod", () => {
         expect(submit).not.toHaveBeenCalled();
     });
 });
+
+describe("clockify_request_time_off honors half_day_period (afternoon)", () => {
+    const HEX = "aaaaaaaaaaaaaaaaaaaaaaaa";
+    function text(res: unknown): Record<string, unknown> {
+        const t = (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
+        return JSON.parse(t) as Record<string, unknown>;
+    }
+
+    it("submits the requested SECOND_HALF (was hardcoded FIRST_HALF) through the confirm flow", async () => {
+        const submit = vi.fn(async (r: unknown) => ({ id: "to-1", ...(r as object) }));
+        const ctx = {
+            workspaceId: "ws-1",
+            client: { timeOff: { submit }, users: { getCurrentUser: async () => ({ id: "me" }) } },
+        } as unknown as Context;
+        const client = await connect(ctx);
+        const args = {
+            policy_id: HEX,
+            start: "2026-08-01",
+            days: 1,
+            half_day: true,
+            half_day_period: "SECOND_HALF",
+        };
+        const preview = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { ...args, dry_run: true },
+        });
+        const token = (text(preview).data as { confirm_token?: string }).confirm_token;
+        expect(token).toBeTruthy();
+        await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: { ...args, confirm_token: token },
+        });
+        expect(submit).toHaveBeenCalledTimes(1);
+        const body = (submit.mock.calls[0]?.[0] as { body: { timeOffPeriod: Record<string, unknown> } })
+            .body;
+        expect(body.timeOffPeriod.isHalfDay).toBe(true);
+        expect(body.timeOffPeriod.halfDayPeriod).toBe("SECOND_HALF");
+    });
+
+    it("defaults a bare half_day:true to FIRST_HALF", async () => {
+        const submit = vi.fn(async (r: unknown) => ({ id: "to-1", ...(r as object) }));
+        const ctx = {
+            workspaceId: "ws-1",
+            client: { timeOff: { submit }, users: { getCurrentUser: async () => ({ id: "me" }) } },
+        } as unknown as Context;
+        const client = await connect(ctx);
+        const preview = text(
+            await client.callTool({
+                name: "clockify_request_time_off",
+                arguments: { policy_id: HEX, start: "2026-08-01", days: 1, half_day: true, dry_run: true },
+            }),
+        );
+        const period = (preview.data as { preview: { body: { timeOffPeriod: Record<string, unknown> } } })
+            .preview.body.timeOffPeriod;
+        expect(period.halfDayPeriod).toBe("FIRST_HALF");
+    });
+});
