@@ -130,6 +130,49 @@ if (!audit.includes(`"id": "${wiring.auditId}"`)) {
     fail(`docs/enterprise-hardening-audit.json: missing id ${wiring.auditId}`);
 }
 
+// --- no consumer advertises a phantom/dead-route SDK method ---
+// The generated SDK still exposes methods bound to routes that are DEAD live
+// (404 "No static resource" / 405 — the official OpenAPI omits them and the spec
+// quarantines them). A CLI command or MCP tool that calls one fails on every
+// invocation, so none may. This makes the "phantom routes are quarantined, not
+// advertised as tools" conformance claim ENFORCED rather than merely asserted.
+// Each entry is live-verified (2026-06-22) with its live replacement; see
+// spec/evidence/discrepancies.md.
+const DEAD_ROUTE_METHODS = {
+    "scheduling.update": "PUT /scheduling/assignments/{id} dead — use scheduling.updateRecurring",
+    "scheduling.delete": "DELETE /scheduling/assignments/{id} dead — use scheduling.deleteRecurring",
+    "timeOff.get": "GET /time-off/requests/{id} flat route dead",
+    "timeOff.delete": "DELETE /time-off/requests/{id} flat dead — use timeOff.withdraw (policy-scoped)",
+    "timeOff.updateStatus": "PATCH /time-off/requests/{id}/status flat dead — use changeTimeOffRequestStatus",
+    "userGroups.listMembers": "GET /user-groups/{id}/users is 405 — use users.filterWorkspaceUsers",
+    "projects.archive": "PUT /projects/{id}/archive dead — archive via projects.update body-envelope",
+    "projects.updateHourlyRate": "PUT /projects/{id}/hourly-rate project-default route absent",
+    "projects.updateCostRate": "PUT /projects/{id}/cost-rate project-default route absent",
+    "clients.archive": "PUT /clients/{id}/archive dead — archive via clients.update body-envelope",
+};
+function consumerTsFiles(relDir) {
+    const abs = path.join(root, relDir);
+    if (!fs.existsSync(abs)) return [];
+    const out = [];
+    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
+        const rel = `${relDir}/${entry.name}`;
+        if (entry.isDirectory()) out.push(...consumerTsFiles(rel));
+        else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) out.push(rel);
+    }
+    return out;
+}
+const consumerFiles = ["mcp/src", "cli/src"].flatMap(consumerTsFiles);
+for (const file of consumerFiles) {
+    const lines = readRelative(file).split("\n");
+    for (const [dead, why] of Object.entries(DEAD_ROUTE_METHODS)) {
+        const [resource, method] = dead.split(".");
+        const re = new RegExp(`\\bclient\\.${resource}\\.${method}\\s*\\(`);
+        lines.forEach((line, i) => {
+            if (re.test(line)) fail(`${file}:${i + 1}: consumer calls dead-route SDK method ${dead} (${why})`);
+        });
+    }
+}
+
 if (failures.length > 0) {
     console.error("Official OpenAPI drift contract failed:");
     for (const f of failures) console.error(`- ${f}`);
