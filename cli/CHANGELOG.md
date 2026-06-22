@@ -60,6 +60,9 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Tests
 
+- Added `cli/tests/crud-create-get.test.ts` covering the tags/tasks/clients
+  create/get/update subcommands (including the tags `--no-archived` boolean
+  branch) that previously had thin coverage.
 - Raised the cli branch-coverage floor 79->80 (`vitest.config.ts` +
   `docs/coverage-contract.json`) after this session's new behavior tests.
 
