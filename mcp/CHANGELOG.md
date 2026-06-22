@@ -33,12 +33,16 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 ### Fixed
 
 - `clockify_webhooks_create` now **requires** `name` (2–30 chars); it was
-  optional, leaving the two webhook-create surfaces inconsistent. The primary
+  optional, leaving the two webhook-create surfaces inconsistent. Webhook `name`
+  requiredness is auth-scheme-dependent (maintainer-confirmed): required on the
+  API-key path this SDK uses, optional only for addon-token creates. The primary
   `clockify_setup_webhook` workflow already requires a name, the corrected
-  `WebhookRequest.required[]` lists it, and every live create probe (2026-06-21)
-  supplied one — so an omitted name was a latent gap, not a supported path. The
-  body builder always sends `name`, and `webhooks-create.test.ts` covers the schema
-  boundary (a missing or too-short name is rejected before the handler runs).
+  `WebhookRequest` marks it `minLength:2`/`maxLength:30` in `required[]`, and the
+  2026-06-21 live API-key probe supplied one — so an omitted name was a latent gap,
+  not a supported path. The body builder always sends `name`, and
+  `webhooks-create.test.ts` covers the schema boundary (a missing or too-short name
+  is rejected before the handler runs). See `spec/evidence/discrepancies.md`
+  `webhook.create.name-required-on-api-key-not-addon`.
 - `clockify_expenses_create` / `clockify_expenses_update` now promote a date-only
   `date` (`YYYY-MM-DD`) to RFC3339 (`…T00:00:00Z`). The expense endpoint requires
   `yyyy-MM-ddThh:mm:ssZ` and 400s "invalid value for field: [date]" on a bare date

@@ -1,10 +1,13 @@
 /**
- * clockify_webhooks_create body shaping. `name` (2-30 chars) is required — matching
- * the primary clockify_setup_webhook surface (which already requires it) and the
- * corrected WebhookRequest.required[]; every live create probe supplied one. The
- * tool's schema makes `name` required, so it is always sent. These tests capture the
- * request the SDK client receives and assert the body envelope shape, plus that a
- * missing or too-short name is rejected at the schema boundary.
+ * clockify_webhooks_create body shaping. `name` (2-30 chars) is required on the
+ * API-key path this SDK uses — requiredness is auth-scheme-dependent (addon-token
+ * creates don't require it; see discrepancies.md
+ * webhook.create.name-required-on-api-key-not-addon), matching the corrected
+ * WebhookRequest (minLength:2/maxLength:30, in required[]) and the primary
+ * clockify_setup_webhook surface. The tool's schema makes `name` required, so it is
+ * always sent. These tests capture the request the SDK client receives and assert the
+ * body envelope shape, plus that a missing or too-short name is rejected at the schema
+ * boundary.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
