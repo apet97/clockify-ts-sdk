@@ -101,6 +101,31 @@ for (const doc of proseDocs) {
     }
 }
 
+// --- layer 3: derived live-success headline must be current in the prose ---
+// Unlike the reactive denylist above, this DERIVES the live-success count from
+// the corrected spec and asserts the current "N/184" value is present, so a
+// re-snapshot that moves the count reds the gate until AGENTS.md / CLAUDE.md are
+// updated (rather than waiting for a human to add the now-stale string to the
+// denylist). The denominator comes from the generated operation count.
+let liveSuccessHeadline = null;
+const liveCfg = contract.liveSuccessProse;
+if (liveCfg && typeof liveCfg === "object") {
+    const specText = readRelative(liveCfg.specPath);
+    const marker = liveCfg.marker ?? "x-clockify-live-status: live-success";
+    const live = specText === "" ? NaN : specText.split(marker).length - 1;
+    const total = resolvePointer(openapiOps, liveCfg.totalPointer ?? "operationCount");
+    liveSuccessHeadline = `${live}/${total}`;
+    for (const doc of Array.isArray(liveCfg.mustAppearIn) ? liveCfg.mustAppearIn : []) {
+        const text = readRelative(doc);
+        if (!text.includes(liveSuccessHeadline)) {
+            fail(
+                `${doc}: missing the current derived live-success headline ${JSON.stringify(liveSuccessHeadline)} ` +
+                    `(spec live-success markers = ${live}, operationCount = ${total})`,
+            );
+        }
+    }
+}
+
 // --- five-anchor wiring ---
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile: missing target ${wiring.makeTarget}`);
@@ -140,4 +165,5 @@ const sources = {
 const printed = (contract.authoritativeCounts ?? [])
     .map((c) => `${c.label}=${resolvePointer(sources[c.source] ?? {}, c.pointer)}`)
     .join(", ");
-console.log(`docs counts contract passed (${printed})`);
+const liveNote = liveSuccessHeadline ? `, live-success=${liveSuccessHeadline}` : "";
+console.log(`docs counts contract passed (${printed}${liveNote})`);
