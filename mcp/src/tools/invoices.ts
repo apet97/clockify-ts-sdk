@@ -312,9 +312,12 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             const updated = await ctx.client.invoices.updateStatus({
                 workspaceId: ctx.workspaceId,
                 invoiceId: args.invoiceId,
-                body: { status: args.status },
-                // KEEP as never: invoice status PATCH body is generated too narrowly.
-            } as never);
+                // The wire field is `invoiceStatus`, NOT `status` — sending `status`
+                // 400s "invalid value for field: [invoiceStatus]... can't be empty"
+                // (live-verified). The generated body type already wants invoiceStatus,
+                // so the typed body-envelope form needs no cast.
+                body: { invoiceStatus: args.status },
+            });
             return successResult(
                 "clockify_invoices_update_status",
                 updated,

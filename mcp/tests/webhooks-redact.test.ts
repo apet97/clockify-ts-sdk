@@ -96,4 +96,28 @@ describe("webhook tools redact the HMAC authToken", () => {
             expect(flat).toContain("https://example.com/hook");
         });
     }
+
+    it("clockify_setup_webhook (workflow create path) never emits the raw authToken", async () => {
+        // The workflow tool creates a webhook too; its create response carries the
+        // authToken just like the domain tool's, so it must redact identically.
+        // Drive the dry_run -> confirm flow so the create actually fires.
+        const client = await connect(webhooksContext());
+        const args = { name: "Audit", url: "https://example.com/hook", event: "NEW_PROJECT" };
+        const preview = await client.callTool({
+            name: "clockify_setup_webhook",
+            arguments: { ...args, dry_run: true },
+        });
+        const token = (JSON.parse(rawText(preview)).data as { confirm_token?: string }).confirm_token;
+        expect(token).toBeTruthy();
+        const res = await client.callTool({
+            name: "clockify_setup_webhook",
+            arguments: { ...args, confirm_token: token },
+        });
+        expect((res as { isError?: boolean }).isError).toBeFalsy();
+        const text = rawText(res);
+        expect(text).not.toContain(SECRET);
+        const flat = JSON.stringify(JSON.parse(text).data);
+        expect(flat).toContain("***redacted***");
+        expect(flat).toContain("wh-1");
+    });
 });

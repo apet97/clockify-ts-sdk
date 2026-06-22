@@ -2,6 +2,7 @@ import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 
 import { assertSafeWebhookUrl } from "../../orchestration/webhook-url.js";
 import { errorResult, successResult } from "../../result.js";
+import { redactWebhook } from "../webhooks.js";
 
 import {
     arrayOfStrings,
@@ -366,7 +367,9 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
     );
     return successResult(
         "clockify_setup_webhook",
-        webhook,
+        // Redact the authToken HMAC secret before it enters the result envelope —
+        // Clockify returns it on create, and an agent transcript would leak it.
+        redactWebhook(webhook),
         { workspaceId: ctx.workspaceId },
         {
             entity: "webhook",

@@ -92,7 +92,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 required: z.boolean().optional(),
                 placeholder: z.string().optional(),
                 description: z.string().optional(),
-                status: z.string().optional().describe("ACTIVE | INACTIVE."),
+                status: z.string().optional().describe("INACTIVE | VISIBLE | INVISIBLE."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
