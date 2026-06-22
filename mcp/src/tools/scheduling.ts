@@ -12,7 +12,7 @@ import { z } from "zod";
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 
@@ -234,60 +234,75 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         {
             title: "Update a scheduling assignment",
             description:
-                "Update one scheduling assignment's user, project, dates, hours, or note by ID.",
+                "Edit a scheduling assignment's date range, hours, task, billable flag, or note by ID. " +
+                "This is a PATCH on the recurring-assignment route (the bare /assignments/{id} PUT 404s " +
+                "live), so start+end are required and seriesUpdateOption scopes the edit across a series. " +
+                "The route cannot reassign the user or project — recreate the assignment to move it.",
             inputSchema: {
                 assignmentId: z.string().min(1),
-                userId: z.string().optional(),
-                projectId: z.string().optional(),
-                start: z.string().optional(),
-                end: z.string().optional(),
+                start: z
+                    .string()
+                    .min(1)
+                    .describe("New range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required."),
+                end: z
+                    .string()
+                    .min(1)
+                    .describe("New range end, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required."),
                 hoursPerDay: zNumberLike(z.number()).optional(),
                 taskId: z.string().optional(),
                 note: z.string().optional(),
                 billable: z.boolean().optional(),
+                seriesUpdateOption: z
+                    .enum(["THIS_ONE", "THIS_AND_FOLLOWING", "ALL"])
+                    .optional()
+                    .describe(
+                        "Which occurrences of a recurring series to apply the edit to. Defaults to this assignment only.",
+                    ),
+                userId: z
+                    .string()
+                    .optional()
+                    .describe(
+                        "Not supported by this route — reassigning the user is rejected. Recreate the assignment to move it.",
+                    ),
+                projectId: z
+                    .string()
+                    .optional()
+                    .describe(
+                        "Not supported by this route — reassigning the project is rejected. Recreate the assignment to move it.",
+                    ),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            let resolvedUserId: string | undefined;
-            let resolvedProjectId: string | undefined;
-            if (args.userId) {
-                const u = await resolveUserRef(
-                    { id: args.userId },
-                    { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
+            // The live edit route is PATCH /scheduling/assignments/recurring/{id}
+            // (the bare PUT /assignments/{id} returns a static-resource 404).
+            // AssignmentUpdateRequestV1 carries no user/project field, so this
+            // route cannot reassign an assignment — fail loudly instead of
+            // silently dropping the caller's intent.
+            if (args.userId !== undefined || args.projectId !== undefined) {
+                return errorResult(
+                    "clockify_scheduling_assignments_update",
+                    new Error(
+                        "The scheduling-assignment edit route cannot reassign the user or project, so you must not " +
+                            "pass userId/projectId here; delete and recreate the assignment to move it.",
+                    ),
+                    {
+                        hint: "Drop userId/projectId from the update, or delete the assignment and create a new one under the target user/project.",
+                        tool: "clockify_scheduling_assignments_create",
+                        retryable: false,
+                    },
                 );
-                if (!u.ok)
-                    return clarifyResult(
-                        "clockify_scheduling_assignments_update",
-                        "userId",
-                        "user",
-                        u.clarify,
-                    );
-                resolvedUserId = u.userId;
             }
-            if (args.projectId) {
-                const p = await resolveEntityRef(
-                    { id: args.projectId },
-                    { noun: "project", verb: "schedule against", list: listProjects },
-                );
-                if (!p.ok)
-                    return clarifyResult(
-                        "clockify_scheduling_assignments_update",
-                        "projectId",
-                        "project",
-                        p.clarify,
-                    );
-                resolvedProjectId = p.id;
-            }
-            const body: ClockifyRequestBody<ClockifyApi.UpdateSchedulingRequest> = {};
-            if (resolvedUserId) body.userId = resolvedUserId;
-            if (resolvedProjectId) body.projectId = resolvedProjectId;
-            if (args.start && args.end) body.period = { start: args.start, end: args.end };
+            const body: ClockifyRequestBody<ClockifyApi.UpdateRecurringSchedulingRequest> = {
+                start: args.start,
+                end: args.end,
+            };
             if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
             if (args.taskId) body.taskId = args.taskId;
             if (args.note) body.note = args.note;
             if (args.billable !== undefined) body.billable = args.billable;
-            const updated = await ctx.client.scheduling.update({
+            if (args.seriesUpdateOption) body.seriesUpdateOption = args.seriesUpdateOption;
+            const updated = await ctx.client.scheduling.updateRecurring({
                 workspaceId: ctx.workspaceId,
                 assignmentId: args.assignmentId,
                 body,
@@ -310,9 +325,18 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         {
             title: "Delete a scheduling assignment",
             description:
-                "Permanently delete a scheduling assignment. Run dry_run first, then retry with the returned confirm_token.",
+                "Permanently delete a scheduling assignment. Hits the recurring-assignment route " +
+                "(DELETE /scheduling/assignments/recurring/{id}; the bare /assignments/{id} DELETE 404s " +
+                "live); seriesUpdateOption scopes the deletion across a recurring series. " +
+                "Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 assignmentId: z.string().min(1),
+                seriesUpdateOption: z
+                    .enum(["THIS_ONE", "THIS_AND_FOLLOWING", "ALL"])
+                    .optional()
+                    .describe(
+                        "Which occurrences of a recurring series to delete. Defaults to this assignment only.",
+                    ),
                 dry_run: z.boolean().optional(),
                 confirm_token: z.string().optional(),
             },
@@ -323,6 +347,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 action: "delete",
                 entity: "scheduling_assignment",
                 id: args.assignmentId,
+                ...(args.seriesUpdateOption
+                    ? { seriesUpdateOption: args.seriesUpdateOption }
+                    : {}),
             };
             const confirmation = requireConfirmation(
                 ctx,
@@ -332,9 +359,12 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 preview,
             );
             if (confirmation) return confirmation;
-            await ctx.client.scheduling.delete({
+            await ctx.client.scheduling.deleteRecurring({
                 workspaceId: ctx.workspaceId,
                 assignmentId: args.assignmentId,
+                ...(args.seriesUpdateOption
+                    ? { seriesUpdateOption: args.seriesUpdateOption }
+                    : {}),
             });
             return successResult(
                 "clockify_scheduling_assignments_delete",

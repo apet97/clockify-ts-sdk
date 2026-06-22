@@ -30,6 +30,33 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Official-OpenAPI conformance pass (diffing the MCP tools against
+  https://docs.clockify.me/openapi.json found tools sending invalid enums or calling
+  routes that 404/405 live):
+  - `clockify_approvals_submit` no longer offers the invalid period `BIWEEKLY`
+    (official `CreateApprovalRequest.period` = WEEKLY/SEMI_MONTHLY/MONTHLY);
+    `clockify_approvals_update_state` now offers the real
+    PENDING/APPROVED/WITHDRAWN_SUBMISSION/WITHDRAWN_APPROVAL/REJECTED set instead of
+    a bare `WITHDRAWN` it could not act on; `clockify_approvals_list` constrains its
+    status filter to the 3 listable values and drops an unchecked cast. Each enum is
+    now pinned `as const satisfies readonly ClockifyApi.<Type>[]`, so future enum
+    drift fails type-check loudly.
+  - `clockify_scheduling_assignments_update` / `_delete` were calling the dead bare
+    `PUT|DELETE /scheduling/assignments/{id}` routes (404 "No static resource",
+    live-confirmed); they now call the live recurring routes `scheduling.updateRecurring`
+    (PATCH .../recurring/{id}) / `scheduling.deleteRecurring` (DELETE .../recurring/{id},
+    optional `seriesUpdateOption`). Update returns a clean `invalid_request` if asked to
+    reassign user/project (the recurring-edit body cannot express it) rather than
+    silently dropping intent; the delete confirm-guard handshake is unchanged.
+  - `clockify_groups_list_members` was calling the dead 405 `userGroups.listMembers`
+    (GET /user-groups/{id}/users — the spec literally names it "DOES NOT EXIST"); it
+    now uses the documented `users.filterWorkspaceUsers({ userGroups:[groupId] })`.
+  - `clockify_project_custom_fields_update` no longer sends the non-schema
+    `allowedValues` (not part of the official `CustomFieldProjectDefaultValuesRequest`).
+  - `clockify_invoices_list` supports multiple statuses + sort column/order (the typed
+    GET route honours them) and drops a now-stale `wireBody` escape.
+  - `clockify_setup_webhook` makes `name` optional (official `WebhookRequest` marks it
+    optional) and omits it when absent. Tool count unchanged (134).
 - `clockify_time_off_requests_delete` can now actually delete. It previously called
   the flat `timeOff.delete` route (`DELETE /time-off/requests/{id}`), which 404s
   live, so the tool always failed. It now requires `policyId` and calls the

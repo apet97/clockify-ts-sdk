@@ -18,6 +18,8 @@ import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, successResult, writeReceipt } from "../result.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
+const INVOICE_SORT_COLUMNS = ["ID", "CLIENT", "DUE_ON", "ISSUE_DATE", "AMOUNT", "BALANCE"] as const;
+const INVOICE_SORT_ORDERS = ["ASCENDING", "DESCENDING"] as const;
 type InvoiceObject = Record<string, unknown>;
 
 // Clockify invoice endpoints require RFC3339 datetimes; promote
@@ -34,21 +36,39 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         {
             title: "List invoices",
             description:
-                "List invoices in the pinned workspace, optionally filtered by invoice status.",
+                "List invoices in the pinned workspace, optionally filtered by one or more invoice statuses and sorted by a column/order.",
             inputSchema: {
+                // Accept a single status (back-compat) or several; both fold into the
+                // typed `statuses` array the GET route honours.
                 status: z.enum(INVOICE_STATUSES).optional(),
+                statuses: z.array(z.enum(INVOICE_STATUSES)).optional(),
+                sortColumn: z
+                    .enum(INVOICE_SORT_COLUMNS)
+                    .optional()
+                    .describe("Sort column: ID | CLIENT | DUE_ON | ISSUE_DATE | AMOUNT | BALANCE."),
+                sortOrder: z
+                    .enum(INVOICE_SORT_ORDERS)
+                    .optional()
+                    .describe("Sort order: ASCENDING | DESCENDING."),
             },
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const req: InvoiceObject = { workspaceId: ctx.workspaceId };
-            if (args.status) req.statuses = args.status;
-            // wireBody: the live list route's request type carries only workspaceId/page/page-size;
-            // the local `statuses` filter slot is not on ListInvoicesRequest, so bind the request
-            // through the sanctioned typed escape. Response shape is narrowed below.
-            const response = (await ctx.client.invoices.list(
-                wireBody<ClockifyApi.ListInvoicesRequest>(req),
-            )) as { invoices?: unknown[]; total?: number } | unknown[];
+            // ListInvoicesRequest is typed for the live GET route: `statuses` is an
+            // InvoiceStatus[] and `sort-column`/`sort-order` are first-class query params,
+            // so no wireBody escape is needed. Merge single `status` + `statuses[]` and
+            // dedupe so callers can use either shape.
+            const statuses = [
+                ...(args.status ? [args.status] : []),
+                ...(args.statuses ?? []),
+            ].filter((s, i, all) => all.indexOf(s) === i);
+            const req: ClockifyApi.ListInvoicesRequest = { workspaceId: ctx.workspaceId };
+            if (statuses.length > 0) req.statuses = statuses;
+            if (args.sortColumn) req["sort-column"] = args.sortColumn;
+            if (args.sortOrder) req["sort-order"] = args.sortOrder;
+            const response = (await ctx.client.invoices.list(req)) as
+                | { invoices?: unknown[]; total?: number }
+                | unknown[];
             const invoices = Array.isArray(response) ? response : (response.invoices ?? []);
             const total = Array.isArray(response)
                 ? invoices.length

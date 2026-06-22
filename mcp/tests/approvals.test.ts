@@ -147,6 +147,21 @@ describe("clockify_approvals_list", () => {
         expect(tool?.annotations?.readOnlyHint).toBe(true);
     });
 
+    it.each(["REJECTED", "WITHDRAWN_SUBMISSION", "WITHDRAWN"] as const)(
+        "rejects the non-listable status %s at the schema before any list call",
+        async (status) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(approvalsContext(captured));
+            const res = await client.callTool({
+                name: "clockify_approvals_list",
+                arguments: { status },
+            });
+            expect(res.isError).toBe(true);
+            expect(rawText(res)).toMatch(/status|-32602|Input validation/i);
+            expect(captured.list).toBeUndefined();
+        },
+    );
+
     it("rejects an out-of-range pageSize at the schema before any list call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
@@ -188,17 +203,30 @@ describe("clockify_approvals_submit", () => {
         const client = await connect(approvalsContext(captured));
         const res = await client.callTool({
             name: "clockify_approvals_submit",
-            arguments: { period: "BIWEEKLY", periodStart: "2026-06-01T00:00:00Z" },
+            arguments: { period: "SEMI_MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
         expect(res.isError).toBeFalsy();
         // wireBody returns the value verbatim → { workspaceId, body: {...} }.
         expect(captured.submit).toEqual({
             workspaceId: "ws-1",
-            body: { period: "BIWEEKLY", periodStart: "2026-06-01T00:00:00Z" },
+            body: { period: "SEMI_MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { workspaceId?: string }).workspaceId).toBe("ws-1");
+    });
+
+    it("rejects BIWEEKLY (not a live Clockify period) at the schema before any submit call", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(approvalsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_approvals_submit",
+            arguments: { period: "BIWEEKLY", periodStart: "2026-06-01T00:00:00Z" },
+        });
+        expect(res.isError).toBe(true);
+        // Schema validation failures surface as a non-JSON MCP protocol error.
+        expect(rawText(res)).toMatch(/period|BIWEEKLY|-32602|Input validation/i);
+        expect(captured.submit).toBeUndefined();
     });
 
     it("is annotated as a (non-idempotent) write", async () => {
@@ -332,11 +360,41 @@ describe("clockify_approvals_update_state", () => {
         );
         const res = await client.callTool({
             name: "clockify_approvals_update_state",
-            arguments: { approvalRequestId: "ar-x", state: "WITHDRAWN" },
+            arguments: { approvalRequestId: "ar-x", state: "WITHDRAWN_APPROVAL" },
         });
         expect(res.isError).toBe(true);
         const json = envelope(res);
         expect((json.error as { code?: string }).code).toBe("not_found");
+    });
+
+    it.each(["WITHDRAWN_APPROVAL", "WITHDRAWN_SUBMISSION"] as const)(
+        "accepts the real withdrawn state %s and forwards it verbatim",
+        async (state) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(approvalsContext(captured));
+            const res = await client.callTool({
+                name: "clockify_approvals_update_state",
+                arguments: { approvalRequestId: "ar-1", state },
+            });
+            expect(res.isError).toBeFalsy();
+            expect(captured.updateStatus).toEqual({
+                workspaceId: "ws-1",
+                approvalRequestId: "ar-1",
+                body: { state },
+            });
+        },
+    );
+
+    it("rejects the bare WITHDRAWN value (not a live state) before any update call", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(approvalsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_approvals_update_state",
+            arguments: { approvalRequestId: "ar-1", state: "WITHDRAWN" },
+        });
+        expect(res.isError).toBe(true);
+        expect(rawText(res)).toMatch(/state|WITHDRAWN|-32602|Input validation/i);
+        expect(captured.updateStatus).toBeUndefined();
     });
 });
 
