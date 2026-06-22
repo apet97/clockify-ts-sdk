@@ -29,6 +29,17 @@ const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
 
 type ExpenseFields = Partial<Record<keyof typeof EXPENSE_CHANGE_FIELDS, unknown>>;
 
+// The expense create/update wire requires `date` as RFC3339 (yyyy-MM-ddThh:mm:ssZ)
+// and 400s "invalid value for field: [date]" on a bare YYYY-MM-DD (live-verified).
+// Promote a date-only value to midnight UTC; pass any other value through. (The
+// record_expense workflow already normalizes via the resolve helper; these domain
+// tools forwarded the raw arg.)
+function normaliseExpenseDate(value: unknown): unknown {
+    return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ? `${value}T00:00:00Z`
+        : value;
+}
+
 function expenseChangeFields(fields: ExpenseFields): string[] {
     return Object.entries(EXPENSE_CHANGE_FIELDS)
         .filter(([key]) => fields[key] !== undefined)
@@ -182,6 +193,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             const { extra, userId, categoryId, ...rest } = args;
             const fields = {
                 ...rest,
+                date: normaliseExpenseDate(rest.date),
                 categoryId: await resolveExpenseCategoryId(ctx, categoryId),
             };
             const owner = userId ?? (await currentUserId(ctx));
@@ -229,6 +241,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             const { expenseId, extra, userId, categoryId, ...rest } = args;
             const fields = {
                 ...rest,
+                date: normaliseExpenseDate(rest.date),
                 categoryId: await resolveExpenseCategoryId(ctx, categoryId),
             };
             const owner = userId ?? (await currentUserId(ctx));

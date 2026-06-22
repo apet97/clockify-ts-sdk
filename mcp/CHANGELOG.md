@@ -32,6 +32,11 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_expenses_create` / `clockify_expenses_update` now promote a date-only
+  `date` (`YYYY-MM-DD`) to RFC3339 (`…T00:00:00Z`). The expense endpoint requires
+  `yyyy-MM-ddThh:mm:ssZ` and 400s "invalid value for field: [date]" on a bare date
+  (live-verified via the shared SDK path). The `record_expense` workflow already
+  normalized; these domain tools forwarded the raw arg.
 - `clockify_invoices_update_status` sent the wrong wire field — `body: { status }`
   behind an `as never` cast — so the change-status PATCH 400s "invalid value for
   field: [invoiceStatus]... can't be empty" (live-verified) and silently never
