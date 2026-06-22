@@ -7,6 +7,17 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Security
+
+- `validateWebhookUrl` / `assertSafeWebhookUrl` now reject IPv4 multicast
+  (224.0.0.0/4), reserved Class E (240.0.0.0/4) and the 255.255.255.255 limited
+  broadcast, plus IPv6 multicast (ff00::/8, e.g. `ff02::1`, `ff0e::1`). These
+  non-unicast hosts pass `new URL()` un-folded and previously fell through the
+  SSRF guard to `null` (allowed), so a webhook callback could target them. The
+  single `a >= 224` arm in `ipv4Reason` and the `firstByte === 0xff` arm in
+  `ipv6Reason` close the gap; `223.255.255.255` and `fec0::1` stay allowed
+  (boundary-pinned in the unit + property tests).
+
 ### Added
 
 - Re-snapshot of the corrected OpenAPI (from GOCLMCP): the generator now keeps

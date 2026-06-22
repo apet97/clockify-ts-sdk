@@ -18,7 +18,9 @@ function isBlockedIpv4([a, b]: readonly [number, number, number, number]): boole
         (a === 172 && b >= 16 && b <= 31) ||
         (a === 192 && b === 168) ||
         (a === 169 && b === 254) ||
-        (a === 100 && b >= 64 && b <= 127)
+        (a === 100 && b >= 64 && b <= 127) ||
+        // 224.0.0.0/4 multicast + 240.0.0.0/4 reserved + 255.255.255.255 broadcast.
+        a >= 224
     );
 }
 
@@ -30,6 +32,8 @@ const blockedFamilies = fc.oneof(
     fc.tuple(fc.constant(169), fc.constant(254), octet, octet),
     fc.tuple(fc.constant(100), fc.integer({ min: 64, max: 127 }), octet, octet),
     fc.tuple(fc.constant(0), octet, octet, octet),
+    // 224-255 first octet: multicast (224-239), reserved (240-254), broadcast (255).
+    fc.tuple(fc.integer({ min: 224, max: 255 }), octet, octet, octet),
 );
 
 describe("webhook URL validation properties", () => {
@@ -71,6 +75,9 @@ describe("webhook URL validation properties", () => {
                     // IPv4-compatible (::/96) embedding a private/metadata v4.
                     "::a9fe:a9fe",
                     "::7f00:1",
+                    // ff00::/8 multicast (link-local all-nodes + global).
+                    "ff02::1",
+                    "ff0e::1",
                 ),
                 (host) => {
                     expect(validateWebhookUrl(`https://[${host}]/hook`).ok).toBe(false);
