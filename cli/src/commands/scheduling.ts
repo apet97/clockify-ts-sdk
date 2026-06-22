@@ -12,7 +12,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
+import { parseFloatArg, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerSchedulingCommand: Registrar = (program, services) => {
@@ -81,9 +81,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .requiredOption("--project <id>", "Project ID.")
         .requiredOption("--start <date>", "Period start (YYYY-MM-DD or RFC3339).")
         .requiredOption("--end <date>", "Period end (YYYY-MM-DD or RFC3339).")
-        .requiredOption("--hours-per-day <n>", "Daily hour load (e.g. 6).", (v) =>
-            Number.parseFloat(v),
-        )
+        .requiredOption("--hours-per-day <n>", "Daily hour load (e.g. 6).", parseFloatArg)
         .option("--task <id>", "Task ID.")
         .option("--note <text>", "Assignment note.")
         .option("--billable", "Mark assignment as billable.", false)

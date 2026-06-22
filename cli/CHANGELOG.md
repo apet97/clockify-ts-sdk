@@ -4,6 +4,26 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clk115 reports attendance` now sends the required `attendanceFilter` (empty
+  object). The attendance report 400s "Please provide filters." without it
+  (live-verified), so the command was broken on every invocation and diverged
+  from the MCP attendance tool.
+- `--amount` (expenses update), `--hours-per-day` (scheduling create) and
+  `--days` (timeoff submit) now parse through the shared `parseFloatArg` /
+  `parseIntArg` guards, so a non-numeric or non-positive value raises a clean
+  commander usage error (exit 2) at parse time instead of serializing `NaN`/
+  `null` to the wire. `--days abc` no longer trips the misleading
+  "provide --end or --days" message for a value the user did supply.
+
+### Changed
+
+- `cli/tsconfig.json` now sets `removeComments: true`, so the
+  `cli/dist/index.js` byte budget measures emitted code rather than JSDoc prose
+  (adding a doc comment no longer reds `make performance-budgets`). The build
+  emits no declarations or sourcemaps and tsc preserves the shebang.
+
 ### Tests
 
 - Raised the cli branch-coverage floor 79->80 (`vitest.config.ts` +

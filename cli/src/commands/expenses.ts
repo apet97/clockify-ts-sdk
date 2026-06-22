@@ -12,7 +12,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { parseFloatArg, parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -126,7 +126,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
     expenses
         .command("update")
         .argument("<id>", "Expense ID.")
-        .requiredOption("--amount <n>", "Amount.", (v) => Number.parseFloat(v))
+        .requiredOption("--amount <n>", "Amount.", parseFloatArg)
         .requiredOption("--category <id>", "Expense category ID.")
         .requiredOption("--date <date>", "Expense date (YYYY-MM-DD or ISO).")
         .requiredOption("--user <id>", "Owning user ID.")
