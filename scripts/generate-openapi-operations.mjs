@@ -15,6 +15,7 @@ require 'yaml'
 require 'json'
 
 doc = YAML.load_file(ARGV.fetch(0))
+component_params = (doc['components'] || {})['parameters'] || {}
 methods = %w[get post put patch delete head options trace]
 operations = []
 (doc['paths'] || {}).sort.each do |path, path_item|
@@ -23,6 +24,11 @@ operations = []
     next unless methods.include?(method)
     next unless operation.is_a?(Hash)
     parameters = (operation['parameters'] || []).map do |param|
+      next unless param.is_a?(Hash)
+      if param.key?('$ref')
+        ref_name = param['$ref'].to_s.split('/').last
+        param = component_params[ref_name] if component_params.key?(ref_name)
+      end
       next unless param.is_a?(Hash)
       {
         'name' => param['name'],

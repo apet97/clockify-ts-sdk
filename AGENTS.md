@@ -562,6 +562,22 @@ flat route to the policy-scoped `timeOff.withdraw` (it could never delete before
 category archive, and project-membership PATCH/POST, all from live probes with
 verified `Leftovers:0`.
 
+**2026-06-22 live-success wave (shipped).** A 24-op sandbox CRUD-probe campaign
+(each re-listed for `Leftovers:0`, residue-free) promoted `live-success` 87 →
+**111/184**: invoices (export, info/filter, create, update, duplicate, delete, item
+add + delete), time-off policy create/change-status/delete, project
+template/estimate, task cost-rate/hourly-rate, expense update + category delete,
+per-user time-entries (create, bulk-edit, update/stop, duplicate, mark-invoiced),
+users filter, and scheduling user-capacity totals. The bulk mark-invoiced route
+(`/time-entries/invoiced/bulk`) returns a live 404 and stays deferred. Wire facts
+captured in the GOCLMCP findings: invoice `itemType` resolves against existing
+workspace item-types; `updateExpense` needs a `changeFields[]` array or the 200 is a
+silent no-op; task billable-rate is `PUT .../hourly-rate`; per-user time-entries
+require `tagIds`. This wave also fixed a pre-existing `make openapi-lint` miss:
+`scripts/generate-openapi-operations.mjs` now resolves `$ref` query parameters, so
+the inventory's paginated count reflects the spec's `$ref`'d page/page-size params
+(10 → 23 paginated ops).
+
 ## 9. Secret hygiene
 
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` belong in the

@@ -167,8 +167,11 @@ make docs-drift
   vs 405) before adding a tool; record dead endpoints in
   `spec/evidence/discrepancies.md`.
 - **Probe the live wire before promoting/paginating.** The corrected spec's
-  `x-clockify-live-status: live-success` count is evidence-gated (87/184 as of
-  2026-06-22 — the 2026-06-22 wave added time-off request create/delete, expense
+  `x-clockify-live-status: live-success` count is evidence-gated (111/184 as of
+  2026-06-22 — a 24-op sandbox CRUD-probe wave promoted invoices CRUD + items,
+  time-off policy CRUD, project template/estimate, task rates, expense update +
+  category delete, per-user time-entries, and read-only filters/export, all
+  Leftovers:0; an earlier 2026-06-22 wave added time-off request create/delete, expense
   delete + category archive, and project-membership PATCH/POST from live probes
   with Leftovers:0; the 2026-06-21 wave added createExpense +
   user-group/webhook/custom-field write CRUD + updateHoliday + shared-reports
