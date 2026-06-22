@@ -27,6 +27,7 @@
         "npm test",
         "npm run test:types",
         "npm pack --dry-run --json",
+        "npm run size",
         "make sdk-codegen",
         "make sdk-codegen-drift",
         "make openapi-lint",
