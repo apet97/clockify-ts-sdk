@@ -76,6 +76,15 @@ export function splitList(value: string): string[] {
  */
 export function promoteDateBoundary(value: string, flag: string, edge: "start" | "end"): string {
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        // Validate the bare date before promoting it: reject impossible months/days
+        // (2026-13-45) and silent-rollover dates (2026-02-30 -> 2026-03-02) that the
+        // regex alone lets through to the wire.
+        const probe = new Date(`${value}T00:00:00Z`);
+        if (Number.isNaN(probe.getTime()) || probe.toISOString().slice(0, 10) !== value) {
+            throw new Error(
+                `--${flag} ${JSON.stringify(value)} is not a valid calendar date (YYYY-MM-DD)`,
+            );
+        }
         return edge === "start" ? `${value}T00:00:00Z` : `${value}T23:59:59Z`;
     }
     if (Number.isNaN(Date.parse(value))) {
