@@ -198,12 +198,15 @@ describe("reports command", () => {
         expect(JSON.stringify(captured.weekly[0].weeklyFilter)).toContain("PROJECT");
     });
 
-    it("attendance sends workspaceId and range only", async () => {
+    it("attendance sends workspaceId, range, and the required (empty) attendanceFilter", async () => {
         const { client, captured } = makeClient();
         await makeProgram(client).parseAsync(["node", "clk115", "reports", "attendance"]);
         expect(captured.attendance).toHaveLength(1);
         expect(captured.attendance[0]).toMatchObject({ workspaceId: "ws-1" });
         expect(captured.attendance[0].dateRangeStart).toBeTypeOf("string");
         expect(captured.attendance[0].dateRangeEnd).toBeTypeOf("string");
+        // attendanceFilter is REQUIRED on the wire (the report 400s "Please provide
+        // filters." without it, live-verified); an empty filter is accepted.
+        expect(captured.attendance[0].attendanceFilter).toEqual({});
     });
 });

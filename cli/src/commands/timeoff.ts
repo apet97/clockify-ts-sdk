@@ -103,7 +103,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
         .option(
             "--days <n>",
             "Days requested; DAYS-unit policies need it. Provide --end or --days.",
-            (v) => Number.parseInt(v, 10),
+            parseIntArg,
         )
         .option("--note <text>", "Optional request note.")
         .option("--half-day", "Mark as a half-day request.", false)

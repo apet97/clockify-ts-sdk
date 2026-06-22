@@ -183,10 +183,15 @@ export const registerReportsCommand: Registrar = (program, services) => {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
             const data = await client.reports.attendance(
+                // attendanceFilter is REQUIRED on the wire: without it the report
+                // 400s "Please provide filters." (live-verified). An empty filter
+                // (all sub-fields optional) is accepted and returns 200, so send {}
+                // — every other report command scopes via its own filters.
                 wireBody<ClockifyApi.AttendanceReportsRequest>({
                     workspaceId,
                     dateRangeStart,
                     dateRangeEnd,
+                    attendanceFilter: {},
                 }),
             );
             printObject(data, output);

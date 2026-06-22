@@ -30,6 +30,21 @@ export function parseIntArg(value: string): number {
 }
 
 /**
+ * Commander option parser for positive decimal flags like `--amount` /
+ * `--hours-per-day`. Mirrors {@link parseIntArg}: a non-numeric value
+ * (`Number.parseFloat("abc")` is `NaN`) would otherwise serialize to `null`
+ * on the wire and 400 opaquely, so reject it at parse time with
+ * `commander.InvalidArgumentError` (exit code 2).
+ */
+export function parseFloatArg(value: string): number {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new InvalidArgumentError("must be a positive number.");
+    }
+    return parsed;
+}
+
+/**
  * Normalize a `--from` / `--to` date-range value. A bare `YYYY-MM-DD` is
  * promoted to the day's start (`T00:00:00Z`) or end (`T23:59:59Z`) edge; any
  * other value must be a valid RFC3339 timestamp and is returned unchanged.
