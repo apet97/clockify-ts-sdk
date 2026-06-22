@@ -137,3 +137,39 @@ describe("clockify_webhooks_create — name is optional (official WebhookRequest
         expect(captured.create).toBeUndefined();
     });
 });
+
+describe("clockify_setup_webhook — full WebhookEventType set (MCP-01)", () => {
+    it("accepts an event outside the original 12-item list (TIME_OFF_REQUESTED)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_setup_webhook",
+            arguments: {
+                name: "Time-off hook",
+                url: "https://example.com/hook",
+                event: "TIME_OFF_REQUESTED",
+                dry_run: true,
+            },
+        });
+        // Was hard-rejected at the 12-event enum; now the dry_run preview builds.
+        expect(res.isError).toBeFalsy();
+        expect(envelope(res).ok).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+
+    it("rejects a genuinely invalid event at the schema boundary", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_setup_webhook",
+            arguments: {
+                name: "Bad hook",
+                url: "https://example.com/hook",
+                event: "NOT_AN_EVENT",
+                dry_run: true,
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
+});

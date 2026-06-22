@@ -290,7 +290,6 @@ describeLive("@clockify115/mcp-server live sandbox", () => {
                     project_id: ids.projectId,
                     task_id: ids.taskId,
                     tag_ids: ids.tagId ? [ids.tagId] : [],
-                    allow_overlap: true,
                 },
             });
             expect(logRes.isError).toBeFalsy();

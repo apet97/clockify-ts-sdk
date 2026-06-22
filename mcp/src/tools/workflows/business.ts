@@ -20,10 +20,21 @@ import {
 import type { AnyRecord } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 
+// The full webhook event set the Clockify API accepts, mirroring the generated
+// `ClockifyApi.WebhookEventType` union. `clockify_setup_webhook` binds its
+// `event`/`webhook_event` enum to this, so the workflow tool now accepts every
+// event the low-level `clockify_webhooks_create` tool already takes as a free
+// string — it previously listed only 12 and hard-rejected the other 39 valid
+// events at schema validation. `satisfies` rejects any typo/removed event; the
+// exhaustiveness guard below fails the build if the generated union gains one.
 export const WEBHOOK_EVENTS = [
     "NEW_TIME_ENTRY",
     "TIME_ENTRY_UPDATED",
     "TIME_ENTRY_DELETED",
+    "TIME_ENTRY_SPLIT",
+    "TIME_ENTRY_RESTORED",
+    "NEW_TIMER_STARTED",
+    "TIMER_STOPPED",
     "NEW_PROJECT",
     "PROJECT_UPDATED",
     "PROJECT_DELETED",
@@ -33,7 +44,50 @@ export const WEBHOOK_EVENTS = [
     "NEW_CLIENT",
     "CLIENT_UPDATED",
     "CLIENT_DELETED",
-] as const;
+    "NEW_TAG",
+    "TAG_UPDATED",
+    "TAG_DELETED",
+    "USER_JOINED_WORKSPACE",
+    "USER_DELETED_FROM_WORKSPACE",
+    "USER_DEACTIVATED_ON_WORKSPACE",
+    "USER_ACTIVATED_ON_WORKSPACE",
+    "USER_EMAIL_CHANGED",
+    "USER_UPDATED",
+    "USERS_INVITED_TO_WORKSPACE",
+    "LIMITED_USERS_ADDED_TO_WORKSPACE",
+    "NEW_INVOICE",
+    "INVOICE_UPDATED",
+    "NEW_APPROVAL_REQUEST",
+    "APPROVAL_REQUEST_STATUS_UPDATED",
+    "TIME_OFF_REQUESTED",
+    "TIME_OFF_REQUEST_UPDATED",
+    "TIME_OFF_REQUEST_APPROVED",
+    "TIME_OFF_REQUEST_REJECTED",
+    "TIME_OFF_REQUEST_STARTED",
+    "TIME_OFF_REQUEST_WITHDRAWN",
+    "BALANCE_UPDATED",
+    "EXPENSE_CREATED",
+    "EXPENSE_UPDATED",
+    "EXPENSE_DELETED",
+    "EXPENSE_RESTORED",
+    "ASSIGNMENT_CREATED",
+    "ASSIGNMENT_UPDATED",
+    "ASSIGNMENT_DELETED",
+    "ASSIGNMENT_PUBLISHED",
+    "USER_GROUP_CREATED",
+    "USER_GROUP_UPDATED",
+    "USER_GROUP_DELETED",
+    "COST_RATE_UPDATED",
+    "BILLABLE_RATE_UPDATED",
+] as const satisfies readonly ClockifyApi.WebhookEventType[];
+
+// Compile-time drift guard: if the generated WebhookEventType union gains a
+// member missing from WEBHOOK_EVENTS, `_MissingWebhookEvent` becomes that member
+// (not `never`), the assertion type collapses to `false`, and `const … = true`
+// fails type-check — forcing this list back in sync with the regenerated SDK.
+type _MissingWebhookEvent = Exclude<ClockifyApi.WebhookEventType, (typeof WEBHOOK_EVENTS)[number]>;
+const _webhookEventsExhaustive: _MissingWebhookEvent extends never ? true : false = true;
+void _webhookEventsExhaustive;
 
 export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
     const clientId =

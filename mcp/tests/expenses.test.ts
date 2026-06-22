@@ -197,3 +197,40 @@ describe("expense create/update tools", () => {
         expect((json.data as unknown[]).length).toBe(2);
     });
 });
+
+describe("clockify_expenses_list — narrows the live list envelope (TEST-02)", () => {
+    function listContext(response: unknown, captured: Record<string, unknown>): Context {
+        return {
+            workspaceId: "ws-1",
+            client: {
+                expenses: {
+                    list: async (req: unknown) => {
+                        captured.list = req;
+                        return response;
+                    },
+                },
+            } as never,
+        };
+    }
+
+    const A = { id: "exp-a" };
+    const B = { id: "exp-b" };
+
+    // The prior shipping bug returned count:undefined because the nested
+    // {expenses:{expenses,count}} envelope was not unwrapped. Pin every tolerated
+    // shape so a regression in the narrowing closure is caught offline.
+    it.each([
+        ["nested {expenses:{expenses,count}}", { expenses: { expenses: [A, B], count: 2 } }],
+        ["single-level {expenses:[...]}", { expenses: [A, B] }],
+        ["bare array", [A, B]],
+    ])("unwraps the %s shape to a 2-item list", async (_label, response) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(listContext(response, captured));
+        const res = await client.callTool({ name: "clockify_expenses_list", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        const json = envelope(res);
+        expect(Array.isArray(json.data)).toBe(true);
+        expect((json.data as unknown[]).length).toBe(2);
+        expect((json.meta as { count: number }).count).toBe(2);
+    });
+});

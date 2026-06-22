@@ -135,6 +135,27 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect(JSON.stringify(envelope(res))).toContain("no resolvable user/group assignment");
     });
 
+    it("preserves the existing endDate when only startDate moves on a multi-day holiday", async () => {
+        const captured: Record<string, unknown> = {};
+        // A 3-day holiday (Dec 24–26). Moving only the start must NOT collapse it
+        // to a single day — regression for the `?? args.startDate` fallback that
+        // discarded the existing endDate on a start-only edit.
+        const multiDay = {
+            id: "hol-1",
+            name: "Winter break",
+            datePeriod: { startDate: "2026-12-24", endDate: "2026-12-26" },
+            userIds: ["u1"],
+        };
+        const client = await connect(holidaysContext(captured, multiDay));
+        const res = await client.callTool({
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", startDate: "2026-12-23" },
+        });
+        expect(res.isError).toBeFalsy();
+        const update = captured.update as Record<string, unknown>;
+        expect(update.datePeriod).toEqual({ startDate: "2026-12-23", endDate: "2026-12-26" });
+    });
+
     it("preserves an everyone-assigned holiday without inventing a filter", async () => {
         const captured: Record<string, unknown> = {};
         const everyone = {

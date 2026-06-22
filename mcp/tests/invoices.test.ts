@@ -173,12 +173,26 @@ describe("clockify_invoices_list — typed multi-status + sort (no wireBody esca
         const client = await connect(invoicesContext(captured));
         const res = await client.callTool({ name: "clockify_invoices_list", arguments: {} });
         expect(res.isError).toBeFalsy();
-        // No statuses/sort keys leak in when unspecified.
-        expect(captured.list).toEqual({ workspaceId: "ws-1" });
+        // No statuses/sort keys leak in when unspecified; pagination defaults to 1/50.
+        expect(captured.list).toEqual({ workspaceId: "ws-1", page: 1, "page-size": 50 });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { count: number; total: number }).count).toBe(2);
         expect((json.meta as { count: number; total: number }).total).toBe(2);
+    });
+
+    it("forwards page / pageSize as the hyphenated SDK keys and echoes them in meta", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_list",
+            arguments: { page: 3, pageSize: 25 },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.list).toEqual({ workspaceId: "ws-1", page: 3, "page-size": 25 });
+        const meta = envelope(res).meta as { page: number; pageSize: number };
+        expect(meta.page).toBe(3);
+        expect(meta.pageSize).toBe(25);
     });
 
     it("threads multiple statuses through the typed `statuses` array", async () => {
@@ -189,7 +203,12 @@ describe("clockify_invoices_list — typed multi-status + sort (no wireBody esca
             arguments: { statuses: ["SENT", "PAID"] },
         });
         expect(res.isError).toBeFalsy();
-        expect(captured.list).toEqual({ workspaceId: "ws-1", statuses: ["SENT", "PAID"] });
+        expect(captured.list).toEqual({
+            workspaceId: "ws-1",
+            page: 1,
+            "page-size": 50,
+            statuses: ["SENT", "PAID"],
+        });
     });
 
     it("forwards sort-column / sort-order with the hyphenated SDK keys", async () => {
@@ -202,6 +221,8 @@ describe("clockify_invoices_list — typed multi-status + sort (no wireBody esca
         expect(res.isError).toBeFalsy();
         expect(captured.list).toEqual({
             workspaceId: "ws-1",
+            page: 1,
+            "page-size": 50,
             "sort-column": "ISSUE_DATE",
             "sort-order": "DESCENDING",
         });
@@ -216,7 +237,12 @@ describe("clockify_invoices_list — typed multi-status + sort (no wireBody esca
         });
         expect(res.isError).toBeFalsy();
         // SENT appears once; back-compat single status folds into the array.
-        expect(captured.list).toEqual({ workspaceId: "ws-1", statuses: ["SENT", "VOID"] });
+        expect(captured.list).toEqual({
+            workspaceId: "ws-1",
+            page: 1,
+            "page-size": 50,
+            statuses: ["SENT", "VOID"],
+        });
     });
 
     it("rejects an out-of-enum status at the schema boundary before any read", async () => {

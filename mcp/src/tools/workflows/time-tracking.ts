@@ -36,7 +36,6 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
         schema.end = z.string().optional();
         schema.duration_seconds = z.number().int().min(1).optional();
         schema.durationSeconds = z.number().int().min(1).optional();
-        schema.allow_overlap = z.boolean().optional();
     }
     return schema;
 }

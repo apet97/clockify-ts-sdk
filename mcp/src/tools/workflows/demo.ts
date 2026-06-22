@@ -28,7 +28,6 @@ export async function demoSeed(ctx: Context, args: AnyRecord) {
             project_id: (pkg.ids as AnyRecord)?.projectId,
             task_id: (pkg.ids as AnyRecord)?.taskId,
             tag_ids: (pkg.ids as AnyRecord)?.tagId ? [(pkg.ids as AnyRecord).tagId] : [],
-            allow_overlap: true,
         })
     ).structuredContent;
     return successResult(

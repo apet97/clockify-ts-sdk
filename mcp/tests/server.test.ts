@@ -1,5 +1,7 @@
 // Server tests exercise the canonical envelope: every tool returns content[0].text
 // plus structuredContent matching the advertised output schema.
+import { readFileSync } from "node:fs";
+
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
@@ -239,6 +241,40 @@ describe("@clockify115/mcp-server", () => {
             ].sort(),
         );
         expect(names).toHaveLength(134);
+    });
+
+    it("advertises the version from package.json (server.ts literal must not drift)", () => {
+        // The McpServer version string is reported to every client in `initialize`.
+        // It is a hand-typed literal, so a release-please bump of package.json would
+        // otherwise leave it stale with nothing failing. Pin them equal here, the way
+        // the CLI pins program.version() in cli/tests/index.test.ts.
+        const serverSrc = readFileSync(new URL("../src/server.ts", import.meta.url), "utf8");
+        const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+            version: string;
+        };
+        const advertised = serverSrc.match(
+            /name:\s*"@clockify115\/mcp-server",\s*version:\s*"([^"]+)"/,
+        );
+        expect(advertised?.[1]).toBe(pkg.version);
+    });
+
+    it("clockify_timer_start creates a running entry and emits a created receipt", async () => {
+        // Coverage gap: the handler body was never invoked by any test (only its
+        // registration was asserted). Drive it end-to-end.
+        const client = await connect(fakeContext());
+        const res = await client.callTool({
+            name: "clockify_timer_start",
+            arguments: { description: "writing tests", projectId: "p-9", billable: true },
+        });
+        expect(res.isError).toBeFalsy();
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "{}");
+        expect(parsed.ok).toBe(true);
+        // The fake `create` echoes the request, so the assembled body is observable.
+        expect(parsed.data.body.description).toBe("writing tests");
+        expect(parsed.data.body.projectId).toBe("p-9");
+        expect(parsed.data.body.billable).toBe(true);
+        expect(typeof parsed.data.body.start).toBe("string");
+        expect(parsed.changed.created[0].type).toBe("time_entry");
     });
 
     it("advertises agent-ready metadata for every tool", async () => {
