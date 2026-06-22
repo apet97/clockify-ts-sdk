@@ -92,9 +92,9 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 name: z
                     .string()
-                    .min(1)
-                    .optional()
-                    .describe("Optional webhook name (Clockify allows 2-30 chars)."),
+                    .min(2)
+                    .max(30)
+                    .describe("Webhook name, 2-30 chars (required by Clockify)."),
                 url: z.string().url(),
                 webhookEvent: z
                     .string()
@@ -107,16 +107,19 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             assertSafeWebhookUrl(args.url);
-            // Official WebhookRequest marks `name` OPTIONAL — omit it when absent rather
-            // than sending an empty string. `url` is the only field always present here.
+            // `name` is required here to match the primary clockify_setup_webhook
+            // surface (workflows/index.ts requires it) and the corrected
+            // WebhookRequest.required[]; every live create probe (GOCLMCP
+            // webhooks.md, 2026-06-21) supplied one, and Clockify documents a 2-30
+            // char name. The schema makes it required, so it is always present + sent.
             const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
-                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "url"> & {
+                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "url" | "name"> & {
                     webhookEvent: ClockifyApi.WebhookEventType;
                 } = {
+                name: args.name,
                 url: args.url,
                 webhookEvent: args.webhookEvent as ClockifyApi.WebhookEventType,
             };
-            if (args.name) body.name = args.name;
             if (args.triggerSourceType)
                 body.triggerSourceType =
                     args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;

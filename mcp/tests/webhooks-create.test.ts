@@ -1,9 +1,10 @@
 /**
- * clockify_webhooks_create body shaping. Official WebhookRequest marks `name`
- * OPTIONAL (required = [triggerSource, triggerSourceType, url, webhookEvent]),
- * so the tool must accept a missing name and omit it from the wire body rather
- * than sending an empty string. These tests capture the request the SDK client
- * receives and assert the body envelope shape.
+ * clockify_webhooks_create body shaping. `name` (2-30 chars) is required — matching
+ * the primary clockify_setup_webhook surface (which already requires it) and the
+ * corrected WebhookRequest.required[]; every live create probe supplied one. The
+ * tool's schema makes `name` required, so it is always sent. These tests capture the
+ * request the SDK client receives and assert the body envelope shape, plus that a
+ * missing or too-short name is rejected at the schema boundary.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -51,8 +52,8 @@ function envelope(res: unknown): Record<string, unknown> {
     return JSON.parse(text) as Record<string, unknown>;
 }
 
-describe("clockify_webhooks_create — name is optional (official WebhookRequest)", () => {
-    it("omits `name` from the body when it is not supplied", async () => {
+describe("clockify_webhooks_create — name is required (matches setup_webhook + spec)", () => {
+    it("rejects a create with no name at the schema boundary", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
         const res = await client.callTool({
@@ -60,20 +61,9 @@ describe("clockify_webhooks_create — name is optional (official WebhookRequest
             arguments: { url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
         });
 
-        expect(res.isError).toBeFalsy();
-        const sent = captured.create as { workspaceId: string; body: Record<string, unknown> };
-        expect(sent.workspaceId).toBe("ws-1");
-        // No empty-string name; the key is simply absent.
-        expect("name" in sent.body).toBe(false);
-        expect(sent.body).toEqual({
-            url: "https://example.com/hook",
-            webhookEvent: "NEW_PROJECT",
-        });
-        const json = envelope(res);
-        expect(json.ok).toBe(true);
-        // The created receipt carries no name (none was provided).
-        const changed = json.changed as { created: Array<Record<string, unknown>> };
-        expect(changed.created[0]).toEqual({ type: "webhook", id: "wh-1" });
+        // name is required (matches clockify_setup_webhook + spec required[]); the handler never runs.
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
     });
 
     it("includes `name` in the body and the receipt when supplied", async () => {
@@ -100,12 +90,13 @@ describe("clockify_webhooks_create — name is optional (official WebhookRequest
         expect(changed.created[0]).toEqual({ type: "webhook", id: "wh-1", name: "stripe" });
     });
 
-    it("forwards triggerSource / triggerSourceType alongside an omitted name", async () => {
+    it("forwards triggerSource / triggerSourceType alongside the required name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
         const res = await client.callTool({
             name: "clockify_webhooks_create",
             arguments: {
+                name: "user-hook",
                 url: "https://example.com/hook",
                 webhookEvent: "USER_UPDATED",
                 triggerSourceType: "USER_ID",
@@ -115,8 +106,8 @@ describe("clockify_webhooks_create — name is optional (official WebhookRequest
 
         expect(res.isError).toBeFalsy();
         const sent = captured.create as { body: Record<string, unknown> };
-        expect("name" in sent.body).toBe(false);
         expect(sent.body).toEqual({
+            name: "user-hook",
             url: "https://example.com/hook",
             webhookEvent: "USER_UPDATED",
             triggerSourceType: "USER_ID",
@@ -124,15 +115,15 @@ describe("clockify_webhooks_create — name is optional (official WebhookRequest
         });
     });
 
-    it("still rejects an empty-string name at the schema boundary (min length kept)", async () => {
+    it("rejects a too-short name at the schema boundary (min length 2)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
         const res = await client.callTool({
             name: "clockify_webhooks_create",
-            arguments: { name: "", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
+            arguments: { name: "x", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
         });
 
-        // Optional, but if provided it must be non-empty; the handler never runs.
+        // name must be 2-30 chars; a 1-char name is rejected and the handler never runs.
         expect(res.isError).toBe(true);
         expect(captured.create).toBeUndefined();
     });
