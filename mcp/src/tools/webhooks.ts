@@ -107,11 +107,14 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             assertSafeWebhookUrl(args.url);
-            // `name` is required here to match the primary clockify_setup_webhook
-            // surface (workflows/index.ts requires it) and the corrected
-            // WebhookRequest.required[]; every live create probe (GOCLMCP
-            // webhooks.md, 2026-06-21) supplied one, and Clockify documents a 2-30
-            // char name. The schema makes it required, so it is always present + sent.
+            // `name` is required on the API-key webhook-create path — the only auth
+            // scheme this SDK uses; addon-token creates don't require it
+            // (maintainer-confirmed; see spec/evidence/discrepancies.md
+            // `webhook.create.name-required-on-api-key-not-addon`). The corrected
+            // WebhookRequest marks name minLength:2/maxLength:30 in required[], the
+            // primary clockify_setup_webhook workflow requires it, and the 2026-06-21
+            // live API-key probe supplied one. The schema makes it required, so it is
+            // always present + sent.
             const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
                 Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "url" | "name"> & {
                     webhookEvent: ClockifyApi.WebhookEventType;

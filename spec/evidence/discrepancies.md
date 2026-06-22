@@ -1411,6 +1411,43 @@ on the bare route (the granular variants — already in
   helpers update accordingly. Until then, the documented scheme is
   the authoritative source.
 
+## Webhook create — `name` requiredness is auth-scheme-dependent
+
+### `webhook.create.name-required-on-api-key-not-addon` — DOCUMENTED 2026-06-22
+
+- **Official claim:** `WebhookRequest.name` carries `minLength: 2`,
+  `maxLength: 30` and sits in the schema's `required[]` (with `url`,
+  `webhookEvent`, `triggerSource`, `triggerSourceType`) in
+  `spec/corrected/clockify.corrected.openapi.yaml`. The published spec
+  does not record that the requirement is conditional on auth scheme.
+- **Actual behavior:** `name` requiredness on
+  `POST /workspaces/{id}/webhooks` is **auth-scheme-dependent**
+  (maintainer-confirmed 2026-06-22):
+  - **API key** (user-created webhooks, `X-Api-Key`) — `name` is REQUIRED.
+  - **Addon token** (addon-created webhooks) — `name` is NOT required.
+  The same `required[]` over-specifies in the other direction too:
+  `triggerSource` is accepted EMPTY for a workspace-scoped event (the
+  2026-06-21 live probe sent `triggerSource:[]` and got 201), so
+  `required[]` is not a reliable per-field oracle for this schema.
+- **Live evidence:** the 2026-06-21 sandbox create→update→delete probe
+  (`../../../GOCLMCP/docs/openapi/sources/clockify-api-probe-lab/findings/webhooks.md`,
+  Leftovers:0) was an **API-key** call and supplied `name` — consistent
+  with "required on the API-key path." A no-name API-key create was not
+  separately probed; the requiredness itself is maintainer-confirmed, and
+  the only auth scheme this SDK family uses is the API key.
+- **MCP / CLI / SDK affected:** `clockify_webhooks_create` makes `name`
+  required (`z.string().min(2).max(30)`), matching the spec field shape
+  and the primary `clockify_setup_webhook` workflow (which already
+  required it). This SDK family is API-key-only (`X-Api-Key` /
+  `CLOCKIFY_API_KEY`), so the required-name path is the only one it can
+  reach. Same auth-scheme-conditional shape as the wrapper's
+  `mapAddonTokenRestriction(err, { authScheme })` / `AddonTokenRestrictionError`.
+- **Open questions:** whether a no-name **API-key** create returns 400
+  (expected per maintainer) or is silently accepted — convertible to
+  live-verified with a sandbox key by omitting `name` and recording the
+  status. Not blocking: the addon path (where name is optional) is
+  unreachable from this API-key SDK.
+
 ## Last-Page header — live audit (G.5)
 
 ### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
