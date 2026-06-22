@@ -562,6 +562,18 @@ flat route to the policy-scoped `timeOff.withdraw` (it could never delete before
 category archive, and project-membership PATCH/POST, all from live probes with
 verified `Leftovers:0`.
 
+**2026-06-23 live-success wave (shipped).** An API-key probe campaign against the
+sacrificial sandbox promoted `live-success` 111 → **129/184**: workspace billable +
+cost rate, user hourly + cost rate, project-user hourly + cost rate, invoice settings
+update, invoice status change, give/remove manager role, remove-user-from-group,
+member-profile PATCH, time-off balance PATCH, the three entity-info reads, webhook
+logs, and addon webhooks — all real 2xx, group/role writes cleaned up (`Leftovers:0`).
+The same campaign confirmed ~21 spec ops return a live 404/405 (bare `/policies`,
+`/scheduling/assignments`, project-level rate paths, and four wrong-method ops) and
+surfaced two missing official ops (`getWebhookEventStatusesWithLatestLog`,
+`addLimitedUsersWithInfo`) — both flagged in `spec/evidence/discrepancies.md` for an
+upstream GOCLMCP source-correction pass.
+
 **2026-06-22 live-success wave (shipped).** A 24-op sandbox CRUD-probe campaign
 (each re-listed for `Leftovers:0`, residue-free) promoted `live-success` 87 →
 **111/184**: invoices (export, info/filter, create, update, duplicate, delete, item

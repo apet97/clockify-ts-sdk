@@ -1448,6 +1448,49 @@ on the bare route (the granular variants — already in
   status. Not blocking: the addon path (where name is optional) is
   unreachable from this API-key SDK.
 
+## Live API surface audit (2026-06-23) — promotions, wrong-path flags, missing ops
+
+### `surface.audit.2026-06-23` — DOCUMENTED 2026-06-23
+
+API-key probe campaign against the sacrificial sandbox (WS `65b382b606de527a7ee2b60e`).
+Three outcomes:
+
+- **Promoted to live-success (18 ops, real 2xx).** Stamped `live-success` in the
+  corrected spec (111 → 129/184) via GOCLMCP
+  `findings/live-promotion-2026-06-23.md`. No further action; ledgered: workspace
+  billable/cost rate, user hourly/cost rate, project-user hourly/cost rate, invoice
+  settings update, invoice status change (PATCH), give/remove manager role (201/204),
+  remove-user-from-group, member-profile PATCH, time-off balance PATCH (204),
+  entity-info created/deleted/updated (GET `?type=PROJECTS`), webhook logs (POST),
+  addon webhooks (GET).
+- **FLAGGED wrong-path / wrong-method (confirmed live 404/405) — for upstream GOCLMCP
+  fix.** Maintainer-confirmed (2026-06-23) these are wrong paths, not plan-gating.
+  They remain in the corrected spec (probe-documented/documented) pending a GOCLMCP
+  source-correction pass:
+  - 405 "method not supported" (op does not exist as specified):
+    `getWorkspacesWorkspaceIdUserGroupsGroupId` (GET /user-groups/{id}),
+    `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers` (GET /user-groups/{id}/users),
+    `putWorkspacesWorkspaceId` (PUT /workspaces/{id}),
+    `putWorkspacesWorkspaceIdMemberProfileUserId` (PUT /member-profile/{id} — the real
+    op is the PATCH `updateMemberProfile`, now live-success).
+  - 404 "No static resource" (path not routed): bare `/policies` ×6
+    (get/post/get-one/put/delete/archive — time-off policies live at
+    `/time-off/policies`), `/scheduling/assignments` ×~10, project-level rate paths
+    `putWorkspacesWorkspaceIdProjectsProjectId{Hourly,Cost}Rate` (project-USER rates DO
+    work, now live-success), and `patchTimeEntriesInvoicedBulk` (already deferred).
+- **MISSING from the corrected spec (real official ops, confirmed live) — for upstream
+  add.**
+  - `getWebhookEventStatusesWithLatestLog` GET
+    /workspaces/{id}/webhooks/{webhookId}/statuses — returns 200 live; absent from all
+    GOCLMCP sources.
+  - `addLimitedUsersWithInfo` POST /workspaces/{id}/limited-users — route exists (400
+    "must not be empty" on an empty body); absent from the corrected spec.
+
+The wrong-path set and the two missing ops both trace to GOCLMCP's `AIII/openapi.yaml`
+official source predating the current Clockify web API (168 ops, 7 deprecated). A
+focused source-refresh against the current official pull is the clean fix; recorded
+here so it is flagged, not silently carried.
+
 ## Last-Page header — live audit (G.5)
 
 ### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25
