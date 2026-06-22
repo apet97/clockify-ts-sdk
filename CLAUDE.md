@@ -61,15 +61,18 @@ Running `perfect-fast` cleanly (read before your first run):
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
   packed-consumer smoke, coverage, and wrapper + mcp Stryker mutation
   scoring.
-- **`perfect-full` gate-order trap:** its prereq list is
-  `... wrapper-gates cli-gates mcp-gates performance-budgets pack-smoke coverage
-  mutation ...` — so the load-sensitive `performance-budgets` runs **before**
-  pack-smoke/coverage/mutation, right after the heavy package builds. When it
-  flakes (it does, see above), make STOPS and the slow proofs **never run** — a
-  red there does NOT mean mutation/coverage failed. Validate them solo instead:
-  `make mutation`, `make coverage`, `make pack-smoke`, `make build-determinism`,
-  plus a solo `perfect-fast` (which also carries the startup budgets). Don't keep
-  re-running the whole `perfect-full` hoping the budget cooperates — it re-flakes.
+- **`perfect-full` gate-order trap — FIXED.** `performance-budgets` is now the
+  **last** prerequisite in both `perfect-full` and `perfect-fast` (it used to run
+  *before* pack-smoke/coverage/mutation, so a flake aborted the run and the heavy
+  proofs **never ran**). With it last, a load-sensitive startup-time flake can no
+  longer skip those proofs. It is still a **fatal** prereq (file-size +
+  import/startup-crash budgets block), and it relies on GNU make's serial,
+  left-to-right, abort-on-first-failure order — don't pass `-j` (a comment above
+  the targets records this). The budget can still flake red on its own under CPU
+  contention; when it does, the heavy proofs already ran, so a red there means
+  only the startup-time budget flaked — validate solo with `make
+  performance-budgets` (and `make mutation`/`make coverage`/`make pack-smoke` if
+  needed). Run `perfect-full`/`perfect-fast` solo to avoid the flake.
 - `make perfect-fast` runs the make exit code last; capture it directly (a
   `make ... ; echo $?` compound masks make's real status).
 
