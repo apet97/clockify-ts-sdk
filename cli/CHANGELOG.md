@@ -11,6 +11,13 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- Subcommand usage errors now honor the documented exit-2 contract and the JSON
+  error envelope. `main()` applied `exitOverride()` only to the root program after
+  the subcommands were already built, so commander's children kept
+  `_exitCallback=null` and called `process.exit(1)` directly on a usage error
+  (e.g. `tags list --limit 0`, a missing required `scheduling list --from/--to`),
+  bypassing both the exit-2 mapping and `--output json` envelope. `exitOverride()`
+  is now applied recursively across the whole command tree.
 - `clk115 scheduling list` now requires `--from`/`--to` and sends them as the
   `start`/`end` query range. The underlying `GET .../scheduling/assignments/all`
   400s (code 3001) without `start` (live-verified), so the command was previously

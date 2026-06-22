@@ -158,7 +158,13 @@ export function globalFlags(program: Command): GlobalFlags {
 
 export async function main(argv: string[]): Promise<number> {
     const program = buildProgram();
-    program.exitOverride();
+    // exitOverride() must reach every subcommand (commander copies _exitCallback into
+    // children at .command() time) or a usage error in a child calls process.exit() raw.
+    const applyExitOverride = (cmd: Command): void => {
+        cmd.exitOverride();
+        for (const sub of cmd.commands) applyExitOverride(sub);
+    };
+    applyExitOverride(program);
     try {
         await program.parseAsync(argv);
         return 0;

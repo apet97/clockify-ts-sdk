@@ -41,6 +41,23 @@ describe("CLI exit and JSON error contract", () => {
         expect(payload.error).toMatch(/unknown option/i);
     });
 
+    it("returns 2 and a JSON envelope for a SUBCOMMAND usage error", async () => {
+        // exitOverride() must reach subcommands, not just the root: `tags list
+        // --limit 0` is rejected by the subcommand's parseIntArg parser. Before the
+        // recursive override the child still had _exitCallback=null and called
+        // process.exit(1), bypassing both the exit-2 contract and this JSON envelope.
+        const code = await main(["node", "clk115", "--json", "tags", "list", "--limit", "0"]);
+
+        expect(code).toBe(2);
+        const payload = JSON.parse(errored[errored.length - 1] ?? "{}") as {
+            ok?: boolean;
+            code?: string;
+            error?: string;
+        };
+        expect(payload).toMatchObject({ ok: false, code: "invalid_request" });
+        expect(payload.error).toMatch(/positive integer/i);
+    });
+
     it("returns 1 for runtime configuration errors", async () => {
         const code = await main(["node", "clk115", "--json", "status"]);
 
