@@ -310,11 +310,7 @@ for (const budget of budgets.fileSize ?? []) {
 // regression. File-size ceilings and the in-smoke count assertion stay fatal.
 const ENFORCE_TIMING = process.env.CLOCKIFY_PERF_TIMING !== "0";
 
-function timed(name, maxMs, fn) {
-    const failureCountBefore = failures.length;
-    const start = Date.now();
-    fn();
-    const elapsed = Date.now() - start;
+function recordTiming(name, maxMs, elapsed, failureCountBefore) {
     const overBudget = elapsed > maxMs;
     record({
         kind: "timing",
@@ -333,18 +329,33 @@ function timed(name, maxMs, fn) {
     }
 }
 
+// Startup-time budgets are noise-sensitive on shared CI runners and on a dev
+// laptop under load. Sample the spawn a few times, keep the crash/exit-status
+// check fatal on EVERY run, and compare the BEST (minimum) elapsed to the
+// budget: a real regression slows every sample, whereas contention only inflates
+// some — so the minimum is the truest signal and won't false-red on one noisy
+// spawn. Only a single sample is taken when timing is not enforced (the run then
+// exists solely for the crash / exit-status check).
+const TIMING_SAMPLES = ENFORCE_TIMING ? 3 : 1;
+
 function runNode(name, maxMs, args, options = {}) {
-    timed(name, maxMs, () => {
+    const failureCountBefore = failures.length;
+    const samples = [];
+    for (let attempt = 0; attempt < TIMING_SAMPLES; attempt++) {
+        const start = Date.now();
         const result = spawnSync(process.execPath, args, {
             cwd: options.cwd ?? root,
             encoding: "utf8",
             stdio: options.capture ? "pipe" : "ignore",
             env: { ...process.env, ...(options.env ?? {}) },
         });
+        samples.push(Date.now() - start);
         if (result.status !== 0) {
             fail(`${name}: command exited ${result.status}${result.stderr ? `: ${result.stderr.trim()}` : ""}`);
+            break;
         }
-    });
+    }
+    recordTiming(name, maxMs, Math.min(...samples), failureCountBefore);
 }
 
 const timing = Object.fromEntries((budgets.timing ?? []).map((item) => [item.name, item.maxMs]));
