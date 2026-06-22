@@ -19,7 +19,8 @@ commands, and temporary goal context without reading chat history.
   root gates aligned across `AGENTS.md`, `CLAUDE.md`, README files,
   and generated metadata.
 - Never rely on chat memory for open work. Add temporary context for
-  active long-running goals and remove it only after final proof.
+  active long-running goals; keep it through evidence capture and remove it
+  only after command receipts are complete and immediately before final acceptance.
 - When a follow-on agent inherits setup, auth, runtime, or support-handoff
   uncertainty, start with
   `node scripts/plan.mjs workflow --workflow first-run-support` and preserve
