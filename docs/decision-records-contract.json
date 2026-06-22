@@ -27,13 +27,14 @@
     "Consequences",
     "Proof"
   ],
-  "expectedRecordCount": 5,
+  "expectedRecordCount": 6,
   "requiredRecordIds": [
     "canonical-api-truth",
     "generated-core-boundary",
     "no-default-npm-publish",
     "sandbox-only-live-proof",
-    "local-typescript-generator"
+    "local-typescript-generator",
+    "mcp-tool-surface-scope"
   ],
   "records": [
     {
@@ -79,6 +80,15 @@
         "repo-owned local TypeScript generator",
         "spec/corrected/clockify.corrected.openapi.yaml",
         "make sdk-codegen"
+      ]
+    },
+    {
+      "id": "mcp-tool-surface-scope",
+      "path": "docs/decisions/0006-mcp-tool-surface-scope.md",
+      "contains": [
+        "134-tool TS surface is a deliberate product decision",
+        "no silent ceiling",
+        "make operation-parity"
       ]
     }
   ]
