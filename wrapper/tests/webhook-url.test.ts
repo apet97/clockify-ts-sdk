@@ -43,13 +43,21 @@ describe("validateWebhookUrl", () => {
         // mutant would wrongly allow 172.31.x.x. Witness the boundary.
         "https://172.31.255.255/hook",
         "https://192.168.1.1/hook",
+        // 224.0.0.0/4 multicast, 240.0.0.0/4 reserved (Class E), 255.255.255.255
+        // limited broadcast — all non-unicast, blocked by the `a >= 224` arm.
+        // 224.0.0.1 is the EXACT lower edge: a `>= 224` -> `> 224` mutant would
+        // wrongly allow it, so witnessing it blocked pins the inclusive bound.
+        "https://224.0.0.1/hook",
+        "https://239.255.255.250/hook",
+        "https://240.0.0.1/hook",
+        "https://255.255.255.255/hook",
     ];
     for (const candidate of privateIpv4) {
         it(`rejects private/reserved IPv4: ${candidate}`, () => {
             const result = validateWebhookUrl(candidate);
             expect(result.ok).toBe(false);
             if (!result.ok) {
-                expect(result.reason).toMatch(/private|loopback|metadata|reserved|nat/i);
+                expect(result.reason).toMatch(/private|loopback|metadata|reserved|nat|multicast|broadcast/i);
             }
         });
     }
@@ -58,6 +66,10 @@ describe("validateWebhookUrl", () => {
         expect(validateWebhookUrl("https://8.8.8.8/hook").ok).toBe(true);
         expect(validateWebhookUrl("https://172.32.0.1/hook").ok).toBe(true);
         expect(validateWebhookUrl("https://100.63.255.255/hook").ok).toBe(true);
+        // 223.255.255.255 is the last unicast address BELOW the 224.0.0.0/4
+        // multicast block: it must stay allowed so the `a >= 224` arm does not
+        // over-block. Pins the boundary against a `>= 224` -> `>= 223` mutant.
+        expect(validateWebhookUrl("https://223.255.255.255/hook").ok).toBe(true);
     });
 
     const privateIpv6 = [
@@ -80,13 +92,20 @@ describe("validateWebhookUrl", () => {
         // ::a9fe:a9fe -> 169.254.169.254; ::7f00:1 -> 127.0.0.1.
         "https://[::a9fe:a9fe]/hook",
         "https://[::7f00:1]/hook",
+        // ff00::/8 multicast (firstByte 0xff): ff02::1 all-nodes link-local,
+        // ff0e::1 global. `new URL()` keeps these un-folded, so the guard sees
+        // 0xff and the `firstByte === 0xff` arm blocks them.
+        "https://[ff02::1]/hook",
+        "https://[ff0e::1]/hook",
     ];
     for (const candidate of privateIpv6) {
         it(`rejects private/reserved IPv6: ${candidate}`, () => {
             const result = validateWebhookUrl(candidate);
             expect(result.ok).toBe(false);
             if (!result.ok) {
-                expect(result.reason).toMatch(/private|loopback|link-local|unspecified|metadata/i);
+                expect(result.reason).toMatch(
+                    /private|loopback|link-local|unspecified|metadata|multicast/i,
+                );
             }
         });
     }
@@ -135,6 +154,20 @@ describe("validateWebhookUrl", () => {
         expect(reasonFor("64:ff9b::a9fe:a9fe")).toMatch(/NAT64/);
         expect(reasonFor("2002:a9fe:a9fe::")).toMatch(/6to4/);
         expect(reasonFor("::a9fe:a9fe")).toMatch(/IPv4-compatible/);
+        // ff00::/8 multicast routes to its OWN reason, distinct from the fc00/fe80
+        // ranges above — a mutant misrouting it would flip the reason and be killed.
+        expect(reasonFor("ff02::1")).toMatch(/multicast/);
+        expect(reasonFor("ff0e::1")).toMatch(/multicast/);
+    });
+
+    it("reports the specific reason for IPv4 multicast / reserved / broadcast", () => {
+        // Pin the `a >= 224` arm's reason so a mutant routing it elsewhere is caught.
+        const reasonFor = (host: string) => {
+            const result = validateWebhookUrl(`https://${host}/hook`);
+            return result.ok ? "" : result.reason;
+        };
+        expect(reasonFor("224.0.0.1")).toMatch(/multicast|reserved|broadcast/);
+        expect(reasonFor("255.255.255.255")).toMatch(/multicast|reserved|broadcast/);
     });
 
     it("accepts routable public IPv6 literals", () => {

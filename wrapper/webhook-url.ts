@@ -107,6 +107,10 @@ function ipv4Reason([a, b]: [number, number, number, number]): string | null {
     if (a === 192 && b === 168) return "private range (192.168.0.0/16)";
     if (a === 169 && b === 254) return "link-local / cloud metadata range (169.254.0.0/16)";
     if (a === 100 && b >= 64 && b <= 127) return "carrier-grade NAT range (100.64.0.0/10)";
+    // 224.0.0.0/4 multicast, 240.0.0.0/4 reserved (Class E), and 255.255.255.255
+    // limited broadcast are all non-unicast — never a valid public webhook target.
+    // Any first octet >= 224 is one of these, so block the whole range.
+    if (a >= 224) return "multicast / reserved / broadcast range (224.0.0.0/4 + 240.0.0.0/4)";
     return null;
 }
 
@@ -230,6 +234,9 @@ function ipv6Reason(groups: number[]): string | null {
     const firstByte = (first >> 8) & 0xff;
     if (firstByte === 0xfc || firstByte === 0xfd) return "private unique-local range (fc00::/7)";
     if (first >= 0xfe80 && first <= 0xfebf) return "link-local range (fe80::/10)";
+    // ff00::/8 multicast (ff02::1 all-nodes, ff0e::1 global, etc.) — non-unicast,
+    // never a valid public webhook target. `new URL()` keeps these un-folded.
+    if (firstByte === 0xff) return "multicast range (ff00::/8)";
 
     return null;
 }

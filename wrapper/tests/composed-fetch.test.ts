@@ -453,12 +453,18 @@ describe("composedFetch — metrics", () => {
 describe("composedFetch — abort during retry backoff", () => {
     it("rejects promptly when the signal aborts mid-backoff", async () => {
         const controller = new AbortController();
+        // A deliberately huge 5s backoff: an abort that interrupts it rejects in
+        // ~10ms, one that does NOT would take the full 5s. Asserting rejection
+        // under 1s proves interruption with ~100x headroom over event-loop noise,
+        // so the check no longer false-reds under CPU load (unlike a tight 150ms
+        // bound against a 300ms backoff).
+        const backoffMs = 5000;
         const f = composedFetch({
             fetch: (async () => new Response("retry", { status: 503 })) as typeof fetch,
             retryPolicy: {
                 maxRetries: 1,
                 jitter: 0,
-                computeDelay: () => 300,
+                computeDelay: () => backoffMs,
             },
         });
 
@@ -467,7 +473,8 @@ describe("composedFetch — abort during retry backoff", () => {
         setTimeout(() => controller.abort(new Error("stop waiting")), 10);
 
         await expect(request).rejects.toThrow(/stop waiting|abort/i);
-        expect(Date.now() - started).toBeLessThan(150);
+        // Comfortably below the 5s backoff: the abort cut the wait short.
+        expect(Date.now() - started).toBeLessThan(1000);
     });
 });
 
