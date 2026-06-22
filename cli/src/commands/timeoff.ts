@@ -11,7 +11,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 interface TimeOffListRequest {
@@ -49,7 +49,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             const req: TimeOffListRequest = {
                 workspaceId,
                 page: opts.page,
-                pageSize: Math.min(Math.max(1, opts.limit), 200),
+                pageSize: clampPageSize(opts.limit, 200),
             };
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;
@@ -163,10 +163,3 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             );
         });
 };
-
-function splitList(value: string): string[] {
-    return String(value)
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
-}

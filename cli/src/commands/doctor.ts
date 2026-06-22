@@ -10,6 +10,7 @@ import type { CliConfig, GlobalFlags } from "../config.js";
 import { globalFlags, resolveFlags } from "../index.js";
 import { printObject } from "../output.js";
 
+import { rootProgram } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 const DEFAULT_CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1";
@@ -173,10 +174,4 @@ function maskId(value: string | undefined): string | undefined {
     if (!value) return undefined;
     if (value.length <= 10) return "configured";
     return `${value.slice(0, 4)}...${value.slice(-4)}`;
-}
-
-function rootProgram(cmd: Command): Command {
-    let current: Command = cmd;
-    while (current.parent != null) current = current.parent;
-    return current;
 }

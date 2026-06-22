@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerEntriesCommand: Registrar = (program, services) => {
@@ -33,7 +33,7 @@ export const registerEntriesCommand: Registrar = (program, services) => {
                 workspaceId,
                 userId,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
             };
             // Clockify's time-entry range filter needs a full RFC3339 instant, but
             // CLI users naturally type `--from 2026-06-01`. Promote a bare date to

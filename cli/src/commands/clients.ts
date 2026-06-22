@@ -8,7 +8,7 @@ import type { Command } from "commander";
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseIntArg, resolveContext } from "./helpers.js";
+import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerClientsCommand: Registrar = (program, services) => {
@@ -31,7 +31,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             const req: ClockifyApi.ListClientsRequest = {
                 workspaceId,
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
             };
             if (opts.name) req.name = opts.name;
             if (opts.archived) req.archived = true;

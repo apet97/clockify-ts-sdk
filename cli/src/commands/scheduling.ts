@@ -12,7 +12,13 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { parseFloatArg, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
+import {
+    clampPageSize,
+    parseFloatArg,
+    parseIntArg,
+    promoteDateBoundary,
+    resolveContext,
+} from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 export const registerSchedulingCommand: Registrar = (program, services) => {
@@ -42,7 +48,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 start: promoteDateBoundary(opts.from, "from", "start"),
                 end: promoteDateBoundary(opts.to, "to", "end"),
                 page: opts.page,
-                "page-size": Math.min(Math.max(1, opts.limit), 200),
+                "page-size": clampPageSize(opts.limit, 200),
             };
             if (opts.name) req.name = opts.name;
             const items = await client.scheduling.list(req);
