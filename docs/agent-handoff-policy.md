@@ -10,7 +10,6 @@ commands, and temporary goal context without reading chat history.
 |---|---|
 | `AGENTS.md` | Canonical contributor and agent contract. It owns repo boundaries, first reads, build chain, critical conventions, and hard stops. |
 | `CLAUDE.md` | Concise Claude Code companion. It must point back to `AGENTS.md`, not replace it. |
-| `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` | Temporary context-retention file for this hardening goal. Keep through evidence capture; remove only after command receipts are complete and immediately before final acceptance. |
 
 ## Handoff rules
 

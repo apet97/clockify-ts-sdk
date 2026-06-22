@@ -1,5 +1,12 @@
 # Generator comparison — Fern vs Speakeasy vs Stainless
 
+> **HISTORICAL (Phase 0 spike).** This compared generators when the repo still used
+> Fern. It has since migrated to the local generator
+> `scripts/generate-sdk-from-openapi.mjs` (ADR 0005) and ships dual ESM/CJS; the spec
+> is now 184 operations / 31 tags with ~687 synced TS files. The Fern-era figures
+> (193 ops, 723 files, "keep Fern?" framing) below are the point-in-time snapshot,
+> retained as historical context.
+
 Phase 0 spike for the Stainless/Speakeasy-quality push. Answers
 "should we keep generating with Fern, or migrate to Speakeasy /
 Stainless for v1.0?" with evidence, not vibes.
