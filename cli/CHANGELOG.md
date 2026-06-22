@@ -4,8 +4,23 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- `clk115 expenses create` — closes the CLI/MCP parity gap (the MCP
+  `clockify_expenses_create` tool and the SDK `expenses.create` already created
+  expenses). Posts a scalar body (`--amount`, `--category`, `--date`, optional
+  `--user`/`--project`/`--task`/`--notes`/`--billable`); `--user` defaults to the
+  API-key owner via `getCurrentUser`, and `--category` takes a raw id (the CLI does
+  not resolve category names, matching `expenses update`). The CLI now ships **59
+  commands** (was 58).
+
 ### Fixed
 
+- `clk115 expenses create`/`update` now promote a date-only `--date`
+  (`YYYY-MM-DD`) to RFC3339 (`…T00:00:00Z`). The expense endpoint requires
+  `yyyy-MM-ddThh:mm:ssZ` and 400s on a bare date (live-verified), so the
+  `--date YYYY-MM-DD` the help text advertises previously failed on the wire
+  (a pre-existing bug in `update`, and would have shipped in the new `create`).
 - `clk115 reports attendance` now sends the required `attendanceFilter` (empty
   object). The attendance report 400s "Please provide filters." without it
   (live-verified), so the command was broken on every invocation and diverged

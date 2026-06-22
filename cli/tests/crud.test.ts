@@ -338,8 +338,13 @@ describe("expenses CRUD", () => {
     function makeClient(): { client: ClockifyClient; calls: Calls } {
         const calls: Calls = { updates: [], deletes: [], creates: [] };
         const client = {
+            users: { getCurrentUser: async () => ({ id: "u-owner" }) },
             expenses: {
                 get: async () => ({ id: "ex-1" }),
+                create: async (body: Record<string, unknown>) => {
+                    calls.creates.push(body);
+                    return { id: "ex-new" };
+                },
                 update: async (body: Record<string, unknown>) => {
                     calls.updates.push(body);
                     return { id: "ex-1" };
@@ -352,6 +357,34 @@ describe("expenses CRUD", () => {
         };
         return { client: client as unknown as ClockifyClient, calls };
     }
+
+    it("create posts a scalar body with an explicit --user", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerExpensesCommand, client).parseAsync([
+            "node", "clk115", "--json", "expenses", "create",
+            "--amount", "12.5", "--category", "cat-1", "--date", "2026-06-18", "--user", "u-1",
+        ]);
+        expect(calls.creates).toHaveLength(1);
+        expect(calls.creates[0]).toMatchObject({
+            amount: 12.5,
+            categoryId: "cat-1",
+            date: "2026-06-18T00:00:00Z",
+            userId: "u-1",
+            workspaceId: "ws-1",
+        });
+        // create is a POST — no changeFields whitelist (that is PUT-only).
+        expect(calls.creates[0]).not.toHaveProperty("changeFields");
+        expect(lastPayload().changed).toMatchObject({ created: [{ type: "expense", id: "ex-new" }] });
+    });
+
+    it("create defaults --user to the API-key owner (getCurrentUser)", async () => {
+        const { client, calls } = makeClient();
+        await makeProgram(registerExpensesCommand, client).parseAsync([
+            "node", "clk115", "--json", "expenses", "create",
+            "--amount", "5", "--category", "cat-1", "--date", "2026-06-18",
+        ]);
+        expect(calls.creates[0]).toMatchObject({ userId: "u-owner" });
+    });
 
     it("update derives changeFields from the supplied scalars", async () => {
         const { client, calls } = makeClient();
@@ -374,7 +407,7 @@ describe("expenses CRUD", () => {
         expect(calls.updates[0]).toMatchObject({
             amount: 12.5,
             categoryId: "cat-1",
-            date: "2026-06-18",
+            date: "2026-06-18T00:00:00Z",
             userId: "u-1",
             changeFields: expect.arrayContaining(["AMOUNT", "DATE", "CATEGORY"]),
         });

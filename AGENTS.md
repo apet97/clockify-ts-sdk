@@ -23,7 +23,7 @@ subdirectory:
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
 - **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
-  interface on top of the SDK. **58 commands** across 21 top-level
+  interface on top of the SDK. **59 commands** across 21 top-level
   groups including `reports`, `shared-reports`, `users`, `doctor`, `completion`, the
   scriptable `api` raw command, and the workflow shortcuts (`start`, `stop`, `status`, `log`,
   `entries`, `projects`, `clients`, `tasks`, `tags`, `webhooks`,

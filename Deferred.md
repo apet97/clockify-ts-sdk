@@ -19,7 +19,7 @@ number looks stale — do not trust a printed count):
 
 - **46/184 live-success** in `GOCLMCP/docs/openapi/clockify-openapi.yaml`
   (= 124 probe-documented + 14 documented; total 184).
-- **92 public SDK names**, **27 subpaths**, **58 CLI commands**, **134 MCP
+- **92 public SDK names**, **27 subpaths**, **59 CLI commands**, **134 MCP
   tools**.
 - **24 cast-operator `as never` sites** under `allowedRequestCastBudget: 0`
   (zero *unannotated* `as never`; every real cast carries a `KEEP as never`).
