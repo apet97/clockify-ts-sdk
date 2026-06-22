@@ -28,10 +28,9 @@
       "strict": true,
       "noUncheckedIndexedAccess": true,
       "isolatedModules": true,
-      "noImplicitOverride": false,
-      "exactOptionalPropertyTypes": false,
-      "eoptHandwrittenClean": true,
-      "blockedBy": "GENERATED wrapper/src/** only: noImplicitOverride -> TS4114 at src/errors/ClockifyApiError.ts + src/errors/ClockifyApiTimeoutError.ts (cause shadows Error.cause); exactOptionalPropertyTypes -> exactly 10 errors across src/api/errors/*, src/core/request.ts, src/errors/ClockifyApiError.ts. Hand-written root files are EOPT-clean (0 errors); enforced by the differential gate `tsc --exactOptionalPropertyTypes | grep -v ^src/ | grep -c error == 0`. The compile flag stays off because TS checks transitively-imported src/**; the durable fix is upstream in ../GOCLMCP/."
+      "noImplicitOverride": true,
+      "exactOptionalPropertyTypes": true,
+      "resolvedNote": "All four strictness flags are ON for the wrapper compile (2026-06-22). The EOPT/TS4114 blockers were in the GENERATED error scaffold (src/errors/*, src/api/errors/*) + src/core/request.ts and were fixed at their source in this repo's local SDK generator scripts/generate-sdk-from-openapi.mjs (override on the cause members; explicit `| undefined` on optional scaffold props; signal `?? null`), NOT upstream in ../GOCLMCP/ (which owns only the OpenAPI spec). The former hand-written-only EOPT differential gate in check-consumer-cast-budget.mjs was retired now that `npm run type-check` enforces exactOptionalPropertyTypes + noImplicitOverride across the whole wrapper. See spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked (resolved)."
     },
     "cli": {
       "strict": true,

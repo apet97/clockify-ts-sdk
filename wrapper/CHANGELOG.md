@@ -7,6 +7,23 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- The SDK now compiles under `exactOptionalPropertyTypes` and `noImplicitOverride`
+  (both enabled in `wrapper/tsconfig.json`, matching cli + mcp). The local
+  generator (`scripts/generate-sdk-from-openapi.mjs`) now emits an
+  EOPT/override-clean error scaffold + request runtime: `override` on the
+  `ClockifyApiError`/`ClockifyApiTimeoutError` `cause` members, explicit
+  `| undefined` on the error classes' optional fields/constructor params, and a
+  `?? null` no-signal default in the generated `core/request.ts`. Generated
+  `.d.ts` optional error fields now read `?: T | undefined` (read-compatible for
+  consumers; the emitted runtime JS is byte-identical). The former
+  hand-written-only EOPT differential check in
+  `scripts/check-consumer-cast-budget.mjs` was retired now that `npm run
+  type-check` enforces both flags across the whole wrapper. See
+  `spec/evidence/discrepancies.md`
+  `strictness.wrapper-eopt-noimplicitoverride-blocked` (resolved).
+
 ### Security
 
 - `validateWebhookUrl` / `assertSafeWebhookUrl` now reject IPv4 multicast

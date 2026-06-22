@@ -705,7 +705,7 @@
     },
     {
       "id": "consumer-cast-budget",
-      "requirement": "Bound the consumer->SDK escape-hatch casts: every `as never` in cli/src + mcp/src is eliminated or KEEP-annotated, and per-package strictness (EOPT in cli+mcp) is recorded.",
+      "requirement": "Bound the consumer->SDK escape-hatch casts: every `as never` in cli/src + mcp/src is eliminated or KEEP-annotated, and per-package strictness (EOPT + noImplicitOverride now ON in wrapper, cli, and mcp) is recorded.",
       "evidence": [
         {
           "path": "docs/consumer-cast-budget-contract.json",

@@ -1,11 +1,13 @@
 {
-  "_blockedStrictnessFlags": "noImplicitOverride and exactOptionalPropertyTypes are intentionally NOT set here: they red on GENERATED files which the hard stop forbids editing. noImplicitOverride -> TS4114 at src/errors/ClockifyApiError.ts (public readonly cause shadows Error.cause). exactOptionalPropertyTypes -> 10 errors across src/errors/* and src/core/request.ts. The fix lives upstream in ../GOCLMCP/. cli and mcp DO enable both flags. See docs/consumer-cast-budget-contract.json strictness block and spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked.",
+  "_strictnessNote": "All four strictness flags (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride) are ON for the wrapper compile. The EOPT/TS4114 blockers in the GENERATED error scaffold + core/request.ts were fixed at their source -- this repo's local SDK generator scripts/generate-sdk-from-openapi.mjs (override on the cause members; explicit `| undefined` on optional scaffold props; signal `?? null`), NOT ../GOCLMCP/ which owns only the OpenAPI spec -- so the regenerated wrapper/src compiles clean. See spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked (resolved) and docs/consumer-cast-budget-contract.json.",
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

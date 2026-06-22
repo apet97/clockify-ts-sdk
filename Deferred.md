@@ -1186,19 +1186,19 @@ filters, can't express `upsert:false` always-create, and can't carry the per-ste
 keeps its direct-create + reverse-undo path; the entry stays `WONTFIX`. Effort:
 none.
 
-### 4f — wrapper `noImplicitOverride` / `exactOptionalPropertyTypes`. GENERATOR-CHANGE (in GOCLMCP). SKIP in-repo.
+### 4f — wrapper `noImplicitOverride` / `exactOptionalPropertyTypes`. RESOLVED 2026-06-22 (in-repo, local generator).
 
-`spec/evidence/discrepancies.md:2313`. wrapper cannot enable these flags because
-the errors live in generated `wrapper/src/**` (no-edit hard-stop):
-`noImplicitOverride` → TS4114 at `src/errors/ClockifyApiError.ts`;
-`exactOptionalPropertyTypes` → 10 errors across `src/errors/*` +
-`src/core/request.ts`. Flags stay OFF on wrapper (rationale pinned in
-`wrapper/tsconfig.json` `_blockedStrictnessFlags`), ON in cli+mcp; the
-hand-written surface is EOPT-clean and enforced by
-`scripts/check-consumer-cast-budget.mjs`. **Upstream fix:** the GOCLMCP generator
-must emit `override` keywords + EOPT-clean optionals; after re-snapshot + `make
-sdk-codegen` the wrapper flips both flags on and drops the rationale. Until then,
-OFF by design. Effort: M, in GOCLMCP. Keep deferred-to-upstream.
+`spec/evidence/discrepancies.md` `strictness.wrapper-eopt-noimplicitoverride-blocked`.
+The 12 blocker errors (`noImplicitOverride` → TS4114 at `src/errors/ClockifyApiError.ts`
++ `ClockifyApiTimeoutError.ts`; `exactOptionalPropertyTypes` → 10 across `src/errors/*`,
+`src/api/errors/*`, `src/core/request.ts`) lived in GENERATED `wrapper/src/**`, but the
+templates that emit them are this repo's LOCAL generator
+`scripts/generate-sdk-from-openapi.mjs` — NOT GOCLMCP, which owns only the OpenAPI spec
+(the earlier "GENERATOR-CHANGE in GOCLMCP" framing was a Fern-era misattribution). Fixed
+in that generator (`override` on the `cause` members; explicit `| undefined` on optional
+scaffold props; `signal ?? null`); after `make sdk-codegen` the wrapper compiles clean,
+both flags are ON, and the hand-written-only EOPT differential in
+`scripts/check-consumer-cast-budget.mjs` was retired. Effort: S, in-repo. DONE.
 
 ---
 
