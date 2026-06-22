@@ -22,6 +22,14 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   afternoon half-day impossible; a bare `half_day: true` still defaults to
   `FIRST_HALF`.
 
+### Changed
+
+- Internal: the byte-identical `listUsers` (workspace user listing, `page-size:
+  200`) and `meUserId` (current-user id) helpers that were copy-pasted into the
+  holidays, users, scheduling, groups, and time-off tool modules now live once in
+  `src/tools/user-refs.ts` (`userRefHelpers(ctx)`). Pure refactor — identical
+  request shape, return shape, and behavior; no tool, schema, or output change.
+
 ### Fixed
 
 - `clockify_invoices_update_status` sent the wrong wire field — `body: { status }`

@@ -17,17 +17,10 @@ import { defineTool, entityId, errorResult, successResult, writeReceipt } from "
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
+import { userRefHelpers } from "./user-refs.js";
 
 export function registerHolidaysTools(server: McpServer, ctx: Context): void {
-    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.users.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            "include-roles": false,
-        })) as Array<{ id?: string; name?: string }>;
-        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
-    };
+    const { listUsers, meUserId } = userRefHelpers(ctx);
     const listGroups = async (): Promise<Array<{ id: string; name: string }>> => {
         const rows = (await ctx.client.userGroups.list({
             workspaceId: ctx.workspaceId,
@@ -36,12 +29,6 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         })) as Array<{ id?: string; name?: string }>;
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
-    const meUserId = async (): Promise<string> =>
-        // Lazy single-flight memo when the context provides one (fetched once per
-        // server lifetime); fall back to a direct call for hand-built contexts.
-        ctx.currentUserId
-            ? await ctx.currentUserId()
-            : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
     defineTool(
         server,
         "clockify_holidays_list",

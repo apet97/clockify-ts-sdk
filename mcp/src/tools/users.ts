@@ -11,9 +11,10 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineTool, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
+import { userRefHelpers } from "./user-refs.js";
 
 const WORKSPACE_ROLES = ["WORKSPACE_ADMIN", "TEAM_MANAGER", "PROJECT_MANAGER"] as const;
 
@@ -28,21 +29,7 @@ const roleInput = {
 };
 
 export function registerUsersTools(server: McpServer, ctx: Context): void {
-    const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.users.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            "include-roles": false,
-        })) as Array<{ id?: string; name?: string }>;
-        return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
-    };
-    const meUserId = async (): Promise<string> =>
-        // Lazy single-flight memo when the context provides one (fetched once per
-        // server lifetime); fall back to a direct call for hand-built contexts.
-        ctx.currentUserId
-            ? await ctx.currentUserId()
-            : (entityId(await ctx.client.users.getCurrentUser()) ?? "");
+    const { listUsers, meUserId } = userRefHelpers(ctx);
 
     defineTool(
         server,
