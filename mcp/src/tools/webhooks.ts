@@ -20,7 +20,10 @@ import { defineTool, entityId, successResult, writeReceipt } from "../result.js"
  * Accepts a single webhook object or a list; non-objects pass through unchanged.
  */
 const WEBHOOK_SECRET_FIELDS = ["authToken"] as const;
-function redactWebhook<T>(value: T): T {
+// Exported so the workflow-first `clockify_setup_webhook` (workflows/business.ts)
+// redacts the same secret on its create path — the domain tools below are not the
+// only writer that receives Clockify's authToken-bearing create response.
+export function redactWebhook<T>(value: T): T {
     if (Array.isArray(value)) return value.map((item) => redactWebhook(item)) as unknown as T;
     if (!value || typeof value !== "object") return value;
     const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };

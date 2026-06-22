@@ -49,6 +49,10 @@ function invoicesContext(captured: Record<string, unknown>): Context {
                     captured.list = req;
                     return { invoices: [{ id: "inv-1" }, { id: "inv-2" }], total: 2 };
                 },
+                updateStatus: async (req: unknown) => {
+                    captured.updateStatus = req;
+                    return { id: "inv-1" };
+                },
             },
         } as never,
     };
@@ -254,5 +258,23 @@ describe("clockify_invoices_list — typed multi-status + sort (no wireBody esca
         });
         expect(res.isError).toBe(true);
         expect(captured.list).toBeUndefined();
+    });
+});
+
+describe("clockify_invoices_update_status — sends the invoiceStatus wire field", () => {
+    it("renames status -> invoiceStatus in the body (live: status alone 400s)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_update_status",
+            arguments: { invoiceId: "inv-1", status: "PAID" },
+        });
+        expect(res.isError).toBeFalsy();
+        const sent = captured.updateStatus as { workspaceId: string; invoiceId: string; body: Record<string, unknown> };
+        expect(sent.workspaceId).toBe("ws-1");
+        expect(sent.invoiceId).toBe("inv-1");
+        // The wire requires `invoiceStatus`; a top-level/`status` body is rejected.
+        expect(sent.body).toEqual({ invoiceStatus: "PAID" });
+        expect("status" in sent.body).toBe(false);
     });
 });

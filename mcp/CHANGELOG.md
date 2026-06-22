@@ -4,6 +4,16 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Security
+
+- `clockify_setup_webhook` (workflow) now redacts the webhook `authToken` HMAC
+  signing secret from its result, like the domain `clockify_webhooks_create` tool
+  already did. The workflow create path returned Clockify's raw create response —
+  which includes `authToken` — verbatim into the result envelope, so an agent
+  transcript could leak the signing secret. `redactWebhook` is now exported from
+  `webhooks.ts` and applied on the workflow path; `webhooks-redact.test.ts` gains
+  a `clockify_setup_webhook` confirm-flow case.
+
 ### Added
 
 - `clockify_request_time_off`: a `half_day_period` arg (`FIRST_HALF` |
@@ -13,6 +23,17 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   `FIRST_HALF`.
 
 ### Fixed
+
+- `clockify_invoices_update_status` sent the wrong wire field — `body: { status }`
+  behind an `as never` cast — so the change-status PATCH 400s "invalid value for
+  field: [invoiceStatus]... can't be empty" (live-verified) and silently never
+  applied. The official op + generated body type both require `invoiceStatus`; the
+  body is now `{ invoiceStatus: args.status }` and the cast is dropped (it compiles
+  cleanly). + a regression test asserting the wire body.
+- `clockify_custom_fields_update`: the workspace custom-field `status` description
+  listed the wrong enum (`ACTIVE | INACTIVE`); the official `editCustomField` set is
+  `INACTIVE | VISIBLE | INVISIBLE` (matching the sibling project-level tool). A model
+  trusting the old text would send `ACTIVE` and 400. Description-only change.
 
 - `clockify_holidays_update`: a start-only edit no longer collapses a multi-day
   holiday to a single day. The replace-PUT body fell back to `args.startDate`
