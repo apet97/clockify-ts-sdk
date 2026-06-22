@@ -79,6 +79,25 @@ describe("expense create/update tools", () => {
         expect(envelope(res).ok).toBe(true);
     });
 
+    it("clockify_expenses_create promotes a date-only date to RFC3339 (wire requires it)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_create",
+            arguments: {
+                amount: 5,
+                categoryId: CATEGORY_ID,
+                projectId: "proj-1",
+                date: "2026-06-01",
+                userId: "user-9",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        // A bare YYYY-MM-DD 400s "invalid value for field: [date]" on the wire
+        // (live-verified); the tool promotes it to midnight UTC.
+        expect((captured.create as { date: string }).date).toBe("2026-06-01T00:00:00Z");
+    });
+
     it("clockify_expenses_create honors an explicit userId", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
