@@ -38,9 +38,8 @@ Before a maintainer intentionally ships or hands off artifacts:
    live-proof deferral can explain a draft blocker, but final readiness requires
    completed sandbox live proof.
 7. Capture command receipts from command output.
-8. Remove `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md`
-   only after the command receipts are complete and immediately before
-   `make perfect-full`.
+8. Run the full deterministic proof (`make perfect-full`) immediately before the
+   release tag or handoff, only after the command receipts are complete.
 
 Do not run `npm publish` from a developer laptop without explicit
 maintainer approval. Do not change CI/CD, provenance, auth, or release

@@ -85,9 +85,6 @@ TypeScript or local docs first.
 4. Keep npm publication disabled by default; do not touch release workflow or
    auth without explicit maintainer approval.
 5. Capture command receipts only from real command output.
-6. Remove `docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md` only after
-   proof evidence is captured, receipts are complete, and permanent docs
-   contain the surviving context; then run `make perfect-full`.
 
 ## Readiness context maintenance rule
 

@@ -1,5 +1,11 @@
 # Deferred / structural work — clockify-ts-sdk
 
+> **HISTORICAL SNAPSHOT (updated 2026-06-22).** All tracked items here have shipped
+> (see AGENTS.md §8). Live-success is now **111/184** (was 46/184 when this was
+> written); the SDK/GOCLMCP baselines quoted below (SDK HEAD `c84f00e`, GOCLMCP
+> `v0.4.5`) are the point-in-time state this plan was written against and are
+> retained as historical context. EOPT / noImplicitOverride (Item 4f) is RESOLVED.
+
 Both repos are green and there is no correctness or type-safety hole open here.
 `clockify-ts-sdk` is at SDK HEAD **`c84f00e`** (last code/spec-bearing commit
 `4323b1b`; `8a29699` + `c84f00e` touch this file only); the sister generator

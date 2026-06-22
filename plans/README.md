@@ -16,7 +16,7 @@ gap from returning, #9 (CLI `start --task` silently drops the task), and #10
 |------|-------|----------|--------|------------|--------|
 | 001 | Route every destructive MCP domain delete through the dry_run → confirm_token guard | P1 | M | — | DONE |
 | 002 | Gate that every destructive MCP delete is guarded or explicitly exempt | P1 | S | 001 | DONE |
-| 003 | Make `clk115 start --task` fail clearly when `--project` is missing | P2 | S | — | DONE |
+| 003 | Make `clk115 start --task` fail clearly when `--project` is missing | P2 | S | — | DONE (shipped; plan file removed — see `cli/src/commands/start.ts` + `cli/CHANGELOG.md`) |
 | 004 | Extend Dependabot to monitor the cli and mcp packages | P2 | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
