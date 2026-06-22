@@ -1,20 +1,26 @@
 /**
- * `clk115 expenses {list,get,update,delete}`. There is no `expenses create`
- * yet — but NOT because a receipt upload is required: the live create-expense
- * endpoint accepts a scalar body (the synced SDK's
- * `ExpenseCreateRequestFlattened.file` is OPTIONAL), and both the MCP
- * `clockify_expenses_create` tool and the raw SDK `expenses.create` already
- * create expenses without a file. Adding a CLI `expenses create` is therefore a
- * deliberate surface expansion (it bumps the headline command count and the
- * generated command tables), tracked as a follow-up rather than bundled here.
+ * `clk115 expenses {list,create,get,update,delete}`. `create` posts a scalar
+ * body (no receipt upload required): the live create-expense endpoint validates
+ * the scalar fields, and the synced SDK's `ExpenseCreateRequestFlattened.file`
+ * is OPTIONAL, so this mirrors the MCP `clockify_expenses_create` tool and the
+ * raw SDK `expenses.create`. Like that tool, `--user` defaults to the API-key
+ * owner. Unlike the MCP tool, `--category` takes a raw category ID (the CLI does
+ * not resolve category names — same as `expenses update`).
  */
+import { entityId } from "clockify-sdk-ts-115/operation-receipt";
 import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
-import { clampPageSize, parseFloatArg, parseIntArg, resolveContext } from "./helpers.js";
+import {
+    clampPageSize,
+    parseFloatArg,
+    parseIntArg,
+    promoteDateBoundary,
+    resolveContext,
+} from "./helpers.js";
 import type { Registrar } from "./types.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -116,6 +122,68 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         });
 
     expenses
+        .command("create")
+        .requiredOption("--amount <n>", "Amount.", parseFloatArg)
+        .requiredOption("--category <id>", "Expense category ID.")
+        .requiredOption("--date <date>", "Expense date (YYYY-MM-DD or ISO).")
+        .option("--user <id>", "Owning user ID (defaults to the API-key owner).")
+        .option("--project <id>", "Project ID.")
+        .option("--task <id>", "Task ID.")
+        .option("--notes <text>", "Notes.")
+        .option("--billable", "Mark as billable.")
+        .option("--no-billable", "Mark as non-billable.")
+        .description(
+            "Create an expense from amount, category, and date; defaults the user to the API-key owner.",
+        )
+        .action(async function (this: Command, opts) {
+            const { client, workspaceId, output } = await resolveContext(this, services);
+            let userId = opts.user as string | undefined;
+            if (!userId) {
+                userId = entityId(await client.users.getCurrentUser());
+                if (!userId) {
+                    throw new Error(
+                        "could not determine user ID from getCurrentUser response; pass --user.",
+                    );
+                }
+            }
+            // Create is a POST: unlike the expense PUT it needs no changeFields list.
+            const fields: ExpenseUpdateFields = {
+                amount: opts.amount,
+                categoryId: opts.category,
+                date: promoteDateBoundary(opts.date, "date", "start"),
+            };
+            if (opts.project) fields.projectId = opts.project;
+            if (opts.task) fields.taskId = opts.task;
+            if (opts.notes !== undefined) fields.notes = opts.notes;
+            if (opts.billable !== undefined) fields.billable = opts.billable;
+            // No cast needed: the create request's multipart `file` is optional, so
+            // the scalar body type-checks directly (unlike the expense PUT).
+            const created = (await client.expenses.create({
+                ...fields,
+                userId,
+                workspaceId,
+            })) as { id?: string };
+            const data = { id: created.id ?? "" };
+            printReceipt(
+                {
+                    ok: true,
+                    action: "expenses.create",
+                    entity: "expense",
+                    ids: { expenseId: data.id },
+                    data,
+                    changed: { created: [{ type: "expense", id: data.id }] },
+                    next: [
+                        {
+                            command: `clk115 expenses get ${data.id} --json`,
+                            reason: "Verify the new expense.",
+                        },
+                    ],
+                },
+                output,
+            );
+        });
+
+    expenses
         .command("get")
         .argument("<id>", "Expense ID.")
         .description("Get one expense by ID.")
@@ -145,7 +213,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             const fields: ExpenseUpdateFields = {
                 amount: opts.amount,
                 categoryId: opts.category,
-                date: opts.date,
+                date: promoteDateBoundary(opts.date, "date", "start"),
             };
             if (opts.project) fields.projectId = opts.project;
             if (opts.task) fields.taskId = opts.task;

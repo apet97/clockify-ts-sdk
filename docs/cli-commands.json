@@ -138,6 +138,10 @@
       "description": "Get one expense by ID."
     },
     {
+      "command": "clk115 expenses create --amount N --category id --date YYYY-MM-DD [--user id] [--project id] [--task id] [--notes text] [--billable|--no-billable]",
+      "description": "Create an expense (scalar body; --user defaults to the API-key owner)."
+    },
+    {
       "command": "clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable|--no-billable]",
       "description": "Update an expense (full replace of amount, category, date)."
     },

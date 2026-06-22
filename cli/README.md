@@ -101,6 +101,7 @@ Legacy top-level fields such as `id` remain for simple shell scripts.
 | `clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]` | Create an invoice draft. |
 | `clk115 expenses list [--limit N] [--page N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]` | List workspace expenses. |
 | `clk115 expenses get <id>` | Get one expense by ID. |
+| `clk115 expenses create --amount N --category id --date YYYY-MM-DD [--user id] [--project id] [--task id] [--notes text] [--billable\|--no-billable]` | Create an expense (scalar body; --user defaults to the API-key owner). |
 | `clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable\|--no-billable]` | Update an expense (full replace of amount, category, date). |
 | `clk115 expenses delete <id>` | Delete an expense. |
 | `clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]` | List time-off requests. |
