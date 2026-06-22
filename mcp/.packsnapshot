@@ -72,6 +72,8 @@ dist/tools/timer-stop.d.ts
 dist/tools/timer-stop.js
 dist/tools/timer.d.ts
 dist/tools/timer.js
+dist/tools/user-refs.d.ts
+dist/tools/user-refs.js
 dist/tools/users.d.ts
 dist/tools/users.js
 dist/tools/webhooks.d.ts
