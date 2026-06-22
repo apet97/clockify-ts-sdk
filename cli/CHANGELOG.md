@@ -16,6 +16,13 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- `clk115 entries` / `scheduling` date-range flags now reject an impossible or
+  silently-rolled-over `--from`/`--to` value. `promoteDateBoundary` matched a bare
+  `YYYY-MM-DD` by regex alone, so `2026-13-45` (impossible) and `2026-02-30` (rolls
+  over to 2026-03-02) reached the wire as a real timestamp; they now raise a clear
+  local "not a valid calendar date" error before the request is built.
+  `promote-date-boundary.test.ts` covers the valid, impossible, rollover,
+  RFC3339-passthrough, and non-date cases.
 - `clk115 expenses create`/`update` now promote a date-only `--date`
   (`YYYY-MM-DD`) to RFC3339 (`…T00:00:00Z`). The expense endpoint requires
   `yyyy-MM-ddThh:mm:ssZ` and 400s on a bare date (live-verified), so the
