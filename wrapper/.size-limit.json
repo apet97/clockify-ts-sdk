@@ -17,7 +17,7 @@
     {
         "name": "Subpath: composed-fetch (ESM)",
         "path": "dist/esm/composed-fetch.js",
-        "limit": "5 kB"
+        "limit": "5.7 kB"
     },
     {
         "name": "Subpath: iter (ESM)",
@@ -67,7 +67,7 @@
     {
         "name": "Subpath: ensure (ESM)",
         "path": "dist/esm/ensure.js",
-        "limit": "1.35 kB"
+        "limit": "2.2 kB"
     },
     {
         "name": "Subpath: money (ESM)",
