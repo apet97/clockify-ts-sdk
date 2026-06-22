@@ -474,7 +474,6 @@ describe("clockify_project_custom_fields_update", () => {
                 customFieldId: FIELD_ID,
                 status: "VISIBLE",
                 defaultValue: "",
-                allowedValues: ["A", "B"],
             },
         });
 
@@ -484,7 +483,7 @@ describe("clockify_project_custom_fields_update", () => {
             workspaceId: "ws-1",
             projectId: PROJECT_ID,
             customFieldId: FIELD_ID,
-            body: { status: "VISIBLE", defaultValue: "", allowedValues: ["A", "B"] },
+            body: { status: "VISIBLE", defaultValue: "" },
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
@@ -493,6 +492,29 @@ describe("clockify_project_custom_fields_update", () => {
         expect(meta).toEqual({ workspaceId: "ws-1", projectId: PROJECT_ID, customFieldId: FIELD_ID });
         const changed = json.changed as { updated: Array<{ type: string; id: string }> };
         expect(changed.updated).toEqual([{ type: "project_custom_field", id: FIELD_ID }]);
+    });
+
+    it("never sends allowedValues to the project PATCH (not part of CustomFieldProjectDefaultValuesRequest)", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(customFieldsContext(captured));
+        // `allowedValues` is no longer a schema field. Passing it is ignored by the
+        // transport (additional props are stripped) and never reaches the wire body —
+        // the project default-value PATCH only accepts defaultValue + status.
+        const res = await client.callTool({
+            name: "clockify_project_custom_fields_update",
+            arguments: {
+                projectId: PROJECT_ID,
+                customFieldId: FIELD_ID,
+                status: "VISIBLE",
+                defaultValue: "Manila",
+                allowedValues: ["A", "B"],
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        const sent = captured.updateForProject as { body: Record<string, unknown> };
+        expect(sent.body).toEqual({ status: "VISIBLE", defaultValue: "Manila" });
+        expect("allowedValues" in sent.body).toBe(false);
     });
 
     it("sends an empty body when only the ids are supplied", async () => {

@@ -51,7 +51,7 @@ function ctxWith(wire: (client: Record<string, Record<string, unknown>>) => void
         expenseCategories: resource({ archive: async () => ({}), delete: async () => ({}) }),
         expenses: resource({ delete: async () => ({}) }),
         invoices: resource({ delete: async () => ({}), list: async () => ({ invoices: [] }) }),
-        scheduling: resource({ delete: async () => ({}) }),
+        scheduling: resource({ delete: async () => ({}), deleteRecurring: async () => ({}) }),
         timeOff: resource({ delete: async () => ({}), submit: async (req: Record<string, unknown>) => ({ id: "x1", ...req }) }),
         timeOffPolicies: resource({}),
         sharedReports: resource({ delete: async () => ({}) }),
@@ -108,7 +108,7 @@ const guarded: GuardCase[] = [
     { tool: "clockify_expenses_categories_delete", group: "expenseCategories", method: "delete", args: { categoryId: id(15) }, echo: { categoryId: id(15) } },
     { tool: "clockify_expenses_delete", group: "expenses", method: "delete", args: { expenseId: id(16) }, echo: { expenseId: id(16) } },
     { tool: "clockify_invoices_delete", group: "invoices", method: "delete", args: { invoiceId: id(17) }, echo: { invoiceId: id(17) } },
-    { tool: "clockify_scheduling_assignments_delete", group: "scheduling", method: "delete", args: { assignmentId: id(18) }, echo: { assignmentId: id(18) } },
+    { tool: "clockify_scheduling_assignments_delete", group: "scheduling", method: "deleteRecurring", args: { assignmentId: id(18) }, echo: { assignmentId: id(18) } },
     { tool: "clockify_time_off_requests_delete", group: "timeOff", method: "withdraw", args: { policyId: id(27), requestId: id(19) }, echo: { requestId: id(19) } },
     { tool: "clockify_shared_reports_delete", group: "sharedReports", method: "delete", args: { shared_report_id: id(20) }, echo: { sharedReportId: id(20) } },
 ];

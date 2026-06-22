@@ -87,7 +87,11 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             description:
                 "Subscribe a URL to a Clockify event. URL must be HTTPS and is rejected pre-flight if it points at a loopback, private, link-local, CGNAT, or cloud-metadata host.",
             inputSchema: {
-                name: z.string().min(1),
+                name: z
+                    .string()
+                    .min(1)
+                    .optional()
+                    .describe("Optional webhook name (Clockify allows 2-30 chars)."),
                 url: z.string().url(),
                 webhookEvent: z
                     .string()
@@ -100,14 +104,16 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         },
         async (args) => {
             assertSafeWebhookUrl(args.url);
+            // Official WebhookRequest marks `name` OPTIONAL — omit it when absent rather
+            // than sending an empty string. `url` is the only field always present here.
             const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
-                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
+                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "url"> & {
                     webhookEvent: ClockifyApi.WebhookEventType;
                 } = {
-                name: args.name,
                 url: args.url,
                 webhookEvent: args.webhookEvent as ClockifyApi.WebhookEventType,
             };
+            if (args.name) body.name = args.name;
             if (args.triggerSourceType)
                 body.triggerSourceType =
                     args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;

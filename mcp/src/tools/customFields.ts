@@ -194,21 +194,26 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         {
             title: "Update a project custom field",
             description:
-                "Update a custom field association on a project (status, defaults, allowed values).",
+                "Update a custom field association on a project (status and/or default value). Allowed values are defined on the workspace-level definition, not the project association.",
             inputSchema: {
                 projectId: z.string().min(1),
                 customFieldId: z.string().min(1),
-                status: z.string().optional(),
+                status: z
+                    .string()
+                    .optional()
+                    .describe("Project custom field status: INACTIVE | VISIBLE | INVISIBLE."),
                 defaultValue: z.string().optional(),
-                allowedValues: z.array(z.string()).optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
+            // editProjectCustomFieldDefaultValue (PATCH project custom field) accepts ONLY
+            // defaultValue + status (CustomFieldProjectDefaultValuesRequest). allowedValues is
+            // not part of that body — it belongs to the workspace-level definition — so it is
+            // never sent here.
             const body: Record<string, unknown> = {};
             if (args.status) body.status = args.status;
             if (args.defaultValue !== undefined) body.defaultValue = args.defaultValue;
-            if (args.allowedValues) body.allowedValues = args.allowedValues;
             const updated = await ctx.client.customFields.updateForProject({
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,

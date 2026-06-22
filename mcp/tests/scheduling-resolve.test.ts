@@ -27,8 +27,12 @@ function schedulingContext(captured: Record<string, unknown>): Context {
                     return { id: "asg-1" };
                 },
                 update: async (req: unknown) => {
-                    captured.update = req;
+                    captured.update = req; // dead bare PUT — must NOT be called
                     return { id: "asg-1" };
+                },
+                updateRecurring: async (req: unknown) => {
+                    captured.updateRecurring = req;
+                    return [{ id: "asg-1" }];
                 },
             },
             users: {
@@ -151,16 +155,49 @@ describe("scheduling assignments resolve NAME -> id", () => {
         expect(create.projectId).toBe(PROJ);
     });
 
-    it("assignments_update resolves only the supplied slots and leaves omitted ones out of body", async () => {
+    it("assignments_update no longer resolves/forwards user or project — the recurring edit route cannot reassign them", async () => {
+        // The live edit route is PATCH /scheduling/assignments/recurring/{id}
+        // (AssignmentUpdateRequestV1), which has no user/project field. So the
+        // tool rejects userId/projectId up front rather than resolving a NAME
+        // and silently dropping it; neither SDK update method is called.
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
         const res = await client.callTool({
             name: "clockify_scheduling_assignments_update",
-            arguments: { assignmentId: "asg-1", userId: "Alice" },
+            arguments: {
+                assignmentId: "asg-1",
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-06-07T00:00:00Z",
+                userId: "Alice",
+            },
+        });
+        expect(res.isError).toBe(true);
+        const env = envelope(res);
+        expect(env.ok).toBe(false);
+        expect((env.error as { code?: string }).code).toBe("invalid_request");
+        expect(captured.usersListCalled).toBeUndefined(); // no NAME resolution attempted
+        expect(captured.update).toBeUndefined();
+        expect(captured.updateRecurring).toBeUndefined();
+    });
+
+    it("assignments_update forwards a plain field edit to updateRecurring (PATCH), not the dead bare update", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await client.callTool({
+            name: "clockify_scheduling_assignments_update",
+            arguments: {
+                assignmentId: "asg-1",
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-06-07T00:00:00Z",
+                note: "moved",
+            },
         });
         expect(res.isError).toBeFalsy();
-        const update = captured.update as { body?: { userId?: string; projectId?: string } };
-        expect(update.body?.userId).toBe(ALICE);
-        expect(update.body?.projectId).toBeUndefined();
+        expect(captured.update).toBeUndefined();
+        expect(captured.updateRecurring).toEqual({
+            workspaceId: "ws-1",
+            assignmentId: "asg-1",
+            body: { start: "2026-06-01T00:00:00Z", end: "2026-06-07T00:00:00Z", note: "moved" },
+        });
     });
 });

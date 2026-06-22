@@ -45,6 +45,10 @@ function invoicesContext(captured: Record<string, unknown>): Context {
                     captured.create = req;
                     return { id: "inv-9", number: "INV-009" };
                 },
+                list: async (req: unknown) => {
+                    captured.list = req;
+                    return { invoices: [{ id: "inv-1" }, { id: "inv-2" }], total: 2 };
+                },
             },
         } as never,
     };
@@ -160,5 +164,69 @@ describe("clockify_invoices_create — note/subject applied via follow-up PUT", 
         });
         expect(captured.update).toBeUndefined();
         expect(captured.get).toBeUndefined();
+    });
+});
+
+describe("clockify_invoices_list — typed multi-status + sort (no wireBody escape)", () => {
+    it("pins only the workspace when no filters are given", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({ name: "clockify_invoices_list", arguments: {} });
+        expect(res.isError).toBeFalsy();
+        // No statuses/sort keys leak in when unspecified.
+        expect(captured.list).toEqual({ workspaceId: "ws-1" });
+        const json = envelope(res);
+        expect(json.ok).toBe(true);
+        expect((json.meta as { count: number; total: number }).count).toBe(2);
+        expect((json.meta as { count: number; total: number }).total).toBe(2);
+    });
+
+    it("threads multiple statuses through the typed `statuses` array", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_list",
+            arguments: { statuses: ["SENT", "PAID"] },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.list).toEqual({ workspaceId: "ws-1", statuses: ["SENT", "PAID"] });
+    });
+
+    it("forwards sort-column / sort-order with the hyphenated SDK keys", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_list",
+            arguments: { sortColumn: "ISSUE_DATE", sortOrder: "DESCENDING" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.list).toEqual({
+            workspaceId: "ws-1",
+            "sort-column": "ISSUE_DATE",
+            "sort-order": "DESCENDING",
+        });
+    });
+
+    it("merges a single `status` with `statuses[]` and dedupes", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_list",
+            arguments: { status: "SENT", statuses: ["SENT", "VOID"] },
+        });
+        expect(res.isError).toBeFalsy();
+        // SENT appears once; back-compat single status folds into the array.
+        expect(captured.list).toEqual({ workspaceId: "ws-1", statuses: ["SENT", "VOID"] });
+    });
+
+    it("rejects an out-of-enum status at the schema boundary before any read", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_list",
+            arguments: { statuses: ["NOT_A_STATUS"] },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.list).toBeUndefined();
     });
 });

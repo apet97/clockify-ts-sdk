@@ -26,6 +26,12 @@ function groupsContext(captured: Record<string, unknown>): Context {
                     captured.addMembers = req;
                     return { id: "g-1" };
                 },
+                // GET /user-groups/{id}/users is a dead 405 route ("DOES NOT
+                // EXIST") and the generated method is typed `void`. Throw so any
+                // tool that still reaches for it fails the suite loudly.
+                listMembers: async () => {
+                    throw new Error("userGroups.listMembers must not be called (dead 405 route)");
+                },
             },
             users: {
                 list: async () => {
@@ -34,6 +40,13 @@ function groupsContext(captured: Record<string, unknown>): Context {
                         { id: ALICE, name: "Alice" },
                         { id: SAM1, name: "Sam" },
                         { id: SAM2, name: "Sam" },
+                    ];
+                },
+                filterWorkspaceUsers: async (req: unknown) => {
+                    captured.filterWorkspaceUsers = req;
+                    return [
+                        { id: ALICE, name: "Alice" },
+                        { id: SAM1, name: "Sam" },
                     ];
                 },
                 getCurrentUser: async () => ({ id: ME }),
@@ -111,5 +124,38 @@ describe("clockify_groups_add_member resolves NAME -> id", () => {
         expect(res.isError).toBeFalsy();
         const req = captured.addMembers as { userId?: string };
         expect(req.userId).toBe(ALICE);
+    });
+});
+
+describe("clockify_groups_list_members uses the documented users filter (not the dead 405 route)", () => {
+    it("returns members via users.filterWorkspaceUsers and never calls userGroups.listMembers", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(groupsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_groups_list_members",
+            arguments: { groupId: "g-1" },
+        });
+        // The throwing listMembers stub would have surfaced as isError if the
+        // tool still reached for the dead GET /user-groups/{id}/users route.
+        expect(res.isError).toBeFalsy();
+        const env = envelope(res);
+        expect(env.ok).toBe(true);
+        // The matched users come back as the data payload (POST /users/info).
+        expect(JSON.stringify(env.data)).toContain(ALICE);
+        expect(JSON.stringify(env.data)).toContain(SAM1);
+        expect((env.meta as { count?: number }).count).toBe(2);
+    });
+
+    it("forwards the group id to the users filter as userGroups:[groupId]", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(groupsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_groups_list_members",
+            arguments: { groupId: "g-1" },
+        });
+        expect(res.isError).toBeFalsy();
+        const req = captured.filterWorkspaceUsers as { workspaceId?: string; userGroups?: string[] };
+        expect(req.workspaceId).toBe("ws-1");
+        expect(req.userGroups).toEqual(["g-1"]);
     });
 });

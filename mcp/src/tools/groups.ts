@@ -177,13 +177,21 @@ export function registerGroupsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
-            const members = await ctx.client.userGroups.listMembers({
+            // `userGroups.listMembers` (GET /user-groups/{id}/users) is a dead
+            // 405 route — the corrected spec names it "DOES NOT EXIST" and the
+            // generated method is typed `void`. The documented path is the
+            // workspace-users filter (POST /users/info, operationId
+            // `filterUsersOfWorkspace`): its `userGroups` body filter is
+            // whitelisted in the official GetUsersRequestV1 and returns the
+            // users belonging to the given group id(s).
+            const members = await ctx.client.users.filterWorkspaceUsers({
                 workspaceId: ctx.workspaceId,
-                groupId: args.groupId,
+                userGroups: [args.groupId],
             });
             return successResult("clockify_groups_list_members", members, {
                 workspaceId: ctx.workspaceId,
                 groupId: args.groupId,
+                count: members.length,
             });
         },
     );

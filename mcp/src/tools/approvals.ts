@@ -8,8 +8,29 @@ import { z } from "zod";
 import type { Context } from "../client.js";
 import { defineTool, successResult } from "../result.js";
 
-const APPROVAL_STATES = ["APPROVED", "PENDING", "REJECTED", "WITHDRAWN"] as const;
-const APPROVAL_PERIODS = ["WEEKLY", "BIWEEKLY", "SEMI_MONTHLY", "MONTHLY"] as const;
+// Each value-set is pinned to the generated SDK enum via `satisfies` so it
+// cannot drift from the live Clockify contract: the three differ deliberately.
+//   - period (submit/resubmit): no BIWEEKLY exists on the wire.
+//   - update state: the two real withdrawn states, never a bare WITHDRAWN.
+//   - list filter: only these three are listable (see discrepancies.md
+//     `approvals.requests.list`); REJECTED/WITHDRAWN_SUBMISSION are not.
+const APPROVAL_PERIODS = [
+    "WEEKLY",
+    "SEMI_MONTHLY",
+    "MONTHLY",
+] as const satisfies readonly ClockifyApi.ApprovalPeriod[];
+const APPROVAL_UPDATE_STATES = [
+    "PENDING",
+    "APPROVED",
+    "WITHDRAWN_SUBMISSION",
+    "WITHDRAWN_APPROVAL",
+    "REJECTED",
+] as const satisfies readonly ClockifyApi.ApprovalRequestState[];
+const APPROVAL_LIST_STATES = [
+    "PENDING",
+    "APPROVED",
+    "WITHDRAWN_APPROVAL",
+] as const satisfies readonly ClockifyApi.ApprovalRequestFilterState[];
 
 export function registerApprovalsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -19,7 +40,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             title: "List approval requests",
             description: "List timesheet approval requests in the workspace.",
             inputSchema: {
-                status: z.enum(APPROVAL_STATES).optional(),
+                status: z.enum(APPROVAL_LIST_STATES).optional(),
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
             },
@@ -31,7 +52,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 page: args.page ?? 1,
                 "page-size": args.pageSize ?? 50,
             };
-            if (args.status) req.status = args.status as ClockifyApi.ApprovalRequestFilterState;
+            if (args.status) req.status = args.status;
             const items = await ctx.client.approvals.list(req);
             return successResult("clockify_approvals_list", items, {
                 workspaceId: ctx.workspaceId,
@@ -76,7 +97,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             description: "Approve, reject, or change the state of a timesheet approval request.",
             inputSchema: {
                 approvalRequestId: z.string().min(1),
-                state: z.enum(APPROVAL_STATES),
+                state: z.enum(APPROVAL_UPDATE_STATES),
                 note: z.string().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
