@@ -25,6 +25,6 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 
 ## Known open wire-shape risks
 
-- `invoices.payments.post-returns-invoice` — status: `open`
+_No entries are currently marked `open` in the evidence ledger._
 
 Phantom/dead routes quarantined: 2.

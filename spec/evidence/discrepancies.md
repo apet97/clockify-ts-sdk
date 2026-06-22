@@ -2123,17 +2123,43 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `src/clockify/rest/invoices.ts:249-277` and promote this to a full
   COMPENSATED entry.
 
-### `invoices.payments.post-returns-invoice` — OPEN (no tools yet)
+### `invoices.payments.post-returns-invoice` — COMPENSATED 2026-06-22 (spec already invoice-shaped)
 
-- **Actual behavior (addon live-probe 2026-06-10):** `POST
-  /invoices/{id}/payments` returns the updated **invoice** document, not the
-  created payment. To recover the new payment id, GET the payments list before
-  and after the POST and take the new id (list-diff).
-- **MCP tool affected:** none today — the MCP surface has no payment-create
-  tool.
-- **Status:** `open` (no tools yet — latent only). When a payment-create tool
-  lands it must list-diff the payments list around the POST; port from addon
-  `src/clockify/rest/invoices.ts:249-277`.
+- **Official claim:** `POST /workspaces/{workspaceId}/invoices/{invoiceId}/payments`
+  (`addInvoicePayment`) creates an invoice payment.
+- **Actual behavior:** the POST returns **`201` with the updated INVOICE document**
+  (`InvoiceDtoFull`: `balance`/`clientId`/`number`/`status`/…), NOT the created
+  payment. To recover the new payment id, GET `…/payments` before and after the
+  POST and take the new id by set-difference (list items carry
+  `id`/`amount`/`author`/`date`/`note`). Field-name asymmetry: the request body
+  uses **`paymentDate`** (RFC3339, non-millisecond) while the payments-list item
+  uses **`date`**; `amount` is an int64 in **minor units** (`minimum: 1`).
+- **Already encoded in the corrected spec (no fix needed):** `addInvoicePayment`'s
+  success response is `201 -> InvoiceDuplicatedResponse -> InvoiceDtoFull` (an
+  invoice), and the generated SDK already types it — `client.invoicePayments.create()`
+  returns `HttpResponsePromise<InvoiceDtoFull>`
+  (`wrapper/src/api/resources/invoicePayments/client/Client.ts`), while `.list()`
+  returns `InvoicePaymentDto[]`. The two shapes are distinguished correctly, so
+  there is no response-schema mistyping to fix in GOCLMCP and no SDK return-type bug.
+- **Live evidence:** addon `src/clockify/rest/invoices.ts` (`createInvoicePayment`
+  253-266, `deleteInvoicePayment` 268-270, `mapPayment` 100-116) + the
+  `clockify-api-probe-lab` invoices fixtures (`05-payment-add-valid.json` is a
+  full invoice doc; `05-payment-add-invalid.json` shows `paymentDate` is
+  wire-required), plus the corrected spec + GOCLMCP canonical both binding 201 to
+  `InvoiceDtoFull`. No fresh live mutation was run: re-confirming an already-typed,
+  addon-attested shape adds residue risk (a post-payment PAID/PARTIALLY_PAID
+  invoice has no proven direct DELETE path, and `deleteInvoicePayment` is itself
+  `probe-documented`, not `live-success`) for no new information.
+- **MCP tool affected:** none — no payment-CREATE tool exists. (The
+  `invoicePayments` resource is publicly surfaced via `ws.invoicePayments` +
+  `iterAll(list)`, but only the read path.)
+- **Open questions:** list-diff recovery is non-deterministic if two payments share
+  an amount or a concurrent writer adds one; a future payment-create tool must
+  require exactly one new id or report the recovery inconclusive.
+- **Status:** `compensated-in-corrected-spec` (2026-06-22). `x-clockify-live-status`
+  stays `probe-documented` (promotion to `live-success` is a separate
+  GOCLMCP-gated write-promotion). When a payment-create tool lands, port the
+  list-diff recovery + `paymentDate`/minor-unit handling from the addon refs above.
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
 
