@@ -32,6 +32,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- `clockify_webhooks_create` now **requires** `name` (2–30 chars); it was
+  optional, leaving the two webhook-create surfaces inconsistent. The primary
+  `clockify_setup_webhook` workflow already requires a name, the corrected
+  `WebhookRequest.required[]` lists it, and every live create probe (2026-06-21)
+  supplied one — so an omitted name was a latent gap, not a supported path. The
+  body builder always sends `name`, and `webhooks-create.test.ts` covers the schema
+  boundary (a missing or too-short name is rejected before the handler runs).
 - `clockify_expenses_create` / `clockify_expenses_update` now promote a date-only
   `date` (`YYYY-MM-DD`) to RFC3339 (`…T00:00:00Z`). The expense endpoint requires
   `yyyy-MM-ddThh:mm:ssZ` and 400s "invalid value for field: [date]" on a bare date
