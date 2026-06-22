@@ -118,7 +118,7 @@ refreshed by `cp` after every regen in GOCLMCP.
    - `PATH_PARAM_PATTERNS` + `stamp_path_param_patterns!` — stamps
      `^[0-9a-fA-F]{24}$` on `expenseId` / `invoiceId` / `assignmentId`
    - `PAGINATED_LIST_OPS` + `ensure_pagination!` — stamps `page` +
-     `page-size` on 20 list endpoints
+     `page-size` on 21 list endpoints
    - `LAST_PAGE_HEADER_OPS` + `stamp_last_page_header!` — stamps
      `x-clockify-last-page-header: true` on 18 endpoints that emit
      the header

@@ -27,4 +27,4 @@ against the evidence ledger (`spec/evidence/discrepancies.md`).
 
 _No entries are currently marked `open` in the evidence ledger._
 
-Phantom/dead routes quarantined: 2.
+Phantom/dead routes quarantined: 3.

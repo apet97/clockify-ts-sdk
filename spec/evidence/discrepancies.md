@@ -339,6 +339,11 @@ probe evidence before the corrected spec is allowed to claim
   Projects are archived through the project update endpoint (`archived:true`),
   which `clockify_projects_update` already exposes; the parity override maps the
   archive operation there. — affects no dedicated tool by design.
+- `timeEntries.markInvoicedBulk` (`PATCH /workspaces/{workspaceId}/time-entries/invoiced/bulk`):
+  route is not bound on the live API — returns `404` (GOCLMCP sandbox probe `d570aed`).
+  The non-bulk mark-invoiced route stays live-success. No TS MCP tool or CLI consumes the
+  bulk route; see the `time-entries.mark-invoiced.bulk-route-404-deferred` entry for the
+  full record. — affects no tool by design.
 - `scheduling.calculateUsersTotals` (`POST /scheduling/assignments/users/totals`):
   route is not bound on the live API — both POST and a GET probe return
   `404 "No static resource"` (vs `405` on the sibling `publish` route that
@@ -2085,7 +2090,11 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   Sending plain minor `unitPrice` billed a $1000 item as $10. The sibling `amount` field
   stays plain minor. Separately, `POST /invoices/{id}/payments` returns the updated
   **invoice** document, not the payment — the new payment id must be list-diffed around
-  the POST (GET the payments list before and after, take the new id).
+  the POST (GET the payments list before and after, take the new id). Also live-verified
+  2026-06-22: `AddInvoiceItemRequest.itemType` is **not a free string** — it must name an
+  existing workspace invoice item-type (`itemType:"Service"` 404s "Invoice item type with
+  name Service not found"), so an item-add tool must resolve the item-type first; and
+  `applyTaxes` is required (enum `TAX1|TAX2|TAX1TAX2|NONE`).
 - **3. Which test/fixture proves it:** the wrapper helper is unit-tested directly —
   `wrapper/tests/money.test.ts:46-58` and `wrapper/tests/wire-shape.test.ts:126-129`
   pin `invoiceItemUnitPriceToWire(100000) === 10000000` (a $1000 item) and the ÷100
@@ -2160,6 +2169,33 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   stays `probe-documented` (promotion to `live-success` is a separate
   GOCLMCP-gated write-promotion). When a payment-create tool lands, port the
   list-diff recovery + `paymentDate`/minor-unit handling from the addon refs above.
+
+### `time-entries.mark-invoiced.bulk-route-404-deferred` — DOCUMENTED 2026-06-22
+
+- **Official claim:** the corrected snapshot carries
+  `PATCH /workspaces/{workspaceId}/time-entries/invoiced/bulk` (operationId
+  `patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk`, generated SDK
+  `timeEntries.markInvoicedBulk`).
+- **Actual behavior:** the bulk route
+  `PATCH /workspaces/{workspaceId}/time-entries/invoiced/bulk` returns a live
+  **404** (route not bound); the singular
+  `PATCH /workspaces/{workspaceId}/time-entries/invoiced`
+  (`timeEntries.markInvoiced`) is `live-success`.
+- **Live evidence:** GOCLMCP sandbox probe (commit `d570aed`, workspace
+  `65b382b606de527a7ee2b60e`): the `/invoiced` row was promoted to 200 while
+  `/invoiced/bulk` was left unpromoted as a live 404; `findings/time-entries.md`
+  carries only the `/invoiced` row. The official Clockify snapshot
+  (`spec/official/clockify.official.openapi.yaml`) carries only
+  `/time-entries/invoiced`, not the `/bulk` variant — a custom probe-lab-sourced
+  op now known dead.
+- **MCP tools affected:** none — no CLI command or MCP tool consumes
+  `timeEntries.markInvoicedBulk`, so the consumer dead-route gate cannot catch it;
+  this entry is the behavioral record (parsed by `official-openapi-report` as a
+  phantom-risk route).
+- **Open questions:** the corrected spec still stamps the op `probe-documented`;
+  the spec-status fix (`probe-documented` -> quarantine) is GOCLMCP-side.
+- **Status:** `wontfix` (route not bound on the live API; deferred, never shipped
+  as a tool).
 
 ### `time-off.requests.update-status.wrong-method-and-field` — COMPENSATED 2026-06-14
 
@@ -2491,9 +2527,10 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `mcp/src/tools/{reports,audit,invoices,expenses}.ts` and CLI mirrors
   (passthrough/envelope lists), plus runtime body-spread writes whose generated
   flattened request types reject locally validated bodies.
-- **Status:** `compensated-in-consumer-layer` (updated 2026-06-19). Gate:
-  `make consumer-cast-budget` (budget 0, ratchet target 0) plus the wrapper EOPT
-  differential. Current consumer ratio: typed request bindings >= 100,
+- **Status:** `compensated-in-consumer-layer` (updated 2026-06-22). Gate:
+  `make consumer-cast-budget` (budget 0, ratchet target 0). The former wrapper EOPT
+  differential was retired 2026-06-22 — EOPT is now enforced wrapper-wide by `npm run
+  type-check`. Current consumer ratio: typed request bindings >= 100,
   `Record<string, unknown>` literals <= 40, live `KEEP as never` comments <= 60.
 - **2026-06-20 reduction:** after the corrected OpenAPI re-snapshot, the residual
   annotated `KEEP as never` count fell **cli 5->1, mcp 22->7**.

@@ -48,21 +48,31 @@ ceiling. The 58 Go-only names decompose as:
   `time_off_requests_create` (for-user). These are a conscious backlog, not
   shipped, to keep the surface workflow-first and thin.
 
-For the 12 operations with no SDK method name: 5 are real stamping gaps
-(`getCurrentUser`, `changeRecurringPeriod`, `filterWorkspaceUsers`,
-`updateUserCustomFieldValue`, `findUserTeamManagers`) closeable by adding
-`x-fern-sdk-method-name` stamps in the GOCLMCP `SDK_METHOD_NAMES` table
-(data-only, flows in via re-snapshot); 7 are intentional (`uploadImage` unstamped
-binary upload; the dead PUT `member-profile` alias; `changeTimeOffRequestStatus`
-covered by the policy-scoped status method; `deleteMany`; and the `updateUser*`
-status/rate PUTs surfaced through workspace methods).
+For the 12 operations with no SDK method name: all 12 already have reachable,
+operationId-derived generated methods (e.g. `client.users.getCurrentUser`,
+`client.scheduling.changeRecurringPeriod`) — none is a MISSING method. They are
+unstamped by GOCLMCP's deliberate convention: the `SDK_METHOD_NAMES` table reserves
+clean group/method stamps for workspace-scoped CRUDL operations and leaves action
+verbs, non-CRUDL, and non-workspace ops on their operationId-derived names
+(documented in `../GOCLMCP/scripts/gen-clockify-openapi`: "rate/template/membership/
+archive verbs left on operationId-derived names; they're action verbs, not CRUDL").
+Five fit that action-verb / non-workspace shape (`getCurrentUser` is the
+non-workspace `GET /user`; `filterWorkspaceUsers`, `changeRecurringPeriod`,
+`updateUserCustomFieldValue`, `findUserTeamManagers` are filter/find/change/
+set-value action verbs); the other seven are the same kind (`uploadImage`; the dead
+PUT `member-profile` alias; `changeTimeOffRequestStatus` covered by the
+policy-scoped status method; `deleteMany`; the `updateUser*` status/rate PUTs
+surfaced through workspace methods). Adding clean stamps is OPTIONAL parity-matrix
+completeness, not a functional gap, and would contradict the maintainer's
+convention — so it stays as-is.
 
 ## Consequences
 
 The MCP surface stays at 134 advertised tools by intent; the 58-name parity gap
 is fully accounted for (8 + 28 + 22) with no silent ceiling. The 22 backlog
-candidates and the 5 SDK stamping gaps are an explicit, prioritized to-do.
-Changing the tool count, shipping a backlog tool, or adding a stamp is a
+candidates are an explicit, prioritized to-do; the 12 unstamped ops are reachable
+via their operationId-derived methods and intentionally unstamped per convention.
+Changing the tool count or shipping a backlog tool is a
 deliberate follow-up reviewed against the workflow-first posture; none is
 implied to be missing by accident.
 

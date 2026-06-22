@@ -160,4 +160,5 @@ policy).
 | Slug | Method | Path |
 | --- | --- | --- |
 | `projects.archive` | PUT | `/projects/{projectId}/archive` |
+| `timeEntries.markInvoicedBulk` | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` |
 | `scheduling.calculateUsersTotals` | POST | `/scheduling/assignments/users/totals` |
