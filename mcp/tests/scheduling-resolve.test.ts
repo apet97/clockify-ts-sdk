@@ -24,7 +24,8 @@ function schedulingContext(captured: Record<string, unknown>): Context {
             scheduling: {
                 createRecurring: async (req: unknown) => {
                     captured.createRecurring = req;
-                    return { id: "asg-1" };
+                    // createRecurring returns an ARRAY (one entry per occurrence).
+                    return [{ id: "asg-1" }];
                 },
                 publish: async (req: unknown) => {
                     captured.publish = req;
@@ -96,6 +97,10 @@ describe("scheduling assignments resolve NAME -> id", () => {
             (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
+        // createRecurring returns an array; the receipt id must come from the FIRST element.
+        expect(
+            (envelope(res).changed as { created?: Array<{ id?: string }> })?.created?.[0]?.id,
+        ).toBe("asg-1");
     });
 
     it("assignments_create clarifies + does not create on an unknown project name", async () => {
@@ -156,6 +161,10 @@ describe("scheduling assignments resolve NAME -> id", () => {
             (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
+        // createRecurring returns an array; the receipt id must come from the FIRST element.
+        expect(
+            (envelope(res).changed as { created?: Array<{ id?: string }> })?.created?.[0]?.id,
+        ).toBe("asg-1");
     });
 
     it("assignments_update no longer resolves/forwards user or project — the recurring edit route cannot reassign them", async () => {

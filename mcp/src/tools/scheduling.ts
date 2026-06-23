@@ -207,11 +207,15 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 body,
             };
             const created = await ctx.client.scheduling.createRecurring(req);
+            // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt id.
+            const first = Array.isArray(created) ? created[0] : created;
             if (args.published === true) {
+                // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
                 await ctx.client.scheduling.publish({
                     workspaceId: ctx.workspaceId,
                     start: args.start,
                     end: args.end,
+                    userFilter: { contains: "CONTAINS", ids: [u.userId] },
                 });
             }
             return successResult(
@@ -220,7 +224,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 {
                     workspaceId: ctx.workspaceId,
                 },
-                writeReceipt("created", "scheduling_assignment", { id: entityId(created) }),
+                writeReceipt("created", "scheduling_assignment", { id: entityId(first) }),
             );
         },
     );

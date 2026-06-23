@@ -10,8 +10,11 @@ All notable changes to `@clockify115/cli` are documented here.
   (`scheduling.createRecurring`): the bare `POST /scheduling/assignments` 404s on live
   Clockify and was removed from the 2026-06-23 corrected spec. Flags are unchanged (a
   one-off assignment when no recurrence is given); `--publish` now maps to the separate
-  range-based publish op. `users member-profile update` retypes its body to
-  `UpdateMemberProfilesRequest` (the dead `PUT /member-profile` request type was removed).
+  range-based publish op. `createRecurring` returns an array (one entry per occurrence) —
+  the command reads the first occurrence for the receipt id — and `--publish` narrows the
+  publish range to the just-assigned user via `userFilter`. `users member-profile update`
+  retypes its body to `UpdateMemberProfilesRequest` (the dead `PUT /member-profile`
+  request type was removed).
 
 ### Added
 

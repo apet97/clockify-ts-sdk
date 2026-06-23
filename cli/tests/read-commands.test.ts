@@ -308,14 +308,17 @@ describe("scheduling read and create commands", () => {
                 createRecurring: async (req: Record<string, unknown>) => {
                     calls.push(req);
                     const body = req.body as Record<string, unknown>;
-                    return {
-                        id: "a-9",
-                        userId: "u-1",
-                        projectId: "p-1",
-                        hoursPerDay: 6,
-                        start: body.start,
-                        end: body.end,
-                    };
+                    // createRecurring returns an ARRAY (one entry per occurrence).
+                    return [
+                        {
+                            id: "a-9",
+                            userId: "u-1",
+                            projectId: "p-1",
+                            hoursPerDay: 6,
+                            start: body.start,
+                            end: body.end,
+                        },
+                    ];
                 },
                 publish: async (req: Record<string, unknown>) => {
                     publishes.push(req);
@@ -360,7 +363,8 @@ describe("scheduling read and create commands", () => {
             scheduling: {
                 createRecurring: async (req: Record<string, unknown>) => {
                     calls.push(req);
-                    return { id: "a-10", ...(req.body as Record<string, unknown>) };
+                    // createRecurring returns an ARRAY (one entry per occurrence).
+                    return [{ id: "a-10", ...(req.body as Record<string, unknown>) }];
                 },
                 publish: async () => {
                     /* --publish maps to the separate range-based publish op */

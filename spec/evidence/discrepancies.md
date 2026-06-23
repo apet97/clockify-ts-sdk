@@ -1509,6 +1509,24 @@ live-success 129 → 135. The SDK re-snapshot cascaded into the wrapper (dropped
 `.policies` scoped accessor) and CLI/MCP scheduling-create (repointed to the live
 `createRecurring`, since `POST /scheduling/assignments` 404s).
 
+### `scheduling.createRecurring.returns-array-and-publish-is-range-scoped` — DOCUMENTED 2026-06-23
+
+- **Live shape:** `POST /scheduling/assignments/recurring` (`scheduling.createRecurring`,
+  the live assignment-create path that replaced the dead `POST /scheduling/assignments`)
+  returns a **201 array** of `SchedulingAssignment` — one entry per occurrence; a one-off
+  has a single element — NOT a single object. The generated SDK types it
+  `Promise<SchedulingAssignment[]>`. Callers must read element `[0]` for the
+  created-entity id: `clk115 scheduling create`, `clockify_scheduling_assignments_create`,
+  and the `clockify_schedule_work` workflow all do (the receipt `changed.created` id comes
+  from the first element). A regression that read the id off the bare array produced empty
+  receipt ids; the create tests now return arrays and assert the receipt id
+  (`mcp/tests/scheduling-resolve.test.ts`).
+- **Publish is range-scoped:** there is no single-assignment publish op.
+  `scheduling.publish` (`PUT /scheduling/assignments/publish`) publishes every draft
+  assignment overlapping `[start,end]`. The CLI `--publish` flag and the MCP `published`
+  arg narrow the window to the just-assigned user via
+  `userFilter:{contains:CONTAINS, ids:[userId]}` to limit blast radius.
+
 ## Last-Page header — live audit (G.5)
 
 ### `pagination.last-page-header.live-audit-2026-05-25` — DOCUMENTED 2026-05-25

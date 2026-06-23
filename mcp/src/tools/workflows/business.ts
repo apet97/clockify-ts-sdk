@@ -307,12 +307,14 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const assignment = await ctx.client.scheduling.createRecurring(
+    const created = await ctx.client.scheduling.createRecurring(
         wireBody<ClockifyApi.CreateRecurringSchedulingRequest>(preview),
     );
+    // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt.
+    const assignment = Array.isArray(created) ? created[0] : created;
     return successResult(
         "clockify_schedule_work",
-        assignment,
+        created,
         { workspaceId: ctx.workspaceId },
         {
             entity: "assignment",
