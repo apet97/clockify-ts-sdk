@@ -126,7 +126,8 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 type: requireType(opts.type),
                 filter: parseFilter(opts.filter),
             };
-            if (opts.public) body.public = true;
+            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
+            if (opts.public) body.isPublic = true;
             const created = (await client.sharedReports.create(
                 wireBody<ClockifyApi.SharedReportCreate>({ workspaceId, body }),
             )) as {
@@ -168,7 +169,8 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
                 type: requireType(opts.type),
                 filter: parseFilter(opts.filter),
             };
-            if (opts.public) body.public = true;
+            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
+            if (opts.public) body.isPublic = true;
             const updated = (await client.sharedReports.update(
                 wireBody<ClockifyApi.UpdateSharedReportsRequest>({
                     workspaceId,
