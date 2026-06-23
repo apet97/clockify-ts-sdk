@@ -27,14 +27,14 @@
 
 - `workspaceId` (`string`, required)
 - `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `isPublic` (`boolean`, optional)
 - `name` (`string`, required)
-- `public` (`boolean`, optional)
 - `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 - `workspaceId` (`string`, required)
 - `body` (`SharedReportCreateBody`, required)
 - `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `isPublic` (`boolean`, optional)
 - `name` (`string`, required)
-- `public` (`boolean`, optional)
 - `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 
 ### `update`
@@ -44,15 +44,15 @@
 - `workspaceId` (`string`, required)
 - `sharedReportId` (`string`, required)
 - `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `isPublic` (`boolean`, optional)
 - `name` (`string`, required)
-- `public` (`boolean`, optional)
 - `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 - `workspaceId` (`string`, required)
 - `sharedReportId` (`string`, required)
 - `body` (`UpdateSharedReportsRequestBody`, required)
 - `filter` (`ClockifyApi.SharedReportFilter`, required)
+- `isPublic` (`boolean`, optional)
 - `name` (`string`, required)
-- `public` (`boolean`, optional)
 - `type` (`"SUMMARY" \| "DETAILED" \| "WEEKLY" \| "EXPENSE_DETAILED" \| "INVOICE_TIME" \| "KIOSK_PIN_LIST" \| "ATTENDANCE_DETAILED" \| "ATTENDANCE_SUMMARY" \| "ASSIGNMENT_LIST" \| "ASSIGNMENT_SCHEDULE" \| "APPROVAL_DETAILED" \| "APPROVAL_SUMMARY" \| "BALANCE_LIST" \| "INVOICE_AMOUNT_LIST" \| "INVOICE_DETAILED" \| "TIMEOFF_DETAILED" \| "TIMEOFF_HOLIDAY" \| "TIMEOFF_BALANCE" \| "EXPENSE_SUMMARY"`, required)
 
 ### `delete`

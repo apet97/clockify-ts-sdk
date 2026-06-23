@@ -4,6 +4,12 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clk115 shared-reports create`/`update --public` now sends `isPublic` on the wire. It
+  previously sent `public`, which the live API silently ignores, so `--public` was a
+  no-op (the report stayed private). The flag name is unchanged.
+
 ### Changed
 
 - Repointed `clk115 scheduling create` to the live recurring endpoint

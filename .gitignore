@@ -37,3 +37,10 @@ spec/evidence/probes/*.hdr
 
 # Recon / scratch output from agent sessions.
 /.recon/
+
+# Local env files — never commit secrets (CLOCKIFY_API_KEY etc.). The
+# secret-hygiene gate is best-effort and self-disclaims completeness, so keep
+# .env uncommittable outright. A committed template stays allowed.
+.env
+.env.*
+!.env.example

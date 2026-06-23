@@ -4,6 +4,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_shared_reports_create`/`clockify_shared_reports_update` now map the `public`
+  argument to the wire field `isPublic`. They previously sent `public`, which the live
+  API silently ignores, so requesting a public report had no effect. The tool argument
+  name is unchanged.
+
 ### Changed
 
 - Repointed `clockify_scheduling_assignments_create` and the `clockify_schedule_work`
