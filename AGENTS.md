@@ -540,12 +540,17 @@ and evidence live in `spec/evidence/discrepancies.md`. Historical denominators a
 | 2026-06-22 | CRUD probe | 87 → 111/184 | invoices CRUD + items, time-off policy CRUD, project template/estimate, task rates, expense update + category delete, per-user time-entries, users filter, scheduling user-capacity totals; `/time-entries/invoiced/bulk` deferred (live 404); paginated count 10 → 23 (`$ref` page params) |
 | 2026-06-23 | API-key probe | 111 → 129/184 | workspace/user/project-user rates, invoice settings + status, manager-role grant/revoke, remove-user-from-group, member-profile PATCH, time-off balance PATCH, entity-info reads, webhook logs + addon webhooks; flagged ~21 live-404/405 spec ops + 2 missing official ops |
 | 2026-06-23 | surface refresh | 184 → 169 ops; 129 → **135/169** | quarantined 17 confirmed-wrong ops via `PHANTOM_PATHS`, added 2 missing official ops (`getWebhookEventStatusesWithLatestLog` live, `addLimitedUsersWithInfo` documented), promoted 6 stragglers; cascaded to the wrapper (dropped dead `.policies` accessor) and CLI/MCP scheduling-create (repointed to live `createRecurring`, since `POST /scheduling/assignments` 404s) |
+| 2026-06-23 | schema fidelity | **135/169** (unchanged) | Live-wire audit fixed three response schemas a thin probe-lab schema had shadowed via the generator's first-writer name race: restored `Client.ccEmails`/`currencyId`; corrected `SharedReport` (`isPublic`/`link` + `reportAuthor`/`visibleToUsers`/`visibleToUserGroups`/`fixedDate`/`workspaceId`/`userId`; dropped phantom `url`/`createdAt`/`updatedAt`/`workspace`); added `Webhook.deliveryEnabled`/`planEnabled`. Fixed CLI/MCP shared-reports create/update sending the API-ignored `public` (wire is `isPublic`, live-proved). Added `spec-sync-drift` (SDK↔GOCLMCP byte-parity gate) + a GOCLMCP manifest reverse-completeness check; `secret-hygiene` now catches bare `KEY=value`/`.env` |
 
 ## 9. Secret hygiene
 
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` belong in the
   developer's shell. Never commit, never echo unredacted, never
   paste in Slack / GitHub comments.
+- `make secret-hygiene` catches the bare `KEY=value` / `export KEY=value` form (not
+  only quoted), via an optional-quote + digit-lookahead regex, and `.env*` is
+  gitignored so a committed `.env` is impossible outright. It is still best-effort
+  (defers to gitleaks for deep audits).
 - `NPM_TOKEN` lives in the repo's GitHub Actions secrets. Use an
   **automation** token with **Publish** scope, **no expiry** (or
   ≤1 year), and rotate after every npm push.

@@ -164,6 +164,17 @@ make docs-drift
   typed SDK methods reach the right host; an explicit `baseUrl`/`environment`
   override still wins (mock/replay). Hand-written code must not assume the
   default host for those resources.
+- **Generated response types must match the live wire, not just the official spec.**
+  The GOCLMCP generator resolves schema-name collisions *first-writer-wins*, so a thin
+  hand-authored schema in `clockify-api-probe-lab/openapi.yaml` shadows richer fragments
+  and silently drops live fields. This dropped `Client.ccEmails`/`currencyId`, broke the
+  `SharedReport` response shape (it used `public`/`url`; the wire is `isPublic`/`link`),
+  and dropped `Webhook.deliveryEnabled`/`planEnabled`. The same `SharedReport` mismatch
+  made the CLI/MCP `--public`/`public` a silent no-op (the wire field is `isPublic`).
+  When adding or auditing a schema, diff the generated type against the **live wire**.
+  `make spec-sync-drift` (perfect-full only; skips if `../GOCLMCP` absent) now guards that
+  `spec/corrected` stays byte-identical to the GOCLMCP canonical — no other gate compared
+  the two.
 - Not every documented operation is live. Some routes return HTTP 404
   ("No static resource") and are deferred, not shipped as tools
   (`scheduling.calculateUsersTotals`, `projects.archive` — archiving is done via
