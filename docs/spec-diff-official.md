@@ -13,12 +13,12 @@ match), so operations are joined on HTTP method + path with positional parameter
 | Metric | Count |
 | --- | --- |
 | Official operations | 158 |
-| Custom operations | 184 |
+| Custom operations | 169 |
 | Shared (matched) | 158 |
 | New official (missing in custom) | 0 |
-| Custom-only (not in official snapshot) | 26 |
+| Custom-only (not in official snapshot) | 11 |
 | Wire-shape conflicts (shared ops) | 13 |
-| Phantom-risk (custom op, dead live route) | 3 |
+| Phantom-risk (custom op, dead live route) | 2 |
 
 Official source: `spec/official/clockify.official.openapi.yaml`.
 
@@ -37,32 +37,17 @@ Operations:
 
 | Method | Path | Live status |
 | --- | --- | --- |
-| DELETE | `/workspaces/{workspaceId}/policies/{policyId}` | probe-documented |
-| DELETE | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | probe-documented |
 | DELETE | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | probe-documented |
-| GET | `/workspaces/{workspaceId}/policies` | probe-documented |
-| GET | `/workspaces/{workspaceId}/policies/{policyId}` | probe-documented |
 | GET | `/workspaces/{workspaceId}/time-off/requests/{requestId}` | probe-documented |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}` | probe-documented |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | probe-documented |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | probe-documented |
-| PATCH | `/workspaces/{workspaceId}/policies/{policyId}/archive` | probe-documented |
+| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | live-success |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | probe-documented |
 | PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | probe-documented |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | probe-documented |
 | POST | `/workspaces/{workspaceId}/audit-log` | live-success |
-| POST | `/workspaces/{workspaceId}/policies` | probe-documented |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments` | probe-documented |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | probe-documented |
-| PUT | `/workspaces/{workspaceId}` | probe-documented |
+| POST | `/workspaces/{workspaceId}/limited-users` | probe-documented |
 | PUT | `/workspaces/{workspaceId}/clients/{clientId}/archive` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/member-profile/{userId}` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/policies/{policyId}` | probe-documented |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/cost-rate` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/hourly-rate` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | probe-documented |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | probe-documented |
 
 ## CONFLICT — shared operations with differing wire shape
 
@@ -90,5 +75,4 @@ differences are tracked entry-by-entry in [`live-evidence-index.md`](./live-evid
 | Method | Path | Note |
 | --- | --- | --- |
 | PATCH | `/workspaces/{workspaceId}/time-entries/invoiced/bulk` | live evidence: 404 / not bound |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | live evidence: 404 / not bound |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | live evidence: 404 / not bound |

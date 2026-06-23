@@ -299,9 +299,13 @@ describe("scheduling read and create commands", () => {
 
     it("create defaults to draft and only publishes with --publish", async () => {
         const calls: Record<string, unknown>[] = [];
+        const publishes: Record<string, unknown>[] = [];
         const client = {
             scheduling: {
-                create: async (req: Record<string, unknown>) => {
+                // Live Clockify has no single-assignment create; the command uses the
+                // recurring endpoint (one-off when recurringAssignment is omitted) and
+                // --publish maps to the separate range-based publish op.
+                createRecurring: async (req: Record<string, unknown>) => {
                     calls.push(req);
                     const body = req.body as Record<string, unknown>;
                     return {
@@ -309,9 +313,12 @@ describe("scheduling read and create commands", () => {
                         userId: "u-1",
                         projectId: "p-1",
                         hoursPerDay: 6,
-                        period: body.period,
-                        published: body.published,
+                        start: body.start,
+                        end: body.end,
                     };
+                },
+                publish: async (req: Record<string, unknown>) => {
+                    publishes.push(req);
                 },
             },
         };
@@ -332,26 +339,31 @@ describe("scheduling read and create commands", () => {
             "6",
         ];
         await makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync(args);
-        expect((calls[0].body as Record<string, unknown>).published).toBe(false);
-        expect((calls[0].body as Record<string, unknown>).period).toMatchObject({
+        expect(calls[0].body as Record<string, unknown>).toMatchObject({
             start: "2026-06-01",
             end: "2026-06-07",
         });
+        expect((calls[0].body as Record<string, unknown>).period).toBeUndefined();
+        expect(publishes).toHaveLength(0);
 
         await makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync([
             ...args,
             "--publish",
         ]);
-        expect((calls[1].body as Record<string, unknown>).published).toBe(true);
+        expect(publishes).toHaveLength(1);
+        expect(publishes[0]).toMatchObject({ start: "2026-06-01", end: "2026-06-07" });
     });
 
     it("create includes every optional scheduling field when supplied", async () => {
         const calls: Record<string, unknown>[] = [];
         const client = {
             scheduling: {
-                create: async (req: Record<string, unknown>) => {
+                createRecurring: async (req: Record<string, unknown>) => {
                     calls.push(req);
                     return { id: "a-10", ...(req.body as Record<string, unknown>) };
+                },
+                publish: async () => {
+                    /* --publish maps to the separate range-based publish op */
                 },
             },
         };
@@ -383,7 +395,8 @@ describe("scheduling read and create commands", () => {
             note: "Plan",
             billable: true,
             includeNonWorkingDays: true,
-            published: true,
+            start: "2026-06-01",
+            end: "2026-06-07",
         });
     });
 });

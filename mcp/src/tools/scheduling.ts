@@ -187,23 +187,33 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     "project",
                     p.clarify,
                 );
-            const body: ClockifyRequestBody<ClockifyApi.CreateSchedulingRequest> = {
+            // Single-assignment create (POST /scheduling/assignments) 404s on live Clockify;
+            // the recurring endpoint is the real create path (one-off when recurringAssignment
+            // is omitted). args.published maps to the separate range-based publish op.
+            const body: ClockifyRequestBody<ClockifyApi.CreateRecurringSchedulingRequest> = {
                 userId: u.userId,
                 projectId: p.id,
                 hoursPerDay: args.hoursPerDay,
-                period: { start: args.start, end: args.end },
-                published: args.published === true,
+                start: args.start,
+                end: args.end,
             };
             if (args.taskId) body.taskId = args.taskId;
             if (args.note) body.note = args.note;
             if (args.billable !== undefined) body.billable = args.billable;
             if (args.includeNonWorkingDays !== undefined)
                 body.includeNonWorkingDays = args.includeNonWorkingDays;
-            const req: ClockifyApi.CreateSchedulingRequest = {
+            const req: ClockifyApi.CreateRecurringSchedulingRequest = {
                 workspaceId: ctx.workspaceId,
                 body,
             };
-            const created = await ctx.client.scheduling.create(req);
+            const created = await ctx.client.scheduling.createRecurring(req);
+            if (args.published === true) {
+                await ctx.client.scheduling.publish({
+                    workspaceId: ctx.workspaceId,
+                    start: args.start,
+                    end: args.end,
+                });
+            }
             return successResult(
                 "clockify_scheduling_assignments_create",
                 created,

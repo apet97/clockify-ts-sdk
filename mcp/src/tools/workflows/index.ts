@@ -359,7 +359,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             title: "Set up webhook",
             description: "Create a webhook subscription after HTTPS URL validation. Supports dry_run plus confirm_token.",
             inputSchema: {
-                name: z.string().min(1),
+                name: z.string().min(2).max(30),
                 url: z.string().url(),
                 event: z.enum(WEBHOOK_EVENTS).optional(),
                 webhook_event: z.enum(WEBHOOK_EVENTS).optional(),

@@ -107,8 +107,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, userId: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest> =
-                {};
+            const body: ClockifyRequestBody<ClockifyApi.UpdateMemberProfilesRequest> = {};
             if (opts.name !== undefined) body.name = opts.name;
             if (opts.imageUrl !== undefined) body.imageUrl = opts.imageUrl;
             if (opts.removeImage) body.removeProfileImage = true;

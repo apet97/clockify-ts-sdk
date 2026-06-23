@@ -4,6 +4,15 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Repointed `clk115 scheduling create` to the live recurring endpoint
+  (`scheduling.createRecurring`): the bare `POST /scheduling/assignments` 404s on live
+  Clockify and was removed from the 2026-06-23 corrected spec. Flags are unchanged (a
+  one-off assignment when no recurrence is given); `--publish` now maps to the separate
+  range-based publish op. `users member-profile update` retypes its body to
+  `UpdateMemberProfilesRequest` (the dead `PUT /member-profile` request type was removed).
+
 ### Added
 
 - `clk115 expenses create` — closes the CLI/MCP parity gap (the MCP

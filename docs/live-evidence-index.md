@@ -107,6 +107,8 @@ policy).
 | GET | `/workspaces/{workspaceId}/users/{userId}/managers` | findUserTeamManagers |
 | GET | `/workspaces/{workspaceId}/webhooks` | getWebhooksOnWorkspace |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}` | getWebhookById |
+| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | getWebhookEventStatusesWithLatestLog |
+| PATCH | `/workspaces/{workspaceId}/approval-requests/{approvalRequestId}` | updateApprovalRequest |
 | PATCH | `/workspaces/{workspaceId}/expenses/categories/{categoryId}/status` | archiveExpenseCategory |
 | PATCH | `/workspaces/{workspaceId}/invoices/{invoiceId}/status` | changeInvoiceStatus |
 | PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | updateMemberProfile |
@@ -117,6 +119,7 @@ policy).
 | PATCH | `/workspaces/{workspaceId}/time-off/balance/policy/{policyId}` | updateBalance |
 | PATCH | `/workspaces/{workspaceId}/time-off/policies/{policyId}` | changeTimeOffPolicyStatus |
 | PATCH | `/workspaces/{workspaceId}/user/{userId}/time-entries` | patchWorkspacesWorkspaceIdUserUserIdTimeEntries |
+| POST | `/workspaces/{workspaceId}/approval-requests` | submitApprovalRequest |
 | POST | `/workspaces/{workspaceId}/audit-log` | searchAuditLogs |
 | POST | `/workspaces/{workspaceId}/clients` | postWorkspacesWorkspaceIdClients |
 | POST | `/workspaces/{workspaceId}/custom-fields` | createWorkspaceCustomField |
@@ -126,12 +129,14 @@ policy).
 | POST | `/workspaces/{workspaceId}/invoices` | addInvoice |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate` | duplicateInvoice |
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/items` | addInvoiceItem |
+| POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | addInvoicePayment |
 | POST | `/workspaces/{workspaceId}/invoices/info` | filterInvoices |
 | POST | `/workspaces/{workspaceId}/projects` | createProject |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | assignOrRemoveProjectUsers |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | addTaskOnProject |
 | POST | `/workspaces/{workspaceId}/reports/attendance` | generateAttendanceReport |
 | POST | `/workspaces/{workspaceId}/reports/detailed` | generateDetailedReport |
+| POST | `/workspaces/{workspaceId}/reports/expenses/detailed` | generateDetailedReportV1 |
 | POST | `/workspaces/{workspaceId}/reports/summary` | generateSummaryReport |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | generateWeeklyReport |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | getScheduledAssignmentsPerProject |
@@ -143,6 +148,7 @@ policy).
 | POST | `/workspaces/{workspaceId}/time-off/policies/{policyId}/requests` | createTimeOffRequest |
 | POST | `/workspaces/{workspaceId}/time-off/requests` | getAllTimeOffRequestsOnWorkspace |
 | POST | `/workspaces/{workspaceId}/user-groups` | addNewGroup |
+| POST | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | addUsersToGroup |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries` | postWorkspacesWorkspaceIdUserUserIdTimeEntries |
 | POST | `/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate` | postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate |
 | POST | `/workspaces/{workspaceId}/users/{userId}/roles` | giveUserManagerRole |

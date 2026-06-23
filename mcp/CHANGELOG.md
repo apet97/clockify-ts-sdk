@@ -4,6 +4,17 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Repointed `clockify_scheduling_assignments_create` and the `clockify_schedule_work`
+  workflow to the live `scheduling.createRecurring` endpoint — the bare
+  `POST /scheduling/assignments` 404s on live Clockify and was removed from the
+  2026-06-23 corrected spec; `published` maps to the separate range-based publish op.
+  The member-profile update tool retypes its body to `UpdateMemberProfilesRequest`.
+- Tightened `clockify_setup_webhook`'s `name` validation from `min(1)` to
+  `min(2).max(30)`, matching the domain `clockify_webhooks_create` tool and the
+  live-verified 2–30 constraint on the API-key webhook-create path.
+
 ### Security
 
 - `clockify_setup_webhook` (workflow) now redacts the webhook `authToken` HMAC

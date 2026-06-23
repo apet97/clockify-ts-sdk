@@ -23,11 +23,11 @@
     "operationParity": "docs/operation-parity.json"
   },
   "thresholds": {
-    "operations": 184,
-    "sdkNamed": 172,
-    "tsMcpExact": 87,
-    "goMcpExact": 84,
-    "curated": 31
+    "operations": 169,
+    "sdkNamed": 156,
+    "tsMcpExact": 92,
+    "goMcpExact": 82,
+    "curated": 32
   },
   "requiredTargets": [
     "operation-coverage",
@@ -82,8 +82,8 @@
     {
       "path": "scripts/lint-openapi-contract.mjs",
       "contains": [
-        "expected at least 171 SDK-named operations",
-        "expected 184 operations"
+        "expected at least 155 SDK-named operations",
+        "expected 169 operations"
       ]
     }
   ],

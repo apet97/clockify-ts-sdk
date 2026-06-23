@@ -1,6 +1,6 @@
 # projects
 
-15 methods on `client.projects`.
+13 methods on `client.projects`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -121,22 +121,6 @@
 - `body` (`ArchiveProjectsRequestBody`, required)
 - `archived` (`boolean`, optional)
 
-### `updateCostRate`
-
-**Request fields** (`UpdateCostRateProjectsRequest`):
-
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `amount` (`number`, required)
-- `since` (`string`, optional)
-- `sinceAsInstant` (`string`, optional)
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `body` (`UpdateCostRateProjectsRequestBody`, required)
-- `amount` (`number`, required)
-- `since` (`string`, optional)
-- `sinceAsInstant` (`string`, optional)
-
 ### `updateEstimate`
 
 **Request fields** (`UpdateEstimateProjectsRequest`):
@@ -152,22 +136,6 @@
 - `budgetEstimate` (`ClockifyApi.EstimateWithOptionsRequest`, optional)
 - `estimateReset` (`ClockifyApi.EstimateResetRequest`, optional)
 - `timeEstimate` (`ClockifyApi.TimeEstimateRequest`, optional)
-
-### `updateHourlyRate`
-
-**Request fields** (`UpdateHourlyRateProjectsRequest`):
-
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `amount` (`number`, required)
-- `since` (`string`, optional)
-- `sinceAsInstant` (`string`, optional)
-- `workspaceId` (`string`, required)
-- `projectId` (`string`, required)
-- `body` (`UpdateHourlyRateProjectsRequestBody`, required)
-- `amount` (`number`, required)
-- `since` (`string`, optional)
-- `sinceAsInstant` (`string`, optional)
 
 ### `setMembers`
 

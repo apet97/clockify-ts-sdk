@@ -262,15 +262,17 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: ClockifyRequestBody<ClockifyApi.PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest> =
-                {};
+            const body: ClockifyRequestBody<ClockifyApi.UpdateMemberProfilesRequest> = {};
             if (args.name !== undefined) body.name = args.name;
             if (args.imageUrl !== undefined) body.imageUrl = args.imageUrl;
             if (args.removeProfileImage !== undefined)
                 body.removeProfileImage = args.removeProfileImage;
-            if (args.weekStart !== undefined) body.weekStart = args.weekStart;
+            if (args.weekStart !== undefined)
+                body.weekStart = args.weekStart as ClockifyApi.UsersDayOfWeek;
             if (args.workCapacity !== undefined) body.workCapacity = args.workCapacity;
-            if (args.workingDays !== undefined) body.workingDays = args.workingDays;
+            if (args.workingDays !== undefined)
+                // generated workingDays type mis-parenthesizes the enum array; cast to the field type.
+                body.workingDays = args.workingDays as NonNullable<typeof body.workingDays>;
             const updated = await ctx.client.memberProfiles.update({
                 workspaceId: ctx.workspaceId,
                 userId: args.userId,
