@@ -526,83 +526,20 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).
 
-**2026-06-20 structural wave (shipped — no longer deferred).** The structural
-items formerly tracked in `Deferred.md` landed: corrected-spec `live-success`
-rose 46 → 67/184 (21 probe-backed read-side GET promotions); expenses + invoices
-list ops joined GOCLMCP `PAGINATED_LIST_OPS` (webhooks deliberately left out —
-live-verified non-paginated); consumer `as never` residue dropped 27 → 7
-(documented Bucket-C + the typed `wireBody<T>` escape); vitest unified to `^4`
-with honest re-pinned coverage floors and ~140 added handler tests; ten mutation
-survivors killed; the time-off status/`note` branch is live-verified (`note`
-optional, `changeTimeOffRequestStatus` bound via `wireBody`).
+### Shipped live-success waves
 
-**2026-06-21 wave (shipped).** `live-success` rose 67 → **81/184**: `createExpense`
-(orphaned findings-path fix) plus user-group + webhook + custom-field write CRUD,
-`updateHoliday`, and shared-reports write CRUD (13 ops) from fresh live probes with verified `Leftovers:0`. The two GOCLMCP follow-ups above
-landed: `apply_live_overrides!` drops `note` from
-`ChangeTimeOffRequestStatusRequest.required` (the `wireBody` is now a clean
-body-envelope bind), and the single-project scheduling-totals GET now carries
-**required** `start`/`end` query params — it 400s (code 3001) without them, a real
-runtime bug; the tool forwards them and the "ignores start/end" prose is
-corrected. Other live-evidence fixes: `expenses/categories` paginated and
-`Last-Page` stamped on 18 of the 21 paginated ops; the webhook SSRF guard blocks
-NAT64 `64:ff9b::/96`; a wrong-id `400 code:501` "doesn't belong to Workspace"
-classifies `not_found`; `fix_entry`/`groups_get` scans bounded; the time-off
-submit period is policy-unit dependent (DAYS = `start`+`days`, HOURS =
-`start`+`end`). No open generator follow-ups from this wave.
+Each wave probed the sacrificial sandbox with `Leftovers:0`; full per-op wire-facts
+and evidence live in `spec/evidence/discrepancies.md`. Historical denominators are
+184 (the op set before the 2026-06-23 surface refresh); the current op set is 169.
 
-**2026-06-22 wave (shipped).** The GOCLMCP generator now keeps `$ref` query
-parameters (`ensure_path_parameters!` resolve-aware), restoring dropped query
-params on 15 ops — notably the live-required `start`/`end` on `scheduling.list`
-(`assignments/all`) + the schedule-totals GETs, which exposed and fixed a broken
-CLI `scheduling list` + `clockify_scheduling_assignments_list` (both now require a
-`start`/`end` range). `clockify_time_off_requests_delete` was rewired from the dead
-flat route to the policy-scoped `timeOff.withdraw` (it could never delete before).
-`live-success` rose 81 → **87/184**: time-off request create/delete, expense delete +
-category archive, and project-membership PATCH/POST, all from live probes with
-verified `Leftovers:0`.
-
-**2026-06-23 live-success wave (shipped).** An API-key probe campaign against the
-sacrificial sandbox promoted `live-success` 111 → **129/184**: workspace billable +
-cost rate, user hourly + cost rate, project-user hourly + cost rate, invoice settings
-update, invoice status change, give/remove manager role, remove-user-from-group,
-member-profile PATCH, time-off balance PATCH, the three entity-info reads, webhook
-logs, and addon webhooks — all real 2xx, group/role writes cleaned up (`Leftovers:0`).
-The same campaign confirmed ~21 spec ops return a live 404/405 (bare `/policies`,
-`/scheduling/assignments`, project-level rate paths, and four wrong-method ops) and
-surfaced two missing official ops (`getWebhookEventStatusesWithLatestLog`,
-`addLimitedUsersWithInfo`) — both flagged in `spec/evidence/discrepancies.md` for an
-upstream GOCLMCP source-correction pass.
-
-**2026-06-23 surface-refresh wave (shipped).** Acting on the audit above, the upstream
-GOCLMCP source-correction landed: 17 confirmed-wrong ops were quarantined via
-`PHANTOM_PATHS` (bare `/policies` ×6, synthetic `/scheduling/assignments` writes ×5,
-project-level rate PUTs ×2, and four wrong-method 405 ops — each re-confirmed live
-404/405), the two missing official ops were added via a probe-fragment
-(`getWebhookEventStatusesWithLatestLog` live-stamped 200, `addLimitedUsersWithInfo`
-documented), and six stragglers were promoted from clean live 2xx probes
-(`getWebhookEventStatusesWithLatestLog`, `addUsersToGroup`, `generateDetailedReportV1`,
-`submitApprovalRequest`, `updateApprovalRequest`, `addInvoicePayment`; all
-`Leftovers:0`). Net: the canonical op set is now **169** and `live-success` is
-**135/169**. The removals cascaded into the wrapper (dropped the dead `.policies`
-scoped accessor) and the CLI/MCP scheduling-create path (repointed to the live
-recurring endpoint, since `POST /scheduling/assignments` 404s).
-
-**2026-06-22 live-success wave (shipped).** A 24-op sandbox CRUD-probe campaign
-(each re-listed for `Leftovers:0`, residue-free) promoted `live-success` 87 →
-**111/184**: invoices (export, info/filter, create, update, duplicate, delete, item
-add + delete), time-off policy create/change-status/delete, project
-template/estimate, task cost-rate/hourly-rate, expense update + category delete,
-per-user time-entries (create, bulk-edit, update/stop, duplicate, mark-invoiced),
-users filter, and scheduling user-capacity totals. The bulk mark-invoiced route
-(`/time-entries/invoiced/bulk`) returns a live 404 and stays deferred. Wire facts
-captured in the GOCLMCP findings: invoice `itemType` resolves against existing
-workspace item-types; `updateExpense` needs a `changeFields[]` array or the 200 is a
-silent no-op; task billable-rate is `PUT .../hourly-rate`; per-user time-entries
-require `tagIds`. This wave also fixed a pre-existing `make openapi-lint` miss:
-`scripts/generate-openapi-operations.mjs` now resolves `$ref` query parameters, so
-the inventory's paginated count reflects the spec's `$ref`'d page/page-size params
-(10 → 23 paginated ops).
+| Date | Wave | live-success | Highlights |
+|---|---|---|---|
+| 2026-06-20 | structural | 46 → 67/184 | 21 read-side GET promotions; expenses + invoices joined `PAGINATED_LIST_OPS` (webhooks left out — non-paginated); consumer `as never` 27 → 7; vitest unified `^4` + re-pinned coverage floors; ten mutation survivors killed |
+| 2026-06-21 | write CRUD | 67 → 81/184 | `createExpense` + user-group/webhook/custom-field write CRUD, `updateHoliday`, shared-reports write CRUD; `note` dropped from `ChangeTimeOffRequestStatusRequest.required`; scheduling-totals GET now requires `start`/`end` (400 code 3001 without); `expenses/categories` paginated; webhook SSRF guard blocks NAT64 `64:ff9b::/96` |
+| 2026-06-22 | generator + writes | 81 → 87/184 | `$ref` query params restored (`ensure_path_parameters!`) — fixed `scheduling.list` + schedule-totals GETs needing `start`/`end`; `clockify_time_off_requests_delete` rewired to `timeOff.withdraw`; time-off request create/delete, expense delete + category archive, project-membership PATCH/POST |
+| 2026-06-22 | CRUD probe | 87 → 111/184 | invoices CRUD + items, time-off policy CRUD, project template/estimate, task rates, expense update + category delete, per-user time-entries, users filter, scheduling user-capacity totals; `/time-entries/invoiced/bulk` deferred (live 404); paginated count 10 → 23 (`$ref` page params) |
+| 2026-06-23 | API-key probe | 111 → 129/184 | workspace/user/project-user rates, invoice settings + status, manager-role grant/revoke, remove-user-from-group, member-profile PATCH, time-off balance PATCH, entity-info reads, webhook logs + addon webhooks; flagged ~21 live-404/405 spec ops + 2 missing official ops |
+| 2026-06-23 | surface refresh | 184 → 169 ops; 129 → **135/169** | quarantined 17 confirmed-wrong ops via `PHANTOM_PATHS`, added 2 missing official ops (`getWebhookEventStatusesWithLatestLog` live, `addLimitedUsersWithInfo` documented), promoted 6 stragglers; cascaded to the wrapper (dropped dead `.policies` accessor) and CLI/MCP scheduling-create (repointed to live `createRecurring`, since `POST /scheduling/assignments` 404s) |
 
 ## 9. Secret hygiene
 

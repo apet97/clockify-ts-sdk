@@ -126,6 +126,8 @@ make docs-drift
 
 ## Current Gotchas
 
+### Workspace, build & generated paths
+
 - The repo is wired as **npm workspaces** from a root `package.json`
   (`workspaces: ["wrapper", "cli", "mcp"]`) with a single root
   `package-lock.json`. Run `npm ci` at the root, then per-package
@@ -153,6 +155,8 @@ make docs-drift
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator
   and drift gates pass; in that handoff, run the final full proof as
   `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' CLOCKIFY_ALLOW_GENERATED_DIFF=1 make perfect-full`.
+### Spec & live-API reality
+
 - Some operations live on non-default Clockify hosts (reports →
   `reports.api.clockify.me/v1`, audit-log → `auditlog-api.api.clockify.me/v1`,
   shared/expense reports). The corrected OpenAPI carries a per-operation
@@ -199,6 +203,8 @@ make docs-drift
   of 2026-06-21, the generated type marks it `note?` (GOCLMCP
   `apply_live_overrides!` drops it from `required[]`), so the tool binds the clean
   body-envelope form — the `wireBody<T>()` escape was dropped.
+### MCP tools & write-safety
+
 - `mcp/src/tools/workflows/` holds the workflow-first MCP surface
   (`index.ts` registers the tools; `business`/`review`/`run`/
   `time-tracking`/`resolve`/`plan`/`demo` carry the logic). The
@@ -255,6 +261,8 @@ make docs-drift
   decodes both), and localhost-ish hostnames, but not DNS rebinding.
   Dotless/hex/octal IPv4 literals are NOT a bypass — Node's WHATWG `URL`
   normalizes them to dotted-decimal before the guard sees the host.
+### Live-evidence behaviors & active-entity deletes
+
 - **Live-evidence behaviors (2026-06-21):** the single-project scheduling totals
   GET (`scheduling.listOnProject`) **requires** `start`/`end` — it 400s (code
   3001) without them, so `clockify_scheduling_assignments_list_per_project`
@@ -278,6 +286,8 @@ make docs-drift
   still marks DONE inline (`tasks.update({status:"DONE"})`) — a different
   replace-PUT shape, not folded into the helper. See
   `spec/evidence/discrepancies.md` (`deletes.archive-first.*`).
+### Live creds, sandbox & MCP scope filters
+
 - `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` are live sandbox env
   values. Check presence, never print values. `make sandbox-key-health`
   is the optional live preflight; it exits 0 when creds are blank and
@@ -289,6 +299,8 @@ make docs-drift
   (`mcp/src/tools/holidays.ts`) — matching the live-verified addon. See
   `spec/evidence/discrepancies.md`
   (`time-off.policies.scope.status-active-not-all`).
+### Generated docs, pack snapshots & their make-targets
+
 - `wrapper/.packsnapshot`, `cli/.packsnapshot`, and `mcp/.packsnapshot`
   must be the sorted `npm pack --dry-run --json` file lists. Run
   `make pack-snapshot-check` before push when package contents or CI
@@ -316,6 +328,8 @@ make docs-drift
 - CLI/MCP README command/tool tables are generated from
   `docs/cli-commands.json` and `docs/mcp-tools.json`; run
   `make readme-tables` after command or tool documentation changes.
+### Gates: coverage, mutation, performance, determinism
+
 - `make changelog-drift` checks that touched package scopes update
   their package changelog.
 - `make performance-budgets` checks built package file-size and
@@ -354,12 +368,16 @@ make docs-drift
 - `make build-determinism` builds the wrapper twice and hashes
   `wrapper/dist/**`; it is wired into `perfect-full`, not
   `perfect-fast`.
+### Operator docs & docs-index drift
+
 - `make docs-index-drift` checks `docs/README.md` links and required
   generated surfaces.
 - `docs/install-personas.md`, `docs/migration-guide.md`, and
   `docs/dependency-policy.md` are operator-facing hand-written docs.
 - `docs/troubleshooting.md` is generated from `docs/error-codes.json`;
   run `make troubleshooting` after error registry changes.
+### Release, CI & handoff
+
 - `make agent-handoff` checks `AGENTS.md`, this file, generated-path
   boundaries, and stale package/tool counts.
 - Release-please now files Unreleased→version-bump PRs (the
