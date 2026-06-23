@@ -7,6 +7,19 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored `Client.ccEmails` and `Client.currencyId` to the generated types — both are
+  returned by the live API (`GET /clients`) and present in official `ClientDtoV1`, but a
+  thin upstream schema had dropped them (first-writer schema-name race in the generator).
+- Corrected the `SharedReport` response type to the live wire shape: `isPublic` (was
+  `public`), `link` (was `url`), plus `reportAuthor`/`visibleToUsers`/
+  `visibleToUserGroups`/`fixedDate`/`workspaceId`/`userId`; dropped the phantom
+  `url`/`createdAt`/`updatedAt`/`workspace`. The now-orphaned bare `WorkspaceSettings`
+  schema is pruned (`Workspace` still uses `WorkspaceSettingsDtoV1`).
+- `Webhook` gained `deliveryEnabled`/`planEnabled` (present on the live wire and in
+  official `WebhookDtoV1`).
+
 ### Changed
 
 - Re-snapshotted the corrected OpenAPI to the 2026-06-23 GOCLMCP surface refresh:
