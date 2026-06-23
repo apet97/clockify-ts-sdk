@@ -248,7 +248,7 @@ describe("clockify_shared_reports_create", () => {
         // A falsy `public` must still land in the body envelope.
         expect(captured.create).toEqual({
             workspaceId: "ws-1",
-            body: { name: "Private", type: "DETAILED", filter: {}, public: false },
+            body: { name: "Private", type: "DETAILED", filter: {}, isPublic: false },
         });
     });
 
@@ -373,7 +373,7 @@ describe("clockify_shared_reports_update", () => {
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             sharedReportId: REPORT_ID,
-            body: { name: "Made public", type: "WEEKLY", filter: {}, public: true },
+            body: { name: "Made public", type: "WEEKLY", filter: {}, isPublic: true },
         });
     });
 

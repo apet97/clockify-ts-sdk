@@ -771,8 +771,9 @@ describe("users, tags, and shared report read branches", () => {
         expect(calls[1].body).toMatchObject({
             name: "Public",
             type: "SUMMARY",
-            public: true,
+            isPublic: true,
         });
+        expect(calls[1].body).not.toHaveProperty("public");
         expect((lastJson() as Record<string, unknown>).action).toBe("shared-reports.update");
     });
 

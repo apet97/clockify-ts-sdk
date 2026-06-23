@@ -94,7 +94,8 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
                 type: args.type,
                 filter: args.filter,
             };
-            if (args.public !== undefined) body.public = args.public;
+            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
+            if (args.public !== undefined) body.isPublic = args.public;
             const created = await ctx.client.sharedReports.create(
                 wireBody<ClockifyApi.SharedReportCreate>({ workspaceId: ctx.workspaceId, body }),
             );
@@ -130,7 +131,8 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
                 type: args.type,
                 filter: args.filter,
             };
-            if (args.public !== undefined) body.public = args.public;
+            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
+            if (args.public !== undefined) body.isPublic = args.public;
             const updated = await ctx.client.sharedReports.update(
                 wireBody<ClockifyApi.UpdateSharedReportsRequest>({
                     workspaceId: ctx.workspaceId,
