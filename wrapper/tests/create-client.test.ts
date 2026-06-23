@@ -163,6 +163,41 @@ describe("createClockifyClient", () => {
         expect(capturedBody).toBe(JSON.stringify({ name: "Acme" }));
     });
 
+    it("lands archived:true on the wire for a clients.update body envelope (archive deletion-safety path)", async () => {
+        // The generated clients.update FLATTENED whitelist is [address, currencyCode,
+        // email, name, note] — it DROPS `archived`. The archive-then-delete path
+        // (ensure.archiveThenDeleteClient) therefore relies on the body-envelope
+        // passthrough in core.bodyFromRequest (request.ts:225) carrying archived:true
+        // to the wire. If that branch regresses, archiving silently no-ops and the
+        // subsequent live DELETE 400s ("Cannot delete an active client"). This pins
+        // the exact wire bytes for that path end-to-end.
+        let capturedBody: string | null | undefined;
+        const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+            capturedBody = init?.body as string | null | undefined;
+            return new Response(JSON.stringify({ id: "client-1", name: "Globex", archived: true }), {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            });
+        });
+
+        const client = createClockifyClient({
+            apiKey: "test",
+            fetch: fetchMock as typeof fetch,
+            maxRetries: 0,
+        });
+        // `archived` is intentionally NOT in UpdateClientsRequestBody (the flattened
+        // whitelist drops it); the body envelope is the bypass. The double-cast mirrors
+        // ensure.archiveThenDeleteClient, whose archiveRequest is typed `=> unknown`.
+        await client.clients.update({
+            workspaceId: "ws-1",
+            clientId: "client-1",
+            body: { name: "Globex", archived: true },
+        } as unknown as Parameters<typeof client.clients.update>[0]);
+
+        expect(typeof capturedBody).toBe("string");
+        expect(JSON.parse(capturedBody as string)).toEqual({ name: "Globex", archived: true });
+    });
+
     it("throws generated status-specific API errors", async () => {
         const fetchMock = vi.fn(
             async () =>

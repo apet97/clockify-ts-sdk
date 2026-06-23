@@ -139,7 +139,7 @@ perfect-fast: generated-edit-check openapi-evidence upstream-drift official-open
 # and contract drift suite that previously only ran locally.
 contract-gates: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract cassettes fixture-mock-parity maintenance-playbook mutation-safety error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift schema-quality
 
-perfect-full: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence goclmcp-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism generator-comparison doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity mutation-safety maintenance-playbook product-surface-drift error-docs-drift error-registry troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift wrapper-gates cli-gates mcp-gates pack-smoke coverage mutation size mcp-tool-manifest-drift performance-budgets
+perfect-full: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence goclmcp-drift spec-sync-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism generator-comparison doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity mutation-safety maintenance-playbook product-surface-drift error-docs-drift error-registry troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift wrapper-gates cli-gates mcp-gates pack-smoke coverage mutation size mcp-tool-manifest-drift performance-budgets
 
 perfect-live:
 	@if [ -z "$${CLOCKIFY_API_KEY:-}" ] || [ -z "$${CLOCKIFY_WORKSPACE_ID:-}" ]; then \
@@ -193,6 +193,25 @@ goclmcp-drift:
 	@if [ ! -d ../GOCLMCP ]; then echo 'goclmcp-drift: ../GOCLMCP not found.' >&2; exit 1; fi
 	cd ../GOCLMCP && $(MAKE) openapi-drift catalog-drift selfinspect-drift raw-allowlist-drift
 	cd ../GOCLMCP && go test ./internal/tools/...
+
+# Cross-repo spec parity: spec/corrected/clockify.corrected.openapi.yaml must be a
+# byte-faithful copy of GOCLMCP's canonical OpenAPI. No other gate compares the two
+# (upstream-drift is internal-only, official-openapi-drift compares spec/official,
+# goclmcp-drift only proves GOCLMCP self-regenerates), so a stale or hand-tweaked
+# copy would otherwise pass every gate. perfect-full only (needs the sibling);
+# skips gracefully when ../GOCLMCP is absent.
+spec-sync-drift:
+	@if [ ! -d ../GOCLMCP ]; then echo 'spec-sync-drift: ../GOCLMCP not found, skipping.'; exit 0; fi
+	@a=`shasum -a 256 spec/corrected/clockify.corrected.openapi.yaml | cut -d' ' -f1`; \
+	 b=`shasum -a 256 ../GOCLMCP/docs/openapi/clockify-openapi.yaml | cut -d' ' -f1`; \
+	 if [ "$$a" != "$$b" ]; then \
+	   echo 'spec-sync-drift: SDK corrected snapshot != GOCLMCP canonical' >&2; \
+	   echo "  SDK     $$a" >&2; \
+	   echo "  GOCLMCP $$b" >&2; \
+	   echo '  Re-copy: cp ../GOCLMCP/docs/openapi/clockify-openapi.yaml spec/corrected/clockify.corrected.openapi.yaml' >&2; \
+	   exit 1; \
+	 fi; \
+	 echo "spec-sync-drift: OK (SDK snapshot == GOCLMCP canonical, $$a)"
 
 sdk-codegen-sync:
 	node scripts/generate-sdk-from-openapi.mjs --write
