@@ -111,7 +111,8 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
             if (opts.billable) body.billable = true;
             if (opts.includeNonWorkingDays) body.includeNonWorkingDays = true;
             const req: ClockifyApi.CreateRecurringSchedulingRequest = { workspaceId, body };
-            const created = (await client.scheduling.createRecurring(req)) as {
+            // createRecurring returns an ARRAY (one entry per occurrence; a one-off has one).
+            const createdList = (await client.scheduling.createRecurring(req)) as Array<{
                 id?: string;
                 userId?: string;
                 projectId?: string;
@@ -119,9 +120,16 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
                 start?: string;
                 end?: string;
                 period?: { start?: string; end?: string };
-            };
+            }>;
+            const created = createdList?.[0] ?? {};
             if (opts.publish === true) {
-                await client.scheduling.publish({ workspaceId, start: opts.start, end: opts.end });
+                // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
+                await client.scheduling.publish({
+                    workspaceId,
+                    start: opts.start,
+                    end: opts.end,
+                    userFilter: { contains: "CONTAINS", ids: [opts.user] },
+                });
             }
             const data = {
                 id: created.id ?? "",

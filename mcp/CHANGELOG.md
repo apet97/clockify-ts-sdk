@@ -10,7 +10,10 @@ All notable changes to `@clockify115/mcp-server` are documented here.
   workflow to the live `scheduling.createRecurring` endpoint — the bare
   `POST /scheduling/assignments` 404s on live Clockify and was removed from the
   2026-06-23 corrected spec; `published` maps to the separate range-based publish op.
-  The member-profile update tool retypes its body to `UpdateMemberProfilesRequest`.
+  `createRecurring` returns an array (one entry per occurrence); the tool reads the first
+  element for the receipt id, and `published` narrows the publish range to the
+  just-assigned user via `userFilter`. The member-profile update tool retypes its body to
+  `UpdateMemberProfilesRequest`.
 - Tightened `clockify_setup_webhook`'s `name` validation from `min(1)` to
   `min(2).max(30)`, matching the domain `clockify_webhooks_create` tool and the
   live-verified 2–30 constraint on the API-key webhook-create path.
