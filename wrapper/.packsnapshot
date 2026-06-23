@@ -1313,8 +1313,6 @@ dist/cjs/src/api/types/Workspace.d.ts
 dist/cjs/src/api/types/Workspace.js
 dist/cjs/src/api/types/WorkspaceExpensesDtoV1.d.ts
 dist/cjs/src/api/types/WorkspaceExpensesDtoV1.js
-dist/cjs/src/api/types/WorkspaceSettings.d.ts
-dist/cjs/src/api/types/WorkspaceSettings.js
 dist/cjs/src/api/types/WorkspaceSettingsDtoV1.d.ts
 dist/cjs/src/api/types/WorkspaceSettingsDtoV1.js
 dist/cjs/src/api/types/WorkspaceSubdomainDtoV1.d.ts
@@ -2705,8 +2703,6 @@ dist/esm/src/api/types/Workspace.d.ts
 dist/esm/src/api/types/Workspace.js
 dist/esm/src/api/types/WorkspaceExpensesDtoV1.d.ts
 dist/esm/src/api/types/WorkspaceExpensesDtoV1.js
-dist/esm/src/api/types/WorkspaceSettings.d.ts
-dist/esm/src/api/types/WorkspaceSettings.js
 dist/esm/src/api/types/WorkspaceSettingsDtoV1.d.ts
 dist/esm/src/api/types/WorkspaceSettingsDtoV1.js
 dist/esm/src/api/types/WorkspaceSubdomainDtoV1.d.ts
