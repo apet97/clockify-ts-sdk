@@ -1437,20 +1437,25 @@ on the bare route (the granular variants — already in
   the only auth scheme this SDK family uses is the API key.
 - **MCP / CLI / SDK affected:** `clockify_webhooks_create` makes `name`
   required (`z.string().min(2).max(30)`), matching the spec field shape
-  and the primary `clockify_setup_webhook` workflow (which already
-  required it). This SDK family is API-key-only (`X-Api-Key` /
+  and the primary `clockify_setup_webhook` workflow (tightened 2026-06-23
+  from `min(1)` to the same `min(2).max(30)`). This SDK family is API-key-only (`X-Api-Key` /
   `CLOCKIFY_API_KEY`), so the required-name path is the only one it can
   reach. Same auth-scheme-conditional shape as the wrapper's
   `mapAddonTokenRestriction(err, { authScheme })` / `AddonTokenRestrictionError`.
-- **Open questions:** whether a no-name **API-key** create returns 400
-  (expected per maintainer) or is silently accepted — convertible to
-  live-verified with a sandbox key by omitting `name` and recording the
-  status. Not blocking: the addon path (where name is optional) is
-  unreachable from this API-key SDK.
+- **Open questions:** RESOLVED 2026-06-23 (live). A no-name **API-key**
+  webhook create returns **400** (no webhook created): omitting `name` 400s
+  with a misleading `{"message":"Webhook already exists","code":501}`, and an
+  empty-string `name` 400s with the clean `"length must be between 2 and 30"`
+  — both confirm `name` is REQUIRED (2–30 chars) on the API-key path, while a
+  valid 2–30 name returns 201. A/B isolated on untouched webhook events to
+  rule out duplicate-detection. Evidence: GOCLMCP
+  `findings/live-promotion-2026-06-23-stragglers.md`. The addon path (where
+  `name` is optional, per the official spec's `required[]`) stays unreachable
+  from this API-key SDK.
 
 ## Live API surface audit (2026-06-23) — promotions, wrong-path flags, missing ops
 
-### `surface.audit.2026-06-23` — DOCUMENTED 2026-06-23
+### `surface.audit.2026-06-23` — DOCUMENTED 2026-06-23 / RESOLVED 2026-06-23
 
 API-key probe campaign against the sacrificial sandbox (WS `65b382b606de527a7ee2b60e`).
 Three outcomes:
@@ -1490,6 +1495,19 @@ The wrong-path set and the two missing ops both trace to GOCLMCP's `AIII/openapi
 official source predating the current Clockify web API (168 ops, 7 deprecated). A
 focused source-refresh against the current official pull is the clean fix; recorded
 here so it is flagged, not silently carried.
+
+**RESOLVED 2026-06-23.** GOCLMCP source-correction shipped (commits `07667f0` +
+`3e448c1`). **17** wrong ops quarantined via `PHANTOM_PATHS` — the count was 17, not
+~21: only **5** of the `/scheduling/assignments` ops were synthetic (the 5 totals reads
+are live-success and were kept; all 5 removed scheduling writes re-confirmed live
+404/405 this session), plus bare `/policies` ×6, project-level rate PUTs ×2, and the
+four wrong-method 405 ops. The 2 missing ops were added via a probe-fragment
+(`getWebhookEventStatusesWithLatestLog` live-stamped 200; `addLimitedUsersWithInfo`
+documented, tagged `Workspaces` to avoid a spurious SDK resource).
+`patchTimeEntriesInvoicedBulk` stays deferred (live 404). Net op set 184 → 169,
+live-success 129 → 135. The SDK re-snapshot cascaded into the wrapper (dropped the dead
+`.policies` scoped accessor) and CLI/MCP scheduling-create (repointed to the live
+`createRecurring`, since `POST /scheduling/assignments` 404s).
 
 ## Last-Page header — live audit (G.5)
 

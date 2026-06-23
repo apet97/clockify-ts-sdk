@@ -95,34 +95,42 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .option("--publish", "Publish immediately (default is draft).", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.CreateSchedulingRequest> = {
+            // Live Clockify has no single-assignment create (POST /scheduling/assignments
+            // 404s); the real create path is the recurring endpoint, which models a one-off
+            // when recurringAssignment is omitted. --publish maps to the separate range-based
+            // publish op for the assignment window.
+            const body: ClockifyRequestBody<ClockifyApi.CreateRecurringSchedulingRequest> = {
                 userId: opts.user,
                 projectId: opts.project,
                 hoursPerDay: opts.hoursPerDay,
-                period: { start: opts.start, end: opts.end },
-                published: opts.publish === true,
+                start: opts.start,
+                end: opts.end,
             };
             if (opts.task) body.taskId = opts.task;
             if (opts.note) body.note = opts.note;
             if (opts.billable) body.billable = true;
             if (opts.includeNonWorkingDays) body.includeNonWorkingDays = true;
-            const req: ClockifyApi.CreateSchedulingRequest = { workspaceId, body };
-            const created = (await client.scheduling.create(req)) as {
+            const req: ClockifyApi.CreateRecurringSchedulingRequest = { workspaceId, body };
+            const created = (await client.scheduling.createRecurring(req)) as {
                 id?: string;
                 userId?: string;
                 projectId?: string;
                 hoursPerDay?: number;
+                start?: string;
+                end?: string;
                 period?: { start?: string; end?: string };
-                published?: boolean;
             };
+            if (opts.publish === true) {
+                await client.scheduling.publish({ workspaceId, start: opts.start, end: opts.end });
+            }
             const data = {
                 id: created.id ?? "",
                 user: created.userId ?? "",
                 project: created.projectId ?? "",
                 hoursPerDay: created.hoursPerDay ?? 0,
-                start: created.period?.start ?? "",
-                end: created.period?.end ?? "",
-                published: created.published === true,
+                start: created.start ?? created.period?.start ?? opts.start ?? "",
+                end: created.end ?? created.period?.end ?? opts.end ?? "",
+                published: opts.publish === true,
             };
             printReceipt(
                 {

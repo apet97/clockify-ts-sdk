@@ -24,12 +24,6 @@
 
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 
-### `update`
-
-**Request fields** (`UpdateWorkspacesRequest`):
-
-- `workspaceId` (`string`, required)
-
 ### `updateCostRate`
 
 **Request fields** (`UpdateCostRateWorkspacesRequest`):
@@ -55,6 +49,16 @@
 - `amount` (`number`, required) — Represents an amount as integer.
 - `currency` (`string`, required) — Represents a currency.
 - `since` (`string`, optional) — Represents a date and time in yyyy-MM-ddThh:mm:ssZ format.
+
+### `addLimitedUsersWithInfo`
+
+**Request fields** (`AddLimitedUsersWithInfoWorkspacesRequest`):
+
+- `workspaceId` (`string`, required)
+- `users` (`ClockifyApi.LimitedUserRequest[]`, required)
+- `workspaceId` (`string`, required)
+- `body` (`AddLimitedUsersWithInfoWorkspacesRequestBody`, required)
+- `users` (`ClockifyApi.LimitedUserRequest[]`, required)
 
 ### `addUser`
 

@@ -123,9 +123,9 @@ refreshed by `cp` after every regen in GOCLMCP.
      `x-clockify-last-page-header: true` on 18 endpoints that emit
      the header
    - `SDK_METHOD_NAMES` + `stamp_sdk_method_name!` — pairs
-     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 171 ops
-     across 28 modules
-   - `PHANTOM_PATHS` + `phantom_path?` — 10 quarantined live-404/405
+     `x-fern-sdk-group-name` + `x-fern-sdk-method-name` on 155 ops
+     across 27 modules
+   - `PHANTOM_PATHS` + `phantom_path?` — 27 quarantined live-404/405
      routes (3 round-1 timeOff legacy, 3 round-2 G.1 edge cases,
      plus bare `/balance` × 2, `/scheduling/capacity` × 1, and
      `/time-entries/stop` × 1)
@@ -184,7 +184,7 @@ upstream sources (GOCLMCP/docs/openapi/sources/**)
         │
         │  (cd ../GOCLMCP && make gen-openapi)
         ▼
-GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 184 ops, 10 quarantined sources)
+GOCLMCP/docs/openapi/clockify-openapi.yaml  (canonical, 169 ops, 27 quarantined sources)
         │
         │  make {openapi,catalog,selfinspect,raw-allowlist}-drift   ← all 4 must EXIT 0
         │  go test ./internal/tools/...                              ← must pass
@@ -516,12 +516,12 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    (internal evidence only — not filed).
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
-   `x-fern-sdk-method-name`. Coverage: 171 ops / 28 modules /
-   92.9% of the 184-op live surface. The other ~13 ops are
+   `x-fern-sdk-method-name`. Coverage: 155 ops / 27 modules /
+   91.7% of the 169-op live surface. The other ~14 ops are
    already-clean operationIds or per-module domain edge cases.
-   (This 171 is the fern *pairing* count. The SDK README states 172 —
+   (This 155 is the fern *pairing* count. The SDK README states 156 —
    total method-name coverage — which adds the one operationId-derived
-   method, `expenseReport.generateDetailedReportV1`, to these 171.)
+   method, `expenseReport.generateDetailedReportV1`, to these 155.)
 
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).
@@ -573,6 +573,20 @@ The same campaign confirmed ~21 spec ops return a live 404/405 (bare `/policies`
 surfaced two missing official ops (`getWebhookEventStatusesWithLatestLog`,
 `addLimitedUsersWithInfo`) — both flagged in `spec/evidence/discrepancies.md` for an
 upstream GOCLMCP source-correction pass.
+
+**2026-06-23 surface-refresh wave (shipped).** Acting on the audit above, the upstream
+GOCLMCP source-correction landed: 17 confirmed-wrong ops were quarantined via
+`PHANTOM_PATHS` (bare `/policies` ×6, synthetic `/scheduling/assignments` writes ×5,
+project-level rate PUTs ×2, and four wrong-method 405 ops — each re-confirmed live
+404/405), the two missing official ops were added via a probe-fragment
+(`getWebhookEventStatusesWithLatestLog` live-stamped 200, `addLimitedUsersWithInfo`
+documented), and six stragglers were promoted from clean live 2xx probes
+(`getWebhookEventStatusesWithLatestLog`, `addUsersToGroup`, `generateDetailedReportV1`,
+`submitApprovalRequest`, `updateApprovalRequest`, `addInvoicePayment`; all
+`Leftovers:0`). Net: the canonical op set is now **169** and `live-success` is
+**135/169**. The removals cascaded into the wrapper (dropped the dead `.policies`
+scoped accessor) and the CLI/MCP scheduling-create path (repointed to the live
+recurring endpoint, since `POST /scheduling/assignments` 404s).
 
 **2026-06-22 live-success wave (shipped).** A 24-op sandbox CRUD-probe campaign
 (each re-listed for `Leftovers:0`, residue-free) promoted `live-success` 87 →

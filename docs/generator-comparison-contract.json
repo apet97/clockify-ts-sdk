@@ -22,8 +22,8 @@
     "methodRegex": "public\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
   },
   "thresholds": {
-    "minimumStampedOperations": 169,
-    "minimumGeneratedMethods": 184
+    "minimumStampedOperations": 155,
+    "minimumGeneratedMethods": 169
   },
   "wiring": {
     "makeTarget": "generator-comparison",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "spec/corrected/clockify.corrected.openapi.yaml",
-  "operationCount": 184,
+  "operationCount": 169,
   "operations": [
     {
       "method": "POST",
@@ -123,29 +123,6 @@
       "hasRequestBody": false,
       "responseCodes": [
         "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}",
-      "operationId": "putWorkspacesWorkspaceId",
-      "tags": [
-        "Workspaces"
-      ],
-      "sdkGroup": "workspaces",
-      "sdkMethod": "update",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "405"
       ],
       "parameters": [
         {
@@ -1991,6 +1968,29 @@
       ]
     },
     {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/limited-users",
+      "operationId": "addLimitedUsersWithInfo",
+      "tags": [
+        "Workspaces"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": true,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/member-profile/{userId}",
       "operationId": "getMemberProfile",
@@ -2001,35 +2001,6 @@
       "sdkMethod": "get",
       "lastPageHeader": false,
       "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "userId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
-      "operationId": "putWorkspacesWorkspaceIdMemberProfileUserId",
-      "tags": [
-        "Users"
-      ],
-      "sdkGroup": null,
-      "sdkMethod": null,
-      "lastPageHeader": false,
-      "hasRequestBody": true,
       "responseCodes": [
         "200"
       ],
@@ -2071,186 +2042,6 @@
         },
         {
           "name": "userId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/policies",
-      "operationId": "getWorkspacesWorkspaceIdPolicies",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "list",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "archived",
-          "in": "query",
-          "required": false,
-          "schemaType": "boolean"
-        },
-        {
-          "name": "page",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "page-size",
-          "in": "query",
-          "required": false,
-          "schemaType": "integer"
-        },
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/policies",
-      "operationId": "postWorkspacesWorkspaceIdPolicies",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "create",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "201"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "getWorkspacesWorkspaceIdPoliciesPolicyId",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "get",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "policyId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "putWorkspacesWorkspaceIdPoliciesPolicyId",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "update",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "policyId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "deleteWorkspacesWorkspaceIdPoliciesPolicyId",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "delete",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "policyId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}/archive",
-      "operationId": "patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive",
-      "tags": [
-        "Policies"
-      ],
-      "sdkGroup": "policies",
-      "sdkMethod": "archive",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "policyId",
           "in": "path",
           "required": true,
           "schemaType": "string"
@@ -2593,35 +2384,6 @@
       ]
     },
     {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/cost-rate",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdCostRate",
-      "tags": [
-        "Projects"
-      ],
-      "sdkGroup": "projects",
-      "sdkMethod": "updateCostRate",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "projectId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields",
       "operationId": "listProjectCustomFields",
@@ -2759,35 +2521,6 @@
       ],
       "sdkGroup": "projects",
       "sdkMethod": "updateEstimate",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "projectId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/hourly-rate",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate",
-      "tags": [
-        "Projects"
-      ],
-      "sdkGroup": "projects",
-      "sdkMethod": "updateHourlyRate",
       "lastPageHeader": false,
       "hasRequestBody": true,
       "responseCodes": [
@@ -3390,29 +3123,6 @@
       ]
     },
     {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments",
-      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignments",
-      "tags": [
-        "Scheduling"
-      ],
-      "sdkGroup": "scheduling",
-      "sdkMethod": "create",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "201"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/all",
       "operationId": "getAllSchedulingAssignments",
@@ -3588,35 +3298,6 @@
       ]
     },
     {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
-      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId",
-      "tags": [
-        "Scheduling"
-      ],
-      "sdkGroup": "scheduling",
-      "sdkMethod": "replaceRecurring",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "assignmentId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
       "method": "PATCH",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
       "operationId": "updateRecurringAssignment",
@@ -3733,29 +3414,6 @@
       ]
     },
     {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/totals",
-      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals",
-      "tags": [
-        "Scheduling"
-      ],
-      "sdkGroup": "scheduling",
-      "sdkMethod": "calculateUsersTotals",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals",
       "operationId": "getUserCapacityTotal",
@@ -3803,64 +3461,6 @@
         {
           "name": "end",
           "in": "query",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
-      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
-      "tags": [
-        "Scheduling"
-      ],
-      "sdkGroup": "scheduling",
-      "sdkMethod": "update",
-      "lastPageHeader": false,
-      "hasRequestBody": true,
-      "responseCodes": [
-        "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "assignmentId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
-      "operationId": "deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
-      "tags": [
-        "Scheduling"
-      ],
-      "sdkGroup": "scheduling",
-      "sdkMethod": "delete",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "204"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "assignmentId",
-          "in": "path",
           "required": true,
           "schemaType": "string"
         }
@@ -5049,35 +4649,6 @@
       ]
     },
     {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
-      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupId",
-      "tags": [
-        "User Groups"
-      ],
-      "sdkGroup": "userGroups",
-      "sdkMethod": "get",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "405"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "groupId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
       "method": "PUT",
       "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
       "operationId": "updateGroup",
@@ -5119,35 +4690,6 @@
       "hasRequestBody": false,
       "responseCodes": [
         "200"
-      ],
-      "parameters": [
-        {
-          "name": "workspaceId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        },
-        {
-          "name": "groupId",
-          "in": "path",
-          "required": true,
-          "schemaType": "string"
-        }
-      ]
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
-      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupIdUsers",
-      "tags": [
-        "User Groups"
-      ],
-      "sdkGroup": "userGroups",
-      "sdkMethod": "listMembers",
-      "lastPageHeader": false,
-      "hasRequestBody": false,
-      "responseCodes": [
-        "405"
       ],
       "parameters": [
         {
@@ -6100,6 +5642,53 @@
           "name": "webhookId",
           "in": "path",
           "required": true,
+          "schemaType": "string"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/statuses",
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "tags": [
+        "Webhooks"
+      ],
+      "sdkGroup": null,
+      "sdkMethod": null,
+      "lastPageHeader": false,
+      "hasRequestBody": false,
+      "responseCodes": [
+        "200"
+      ],
+      "parameters": [
+        {
+          "name": "workspaceId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "webhookId",
+          "in": "path",
+          "required": true,
+          "schemaType": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "size",
+          "in": "query",
+          "required": false,
+          "schemaType": "integer"
+        },
+        {
+          "name": "statuses",
+          "in": "query",
+          "required": false,
           "schemaType": "string"
         }
       ]

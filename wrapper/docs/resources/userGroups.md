@@ -1,6 +1,6 @@
 # userGroups
 
-8 methods on `client.userGroups`.
+6 methods on `client.userGroups`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -29,13 +29,6 @@
 - `body` (`UserGroupRequestBody`, required)
 - `name` (`string`, required) — Represents a user group name.
 
-### `get`
-
-**Request fields** (`GetUserGroupsRequest`):
-
-- `workspaceId` (`string`, required)
-- `groupId` (`string`, required)
-
 ### `update`
 
 **Request fields** (`UpdateUserGroupsRequest`):
@@ -51,13 +44,6 @@
 ### `delete`
 
 **Request fields** (`DeleteUserGroupsRequest`):
-
-- `workspaceId` (`string`, required)
-- `groupId` (`string`, required)
-
-### `listMembers`
-
-**Request fields** (`ListMembersUserGroupsRequest`):
 
 - `workspaceId` (`string`, required)
 - `groupId` (`string`, required)

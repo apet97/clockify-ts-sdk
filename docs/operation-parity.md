@@ -8,11 +8,11 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 
 | Metric | Count |
 |---|---:|
-| operations | 184 |
-| sdkNamed | 172 |
-| tsMcpExact | 94 |
-| goMcpExact | 84 |
-| curated | 33 |
+| operations | 169 |
+| sdkNamed | 156 |
+| tsMcpExact | 92 |
+| goMcpExact | 82 |
+| curated | 32 |
 
 ## Operations
 
@@ -24,7 +24,6 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | GET | `/workspaces` | `getAllMyWorkspaces` | `client.workspaces.list` | - | - | - | `clockify_workspaces_list` |
 | POST | `/workspaces` | `addWorkspace` | `client.workspaces.create` | - | - | - | `clockify_workspaces_create` |
 | GET | `/workspaces/{workspaceId}` | `getWorkspaceInfo` | `client.workspaces.get` | - | - | - | `clockify_workspaces_get` |
-| PUT | `/workspaces/{workspaceId}` | `putWorkspacesWorkspaceId` | `client.workspaces.update` | - | - | - | `clockify_workspaces_update` |
 | GET | `/workspaces/{workspaceId}/addons/{addonId}/webhooks` | `getAddonWebhooksOnWorkspace` | `client.webhooks.listForAddon` | - | - | - | `clockify_webhooks_list_for_addon` |
 | GET | `/workspaces/{workspaceId}/approval-requests` | `getApprovalRequests` | `client.approvals.list` | `clockify_approvals_list` | `clockify_approvals_list` | - | `clockify_approvals_list` |
 | POST | `/workspaces/{workspaceId}/approval-requests` | `submitApprovalRequest` | `client.approvals.submit` | `clockify_approvals_submit` | `clockify_approvals_submit` | - | `clockify_approvals_submit`<br>`clockify_approvals_create` |
@@ -81,15 +80,9 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | `addInvoicePayment` | `client.invoicePayments.create` | `clockify_invoices_create` | `clockify_invoices_payments_create` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_create` |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}` | `deleteInvoicePayment` | `client.invoicePayments.delete` | `clockify_invoices_delete` | `clockify_invoices_payments_delete` | GOCLMCP groups invoice payment operations under invoices_payments. | `clockify_invoices_delete` |
 | PATCH | `/workspaces/{workspaceId}/invoices/{invoiceId}/status` | `changeInvoiceStatus` | `client.invoices.updateStatus` | `clockify_invoices_update_status` | - | - | `clockify_invoices_update_status` |
+| POST | `/workspaces/{workspaceId}/limited-users` | `addLimitedUsersWithInfo` | - | - | - | - | `clockify_workspaces_add_limited_users_with_info` |
 | GET | `/workspaces/{workspaceId}/member-profile/{userId}` | `getMemberProfile` | `client.memberProfiles.get` | `clockify_member_profile_get` | `clockify_users_profile` | Member profile lookup; TS names it member_profile_get, GOCLMCP users_profile. | `clockify_member_profiles_get` |
-| PUT | `/workspaces/{workspaceId}/member-profile/{userId}` | `putWorkspacesWorkspaceIdMemberProfileUserId` | - | - | - | - | `clockify_users_put_workspaces_workspace_id_member_profile_user_id` |
 | PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | `updateMemberProfile` | `client.memberProfiles.update` | `clockify_member_profile_update` | - | PATCH member-profile is surfaced as the member_profile_update tool (the singular member_profile prefix matches member_profile_get; not the dead PUT alias). | `clockify_member_profiles_update` |
-| GET | `/workspaces/{workspaceId}/policies` | `getWorkspacesWorkspaceIdPolicies` | `client.policies.list` | - | - | - | `clockify_policies_list` |
-| POST | `/workspaces/{workspaceId}/policies` | `postWorkspacesWorkspaceIdPolicies` | `client.policies.create` | - | - | - | `clockify_policies_create` |
-| GET | `/workspaces/{workspaceId}/policies/{policyId}` | `getWorkspacesWorkspaceIdPoliciesPolicyId` | `client.policies.get` | - | - | - | `clockify_policies_get` |
-| PUT | `/workspaces/{workspaceId}/policies/{policyId}` | `putWorkspacesWorkspaceIdPoliciesPolicyId` | `client.policies.update` | - | - | - | `clockify_policies_update` |
-| DELETE | `/workspaces/{workspaceId}/policies/{policyId}` | `deleteWorkspacesWorkspaceIdPoliciesPolicyId` | `client.policies.delete` | - | - | - | `clockify_policies_delete` |
-| PATCH | `/workspaces/{workspaceId}/policies/{policyId}/archive` | `patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive` | `client.policies.archive` | - | - | - | `clockify_policies_archive` |
 | GET | `/workspaces/{workspaceId}/projects` | `getWorkspaceProjects` | `client.projects.list` | `clockify_projects_list` | `clockify_projects_list` | - | `clockify_projects_list` |
 | POST | `/workspaces/{workspaceId}/projects` | `createProject` | `client.projects.create` | `clockify_projects_create` | `clockify_projects_create` | - | `clockify_projects_create` |
 | POST | `/workspaces/{workspaceId}/projects/from-template` | `createProjectFromTemplate` | `client.projects.createFromTemplate` | - | - | - | `clockify_projects_create_from_template` |
@@ -97,12 +90,10 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | `updateProject` | `client.projects.update` | `clockify_projects_update` | `clockify_projects_update` | - | `clockify_projects_update` |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | `deleteProject` | `client.projects.delete` | `clockify_projects_delete` | `clockify_projects_delete` | - | `clockify_projects_delete` |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | `client.projects.archive` | `clockify_projects_update` | `clockify_projects_archive` | The dedicated /projects/{id}/archive route returns 404 on the live API; projects are archived via the project update tool (archived:true). See spec/evidence/discrepancies.md. | `clockify_projects_archive` |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/cost-rate` | `putWorkspacesWorkspaceIdProjectsProjectIdCostRate` | `client.projects.updateCostRate` | - | - | - | `clockify_projects_update_cost_rate` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields` | `listProjectCustomFields` | `client.customFields.listForProject` | - | - | - | `clockify_custom_fields_list_for_project` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `updateProjectCustomField` | `client.customFields.updateForProject` | - | - | - | `clockify_custom_fields_update_for_project` |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `removeProjectCustomField` | `client.customFields.removeFromProject` | - | - | - | `clockify_custom_fields_remove_from_project` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/estimate` | `updateProjectEstimate` | `client.projects.updateEstimate` | - | - | - | `clockify_projects_update_estimate` |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/hourly-rate` | `putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate` | `client.projects.updateHourlyRate` | - | - | - | `clockify_projects_update_hourly_rate` |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `assignOrRemoveProjectUsers` | `client.projects.setMembers` | - | - | - | `clockify_projects_set_members` |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `updateProjectMemberships` | `client.projects.updateMemberships` | - | - | - | `clockify_projects_update_memberships` |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | `findTasksOnProject` | `client.tasks.list` | `clockify_tasks_list` | `clockify_tasks_list` | - | `clockify_tasks_list` |
@@ -120,21 +111,16 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | POST | `/workspaces/{workspaceId}/reports/expenses/detailed` | `generateDetailedReportV1` | `client.expenseReport.generateDetailedReportV1` | `clockify_expenses_list` | `clockify_reports_expense` | Expense reports are generated under an operationId-derived SDK module and a reports-family Go MCP tool. | `clockify_expenses_generate_detailed_report_v1`<br>`clockify_expenses_list` |
 | POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | `client.reports.summary` | `clockify_reports_summary` | `clockify_reports_summary` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_summary` |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | `client.reports.weekly` | `clockify_reports_weekly` | `clockify_reports_weekly` | GOCLMCP reports use report-family names instead of generic operation verbs. | `clockify_reports_weekly` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments` | `postWorkspacesWorkspaceIdSchedulingAssignments` | `client.scheduling.create` | - | - | - | `clockify_scheduling_create` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | `client.scheduling.list` | - | - | - | `clockify_scheduling_list` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | `client.scheduling.listPerProject` | `clockify_scheduling_assignments_list_per_project` | `clockify_scheduling_project_totals` | Project totals POST is the existing per-project assignments list tool; GOCLMCP names it as a scheduling aggregate. | `clockify_scheduling_list_per_project` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}` | `getScheduledAssignmentsOnProject` | `client.scheduling.listOnProject` | - | - | - | `clockify_scheduling_list_on_project` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | `client.scheduling.publish` | `clockify_scheduling_publish` | `clockify_scheduling_publish` | - | `clockify_scheduling_publish` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/recurring` | `createRecurringAssignment` | `client.scheduling.createRecurring` | - | - | - | `clockify_scheduling_create_recurring` |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId` | `client.scheduling.replaceRecurring` | - | - | - | `clockify_scheduling_replace_recurring` |
 | PATCH | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `updateRecurringAssignment` | `client.scheduling.updateRecurring` | - | - | - | `clockify_scheduling_update_recurring` |
 | DELETE | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `deleteRecurringAssignment` | `client.scheduling.deleteRecurring` | - | - | - | `clockify_scheduling_delete_recurring` |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}` | `changeRecurringPeriod` | - | - | - | - | `clockify_scheduling_change_recurring_period` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals` | `getUsersCapacityTotals` | `client.scheduling.getUsersCapacityFiltered` | `clockify_scheduling_capacity` | `clockify_scheduling_capacity` | GOCLMCP names capacity totals as the capacity workflow. | `clockify_scheduling_get_users_capacity_filtered` |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | `postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals` | `client.scheduling.calculateUsersTotals` | - | `clockify_scheduling_user_totals` | Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md. | `clockify_scheduling_calculate_users_totals` |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals` | `getUserCapacityTotal` | `client.scheduling.getUserCapacity` | - | - | - | `clockify_scheduling_get_user_capacity` |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.update` | - | - | - | `clockify_scheduling_update` |
-| DELETE | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | `client.scheduling.delete` | - | - | - | `clockify_scheduling_delete` |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | `client.scheduling.copy` | - | - | - | `clockify_scheduling_copy` |
 | GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.list` | `clockify_shared_reports_list` | - | - | `clockify_shared_reports_list` |
 | POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | `client.sharedReports.create` | `clockify_shared_reports_create` | - | - | `clockify_shared_reports_create` |
@@ -171,10 +157,8 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus` | `client.timeOff.updateStatus` | `clockify_time_off_requests_update_status` | `clockify_time_off_requests_update` | TS MCP names the status transition explicitly; GOCLMCP exposes a generic request update tool plus approve/deny helpers. | `clockify_time_off_update_status` |
 | GET | `/workspaces/{workspaceId}/user-groups` | `findAllGroupsOnWorkspace` | `client.userGroups.list` | `clockify_groups_list` | `clockify_groups_list` | - | `clockify_groups_list` |
 | POST | `/workspaces/{workspaceId}/user-groups` | `addNewGroup` | `client.userGroups.create` | `clockify_groups_create` | `clockify_groups_create` | - | `clockify_groups_create` |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}` | `getWorkspacesWorkspaceIdUserGroupsGroupId` | `client.userGroups.get` | `clockify_groups_get` | `clockify_groups_get` | - | `clockify_groups_get` |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | `updateGroup` | `client.userGroups.update` | `clockify_groups_update` | `clockify_groups_update` | - | `clockify_groups_update` |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | `deleteGroup` | `client.userGroups.delete` | `clockify_groups_delete` | `clockify_groups_delete` | - | `clockify_groups_delete` |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers` | `client.userGroups.listMembers` | `clockify_groups_list_members` | - | - | `clockify_groups_list_members` |
 | POST | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | `addUsersToGroup` | `client.userGroups.addMembers` | `clockify_groups_add_member` | `clockify_groups_add_user` | TS MCP uses member terminology; GOCLMCP uses user terminology. | `clockify_groups_add_members` |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}` | `removeUserFromGroup` | `client.userGroups.removeMember` | `clockify_groups_remove_member` | `clockify_groups_remove_user` | TS MCP uses member terminology; GOCLMCP uses user terminology. | `clockify_groups_remove_member` |
 | GET | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `getWorkspacesWorkspaceIdUserUserIdTimeEntries` | `client.timeEntries.listForUser` | - | - | - | `clockify_entries_list_for_user` |
@@ -201,5 +185,6 @@ Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScr
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | `client.webhooks.rotateToken` | - | - | - | `clockify_webhooks_rotate_token` |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | `client.webhooks.listLogs` | - | - | - | `clockify_webhooks_list_logs` |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | `client.webhooks.searchLogs` | - | - | - | `clockify_webhooks_search_logs` |
+| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | - | - | - | - | `clockify_webhooks_get_webhook_event_statuses_with_latest_log` |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/token` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken` | `client.webhooks.updateToken` | - | - | - | `clockify_webhooks_update_token` |
 

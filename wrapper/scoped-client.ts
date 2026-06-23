@@ -43,7 +43,6 @@ import type { InvoicePaymentsClient } from "./src/api/resources/invoicePayments/
 import type { InvoicesClient } from "./src/api/resources/invoices/client/Client.js";
 import type { InvoiceSettingsClient } from "./src/api/resources/invoiceSettings/client/Client.js";
 import type { MemberProfilesClient } from "./src/api/resources/memberProfiles/client/Client.js";
-import type { PoliciesClient } from "./src/api/resources/policies/client/Client.js";
 import type { ProjectsClient } from "./src/api/resources/projects/client/Client.js";
 import type { ReportsClient } from "./src/api/resources/reports/client/Client.js";
 import type { SchedulingClient } from "./src/api/resources/scheduling/client/Client.js";
@@ -142,9 +141,6 @@ export class Workspace {
     }
     get memberProfiles(): MemberProfilesClient {
         return this.scoped("memberProfiles") as MemberProfilesClient;
-    }
-    get policies(): PoliciesClient {
-        return this.scoped("policies") as PoliciesClient;
     }
     get projects(): ProjectsClient {
         return this.scoped("projects") as ProjectsClient;

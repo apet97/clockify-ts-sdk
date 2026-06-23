@@ -22,9 +22,12 @@ function schedulingContext(captured: Record<string, unknown>): Context {
         workspaceId: "ws-1",
         client: {
             scheduling: {
-                create: async (req: unknown) => {
-                    captured.create = req;
+                createRecurring: async (req: unknown) => {
+                    captured.createRecurring = req;
                     return { id: "asg-1" };
+                },
+                publish: async (req: unknown) => {
+                    captured.publish = req;
                 },
                 update: async (req: unknown) => {
                     captured.update = req; // dead bare PUT — must NOT be called
@@ -90,7 +93,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
         });
         expect(res.isError).toBeFalsy();
         const create =
-            (captured.create as { body?: { userId?: string; projectId?: string } }).body ?? {};
+            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
     });
@@ -112,7 +115,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
         const env = envelope(res);
         expect(env.ok).toBe(true);
         expect((env.clarification as { field?: string }).field).toBe("projectId");
-        expect(captured.create).toBeUndefined();
+        expect(captured.createRecurring).toBeUndefined();
     });
 
     it("assignments_create clarifies on an ambiguous user name and does not create", async () => {
@@ -132,7 +135,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
         const env = envelope(res);
         expect(env.ok).toBe(true);
         expect((env.clarification as { field?: string }).field).toBe("userId");
-        expect(captured.create).toBeUndefined();
+        expect(captured.createRecurring).toBeUndefined();
     });
 
     it("assignments_create passes 24-hex userId + projectId through (resolved id equals input)", async () => {
@@ -150,7 +153,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
         });
         expect(res.isError).toBeFalsy();
         const create =
-            (captured.create as { body?: { userId?: string; projectId?: string } }).body ?? {};
+            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
     });

@@ -8,7 +8,7 @@ Accepted.
 
 The TypeScript MCP (`@clockify115/mcp-server`) advertises 134 tools; the sibling
 Go MCP reference (`../GOCLMCP`) loads 156. The operation-parity matrix
-(`docs/operation-parity.md`) also shows 12 of the 184 OpenAPI operations with no
+(`docs/operation-parity.md`) also shows 13 of the 169 OpenAPI operations with no
 SDK method name (the SDK column is `-`). Quality work requires each gap to be
 either closed or recorded as a deliberate, justified decision — no silent
 ceilings. A cross-repo triage (2026-06-22) reconciled both surfaces fully:

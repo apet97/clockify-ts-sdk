@@ -1,6 +1,6 @@
 # webhooks
 
-10 methods on `client.webhooks`.
+11 methods on `client.webhooks`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
@@ -107,6 +107,16 @@
 - `sortByNewest` (`boolean`, optional) — If set to true, logs will be sorted with most recent first.
 - `status` (`"ALL" \| "SUCCEEDED" \| "FAILED"`, optional) — Filters logs by status.
 - `to` (`string`, optional) — Represents date and time in yyyy-MM-ddThh:mm:ssZ format. If provided, results will include logs which occurred before this value.
+
+### `getWebhookEventStatusesWithLatestLog`
+
+**Request fields** (`GetWebhookEventStatusesWithLatestLogWebhooksRequest`):
+
+- `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
+- `webhookId` (`string`, required) — Represents a webhook identifier across the system.
+- `page` (`number`, optional) — Page number.
+- `size` (`number`, optional) — Page size.
+- `statuses` (`"SUCCEEDED" \| "RETRYING" \| "FAILED"`, optional) — Represents a filter for webhook event status.
 
 ### `updateToken`
 

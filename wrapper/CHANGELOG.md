@@ -9,6 +9,11 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Re-snapshotted the corrected OpenAPI to the 2026-06-23 GOCLMCP surface refresh:
+  **184 → 169 operations** (17 live-404/405 wrong-path ops removed, 2 missing official
+  ops added) and **129 → 135 live-success**. Dropped the dead `.policies` scoped-client
+  accessor — the bare `/policies` resource no longer exists; the live time-off policies
+  surface is `.timeOffPolicies`.
 - The SDK now compiles under `exactOptionalPropertyTypes` and `noImplicitOverride`
   (both enabled in `wrapper/tsconfig.json`, matching cli + mcp). The local
   generator (`scripts/generate-sdk-from-openapi.mjs`) now emits an

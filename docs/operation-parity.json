@@ -8,11 +8,11 @@
     "overrides": "docs/operation-parity-overrides.json"
   },
   "summary": {
-    "operations": 184,
-    "sdkNamed": 172,
-    "tsMcpExact": 94,
-    "goMcpExact": 84,
-    "curated": 33
+    "operations": 169,
+    "sdkNamed": 156,
+    "tsMcpExact": 92,
+    "goMcpExact": 82,
+    "curated": 32
   },
   "operations": [
     {
@@ -112,24 +112,6 @@
       "sdk": "client.workspaces.get",
       "candidateTools": [
         "clockify_workspaces_get"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}",
-      "operationId": "putWorkspacesWorkspaceId",
-      "sdk": "client.workspaces.update",
-      "candidateTools": [
-        "clockify_workspaces_update"
       ],
       "tsMcp": null,
       "goMcp": null,
@@ -1152,6 +1134,24 @@
       }
     },
     {
+      "method": "POST",
+      "path": "/workspaces/{workspaceId}/limited-users",
+      "operationId": "addLimitedUsersWithInfo",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_workspaces_add_limited_users_with_info"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/member-profile/{userId}",
       "operationId": "getMemberProfile",
@@ -1170,24 +1170,6 @@
       }
     },
     {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
-      "operationId": "putWorkspacesWorkspaceIdMemberProfileUserId",
-      "sdk": null,
-      "candidateTools": [
-        "clockify_users_put_workspaces_workspace_id_member_profile_user_id"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": false,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
       "method": "PATCH",
       "path": "/workspaces/{workspaceId}/member-profile/{userId}",
       "operationId": "updateMemberProfile",
@@ -1203,114 +1185,6 @@
         "tsMcpExact": true,
         "goMcpExact": false,
         "curated": true
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/policies",
-      "operationId": "getWorkspacesWorkspaceIdPolicies",
-      "sdk": "client.policies.list",
-      "candidateTools": [
-        "clockify_policies_list"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/policies",
-      "operationId": "postWorkspacesWorkspaceIdPolicies",
-      "sdk": "client.policies.create",
-      "candidateTools": [
-        "clockify_policies_create"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "getWorkspacesWorkspaceIdPoliciesPolicyId",
-      "sdk": "client.policies.get",
-      "candidateTools": [
-        "clockify_policies_get"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "putWorkspacesWorkspaceIdPoliciesPolicyId",
-      "sdk": "client.policies.update",
-      "candidateTools": [
-        "clockify_policies_update"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}",
-      "operationId": "deleteWorkspacesWorkspaceIdPoliciesPolicyId",
-      "sdk": "client.policies.delete",
-      "candidateTools": [
-        "clockify_policies_delete"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PATCH",
-      "path": "/workspaces/{workspaceId}/policies/{policyId}/archive",
-      "operationId": "patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive",
-      "sdk": "client.policies.archive",
-      "candidateTools": [
-        "clockify_policies_archive"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
       }
     },
     {
@@ -1440,24 +1314,6 @@
       }
     },
     {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/cost-rate",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdCostRate",
-      "sdk": "client.projects.updateCostRate",
-      "candidateTools": [
-        "clockify_projects_update_cost_rate"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields",
       "operationId": "listProjectCustomFields",
@@ -1518,24 +1374,6 @@
       "sdk": "client.projects.updateEstimate",
       "candidateTools": [
         "clockify_projects_update_estimate"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/projects/{projectId}/hourly-rate",
-      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate",
-      "sdk": "client.projects.updateHourlyRate",
-      "candidateTools": [
-        "clockify_projects_update_hourly_rate"
       ],
       "tsMcp": null,
       "goMcp": null,
@@ -1855,24 +1693,6 @@
       }
     },
     {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments",
-      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignments",
-      "sdk": "client.scheduling.create",
-      "candidateTools": [
-        "clockify_scheduling_create"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/all",
       "operationId": "getAllSchedulingAssignments",
@@ -1963,24 +1783,6 @@
       }
     },
     {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
-      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId",
-      "sdk": "client.scheduling.replaceRecurring",
-      "candidateTools": [
-        "clockify_scheduling_replace_recurring"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
       "method": "PATCH",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
       "operationId": "updateRecurringAssignment",
@@ -2053,66 +1855,12 @@
       }
     },
     {
-      "method": "POST",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/totals",
-      "operationId": "postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals",
-      "sdk": "client.scheduling.calculateUsersTotals",
-      "candidateTools": [
-        "clockify_scheduling_calculate_users_totals"
-      ],
-      "tsMcp": null,
-      "goMcp": "clockify_scheduling_user_totals",
-      "overrideReason": "Deferred on TS: POST /scheduling/assignments/users/totals returns HTTP 404 (route not bound) on the live API; shipping a tool would 404. See spec/evidence/discrepancies.md.",
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": true,
-        "curated": true
-      }
-    },
-    {
       "method": "GET",
       "path": "/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals",
       "operationId": "getUserCapacityTotal",
       "sdk": "client.scheduling.getUserCapacity",
       "candidateTools": [
         "clockify_scheduling_get_user_capacity"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "PUT",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
-      "operationId": "putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
-      "sdk": "client.scheduling.update",
-      "candidateTools": [
-        "clockify_scheduling_update"
-      ],
-      "tsMcp": null,
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": false,
-        "goMcpExact": false,
-        "curated": false
-      }
-    },
-    {
-      "method": "DELETE",
-      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}",
-      "operationId": "deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId",
-      "sdk": "client.scheduling.delete",
-      "candidateTools": [
-        "clockify_scheduling_delete"
       ],
       "tsMcp": null,
       "goMcp": null,
@@ -2775,24 +2523,6 @@
       }
     },
     {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
-      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupId",
-      "sdk": "client.userGroups.get",
-      "candidateTools": [
-        "clockify_groups_get"
-      ],
-      "tsMcp": "clockify_groups_get",
-      "goMcp": "clockify_groups_get",
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": true,
-        "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
       "method": "PUT",
       "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
       "operationId": "updateGroup",
@@ -2825,24 +2555,6 @@
         "sdkNamed": true,
         "tsMcpExact": true,
         "goMcpExact": true,
-        "curated": false
-      }
-    },
-    {
-      "method": "GET",
-      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
-      "operationId": "getWorkspacesWorkspaceIdUserGroupsGroupIdUsers",
-      "sdk": "client.userGroups.listMembers",
-      "candidateTools": [
-        "clockify_groups_list_members"
-      ],
-      "tsMcp": "clockify_groups_list_members",
-      "goMcp": null,
-      "overrideReason": null,
-      "parity": {
-        "sdkNamed": true,
-        "tsMcpExact": true,
-        "goMcpExact": false,
         "curated": false
       }
     },
@@ -3309,6 +3021,24 @@
       "overrideReason": null,
       "parity": {
         "sdkNamed": true,
+        "tsMcpExact": false,
+        "goMcpExact": false,
+        "curated": false
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/statuses",
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "sdk": null,
+      "candidateTools": [
+        "clockify_webhooks_get_webhook_event_statuses_with_latest_log"
+      ],
+      "tsMcp": null,
+      "goMcp": null,
+      "overrideReason": null,
+      "parity": {
+        "sdkNamed": false,
         "tsMcpExact": false,
         "goMcpExact": false,
         "curated": false

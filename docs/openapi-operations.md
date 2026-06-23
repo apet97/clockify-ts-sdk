@@ -4,7 +4,7 @@
 
 Source: `spec/corrected/clockify.corrected.openapi.yaml`
 
-Operation count: **184**
+Operation count: **169**
 
 | Method | Path | Operation ID | Tags | Fern SDK group | Fern SDK method | Last-Page | Request body | Responses |
 |---|---|---|---|---|---|---|---|---|
@@ -14,7 +14,6 @@ Operation count: **184**
 | GET | `/workspaces` | `getAllMyWorkspaces` | Workspaces | workspaces | list | - | - | 200 |
 | POST | `/workspaces` | `addWorkspace` | Workspaces | workspaces | create | - | yes | 201 |
 | GET | `/workspaces/{workspaceId}` | `getWorkspaceInfo` | Workspaces | workspaces | get | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}` | `putWorkspacesWorkspaceId` | Workspaces | workspaces | update | - | - | 405 |
 | GET | `/workspaces/{workspaceId}/addons/{addonId}/webhooks` | `getAddonWebhooksOnWorkspace` | Webhooks | webhooks | listForAddon | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/approval-requests` | `getApprovalRequests` | Approvals | approvals | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/approval-requests` | `submitApprovalRequest` | Approvals | approvals | submit | - | yes | 201 |
@@ -71,15 +70,9 @@ Operation count: **184**
 | POST | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments` | `addInvoicePayment` | Invoice payments | invoicePayments | create | - | yes | 201 |
 | DELETE | `/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}` | `deleteInvoicePayment` | Invoice payments | invoicePayments | delete | - | - | 200 |
 | PATCH | `/workspaces/{workspaceId}/invoices/{invoiceId}/status` | `changeInvoiceStatus` | Invoices | invoices | updateStatus | - | yes | 200 |
+| POST | `/workspaces/{workspaceId}/limited-users` | `addLimitedUsersWithInfo` | Workspaces | - | - | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/member-profile/{userId}` | `getMemberProfile` | Member profiles | memberProfiles | get | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}/member-profile/{userId}` | `putWorkspacesWorkspaceIdMemberProfileUserId` | Users | - | - | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/member-profile/{userId}` | `updateMemberProfile` | Member profiles | memberProfiles | update | - | yes | 200 |
-| GET | `/workspaces/{workspaceId}/policies` | `getWorkspacesWorkspaceIdPolicies` | Policies | policies | list | - | - | 200 |
-| POST | `/workspaces/{workspaceId}/policies` | `postWorkspacesWorkspaceIdPolicies` | Policies | policies | create | - | yes | 201 |
-| GET | `/workspaces/{workspaceId}/policies/{policyId}` | `getWorkspacesWorkspaceIdPoliciesPolicyId` | Policies | policies | get | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}/policies/{policyId}` | `putWorkspacesWorkspaceIdPoliciesPolicyId` | Policies | policies | update | - | yes | 200 |
-| DELETE | `/workspaces/{workspaceId}/policies/{policyId}` | `deleteWorkspacesWorkspaceIdPoliciesPolicyId` | Policies | policies | delete | - | - | 200 |
-| PATCH | `/workspaces/{workspaceId}/policies/{policyId}/archive` | `patchWorkspacesWorkspaceIdPoliciesPolicyIdArchive` | Policies | policies | archive | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/projects` | `getWorkspaceProjects` | Projects | projects | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/projects` | `createProject` | Projects | projects | create | - | yes | 201 |
 | POST | `/workspaces/{workspaceId}/projects/from-template` | `createProjectFromTemplate` | Projects | projects | createFromTemplate | - | yes | 200 |
@@ -87,12 +80,10 @@ Operation count: **184**
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}` | `updateProject` | Projects | projects | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}` | `deleteProject` | Projects | projects | delete | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/projects/{projectId}/archive` | `putWorkspacesWorkspaceIdProjectsProjectIdArchive` | Projects | projects | archive | - | yes | 200 |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/cost-rate` | `putWorkspacesWorkspaceIdProjectsProjectIdCostRate` | Projects | projects | updateCostRate | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields` | `listProjectCustomFields` | Custom Fields | customFields | listForProject | - | - | 200, 401, 404 |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `updateProjectCustomField` | Custom Fields | customFields | updateForProject | - | yes | 200, 401, 404 |
 | DELETE | `/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}` | `removeProjectCustomField` | Custom Fields | customFields | removeFromProject | - | - | 200, 401, 404 |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/estimate` | `updateProjectEstimate` | Projects | projects | updateEstimate | - | yes | 200 |
-| PUT | `/workspaces/{workspaceId}/projects/{projectId}/hourly-rate` | `putWorkspacesWorkspaceIdProjectsProjectIdHourlyRate` | Projects | projects | updateHourlyRate | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `assignOrRemoveProjectUsers` | Projects | projects | setMembers | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/projects/{projectId}/memberships` | `updateProjectMemberships` | Projects | projects | updateMemberships | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/projects/{projectId}/tasks` | `findTasksOnProject` | Tasks | tasks | list | yes | - | 200 |
@@ -110,21 +101,16 @@ Operation count: **184**
 | POST | `/workspaces/{workspaceId}/reports/expenses/detailed` | `generateDetailedReportV1` | Expense Report | - | - | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/reports/summary` | `generateSummaryReport` | Reports | reports | summary | - | yes | 200, 400, 401, 403, 404 |
 | POST | `/workspaces/{workspaceId}/reports/weekly` | `generateWeeklyReport` | Reports | reports | weekly | - | yes | 200, 400, 401, 403, 404 |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments` | `postWorkspacesWorkspaceIdSchedulingAssignments` | Scheduling | scheduling | create | - | yes | 201 |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/all` | `getAllSchedulingAssignments` | Scheduling | scheduling | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals` | `getScheduledAssignmentsPerProject` | Scheduling | scheduling | listPerProject | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}` | `getScheduledAssignmentsOnProject` | Scheduling | scheduling | listOnProject | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/publish` | `publishAssignments` | Scheduling | scheduling | publish | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/recurring` | `createRecurringAssignment` | Scheduling | scheduling | createRecurring | - | yes | 201 |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsRecurringAssignmentId` | Scheduling | scheduling | replaceRecurring | - | yes | 200 |
 | PATCH | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `updateRecurringAssignment` | Scheduling | scheduling | updateRecurring | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}` | `deleteRecurringAssignment` | Scheduling | scheduling | deleteRecurring | - | - | 200 |
 | PUT | `/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}` | `changeRecurringPeriod` | Scheduling | - | - | - | yes | 200 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals` | `getUsersCapacityTotals` | Scheduling | scheduling | getUsersCapacityFiltered | - | yes | 200 |
-| POST | `/workspaces/{workspaceId}/scheduling/assignments/users/totals` | `postWorkspacesWorkspaceIdSchedulingAssignmentsUsersTotals` | Scheduling | scheduling | calculateUsersTotals | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals` | `getUserCapacityTotal` | Scheduling | scheduling | getUserCapacity | - | - | 200 |
-| PUT | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `putWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | Scheduling | scheduling | update | - | yes | 200 |
-| DELETE | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}` | `deleteWorkspacesWorkspaceIdSchedulingAssignmentsAssignmentId` | Scheduling | scheduling | delete | - | - | 204 |
 | POST | `/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy` | `copyScheduledAssignment` | Scheduling | scheduling | copy | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/shared-reports` | `getWorkspacesWorkspaceIdSharedReports` | Shared Reports | sharedReports | list | - | - | 200 |
 | POST | `/workspaces/{workspaceId}/shared-reports` | `postWorkspacesWorkspaceIdSharedReports` | Shared Reports | sharedReports | create | - | yes | 201 |
@@ -161,10 +147,8 @@ Operation count: **184**
 | PATCH | `/workspaces/{workspaceId}/time-off/requests/{requestId}/status` | `patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus` | Time Off | timeOff | updateStatus | - | yes | 200 |
 | GET | `/workspaces/{workspaceId}/user-groups` | `findAllGroupsOnWorkspace` | User Groups | userGroups | list | yes | - | 200 |
 | POST | `/workspaces/{workspaceId}/user-groups` | `addNewGroup` | User Groups | userGroups | create | - | yes | 201 |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}` | `getWorkspacesWorkspaceIdUserGroupsGroupId` | User Groups | userGroups | get | - | - | 405 |
 | PUT | `/workspaces/{workspaceId}/user-groups/{groupId}` | `updateGroup` | User Groups | userGroups | update | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}` | `deleteGroup` | User Groups | userGroups | delete | - | - | 200 |
-| GET | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | `getWorkspacesWorkspaceIdUserGroupsGroupIdUsers` | User Groups | userGroups | listMembers | - | - | 405 |
 | POST | `/workspaces/{workspaceId}/user-groups/{groupId}/users` | `addUsersToGroup` | User Groups | userGroups | addMembers | - | yes | 200 |
 | DELETE | `/workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}` | `removeUserFromGroup` | User Groups | userGroups | removeMember | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/user/{userId}/time-entries` | `getWorkspacesWorkspaceIdUserUserIdTimeEntries` | Time Entries | timeEntries | listForUser | yes | - | 200 |
@@ -191,5 +175,6 @@ Operation count: **184**
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken` | Webhooks | webhooks | rotateToken | - | - | 200 |
 | GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWorkspacesWorkspaceIdWebhooksWebhookIdLogs` | Webhooks | webhooks | listLogs | - | - | 405 |
 | POST | `/workspaces/{workspaceId}/webhooks/{webhookId}/logs` | `getWebhookLogs` | Webhooks | webhooks | searchLogs | - | yes | 200 |
+| GET | `/workspaces/{workspaceId}/webhooks/{webhookId}/statuses` | `getWebhookEventStatusesWithLatestLog` | Webhooks | - | - | - | - | 200 |
 | PATCH | `/workspaces/{workspaceId}/webhooks/{webhookId}/token` | `patchWorkspacesWorkspaceIdWebhooksWebhookIdToken` | Webhooks | webhooks | updateToken | - | - | 200, 405 |
 

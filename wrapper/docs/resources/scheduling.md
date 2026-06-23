@@ -1,82 +1,10 @@
 # scheduling
 
-16 methods on `client.scheduling`.
+11 methods on `client.scheduling`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
 ## Methods
-
-### `create`
-
-**Request fields** (`CreateSchedulingRequest`):
-
-- `workspaceId` (`string`, required)
-- `billable` (`boolean`, optional)
-- `excludeDays` (`Record<string, unknown>[]`, optional)
-- `hoursPerDay` (`number`, required)
-- `includeNonWorkingDays` (`boolean`, optional)
-- `note` (`string`, optional)
-- `period` (`ClockifyApi.DateTimeInterval`, required)
-- `projectId` (`string`, required)
-- `published` (`boolean`, optional) — Probes MUST keep published=false (draft) to avoid notifying other users.
-- `repeat` (`boolean`, optional)
-- `taskId` (`string`, optional)
-- `userId` (`string`, required)
-- `weeks` (`number`, optional)
-- `workspaceId` (`string`, required)
-- `body` (`CreateSchedulingRequestBody`, required)
-- `billable` (`boolean`, optional)
-- `excludeDays` (`Record<string, unknown>[]`, optional)
-- `hoursPerDay` (`number`, required)
-- `includeNonWorkingDays` (`boolean`, optional)
-- `note` (`string`, optional)
-- `period` (`ClockifyApi.DateTimeInterval`, required)
-- `projectId` (`string`, required)
-- `published` (`boolean`, optional) — Probes MUST keep published=false (draft) to avoid notifying other users.
-- `repeat` (`boolean`, optional)
-- `taskId` (`string`, optional)
-- `userId` (`string`, required)
-- `weeks` (`number`, optional)
-
-### `update`
-
-**Request fields** (`UpdateSchedulingRequest`):
-
-- `workspaceId` (`string`, required)
-- `assignmentId` (`string`, required)
-- `billable` (`boolean`, optional)
-- `hoursPerDay` (`number`, optional)
-- `id` (`string`, optional)
-- `includeNonWorkingDays` (`boolean`, optional)
-- `note` (`string \| null`, optional)
-- `period` (`ClockifyApi.DateTimeInterval`, optional)
-- `projectId` (`string`, optional)
-- `published` (`boolean`, optional)
-- `seriesId` (`string \| null`, optional)
-- `taskId` (`string \| null`, optional)
-- `userId` (`string`, optional)
-- `workspaceId` (`string`, required)
-- `assignmentId` (`string`, required)
-- `body` (`UpdateSchedulingRequestBody`, required)
-- `billable` (`boolean`, optional)
-- `hoursPerDay` (`number`, optional)
-- `id` (`string`, optional)
-- `includeNonWorkingDays` (`boolean`, optional)
-- `note` (`string \| null`, optional)
-- `period` (`ClockifyApi.DateTimeInterval`, optional)
-- `projectId` (`string`, optional)
-- `published` (`boolean`, optional)
-- `seriesId` (`string \| null`, optional)
-- `taskId` (`string \| null`, optional)
-- `userId` (`string`, optional)
-- `workspaceId` (`string`, optional)
-
-### `delete`
-
-**Request fields** (`DeleteSchedulingRequest`):
-
-- `workspaceId` (`string`, required)
-- `assignmentId` (`string`, required)
 
 ### `copy`
 
@@ -186,16 +114,6 @@
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 
-### `replaceRecurring`
-
-**Request fields** (`ReplaceRecurringSchedulingRequest`):
-
-- `workspaceId` (`string`, required)
-- `assignmentId` (`string`, required)
-- `workspaceId` (`string`, required)
-- `assignmentId` (`string`, required)
-- `body` (`Record<string, unknown>`, required)
-
 ### `updateRecurring`
 
 **Request fields** (`UpdateRecurringSchedulingRequest`):
@@ -280,16 +198,4 @@
 - `page-size` (`number`, optional) — Page size.
 - `start` (`string`, required) — Represents a start date in the yyyy-MM-ddThh:mm:ssZ format.
 - `end` (`string`, required) — Represents an end date in the yyyy-MM-ddThh:mm:ssZ format.
-
-### `calculateUsersTotals`
-
-**Request fields** (`CalculateUsersTotalsSchedulingRequest`):
-
-- `workspaceId` (`string`, required)
-- `end` (`string`, required)
-- `start` (`string`, required)
-- `workspaceId` (`string`, required)
-- `body` (`CalculateUsersTotalsSchedulingRequestBody`, required)
-- `end` (`string`, required)
-- `start` (`string`, required)
 

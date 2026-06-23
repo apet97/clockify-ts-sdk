@@ -289,9 +289,9 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         workspaceId: ctx.workspaceId,
         userId,
         projectId,
-        period: { start: str(args.start), end: str(args.end) },
+        start: str(args.start),
+        end: str(args.end),
         hoursPerDay: args.hours_per_day,
-        published: false,
         ...(taskId ? { taskId } : {}),
         ...(str(args.note) ? { note: str(args.note) } : {}),
         ...(args.billable !== undefined ? { billable: args.billable } : {}),
@@ -307,8 +307,8 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const assignment = await ctx.client.scheduling.create(
-        wireBody<ClockifyApi.CreateSchedulingRequest>(preview),
+    const assignment = await ctx.client.scheduling.createRecurring(
+        wireBody<ClockifyApi.CreateRecurringSchedulingRequest>(preview),
     );
     return successResult(
         "clockify_schedule_work",

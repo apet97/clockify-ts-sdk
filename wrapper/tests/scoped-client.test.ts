@@ -120,7 +120,6 @@ describe("Workspace scoped client", () => {
             "invoices",
             "invoiceSettings",
             "memberProfiles",
-            "policies",
             "projects",
             "reports",
             "scheduling",

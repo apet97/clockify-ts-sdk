@@ -1,22 +1,12 @@
 # users
 
-8 methods on `client.users`.
+7 methods on `client.users`.
 
 > Compact reference auto-generated from the synced SDK. For full type expansions, see the [TypeDoc reference](../../../docs/api/).
 
 ## Methods
 
 ### `getCurrentUser`
-
-### `putWorkspacesWorkspaceIdMemberProfileUserId`
-
-**Request fields** (`PutWorkspacesWorkspaceIdMemberProfileUserIdUsersRequest`):
-
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `workspaceId` (`string`, required)
-- `userId` (`string`, required)
-- `body` (`Record<string, unknown>`, required)
 
 ### `list`
 
