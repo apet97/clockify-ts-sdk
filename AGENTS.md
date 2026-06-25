@@ -16,6 +16,11 @@ applies to humans and AI agents equally.
 
 ## 1. Identity & boundary
 
+This is an independent, community-built project — **not affiliated with,
+endorsed by, or sponsored by CAKE.com or Clockify** ("Clockify" is a CAKE.com
+trademark, used nominatively; the `-115` / `115` suffixes are deliberate
+trademark distance). See [`NOTICE.md`](./NOTICE.md).
+
 This repo ships three sibling npm packages, each from its own
 subdirectory:
 
