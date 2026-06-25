@@ -3,6 +3,10 @@
 Concise Claude Code guide for `apet97/clockify-ts-sdk`. The canonical
 contract is [`AGENTS.md`](./AGENTS.md); read it before edits.
 
+Independent, community-built project — **not affiliated with or endorsed by
+CAKE.com or Clockify** (the `-115` / `115` suffixes are deliberate trademark
+distance; see [`NOTICE.md`](./NOTICE.md)).
+
 ## Product Shape
 
 This standalone repo ships three sibling packages:

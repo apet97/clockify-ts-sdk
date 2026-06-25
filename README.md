@@ -22,6 +22,13 @@ wants.
 > found against the **real API** and is pinned by a regression test. The evidence
 > ledger is [`spec/evidence/discrepancies.md`](./spec/evidence/discrepancies.md).
 
+> **Not affiliated with Clockify.** This is an independent, community-built
+> project — not affiliated with, endorsed by, sponsored by, or approved by
+> CAKE.com or Clockify. "Clockify" is a trademark of CAKE.com, used here only
+> nominatively to identify the public API these packages integrate against; the
+> `-115` / `115` suffixes are deliberate trademark distance. See
+> [NOTICE.md](./NOTICE.md).
+
 ## Quick start
 
 ### SDK
