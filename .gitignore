@@ -44,3 +44,8 @@ spec/evidence/probes/*.hdr
 .env
 .env.*
 !.env.example
+
+# Built MCP one-click install bundle (produced by `make mcpb`). The artifact is
+# rebuildable from source and intentionally not committed; distribution is a
+# separate maintainer decision.
+*.mcpb

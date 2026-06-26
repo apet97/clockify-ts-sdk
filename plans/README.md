@@ -18,8 +18,51 @@ gap from returning, #9 (CLI `start --task` silently drops the task), and #10
 | 002 | Gate that every destructive MCP delete is guarded or explicitly exempt | P1 | S | 001 | DONE |
 | 003 | Make `clk115 start --task` fail clearly when `--project` is missing | P2 | S | — | DONE (shipped; plan file removed — see `cli/src/commands/start.ts` + `cli/CHANGELOG.md`) |
 | 004 | Extend Dependabot to monitor the cli and mcp packages | P2 | S | — | DONE |
+| 005 | Make the MCP server a one-click-installable flagship product (MCPB bundle + product README + `make mcpb`) | P1 | M | — | DONE (2026-06-26; `make mcpb` builds a self-contained `.mcpb`, gates green; distribution deferred to maintainer) |
+| 006 | Add a live `clockify_doctor` connection-check tool (key/workspace/base-url/clock + per-failure remediation) | P2 | M | — | TODO |
+| 007 | Graceful no-credential startup — start the server and return `setup_required` per tool instead of crashing | P1 | M | — | TODO |
+| 008 | Failure-class-aware error/recovery hints in `clockify_status` (401 vs wrong-workspace vs network) | P2 | S | — | TODO |
+| 009 | First-run onboarding — server `instructions` + `clockify-getting-started` prompt + status nudge | P2 | S | — | TODO |
+| 010 | Nominative positioning page + visual quickstart (docs only) | P3 | S | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED (one-line rationale)
+
+## Flagship-MCP roadmap (005–010, added 2026-06-26, planned against `7c3a84c`)
+
+Origin: the `improve`-skill product-direction review ("rate it / what product
+should I make of this") → **make the MCP server the flagship**. Verified by a
+multi-agent investigation of the real `@anthropic-ai/mcpb@2.1.2` toolchain, the
+repo gate system, and a first-run UX/competitive audit (no official Clockify MCP
+exists; this is the most differentiated entrant).
+
+- **005 (packaging)** turns the server *installable* — a self-contained `.mcpb`
+  one-click bundle. It is the foundation; do it first. It stops before
+  distribution (a maintainer hard-stop).
+- **006–010** turn it from *installable* into a *delightful first run*:
+  **007** (graceful startup) and **008** (error hints) are the highest-value
+  reliability wins and have the lowest gate-cascade — do them early. **006**
+  (doctor tool) and **009** (onboarding prompt) change advertised tool/prompt
+  counts, so each carries the full count-surface regeneration sequence and must
+  finish with a solo `make perfect-full`. **010** is docs-only.
+
+Recommended order: **005 → 007 → 008 → 009 → 006 → 010** (reliability and
+count-safe wins before the count-moving tool; docs last). All are independent
+(no hard dependencies); the order is leverage + cascade-risk, not a dependency
+graph.
+
+Each of 006–010 was authored by a dedicated planning agent against the same
+template and inlines the verified repo facts (env contract, registration seam,
+the public-surface cascade) so a weaker executor can run it cold.
+
+## Plan 005 — product direction (added 2026-06-26, planned against `7c3a84c`)
+
+Origin: an `improve`-skill product-direction review (rate-the-repo + "what
+product should I make of this"). Verdict: the codebase is an A-grade engineering
+artifact with no audience because it is deliberately unpublished; the
+highest-leverage path to a real product is shipping the **MCP server** as a
+one-click install. Plan 005 builds the install bundle and onboarding; it
+**stops before distribution** (npm publish / GitHub Release), which is a maintainer
+decision and a repo hard-stop. Independent of plans 001–004.
 
 ## Dependency notes
 
