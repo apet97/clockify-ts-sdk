@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-The TypeScript MCP (`@clockify115/mcp-server`) advertises 134 tools; the sibling
+The TypeScript MCP (`@clockify115/mcp-server`) advertises 135 tools; the sibling
 Go MCP reference (`../GOCLMCP`) loads 156. The operation-parity matrix
 (`docs/operation-parity.md`) also shows 13 of the 169 OpenAPI operations with no
 SDK method name (the SDK column is `-`). Quality work requires each gap to be
@@ -18,7 +18,7 @@ exact-name parity (94) exceeds Go (84).
 
 ## Decision
 
-The 134-tool TS surface is a deliberate product decision, not an arbitrary
+The 135-tool TS surface is a deliberate product decision, not an arbitrary
 ceiling. The 58 Go-only names decompose as:
 
 - **8 intentional Go-only exclusions.** Two raw API-fallback tools
@@ -68,7 +68,7 @@ convention — so it stays as-is.
 
 ## Consequences
 
-The MCP surface stays at 134 advertised tools by intent; the 58-name parity gap
+The MCP surface stays at 135 advertised tools by intent; the 58-name parity gap
 is fully accounted for (8 + 28 + 22) with no silent ceiling. The 22 backlog
 candidates are an explicit, prioritized to-do; the 12 unstamped ops are reachable
 via their operationId-derived methods and intentionally unstamped per convention.
@@ -81,5 +81,5 @@ implied to be missing by accident.
 `make operation-parity` regenerates `docs/operation-parity.{json,md}` by joining
 the OpenAPI operations, SDK method stamps, TS MCP tool names, and the GOCLMCP
 tool catalog; `docs/operation-parity-overrides.json` carries the curated rename
-map. `make mcp-contract` pins the 134-tool count and split (21 workflow + 113
+map. `make mcp-contract` pins the 135-tool count and split (22 workflow + 113
 domain). `make decision-records` verifies this record.

@@ -6,6 +6,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- `clockify_doctor`: a read-only live connection-check tool. It validates
+  CLOCKIFY_API_KEY against `/user`, confirms the pinned CLOCKIFY_WORKSPACE_ID
+  is reachable for that key, reports base-URL posture (host only), and
+  estimates clock skew, returning a pass/fail receipt with per-failure
+  remediation. It reuses the shared failure-class hints (`mcp/src/diagnose.ts`)
+  and gracefully reports `setup_required` when the server started without
+  credentials. Tool surface 134 -> 135 (22 workflow + 113 domain).
 - docs: add `POSITIONING.md` — a nominative "how this compares to other Clockify
   MCP servers" page and a visual quickstart (install → first call → log work)
   with screenshot/GIF placeholders and a maintainer capture checklist. No tool,

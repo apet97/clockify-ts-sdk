@@ -82,7 +82,8 @@
     "(currently 691)",
     "29 commands",
     "35 commands",
-    "127 tools"
+    "127 tools",
+    "134 tools"
   ],
   "wiring": {
     "makeTarget": "docs-counts",
