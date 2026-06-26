@@ -19,12 +19,58 @@ recovery). For the repo-level quality bar, see
 
 ## Install
 
+The fastest path is the one-click bundle. A manual MCP-client config and a
+build-from-source flow follow for other setups.
+
+### One-click (recommended)
+
+Download `clockify115-mcp-<version>.mcpb` from the project's GitHub Releases and
+open it with Claude Desktop. Claude Desktop installs the bundled server and
+prompts for your Clockify API key and workspace id; the key is stored in your OS
+keychain, not in a config file.
+
+No release yet? Build the bundle yourself from a clone:
+
+```sh
+make mcpb
+```
+
+This writes `mcp/clockify115-mcp-<version>.mcpb`, a self-contained bundle you can
+open with Claude Desktop the same way.
+
+### Manual MCP client config
+
+If your MCP client reads an `mcpServers` config instead of an `.mcpb`, use the
+JSON block in [Configure](#configure). Note that `"command": "clockify115-mcp"`
+requires the binary to be on your `PATH` first — install the package globally or
+`npm link` it from a source build (below). Otherwise point `command` at an
+absolute path: `node /absolute/path/to/mcp/dist/index.js`.
+
+### Build from source
+
+For development, or to produce the `clockify115-mcp` binary for the manual config
+above:
+
 ```sh
 cd mcp
 npm install
 npm run build
 npm link
 ```
+
+This builds the server against `clockify-sdk-ts-115` and links the
+`clockify115-mcp` binary onto your `PATH`.
+
+### Where to get your two values
+
+- **API key**: Clockify -> Profile -> **API**, then generate a key.
+- **Workspace id**: the 24-character id in your Clockify URL after
+  `/workspaces/`.
+
+### Verify it works
+
+Ask your assistant to call `clockify_status`. It should report your user, your
+workspace, and any running timer.
 
 ## Configure
 

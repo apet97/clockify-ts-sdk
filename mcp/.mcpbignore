@@ -1,0 +1,31 @@
+# Defense-in-depth excludes for `mcpb pack`. The supported build path is
+# `make mcpb` (scripts/build-mcpb.mjs), which packs a STAGED production install
+# rather than this directory, so these rules are mostly belt-and-suspenders for
+# anyone who runs `mcpb pack mcp` by hand. The shipped bundle should be dist/ +
+# manifest + docs + a real node_modules only.
+
+# Source, tests, tooling configs, and build metadata
+src/
+tests/
+scripts/
+examples/
+*.tsbuildinfo
+tsconfig.json
+tsconfig.lint.json
+vitest.config.ts
+eslint.config.mjs
+stryker.conf.json
+
+# Tooling and report output
+coverage/
+reports/
+.stryker-tmp/
+.packsnapshot
+
+# Repo and editor noise
+.gitignore
+.DS_Store
+*.log
+
+# Never bundle a previously built artifact
+*.mcpb

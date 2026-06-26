@@ -4,6 +4,15 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- Added a self-contained one-click MCPB install bundle (`manifest.json`,
+  `scripts/build-mcpb.mjs`, `make mcpb`) and reframed the README install flow for
+  end users. The builder stages a production install (the `clockify-sdk-ts-115`
+  tarball plus `@modelcontextprotocol/sdk` and `zod`) so the packed `.mcpb` runs
+  standalone without the monorepo `node_modules`. No tool or API changes (still
+  `134 tools`).
+
 ### Fixed
 
 - `clockify_shared_reports_create`/`clockify_shared_reports_update` now map the `public`

@@ -1,0 +1,37 @@
+{
+  "manifest_version": "0.4",
+  "name": "clockify115-mcp",
+  "display_name": "Clockify (community)",
+  "version": "0.3.0",
+  "description": "Drive Clockify time tracking from your AI assistant - safely. Workflow-first tools with dry-run/confirm on every destructive write.",
+  "author": { "name": "Aleksandar Petkovic" },
+  "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "CLOCKIFY_API_KEY": "${user_config.api_key}",
+        "CLOCKIFY_WORKSPACE_ID": "${user_config.workspace_id}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "Clockify API key",
+      "description": "Clockify -> Profile -> API. Stored in your OS keychain.",
+      "sensitive": true,
+      "required": true
+    },
+    "workspace_id": {
+      "type": "string",
+      "title": "Clockify workspace ID",
+      "description": "The 24-char workspace id (the part of the workspace URL after /workspaces/).",
+      "required": true
+    }
+  }
+}
