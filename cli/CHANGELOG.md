@@ -4,6 +4,12 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- The shared error registry (`error-codes.ts`) gained the `setup_required` code
+  (regenerated copy) for the MCP graceful no-credential startup path; no CLI
+  behavior changed.
+
 ### Fixed
 
 - `clk115 shared-reports create`/`update --public` now sends `isPublic` on the wire. It

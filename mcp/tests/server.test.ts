@@ -356,6 +356,27 @@ describe("@clockify115/mcp-server", () => {
         );
     });
 
+    it("clockify_status returns a 401-class recovery hint when auth fails", async () => {
+        const ctx = {
+            workspaceId: "ws-1",
+            client: {
+                users: {
+                    getCurrentUser: async () => {
+                        throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+                    },
+                },
+                timeEntries: { listInProgress: async () => [] },
+            },
+        } as unknown as Context;
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        expect(res.isError).toBe(true);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]!.text);
+        expect(parsed.error.code).toBe("auth_or_permission");
+        expect(parsed.recovery.hint).toContain("Profile");
+        expect(parsed.recovery.retryable).toBe(false);
+    });
+
     it("clockify_projects_list passes pagination args through to the SDK", async () => {
         let captured: unknown = null;
         const client = await connect(

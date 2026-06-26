@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- The shared error registry (`error-codes.ts`) gained the `setup_required` code
+  (regenerated copy) for the MCP graceful no-credential startup path; no
+  wrapper runtime behavior changed.
+
 ### Fixed
 
 - Restored `Client.ccEmails` and `Client.currencyId` to the generated types — both are

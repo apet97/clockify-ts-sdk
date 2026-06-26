@@ -3,7 +3,8 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
-import { defineTool, errorResult, successResult, type ToolHandler } from "../src/result.js";
+import { MissingCredentialsError } from "../src/client.js";
+import { defineTool, errorCodeForError, errorResult, successResult, type ToolHandler } from "../src/result.js";
 
 describe("successResult", () => {
     it("wraps the payload in {ok:true, action, data}", () => {
@@ -176,6 +177,47 @@ describe("errorResult", () => {
             retryable: true,
         });
         expect(out.structuredContent).toEqual(parsed);
+    });
+
+    it("calls a RecoveryResolver with (err, code) and uses its returned hint", () => {
+        const seen: Array<{ err: unknown; code: string }> = [];
+        const err = Object.assign(new Error("Unauthorized"), { statusCode: 401 });
+        const out = errorResult("clockify_status", err, (e, code) => {
+            seen.push({ err: e, code });
+            return { hint: "regenerate the key", retryable: false };
+        });
+        expect(seen).toHaveLength(1);
+        expect(seen[0]!.err).toBe(err);
+        expect(seen[0]!.code).toBe("auth_or_permission");
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.recovery).toEqual({ hint: "regenerate the key", retryable: false });
+    });
+
+    it("maps a MissingCredentialsError to a setup_required envelope", () => {
+        const out = errorResult("clockify_status", new MissingCredentialsError(["CLOCKIFY_API_KEY"]));
+        expect(out.isError).toBe(true);
+        const parsed = JSON.parse((out.content as Array<{ text: string }>)[0].text);
+        expect(parsed.ok).toBe(false);
+        expect(parsed.error.code).toBe("setup_required");
+        expect(parsed.error.message).toMatch(/CLOCKIFY_API_KEY is not set/);
+        expect(parsed.recovery.retryable).toBe(false);
+    });
+
+    it("wraps a resolver that returns a bare string into {hint}", () => {
+        const out = errorResult(
+            "x",
+            Object.assign(new Error("nope"), { statusCode: 404 }),
+            (_e, code) => `code is ${code}`,
+        );
+        const parsed = JSON.parse((out.content[0] as { text: string }).text);
+        expect(parsed.recovery).toEqual({ hint: "code is not_found" });
+    });
+});
+
+describe("errorCodeForError", () => {
+    it("derives the stable code with errorResult's precedence", () => {
+        expect(errorCodeForError(Object.assign(new Error("x"), { statusCode: 403 }))).toBe("auth_or_permission");
+        expect(errorCodeForError("plain string")).toBe("error");
     });
 });
 

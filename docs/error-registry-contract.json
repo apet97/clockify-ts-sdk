@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "Integrity anchor for the shared error-code registry. Pins the code count and id set, required per-code fields, mirrored package copies, and the reachable subset grounded by HTTP-status mapping, classifier code, or tests. Catches semantic regressions that error-docs-drift cannot catch after regenerating from a smaller or renamed source registry.",
   "registry": "docs/error-codes.json",
-  "expectedCodeCount": 16,
+  "expectedCodeCount": 17,
   "expectedCodeIds": [
     "invalid_request",
     "auth_or_permission",
@@ -19,7 +19,8 @@
     "active_resource_delete_blocked",
     "dead_route",
     "name_reserved_after_delete",
-    "error"
+    "error",
+    "setup_required"
   ],
   "requiredFields": [
     "code",
@@ -48,13 +49,15 @@
     "rate_limited_retry_after",
     "addon_token_restricted",
     "active_resource_delete_blocked",
-    "error"
+    "error",
+    "setup_required"
   ],
   "reachabilitySources": [
     "wrapper/error-codes.ts",
     "wrapper/errors.ts",
     "wrapper/tests/error-code-wiring.test.ts",
-    "wrapper/tests/errors.test.ts"
+    "wrapper/tests/errors.test.ts",
+    "mcp/src/result.ts"
   ],
   "wiring": {
     "makeTarget": "error-registry",
