@@ -101,3 +101,25 @@ describe("clockify-workflow-plan prompt", () => {
         expect(text).toContain("Goal: not specified");
     });
 });
+
+describe("clockify-getting-started prompt", () => {
+    it("advertises the prompt with a title and description", async () => {
+        const client = await connect();
+        const { prompts } = await client.listPrompts();
+        const intro = prompts.find((p) => p.name === "clockify-getting-started");
+        expect(intro).toBeDefined();
+        expect(intro?.title).toBe("Clockify: Getting Started");
+        expect(intro?.description).toMatch(/first-run setup walkthrough/i);
+    });
+
+    it("renders the first-run checklist when invoked with no arguments", async () => {
+        const client = await connect();
+        const result = await client.getPrompt({ name: "clockify-getting-started" });
+        const text = promptText(result.messages);
+        expect(text).toContain("clockify_status");
+        expect(text).toContain("CLOCKIFY_API_KEY");
+        expect(text).toContain("clockify://guide/which-tool");
+        expect(text).toContain("clockify_log_work");
+        expect(text).toContain("dry_run");
+    });
+});

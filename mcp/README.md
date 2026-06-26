@@ -17,6 +17,8 @@ strict about receipts (`ids`, `changed`, `next`, stable errors,
 recovery). For the repo-level quality bar, see
 [`docs/product-north-star.md`](../docs/product-north-star.md).
 
+New here? See [how this compares to other Clockify MCP servers and a 2-minute visual quickstart](./POSITIONING.md).
+
 ## Install
 
 The fastest path is the one-click bundle. A manual MCP-client config and a
@@ -270,6 +272,7 @@ or MCP path before touching live data.
 Prompts:
 
 - `clockify-workflow-plan` — interactive workflow plan for time tracking and admin flows.
+- `clockify-getting-started` — first-run setup walkthrough from API key and workspace to your first logged entry.
 
 ## Naming
 

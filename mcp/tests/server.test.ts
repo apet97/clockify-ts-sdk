@@ -7,6 +7,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
+import { MissingCredentialsError } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
 const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice" };
@@ -330,13 +331,14 @@ describe("@clockify115/mcp-server", () => {
             "clockify://mcp/doctor",
         ]);
         expect(prompts.prompts.map((prompt) => prompt.name)).toContain("clockify-workflow-plan");
+        expect(prompts.prompts.map((prompt) => prompt.name)).toContain("clockify-getting-started");
 
         const cookbook = await client.readResource({ uri: "clockify://guide/workflows" });
-        expect(cookbook.contents[0]?.text).toContain("clockify_status");
+        expect((cookbook.contents[0] as { text?: string }).text).toContain("clockify_status");
 
         const doctor = await client.readResource({ uri: "clockify://mcp/doctor" });
-        expect(doctor.contents[0]?.text).toContain("no-network diagnostics checklist");
-        expect(doctor.contents[0]?.text).toContain("CLOCKIFY_API_KEY");
+        expect((doctor.contents[0] as { text?: string }).text).toContain("no-network diagnostics checklist");
+        expect((doctor.contents[0] as { text?: string }).text).toContain("CLOCKIFY_API_KEY");
     });
 
     it("clockify_status returns the canonical envelope", async () => {
@@ -374,7 +376,51 @@ describe("@clockify115/mcp-server", () => {
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]!.text);
         expect(parsed.error.code).toBe("auth_or_permission");
         expect(parsed.recovery.hint).toContain("Profile");
+        // First-timer friction (invalid key) points at the getting-started prompt.
+        expect(parsed.recovery.hint).toContain("clockify-getting-started");
         expect(parsed.recovery.retryable).toBe(false);
+    });
+
+    it("clockify_status points an unconfigured server at the getting-started prompt", async () => {
+        const error = new MissingCredentialsError(["CLOCKIFY_API_KEY", "CLOCKIFY_WORKSPACE_ID"]);
+        const fail = (): never => {
+            throw error;
+        };
+        const ctx = {
+            get client() {
+                return fail();
+            },
+            get workspaceId() {
+                return fail();
+            },
+        } as unknown as Context;
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        expect(res.isError).toBe(true);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]!.text);
+        expect(parsed.error.code).toBe("setup_required");
+        expect(parsed.recovery.hint).toContain("clockify-getting-started");
+    });
+
+    it("clockify_status keeps the plain failure-class hint for non-credential errors", async () => {
+        const ctx = {
+            workspaceId: "ws-1",
+            client: {
+                users: {
+                    getCurrentUser: async () => {
+                        throw Object.assign(new Error("Service Unavailable"), { statusCode: 503 });
+                    },
+                },
+                timeEntries: { listInProgress: async () => [] },
+            },
+        } as unknown as Context;
+        const client = await connect(ctx);
+        const res = await client.callTool({ name: "clockify_status", arguments: {} });
+        expect(res.isError).toBe(true);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]!.text);
+        expect(parsed.error.code).toBe("clockify_upstream_error");
+        expect(parsed.recovery.hint).not.toContain("clockify-getting-started");
+        expect(parsed.recovery.retryable).toBe(true);
     });
 
     it("clockify_projects_list passes pagination args through to the SDK", async () => {
