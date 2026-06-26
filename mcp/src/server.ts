@@ -37,6 +37,7 @@ export const SERVER_INSTRUCTIONS =
     "This is a single-user Clockify MCP for one pinned workspace. " +
     "All tools operate on the workspace set by CLOCKIFY_WORKSPACE_ID. " +
     "Use clockify_status first to confirm credentials, workspace, and running timer state. " +
+    "On first run, get the clockify-getting-started prompt and read the clockify://guide/which-tool resource. " +
     "Prefer workflow tools before low-level domain tools. " +
     "Use IDs returned by previous structured receipts rather than re-resolving names. " +
     "For invoices, expenses, time off, scheduling, and webhooks, run dry_run first and reuse the returned confirm_token. " +

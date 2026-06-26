@@ -15,7 +15,8 @@
       "clockify://mcp/doctor"
     ],
     "prompts": [
-      "clockify-workflow-plan"
+      "clockify-workflow-plan",
+      "clockify-getting-started"
     ],
     "outputSchemaExport": "MCP_RESULT_OUTPUT_SCHEMA"
   },

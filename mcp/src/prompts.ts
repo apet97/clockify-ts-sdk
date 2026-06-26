@@ -34,4 +34,38 @@ export function registerClockifyPrompts(server: McpServer): void {
             };
         },
     );
+
+    server.registerPrompt(
+        "clockify-getting-started",
+        {
+            title: "Clockify: Getting Started",
+            description:
+                "First-run setup walkthrough: from API key + workspace to your first logged time entry.",
+        },
+        () => ({
+            messages: [
+                {
+                    role: "user" as const,
+                    content: {
+                        type: "text" as const,
+                        text:
+                            "Walk me through setting up this Clockify MCP server for the first time. " +
+                            "Return a short numbered checklist:\n\n" +
+                            "1. Confirm CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are set in the MCP " +
+                            "client's env block for @clockify115/mcp-server.\n" +
+                            "2. Call clockify_status to confirm credentials, the pinned workspace, the " +
+                            "current user, and any running timer.\n" +
+                            "3. Read the clockify://guide/which-tool resource to map intent to the first tool.\n" +
+                            "4. Use clockify_create_work_package to create or reuse a project, task, or tag.\n" +
+                            "5. Log the first entry with clockify_log_work (finished work) or start a live " +
+                            "timer with clockify_start_work.\n" +
+                            "6. For invoices, expenses, time off, scheduling, or webhooks, preview with " +
+                            "dry_run and reuse the returned confirm_token.\n\n" +
+                            "If clockify_status fails, report the stable error code and recovery hint instead " +
+                            "of retrying blindly.",
+                    },
+                },
+            ],
+        }),
+    );
 }

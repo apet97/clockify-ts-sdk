@@ -2,7 +2,23 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { Context } from "../client.js";
 import { failureHint } from "../diagnose.js";
-import { defineTool, entityId, successResult } from "../result.js";
+import type { ClockifyErrorCode } from "../error-codes.js";
+import { defineTool, entityId, successResult, type RecoveryHint } from "../result.js";
+
+/**
+ * Recovery resolver for clockify_status. Reuses the shared failure-class hint
+ * (failureHint) and, on the two first-timer friction classes — no credentials
+ * yet (`setup_required`) or a present-but-invalid key (`auth_or_permission`) —
+ * points the user at the clockify-getting-started prompt. Other classes (rate
+ * limit, network, upstream) keep the unembellished failure-class hint.
+ */
+function statusRecovery(err: unknown, code: ClockifyErrorCode): RecoveryHint {
+    const base = failureHint(err, code);
+    if (code === "setup_required" || code === "auth_or_permission") {
+        return { ...base, hint: `${base.hint} For first-time setup, get the clockify-getting-started prompt.` };
+    }
+    return base;
+}
 
 export function registerStatusTool(server: McpServer, ctx: Context): void {
     defineTool(
@@ -49,6 +65,6 @@ export function registerStatusTool(server: McpServer, ctx: Context): void {
                 },
             );
         },
-        failureHint,
+        statusRecovery,
     );
 }

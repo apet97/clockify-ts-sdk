@@ -6,6 +6,16 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- docs: add `POSITIONING.md` — a nominative "how this compares to other Clockify
+  MCP servers" page and a visual quickstart (install → first call → log work)
+  with screenshot/GIF placeholders and a maintainer capture checklist. No tool,
+  API, or count changes.
+- First-run onboarding: the server `instructions` now point new users at
+  `clockify_status` and `clockify://guide/which-tool`; a new zero-argument
+  `clockify-getting-started` prompt walks a brand-new user from API key + workspace to
+  their first logged entry; and `clockify_status`'s recovery hint now points at that
+  prompt when credentials are missing or invalid. No tool was added or removed
+  (still 134 tools).
 - The MCP server now starts even when `CLOCKIFY_API_KEY`/`CLOCKIFY_WORKSPACE_ID`
   are unset; every tool returns a `setup_required` receipt with the exact fix
   (which env vars to set, where, and where to get them) instead of the process
