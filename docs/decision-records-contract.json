@@ -86,7 +86,7 @@
       "id": "mcp-tool-surface-scope",
       "path": "docs/decisions/0006-mcp-tool-surface-scope.md",
       "contains": [
-        "134-tool TS surface is a deliberate product decision",
+        "135-tool TS surface is a deliberate product decision",
         "no silent ceiling",
         "make operation-parity"
       ]

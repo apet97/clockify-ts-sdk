@@ -90,6 +90,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_sdk_snippet",
                 // Status
                 "clockify_status",
+                "clockify_doctor",
                 "clockify_tools_guide",
                 "clockify_plan_change",
                 "clockify_create_work_package",
@@ -241,7 +242,7 @@ describe("@clockify115/mcp-server", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(134);
+        expect(names).toHaveLength(135);
     });
 
     it("advertises the version from package.json (server.ts literal must not drift)", () => {

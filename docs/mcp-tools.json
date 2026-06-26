@@ -1,12 +1,13 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "totalTools": 134,
-    "workflowTools": 21,
+    "totalTools": 135,
+    "workflowTools": 22,
     "domainTools": 113
   },
   "workflowTools": [
     { "tool": "clockify_status", "purpose": "Confirm user, workspace, and running timer." },
+    { "tool": "clockify_doctor", "purpose": "Live preflight: validate the API key, workspace pin, base-URL posture, and clock skew (read-only)." },
     { "tool": "clockify_tools_guide", "purpose": "Show workflow groups and when to use domain tools." },
     { "tool": "clockify_plan_change", "purpose": "Explain which tools a change will use, in order, before mutating (read-only)." },
     { "tool": "clockify_docs_search", "purpose": "Search compact SDK/CLI/MCP guidance for agents (read-only)." },

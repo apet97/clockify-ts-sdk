@@ -19,7 +19,7 @@ gap from returning, #9 (CLI `start --task` silently drops the task), and #10
 | 003 | Make `clk115 start --task` fail clearly when `--project` is missing | P2 | S | — | DONE (shipped; plan file removed — see `cli/src/commands/start.ts` + `cli/CHANGELOG.md`) |
 | 004 | Extend Dependabot to monitor the cli and mcp packages | P2 | S | — | DONE |
 | 005 | Make the MCP server a one-click-installable flagship product (MCPB bundle + product README + `make mcpb`) | P1 | M | — | DONE (2026-06-26; `make mcpb` builds a self-contained `.mcpb`, gates green; distribution deferred to maintainer) |
-| 006 | Add a live `clockify_doctor` connection-check tool (key/workspace/base-url/clock + per-failure remediation) | P2 | M | — | TODO |
+| 006 | Add a live `clockify_doctor` connection-check tool (key/workspace/base-url/clock + per-failure remediation) | P2 | M | — | DONE (2026-06-26; read-only `clockify_doctor` reuses `mcp/src/diagnose.ts` failure-class hints + graceful `setup_required`; tool surface 134→135 = 22 workflow + 113 domain; full count cascade regenerated) |
 | 007 | Graceful no-credential startup — start the server and return `setup_required` per tool instead of crashing | P1 | M | — | DONE |
 | 008 | Failure-class-aware error/recovery hints in `clockify_status` (401 vs wrong-workspace vs network) | P2 | S | — | DONE (2026-06-26; `mcp/src/diagnose.ts` failure-class mapping wired into `clockify_status`) |
 | 009 | First-run onboarding — server `instructions` + `clockify-getting-started` prompt + status nudge | P2 | S | — | DONE (2026-06-26; prompt count 1→2 via `clockify-getting-started`, status recovery integrates the 007/008 `failureHint` resolver; no tool-count change, still 134) |
