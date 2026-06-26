@@ -23,11 +23,13 @@ import type {
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
 
+import { MissingCredentialsError } from "./client.js";
 import {
     errorCodeForMessage,
     errorCodeForStatus,
     recoveryForCode,
     retryableForCode,
+    type ClockifyErrorCode,
 } from "./error-codes.js";
 
 type JsonRecord = Record<string, unknown>;
@@ -99,6 +101,14 @@ export interface RecoveryHint {
     retryAfterSeconds?: number;
 }
 
+/**
+ * A failure-class-aware recovery resolver: given the thrown error and its
+ * already-derived stable code, returns a tailored recovery hint. Lets a tool
+ * emit a class-specific remediation (401 vs wrong-workspace vs network) without
+ * owning its own try/catch — pass it as the `recovery` argument to defineTool.
+ */
+export type RecoveryResolver = (err: unknown, code: ClockifyErrorCode) => string | RecoveryHint;
+
 export interface SuccessOptions {
     entity?: string;
     ids?: Record<string, string | undefined>;
@@ -147,24 +157,46 @@ export function writeReceipt(
     return { entity, changed: { [kind]: [entityRef] }, ...extra };
 }
 
+/**
+ * Derive the stable cross-surface error code from any thrown value, using the
+ * SAME precedence errorResult applies: the SDK's cause-aware classifier first
+ * (so a connection/abort error with statusCode null is never mislabeled by the
+ * message-regex fallback — e.g. a network failure whose message contains
+ * "workspace" stays connection_error, not auth_or_permission), then HTTP-status
+ * mapping, then the message matcher. Exported so failure-class hint mappers
+ * (mcp/src/diagnose.ts) classify identically to the error envelope.
+ */
+export function errorCodeForError(err: unknown): ClockifyErrorCode {
+    const message = err instanceof Error ? err.message : String(err);
+    const status = (err as { statusCode?: number }).statusCode;
+    return (
+        classifyClockifyError(err)?.code ??
+        errorCodeForStatus(status) ??
+        errorCodeForMessage(message)
+    );
+}
+
 export function errorResult(
     action: string,
     err: unknown,
-    recovery?: string | RecoveryHint,
+    recovery?: string | RecoveryHint | RecoveryResolver,
 ): CallToolResult {
     const message = err instanceof Error ? err.message : String(err);
-    // Prefer the SDK's cause-aware classifier: a connection/abort error (statusCode
-    // null) must not be mislabeled by the message-regex fallback — e.g. a network
-    // failure whose message contains "workspace" stays connection_error (retryable),
-    // not auth_or_permission. Non-SDK errors classify to undefined and fall through.
-    const status = (err as { statusCode?: number }).statusCode;
-    const code =
-        classifyClockifyError(err)?.code ??
-        errorCodeForStatus(status) ??
-        errorCodeForMessage(message);
+    // MissingCredentialsError is the lazy "server started without creds" signal:
+    // map it to the friendly setup_required code so every tool explains the fix
+    // instead of crashing at startup. The recovery still flows through the shared
+    // dispatch below (a tool's RecoveryResolver such as failureHint, else the
+    // registry recoveryForCode) — no bespoke envelope/recovery duplication here.
+    let code: ClockifyErrorCode;
+    if (err instanceof MissingCredentialsError) {
+        code = "setup_required";
+    } else {
+        code = errorCodeForError(err);
+    }
     const envelope: ErrorEnvelope = { ok: false, action, error: { code, message } };
     if (recovery) {
-        envelope.recovery = typeof recovery === "string" ? { hint: recovery } : recovery;
+        const resolved = typeof recovery === "function" ? recovery(err, code) : recovery;
+        envelope.recovery = typeof resolved === "string" ? { hint: resolved } : resolved;
     } else {
         envelope.recovery = { hint: recoveryForCode(code), retryable: retryableForCode(code) };
     }
@@ -228,7 +260,7 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
     name: string,
     config: ToolConfig<InputArgs>,
     handler: ToolHandler<InputArgs>,
-    recovery?: string | RecoveryHint,
+    recovery?: string | RecoveryHint | RecoveryResolver,
 ): void {
     server.registerTool(
         name,

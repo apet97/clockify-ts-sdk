@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createCurrentUserIdMemo, loadContext } from "../src/client.js";
+import { MissingCredentialsError, createCurrentUserIdMemo, loadContext } from "../src/client.js";
 import { isDirectInvocation } from "../src/index.js";
 
 describe("MCP package contract", () => {
-    it("uses the renamed package and bin in missing-env guidance", () => {
-        expect(() => loadContext({})).toThrow(/@clockify115\/mcp-server/);
-        expect(() => loadContext({})).toThrow(/clockify115-mcp/);
+    it("does not throw on missing env; defers to a setup_required context", () => {
+        const ctx = loadContext({});
+        expect(ctx.setupError).toBeInstanceOf(MissingCredentialsError);
+        // The renamed package and bin still appear in the missing-env guidance.
+        expect(ctx.setupError?.message).toMatch(/@clockify115\/mcp-server/);
+        expect(ctx.setupError?.message).toMatch(/clockify115-mcp/);
+        // The throw is deferred to first client/workspace access.
+        expect(() => ctx.client).toThrow(MissingCredentialsError);
+        expect(() => ctx.workspaceId).toThrow(MissingCredentialsError);
     });
 
     it("recognizes the installed mcp bin name as direct invocation", () => {

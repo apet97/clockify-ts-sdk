@@ -164,3 +164,13 @@ Recovery: Preserve the message and request ID if available, then classify the fa
 
 Surfaces: cli, mcp
 
+## `setup_required`
+
+Meaning: The MCP server started but required credentials (CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID) are not set, so no Clockify call can be made yet.
+
+Retryable: no
+
+Recovery: Set CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID in the MCP client's env block, then restart the server. Get the API key from Clockify Profile Settings -> API; the workspace ID is in the workspace URL.
+
+Surfaces: mcp
+

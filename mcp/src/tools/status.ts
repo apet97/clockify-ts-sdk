@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { Context } from "../client.js";
+import { failureHint } from "../diagnose.js";
 import { defineTool, entityId, successResult } from "../result.js";
 
 export function registerStatusTool(server: McpServer, ctx: Context): void {
@@ -48,6 +49,6 @@ export function registerStatusTool(server: McpServer, ctx: Context): void {
                 },
             );
         },
-        "Verify CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are set and valid.",
+        failureHint,
     );
 }

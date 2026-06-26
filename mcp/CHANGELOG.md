@@ -6,6 +6,12 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Added
 
+- The MCP server now starts even when `CLOCKIFY_API_KEY`/`CLOCKIFY_WORKSPACE_ID`
+  are unset; every tool returns a `setup_required` receipt with the exact fix
+  (which env vars to set, where, and where to get them) instead of the process
+  crashing at startup. A one-line `setup:` hint is written to stderr (stdout
+  stays clean JSON-RPC). New shared error code `setup_required`; tool count
+  unchanged (134).
 - Added a self-contained one-click MCPB install bundle (`manifest.json`,
   `scripts/build-mcpb.mjs`, `make mcpb`) and reframed the README install flow for
   end users. The builder stages a production install (the `clockify-sdk-ts-115`
@@ -22,6 +28,13 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Changed
 
+- `clockify_status` now returns a failure-class-aware recovery hint: a `401`/`403`
+  points at regenerating the API key (Clockify > Profile Settings > API), a
+  `404`/wrong-workspace points at the 24-character workspace id, and a
+  network/timeout failure points at connectivity/proxy — instead of one static
+  "verify your credentials" string. The mapping lives in `mcp/src/diagnose.ts`
+  (`failureHint`) and is reusable via the new `RecoveryResolver` seam in
+  `mcp/src/result.ts`. No new error codes; tool count unchanged (134).
 - Repointed `clockify_scheduling_assignments_create` and the `clockify_schedule_work`
   workflow to the live `scheduling.createRecurring` endpoint — the bare
   `POST /scheduling/assignments` 404s on live Clockify and was removed from the

@@ -24,6 +24,7 @@ Shared recovery/error vocabulary for SDK helpers, CLI JSON, MCP envelopes, and d
 | `dead_route` | no | - | no | sdk, cli, mcp | A documented Clockify route is not served and returns a static-resource 404 or equivalent unsupported response. | Use the replacement path recorded in the evidence ledger and treat the response as a quarantined route, not a transient missing object. |
 | `name_reserved_after_delete` | no | - | no | sdk, cli, mcp | A project, tag, or client name stayed reserved briefly after deletion, so an immediate recreate with the same name was rejected. | Wait for the reservation window, reuse the existing object when present, or create the new entity with a distinct name. |
 | `error` | yes | - | no | cli, mcp | Unknown local/runtime failure that does not fit a more specific code yet. | Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior. |
+| `setup_required` | yes | - | no | mcp | The MCP server started but required credentials (CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID) are not set, so no Clockify call can be made yet. | Set CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID in the MCP client's env block, then restart the server. Get the API key from Clockify Profile Settings -> API; the workspace ID is in the workspace URL. |
 
 ## Adoption rule
 

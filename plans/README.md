@@ -20,8 +20,8 @@ gap from returning, #9 (CLI `start --task` silently drops the task), and #10
 | 004 | Extend Dependabot to monitor the cli and mcp packages | P2 | S | — | DONE |
 | 005 | Make the MCP server a one-click-installable flagship product (MCPB bundle + product README + `make mcpb`) | P1 | M | — | DONE (2026-06-26; `make mcpb` builds a self-contained `.mcpb`, gates green; distribution deferred to maintainer) |
 | 006 | Add a live `clockify_doctor` connection-check tool (key/workspace/base-url/clock + per-failure remediation) | P2 | M | — | TODO |
-| 007 | Graceful no-credential startup — start the server and return `setup_required` per tool instead of crashing | P1 | M | — | TODO |
-| 008 | Failure-class-aware error/recovery hints in `clockify_status` (401 vs wrong-workspace vs network) | P2 | S | — | TODO |
+| 007 | Graceful no-credential startup — start the server and return `setup_required` per tool instead of crashing | P1 | M | — | DONE |
+| 008 | Failure-class-aware error/recovery hints in `clockify_status` (401 vs wrong-workspace vs network) | P2 | S | — | DONE (2026-06-26; `mcp/src/diagnose.ts` failure-class mapping wired into `clockify_status`) |
 | 009 | First-run onboarding — server `instructions` + `clockify-getting-started` prompt + status nudge | P2 | S | — | TODO |
 | 010 | Nominative positioning page + visual quickstart (docs only) | P3 | S | — | TODO |
 

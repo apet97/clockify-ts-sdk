@@ -233,6 +233,17 @@ export const CLOCKIFY_ERROR_CODES = [
         "meaning": "Unknown local/runtime failure that does not fit a more specific code yet.",
         "recovery": "Preserve the message and request ID if available, then classify the failure into a stable code before broadening behavior.",
         "reachable": true
+    },
+    {
+        "code": "setup_required",
+        "httpStatus": [],
+        "retry": false,
+        "surfaces": [
+            "mcp"
+        ],
+        "meaning": "The MCP server started but required credentials (CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID) are not set, so no Clockify call can be made yet.",
+        "recovery": "Set CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID in the MCP client's env block, then restart the server. Get the API key from Clockify Profile Settings -> API; the workspace ID is in the workspace URL.",
+        "reachable": true
     }
 ] as const satisfies readonly ClockifyErrorCodeEntry[];
 
