@@ -11,7 +11,8 @@
       "make agent-handoff",
       "make perfect-fast",
       "make perfect-full",
-      "make perfect-live"
+      "make perfect-live",
+      "make mutation-ci"
     ],
     "forbiddenMarkers": [
       "TODO",
@@ -28,6 +29,7 @@
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",
+        "make mutation-ci",
         "Never edit `spec/corrected/clockify.corrected.openapi.yaml`",
         "Never edit `output/ts-sdk/**`",
         "Never edit `wrapper/src/**`"
@@ -42,6 +44,7 @@
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",
+        "make mutation-ci",
         "No `npm publish`"
       ]
     },

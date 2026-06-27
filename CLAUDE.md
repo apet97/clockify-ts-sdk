@@ -7,6 +7,23 @@ Independent, community-built project — **not affiliated with or endorsed by
 CAKE.com or Clockify** (the `-115` / `115` suffixes are deliberate trademark
 distance; see [`NOTICE.md`](./NOTICE.md)).
 
+## Current Hardening Checkpoint (2026-06-27)
+
+- `main` is the integration branch. Before a direct push, verify the
+  branch is even with `origin/main`, make one focused commit, push, and
+  watch the resulting GitHub Actions runs.
+- Keep local proof laptop-safe. Use focused package/doc gates or
+  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
+  for deterministic local proof; do not start local mutation,
+  coverage, or `perfect-full` while the machine is already loaded.
+- Mutation score proof is GitHub-hosted for routine use. `make
+  perfect-full` checks the manual **Mutation** workflow wiring via
+  `make mutation-ci`; local `make mutation` is opt-in and capped by
+  the Stryker configs.
+- Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
+  `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
+  flow through this repo's generator/sync gates.
+
 ## Product Shape
 
 This standalone repo ships three sibling packages:
@@ -42,7 +59,7 @@ Preferred root gates:
 
 ```bash
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof
-make perfect-full   # GOCLMCP drift + local codegen/build determinism + package/coverage/mutation/pack smoke
+make perfect-full   # GOCLMCP drift + local codegen/build determinism + package/coverage/pack smoke + mutation-ci
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
 
@@ -63,11 +80,11 @@ Running `perfect-fast` cleanly (read before your first run):
   `type-check`/`test`/`build` do NOT — run `npm run lint -w <pkg>` before claiming green.
 - `make perfect-full` adds slow proof that does not belong in the fast loop:
   GOCLMCP drift, `make codegen-determinism`, `make build-determinism`,
-  packed-consumer smoke, coverage, and wrapper + mcp Stryker mutation
-  scoring.
+  packed-consumer smoke, coverage, and `make mutation-ci` workflow
+  wiring. It does not run local Stryker mutation.
 - **`perfect-full` gate-order trap — FIXED.** `performance-budgets` is now the
   **last** prerequisite in both `perfect-full` and `perfect-fast` (it used to run
-  *before* pack-smoke/coverage/mutation, so a flake aborted the run and the heavy
+  *before* pack-smoke/coverage/mutation-ci, so a flake aborted the run and the heavy
   proofs **never ran**). With it last, a load-sensitive startup-time flake can no
   longer skip those proofs. It is still a **fatal** prereq (file-size +
   import/startup-crash budgets block), and it relies on GNU make's serial,

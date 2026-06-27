@@ -29,6 +29,21 @@ commands, and temporary goal context without reading chat history.
 - Do not hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`.
 - Future agents should prefer `make perfect-fast`, `make perfect-full`, and `make perfect-live` over memorized package internals.
+
+## Current proof posture
+
+- Keep local proof laptop-safe. Prefer focused package/doc gates or
+  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
+  for deterministic local proof.
+- Treat the manual GitHub Actions **Mutation** workflow as the routine
+  mutation-score proof. Use `target=all` for release/readiness proof;
+  use `target=wrapper` or `target=mcp` only for focused changes.
+- `make mutation-ci` verifies the workflow wiring and belongs in
+  `perfect-full`; local `make mutation` is opt-in maintainer proof,
+  not a default handoff requirement.
+- After a direct `main` push, watch the new GitHub Actions runs and fix
+  clean-checkout-only drift before declaring the branch green.
+
 ## Required receipts
 
 Before claiming agent-handoff readiness, run or cite:
