@@ -8,7 +8,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 |---|---|---|
 | See available gates | `make help` | The repo exposes a one-screen command menu. |
 | Fast deterministic proof | `make perfect-fast` | Guarded generated paths are clean, product surface metadata is current, allowlisted docs drift is checked, and SDK/CLI/MCP package gates pass. |
-| Full generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, and packed-consumer smoke pass. |
+| Full generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
 | Live sandbox proof | `make perfect-live` | TS MCP live cleanup and GOCLMCP sacrificial-workspace live proof run with explicit live env. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
@@ -94,7 +94,8 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
 | Check test matrix contract | `make test-matrix` | SDK/CLI/MCP required test files, package test/build scripts, exact `prepublishOnly` command shape, and root gate targets remain present. |
 | Check coverage floors | `make coverage` | Measured SDK/CLI/MCP hand-written-surface coverage stays at or above the pinned floors in `docs/coverage-contract.json`. |
-| Check mutation score floors | `make mutation` | Wrapper Stryker mutation testing stays at or above pinned covered-mutant score floors. |
+| Check mutation score floors | `make mutation` | Opt-in local wrapper + MCP Stryker mutation testing stays at or above pinned covered-mutant score floors. Prefer the manual GitHub Mutation workflow for routine proof. |
+| Check mutation CI wiring | `make mutation-ci` | The manual GitHub Mutation workflow exists, stays dispatch-only, uploads reports, and keeps local Stryker concurrency capped. |
 | Check mock Clockify contract | `make mock-contract` | Mock Clockify server routes, headers, docs, and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Replay golden fixtures | `make replay-fixtures` | Committed redacted API fixtures replay offline and keep wire-shape tripwires aligned with the live-probe ledger. |
 | Replay typed cassettes | `make cassettes` | Redacted response cassettes replay through the typed SDK client and local mock server. |

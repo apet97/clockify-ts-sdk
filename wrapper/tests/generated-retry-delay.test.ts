@@ -5,12 +5,12 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const generatorPath = path.join(repoRoot, "scripts", "generate-sdk-from-openapi.mjs");
+const generatorTemplatePath = path.join(repoRoot, "scripts", "sdk-codegen", "emitter.mjs");
 const generatedRequestPath = path.join(repoRoot, "wrapper", "src", "core", "request.ts");
 
 const RETRY_MAX_DELAY_MS = 60_000;
 
-// MIRROR of generated retryDelayMs template in scripts/generate-sdk-from-openapi.mjs.
+// MIRROR of generated retryDelayMs template in scripts/sdk-codegen/emitter.mjs.
 function jitter(ms: number): number {
     const spread = ms * (1 + (Math.random() - 0.5) * 0.4);
     return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, spread));
@@ -38,7 +38,7 @@ function retryDelayMs(response: Response | undefined, attempt: number): number {
 
 describe("generated retry delay template", () => {
     it("keeps the generator and emitted request helper capped and jittered", () => {
-        const generator = readFileSync(generatorPath, "utf8");
+        const generator = readFileSync(generatorTemplatePath, "utf8");
         const generatedRequest = readFileSync(generatedRequestPath, "utf8");
 
         for (const source of [generator, generatedRequest]) {

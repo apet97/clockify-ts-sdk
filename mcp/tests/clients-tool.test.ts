@@ -30,6 +30,7 @@ afterEach(async () => {
 });
 
 interface ClientsStubOptions {
+    list?: (req: unknown) => PromiseLike<unknown[]>;
     listResult?: unknown[];
     getResult?: unknown;
     createResult?: unknown;
@@ -51,10 +52,11 @@ function clientsContext(captured: Record<string, unknown>, options: ClientsStubO
         workspaceId: "ws-1",
         client: {
             clients: {
-                list: async (req: unknown) => {
+                list: (req: unknown) => {
                     captured.list = req;
                     if (options.listError) throw options.listError;
-                    return options.listResult ?? [];
+                    if (options.list) return options.list(req);
+                    return Promise.resolve(options.listResult ?? []);
                 },
                 get: async (req: unknown) => {
                     captured.get = req;
@@ -92,6 +94,14 @@ async function connect(ctx: Context): Promise<Client> {
 function envelope(res: unknown): Record<string, unknown> {
     const text = (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
     return JSON.parse(text) as Record<string, unknown>;
+}
+
+function responseAware<T>(data: T, headers: Record<string, string>) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    return promise;
 }
 
 /** An Error carrying a Clockify-style HTTP status, used to drive the status->code mapping. */
@@ -150,6 +160,22 @@ describe("clockify_clients_list", () => {
         const meta = envelope(res).meta as { count?: number; hasMore?: boolean };
         expect(meta.count).toBe(2);
         expect(meta.hasMore).toBe(true);
+    });
+
+    it("uses Last-Page:false to report more rows on a short page", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            clientsContext(captured, {
+                list: () => responseAware([{ id: "a" }], { "Last-Page": "false" }),
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_clients_list",
+            arguments: { pageSize: 2 },
+        });
+        const meta = envelope(res).meta as { hasMore?: boolean; lastPageHeader?: boolean };
+        expect(meta.hasMore).toBe(true);
+        expect(meta.lastPageHeader).toBe(false);
     });
 
     it("maps a 403 from the list call to auth_or_permission and flags isError", async () => {

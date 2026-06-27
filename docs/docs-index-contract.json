@@ -7,7 +7,7 @@
     "enterpriseAuditId": "generated-doc-drift"
   },
   "indexPath": "docs/README.md",
-  "expectedRequiredLinkCount": 128,
+  "expectedRequiredLinkCount": 129,
   "requiredLinks": [
     "quality-gates.md",
     "axioms.md",
@@ -57,6 +57,7 @@
     "api-docs-policy.md",
     "mcp-write-safety-policy.md",
     "mcp-agent-ux-policy.md",
+    "mcp-backlog.md",
     "cli-write-safety-policy.md",
     "openapi-evidence-policy.md",
     "schema-quality-policy.md",

@@ -183,6 +183,7 @@ const docsIndex = await readRel("docs/README.md");
 const qualityGates = await readRel("docs/quality-gates.md");
 const contractInventory = await readRel("docs/contract-inventory.json");
 const enterpriseAudit = await readRel("docs/enterprise-hardening-audit.json");
+const mcpBacklog = await readRel("docs/mcp-backlog.md");
 
 const policy = await readRel(contract.policyDocument.path);
 includesAll(policy, contract.policyDocument.contains, contract.policyDocument.path);
@@ -216,6 +217,16 @@ if (!docsIndex.includes("./decision-records-policy.md")) {
 }
 if (!docsIndex.includes("./decision-records-contract.json")) {
     failures.push("docs/README.md missing decision records contract link");
+}
+if (!docsIndex.includes("./mcp-backlog.md")) {
+    failures.push("docs/README.md missing MCP backlog link");
+}
+if (!mcpBacklog.includes("22 accepted") || !mcpBacklog.includes("ADR 0006")) {
+    failures.push("docs/mcp-backlog.md must link its 22 candidates to ADR 0006");
+}
+const mcpBacklogRows = [...mcpBacklog.matchAll(/^\| `clockify_[^`]+` \|/gm)];
+if (mcpBacklogRows.length !== 22) {
+    failures.push(`docs/mcp-backlog.md must contain 22 candidate rows, got ${mcpBacklogRows.length}`);
 }
 if (!contractInventory.includes('"id": "decision-records"')) {
     failures.push("docs/contract-inventory.json missing decision-records entry");

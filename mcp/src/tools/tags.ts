@@ -6,6 +6,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { pageWithMeta } from "./paging.js";
+
 export function registerTagsTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -22,20 +24,22 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
             const req: ClockifyApi.ListTagsRequest = {
                 workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
+                page,
+                "page-size": pageSize,
             };
             if (args.name) req.name = args.name;
             if (args.archived !== undefined) req.archived = args.archived;
-            const tags = await ctx.client.tags.list(req);
-            return successResult("clockify_tags_list", tags, {
+            const { items: tags, meta } = await pageWithMeta(ctx.client.tags.list(req), {
                 workspaceId: ctx.workspaceId,
-                count: tags.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-                hasMore: tags.length === (args.pageSize ?? 50),
+                page,
+                pageSize,
+            });
+            return successResult("clockify_tags_list", tags, {
+                ...meta,
             });
         },
     );

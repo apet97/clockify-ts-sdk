@@ -264,7 +264,8 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check package size/startup budgets | `make performance-budgets` |
 | Check wrapper build-output determinism | `make build-determinism` |
 | Replay redacted typed cassettes | `make cassettes` |
-| Run wrapper + mcp mutation-score gate | `make mutation` |
+| Check manual GitHub mutation workflow wiring | `make mutation-ci` |
+| Opt-in local wrapper + mcp mutation-score gate | `make mutation` |
 | Check package tarball snapshots | `make pack-snapshot-check` |
 | Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |

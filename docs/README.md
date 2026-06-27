@@ -94,6 +94,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`mcp-write-safety-policy.md`](./mcp-write-safety-policy.md) | MCP destructive-write confirmation, receipt, and recovery policy. |
 | [`mcp-agent-ux-policy.md`](./mcp-agent-ux-policy.md) | MCP agent UX rules for workflow-first guidance, server instructions, resources, prompts, receipts, and recovery. |
 | [`cli-write-safety-policy.md`](./cli-write-safety-policy.md) | CLI write/delete determinism, explicit target, and receipt policy. |
+| [`mcp-backlog.md`](./mcp-backlog.md) | Literal roadmap for the 22 accepted MCP could-add candidates from ADR 0006; docs-only until a deliberate tool-count change lands. |
 | [`openapi-evidence-policy.md`](./openapi-evidence-policy.md) | Evidence rules for manual OpenAPI corrections and generator decisions. |
 | [`schema-quality-policy.md`](./schema-quality-policy.md) | OpenAPI component schema, enum, request/response model, loose-object, and generated TypeScript model quality rules. |
 | [`upstream-drift-policy.md`](./upstream-drift-policy.md) | Clockify API, GOCLMCP, SDK, CLI, MCP, and docs drift lifecycle and routing rules. |
@@ -272,7 +273,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
-| Mutation score | `make mutation` | Run wrapper Stryker mutation testing and enforce pinned covered-mutant score floors. |
+| Mutation score | `make mutation` | Opt-in local wrapper + MCP Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |
+| Mutation CI wiring | `make mutation-ci` | Check the manual GitHub Mutation workflow stays dispatch-only, uploads Stryker reports, and keeps local concurrency capped. |
 | Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
 | Typed cassettes | `make cassettes` | Replay redacted response cassettes through the typed SDK client and local mock server. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |

@@ -48,7 +48,8 @@ in the [SDK README](./wrapper/README.md). Runnable scripts live in
 ### CLI
 
 ```sh
-npm install -g @clockify115/cli   # or: npm pack, then install the tarball
+npm ci
+cd cli && npm run build && npm link
 export CLOCKIFY_API_KEY=...        # Clockify › Profile › API Keys
 export CLOCKIFY_WORKSPACE_ID=...
 
@@ -58,6 +59,15 @@ clk115 projects list --json
 ```
 
 ### MCP server
+
+Build the server or the one-click bundle from this clone first; the packages are
+packable but are not published to public npm by default.
+
+```sh
+npm ci
+npm run build -w clockify-sdk-ts-115
+cd mcp && npm run build && npm link
+```
 
 ```jsonc
 // Claude Desktop / any MCP client — add to the client's mcpServers config
@@ -73,7 +83,8 @@ clk115 projects list --json
 
 Call `clockify_status` first; read the `clockify://guide/which-tool` resource to
 route a request to the right tool. Risky writes preview with `dry_run: true` and
-commit with the returned `confirm_token`. See the [MCP README](./mcp/README.md).
+commit with the returned `confirm_token`. For Claude Desktop one-click install
+bundles, see the [MCP README](./mcp/README.md).
 
 > Packages ship as local tarballs (`npm pack`) by default — this is not public npm publication. Publishing requires explicit maintainer approval.
 
@@ -102,7 +113,7 @@ Three gate tiers:
 | Command | What it proves |
 |---|---|
 | `make perfect-fast` | Deterministic local SDK/CLI/MCP package proof (no network, no live Clockify) |
-| `make perfect-full` | Adds GOCLMCP spec drift, codegen determinism, and a packed-consumer smoke |
+| `make perfect-full` | Adds GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
 | `make perfect-live` | Explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
 
 `make help` lists every focused gate. Contribution workflow, the contract system,

@@ -46,7 +46,8 @@ ceiling. The 58 Go-only names decompose as:
   `custom_fields_set_value`, `entity_changes_list`, `users_deactivate`,
   `workspace_settings`, `webhooks_events`, `time_off_balances_update`,
   `time_off_requests_create` (for-user). These are a conscious backlog, not
-  shipped, to keep the surface workflow-first and thin.
+  shipped, to keep the surface workflow-first and thin. The literal execution
+  roadmap lives in [`../mcp-backlog.md`](../mcp-backlog.md).
 
 For the 12 operations with no SDK method name: all 12 already have reachable,
 operationId-derived generated methods (e.g. `client.users.getCurrentUser`,
@@ -70,9 +71,9 @@ convention — so it stays as-is.
 
 The MCP surface stays at 135 advertised tools by intent; the 58-name parity gap
 is fully accounted for (8 + 28 + 22) with no silent ceiling. The 22 backlog
-candidates are an explicit, prioritized to-do; the 12 unstamped ops are reachable
-via their operationId-derived methods and intentionally unstamped per convention.
-Changing the tool count or shipping a backlog tool is a
+candidates are an explicit, prioritized to-do in `docs/mcp-backlog.md`; the 12
+unstamped ops are reachable via their operationId-derived methods and
+intentionally unstamped per convention. Changing the tool count or shipping a backlog tool is a
 deliberate follow-up reviewed against the workflow-first posture; none is
 implied to be missing by accident.
 

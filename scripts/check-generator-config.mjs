@@ -153,11 +153,14 @@ if (failures.length > 0) {
 
 const localGenerator = contract.localGenerator;
 const scriptText = readRelative(localGenerator.script, "localGenerator.script");
+const constantsText = readRelative("scripts/sdk-codegen/constants.mjs", "localGenerator.constantsModule");
 readRelative(localGenerator.inputOpenApi, "localGenerator.inputOpenApi");
 readRelative(localGenerator.syncScript, "localGenerator.syncScript");
 
 for (const marker of [localGenerator.inputOpenApi, localGenerator.outputPath]) {
-    if (!scriptText.includes(marker)) fail(`${localGenerator.script} missing marker ${marker}`);
+    if (!`${scriptText}\n${constantsText}`.includes(marker)) {
+        fail(`${localGenerator.script} or scripts/sdk-codegen/constants.mjs missing marker ${marker}`);
+    }
 }
 for (const marker of contract.offlineReproducibility.forbiddenCommandMarkers ?? []) {
     if (scriptText.toLowerCase().includes(marker.toLowerCase())) {

@@ -11,6 +11,29 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const PASSING_STATUSES = new Set(["Killed", "Timeout"]);
 const EXCLUDED_STATUSES = new Set(["Ignored", "NoCoverage"]);
+const requestedPackageIds = new Set();
+
+for (let index = 2; index < process.argv.length; index += 1) {
+    const arg = process.argv[index];
+    if (arg === "--package") {
+        const value = process.argv[index + 1];
+        if (typeof value !== "string" || value.trim() === "") {
+            fail("argv.--package", "must be followed by a package id");
+        } else {
+            requestedPackageIds.add(value);
+        }
+        index += 1;
+    } else if (arg.startsWith("--package=")) {
+        const value = arg.slice("--package=".length);
+        if (value.trim() === "") {
+            fail("argv.--package", "must not be empty");
+        } else {
+            requestedPackageIds.add(value);
+        }
+    } else {
+        fail("argv", `unknown argument ${arg}`);
+    }
+}
 
 function fail(label, message) {
     failures.push(`${label}: ${message}`);
@@ -125,8 +148,16 @@ if (!Array.isArray(contract.packages) || contract.packages.length !== 2) {
 }
 
 const headContract = readHeadContract();
+const packages = Array.isArray(contract.packages) ? contract.packages : [];
+const knownPackageIds = new Set(packages.map((pkg) => pkg?.id).filter((id) => typeof id === "string"));
+for (const id of requestedPackageIds) {
+    if (!knownPackageIds.has(id)) fail("argv.--package", `unknown package id ${id}`);
+}
 
-for (const pkg of contract.packages ?? []) {
+const packagesToCheck =
+    requestedPackageIds.size === 0 ? packages : packages.filter((pkg) => requestedPackageIds.has(pkg?.id));
+
+for (const pkg of packagesToCheck) {
     const id = pkg?.id ?? "(unknown)";
     const report = readJson(pkg?.report, `${id}.report`);
     if (report == null) continue;
@@ -179,4 +210,5 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log("mutation score check passed (wrapper + mcp Stryker reports, covered-mutant floors).");
+const checked = packagesToCheck.map((pkg) => pkg.id).join(" + ");
+console.log(`mutation score check passed (${checked} Stryker reports, covered-mutant floors).`);

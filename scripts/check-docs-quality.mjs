@@ -232,6 +232,44 @@ function checkProductSurfaceClaims() {
     }
 }
 
+function checkMcpPositioningMedia() {
+    const relPath = "mcp/POSITIONING.md";
+    const text = readRelative(relPath);
+    const forbidden = [
+        "screenshots below are placeholders",
+        "Screenshot",
+        "Full flow GIF",
+    ];
+
+    for (const marker of forbidden) {
+        if (text.includes(marker)) fail(relPath, `contains unsupported media placeholder marker ${JSON.stringify(marker)}`);
+    }
+
+    const imageLinks = [...text.matchAll(/!\[[^\]]*]\(([^)]+)\)/g)];
+    for (const match of imageLinks) {
+        const target = match[1]?.trim() ?? "";
+        if (target === "" || /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("#")) {
+            continue;
+        }
+        const resolved = path.normalize(path.join(path.dirname(relPath), target)).replace(/\\/g, "/");
+        safeRelativePath(`${relPath}.image`, resolved);
+        if (!fs.existsSync(path.join(root, resolved))) {
+            fail(relPath, `image link points at missing file ${target}`);
+        }
+    }
+}
+
+function checkHistoricalArchiveBanners() {
+    const banner = "ARCHIVED ARTIFACT. Do not execute directly.";
+    for (const relPath of ["Deferred.md", ".recon/MASTER.md", "plans/README.md"]) {
+        const text = readRelative(relPath);
+        if (!text.includes(banner)) fail(relPath, `missing archive banner ${JSON.stringify(banner)}`);
+        if (!text.includes("Use `AGENTS.md`,") || !text.includes("current `make perfect-fast` output")) {
+            fail(relPath, "archive banner must point to AGENTS.md and current make perfect-fast output");
+        }
+    }
+}
+
 validateContractShape();
 
 if (failures.length > 0) {
@@ -249,6 +287,8 @@ for (const surface of contract.generatedTruthSurfaces ?? []) {
     readRelative(surface);
 }
 checkProductSurfaceClaims();
+checkMcpPositioningMedia();
+checkHistoricalArchiveBanners();
 
 for (const relPath of contract.scanPaths ?? []) {
     const text = readRelative(relPath);

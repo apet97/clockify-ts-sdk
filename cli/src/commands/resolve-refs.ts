@@ -4,6 +4,7 @@
  * through, while a name does one case-insensitive list lookup. Keeping this
  * in one place means the two sibling commands can never drift apart.
  */
+import { iterAll, type PaginatedRequest } from "clockify-sdk-ts-115/iter";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import type { ClockifyClient } from "../client.js";
@@ -32,15 +33,32 @@ function pickIdByName(rows: unknown[], ref: string, noun: string): string {
     return match.entity.id;
 }
 
+async function collectPaged<TRequest extends PaginatedRequest>(
+    fetcher: (request: TRequest) => PromiseLike<readonly unknown[]>,
+    baseRequest: Omit<TRequest, "page" | "page-size">,
+): Promise<unknown[]> {
+    const rows: unknown[] = [];
+    for await (const row of iterAll(fetcher, baseRequest, { pageSize: 200, maxPages: 1000 })) {
+        rows.push(row);
+    }
+    return rows;
+}
+
 export async function resolveProjectId(client: ClockifyClient, workspaceId: string, ref: string): Promise<string> {
     if (looksLikeClockifyId(ref)) return ref;
-    const list = await client.projects.list({ workspaceId, name: ref, page: 1, "page-size": 200 });
+    const list = await collectPaged(client.projects.list.bind(client.projects), {
+        workspaceId,
+        name: ref,
+    });
     return pickIdByName(list, ref, "project");
 }
 
 export async function resolveClientId(client: ClockifyClient, workspaceId: string, ref: string): Promise<string> {
     if (looksLikeClockifyId(ref)) return ref;
-    const list = await client.clients.list({ workspaceId, name: ref, page: 1, "page-size": 200 });
+    const list = await collectPaged(client.clients.list.bind(client.clients), {
+        workspaceId,
+        name: ref,
+    });
     return pickIdByName(list, ref, "client");
 }
 
@@ -51,7 +69,11 @@ export async function resolveTaskId(
     ref: string,
 ): Promise<string> {
     if (looksLikeClockifyId(ref)) return ref;
-    const list = await client.tasks.list({ workspaceId, projectId, name: ref, page: 1, "page-size": 200 });
+    const list = await collectPaged(client.tasks.list.bind(client.tasks), {
+        workspaceId,
+        projectId,
+        name: ref,
+    });
     const match = matchByName(asNamed(list), ref);
     if (match.kind === "many") {
         throw new Error(`multiple tasks named ${JSON.stringify(ref)} on project ${projectId}; pass the 24-character id`);
@@ -69,7 +91,10 @@ export async function resolveTagIds(client: ClockifyClient, workspaceId: string,
             ids.push(ref);
             continue;
         }
-        const list = await client.tags.list({ workspaceId, name: ref, page: 1, "page-size": 200 });
+        const list = await collectPaged(client.tags.list.bind(client.tags), {
+            workspaceId,
+            name: ref,
+        });
         ids.push(pickIdByName(list, ref, "tag"));
     }
     return ids;

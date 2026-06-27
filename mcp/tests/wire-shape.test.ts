@@ -14,10 +14,21 @@ import { scopeFilter } from "../src/scope-filter.js";
 import { resolveProjectId, resolveUserId } from "../src/tools/workflows/resolve.js";
 
 // A minimal context whose project list contains one project named "Website".
-function ctxWith(projects: Array<{ id: string; name: string }>) {
+type ListCall = Record<string, unknown>;
+
+function pagedRows<T>(rows: T[], calls: ListCall[] = []): (req: ListCall) => Promise<T[]> {
+    return async (req) => {
+        calls.push(req);
+        const page = Number(req.page ?? 1);
+        const pageSize = Number(req["page-size"] ?? 50);
+        return rows.slice((page - 1) * pageSize, page * pageSize);
+    };
+}
+
+function ctxWith(projects: Array<{ id: string; name: string }> | ((req: ListCall) => Promise<unknown[]>)) {
     return {
         workspaceId: "ws1",
-        client: { projects: { list: async () => projects } },
+        client: { projects: { list: typeof projects === "function" ? projects : async () => projects } },
     } as unknown as Parameters<typeof resolveProjectId>[0];
 }
 const PROJECT_ID = "000000000000000000000301";
@@ -62,6 +73,32 @@ describe("workflow name→id resolution never ships a name as an id", () => {
         await expect(resolveProjectId(ctxWith(projects), "Nonexistent")).rejects.toThrow(/no project named/);
     });
 
+    it("finds a project exact match beyond the first 200 rows", async () => {
+        const calls: ListCall[] = [];
+        const filler = Array.from({ length: 200 }, (_, index) => ({
+            id: `p-${index}`,
+            name: `Project ${index}`,
+        }));
+        const ctx = ctxWith(pagedRows([...filler, { id: "p-target", name: "Website" }], calls));
+
+        expect(await resolveProjectId(ctx, "Website")).toBe("p-target");
+        expect(calls.map((call) => call.page)).toEqual([1, 2]);
+    });
+
+    it("throws on exact-name ambiguity across project pages", async () => {
+        const calls: ListCall[] = [];
+        const filler = Array.from({ length: 199 }, (_, index) => ({
+            id: `p-${index}`,
+            name: `Project ${index}`,
+        }));
+        const ctx = ctxWith(
+            pagedRows([{ id: "p-first", name: "Website" }, ...filler, { id: "p-second", name: "Website" }], calls),
+        );
+
+        await expect(resolveProjectId(ctx, "Website")).rejects.toThrow(/multiple projects match/);
+        expect(calls.map((call) => call.page)).toEqual([1, 2]);
+    });
+
     it("resolves a user by EMAIL through the unified matcher (matchKeys name+email)", async () => {
         const ctx = {
             workspaceId: "ws1",
@@ -69,5 +106,26 @@ describe("workflow name→id resolution never ships a name as an id", () => {
         } as unknown as Parameters<typeof resolveUserId>[0];
         // resolveUserId -> resolveByName -> findOneByName(["name","email"]) -> SDK matchByName
         expect(await resolveUserId(ctx, "bob@x.com")).toBe("u-7");
+    });
+
+    it("finds a user exact email match beyond the first 200 rows", async () => {
+        const calls: ListCall[] = [];
+        const filler = Array.from({ length: 200 }, (_, index) => ({
+            id: `u-${index}`,
+            name: `User ${index}`,
+            email: `user-${index}@example.test`,
+        }));
+        const ctx = {
+            workspaceId: "ws1",
+            client: {
+                users: {
+                    list: pagedRows([...filler, { id: "u-target", name: "Bob Smith", email: "bob@x.com" }], calls),
+                },
+            },
+        } as unknown as Parameters<typeof resolveUserId>[0];
+
+        expect(await resolveUserId(ctx, "bob@x.com")).toBe("u-target");
+        expect(calls.map((call) => call.page)).toEqual([1, 2]);
+        expect(calls.every((call) => call["include-roles"] === false)).toBe(true);
     });
 });

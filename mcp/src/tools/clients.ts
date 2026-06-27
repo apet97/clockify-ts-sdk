@@ -7,6 +7,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { pageWithMeta } from "./paging.js";
+
 export function registerClientsTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -23,20 +25,22 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
             const req: ClockifyApi.ListClientsRequest = {
                 workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
+                page,
+                "page-size": pageSize,
             };
             if (args.name) req.name = args.name;
             if (args.archived !== undefined) req.archived = args.archived;
-            const clients = await ctx.client.clients.list(req);
-            return successResult("clockify_clients_list", clients, {
+            const { items: clients, meta } = await pageWithMeta(ctx.client.clients.list(req), {
                 workspaceId: ctx.workspaceId,
-                count: clients.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-                hasMore: clients.length === (args.pageSize ?? 50),
+                page,
+                pageSize,
+            });
+            return successResult("clockify_clients_list", clients, {
+                ...meta,
             });
         },
     );

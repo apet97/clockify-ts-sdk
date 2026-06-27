@@ -9,6 +9,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { pageWithMeta } from "./paging.js";
+
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -26,21 +28,23 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
             const req: ClockifyApi.ListProjectsRequest = {
                 workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
+                page,
+                "page-size": pageSize,
             };
             if (args.name) req.name = args.name;
             if (args.archived !== undefined) req.archived = args.archived;
             if (args.clientId) req.clients = [args.clientId];
-            const projects = await ctx.client.projects.list(req);
-            return successResult("clockify_projects_list", projects, {
+            const { items: projects, meta } = await pageWithMeta(ctx.client.projects.list(req), {
                 workspaceId: ctx.workspaceId,
-                count: projects.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-                hasMore: projects.length === (args.pageSize ?? 50),
+                page,
+                pageSize,
+            });
+            return successResult("clockify_projects_list", projects, {
+                ...meta,
             });
         },
         "Lower pageSize or narrow filters; verify the workspace ID.",

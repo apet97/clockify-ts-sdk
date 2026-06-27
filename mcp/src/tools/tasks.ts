@@ -8,6 +8,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
+import { pageWithMeta } from "./paging.js";
+
 export function registerTasksTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -25,21 +27,23 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
             const req: ClockifyApi.ListTasksRequest = {
                 workspaceId: ctx.workspaceId,
                 projectId: args.projectId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
+                page,
+                "page-size": pageSize,
             };
             if (args.name) req.name = args.name;
-            const tasks = await ctx.client.tasks.list(req);
-            return successResult("clockify_tasks_list", tasks, {
+            const { items: tasks, meta } = await pageWithMeta(ctx.client.tasks.list(req), {
                 workspaceId: ctx.workspaceId,
+                page,
+                pageSize,
+            });
+            return successResult("clockify_tasks_list", tasks, {
+                ...meta,
                 projectId: args.projectId,
-                count: tasks.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-                hasMore: tasks.length === (args.pageSize ?? 50),
             });
         },
         "Verify the projectId exists in this workspace.",

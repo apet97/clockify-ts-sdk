@@ -313,8 +313,10 @@ for (const pkg of contract.packages ?? []) {
 }
 
 const localGeneratorText = readRelative(contract.localGenerator.script);
+const localGeneratorConstantsText = readRelative("scripts/sdk-codegen/constants.mjs");
+const localGeneratorSurface = `${localGeneratorText}\n${localGeneratorConstantsText}`;
 for (const marker of contract.localGenerator.mustContain ?? []) {
-    if (!localGeneratorText.includes(marker)) fail("localGenerator", `missing marker ${JSON.stringify(marker)}`);
+    if (!localGeneratorSurface.includes(marker)) fail("localGenerator", `missing marker ${JSON.stringify(marker)}`);
 }
 
 for (const doc of contract.supportingDocs ?? []) {

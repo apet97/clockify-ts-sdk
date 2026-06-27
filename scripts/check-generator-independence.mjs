@@ -232,9 +232,12 @@ const packageManifests = {
 };
 const productSurface = readJson(contract.files.productSurface, "files.productSurface") ?? {};
 const localGenerator = read(contract.files.localGenerator, "files.localGenerator");
+const localGeneratorConstants = read("scripts/sdk-codegen/constants.mjs", "files.localGeneratorConstants");
 
 for (const marker of [contract.localGenerator.inputOpenApi, contract.localGenerator.outputPath]) {
-    if (!localGenerator.includes(marker)) fail(`local generator must reference ${marker}`);
+    if (!`${localGenerator}\n${localGeneratorConstants}`.includes(marker)) {
+        fail(`local generator must reference ${marker}`);
+    }
 }
 if (!fs.existsSync(path.join(root, contract.files.syncScript))) fail(`${contract.files.syncScript} is missing`);
 

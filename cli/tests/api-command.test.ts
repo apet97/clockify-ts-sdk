@@ -14,8 +14,15 @@ interface FetchCall {
     init?: RequestInit;
 }
 
+type PageFixture =
+    | unknown[]
+    | {
+          body: unknown[];
+          headers?: Record<string, string>;
+      };
+
 function makeClient(
-    pages: unknown[][] = [[{ id: "row-1" }]],
+    pages: PageFixture[] = [[{ id: "row-1" }]],
     status = 200,
 ): {
     client: ClockifyClient;
@@ -26,11 +33,13 @@ function makeClient(
     const client = {
         fetch: async (input: string | URL | Request, init?: RequestInit) => {
             calls.push({ input: String(input), init });
-            const body = pages[index] ?? [];
+            const page = pages[index] ?? [];
+            const body = Array.isArray(page) ? page : page.body;
+            const headers = Array.isArray(page) ? {} : (page.headers ?? {});
             index += 1;
             return new Response(JSON.stringify(body), {
                 status,
-                headers: { "content-type": "application/json", "x-test": "yes" },
+                headers: { "content-type": "application/json", "x-test": "yes", ...headers },
             });
         },
     };
@@ -135,6 +144,25 @@ describe("api command", () => {
         expect(calls).toHaveLength(2);
         expect(calls[0]?.input).toBe("/x?page=1&page-size=2");
         expect(JSON.parse(logged[0] ?? "")).toEqual([{ id: "a" }, { id: "b" }, { id: "c" }]);
+    });
+
+    it("stops --all on Last-Page:true even when the final page is full", async () => {
+        const { client, calls } = makeClient([
+            { body: [{ id: "a" }, { id: "b" }], headers: { "Last-Page": "true" } },
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2"]);
+        expect(calls).toHaveLength(1);
+        expect(JSON.parse(logged[0] ?? "")).toEqual([{ id: "a" }, { id: "b" }]);
+    });
+
+    it("continues --all on Last-Page:false even when the page is short", async () => {
+        const { client, calls } = makeClient([
+            { body: [{ id: "a" }], headers: { "Last-Page": "false" } },
+            { body: [{ id: "b" }], headers: { "Last-Page": "true" } },
+        ]);
+        await run(client, ["GET", "/x", "--all", "--page-size", "2"]);
+        expect(calls).toHaveLength(2);
+        expect(JSON.parse(logged[0] ?? "")).toEqual([{ id: "a" }, { id: "b" }]);
     });
 
     it("stops at --max-pages when every page is full", async () => {

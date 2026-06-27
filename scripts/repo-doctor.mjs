@@ -189,12 +189,16 @@ export async function buildReport() {
     const localGenerator = (await exists("scripts/generate-sdk-from-openapi.mjs"))
         ? await readText("scripts/generate-sdk-from-openapi.mjs")
         : "";
+    const localGeneratorConstants = (await exists("scripts/sdk-codegen/constants.mjs"))
+        ? await readText("scripts/sdk-codegen/constants.mjs")
+        : "";
+    const localGeneratorSurface = `${localGenerator}\n${localGeneratorConstants}`;
 
     checks.push(
         check(
             "codegen.local-generator",
-            localGenerator.includes("spec/corrected/clockify.corrected.openapi.yaml") &&
-                localGenerator.includes("output/ts-sdk")
+            localGeneratorSurface.includes("spec/corrected/clockify.corrected.openapi.yaml") &&
+                localGeneratorSurface.includes("output/ts-sdk")
                 ? "pass"
                 : "fail",
             "Local generator should read the corrected OpenAPI snapshot and emit output/ts-sdk",

@@ -1,11 +1,11 @@
-.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage mutation mcpb
+.PHONY: help perfect perfect-fast perfect-full perfect-live contract-gates wrapper-gates cli-gates mcp-gates goclmcp-drift sdk-codegen-sync sdk-wrapper-build sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism product-surface product-surface-drift error-docs error-docs-drift error-registry troubleshooting troubleshooting-drift openapi-operations openapi-operations-drift operation-parity operation-parity-drift mcp-tool-manifest mcp-tool-manifest-drift operation-coverage naming-taxonomy openapi-lint schema-quality openapi-evidence upstream-drift official-openapi-drift official-openapi-report official-openapi-fetch operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix examples-plan snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory contract-inventory-report workflow-cookbook workflow-plan acceptance-scenarios acceptance-plan naming-taxonomy change-impact change-impact-plan version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness release-decision-plan ci-contract live-safety test-data-lifecycle risk-register risk-status-report user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment repo-doctor onboarding-plan operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity maintenance-playbook maintenance-plan mutation-safety readme-tables readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance conformance-drift performance-budgets performance-receipt performance-calibration-plan generated-edit-check docs-drift pack-smoke sandbox-key-health mock-clockify coverage mutation mutation-ci mcpb mcpb-validate mcpb-smoke
 
 help:
 	@printf '%s\n' 'Clockify TypeScript SDK platform gates'
 	@printf '%s\n' ''
 	@printf '%s\n' 'Core targets:'
 	@printf '%s\n' '  make perfect-fast        Deterministic local product gates without codegen/live Clockify.'
-	@printf '%s\n' '  make perfect-full        Canonical OpenAPI, local SDK codegen, package gates, and packed-consumer smoke.'
+	@printf '%s\n' '  make perfect-full        Canonical OpenAPI, local SDK codegen, package gates, packed-consumer smoke, and CI mutation wiring.'
 	@printf '%s\n' '  make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars.'
 	@printf '%s\n' ''
 	@printf '%s\n' 'Focused targets:'
@@ -98,7 +98,8 @@ help:
 	@printf '%s\n' '  make cli-write-safety    Check CLI write commands stay explicit, non-interactive, and receipt-oriented.'
 	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP consumer as-never escape hatches stay annotated and budgeted.'
 	@printf '%s\n' '  make coverage            Measure SDK/CLI/MCP coverage and enforce pinned floors.'
-	@printf '%s\n' '  make mutation            Run wrapper + mcp Stryker mutation testing and enforce pinned score floors.'
+	@printf '%s\n' '  make mutation            Opt-in local Stryker mutation test; prefer the manual GitHub Mutation workflow.'
+	@printf '%s\n' '  make mutation-ci         Check the manual GitHub Mutation workflow is wired.'
 	@printf '%s\n' '  make test-matrix         Check SDK/CLI/MCP test files and package scripts are present.'
 	@printf '%s\n' '  make mock-contract       Check mock Clockify server routes and mock-backed tests.'
 	@printf '%s\n' '  make replay-fixtures     Replay committed redacted fixtures and check wire-shape tripwires.'
@@ -116,7 +117,9 @@ help:
 	@printf '%s\n' '  make pack-smoke          Install packed SDK/CLI/MCP tarballs into temp consumer projects.'
 	@printf '%s\n' '  make sandbox-key-health  Validate sandbox key shape offline; LIVE probe only when a key is present.'
 	@printf '%s\n' '  make mock-clockify       Start the local mock Clockify server for deterministic tests.'
+	@printf '%s\n' '  make mcpb-validate       Validate the MCPB manifest without building a bundle.'
 	@printf '%s\n' '  make mcpb                Build the self-contained MCP one-click install bundle (mcp/*.mcpb).'
+	@printf '%s\n' '  make mcpb-smoke          Build the MCPB bundle and inspect it with the pinned mcpb tool.'
 
 perfect: perfect-fast
 
@@ -128,7 +131,7 @@ perfect: perfect-fast
 # proofs (pack-smoke/coverage/mutation). It stays a FATAL prerequisite: the
 # file-size and import/startup-crash budgets still block. Keep it last when
 # editing these prerequisite lists.
-perfect-fast: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity maintenance-playbook mutation-safety product-surface-drift error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift wrapper-gates cli-gates mcp-gates schema-quality lint pack-snapshot-check mcp-tool-manifest-drift performance-budgets
+perfect-fast: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity maintenance-playbook mutation-safety product-surface-drift error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift mcpb-validate wrapper-gates cli-gates mcp-gates schema-quality lint pack-snapshot-check mcp-tool-manifest-drift performance-budgets
 
 # Deterministic, offline, network-free contract/doc/drift gates only.
 # This is the perfect-fast set minus the package gates (wrapper-gates,
@@ -140,7 +143,7 @@ perfect-fast: generated-edit-check openapi-evidence upstream-drift official-open
 # and contract drift suite that previously only ran locally.
 contract-gates: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract cassettes fixture-mock-parity maintenance-playbook mutation-safety error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift schema-quality
 
-perfect-full: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence goclmcp-drift spec-sync-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism generator-comparison doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity mutation-safety maintenance-playbook product-surface-drift error-docs-drift error-registry troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift wrapper-gates cli-gates mcp-gates pack-smoke coverage mutation size mcp-tool-manifest-drift performance-budgets
+perfect-full: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence goclmcp-drift spec-sync-drift sdk-codegen sdk-codegen-drift sdk-codegen-test codegen-determinism build-determinism generator-comparison doc-correctness-anchor-strict generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract replay-fixtures cassettes fixture-mock-parity mutation-safety maintenance-playbook product-surface-drift error-docs-drift error-registry troubleshooting-drift openapi-operations-drift operation-parity-drift openapi-lint schema-quality readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift wrapper-gates cli-gates mcp-gates pack-smoke coverage mutation-ci size mcp-tool-manifest-drift performance-budgets
 
 perfect-live:
 	@if [ -z "$${CLOCKIFY_API_KEY:-}" ] || [ -z "$${CLOCKIFY_WORKSPACE_ID:-}" ]; then \
@@ -198,6 +201,13 @@ mcpb:
 	npm run build -w clockify-sdk-ts-115
 	npm run build -w @clockify115/mcp-server
 	node scripts/build-mcpb.mjs
+
+mcpb-validate:
+	node scripts/check-mcpb-manifest.mjs
+
+mcpb-smoke: mcpb-validate
+	$(MAKE) mcpb
+	npx --yes @anthropic-ai/mcpb@2.1.2 info mcp/clockify115-mcp-*.mcpb
 
 goclmcp-drift:
 	@if [ ! -d ../GOCLMCP ]; then echo 'goclmcp-drift: ../GOCLMCP not found.' >&2; exit 1; fi
@@ -600,16 +610,17 @@ coverage: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run test:coverage -w @clockify115/mcp-server
 	node scripts/check-coverage-floor.mjs
 
-# Mutation-score gate (Stryker, wrapper + mcp packages). Proves tests catch
-# injected bugs, not just that lines ran. The mcp run mutates the
-# safety-critical confirmation/confirm-guard/result modules on the existing
-# Vitest 2 suite (Stryker's vitest-runner accepts vitest >=2.0.0). Slow +
-# CPU-bound: perfect-full only, never perfect-fast. Distinct from
-# mutation-safety, which validates write policy.
+# Opt-in local mutation-score gate (Stryker, wrapper + mcp packages). Proves
+# tests catch injected bugs, not just that lines ran. CPU-bound by design:
+# prefer the manual GitHub "Mutation" workflow for authoritative proof.
+# Distinct from mutation-safety, which validates write policy.
 mutation: sdk-codegen
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115
 	CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @clockify115/mcp-server
 	node scripts/check-mutation-score.mjs
+
+mutation-ci:
+	node scripts/check-mutation-ci-workflow.mjs
 
 # Bundle-size ceiling gate (size-limit against the built wrapper/dist export
 # barrels). Mirrors the CI `size` job (.github/workflows/ci.yml) so a local
