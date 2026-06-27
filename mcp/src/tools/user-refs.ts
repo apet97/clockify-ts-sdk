@@ -17,8 +17,10 @@
 import type { Context } from "../client.js";
 import { entityId } from "../result.js";
 
+import { collectPagedList } from "./paging.js";
+
 export interface UserRefHelpers {
-    /** Every workspace user as `{ id, name }` (page 1, `page-size: 200`, no roles). */
+    /** Every workspace user as `{ id, name }` (`page-size: 200`, no roles). */
     listUsers: () => Promise<Array<{ id: string; name: string }>>;
     /** The current user's id ("" when it can't be determined). */
     meUserId: () => Promise<string>;
@@ -27,12 +29,16 @@ export interface UserRefHelpers {
 /** Build the shared `listUsers` / `meUserId` helpers over a tool {@link Context}. */
 export function userRefHelpers(ctx: Context): UserRefHelpers {
     const listUsers = async (): Promise<Array<{ id: string; name: string }>> => {
-        const rows = (await ctx.client.users.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-            "include-roles": false,
-        })) as Array<{ id?: string; name?: string }>;
+        const rows = await collectPagedList(
+            (page) =>
+                ctx.client.users.list({
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    "page-size": 200,
+                    "include-roles": false,
+                }) as PromiseLike<Array<{ id?: string; name?: string }>>,
+            { pageSize: 200 },
+        );
         return rows.map((r) => ({ id: String(r.id ?? ""), name: String(r.name ?? "") }));
     };
     const meUserId = async (): Promise<string> =>

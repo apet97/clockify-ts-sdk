@@ -38,6 +38,16 @@ All notable changes to `@clockify115/mcp-server` are documented here.
 
 ### Fixed
 
+- Domain list receipts for clients, projects, tasks, tags, and current-user
+  entries now honor Clockify's `Last-Page` response header when it is present,
+  instead of relying only on page length for `meta.hasMore`.
+- Workflow and domain name resolvers now walk bounded pages for clients,
+  projects, tasks, tags, users, expense categories, and time-off policies. Large
+  workspaces no longer miss exact name/email matches beyond the first 200 rows,
+  and `include-roles:false` is preserved for user lookup.
+- Install docs now treat local source/MCPB builds as the current primary path
+  until a maintainer attaches real release assets; the new `make mcpb-validate`
+  gate validates the bundle manifest without building a release artifact.
 - `clockify_shared_reports_create`/`clockify_shared_reports_update` now map the `public`
   argument to the wire field `isPublic`. They previously sent `public`, which the live
   API silently ignores, so requesting a public report had no effect. The tool argument

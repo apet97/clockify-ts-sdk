@@ -62,6 +62,14 @@ function envelope(res: unknown): Record<string, unknown> {
     return JSON.parse(text) as Record<string, unknown>;
 }
 
+function responseAware<T>(data: T, headers: Record<string, string>) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    return promise;
+}
+
 describe("clockify_tasks_list", () => {
     it("omits the name filter and defaults page/page-size, reporting hasMore=true on a full page", async () => {
         const captured: Record<string, unknown> = {};
@@ -131,6 +139,24 @@ describe("clockify_tasks_list", () => {
         expect(meta.count).toBe(2);
         // 2 rows !== pageSize 25 => hasMore false.
         expect(meta.hasMore).toBe(false);
+    });
+
+    it("uses Last-Page:true to report no more rows on a full page", async () => {
+        const client = await connect(
+            tasksContext({
+                list: () =>
+                    responseAware([{ id: "t-1" }, { id: "t-2" }], {
+                        "Last-Page": "true",
+                    }) as unknown as Promise<unknown>,
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_tasks_list",
+            arguments: { projectId: "proj-1", pageSize: 2 },
+        });
+        const meta = envelope(res).meta as { hasMore?: boolean; lastPageHeader?: boolean };
+        expect(meta.hasMore).toBe(false);
+        expect(meta.lastPageHeader).toBe(true);
     });
 
     it("classifies a thrown 404 as not_found in the error envelope and carries the tailored recovery hint", async () => {

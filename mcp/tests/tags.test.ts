@@ -78,6 +78,14 @@ function envelope(res: unknown): Record<string, unknown> {
     return JSON.parse(text) as Record<string, unknown>;
 }
 
+function responseAware<T>(data: T, headers: Record<string, string>) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    return promise;
+}
+
 describe("clockify_tags_list", () => {
     it("applies default page/pageSize and reports hasMore=false when the page is short", async () => {
         const captured: Record<string, unknown> = {};
@@ -135,6 +143,30 @@ describe("clockify_tags_list", () => {
         expect(meta.count).toBe(2);
         expect(meta.pageSize).toBe(2);
         expect(meta.hasMore).toBe(true);
+    });
+
+    it("uses Last-Page:true to report no more rows on a full page", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            tagsContext(captured, {
+                list: () =>
+                    responseAware(
+                        [
+                            { id: "t1", name: "A" },
+                            { id: "t2", name: "B" },
+                        ],
+                        { "Last-Page": "true" },
+                    ) as unknown as Promise<unknown>,
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_tags_list",
+            arguments: { pageSize: 2 },
+        });
+
+        const meta = envelope(res).meta as { hasMore: boolean; lastPageHeader?: boolean };
+        expect(meta.hasMore).toBe(false);
+        expect(meta.lastPageHeader).toBe(true);
     });
 
     it("surfaces an upstream 401 as a structured auth_or_permission error", async () => {

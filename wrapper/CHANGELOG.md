@@ -28,6 +28,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Internal generator maintenance: split `scripts/generate-sdk-from-openapi.mjs`
+  into focused `scripts/sdk-codegen/*` modules with byte-stable output, and
+  pointed the retry-delay regression test at the new emitter module.
 - Re-snapshotted the corrected OpenAPI to the 2026-06-23 GOCLMCP surface refresh:
   **184 → 169 operations** (17 live-404/405 wrong-path ops removed, 2 missing official
   ops added) and **129 → 135 live-success**. Dropped the dead `.policies` scoped-client

@@ -27,9 +27,24 @@ async function connect(ctx: Context): Promise<Client> {
 
 const ME = { id: "user-1", name: "Me" };
 
+function responseAware<T>(data: T, headers: Record<string, string>) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    return promise;
+}
+
+function envelope(res: unknown): Record<string, unknown> {
+    const text = (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}";
+    return JSON.parse(text) as Record<string, unknown>;
+}
+
 describe("clockify_entries_list", () => {
     it("lists the current user's entries with the right request + paginated receipt", async () => {
-        const listForUser = vi.fn(async (_req: unknown) => [{ id: "e1" }, { id: "e2" }]);
+        const listForUser = vi.fn(() =>
+            responseAware([{ id: "e1" }, { id: "e2" }], { "Last-Page": "false" }),
+        );
         const client = await connect({
             workspaceId: "ws-1",
             client: {
@@ -40,7 +55,7 @@ describe("clockify_entries_list", () => {
 
         const res = (await client.callTool({
             name: "clockify_entries_list",
-            arguments: { pageSize: 2, description: "standup", start: "2026-06-01T00:00:00Z" },
+            arguments: { pageSize: 3, description: "standup", start: "2026-06-01T00:00:00Z" },
         })) as { isError?: boolean };
 
         expect(res.isError).toBeFalsy();
@@ -49,10 +64,13 @@ describe("clockify_entries_list", () => {
         expect(req).toMatchObject({
             workspaceId: "ws-1",
             userId: "user-1",
-            "page-size": 2,
+            "page-size": 3,
             description: "standup",
             start: "2026-06-01T00:00:00Z",
         });
+        const meta = envelope(res).meta as { hasMore?: boolean; lastPageHeader?: boolean };
+        expect(meta.hasMore).toBe(true);
+        expect(meta.lastPageHeader).toBe(false);
     });
 
     it("errors when getCurrentUser yields no id (never lists)", async () => {

@@ -27,6 +27,6 @@
         "fileName": "wrapper/reports/mutation/mutation.json"
     },
     "timeoutMS": 60000,
-    "concurrency": 4,
+    "concurrency": 2,
     "tempDirName": "wrapper/.stryker-tmp"
 }

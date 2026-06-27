@@ -10,18 +10,32 @@ import {
 
 const ID = "b".repeat(24);
 
+type ListCall = Record<string, unknown>;
+
 function clientWith(lists: {
-    projects?: unknown[];
-    clients?: unknown[];
-    tasks?: unknown[];
-    tags?: unknown[];
+    projects?: unknown[] | ((req: ListCall) => Promise<unknown[]>);
+    clients?: unknown[] | ((req: ListCall) => Promise<unknown[]>);
+    tasks?: unknown[] | ((req: ListCall) => Promise<unknown[]>);
+    tags?: unknown[] | ((req: ListCall) => Promise<unknown[]>);
 }): ClockifyClient {
+    const list = (rows?: unknown[] | ((req: ListCall) => Promise<unknown[]>)) =>
+        async (req: ListCall): Promise<unknown[]> =>
+            typeof rows === "function" ? rows(req) : (rows ?? []);
     return {
-        projects: { list: async () => lists.projects ?? [] },
-        clients: { list: async () => lists.clients ?? [] },
-        tasks: { list: async () => lists.tasks ?? [] },
-        tags: { list: async () => lists.tags ?? [] },
+        projects: { list: list(lists.projects) },
+        clients: { list: list(lists.clients) },
+        tasks: { list: list(lists.tasks) },
+        tags: { list: list(lists.tags) },
     } as unknown as ClockifyClient;
+}
+
+function pagedRows(rows: unknown[], calls: ListCall[]): (req: ListCall) => Promise<unknown[]> {
+    return async (req) => {
+        calls.push(req);
+        const page = Number(req.page ?? 1);
+        const pageSize = Number(req["page-size"] ?? 50);
+        return rows.slice((page - 1) * pageSize, page * pageSize);
+    };
 }
 
 describe("resolve-refs direct entry points", () => {
@@ -50,6 +64,40 @@ describe("resolve-refs direct entry points", () => {
         await expect(resolveClientId(client, "ws-1", "Dup")).rejects.toThrow(
             /multiple clients named/,
         );
+    });
+
+    it("resolveClientId finds an exact match beyond the first 200 rows", async () => {
+        const calls: ListCall[] = [];
+        const filler = Array.from({ length: 200 }, (_, index) => ({
+            id: `c-${index}`,
+            name: `Client ${index}`,
+        }));
+        const client = clientWith({
+            clients: pagedRows([...filler, { id: "c-target", name: "Globex" }], calls),
+        });
+
+        await expect(resolveClientId(client, "ws-1", "Globex")).resolves.toBe("c-target");
+        expect(calls.map((call) => call.page)).toEqual([1, 2]);
+        expect(calls.every((call) => call["page-size"] === 200)).toBe(true);
+    });
+
+    it("resolveClientId detects exact-name ambiguity across pages", async () => {
+        const calls: ListCall[] = [];
+        const filler = Array.from({ length: 199 }, (_, index) => ({
+            id: `c-${index}`,
+            name: `Client ${index}`,
+        }));
+        const client = clientWith({
+            clients: pagedRows(
+                [{ id: "c-first", name: "Dup" }, ...filler, { id: "c-second", name: "Dup" }],
+                calls,
+            ),
+        });
+
+        await expect(resolveClientId(client, "ws-1", "Dup")).rejects.toThrow(
+            /multiple clients named/,
+        );
+        expect(calls.map((call) => call.page)).toEqual([1, 2]);
     });
 
     it("resolveTaskId resolves within a project and reports the project on miss", async () => {

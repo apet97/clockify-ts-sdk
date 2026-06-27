@@ -60,6 +60,21 @@ is a separate, deliberate maintainer decision (AGENTS.md §12.7). To enable a
 package: add a `push: { tags: [...] }` trigger with a tag↔`package.json` version
 guard, remove the `if: false` guard on its publish step, set the `NPM_TOKEN`
 secret, and confirm provenance/OIDC. Until then, nothing is published.
+
+## MCPB release assets
+
+The MCP package can also be distributed as a Claude Desktop one-click `.mcpb`
+bundle. Local validation is split deliberately:
+
+- `make mcpb-validate` checks `mcp/manifest.json` and is part of the normal
+  deterministic gate.
+- `make mcpb-smoke` is a maintainer handoff gate: it builds the bundle, then runs
+  the pinned `@anthropic-ai/mcpb` inspector against `mcp/clockify115-mcp-*.mcpb`.
+
+Attaching the `.mcpb` file to a GitHub Release is a maintainer action after
+`make mcpb-smoke`; it is not performed by `perfect-fast`, `perfect-full`, or npm
+publish workflows.
+
 ## Security support
 
 Security intake is documented in `SECURITY.md`. Security fixes use the

@@ -15,7 +15,7 @@ const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice" };
 function fakeContext(overrides?: {
     clientsUpdate?: (req: unknown) => Promise<unknown>;
     listInProgress?: () => Promise<unknown>;
-    projectsList?: (req: unknown) => Promise<unknown[]>;
+    projectsList?: (req: unknown) => PromiseLike<unknown[]>;
     projectsUpdate?: (req: unknown) => Promise<unknown>;
 }): Context {
     return {
@@ -56,6 +56,14 @@ function fakeContext(overrides?: {
             },
         } as never,
     };
+}
+
+function responseAware<T>(data: T, headers: Record<string, string>) {
+    const promise = Promise.resolve(data) as Promise<T> & {
+        withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
+    };
+    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    return promise;
 }
 
 let teardown: () => Promise<void> = async () => {};
@@ -448,6 +456,25 @@ describe("@clockify115/mcp-server", () => {
         const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
         expect(parsed.meta.count).toBe(1);
         expect(parsed.meta.page).toBe(2);
+    });
+
+    it("clockify_projects_list uses Last-Page:true for full final pages", async () => {
+        const client = await connect(
+            fakeContext({
+                projectsList: () =>
+                    responseAware([{ id: "p1", name: "A" }, { id: "p2", name: "B" }], {
+                        "Last-Page": "true",
+                    }),
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_projects_list",
+            arguments: { pageSize: 2 },
+        });
+        expect(res.isError).toBeFalsy();
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]?.text ?? "");
+        expect(parsed.meta.hasMore).toBe(false);
+        expect(parsed.meta.lastPageHeader).toBe(true);
     });
 
     it("clockify_projects_update passes update fields at the SDK request top level", async () => {

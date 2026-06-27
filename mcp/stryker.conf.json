@@ -22,6 +22,6 @@
         "fileName": "mcp/reports/mutation/mutation.json"
     },
     "timeoutMS": 60000,
-    "concurrency": 4,
+    "concurrency": 2,
     "tempDirName": "mcp/.stryker-tmp"
 }

@@ -54,6 +54,8 @@ dist/tools/holidays.d.ts
 dist/tools/holidays.js
 dist/tools/invoices.d.ts
 dist/tools/invoices.js
+dist/tools/paging.d.ts
+dist/tools/paging.js
 dist/tools/projects.d.ts
 dist/tools/projects.js
 dist/tools/reports.d.ts

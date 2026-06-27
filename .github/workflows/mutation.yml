@@ -1,0 +1,75 @@
+name: Mutation
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Mutation target to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - wrapper
+          - mcp
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  CLOCKIFY_API_KEY: ""
+  CLOCKIFY_WORKSPACE_ID: ""
+
+jobs:
+  mutation:
+    name: Stryker mutation (${{ inputs.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install workspaces (root)
+        run: npm ci
+
+      - name: Generate + sync TS SDK (local generator)
+        run: make sdk-codegen
+
+      - name: Run full mutation gate
+        if: ${{ inputs.target == 'all' }}
+        run: make mutation
+
+      - name: Run wrapper mutation
+        if: ${{ inputs.target == 'wrapper' }}
+        run: npm run mutation -w clockify-sdk-ts-115
+
+      - name: Check wrapper mutation floor
+        if: ${{ inputs.target == 'wrapper' }}
+        run: node scripts/check-mutation-score.mjs --package wrapper
+
+      - name: Run MCP mutation
+        if: ${{ inputs.target == 'mcp' }}
+        run: npm run mutation -w @clockify115/mcp-server
+
+      - name: Check MCP mutation floor
+        if: ${{ inputs.target == 'mcp' }}
+        run: node scripts/check-mutation-score.mjs --package mcp
+
+      - name: Upload mutation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          path: |
+            wrapper/reports/mutation/**
+            mcp/reports/mutation/**

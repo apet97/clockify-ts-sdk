@@ -34,7 +34,7 @@ export const registerApiCommand: Registrar = (program, services) => {
         .option("-q, --query <key=value>", "Query parameter (repeatable).", collect, [])
         .option("-H, --header <key=value>", "Request header (repeatable).", collect, [])
         .option("--body <json|@file|->", "JSON body: inline, @file, or - for stdin.")
-        .option("--all", "Walk page/page-size pagination until an empty or short page.", false)
+        .option("--all", "Walk page/page-size pagination, honoring Last-Page when present.", false)
         .option("--page-size <n>", "Page size for --all.", "50")
         .option("--max-pages <n>", "Maximum pages for --all.", "20")
         .option("--include-headers", "Include status and response headers in output.", false)
@@ -176,15 +176,27 @@ async function fetchAllPages(
         if (!Array.isArray(data)) {
             throw new Error("--all expects each page to return a JSON array.");
         }
-        if (data.length === 0) {
+        const lastPage = parseLastPageHeader(response.headers.get("Last-Page"));
+        items.push(...data);
+        if (lastPage === true) {
             break;
         }
-        items.push(...data);
-        if (data.length < pageSize) {
+        if (lastPage === false) {
+            continue;
+        }
+        if (data.length === 0 || data.length < pageSize) {
             break;
         }
     }
     return items;
+}
+
+function parseLastPageHeader(value: string | null): boolean | undefined {
+    if (value == null) return undefined;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+    return undefined;
 }
 
 function formatBody(data: unknown): string {

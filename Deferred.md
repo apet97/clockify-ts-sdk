@@ -1,5 +1,8 @@
 # Deferred / structural work — clockify-ts-sdk
 
+> **ARCHIVED ARTIFACT. Do not execute directly.** Use `AGENTS.md`,
+> `docs/decisions/*`, and current `make perfect-fast` output for current counts.
+
 > **HISTORICAL SNAPSHOT (updated 2026-06-22).** All tracked items here have shipped
 > (see AGENTS.md §8). Live-success is now **111/184** (was 46/184 when this was
 > written); the SDK/GOCLMCP baselines quoted below (SDK HEAD `c84f00e`, GOCLMCP
@@ -15,75 +18,12 @@ dead mutants — not behavior fixes. Do not treat any of this as a bug.
 
 ---
 
-## ⟶ For the implementing session — read this first
+## Archived executor note
 
-You are picking up a green codebase. Scope is **only the deferred / structural
-items below** — do not invent adjacent work, do not refactor untouched code.
-
-Ground every "current state" claim on this verified surface (re-count if a
-number looks stale — do not trust a printed count):
-
-- **46/184 live-success** in `GOCLMCP/docs/openapi/clockify-openapi.yaml`
-  (= 124 probe-documented + 14 documented; total 184).
-- **92 public SDK names**, **27 subpaths**, **59 CLI commands**, **134 MCP
-  tools**.
-- **24 cast-operator `as never` sites** under `allowedRequestCastBudget: 0`
-  (zero *unannotated* `as never`; every real cast carries a `KEEP as never`).
-
-Validate against **SDK HEAD `c84f00e`** and **GOCLMCP `v0.4.5` (`6f3cd2c`)**.
-
-### Prerequisites
-
-- **Fresh branch off `main`** before any edit:
-  `git checkout main && git pull && git checkout -b deferred/<item>`. Never
-  commit deferred work onto `main`. For two-repo items (Item 1 Bucket C, Item 2,
-  Item 4a) cut a matching branch in `../GOCLMCP` too.
-- A **LIVE Clockify sandbox key is required ONLY for the NEEDS-LIVE-KEY items**
-  (Item 2, Item 4a's optional live re-decode, Item 4c). The key **rotates** — the
-  value in `CLOCKIFY_API_KEY` is very likely dead. **Preflight before any live
-  run** and expect HTTP `200`:
-  ```bash
-  curl -s -o /dev/null -w '%{http_code}\n' -H "X-Api-Key: $CLOCKIFY_API_KEY" https://api.clockify.me/api/v1/user
-  ```
-  A non-200 means the key is dead — STOP, get a fresh **sacrificial sandbox**
-  key, do not proceed. The key is used VERBATIM (base64 form), never decoded;
-  **never print it** — redact in all output. Optional offline shape check:
-  `make sandbox-key-health` (exits 0 on blank creds, never prints the key).
-  **Items 1 (A+B), 3, and 4b are fully offline and need no key.**
-
-### Hard stops
-
-- **No hand-edits to generated/snapshot paths**: `wrapper/src/**`,
-  `output/ts-sdk/**`, `spec/corrected/**`. Regenerate via `make sdk-codegen`. The
-  only sanctioned write to those paths is a refresh-from-canonical guarded by
-  `CLOCKIFY_ALLOW_GENERATED_DIFF=1` (enforced by
-  `scripts/check-no-generated-edits.mjs:103`); `make sdk-codegen` must run first
-  or type-checks fail spuriously. `check-no-generated-edits` is in `perfect-full`.
-- **Spec-shape changes go through GOCLMCP**, never this repo. Bucket C (Item 1),
-  4f, and any new param/response schema are `../GOCLMCP` generator PRs, then
-  re-snapshot here via `cp` + `make sdk-codegen` + `CLOCKIFY_ALLOW_GENERATED_DIFF=1
-  make sdk-codegen-drift`.
-- **Run BOTH `make perfect-fast` AND `make perfect-full` SOLO with blanked
-  creds** for any code/spec change's final proof:
-  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`, then the same
-  prefix for `perfect-full`. They flake under CPU contention (startup-time
-  budgets) and the dead key 401s the live suites if creds are set — run nothing
-  else concurrently. Capture make's exit code directly (`make ...; echo $?` on
-  its own line — a `&&`/`;` compound masks make's real status).
-- **Plain commit messages.** No `npm publish`, no `git push --force`, no live
-  tests against personal/production workspaces. Commit only when the user asks.
-- **Release reality**: the SDK **does NOT release** on a spec/live change. On a
-  spec change, **GOCLMCP cuts a patch release** (release.yml on a pushed tag);
-  this repo only refreshes the snapshot + re-codegens. Do not touch CI/auth/
-  release settings.
-
-### How to know each item is done
-
-Each item carries its own **Done when:** acceptance line, per-step **Verify:**,
-and a **Perfect end state** block describing exactly what the code/tests/docs
-look like once it lands. Treat Done-when as the gate — do not declare an item
-done until its Done-when passes AND the final solo `perfect-fast` +
-`perfect-full` are green with blanked creds.
+Do not run the workflow below as written. It was planned against old commits and
+old surface counts. For current execution guidance, read `AGENTS.md` Section 8,
+the durable decision records under `docs/decisions/`, and the latest local gate
+output from `make perfect-fast`.
 
 ---
 

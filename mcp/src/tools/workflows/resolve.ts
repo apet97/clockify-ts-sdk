@@ -6,6 +6,7 @@ import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
 import { successResult } from "../../result.js";
+import { collectPagedList } from "../paging.js";
 
 import type { AnyRecord, Bucket, ChangeSet, EntityRef, NextAction, RecoveryHint } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
@@ -34,12 +35,14 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             required: false,
             run: async () => {
                 const found = await findOneByName(
-                    await ctx.client.clients.list({
-                        workspaceId: ctx.workspaceId,
-                        name: clientName,
-                        page: 1,
-                        "page-size": 200,
-                    }),
+                    await collectPagedList((page) =>
+                        ctx.client.clients.list({
+                            workspaceId: ctx.workspaceId,
+                            name: clientName,
+                            page,
+                            "page-size": 200,
+                        }),
+                    ),
                     clientName,
                     "client",
                 );
@@ -87,13 +90,15 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             if (projectId) return { kind: "done" }; // supplied by id — neither created nor reused
             const projectName = str(args.project);
             if (!projectName) throw new Error("project or project_id is required");
-            const listed = await ctx.client.projects.list({
-                workspaceId: ctx.workspaceId,
-                name: projectName,
-                ...(clientId ? { clients: [clientId] } : {}),
-                page: 1,
-                "page-size": 200,
-            });
+            const listed = await collectPagedList((page) =>
+                ctx.client.projects.list({
+                    workspaceId: ctx.workspaceId,
+                    name: projectName,
+                    ...(clientId ? { clients: [clientId] } : {}),
+                    page,
+                    "page-size": 200,
+                }),
+            );
             const found = await findOneByName(listed, projectName, "project");
             if (found && upsert) {
                 projectId = idOf(found);
@@ -146,13 +151,15 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             label: "task",
             required: true,
             run: async () => {
-                const listed = await ctx.client.tasks.list({
-                    workspaceId: ctx.workspaceId,
-                    projectId,
-                    name: taskName,
-                    page: 1,
-                    "page-size": 200,
-                });
+                const listed = await collectPagedList((page) =>
+                    ctx.client.tasks.list({
+                        workspaceId: ctx.workspaceId,
+                        projectId,
+                        name: taskName,
+                        page,
+                        "page-size": 200,
+                    }),
+                );
                 const found = await findOneByName(listed, taskName, "task");
                 if (found && upsert) {
                     taskId = idOf(found);
@@ -203,12 +210,14 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
             required: false,
             run: async () => {
                 const found = await findOneByName(
-                    await ctx.client.tags.list({
-                        workspaceId: ctx.workspaceId,
-                        name,
-                        page: 1,
-                        "page-size": 200,
-                    }),
+                    await collectPagedList((page) =>
+                        ctx.client.tags.list({
+                            workspaceId: ctx.workspaceId,
+                            name,
+                            page,
+                            "page-size": 200,
+                        }),
+                    ),
                     name,
                     "tag",
                 );
@@ -522,7 +531,7 @@ function notFound(noun: string, value: string): Error {
 async function resolveByName(
     value: string,
     label: string,
-    list: () => Promise<unknown>,
+    list: () => Promise<readonly unknown[]>,
     keys?: string[],
 ): Promise<string> {
     if (looksLikeClockifyId(value)) return value;
@@ -533,23 +542,27 @@ async function resolveByName(
 
 export function resolveClientId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "client", () =>
-        ctx.client.clients.list({
-            workspaceId: ctx.workspaceId,
-            name: value,
-            page: 1,
-            "page-size": 200,
-        }),
+        collectPagedList((page) =>
+            ctx.client.clients.list({
+                workspaceId: ctx.workspaceId,
+                name: value,
+                page,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
 export function resolveProjectId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "project", () =>
-        ctx.client.projects.list({
-            workspaceId: ctx.workspaceId,
-            name: value,
-            page: 1,
-            "page-size": 200,
-        }),
+        collectPagedList((page) =>
+            ctx.client.projects.list({
+                workspaceId: ctx.workspaceId,
+                name: value,
+                page,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
@@ -557,49 +570,57 @@ export function resolveTaskId(ctx: Context, projectId: string, value: string): P
     if (!projectId)
         throw new Error("project_id or project is required when resolving task by name");
     return resolveByName(value, "task", () =>
-        ctx.client.tasks.list({
-            workspaceId: ctx.workspaceId,
-            projectId,
-            name: value,
-            page: 1,
-            "page-size": 200,
-        }),
+        collectPagedList((page) =>
+            ctx.client.tasks.list({
+                workspaceId: ctx.workspaceId,
+                projectId,
+                name: value,
+                page,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
 export function resolveTagId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "tag", () =>
-        ctx.client.tags.list({
-            workspaceId: ctx.workspaceId,
-            name: value,
-            page: 1,
-            "page-size": 200,
-        }),
+        collectPagedList((page) =>
+            ctx.client.tags.list({
+                workspaceId: ctx.workspaceId,
+                name: value,
+                page,
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
 export function resolveExpenseCategoryId(ctx: Context, value: string): Promise<string> {
-    return resolveByName(value, "expense category", async () => {
-        // GET /expenses/categories returns a { count, categories } envelope, not a
-        // bare array, so unwrap before name-matching (findOneByName needs the array).
-        const res = await ctx.client.expenseCategories.list({
-            workspaceId: ctx.workspaceId,
-            page: 1,
-            "page-size": 200,
-        });
-        return Array.isArray(res) ? res : (res.categories ?? []);
-    });
+    return resolveByName(value, "expense category", () =>
+        collectPagedList(async (page) => {
+            // GET /expenses/categories returns a { count, categories } envelope, not a
+            // bare array, so unwrap before name-matching (findOneByName needs the array).
+            const res = await ctx.client.expenseCategories.list({
+                workspaceId: ctx.workspaceId,
+                page,
+                "page-size": 200,
+            });
+            return Array.isArray(res) ? res : (res.categories ?? []);
+        }),
+    );
 }
 
 export function resolvePolicyId(ctx: Context, value: string): Promise<string> {
     return resolveByName(value, "time-off policy", () =>
-        // The generated request types `page` as a string (the winning source declares
-        // it so); send "1" to match, keeping a typed call without a cast.
-        ctx.client.timeOffPolicies.list({
-            workspaceId: ctx.workspaceId,
-            page: "1",
-            "page-size": 200,
-        }),
+        collectPagedList((page) =>
+            // The generated request types `page` as a string (the winning source declares
+            // it so); send strings to match, keeping a typed call without a cast.
+            ctx.client.timeOffPolicies.list({
+                workspaceId: ctx.workspaceId,
+                page: String(page),
+                "page-size": 200,
+            }),
+        ),
     );
 }
 
@@ -608,16 +629,15 @@ export function resolveUserId(ctx: Context, value: string): Promise<string> {
         value,
         "user",
         () =>
-            ctx.client.users.list({
-                workspaceId: ctx.workspaceId,
-                name: value,
-                "include-roles": false,
-                // Match every sibling resolver: page the name filter to 200 so an
-                // exact match past the default 50-row first page is not missed on a
-                // large workspace (the name filter is contains/case-insensitive).
-                page: 1,
-                "page-size": 200,
-            }),
+            collectPagedList((page) =>
+                ctx.client.users.list({
+                    workspaceId: ctx.workspaceId,
+                    name: value,
+                    "include-roles": false,
+                    page,
+                    "page-size": 200,
+                }),
+            ),
         ["name", "email"],
     );
 }

@@ -6,6 +6,8 @@ import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
 
+import { pageWithMeta } from "./paging.js";
+
 export function registerEntriesTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -35,23 +37,28 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                     new Error("could not determine user ID from getCurrentUser response"),
                 );
             }
+            const page = args.page ?? 1;
+            const pageSize = args.pageSize ?? 50;
             const req: ClockifyApi.ListForUserTimeEntriesRequest = {
                 workspaceId: ctx.workspaceId,
                 userId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
+                page,
+                "page-size": pageSize,
             };
             if (args.start) req.start = args.start;
             if (args.end) req.end = args.end;
             if (args.description) req.description = args.description;
-            const entries = await ctx.client.timeEntries.listForUser(req);
+            const { items: entries, meta } = await pageWithMeta(
+                ctx.client.timeEntries.listForUser(req),
+                {
+                    workspaceId: ctx.workspaceId,
+                    page,
+                    pageSize,
+                },
+            );
             return successResult("clockify_entries_list", entries, {
-                workspaceId: ctx.workspaceId,
+                ...meta,
                 userId,
-                count: entries.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-                hasMore: entries.length === (args.pageSize ?? 50),
             });
         },
     );

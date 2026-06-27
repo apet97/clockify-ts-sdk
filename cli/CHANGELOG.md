@@ -12,6 +12,13 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Fixed
 
+- `clk115 api --all` now honors Clockify's `Last-Page` response header when it
+  is present, so a full final page stops cleanly and a short non-final page
+  continues instead of truncating scripted reads.
+- Name-based `start`/`log` resolution now walks bounded pages for projects,
+  clients, tasks, and tags. Large workspaces no longer miss an exact name match
+  beyond the first 200 rows, while ambiguous exact matches still fail before a
+  write.
 - `clk115 shared-reports create`/`update --public` now sends `isPublic` on the wire. It
   previously sent `public`, which the live API silently ignores, so `--public` was a
   no-op (the report stayed private). The flag name is unchanged.

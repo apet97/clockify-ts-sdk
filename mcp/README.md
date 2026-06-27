@@ -17,7 +17,7 @@ strict about receipts (`ids`, `changed`, `next`, stable errors,
 recovery). For the repo-level quality bar, see
 [`docs/product-north-star.md`](../docs/product-north-star.md).
 
-New here? See [how this compares to other Clockify MCP servers and a 2-minute visual quickstart](./POSITIONING.md).
+New here? See [how this compares to other Clockify MCP servers and the first-run path](./POSITIONING.md).
 
 ## Install
 
@@ -26,12 +26,8 @@ build-from-source flow follow for other setups.
 
 ### One-click (recommended)
 
-Download `clockify115-mcp-<version>.mcpb` from the project's GitHub Releases and
-open it with Claude Desktop. Claude Desktop installs the bundled server and
-prompts for your Clockify API key and workspace id; the key is stored in your OS
-keychain, not in a config file.
-
-No release yet? Build the bundle yourself from a clone:
+No release asset is currently attached. Until a maintainer publishes one, build
+the bundle yourself from a clone:
 
 ```sh
 make mcpb
@@ -39,6 +35,10 @@ make mcpb
 
 This writes `mcp/clockify115-mcp-<version>.mcpb`, a self-contained bundle you can
 open with Claude Desktop the same way.
+
+Maintainers should run `make mcpb-smoke` before attaching the bundle to a GitHub
+Release. Routine local gates run `make mcpb-validate`, which checks the manifest
+without producing the binary bundle.
 
 ### Manual MCP client config
 
