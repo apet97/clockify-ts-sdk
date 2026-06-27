@@ -14,6 +14,26 @@ Adjust paths if your layout differs.
 Read this whole file before touching anything. Every rule below
 applies to humans and AI agents equally.
 
+## 0. Current hardening checkpoint (2026-06-27)
+
+- `main` is the integration branch. For direct pushes, first verify a
+  clean worktree and `HEAD...origin/main` is even, then make one focused
+  commit, push, and watch the resulting GitHub Actions runs.
+- Keep local proof laptop-safe. Prefer focused package/doc gates or
+  `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
+  for deterministic local proof. Do not start local mutation, coverage,
+  or `perfect-full` while the machine is under load.
+- Mutation score proof is GitHub-hosted for routine use. The manual
+  **Mutation** workflow runs on `workflow_dispatch` with `target=all`,
+  `wrapper`, or `mcp`; `make mutation-ci` verifies that wiring and is
+  included in `make perfect-full`.
+- Local `make mutation` remains an opt-in maintainer gate. It runs
+  wrapper + MCP Stryker only after SDK codegen and is capped by the
+  package Stryker configs.
+- Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
+  `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
+  flow through this repo's generator/sync gates.
+
 ## 1. Identity & boundary
 
 This is an independent, community-built project — **not affiliated with,
