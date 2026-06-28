@@ -14,6 +14,11 @@ Adjust paths if your layout differs.
 Read this whole file before touching anything. Every rule below
 applies to humans and AI agents equally.
 
+Working in Claude Code? Repo-local skills in `.claude/skills/`
+(`clockify-sdk-verify`, `clockify-sdk-navigate`,
+`clockify-sdk-add-mcp-tool`, `clockify-sdk-publish`) auto-activate and
+distill the gate, navigation, MCP-tool, and release workflows below.
+
 ## 0. Current hardening checkpoint (2026-06-27)
 
 - `main` is the integration branch. For direct pushes, first verify a

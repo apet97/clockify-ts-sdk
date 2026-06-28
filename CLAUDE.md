@@ -7,6 +7,18 @@ Independent, community-built project — **not affiliated with or endorsed by
 CAKE.com or Clockify** (the `-115` / `115` suffixes are deliberate trademark
 distance; see [`NOTICE.md`](./NOTICE.md)).
 
+## Agent skills
+
+Repo-local Claude Code skills in [`.claude/skills/`](./.claude/skills/) auto-activate
+to capture the conventions below — prefer the matching one over re-deriving:
+
+- **`clockify-sdk-verify`** — pick the right gates; run `perfect-fast` safely (blank
+  creds, run solo) before claiming a change green.
+- **`clockify-sdk-navigate`** — which file to edit (SDK/CLI/MCP/spec) + the
+  generated-vs-hand-written boundary + hard stops.
+- **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
+- **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
+
 ## Current Hardening Checkpoint (2026-06-27)
 
 - `main` is the integration branch. Before a direct push, verify the
@@ -220,7 +232,7 @@ make docs-drift
   with Leftovers:0; the 2026-06-21 wave added createExpense +
   user-group/webhook/custom-field write CRUD + updateHoliday + shared-reports
   write CRUD; up from 46 — the
-  46→67 Deferred.md wave shipped on
+  46→67 wave shipped on
   `2026-06-20`; see the per-package CHANGELOGs and `spec/evidence/discrepancies.md`
   `Re-verified 2026-06-20` lines). Before adding a list op to GOCLMCP's
   `PAGINATED_LIST_OPS`, confirm the live wire honors `page`/`page-size`: expenses

@@ -33,7 +33,10 @@ spec/evidence/probes/*.hdr
 .idea/
 .vscode/
 *.swp
-.claude/
+# Ignore local Claude Code state (settings.local.json, worktrees) but commit the
+# shared, repo-local agent skills under .claude/skills/.
+.claude/*
+!.claude/skills/
 
 # Recon / scratch output from agent sessions.
 /.recon/
