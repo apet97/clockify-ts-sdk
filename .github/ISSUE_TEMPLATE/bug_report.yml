@@ -20,8 +20,8 @@ body:
       multiple: true
       options:
         - SDK wrapper (`clockify-sdk-ts-115`)
-        - CLI (`@clockify115/cli`)
-        - MCP server (`@clockify115/mcp-server`)
+        - CLI (`@apet97/clockify-cli-115`)
+        - MCP server (`@apet97/clockify-mcp-115`)
         - OpenAPI / GOCLMCP / local generation contract
         - Package install / pack smoke
         - Mock/replay server
@@ -34,7 +34,7 @@ body:
     id: package-version
     attributes:
       label: Package and version
-      description: Include the exact package/version, for example `clockify-sdk-ts-115@0.9.0`, `@clockify115/cli@0.1.0`, or `@clockify115/mcp-server@0.3.0`.
+      description: Include the exact package/version, for example `clockify-sdk-ts-115@0.9.0`, `@apet97/clockify-cli-115@0.1.0`, or `@apet97/clockify-mcp-115@0.3.0`.
       placeholder: "clockify-sdk-ts-115@0.9.0"
     validations:
       required: true

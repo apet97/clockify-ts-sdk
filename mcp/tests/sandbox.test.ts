@@ -1,5 +1,5 @@
 /**
- * Live sandbox tests for @clockify115/mcp-server. Connects to a real
+ * Live sandbox tests for @apet97/clockify-mcp-115. Connects to a real
  * Clockify workspace via the same `loadContext()` + `buildServer()`
  * path that the stdio bin uses, but pipes the MCP transport through
  * `InMemoryTransport.createLinkedPair()` so the assertions can run
@@ -44,7 +44,7 @@ type EnvelopeOk = {
 type EnvelopeErr = { ok: false; action: string; error: { message: string; code?: string } };
 type Envelope = EnvelopeOk | EnvelopeErr;
 
-describeLive("@clockify115/mcp-server live sandbox", () => {
+describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
     let teardown: () => Promise<void> = async () => {};
 
     afterEach(async () => {

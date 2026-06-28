@@ -10,8 +10,8 @@ without accidentally collecting secrets.
 Collect these items before escalating an issue:
 
 - Package surface: SDK, CLI, MCP, or OpenAPI/generator.
-- Package name and version: `clockify-sdk-ts-115`, `@clockify115/cli`, or
-  `@clockify115/mcp-server`.
+- Package name and version: `clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, or
+  `@apet97/clockify-mcp-115`.
 - Prepublish gate: the exact `prepublishOnly` command when packaging,
   tarball, or publish-readiness behavior is relevant.
 - Runtime: Node version, package-lock version/package count, operating system,

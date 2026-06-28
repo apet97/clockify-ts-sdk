@@ -2,7 +2,7 @@
 
 ## Trademark and non-affiliation
 
-`clockify-sdk-ts-115`, `@clockify115/cli`, and `@clockify115/mcp-server` are an
+`clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, and `@apet97/clockify-mcp-115` are an
 independent, community-built TypeScript SDK, CLI, and [Model Context
 Protocol](https://modelcontextprotocol.io) server for the public
 [Clockify](https://clockify.me) HTTP API. They are **not affiliated with,

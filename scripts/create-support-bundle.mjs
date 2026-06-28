@@ -40,13 +40,13 @@ const diagnosticsSurfaces = [
     {
         surface: "CLI",
         entrypoint: "clk115 doctor --json",
-        package: "@clockify115/cli",
+        package: "@apet97/clockify-cli-115",
         network: "none",
     },
     {
         surface: "MCP",
         entrypoint: "clockify://mcp/doctor",
-        package: "@clockify115/mcp-server",
+        package: "@apet97/clockify-mcp-115",
         network: "none",
     },
 ];

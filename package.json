@@ -1,7 +1,7 @@
 {
   "name": "clockify-ts-sdk-workspace",
   "private": true,
-  "description": "npm workspaces root for clockify-sdk-ts-115 (SDK), @clockify115/cli, and @clockify115/mcp-server. Not published.",
+  "description": "npm workspaces root for clockify-sdk-ts-115 (SDK), @apet97/clockify-cli-115, and @apet97/clockify-mcp-115. Published to npm under the unofficial @apet97 scope.",
   "workspaces": [
     "wrapper",
     "cli",
@@ -14,9 +14,9 @@
     "yaml": "^2.9.0"
   },
   "scripts": {
-    "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @clockify115/cli && npm run type-check -w @clockify115/mcp-server",
-    "build": "npm run build -w clockify-sdk-ts-115 && npm run build -w @clockify115/cli && npm run build -w @clockify115/mcp-server",
-    "test": "npm test -w clockify-sdk-ts-115 && npm test -w @clockify115/cli && npm test -w @clockify115/mcp-server",
+    "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @apet97/clockify-cli-115 && npm run type-check -w @apet97/clockify-mcp-115",
+    "build": "npm run build -w clockify-sdk-ts-115 && npm run build -w @apet97/clockify-cli-115 && npm run build -w @apet97/clockify-mcp-115",
+    "test": "npm test -w clockify-sdk-ts-115 && npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115",
     "test:codegen": "node --test scripts/sdk-codegen/test-generate-sdk-from-openapi.mjs"
   }
 }

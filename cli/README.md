@@ -1,4 +1,4 @@
-# @clockify115/cli
+# @apet97/clockify-cli-115
 
 Command-line interface for [Clockify](https://clockify.me/), built on
 top of `clockify-sdk-ts-115`.

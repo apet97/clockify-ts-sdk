@@ -1,6 +1,6 @@
 # Agent task: add a CLI command
 
-**When to use:** you are adding a command to the `@clockify115/cli` package
+**When to use:** you are adding a command to the `@apet97/clockify-cli-115` package
 (bins `clockify115` / `clk115`).
 
 ## Files to read first
@@ -29,8 +29,8 @@
 ## Required tests / gates
 
 ```bash
-npm run type-check -w @clockify115/cli
-npm test -w @clockify115/cli
+npm run type-check -w @apet97/clockify-cli-115
+npm test -w @apet97/clockify-cli-115
 make readme-tables          # regenerate the CLI README command table
 make cli-contract cli-write-safety readme-tables-drift changelog-drift
 make perfect-fast
@@ -49,5 +49,5 @@ make perfect-fast
 - [ ] `docs/cli-commands.json` entry added; `make readme-tables` regenerated the table.
 - [ ] Mutating commands honor the write-safety policy (`make cli-write-safety`).
 - [ ] `cli/CHANGELOG.md` `## [Unreleased]` updated.
-- [ ] `npm run type-check -w @clockify115/cli` and `npm test -w @clockify115/cli` pass.
+- [ ] `npm run type-check -w @apet97/clockify-cli-115` and `npm test -w @apet97/clockify-cli-115` pass.
 - [ ] `make perfect-fast` passes; output cited.

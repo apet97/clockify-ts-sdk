@@ -52,7 +52,7 @@ export function registerClockifyPrompts(server: McpServer): void {
                             "Walk me through setting up this Clockify MCP server for the first time. " +
                             "Return a short numbered checklist:\n\n" +
                             "1. Confirm CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are set in the MCP " +
-                            "client's env block for @clockify115/mcp-server.\n" +
+                            "client's env block for @apet97/clockify-mcp-115.\n" +
                             "2. Call clockify_status to confirm credentials, the pinned workspace, the " +
                             "current user, and any running timer.\n" +
                             "3. Read the clockify://guide/which-tool resource to map intent to the first tool.\n" +

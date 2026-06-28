@@ -232,10 +232,10 @@ will add an `### Added` entry under `## [Unreleased]`.
 | Root install (once, fresh clone) | `npm ci` | exit 0 |
 | Generate SDK source (fresh clone only) | `make sdk-codegen` | exit 0; populates `wrapper/src/**`, `output/ts-sdk/**` |
 | Build wrapper (provides MCP's types via `wrapper/dist`) | `npm run build -w clockify-sdk-ts-115` | exit 0 |
-| MCP type-check | `npm run type-check -w @clockify115/mcp-server` | exit 0, no errors |
-| MCP tests | `npm test -w @clockify115/mcp-server` | all pass (existing + new) |
-| MCP build | `npm run build -w @clockify115/mcp-server` | exit 0 |
-| MCP lint | `npm run lint -w @clockify115/mcp-server` | exit 0 |
+| MCP type-check | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0, no errors |
+| MCP tests | `npm test -w @apet97/clockify-mcp-115` | all pass (existing + new) |
+| MCP build | `npm run build -w @apet97/clockify-mcp-115` | exit 0 |
+| MCP lint | `npm run lint -w @apet97/clockify-mcp-115` | exit 0 |
 | MCP discoverability contract | `make mcp-contract` | exit 0; prints `... 6 resources, 2 prompts` |
 | MCP agent-UX contract | `make mcp-agent-ux` | exit 0 |
 | Changelog drift | `make changelog-drift` | exit 0 |
@@ -315,7 +315,7 @@ and the `Prefer workflow tools ...` line. The trailing space inside the literal 
 the string is concatenated without separators.)
 
 **Verify**:
-- `npm run type-check -w @clockify115/mcp-server` → exit 0.
+- `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 - All 7 markers still present:
   `for m in "Use clockify_status first" "Prefer workflow tools before low-level domain tools" "structured receipts" "dry_run" "confirm_token" "stable error codes" "recovery"; do grep -qF "$m" mcp/src/server.ts && echo "ok: $m" || echo "MISSING: $m"; done`
   → seven `ok:` lines, zero `MISSING:`.
@@ -345,7 +345,7 @@ and the test trivial). Target shape:
                             "Walk me through setting up this Clockify MCP server for the first time. " +
                             "Return a short numbered checklist:\n\n" +
                             "1. Confirm CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are set in the MCP " +
-                            "client's env block for @clockify115/mcp-server.\n" +
+                            "client's env block for @apet97/clockify-mcp-115.\n" +
                             "2. Call clockify_status to confirm credentials, the pinned workspace, the " +
                             "current user, and any running timer.\n" +
                             "3. Read the clockify://guide/which-tool resource to map intent to the first tool.\n" +
@@ -372,7 +372,7 @@ Notes:
   `dry_run`, and `confirm_token` — these are asserted by the Step 5 test (and enable the
   optional Step 7 markers).
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 
 ### Step 3: Point `clockify_status`'s recovery hint at the new prompt
 
@@ -391,7 +391,7 @@ to:
 Do **not** modify the success-path `next:[...]` array. Do **not** add a prompt to
 `next[].tool`.
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 
 ### Step 4: Register the prompt across the discoverability contract (3 files + 1 contract entry)
 
@@ -431,7 +431,7 @@ These four edits must land together — `make mcp-contract` fails unless all are
 
 **Verify**:
 - `make mcp-contract` → exit 0, output ends `MCP contract passed (134 tools, 6 resources, 2 prompts)`.
-- `npm test -w @clockify115/mcp-server` → all pass (the server-test prompt assertion now
+- `npm test -w @apet97/clockify-mcp-115` → all pass (the server-test prompt assertion now
   checks both names).
 
 ### Step 5: Add an end-to-end test for the new prompt handler (coverage)
@@ -470,7 +470,7 @@ describe("clockify-getting-started prompt", () => {
 > that is a STOP condition (see STOP conditions) — pass `arguments: {}` and re-run; if it
 > still fails, stop and report.
 
-**Verify**: `npm test -w @clockify115/mcp-server` → all pass, including the two new
+**Verify**: `npm test -w @apet97/clockify-mcp-115` → all pass, including the two new
 `clockify-getting-started` tests.
 
 ### Step 6: Add the changelog entry
@@ -511,10 +511,10 @@ must appear literally in `mcp/src/prompts.ts`, which Step 2 guarantees):
 ### Step 8: Full focused verification
 
 Run, and confirm each:
-- `npm run type-check -w @clockify115/mcp-server` → exit 0
-- `npm run build -w @clockify115/mcp-server` → exit 0
-- `npm test -w @clockify115/mcp-server` → all pass
-- `npm run lint -w @clockify115/mcp-server` → exit 0
+- `npm run type-check -w @apet97/clockify-mcp-115` → exit 0
+- `npm run build -w @apet97/clockify-mcp-115` → exit 0
+- `npm test -w @apet97/clockify-mcp-115` → all pass
+- `npm run lint -w @apet97/clockify-mcp-115` → exit 0
 - `make mcp-contract` → exit 0 (`… 6 resources, 2 prompts`)
 - `make mcp-agent-ux` → exit 0
 - `make changelog-drift` → exit 0
@@ -537,18 +537,18 @@ load-sensitive flake — re-run solo to confirm green.
   `"advertises guide resources and workflow prompt"` test gains a second `toContain`
   for `clockify-getting-started`; the `toHaveLength(134)` tool assertion is unchanged
   (regression guard that the tool count did not move).
-- **Verification**: `npm test -w @clockify115/mcp-server` → all pass, including the new
+- **Verification**: `npm test -w @apet97/clockify-mcp-115` → all pass, including the new
   prompt tests.
 
 ## Done criteria
 
 Machine-checkable. ALL must hold:
 
-- [ ] `npm run type-check -w @clockify115/mcp-server` exits 0
-- [ ] `npm run build -w @clockify115/mcp-server` exits 0
-- [ ] `npm test -w @clockify115/mcp-server` exits 0; the two new
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` exits 0
+- [ ] `npm run build -w @apet97/clockify-mcp-115` exits 0
+- [ ] `npm test -w @apet97/clockify-mcp-115` exits 0; the two new
       `clockify-getting-started` tests in `mcp/tests/prompt-handler.test.ts` exist and pass
-- [ ] `npm run lint -w @clockify115/mcp-server` exits 0
+- [ ] `npm run lint -w @apet97/clockify-mcp-115` exits 0
 - [ ] `make mcp-contract` exits 0 and prints `MCP contract passed (134 tools, 6 resources, 2 prompts)`
 - [ ] `make mcp-agent-ux` exits 0
 - [ ] `make changelog-drift` exits 0

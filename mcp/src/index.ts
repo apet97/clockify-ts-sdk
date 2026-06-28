@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Entrypoint for @clockify115/mcp-server. Loads the Clockify SDK
+ * Entrypoint for @apet97/clockify-mcp-115. Loads the Clockify SDK
  * client + workspace pin from the environment, wires the McpServer,
  * and connects it to stdio so an MCP client (Claude Desktop, the
  * MCP inspector, etc.) can drive it over JSON-RPC.

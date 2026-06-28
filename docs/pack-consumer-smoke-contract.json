@@ -10,12 +10,12 @@
     {
       "id": "cli",
       "packageDir": "cli",
-      "npmName": "@clockify115/cli"
+      "npmName": "@apet97/clockify-cli-115"
     },
     {
       "id": "mcp",
       "packageDir": "mcp",
-      "npmName": "@clockify115/mcp-server"
+      "npmName": "@apet97/clockify-mcp-115"
     }
   ],
   "consumers": [
@@ -51,12 +51,12 @@
     "clockify-sdk-ts-115/iter",
     "clockify-sdk-ts-115/webhooks",
     "clockify-sdk-ts-115/errors",
-    "@clockify115",
+    "clockify-cli-115",
     "dist",
     "index.js",
     "--version",
-    "@clockify115/mcp-server/server",
-    "@clockify115/mcp-server/client",
+    "@apet97/clockify-mcp-115/server",
+    "@apet97/clockify-mcp-115/client",
     "packed consumer smoke passed",
     "pack consumer smoke contract shape failed",
     "wiring.makeTarget",

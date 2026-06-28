@@ -22,6 +22,7 @@ export default [
             "src/**",
             "dist/**",
             "node_modules/**",
+            ".stryker-tmp/**",
             "docs/**",
             "examples/**",
             "scripts/**",

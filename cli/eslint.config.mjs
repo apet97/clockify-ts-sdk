@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * ESLint flat config for the @clockify115/cli hand-written surface
+ * ESLint flat config for the @apet97/clockify-cli-115 hand-written surface
  * (src/** plus tests/**). Type-aware rules use a dedicated
  * `project: ["./tsconfig.lint.json"]` (which includes tests/**). dist/,
  * node_modules/, and scripts/ are excluded.
@@ -13,6 +13,7 @@ export default [
         ignores: [
             "dist/**",
             "node_modules/**",
+            ".stryker-tmp/**",
             "coverage/**",
             "scripts/**",
             "eslint.config.mjs",

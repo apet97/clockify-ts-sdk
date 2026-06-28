@@ -29,7 +29,7 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "licenseFile": "cli/LICENSE",
-      "name": "@clockify115/cli",
+      "name": "@apet97/clockify-cli-115",
       "license": "MIT",
       "publishConfig": {
         "access": "public",
@@ -52,7 +52,7 @@
       "id": "mcp",
       "manifest": "mcp/package.json",
       "licenseFile": "mcp/LICENSE",
-      "name": "@clockify115/mcp-server",
+      "name": "@apet97/clockify-mcp-115",
       "license": "MIT",
       "publishConfig": {
         "access": "public",

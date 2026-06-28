@@ -1,6 +1,6 @@
 # Agent task: add an MCP tool
 
-**When to use:** you are adding a tool to `@clockify115/mcp-server` — a domain tool
+**When to use:** you are adding a tool to `@apet97/clockify-mcp-115` — a domain tool
 in `mcp/src/tools/*.ts` or a workflow tool in `mcp/src/tools/workflows/`. Adding a
 tool moves every count assertion and several contracts in lockstep.
 
@@ -44,8 +44,8 @@ tool moves every count assertion and several contracts in lockstep.
 ## Required tests / gates
 
 ```bash
-npm run type-check -w @clockify115/mcp-server
-npm test -w @clockify115/mcp-server          # server.test.ts asserts the exact tool count
+npm run type-check -w @apet97/clockify-mcp-115
+npm test -w @apet97/clockify-mcp-115          # server.test.ts asserts the exact tool count
 make readme-tables product-surface operation-parity     # regenerate generated surfaces
 make mcp-contract mcp-agent-ux mcp-write-safety docs-quality user-docs agent-handoff changelog-drift
 make perfect-fast      # plus perfect-full to catch operation-parity-drift

@@ -7,8 +7,8 @@ This project intentionally uses package names with `115` suffixes for trademark 
 | Old or generic expectation | Current package |
 |---|---|
 | `clockify-sdk-ts` | `clockify-sdk-ts-115` |
-| `clockify` CLI | `@clockify115/cli`, binaries `clockify115` and `clk115` |
-| Clockify MCP server | `@clockify115/mcp-server`, binary `clockify115-mcp` |
+| `clockify` CLI | `@apet97/clockify-cli-115`, binaries `clockify115` and `clk115` |
+| Clockify MCP server | `@apet97/clockify-mcp-115`, binary `clockify115-mcp` |
 
 ## Import paths
 

@@ -86,10 +86,11 @@ Start with `clockify_status`, then prefer workflow tools such as `clockify_creat
 
 ## Distribution personas (how you ship and update)
 
-The default stance is **local tarballs, not public npm publication**. The three
-distribution personas below cover how a consumer installs, smoke-tests, updates,
-debugs, and reasons about security for each path. All three install the same
-packages (`clockify-sdk-ts-115`, `@clockify115/cli`, `@clockify115/mcp-server`).
+The packages are published to npm under the unofficial `@apet97` scope; the
+default *dev* loop is still local tarballs. The distribution personas below cover
+how a consumer installs, smoke-tests, updates, debugs, and reasons about security
+for each path. They install the same packages (`clockify-sdk-ts-115`,
+`@apet97/clockify-cli-115`, `@apet97/clockify-mcp-115`).
 
 ### 1. Local tarball user (default)
 

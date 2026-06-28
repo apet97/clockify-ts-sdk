@@ -1,17 +1,20 @@
 # Release and Support Policy
 
-This repo is packable, but npm publication is not the default path.
-Release readiness means the SDK, CLI, MCP server, generated OpenAPI
-snapshot, docs, and proof receipts agree before anyone ships an
-artifact.
+This repo's three packages are published to npm under the unofficial
+`@apet97` scope (and the unscoped `clockify-sdk-ts-115`) — community-built,
+not affiliated with CAKE.com or Clockify (see `NOTICE.md`). Publication is a
+deliberate, tag-gated CI action: npm publication is not the default path for
+routine changes (the default local loop stays `make pack-smoke`). Release
+readiness means the SDK, CLI, MCP server, generated OpenAPI snapshot, docs,
+and proof receipts agree before anyone ships an artifact.
 
 ## Public packages
 
 | Package | User surface | Support promise |
 |---|---|---|
 | `clockify-sdk-ts-115` | TypeScript SDK wrapper, public exports, subpaths, examples, and TypeDoc. | Keep additive changes source-compatible whenever practical before `1.0.0`; document any break in the migration guide and changelog. |
-| `@clockify115/cli` | `clockify115` and `clk115` binaries, command names, global flags, JSON output, and exit codes. | Preserve command names and JSON/exit contracts; add aliases before removals. |
-| `@clockify115/mcp-server` | `clockify115-mcp` binary, tool names, envelopes, output schemas, resources, and prompts. | Preserve tool names and structured receipts; add replacement tools before removals. |
+| `@apet97/clockify-cli-115` | `clockify115` and `clk115` binaries, command names, global flags, JSON output, and exit codes. | Preserve command names and JSON/exit contracts; add aliases before removals. |
+| `@apet97/clockify-mcp-115` | `clockify115-mcp` binary, tool names, envelopes, output schemas, resources, and prompts. | Preserve tool names and structured receipts; add replacement tools before removals. |
 
 ## Version support
 
@@ -45,21 +48,28 @@ Do not run `npm publish` from a developer laptop without explicit
 maintainer approval. Do not change CI/CD, provenance, auth, or release
 workflow triggers as part of routine SDK polish.
 
-## Enabling CLI / MCP npm publish (deferred — maintainer decision)
+## npm publish (enabled — unofficial `@apet97` scope)
 
-Only `clockify-sdk-ts-115` (`wrapper/`) has a live release path
-(`.github/workflows/release.yml`). The CLI and MCP packages ship as local
-tarballs by default. Two INERT scaffolds are in place so their release is
-designed and ready but cannot fire:
-`.github/workflows/ci-cli-release.yml` and `ci-mcp-release.yml` — both run on
-manual `workflow_dispatch` only and guard the publish step with `if: false`, so
-a run only builds and dry-run packs.
+All three packages publish to npm via tag-triggered CI on a pushed prefixed
+tag whose version matches the package's `package.json`:
 
-Enabling public npm publication of `@clockify115/cli` / `@clockify115/mcp-server`
-is a separate, deliberate maintainer decision (AGENTS.md §12.7). To enable a
-package: add a `push: { tags: [...] }` trigger with a tag↔`package.json` version
-guard, remove the `if: false` guard on its publish step, set the `NPM_TOKEN`
-secret, and confirm provenance/OIDC. Until then, nothing is published.
+| Package | Tag | Workflow |
+|---|---|---|
+| `clockify-sdk-ts-115` | `wrapper-v*.*.*` | `.github/workflows/release.yml` |
+| `@apet97/clockify-cli-115` | `cli-v*.*.*` | `.github/workflows/ci-cli-release.yml` |
+| `@apet97/clockify-mcp-115` | `mcp-v*.*.*` | `.github/workflows/ci-mcp-release.yml` |
+
+The `@apet97` scope and `-115` suffix are deliberate trademark distance: these
+are unofficial, community-built packages, not affiliated with CAKE.com or
+Clockify (see `NOTICE.md`). Each workflow verifies the tag matches
+`package.json`, publishes with provenance via OIDC (`id-token: write` +
+`publishConfig.provenance: true`), and requires the `NPM_TOKEN` repo secret. A
+manual `workflow_dispatch` run only builds and dry-run packs — the publish step
+is gated to tag pushes.
+
+The CLI and MCP server peer-depend on `clockify-sdk-ts-115`, so publish the SDK
+(`wrapper-v*`) before pushing `cli-v*` / `mcp-v*`. Changing release triggers,
+auth, or provenance is a deliberate maintainer action — not routine polish.
 
 ## MCPB release assets
 

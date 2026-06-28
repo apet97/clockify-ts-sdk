@@ -1,4 +1,4 @@
-# Plan 005: Make `@clockify115/mcp-server` a one-click-installable flagship product
+# Plan 005: Make `@apet97/clockify-mcp-115` a one-click-installable flagship product
 
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
@@ -82,7 +82,7 @@ Facts you need, inlined (verified against the repo at planned-at SHA):
 
 Build/repo conventions:
 - Build order: `make sdk-codegen` (fresh tree only) → `npm run build -w clockify-sdk-ts-115`
-  → `npm run build -w @clockify115/mcp-server`. The repo at planned-at SHA is
+  → `npm run build -w @apet97/clockify-mcp-115`. The repo at planned-at SHA is
   already built (`wrapper/dist`, `mcp/dist`, `node_modules` present).
 - `@anthropic-ai/mcpb@2.1.2` resolves on npm; pin it (`npx --yes @anthropic-ai/mcpb@2.1.2`).
 - Conventional-commit messages (see `git log`): `feat(mcp): …`, `docs(mcp): …`, `build: …`.
@@ -92,9 +92,9 @@ Build/repo conventions:
 | Purpose | Command | Expected on success |
 |---|---|---|
 | Build SDK (dependency) | `npm run build -w clockify-sdk-ts-115` | exit 0 |
-| Build MCP | `npm run build -w @clockify115/mcp-server` | exit 0; `mcp/dist/index.js` exists |
-| MCP type-check | `npm run type-check -w @clockify115/mcp-server` | exit 0 |
-| MCP lint | `npm run lint -w @clockify115/mcp-server` | exit 0 |
+| Build MCP | `npm run build -w @apet97/clockify-mcp-115` | exit 0; `mcp/dist/index.js` exists |
+| MCP type-check | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0 |
+| MCP lint | `npm run lint -w @apet97/clockify-mcp-115` | exit 0 |
 | Validate manifest | `npx --yes @anthropic-ai/mcpb@2.1.2 validate mcp/manifest.json` | "Manifest schema validation passes!" exit 0 |
 | Build bundle | `make mcpb` | exit 0; `mcp/clockify115-mcp-0.3.0.mcpb` produced |
 | Inspect bundle | `npx --yes @anthropic-ai/mcpb@2.1.2 info mcp/clockify115-mcp-0.3.0.mcpb` | lists `node_modules/@modelcontextprotocol/sdk`, `node_modules/zod`, `node_modules/clockify-sdk-ts-115`, `dist/index.js`, `manifest.json` |
@@ -258,7 +258,7 @@ In the root `Makefile`, near the other `mcp-*` targets, add (match the existing
 .PHONY: mcpb
 mcpb: ## Build the self-contained MCP one-click install bundle (mcp/*.mcpb)
 	npm run build -w clockify-sdk-ts-115
-	npm run build -w @clockify115/mcp-server
+	npm run build -w @apet97/clockify-mcp-115
 	node scripts/build-mcpb.mjs
 ```
 
@@ -339,7 +339,7 @@ Machine-checkable. ALL must hold:
 - [ ] isolated-cwd smoke (Step 3) shows no `Cannot find module`
 - [ ] `git check-ignore` reports the `.mcpb` as ignored
 - [ ] `node scripts/pack-snapshot.mjs --pkg=mcp --check` exits 0
-- [ ] `npm run type-check -w @clockify115/mcp-server` and `npm run lint -w @clockify115/mcp-server` exit 0
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` and `npm run lint -w @apet97/clockify-mcp-115` exit 0
 - [ ] `make changelog-drift docs-drift readme-tables-drift docs-counts docs-index-drift mcp-tool-manifest-drift` all exit 0
 - [ ] `git status` shows only in-scope files modified; `mcp/package.json` `"files"` unchanged
 - [ ] `plans/README.md` status row for 005 updated
@@ -363,14 +363,14 @@ Stop and report (do not improvise) if:
   flipping a publish gate). That is an explicit maintainer decision and a repo
   hard-stop (`CLAUDE.md` "No `npm publish`"). Build + verify the artifact; do not
   ship it. Report that the bundle is ready and name the two distribution options
-  (npm publish of `@clockify115/mcp-server` vs. attaching `*.mcpb` to a GitHub
+  (npm publish of `@apet97/clockify-mcp-115` vs. attaching `*.mcpb` to a GitHub
   Release) for the maintainer to choose.
 
 ## Maintenance notes
 
 - **Distribution is deferred on purpose.** This makes the MCP *installable*
   (bundle builds + validates + runs standalone) but does not *ship* it. Going
-  live = maintainer picks: (a) `npm publish` so `npx @clockify115/mcp-server`
+  live = maintainer picks: (a) `npm publish` so `npx @apet97/clockify-mcp-115`
   works, or (b) attach the `*.mcpb` to a GitHub Release for one-click Desktop
   install. (b) is lower-commitment and best fits the flagship-MCP direction. Both
   currently conflict with the repo's "no publish" posture → need explicit go-ahead.

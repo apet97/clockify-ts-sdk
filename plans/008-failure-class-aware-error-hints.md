@@ -121,7 +121,7 @@ with:
   one-assertion-per-branch style to copy).
 - **ESM `.js` import specifiers** even for `.ts` sources (e.g.
   `from "./error-codes.js"`). Lint enforces import ordering (eslint
-  `import-x`) — run `npm run lint -w @clockify115/mcp-server` and let
+  `import-x`) — run `npm run lint -w @apet97/clockify-mcp-115` and let
   `lint:fix` sort if needed.
 
 ## Commands you will need
@@ -129,11 +129,11 @@ with:
 | Purpose | Command | Expected on success |
 |---|---|---|
 | Build the SDK wrapper (consumed by mcp types) | `npm run build -w clockify-sdk-ts-115` | exit 0 |
-| MCP type-check | `npm run type-check -w @clockify115/mcp-server` | exit 0, no errors |
-| MCP tests | `npm test -w @clockify115/mcp-server` | all pass (incl. new tests) |
+| MCP type-check | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0, no errors |
+| MCP tests | `npm test -w @apet97/clockify-mcp-115` | all pass (incl. new tests) |
 | Run only the new/changed tests | `cd mcp && npx vitest run tests/diagnose.test.ts tests/result.test.ts tests/server.test.ts` | all pass |
-| MCP lint (NOT in type-check/test) | `npm run lint -w @clockify115/mcp-server` | exit 0 |
-| MCP build | `npm run build -w @clockify115/mcp-server` | exit 0 |
+| MCP lint (NOT in type-check/test) | `npm run lint -w @apet97/clockify-mcp-115` | exit 0 |
+| MCP build | `npm run build -w @apet97/clockify-mcp-115` | exit 0 |
 | Final full proof (SOLO) | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast` | make exits 0 |
 
 Notes:
@@ -270,7 +270,7 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
 ): void {
 ```
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0, no errors.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0, no errors.
 (The `defineTool` call shape `defineTool(server, "...")` is unchanged, so
 `scripts/check-mcp-write-safety.mjs` / `generate-operation-parity` matchers stay
 valid — do not alter the first three positional args.)
@@ -340,7 +340,7 @@ Note on import direction (no cycle): `diagnose.ts` imports values from
 DAG is `status.ts → {result.ts, diagnose.ts}` and `diagnose.ts → {result.ts,
 error-codes.ts}` — acyclic.
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0, no errors.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0, no errors.
 
 ### Step 3: Wire the resolver into `clockify_status`
 
@@ -365,7 +365,7 @@ class-specific hint. The happy path is untouched.
 
 **Verify**:
 ```bash
-npm run type-check -w @clockify115/mcp-server   # exit 0
+npm run type-check -w @apet97/clockify-mcp-115   # exit 0
 grep -n "Verify CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID" mcp/src/tools/status.ts  # no match (old static hint gone)
 ```
 
@@ -563,8 +563,8 @@ changelog was updated).
 ### Step 8: Lint, build, and full proof
 
 ```bash
-npm run lint -w @clockify115/mcp-server          # exit 0 (fix import ordering if flagged: npm run lint:fix -w @clockify115/mcp-server)
-npm run build -w @clockify115/mcp-server         # exit 0
+npm run lint -w @apet97/clockify-mcp-115          # exit 0 (fix import ordering if flagged: npm run lint:fix -w @apet97/clockify-mcp-115)
+npm run build -w @apet97/clockify-mcp-115         # exit 0
 ```
 
 Then the full deterministic proof, SOLO (no other heavy processes):
@@ -596,18 +596,18 @@ list still advertises exactly 134).
   containing "Profile".
 - Structural pattern to copy: `mcp/tests/error-codes.test.ts` (one assertion per
   branch) and `mcp/tests/result.test.ts` (envelope parsing).
-- Verification: `npm test -w @clockify115/mcp-server` → all pass, including the
+- Verification: `npm test -w @apet97/clockify-mcp-115` → all pass, including the
   new `diagnose.test.ts` cases and the added `result`/`server` cases.
 
 ## Done criteria
 
 Machine-checkable. ALL must hold:
 
-- [ ] `npm run type-check -w @clockify115/mcp-server` exits 0.
-- [ ] `npm test -w @clockify115/mcp-server` exits 0; `mcp/tests/diagnose.test.ts`
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` exits 0.
+- [ ] `npm test -w @apet97/clockify-mcp-115` exits 0; `mcp/tests/diagnose.test.ts`
       exists and passes; the new `result`/`server` cases pass.
-- [ ] `npm run lint -w @clockify115/mcp-server` exits 0.
-- [ ] `npm run build -w @clockify115/mcp-server` exits 0.
+- [ ] `npm run lint -w @apet97/clockify-mcp-115` exits 0.
+- [ ] `npm run build -w @apet97/clockify-mcp-115` exits 0.
 - [ ] `grep -n "Verify CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID" mcp/src/tools/status.ts`
       returns no matches (static hint removed).
 - [ ] `grep -rn "RecoveryResolver" mcp/src/result.ts mcp/src/tools/status.ts`

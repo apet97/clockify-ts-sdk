@@ -19,8 +19,8 @@ body:
       multiple: true
       options:
         - SDK wrapper (`clockify-sdk-ts-115`)
-        - CLI (`@clockify115/cli`)
-        - MCP server (`@clockify115/mcp-server`)
+        - CLI (`@apet97/clockify-cli-115`)
+        - MCP server (`@apet97/clockify-mcp-115`)
         - OpenAPI / GOCLMCP / local generation contract
         - Examples / docs
         - Mock/replay / acceptance scenario

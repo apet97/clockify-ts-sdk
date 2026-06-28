@@ -3,7 +3,7 @@
 ## Supported Versions
 
 The public packages in this repo are `clockify-sdk-ts-115`,
-`@clockify115/cli`, and `@clockify115/mcp-server`. Security fixes
+`@apet97/clockify-cli-115`, and `@apet97/clockify-mcp-115`. Security fixes
 land on the latest minor of the latest major; older majors receive
 security fixes only when there's no migration path and the fix is
 trivial.
@@ -31,8 +31,8 @@ Use one of the private disclosure channels below:
 ### What to include
 
 - The package and version affected, for example
-  `clockify-sdk-ts-115@0.9.0`, `@clockify115/cli@0.1.0`, or
-  `@clockify115/mcp-server@0.3.0`.
+  `clockify-sdk-ts-115@0.9.0`, `@apet97/clockify-cli-115@0.1.0`, or
+  `@apet97/clockify-mcp-115@0.3.0`.
 - A minimal reproducer (TypeScript or JavaScript). Don't include
   real API keys or workspace IDs.
 - The expected vs actual behavior.

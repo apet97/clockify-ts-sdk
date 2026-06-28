@@ -47,7 +47,7 @@ subdirectory:
 - **`wrapper/`** → `clockify-sdk-ts-115` — the core TypeScript SDK,
   local-generator output + hand-written ergonomics. The original product.
   Local build artefact: `wrapper/dist/`.
-- **`cli/`** → `@clockify115/cli` — `clockify115` / `clk115` command-line
+- **`cli/`** → `@apet97/clockify-cli-115` — `clockify115` / `clk115` command-line
   interface on top of the SDK. **59 commands** across 21 top-level
   groups including `reports`, `shared-reports`, `users`, `doctor`, `completion`, the
   scriptable `api` raw command, and the workflow shortcuts (`start`, `stop`, `status`, `log`,
@@ -57,7 +57,7 @@ subdirectory:
   with archive-then-delete for active projects/clients/tasks).
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
-- **`mcp/`** → `@clockify115/mcp-server` — stdio Model Context Protocol
+- **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
   server, sibling to the Go MCP in GOCLMCP. **135 tools**: 22
   workflow/orientation tools plus 113 domain tools across 19 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
@@ -77,10 +77,11 @@ subdirectory:
   creation. That webhook guard is intentionally offline and covers
   literal URL/host/IP risks, not DNS rebinding.
 
-The `-115` / `115` suffix is intentional trademark distance from
-Clockify. We do not plan to publish any of these to npm; the
-`publishConfig` blocks + `prepublishOnly` scripts remain so anyone
-who decides otherwise inherits the right gates. MCP tool prefixes
+The `-115` / `115` suffix and the personal `@apet97` scope are
+intentional trademark distance from Clockify. These are published to npm
+as unofficial, community-built packages (not affiliated with CAKE.com or
+Clockify); the `publishConfig` blocks + `prepublishOnly` scripts gate
+every publish. MCP tool prefixes
 (`clockify_status`, etc.) stay because they mirror the Clockify API
 and are validated by `../GOCLMCP/` drift gates.
 
@@ -246,7 +247,7 @@ wrapper/dist/**  (the packable artefact)
         │  npm pack --dry-run    (verifies tarball; compare with the
         │                         current <pkg>/.packsnapshot baseline in CI)
         ▼
-clockify-sdk-ts-115@<version>.tgz  (packable; npm publish is not the default path)
+clockify-sdk-ts-115@<version>.tgz  (packable; published to npm via CI tag-push)
 ```
 
 `make sdk-codegen` runs `scripts/generate-sdk-from-openapi.mjs`
@@ -343,9 +344,10 @@ end-to-end and green before push. Drift gates are non-negotiable.
    Gitignored already. Promote canonical findings into
    `spec/evidence/discrepancies.md` and reference the probe by
    relative path.
-5. **Never run `npm publish` from a developer laptop.** Default
-   stance is no npm publication; a future publish decision needs
-   explicit maintainer approval and a dry-run first.
+5. **Never run `npm publish` from a developer laptop.** Publication is
+   via CI on a pushed version tag (`wrapper-v*`/`cli-v*`/`mcp-v*`);
+   changing release triggers, auth, or provenance still needs explicit
+   maintainer approval.
 6. **Never push a tag that doesn't match `package.json` version.**
    The release workflow's tag-vs-version guard fails the job; the
    consequence is a half-burnt git tag that needs cleanup.

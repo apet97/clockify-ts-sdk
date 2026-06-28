@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// pack-consumer-smoke: runs npm pack for clockify-sdk-ts-115, @clockify115/cli, and @clockify115/mcp-server,
+// pack-consumer-smoke: runs npm pack for clockify-sdk-ts-115, @apet97/clockify-cli-115, and @apet97/clockify-mcp-115,
 // then installs each tarball into a temp consumer project to verify the packed artifacts work end-to-end.
 import fs from "node:fs";
 import os from "node:os";
@@ -238,14 +238,14 @@ assert.equal(typeof errors.promoteApiError, "function");
 
     const cliConsumer = tempProject("cli");
     install(cliConsumer, packageFilesForConsumer("cli", tgzByPackageId));
-    run("node", [path.join(cliConsumer, "node_modules", "@clockify115", "cli", "dist", "index.js"), "--version"], { cwd: cliConsumer });
+    run("node", [path.join(cliConsumer, "node_modules", "@apet97", "clockify-cli-115", "dist", "index.js"), "--version"], { cwd: cliConsumer });
 
     const mcpConsumer = tempProject("mcp");
     install(mcpConsumer, packageFilesForConsumer("mcp", tgzByPackageId));
     writeAndRun(mcpConsumer, "mcp-imports.mjs", `
 import assert from "node:assert/strict";
-const server = await import("@clockify115/mcp-server/server");
-const client = await import("@clockify115/mcp-server/client");
+const server = await import("@apet97/clockify-mcp-115/server");
+const client = await import("@apet97/clockify-mcp-115/client");
 assert.equal(typeof server.buildServer, "function");
 assert.equal(typeof client.loadContext, "function");
 `);

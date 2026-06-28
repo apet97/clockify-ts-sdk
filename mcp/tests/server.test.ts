@@ -85,7 +85,7 @@ async function connect(ctx: Context): Promise<Client> {
     return client;
 }
 
-describe("@clockify115/mcp-server", () => {
+describe("@apet97/clockify-mcp-115", () => {
     it("advertises every tool we registered", async () => {
         const client = await connect(fakeContext());
         const list = await client.listTools();
@@ -263,7 +263,7 @@ describe("@clockify115/mcp-server", () => {
             version: string;
         };
         const advertised = serverSrc.match(
-            /name:\s*"@clockify115\/mcp-server",\s*version:\s*"([^"]+)"/,
+            /name:\s*"@apet97\/clockify-mcp-115",\s*version:\s*"([^"]+)"/,
         );
         expect(advertised?.[1]).toBe(pkg.version);
     });

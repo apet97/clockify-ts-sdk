@@ -7,8 +7,8 @@ knowledge of how the real API behaves:
 | Package | What it is | Use it for |
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([`wrapper/`](./wrapper/README.md)) | The SDK — 29 resource modules, 169 operations, dual ESM/CJS | Calling Clockify from Node/TypeScript with typed errors, pagination, webhooks, and OTel hooks |
-| **`@clockify115/cli`** ([`cli/`](./cli/README.md)) | The CLI — `clockify115` / `clk115` | Time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output |
-| **`@clockify115/mcp-server`** ([`mcp/`](./mcp/README.md)) | The MCP server — 135 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
+| **`@apet97/clockify-cli-115`** ([`cli/`](./cli/README.md)) | The CLI — `clockify115` / `clk115` | Time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output |
+| **`@apet97/clockify-mcp-115`** ([`mcp/`](./mcp/README.md)) | The MCP server — 135 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
 
 The three share two pure helper subpaths so you never hand-roll them:
 `clockify-sdk-ts-115/resolve` turns a **name** into a real id (case-insensitive,
@@ -60,8 +60,13 @@ clk115 projects list --json
 
 ### MCP server
 
-Build the server or the one-click bundle from this clone first; the packages are
-packable but are not published to public npm by default.
+Install the published server (unofficial, under the personal `@apet97` scope):
+
+```sh
+npm i -g @apet97/clockify-mcp-115   # provides the clockify115-mcp binary
+```
+
+Or build it (or the one-click bundle) from this clone:
 
 ```sh
 npm ci
@@ -86,7 +91,7 @@ route a request to the right tool. Risky writes preview with `dry_run: true` and
 commit with the returned `confirm_token`. For Claude Desktop one-click install
 bundles, see the [MCP README](./mcp/README.md).
 
-> Packages ship as local tarballs (`npm pack`) by default — this is not public npm publication. Publishing requires explicit maintainer approval.
+> The three packages are published to npm under the unofficial **`@apet97`** scope (`clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, `@apet97/clockify-mcp-115`) — community-built, **not affiliated with CAKE.com or Clockify**. Publication is a deliberate, tag-gated CI action; local tarballs (`npm pack`) remain the default dev loop.
 
 ## Develop
 
@@ -128,8 +133,8 @@ OpenAPI is **not** in this repo — it is produced by the sister project
 ```
 clockify-ts-sdk/
 ├── wrapper/   clockify-sdk-ts-115   — the SDK package
-├── cli/       @clockify115/cli      — the CLI package
-├── mcp/       @clockify115/mcp-server — the stdio MCP package
+├── cli/       @apet97/clockify-cli-115      — the CLI package
+├── mcp/       @apet97/clockify-mcp-115 — the stdio MCP package
 ├── examples/  runnable SDK / CLI / MCP examples
 ├── spec/      corrected + official OpenAPI snapshots and the evidence ledger
 ├── scripts/   local generator + contract checkers
@@ -142,8 +147,8 @@ clockify-ts-sdk/
 | Package | Version | Surface |
 |---|---|---|
 | `clockify-sdk-ts-115` | 0.9.0 | 29 resource modules, 169 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@clockify115/cli` | 0.1.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@clockify115/mcp-server` | 0.3.0 | 135 stdio tools (22 workflow + 113 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `@apet97/clockify-cli-115` | 0.1.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 0.3.0 | 135 stdio tools (22 workflow + 113 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md).

@@ -1,6 +1,6 @@
 # MCP examples
 
-`@clockify115/mcp-server` is a stdio MCP server: an agent (Claude, etc.) calls its
+`@apet97/clockify-mcp-115` is a stdio MCP server: an agent (Claude, etc.) calls its
 tools, so these examples are **tool-call recipes**, not shell scripts. Each block
 shows the tool name and the arguments to send.
 

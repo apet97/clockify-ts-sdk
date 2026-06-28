@@ -24,7 +24,7 @@
     {
       "id": "cli",
       "manifest": "cli/package.json",
-      "packageName": "@clockify115/cli",
+      "packageName": "@apet97/clockify-cli-115",
       "runtimeDependencies": [
         {
           "name": "cli-table3",
@@ -49,7 +49,7 @@
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
-      "packageName": "@clockify115/mcp-server",
+      "packageName": "@apet97/clockify-mcp-115",
       "runtimeDependencies": [
         {
           "name": "@modelcontextprotocol/sdk",

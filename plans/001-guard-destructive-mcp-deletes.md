@@ -95,8 +95,8 @@ Conventions to match: use `z` (already imported in each file), keep `annotations
 
 | Purpose | Command | Expected on success |
 |---|---|---|
-| Typecheck MCP | `npm run type-check -w @clockify115/mcp-server` | exit 0, no errors |
-| MCP tests | `npm test -w @clockify115/mcp-server` | all pass (live `sandbox.test.ts` skips cleanly if `CLOCKIFY_API_KEY` is unset) |
+| Typecheck MCP | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0, no errors |
+| MCP tests | `npm test -w @apet97/clockify-mcp-115` | all pass (live `sandbox.test.ts` skips cleanly if `CLOCKIFY_API_KEY` is unset) |
 | Write-safety gate | `make mcp-write-safety` | `MCP write-safety contract passed (N destructive tools checked).` |
 | MCP contract + UX | `make mcp-contract mcp-agent-ux` | both `passed` |
 | Full proof | `make perfect-fast` | exit 0 |
@@ -131,7 +131,7 @@ For each tool in the table, in its file:
    **before** the existing delete/remove call. Use the `riskClass` from the table.
 3. Ensure `requireConfirmation` is imported in the file (`import { requireConfirmation } from "../orchestration/confirm-guard.js";` — match the relative path used by `clients.ts`). If the description is now < 40 chars or doesn't mention the handshake, extend it like the exemplar ("Run dry_run first, then retry with the returned confirm_token.").
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 
 ### Step 2: Register the nine tools in the contract
 
@@ -147,18 +147,18 @@ Add an `## [Unreleased]` → `### Fixed` bullet to `mcp/CHANGELOG.md` describing
 
 ### Step 4: Full proof
 
-**Verify**: `npm test -w @clockify115/mcp-server` → all pass; then `make perfect-fast` → exit 0.
+**Verify**: `npm test -w @apet97/clockify-mcp-115` → all pass; then `make perfect-fast` → exit 0.
 
 ## Test plan
 
 - The existing `make mcp-write-safety` gate now structurally proves all 15 tools carry the guard (this is the primary regression check — no new unit test is strictly required).
-- Optional but recommended: add one unit test per newly guarded tool family in `mcp/tests/` (model after the existing destructive-tool tests if present, or `mcp/tests/workflows.test.ts`) asserting that calling the tool **without** `dry_run`/`confirm_token` returns an error envelope (`ok: false`) and **with** `dry_run: true` returns a `confirm_token` in `data`. If you add tests, run `npm test -w @clockify115/mcp-server`.
+- Optional but recommended: add one unit test per newly guarded tool family in `mcp/tests/` (model after the existing destructive-tool tests if present, or `mcp/tests/workflows.test.ts`) asserting that calling the tool **without** `dry_run`/`confirm_token` returns an error envelope (`ok: false`) and **with** `dry_run: true` returns a `confirm_token` in `data`. If you add tests, run `npm test -w @apet97/clockify-mcp-115`.
 - Verification: `make mcp-write-safety` → passes with 15 guarded tools.
 
 ## Done criteria
 
 ALL must hold:
-- [ ] `npm run type-check -w @clockify115/mcp-server` exits 0.
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` exits 0.
 - [ ] Each of the nine tools' `inputSchema` contains `dry_run` and `confirm_token`, and its handler calls `requireConfirmation(ctx, "<name>", ...)` before the delete (`grep -c "requireConfirmation" mcp/src/tools/{customFields,holidays,groups,expenses,invoices,scheduling,timeOff}.ts` each ≥ 1).
 - [ ] `docs/mcp-write-safety-contract.json` `confirmationGuardedDomainTools` has 15 entries.
 - [ ] `make mcp-write-safety` passes.

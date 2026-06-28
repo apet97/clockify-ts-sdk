@@ -19,7 +19,7 @@ unrelated proof gates.
 Bug reports should include:
 
 - Package surface: SDK, CLI, MCP, OpenAPI/generator, docs, mock/replay, or package install.
-- Package version: `clockify-sdk-ts-115`, `@clockify115/cli`, or `@clockify115/mcp-server`.
+- Package version: `clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, or `@apet97/clockify-mcp-115`.
 - Runtime: Node/npm version, OS, module system, and whether local SDK codegen was involved.
 - Entry point: SDK import or method, CLI command, MCP tool, OpenAPI operation ID, or docs path.
 - Sanitized receipt: `requestId`, `status`, stable `code`, `retryable`, `recovery`, `changed`, `next`, and cleanup/leftover count when present.

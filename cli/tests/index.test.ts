@@ -8,7 +8,7 @@ describe("buildProgram", () => {
         const commandNames = program.commands.map((command) => command.name()).sort();
 
         expect(program.name()).toBe("clockify115");
-        expect(program.description()).toContain("@clockify115/cli");
+        expect(program.description()).toContain("@apet97/clockify-cli-115");
         expect(program.description()).toContain("clockify-sdk-ts-115");
         expect(program.version()).toBe("0.1.0");
         expect(commandNames).toEqual([

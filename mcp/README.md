@@ -1,4 +1,4 @@
-# @clockify115/mcp-server
+# @apet97/clockify-mcp-115
 
 TypeScript stdio MCP server for Clockify, built on
 `clockify-sdk-ts-115`. It is the Node sibling to
@@ -26,8 +26,9 @@ build-from-source flow follow for other setups.
 
 ### One-click (recommended)
 
-No release asset is currently attached. Until a maintainer publishes one, build
-the bundle yourself from a clone:
+The `.mcpb` bundle has no GitHub Release asset attached yet, so build it from a
+clone (or `npm i -g @apet97/clockify-mcp-115` for just the `clockify115-mcp`
+binary — unofficial, under the `@apet97` scope):
 
 ```sh
 make mcpb
@@ -398,8 +399,8 @@ Stable error codes:
 tests can wire OpenTelemetry without forking the MCP server:
 
 ```ts
-import { buildServer } from "@clockify115/mcp-server/server";
-import { loadContext } from "@clockify115/mcp-server/client";
+import { buildServer } from "@apet97/clockify-mcp-115/server";
+import { loadContext } from "@apet97/clockify-mcp-115/client";
 import { otelHooks } from "clockify-sdk-ts-115/otel-hooks";
 
 const ctx = loadContext(process.env, {
@@ -413,7 +414,7 @@ const server = buildServer(ctx);
 
 ## TypeScript vs Go MCP
 
-| | `@clockify115/mcp-server` | `go-clockify` |
+| | `@apet97/clockify-mcp-115` | `go-clockify` |
 |---|---|---|
 | Language | TypeScript / Node 20+ | Go |
 | Transport | stdio | stdio |
