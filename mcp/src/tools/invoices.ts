@@ -1,8 +1,10 @@
 /**
- * Invoice tools — wraps client.invoices.{list, get, create, update,
- * delete, updateStatus, export}. The single-invoice GET also returns
- * line items, so a separate `_items_list` tool would only be a
- * formatting helper; defer to a workflow port.
+ * Invoice tools — wraps client.invoices.{list, filter, get, create, update,
+ * delete, updateStatus, export, import} and client.invoicePayments.list.
+ * `clockify_invoices_info` hits the richer POST /invoices/info projection;
+ * `clockify_invoices_items_list` is a focused view over the GET (which also
+ * returns line items); `clockify_invoices_payments_list` reads recorded
+ * payments.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { invoiceUpdateBodyFromExisting } from "clockify-sdk-ts-115/invoice-body";
@@ -414,6 +416,116 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             return successResult("clockify_invoices_import_time", imported, {
                 workspaceId: ctx.workspaceId,
                 invoiceId,
+            });
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_invoices_info",
+        {
+            title: "Filter invoice info",
+            description:
+                "Search invoice 'info' records (POST /invoices/info) by status / invoice-number filters, sorted and paginated. Complements clockify_invoices_list with the richer info projection.",
+            inputSchema: {
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
+                statuses: z.array(z.enum(INVOICE_STATUSES)).optional(),
+                invoiceNumber: z
+                    .string()
+                    .optional()
+                    .describe("Filter by a substring of the invoice number."),
+                strictSearch: z
+                    .boolean()
+                    .optional()
+                    .describe("When true, invoiceNumber must match exactly."),
+                sortColumn: z
+                    .enum(INVOICE_SORT_COLUMNS)
+                    .optional()
+                    .describe("Sort column: ID | CLIENT | DUE_ON | ISSUE_DATE | AMOUNT | BALANCE."),
+                sortOrder: z
+                    .enum(INVOICE_SORT_ORDERS)
+                    .optional()
+                    .describe("Sort order: ASCENDING | DESCENDING."),
+            },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            const response = (await ctx.client.invoices.filter({
+                workspaceId: ctx.workspaceId,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+                ...(args.statuses && args.statuses.length > 0 ? { statuses: args.statuses } : {}),
+                ...(args.invoiceNumber ? { invoiceNumber: args.invoiceNumber } : {}),
+                ...(args.strictSearch !== undefined ? { strictSearch: args.strictSearch } : {}),
+                ...(args.sortColumn ? { sortColumn: args.sortColumn } : {}),
+                ...(args.sortOrder ? { sortOrder: args.sortOrder } : {}),
+            })) as { invoices?: unknown[]; total?: number } | unknown[];
+            const invoices = Array.isArray(response) ? response : (response.invoices ?? []);
+            const total = Array.isArray(response)
+                ? invoices.length
+                : (response.total ?? invoices.length);
+            return successResult("clockify_invoices_info", invoices, {
+                workspaceId: ctx.workspaceId,
+                count: invoices.length,
+                total,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
+            });
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_invoices_items_list",
+        {
+            title: "List invoice line items",
+            description:
+                "Return just the line items of an invoice — a focused projection of clockify_invoices_get for when only the items matter.",
+            inputSchema: { invoiceId: z.string().min(1) },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            const invoice = (await ctx.client.invoices.get({
+                workspaceId: ctx.workspaceId,
+                invoiceId: args.invoiceId,
+            })) as { items?: unknown[] };
+            const items = Array.isArray(invoice.items) ? invoice.items : [];
+            return successResult("clockify_invoices_items_list", items, {
+                workspaceId: ctx.workspaceId,
+                invoiceId: args.invoiceId,
+                count: items.length,
+            });
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_invoices_payments_list",
+        {
+            title: "List invoice payments",
+            description: "List recorded payments against an invoice, paginated.",
+            inputSchema: {
+                invoiceId: z.string().min(1),
+                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
+            },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            const payments = (await ctx.client.invoicePayments.list({
+                workspaceId: ctx.workspaceId,
+                invoiceId: args.invoiceId,
+                page: args.page ?? 1,
+                "page-size": args.pageSize ?? 50,
+            })) as unknown[];
+            const items = Array.isArray(payments) ? payments : [];
+            return successResult("clockify_invoices_payments_list", items, {
+                workspaceId: ctx.workspaceId,
+                invoiceId: args.invoiceId,
+                count: items.length,
+                page: args.page ?? 1,
+                pageSize: args.pageSize ?? 50,
             });
         },
     );

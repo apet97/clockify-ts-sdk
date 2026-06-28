@@ -8,7 +8,7 @@ knowledge of how the real API behaves:
 |---|---|---|
 | **`clockify-sdk-ts-115`** ([`wrapper/`](./wrapper/README.md)) | The SDK — 29 resource modules, 169 operations, dual ESM/CJS | Calling Clockify from Node/TypeScript with typed errors, pagination, webhooks, and OTel hooks |
 | **`@apet97/clockify-cli-115`** ([`cli/`](./cli/README.md)) | The CLI — `clockify115` / `clk115` | Time tracking and admin from the terminal or scripts, with `table`/`json`/`ndjson` output |
-| **`@apet97/clockify-mcp-115`** ([`mcp/`](./mcp/README.md)) | The MCP server — 135 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
+| **`@apet97/clockify-mcp-115`** ([`mcp/`](./mcp/README.md)) | The MCP server — 140 stdio tools | Letting an agent (Claude, etc.) drive Clockify safely, with dry-run + confirm-token writes |
 
 The three share two pure helper subpaths so you never hand-roll them:
 `clockify-sdk-ts-115/resolve` turns a **name** into a real id (case-insensitive,
@@ -148,7 +148,7 @@ clockify-ts-sdk/
 |---|---|---|
 | `clockify-sdk-ts-115` | 0.9.0 | 29 resource modules, 169 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
 | `@apet97/clockify-cli-115` | 0.1.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 0.3.0 | 135 stdio tools (22 workflow + 113 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `@apet97/clockify-mcp-115` | 0.4.0 | 140 stdio tools (22 workflow + 118 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md).

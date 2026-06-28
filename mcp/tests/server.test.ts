@@ -161,6 +161,9 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_invoices_update_status",
                 "clockify_invoices_export",
                 "clockify_invoices_import_time",
+                "clockify_invoices_info",
+                "clockify_invoices_items_list",
+                "clockify_invoices_payments_list",
                 // Expenses + categories
                 "clockify_expenses_list",
                 "clockify_expenses_get",
@@ -178,6 +181,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_webhooks_create",
                 "clockify_webhooks_update",
                 "clockify_webhooks_delete",
+                "clockify_webhooks_events",
                 // Custom fields
                 "clockify_custom_fields_list",
                 "clockify_custom_fields_create",
@@ -220,6 +224,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_reports_detailed",
                 "clockify_reports_weekly",
                 "clockify_reports_attendance",
+                "clockify_reports_expense",
                 // Shared reports
                 "clockify_shared_reports_list",
                 "clockify_shared_reports_view",
@@ -250,7 +255,7 @@ describe("@apet97/clockify-mcp-115", () => {
                 "clockify_audit_log_search",
             ].sort(),
         );
-        expect(names).toHaveLength(135);
+        expect(names).toHaveLength(140);
     });
 
     it("advertises the version from package.json (server.ts literal must not drift)", () => {

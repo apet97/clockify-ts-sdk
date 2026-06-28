@@ -12,6 +12,9 @@ once v1.0.0 ships.
 - Published to npm as an unofficial, community-built package under the unscoped
   `clockify-sdk-ts-115` name (not affiliated with CAKE.com or Clockify). Release
   is tag-triggered CI on a pushed `wrapper-v*` tag (was a bare `v*` tag).
+- docs: the README headline now distinguishes the 169 total operations from the
+  135 live-verified ones (links to `docs/spec-confidence.md`) instead of
+  describing all 169 as "live".
 
 ### Added
 

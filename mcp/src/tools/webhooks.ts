@@ -33,6 +33,64 @@ export function redactWebhook<T>(value: T): T {
     return out as unknown as T;
 }
 
+// Static registry of every webhook event type a subscription can target,
+// mirrored verbatim from the generated `WebhookEventType` union
+// (components/schemas/WebhookEventType). Clockify exposes no list-events
+// endpoint, so this is offline — no API call.
+const WEBHOOK_EVENT_TYPES = [
+    "NEW_PROJECT",
+    "NEW_TASK",
+    "NEW_CLIENT",
+    "NEW_TIMER_STARTED",
+    "TIMER_STOPPED",
+    "TIME_ENTRY_UPDATED",
+    "TIME_ENTRY_DELETED",
+    "TIME_ENTRY_SPLIT",
+    "NEW_TIME_ENTRY",
+    "TIME_ENTRY_RESTORED",
+    "NEW_TAG",
+    "USER_DELETED_FROM_WORKSPACE",
+    "USER_JOINED_WORKSPACE",
+    "USER_DEACTIVATED_ON_WORKSPACE",
+    "USER_ACTIVATED_ON_WORKSPACE",
+    "USER_EMAIL_CHANGED",
+    "USER_UPDATED",
+    "NEW_INVOICE",
+    "INVOICE_UPDATED",
+    "NEW_APPROVAL_REQUEST",
+    "APPROVAL_REQUEST_STATUS_UPDATED",
+    "TIME_OFF_REQUESTED",
+    "TIME_OFF_REQUEST_UPDATED",
+    "TIME_OFF_REQUEST_APPROVED",
+    "TIME_OFF_REQUEST_REJECTED",
+    "TIME_OFF_REQUEST_STARTED",
+    "TIME_OFF_REQUEST_WITHDRAWN",
+    "BALANCE_UPDATED",
+    "TAG_UPDATED",
+    "TAG_DELETED",
+    "TASK_UPDATED",
+    "CLIENT_UPDATED",
+    "TASK_DELETED",
+    "CLIENT_DELETED",
+    "EXPENSE_RESTORED",
+    "ASSIGNMENT_CREATED",
+    "ASSIGNMENT_DELETED",
+    "ASSIGNMENT_PUBLISHED",
+    "ASSIGNMENT_UPDATED",
+    "EXPENSE_CREATED",
+    "EXPENSE_DELETED",
+    "EXPENSE_UPDATED",
+    "PROJECT_UPDATED",
+    "PROJECT_DELETED",
+    "USER_GROUP_CREATED",
+    "USER_GROUP_UPDATED",
+    "USER_GROUP_DELETED",
+    "USERS_INVITED_TO_WORKSPACE",
+    "LIMITED_USERS_ADDED_TO_WORKSPACE",
+    "COST_RATE_UPDATED",
+    "BILLABLE_RATE_UPDATED",
+] as const satisfies readonly ClockifyApi.WebhookEventType[];
+
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
     defineTool(
         server,
@@ -228,6 +286,24 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 { workspaceId: ctx.workspaceId, webhookId: args.webhookId },
                 writeReceipt("deleted", "webhook", args.webhookId),
             );
+        },
+    );
+
+    defineTool(
+        server,
+        "clockify_webhooks_events",
+        {
+            title: "List webhook event types",
+            description:
+                "List every valid webhook event type you can subscribe to (static registry; no API call). Use one as `webhookEvent` in clockify_webhooks_create.",
+            inputSchema: {},
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async () => {
+            return successResult("clockify_webhooks_events", [...WEBHOOK_EVENT_TYPES], {
+                workspaceId: ctx.workspaceId,
+                count: WEBHOOK_EVENT_TYPES.length,
+            });
         },
     );
 }
