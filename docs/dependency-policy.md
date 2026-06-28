@@ -36,8 +36,8 @@ stack as historical evidence only.
 | Package | Node floor |
 |---|---:|
 | `clockify-sdk-ts-115` | `>=20` |
-| `@clockify115/cli` | `>=20` |
-| `@clockify115/mcp-server` | `>=20` |
+| `@apet97/clockify-cli-115` | `>=20` |
+| `@apet97/clockify-mcp-115` | `>=20` |
 
 The CLI and MCP package floors intentionally match the SDK floor.
 They depend on `clockify-sdk-ts-115` as the runtime API client, so
@@ -57,8 +57,8 @@ dependency change.
 | Package | Runtime dependencies | SDK relationship |
 |---|---|---|
 | `clockify-sdk-ts-115` | None | Owns the generated SDK wrapper seam. |
-| `@clockify115/cli` | `cli-table3`, `commander`, `picocolors` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
-| `@clockify115/mcp-server` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
+| `@apet97/clockify-cli-115` | `cli-table3`, `commander`, `picocolors` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
+| `@apet97/clockify-mcp-115` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
 
 The three packages are wired as npm workspaces from the repo-root
 `package.json`; a single root `package-lock.json` covers all of them.

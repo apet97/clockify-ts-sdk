@@ -43,8 +43,8 @@ release gates, and examples that survive contact with a real account.
 | Package | Role | Product bar |
 |---|---|---|
 | `wrapper/` / `clockify-sdk-ts-115` | Core TypeScript SDK | Idiomatic imports, dual ESM/CJS, typed errors, pagination helpers, webhooks, observability hooks, and narrow public seams over generated output. |
-| `cli/` / `@clockify115/cli` | Human and automation CLI | Predictable command groups, JSON output, config/env precedence, useful error messages, and parity with SDK/MCP concepts. |
-| `mcp/` / `@clockify115/mcp-server` | Agent-facing Clockify workflows | Workflow-first tools, 135 advertised tools, rich result envelopes, recovery hints, dry-run confirmation tokens, and clean live sandbox cleanup. |
+| `cli/` / `@apet97/clockify-cli-115` | Human and automation CLI | Predictable command groups, JSON output, config/env precedence, useful error messages, and parity with SDK/MCP concepts. |
+| `mcp/` / `@apet97/clockify-mcp-115` | Agent-facing Clockify workflows | Workflow-first tools, 135 advertised tools, rich result envelopes, recovery hints, dry-run confirmation tokens, and clean live sandbox cleanup. |
 | `spec/` + `output/` | Reproducible generation inputs/outputs | Immutable snapshot discipline, no hand edits to generated surfaces, and explicit discrepancy evidence. |
 
 ## Final Architecture Shape

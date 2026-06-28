@@ -1,8 +1,14 @@
 # Changelog
 
-All notable changes to `@clockify115/cli` are documented here.
+All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
+
+### Changed
+
+- Renamed the package to `@apet97/clockify-cli-115` (was `@clockify115/cli`) and
+  enabled tag-triggered npm publish on a pushed `cli-v*` tag. Unofficial,
+  community-built; the `clockify115` / `clk115` binaries are unchanged.
 
 ### Added
 
@@ -363,6 +369,6 @@ All notable changes to `@clockify115/cli` are documented here.
 
 ### Added
 
-- Initial `@clockify115/cli` package with `clockify115` and `clk115` binaries.
+- Initial `@apet97/clockify-cli-115` package with `clockify115` and `clk115` binaries.
 - Added Clockify status, list, create/update/delete, reporting-adjacent, and admin command groups on top of `clockify-sdk-ts-115`.
 - Added JSON output mode for automation and human-readable table output for terminal use.

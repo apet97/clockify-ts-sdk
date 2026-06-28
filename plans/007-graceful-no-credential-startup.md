@@ -73,7 +73,7 @@ export function loadContext(
     if (!apiKey) {
         throw new Error(
             "CLOCKIFY_API_KEY is not set. Configure it in your MCP client's env block, e.g.\n" +
-                `  "@clockify115/mcp-server": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }`,
+                `  "@apet97/clockify-mcp-115": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }`,
         );
     }
     if (!workspaceId) {
@@ -184,10 +184,10 @@ Conventions that apply here:
 | Error-docs drift gate | `make error-docs-drift` | exit 0, no drift |
 | Troubleshooting drift gate | `make troubleshooting-drift` | exit 0, no drift |
 | Config-precedence gate | `make config-precedence` | exit 0 |
-| MCP type-check | `npm run type-check -w @clockify115/mcp-server` | exit 0, no errors |
-| MCP tests | `npm test -w @clockify115/mcp-server` | all pass (incl. new tests) |
-| MCP build | `npm run build -w @clockify115/mcp-server` | exit 0 |
-| MCP lint | `npm run lint -w @clockify115/mcp-server` | exit 0 |
+| MCP type-check | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0, no errors |
+| MCP tests | `npm test -w @apet97/clockify-mcp-115` | all pass (incl. new tests) |
+| MCP build | `npm run build -w @apet97/clockify-mcp-115` | exit 0 |
+| MCP lint | `npm run lint -w @apet97/clockify-mcp-115` | exit 0 |
 | Changelog-drift gate | `make changelog-drift` | exit 0 |
 | Final full proof (solo, blanked creds) | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-full` | exit 0 |
 
@@ -333,7 +333,7 @@ function buildSetupMessage(missing: readonly string[]): string {
     return (
         `Clockify MCP is not configured: ${parts.join(" ")}\n` +
         "Set them in your MCP client's env block, e.g.\n" +
-        `  "@clockify115/mcp-server": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }\n` +
+        `  "@apet97/clockify-mcp-115": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }\n` +
         "Get the API key from Clockify Profile Settings -> API; the workspace ID is in the workspace URL. Leave CLOCKIFY_BASE_URL unset for live Clockify."
     );
 }
@@ -342,7 +342,7 @@ function buildSetupMessage(missing: readonly string[]): string {
 > The literal strings above contain all four required config-precedence markers
 > (`CLOCKIFY_API_KEY is not set`, `CLOCKIFY_WORKSPACE_ID is not set`, `one-user
 > server is pinned to a single workspace`, `CLOCKIFY_BASE_URL`) plus
-> `@clockify115/mcp-server` and `clockify115-mcp` (asserted by
+> `@apet97/clockify-mcp-115` and `clockify115-mcp` (asserted by
 > `mcp/tests/client.test.ts`). Keep them.
 
 **(b) Add the optional `setupError` field to `Context`** so the entrypoint can
@@ -422,7 +422,7 @@ function makeSetupRequiredContext(error: MissingCredentialsError): Context {
 > tools that use it fall back to `ctx.client.users.getCurrentUser()`, which hits
 > the throwing `client` getter, so they still produce `setup_required`.
 
-**Verify**: `npm run build -w clockify-sdk-ts-115 && npm run type-check -w @clockify115/mcp-server` → exit 0.
+**Verify**: `npm run build -w clockify-sdk-ts-115 && npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 
 ### Step 5: Map `MissingCredentialsError` → `setup_required` in `mcp/src/result.ts`
 
@@ -459,7 +459,7 @@ Then add this branch as the **first statement** inside `errorResult`, before the
 > `recoveryForCode("setup_required")` type-checks only after Step 3 regenerated
 > `mcp/src/error-codes.ts`, so keep the step order.
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0; then
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0; then
 `make error-registry` → `error registry integrity passed (17 codes, 3 package copies, 14 reachable codes grounded)`.
 
 ### Step 6: Emit a one-line stderr hint in `mcp/src/index.ts` (keep starting)
@@ -484,7 +484,7 @@ export async function main(): Promise<void> {
 Leave the `main().catch(...)` block (`mcp/src/index.ts:26-32`) unchanged — it now
 only fires for genuinely unexpected startup errors, not for missing creds.
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
 
 ### Step 7: Update the tests that assumed a startup crash
 
@@ -498,7 +498,7 @@ import { MissingCredentialsError, createCurrentUserIdMemo, loadContext } from ".
     it("does not throw on missing env; defers to a setup_required context", () => {
         const ctx = loadContext({});
         expect(ctx.setupError).toBeInstanceOf(MissingCredentialsError);
-        expect(ctx.setupError?.message).toMatch(/@clockify115\/mcp-server/);
+        expect(ctx.setupError?.message).toMatch(/@apet97\/clockify-mcp-115/);
         expect(ctx.setupError?.message).toMatch(/clockify115-mcp/);
         // The throw is deferred to first client/workspace access.
         expect(() => ctx.client).toThrow(MissingCredentialsError);
@@ -582,14 +582,14 @@ describe("MCP starts without credentials", () => {
 });
 ```
 
-**Verify**: `npm test -w @clockify115/mcp-server` → all pass, including the three
+**Verify**: `npm test -w @apet97/clockify-mcp-115` → all pass, including the three
 new/updated tests.
 
 ### Step 10: Build + lint + add changelog entries
 
 ```bash
-npm run build -w @clockify115/mcp-server
-npm run lint -w @clockify115/mcp-server
+npm run build -w @apet97/clockify-mcp-115
+npm run lint -w @apet97/clockify-mcp-115
 ```
 
 Then add an **Unreleased** bullet to each touched package changelog (the three
@@ -611,9 +611,9 @@ make error-registry
 make error-docs-drift
 make troubleshooting-drift
 make config-precedence
-npm run type-check -w @clockify115/mcp-server
-npm test -w @clockify115/mcp-server
-npm run lint -w @clockify115/mcp-server
+npm run type-check -w @apet97/clockify-mcp-115
+npm test -w @apet97/clockify-mcp-115
+npm run lint -w @apet97/clockify-mcp-115
 ```
 
 All exit 0. Then run the full proof **solo**:
@@ -639,7 +639,7 @@ solo to confirm it was a startup-time flake, per the note in Commands.)
   (not a crash). This is the headline acceptance test for this plan.
 - Structural pattern: model the smoke on `mcp/tests/server.test.ts`'s `connect`
   helper and its `callTool` + `JSON.parse(content[0].text)` assertions.
-- Verification: `npm test -w @clockify115/mcp-server` → all pass.
+- Verification: `npm test -w @apet97/clockify-mcp-115` → all pass.
 
 ## Done criteria
 
@@ -649,10 +649,10 @@ Machine-checkable. ALL must hold:
 - [ ] `make error-registry` → `… (17 codes, 3 package copies, 14 reachable codes grounded)`.
 - [ ] `make error-docs-drift` and `make troubleshooting-drift` → exit 0.
 - [ ] `make config-precedence` → exit 0 (the four `mcp-env-only` markers still present in `mcp/src/client.ts`).
-- [ ] `npm run type-check -w @clockify115/mcp-server` → exit 0.
-- [ ] `npm test -w @clockify115/mcp-server` → all pass, including the new
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` → exit 0.
+- [ ] `npm test -w @apet97/clockify-mcp-115` → all pass, including the new
       `setup-required.test.ts` and the updated `client`/`result` tests.
-- [ ] `npm run build -w @clockify115/mcp-server` and `npm run lint -w @clockify115/mcp-server` → exit 0.
+- [ ] `npm run build -w @apet97/clockify-mcp-115` and `npm run lint -w @apet97/clockify-mcp-115` → exit 0.
 - [ ] `make changelog-drift` → exit 0.
 - [ ] `grep -n 'process.exit(1)' mcp/src/index.ts` still present **only** in the
       `main().catch` block — `main()` itself no longer exits for missing creds.

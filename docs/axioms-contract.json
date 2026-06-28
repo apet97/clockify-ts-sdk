@@ -297,8 +297,8 @@
       "path": "docs/package-contract.json",
       "contains": [
         "clockify-sdk-ts-115",
-        "@clockify115/cli",
-        "@clockify115/mcp-server"
+        "@apet97/clockify-cli-115",
+        "@apet97/clockify-mcp-115"
       ]
     },
     {

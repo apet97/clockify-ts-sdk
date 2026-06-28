@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-The TypeScript MCP (`@clockify115/mcp-server`) advertises 135 tools; the sibling
+The TypeScript MCP (`@apet97/clockify-mcp-115`) advertises 135 tools; the sibling
 Go MCP reference (`../GOCLMCP`) loads 156. The operation-parity matrix
 (`docs/operation-parity.md`) also shows 13 of the 169 OpenAPI operations with no
 SDK method name (the SDK column is `-`). Quality work requires each gap to be

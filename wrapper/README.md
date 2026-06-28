@@ -61,6 +61,15 @@ naming on 156 of 169 operations (92.3%), and dual ESM + CJS.
 ## Install
 
 ```bash
+npm install clockify-sdk-ts-115
+```
+
+This is an **unofficial, community-built** package (not affiliated with
+CAKE.com or Clockify); the `-115` suffix is deliberate trademark distance.
+
+To build and install from this clone instead:
+
+```bash
 cd wrapper
 npm install
 npm run build
@@ -68,10 +77,6 @@ npm pack --dry-run
 npm pack
 npm install ./clockify-sdk-ts-115-0.9.0.tgz
 ```
-
-If your environment publishes this package internally, install that
-published tarball by name. This repository's default stance is
-packable/local, not public npm publication.
 
 ## Quick start
 

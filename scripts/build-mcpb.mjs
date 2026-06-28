@@ -50,7 +50,7 @@ let stageRoot;
 try {
     // 1. Preconditions: both packages must be built before bundling.
     if (!existsSync(path.join(mcpDir, "dist", "index.js"))) {
-        fail("mcp/dist/index.js is missing. Build first: npm run build -w @clockify115/mcp-server");
+        fail("mcp/dist/index.js is missing. Build first: npm run build -w @apet97/clockify-mcp-115");
     }
     if (!existsSync(path.join(root, "wrapper", "dist"))) {
         fail("wrapper/dist is missing. Build first: npm run build -w clockify-sdk-ts-115");

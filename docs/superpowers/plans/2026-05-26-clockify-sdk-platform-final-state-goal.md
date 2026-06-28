@@ -51,9 +51,9 @@ SDK experiment:
 
 - wrapper/ is the polished TypeScript SDK package
   `clockify-sdk-ts-115`.
-- cli/ is the scriptable command-line product `@clockify115/cli`.
+- cli/ is the scriptable command-line product `@apet97/clockify-cli-115`.
 - mcp/ is the agent-facing stdio MCP package
-  `@clockify115/mcp-server`.
+  `@apet97/clockify-mcp-115`.
 - spec/ and output/ preserve deterministic generation and evidence.
 - GOCLMCP remains the canonical Clockify OpenAPI and Go MCP reference.
 

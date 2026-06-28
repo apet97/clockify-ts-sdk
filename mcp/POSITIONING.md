@@ -16,7 +16,7 @@ through a generic connector. This server is purpose-built and workflow-first.
 The table is a factual, nominative comparison to help you choose — capabilities
 of third-party tools vary by version and plan, so their columns are hedged.
 
-| Capability | This server (`@clockify115/mcp-server`) | Typical community Clockify MCP | Connector / aggregator platform |
+| Capability | This server (`@apet97/clockify-mcp-115`) | Typical community Clockify MCP | Connector / aggregator platform |
 |---|---|---|---|
 | Tool design | Workflow-first tools (log work, review day/week, invoice, request time off) **plus** full domain CRUD — see the [Workflow Tools](./README.md#workflow-tools) and [Domain Tools](./README.md#domain-tools) tables | Often a thin 1:1 mirror of the REST API | Generic API passthrough |
 | Destructive-write safety | `dry_run` preview returns a single-use `confirm_token`; the write only runs when you replay it | Frequently writes directly, no preview | Varies by connector |

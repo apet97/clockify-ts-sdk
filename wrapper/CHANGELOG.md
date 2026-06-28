@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Published to npm as an unofficial, community-built package under the unscoped
+  `clockify-sdk-ts-115` name (not affiliated with CAKE.com or Clockify). Release
+  is tag-triggered CI on a pushed `wrapper-v*` tag (was a bare `v*` tag).
+
 ### Added
 
 - The shared error registry (`error-codes.ts`) gained the `setup_required` code

@@ -25,11 +25,11 @@
       "path": "README.md",
       "mustContain": [
         "clockify-sdk-ts-115",
-        "@clockify115/cli",
-        "@clockify115/mcp-server",
+        "@apet97/clockify-cli-115",
+        "@apet97/clockify-mcp-115",
         "make perfect-fast",
         "make perfect-full",
-        "not public npm publication"
+        "not affiliated with CAKE.com or Clockify"
       ]
     },
     {
@@ -39,7 +39,7 @@
         "clockify-sdk-ts-115",
         "Observability",
         "Supported runtimes",
-        "packable/local, not public npm publication"
+        "unofficial, community-built"
       ]
     },
     {
@@ -56,7 +56,7 @@
       "id": "cli-readme",
       "path": "cli/README.md",
       "mustContain": [
-        "@clockify115/cli",
+        "@apet97/clockify-cli-115",
         "CLOCKIFY_BASE_URL",
         "generated:cli-commands",
         "Exit codes"
@@ -66,7 +66,7 @@
       "id": "cli-changelog",
       "path": "cli/CHANGELOG.md",
       "mustContain": [
-        "@clockify115/cli",
+        "@apet97/clockify-cli-115",
         "clockify115",
         "clk115"
       ]
@@ -75,7 +75,7 @@
       "id": "mcp-readme",
       "path": "mcp/README.md",
       "mustContain": [
-        "@clockify115/mcp-server",
+        "@apet97/clockify-mcp-115",
         "structuredContent",
         "generated:mcp-workflow-tools",
         "generated:mcp-domain-tools"
@@ -85,7 +85,7 @@
       "id": "mcp-changelog",
       "path": "mcp/CHANGELOG.md",
       "mustContain": [
-        "@clockify115/mcp-server",
+        "@apet97/clockify-mcp-115",
         "127-tool surface",
         "workflow tools"
       ]

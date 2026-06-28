@@ -14,7 +14,7 @@ This repo ships three user-facing surfaces, but it should feel like one Clockify
 
 ## Rules
 
-- Public docs must say `clockify-sdk-ts-115`, `@clockify115/cli`, and `@clockify115/mcp-server` exactly.
+- Public docs must say `clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, and `@apet97/clockify-mcp-115` exactly.
 - CLI commands use `clk115 <group> <verb>` except top-level workflow shortcuts such as `clk115 start`, `clk115 stop`, and `clk115 log`.
 - MCP tool names keep the `clockify_` prefix and snake_case resource/action names.
 - SDK docs point users to public wrapper helpers before generated internals.

@@ -326,7 +326,7 @@ jobs:
         run: |
           make sdk-codegen
           npm run build -w clockify-sdk-ts-115
-          npm run build -w @clockify115/mcp-server
+          npm run build -w @apet97/clockify-mcp-115
 
       # Catches the per-package-green-but-cross-gate-broken gap: a tool rename
       # or SDK naming change can pass every per-package suite yet break the
@@ -400,8 +400,8 @@ jobs:
         run: |
           make sdk-codegen
           npm run build -w clockify-sdk-ts-115
-          npm run build -w @clockify115/cli
-          npm run build -w @clockify115/mcp-server
+          npm run build -w @apet97/clockify-cli-115
+          npm run build -w @apet97/clockify-mcp-115
 
       # CLOCKIFY_PERF_TIMING=0 keeps file-size ceilings and the in-smoke MCP
       # tool-count assertion fatal while downgrading only load-sensitive

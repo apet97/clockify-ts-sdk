@@ -8,7 +8,7 @@ describe("MCP package contract", () => {
         const ctx = loadContext({});
         expect(ctx.setupError).toBeInstanceOf(MissingCredentialsError);
         // The renamed package and bin still appear in the missing-env guidance.
-        expect(ctx.setupError?.message).toMatch(/@clockify115\/mcp-server/);
+        expect(ctx.setupError?.message).toMatch(/@apet97\/clockify-mcp-115/);
         expect(ctx.setupError?.message).toMatch(/clockify115-mcp/);
         // The throw is deferred to first client/workspace access.
         expect(() => ctx.client).toThrow(MissingCredentialsError);

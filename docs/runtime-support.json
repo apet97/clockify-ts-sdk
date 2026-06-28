@@ -28,7 +28,7 @@
     {
       "id": "cli",
       "manifest": "cli/package.json",
-      "name": "@clockify115/cli",
+      "name": "@apet97/clockify-cli-115",
       "engine": ">=20",
       "docs": [
         "docs/dependency-policy.md"
@@ -37,7 +37,7 @@
     {
       "id": "mcp",
       "manifest": "mcp/package.json",
-      "name": "@clockify115/mcp-server",
+      "name": "@apet97/clockify-mcp-115",
       "engine": ">=20",
       "docs": [
         "mcp/README.md",

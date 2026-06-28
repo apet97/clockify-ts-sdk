@@ -1,6 +1,6 @@
 # MCP Agent UX Policy
 
-This policy keeps `@clockify115/mcp-server` usable by agents that have to
+This policy keeps `@apet97/clockify-mcp-115` usable by agents that have to
 choose safe Clockify actions without reading source code. The MCP should feel
 like a guided workflow product, not a raw API dump.
 
