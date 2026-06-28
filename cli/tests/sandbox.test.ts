@@ -1,5 +1,5 @@
 /**
- * Live sandbox tests for @clockify115/cli. Each test invokes `main()`
+ * Live sandbox tests for @apet97/clockify-cli-115. Each test invokes `main()`
  * (the same entrypoint the `clockify115` / `clk115` bin uses) with --json
  * mode, captures stdout, and parses the result against the real
  * Clockify API at the workspace pinned by CLOCKIFY_WORKSPACE_ID.
@@ -31,7 +31,7 @@ if (!liveSandboxAvailable) {
     );
 }
 
-describeLive("@clockify115/cli live sandbox", () => {
+describeLive("@apet97/clockify-cli-115 live sandbox", () => {
     let logged: string[] = [];
     let errored: string[] = [];
     let logSpy: ReturnType<typeof vi.spyOn>;

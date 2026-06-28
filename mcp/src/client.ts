@@ -39,7 +39,7 @@ function buildSetupMessage(missing: readonly string[]): string {
     return (
         `Clockify MCP is not configured: ${parts.join(" ")}\n` +
         "Set them in your MCP client's env block, e.g.\n" +
-        `  "@clockify115/mcp-server": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }\n` +
+        `  "@apet97/clockify-mcp-115": { "command": "clockify115-mcp", "env": { "CLOCKIFY_API_KEY": "...", "CLOCKIFY_WORKSPACE_ID": "..." } }\n` +
         "Get the API key from Clockify Profile Settings -> API; the workspace ID is in the workspace URL. Leave CLOCKIFY_BASE_URL unset for live Clockify."
     );
 }

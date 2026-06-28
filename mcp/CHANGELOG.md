@@ -1,8 +1,15 @@
 # Changelog
 
-All notable changes to `@clockify115/mcp-server` are documented here.
+All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
+
+### Changed
+
+- Renamed the package to `@apet97/clockify-mcp-115` (was `@clockify115/mcp-server`)
+  and enabled tag-triggered npm publish on a pushed `mcp-v*` tag. Unofficial,
+  community-built; the `clockify115-mcp` binary is unchanged and the MCP server
+  identity now reports the new name.
 
 ### Added
 

@@ -77,7 +77,7 @@ function buildDoctorReceipt(
                 ok: nodeOk,
                 status: nodeOk ? "supported" : "unsupported",
                 value: process.versions.node,
-                ...(nodeOk ? {} : { recovery: "Install Node.js 20 or newer before using @clockify115/cli." }),
+                ...(nodeOk ? {} : { recovery: "Install Node.js 20 or newer before using @apet97/clockify-cli-115." }),
             },
             apiKey: {
                 ok: apiKeyOk,

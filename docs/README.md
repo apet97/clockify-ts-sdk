@@ -9,8 +9,8 @@ New to the repo? Pick your surface, then read the cross-cutting docs:
 | I want to… | First read |
 |---|---|
 | Use the **SDK** (`clockify-sdk-ts-115`) | [SDK README](../wrapper/README.md) — install, auth, pagination, typed errors, webhooks, observability |
-| Use the **CLI** (`@clockify115/cli`) | [CLI README](../cli/README.md) — `clockify115` / `clk115` commands, output modes, config precedence, shell completion |
-| Run the **MCP server** (`@clockify115/mcp-server`) | [MCP README](../mcp/README.md) — stdio tools, guide resources, dry-run + confirm_token write safety |
+| Use the **CLI** (`@apet97/clockify-cli-115`) | [CLI README](../cli/README.md) — `clockify115` / `clk115` commands, output modes, config precedence, shell completion |
+| Run the **MCP server** (`@apet97/clockify-mcp-115`) | [MCP README](../mcp/README.md) — stdio tools, guide resources, dry-run + confirm_token write safety |
 
 Then, regardless of surface:
 

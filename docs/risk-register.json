@@ -153,9 +153,9 @@
       "id": "no-default-npm-publish",
       "status": "accepted",
       "surface": "Release operations",
-      "summary": "Packages are packable but npm publication is not the default path.",
-      "impact": "Publish-related manifest fields exist for safety, but publishing still requires explicit maintainer approval.",
-      "mitigation": "Keep release/support policy and package contract aligned with the no-default-publish stance.",
+      "summary": "Packages are published to npm under the unofficial @apet97 scope; publication stays tag-gated CI, so npm publication is not the default path for routine changes and the publish manifest fields + prepublishOnly gates remain load-bearing.",
+      "impact": "Publishing is a deliberate tag push (wrapper-v*/cli-v*/mcp-v*); the prepublishOnly gates and tag-vs-version guards are the safety rails. Re-publishing on every change is not the workflow.",
+      "mitigation": "Keep release/support policy, package contract, and CI contract aligned with the tag-gated publish stance.",
       "closureGate": "Only publish after explicit maintainer approval plus perfect-full, pack-smoke, and release/support proof.",
       "evidence": [
         {
@@ -173,10 +173,10 @@
       "status": "accepted",
       "finalReadinessBlocking": false,
       "surface": "CI/CD release automation",
-      "summary": "A legacy tag-triggered npm release workflow exists; the maintainer reviewed it and accepted the current shape (release-please files the version-bump PR; release.yml publishes on a tag whose version matches wrapper/package.json).",
+      "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
       "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
       "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
-      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28 and accepted the current shape; the legacy aspect of the workflow is its tag-triggered single-package publish design, which the maintainer has chosen to keep.",
+      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing.",
       "evidence": [
         {
           "path": ".github/workflows/release.yml",

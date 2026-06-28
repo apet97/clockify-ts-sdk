@@ -1,7 +1,7 @@
 {
-  "name": "@clockify115/mcp-server",
+  "name": "@apet97/clockify-mcp-115",
   "version": "0.3.0",
-  "description": "Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
+  "description": "Unofficial, community-built — not affiliated with CAKE.com or Clockify. Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
   "license": "MIT",
   "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
   "homepage": "https://github.com/apet97/clockify-ts-sdk/tree/main/mcp",

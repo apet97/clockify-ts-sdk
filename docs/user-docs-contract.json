@@ -21,8 +21,8 @@
       "path": "README.md",
       "mustContain": [
         "clockify-sdk-ts-115",
-        "@clockify115/cli",
-        "@clockify115/mcp-server",
+        "@apet97/clockify-cli-115",
+        "@apet97/clockify-mcp-115",
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",
@@ -96,15 +96,14 @@
       "id": "cli-changelog",
       "path": "cli/CHANGELOG.md",
       "mustContain": [
-        "@clockify115/cli",
+        "@apet97/clockify-cli-115",
         "clockify115",
         "clk115"
       ],
       "forbiddenMarkers": [
         "TODO",
         "TBD",
-        "@clockify/cli",
-        "clockify-cli"
+        "@clockify/cli"
       ]
     },
     {
@@ -129,15 +128,14 @@
       "id": "mcp-changelog",
       "path": "mcp/CHANGELOG.md",
       "mustContain": [
-        "@clockify115/mcp-server",
+        "@apet97/clockify-mcp-115",
         "127-tool surface",
         "workflow tools"
       ],
       "forbiddenMarkers": [
         "TODO",
         "TBD",
-        "@clockify/mcp-server",
-        "clockify-mcp"
+        "@clockify/mcp-server"
       ]
     },
     {

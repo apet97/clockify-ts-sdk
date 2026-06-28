@@ -216,11 +216,11 @@ Run from the repo root unless noted. The repo is npm workspaces (`wrapper`,
 | Install (once) | `npm ci` | exit 0 |
 | Generate SDK (fresh tree only) | `make sdk-codegen` | populates `output/ts-sdk/` + `wrapper/src/` |
 | Build SDK wrapper | `npm run build -w clockify-sdk-ts-115` | exit 0, `wrapper/dist/**` current |
-| Type-check MCP | `npm run type-check -w @clockify115/mcp-server` | exit 0, no errors |
-| Build MCP | `npm run build -w @clockify115/mcp-server` | exit 0 |
-| Test MCP (filter) | `npm test -w @clockify115/mcp-server -- doctor` | new doctor tests pass |
-| Test MCP (full) | `npm test -w @clockify115/mcp-server` | all pass |
-| Lint MCP | `npm run lint -w @clockify115/mcp-server` | exit 0 |
+| Type-check MCP | `npm run type-check -w @apet97/clockify-mcp-115` | exit 0, no errors |
+| Build MCP | `npm run build -w @apet97/clockify-mcp-115` | exit 0 |
+| Test MCP (filter) | `npm test -w @apet97/clockify-mcp-115 -- doctor` | new doctor tests pass |
+| Test MCP (full) | `npm test -w @apet97/clockify-mcp-115` | all pass |
+| Lint MCP | `npm run lint -w @apet97/clockify-mcp-115` | exit 0 |
 | Regenerate tool manifest | `make mcp-tool-manifest` | rewrites `docs/mcp-tool-manifest.json` |
 | Regenerate README tables | `make readme-tables` | rewrites CLI/MCP README tables |
 | Regenerate product surface | `make product-surface` | rewrites `docs/product-surface.{json,md}` |
@@ -480,7 +480,7 @@ Notes:
 - `ids.userId` may be `""` on auth failure; `cleanIds` in `result.ts` strips
   empty values, so the receipt's `ids` will just omit `userId` then.
 
-**Verify**: `npm run type-check -w @clockify115/mcp-server` → exit 0, no errors.
+**Verify**: `npm run type-check -w @apet97/clockify-mcp-115` → exit 0, no errors.
 
 ### Step 2: Register the tool in `mcp/src/server.ts`
 
@@ -498,7 +498,7 @@ And register it immediately after `registerStatusTool(server, ctx);`
 
 **Verify**:
 ```bash
-npm run build -w clockify-sdk-ts-115 && npm run build -w @clockify115/mcp-server
+npm run build -w clockify-sdk-ts-115 && npm run build -w @apet97/clockify-mcp-115
 ```
 → both exit 0. (Build the wrapper first so its `dist/**` types are current.)
 
@@ -679,7 +679,7 @@ If `ClockifyConnectionError` / `UnauthorizedError` are not exported from the
 `wrapper/errors.ts:38-44`, `ClockifyConnectionError` is a class declared and
 exported in the same module). If an import fails, that is a STOP condition.
 
-**Verify**: `npm test -w @clockify115/mcp-server -- doctor` → all doctor tests
+**Verify**: `npm test -w @apet97/clockify-mcp-115 -- doctor` → all doctor tests
 pass (6 new tests).
 
 ### Step 4: Update `mcp/tests/server.test.ts` (add name, bump count)
@@ -698,7 +698,7 @@ Then change the length assertion at `:243`:
         expect(names).toHaveLength(135);
 ```
 
-**Verify**: `npm test -w @clockify115/mcp-server -- server` → passes,
+**Verify**: `npm test -w @apet97/clockify-mcp-115 -- server` → passes,
 including the "advertises every tool we registered" test.
 
 ### Step 5: Update `docs/mcp-tools.json` counts + workflow list
@@ -769,7 +769,7 @@ In `mcp/CHANGELOG.md`, under `## [Unreleased]`, add an `### Added` section
 Run, in this order (build the wrapper + mcp first if not already current):
 ```bash
 npm run build -w clockify-sdk-ts-115
-npm run build -w @clockify115/mcp-server
+npm run build -w @apet97/clockify-mcp-115
 make mcp-tool-manifest      # rewrites docs/mcp-tool-manifest.json from the live server
 make readme-tables          # rewrites CLI/MCP README command/tool tables
 make product-surface        # rewrites docs/product-surface.{json,md}
@@ -787,8 +787,8 @@ make operation-parity       # rewrites docs/operation-parity.{json,md}
 ### Step 10: Lint, then the full solo proof
 
 ```bash
-npm run lint -w @clockify115/mcp-server
-npm test -w @clockify115/mcp-server          # full MCP suite, all pass
+npm run lint -w @apet97/clockify-mcp-115
+npm test -w @apet97/clockify-mcp-115          # full MCP suite, all pass
 ```
 Then, **run solo (no other heavy commands / agents concurrently)** — the
 `performance-budgets` sub-gate measures startup time and flakes under CPU
@@ -833,18 +833,18 @@ Existing-test update: `mcp/tests/server.test.ts` gains `"clockify_doctor"` and
 `toHaveLength(135)`. `mcp/tests/tool-manifest.test.ts` floors (`>= 134/21/113`)
 keep passing at 135/22/113 once the manifest is regenerated (Step 9).
 
-Verification: `npm test -w @clockify115/mcp-server` → all pass, including the
+Verification: `npm test -w @apet97/clockify-mcp-115` → all pass, including the
 6 new doctor tests and the updated server.test count.
 
 ## Done criteria
 
 Machine-checkable. ALL must hold:
 
-- [ ] `npm run type-check -w @clockify115/mcp-server` exits 0.
-- [ ] `npm run build -w clockify-sdk-ts-115 && npm run build -w @clockify115/mcp-server` exit 0.
-- [ ] `npm test -w @clockify115/mcp-server` exits 0; `mcp/tests/doctor.test.ts`
+- [ ] `npm run type-check -w @apet97/clockify-mcp-115` exits 0.
+- [ ] `npm run build -w clockify-sdk-ts-115 && npm run build -w @apet97/clockify-mcp-115` exit 0.
+- [ ] `npm test -w @apet97/clockify-mcp-115` exits 0; `mcp/tests/doctor.test.ts`
       exists with the 6 cases and passes; `server.test.ts` asserts length 135.
-- [ ] `npm run lint -w @clockify115/mcp-server` exits 0.
+- [ ] `npm run lint -w @apet97/clockify-mcp-115` exits 0.
 - [ ] `docs/mcp-tools.json`: `summary.totalTools == 135`,
       `summary.workflowTools == 22`, `workflowTools.length == 22`,
       `summary.domainTools == 113`.

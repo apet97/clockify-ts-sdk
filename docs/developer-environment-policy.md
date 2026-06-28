@@ -36,7 +36,7 @@ CLI:
 npm ci
 make sdk-codegen
 npm run build -w clockify-sdk-ts-115
-npm run build -w @clockify115/cli
+npm run build -w @apet97/clockify-cli-115
 ```
 
 MCP:
@@ -45,7 +45,7 @@ MCP:
 npm ci
 make sdk-codegen
 npm run build -w clockify-sdk-ts-115
-npm run build -w @clockify115/mcp-server
+npm run build -w @apet97/clockify-mcp-115
 ```
 
 OpenAPI/local SDK generation:

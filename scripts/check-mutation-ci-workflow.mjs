@@ -36,7 +36,7 @@ for (const marker of [
     "make mutation",
     "npm run mutation -w clockify-sdk-ts-115",
     "node scripts/check-mutation-score.mjs --package wrapper",
-    "npm run mutation -w @clockify115/mcp-server",
+    "npm run mutation -w @apet97/clockify-mcp-115",
     "node scripts/check-mutation-score.mjs --package mcp",
     "actions/upload-artifact@v4",
 ]) {

@@ -114,22 +114,26 @@
     {
       "path": ".github/workflows/ci-cli-release.yml",
       "mustContain": [
-        "DISABLED scaffold",
+        "Release @apet97/clockify-cli-115 to npm",
+        "cli-v*.*.*",
         "workflow_dispatch",
         "working-directory: cli",
-        "Pack (dry-run — never publishes)",
-        "if: false",
+        "Verify tag matches package version",
+        "github.ref_type == 'tag'",
+        "npm publish",
         "persist-credentials: false"
       ]
     },
     {
       "path": ".github/workflows/ci-mcp-release.yml",
       "mustContain": [
-        "DISABLED scaffold",
+        "Release @apet97/clockify-mcp-115 to npm",
+        "mcp-v*.*.*",
         "workflow_dispatch",
         "working-directory: mcp",
-        "Pack (dry-run — never publishes)",
-        "if: false",
+        "Verify tag matches package version",
+        "github.ref_type == 'tag'",
+        "npm publish",
         "persist-credentials: false"
       ]
     },
@@ -157,7 +161,7 @@
         "type: choice",
         "make mutation",
         "npm run mutation -w clockify-sdk-ts-115",
-        "npm run mutation -w @clockify115/mcp-server",
+        "npm run mutation -w @apet97/clockify-mcp-115",
         "node scripts/check-mutation-score.mjs --package wrapper",
         "node scripts/check-mutation-score.mjs --package mcp",
         "actions/upload-artifact@v4",

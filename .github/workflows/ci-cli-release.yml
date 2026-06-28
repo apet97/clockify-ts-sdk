@@ -1,23 +1,20 @@
-name: Release @clockify115/cli to npm (DISABLED scaffold)
+name: Release @apet97/clockify-cli-115 to npm
 
-# INERT publish scaffold — it cannot publish anything as written.
+# Publishes @apet97/clockify-cli-115 to npm on a pushed `cli-v*.*.*` tag whose
+# version matches cli/package.json. A manual `workflow_dispatch` run only
+# type-checks, tests, builds, and dry-run packs — the publish step is gated to
+# tag pushes (`github.ref_type == 'tag'`), so it never fires off a branch.
 #
-# The repo posture is "local tarballs only — no public npm publish without
-# explicit maintainer approval" (AGENTS.md §12.7). Only the SDK (`wrapper/`) has a
-# live release path (release.yml). This workflow exists so the CLI release is
-# DESIGNED and ready, but it is doubly disabled:
-#   - it runs ONLY on manual `workflow_dispatch` (never on a tag push), and
-#   - its publish step is guarded `if: false`, so even a manual run only builds
-#     and packs — it never runs `npm publish`.
+# Requires the NPM_TOKEN repo secret. Provenance is emitted via OIDC
+# (id-token: write) from publishConfig.provenance in cli/package.json.
 #
-# To actually publish @clockify115/cli (a separate, deliberate maintainer
-# decision — see docs/release-support-policy.md):
-#   1. add a `push: { tags: ['cli-v*.*.*'] }` trigger and a tag↔version guard,
-#   2. remove the `if: false` guard on the "Publish to npm" step,
-#   3. set the NPM_TOKEN secret and confirm provenance/OIDC.
-# Until then this workflow only proves the package builds, tests, and packs.
+# Ordering: the CLI peer-depends on clockify-sdk-ts-115, so publish the SDK
+# (push `wrapper-v*`) before pushing `cli-v*`.
 
 on:
+  push:
+    tags:
+      - "cli-v*.*.*"
   workflow_dispatch: {}
 
 env:
@@ -25,12 +22,12 @@ env:
 
 jobs:
   publish:
-    name: Pack @clockify115/cli (publish disabled)
+    name: Publish @apet97/clockify-cli-115
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write # reserved for npm provenance via OIDC once enabled
+      id-token: write # required for npm provenance via OIDC
     defaults:
       run:
         working-directory: cli
@@ -62,11 +59,23 @@ jobs:
           npm test
           npm run build
 
-      - name: Pack (dry-run — never publishes)
+      - name: Pack (dry-run smoke before publish)
         run: npm pack --dry-run
 
-      - name: Publish to npm (DISABLED — opt-in only)
-        if: false # remove this guard to enable publishing — see header + AGENTS.md §12.7
+      - name: Verify tag matches package version
+        if: github.ref_type == 'tag'
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#cli-v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION"
+            exit 1
+          fi
+
+      - name: Publish to npm (with provenance from publishConfig)
+        if: github.ref_type == 'tag'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish

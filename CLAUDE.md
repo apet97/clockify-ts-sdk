@@ -31,13 +31,14 @@ This standalone repo ships three sibling packages:
 | Folder | Package | Current surface |
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 92 public names; 27 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`, `requests`, `reports`, `bulk`, `compose`) |
-| `cli/` | `@clockify115/cli` | v0.1.0 CLI; bins `clockify115` and `clk115`; 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@clockify115/mcp-server` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 135 tools (22 workflow + 113 domain); 6 resources |
+| `cli/` | `@apet97/clockify-cli-115` | v0.1.0 CLI; bins `clockify115` and `clk115`; 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
+| `mcp/` | `@apet97/clockify-mcp-115` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 135 tools (22 workflow + 113 domain); 6 resources |
 
-The `-115` / `115` suffix is intentional trademark distance. Default
-stance: local/packable packages, not npm publication. Keep
-`publishConfig` and `prepublishOnly` gates intact; do not publish or
-change release auth unless explicitly asked.
+The `-115` / `115` suffix and the personal `@apet97` scope are
+intentional trademark distance. These three are published to npm as
+unofficial, community-built packages via CI tag-push. Keep
+`publishConfig` and `prepublishOnly` gates intact; do not change release
+auth or workflow triggers unless explicitly asked.
 
 The sister repo `../GOCLMCP/` owns the canonical Clockify OpenAPI
 generator. Spec-shape changes start there, then flow into this repo's
@@ -128,8 +129,8 @@ Or from the repo root, equivalently:
 
 ```bash
 npm run type-check -w clockify-sdk-ts-115
-npm test -w @clockify115/cli
-npm run build -w @clockify115/mcp-server
+npm test -w @apet97/clockify-cli-115
+npm run build -w @apet97/clockify-mcp-115
 ```
 
 For live MCP sandbox cleanup proof, run from the repo root so the
@@ -447,7 +448,7 @@ make docs-drift
 
 ## Hard Stops
 
-- No `npm publish`.
+- No `npm publish` from a laptop (publication is via CI tag-push only).
 - No `git push --force`.
 - No live tests against customer workspaces.
 - No edits to `spec/corrected/**`, `output/ts-sdk/**`, or

@@ -50,7 +50,7 @@ Facts you need, inlined (verified against the repo at the planned-at SHA):
   only `README.md`, `CHANGELOG.md`, `LICENSE`, `src/`, `tests/`, etc. There is no
   `mcp/media/` directory and no `mcp/POSITIONING.md`.
 - `mcp/README.md` — the public MCP doc. Structure (line numbers at planned-at SHA):
-  - Lines 1–18: title `# @clockify115/mcp-server`, intro paragraphs, and a
+  - Lines 1–18: title `# @apet97/clockify-mcp-115`, intro paragraphs, and a
     "Product posture" paragraph ending with
     `[`docs/product-north-star.md`](../docs/product-north-star.md).`
   - Line 20: `## Install`.
@@ -120,7 +120,7 @@ These determine exactly which gates can be affected. Trust them:
   blacklist: `world-class`, `battle-tested`, `production-ready`, `best-in-class`,
   `just works`, `zero-config` (case-insensitive, hyphen/space variants), plus
   `TODO`/`TBD`. It also requires `mcp/README.md` to keep containing
-  `@clockify115/mcp-server`, `structuredContent`, `generated:mcp-workflow-tools`,
+  `@apet97/clockify-mcp-115`, `structuredContent`, `generated:mcp-workflow-tools`,
   `generated:mcp-domain-tools`. A new `mcp/POSITIONING.md` is **not** scanned.
 - **`make user-docs`** (`scripts/check-user-docs.mjs`) requires `mcp/README.md` to
   keep containing the markers `Workflow Tools`, `Domain Tools`,
@@ -239,7 +239,7 @@ through a generic connector. This server is purpose-built and workflow-first.
 The table is a factual, nominative comparison to help you choose — capabilities
 of third-party tools vary by version and plan, so their columns are hedged.
 
-| Capability | This server (`@clockify115/mcp-server`) | Typical community Clockify MCP | Connector / aggregator platform |
+| Capability | This server (`@apet97/clockify-mcp-115`) | Typical community Clockify MCP | Connector / aggregator platform |
 |---|---|---|---|
 | Tool design | Workflow-first tools (log work, review day/week, invoice, request time off) **plus** full domain CRUD — see the [Workflow Tools](./README.md#workflow-tools) and [Domain Tools](./README.md#domain-tools) tables | Often a thin 1:1 mirror of the REST API | Generic API passthrough |
 | Destructive-write safety | `dry_run` preview returns a single-use `confirm_token`; the write only runs when you replay it | Frequently writes directly, no preview | Varies by connector |
@@ -396,7 +396,7 @@ bullet style. Suggested text (avoid forbidden tokens; do not cite a tool count):
 ```
 
 Do not remove existing changelog markers; `mcp/CHANGELOG.md` must keep containing
-`@clockify115/mcp-server` and `workflow tools` (a `docs-quality` requirement).
+`@apet97/clockify-mcp-115` and `workflow tools` (a `docs-quality` requirement).
 
 **Verify**: `make changelog-drift` → exit 0.
 

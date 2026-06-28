@@ -5,8 +5,8 @@
     "path": "docs/release-support-policy.md",
     "mustContain": [
       "clockify-sdk-ts-115",
-      "@clockify115/cli",
-      "@clockify115/mcp-server",
+      "@apet97/clockify-cli-115",
+      "@apet97/clockify-mcp-115",
       "make perfect-fast",
       "make perfect-full",
       "make pack-smoke",
@@ -21,8 +21,8 @@
     "path": "SECURITY.md",
     "mustContain": [
       "clockify-sdk-ts-115",
-      "@clockify115/cli",
-      "@clockify115/mcp-server",
+      "@apet97/clockify-cli-115",
+      "@apet97/clockify-mcp-115",
       "GitHub Security Advisories",
       "Do NOT open a public GitHub issue",
       "coordinated-disclosure"

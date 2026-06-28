@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @clockify115/cli entrypoint. Wires every command, parses global
+ * @apet97/clockify-cli-115 entrypoint. Wires every command, parses global
  * flags, and routes errors through a single exit handler so the
  * process exit code reflects success or failure consistently.
  * Unknown commands (commander.unknownCommand) and unknown options
@@ -45,7 +45,7 @@ export function buildProgram(): Command {
     const program = new Command();
     program
         .name("clockify115")
-        .description("Clockify CLI from @clockify115/cli, built on clockify-sdk-ts-115.")
+        .description("Clockify CLI from @apet97/clockify-cli-115, built on clockify-sdk-ts-115.")
         .version("0.1.0")
         .option("--api-key <key>", "Clockify personal API key (or CLOCKIFY_API_KEY env var).")
         .option("--workspace <id>", "Clockify workspace ID (or CLOCKIFY_WORKSPACE_ID env var).")

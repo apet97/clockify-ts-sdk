@@ -48,7 +48,7 @@ export const SERVER_INSTRUCTIONS =
 export function buildServer(ctx: Context): McpServer {
     const server = new McpServer(
         {
-            name: "@clockify115/mcp-server",
+            name: "@apet97/clockify-mcp-115",
             version: "0.3.0",
         },
         {

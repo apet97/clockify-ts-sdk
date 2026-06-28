@@ -58,7 +58,7 @@ jobs:
 
       - name: Run MCP mutation
         if: ${{ inputs.target == 'mcp' }}
-        run: npm run mutation -w @clockify115/mcp-server
+        run: npm run mutation -w @apet97/clockify-mcp-115
 
       - name: Check MCP mutation floor
         if: ${{ inputs.target == 'mcp' }}

@@ -1,6 +1,6 @@
 # Agent-mode guide (compact)
 
-A dense, LLM-context-friendly operating guide for `@clockify115/mcp-server`. The
+A dense, LLM-context-friendly operating guide for `@apet97/clockify-mcp-115`. The
 human README has the full prose; this is the short version an agent should follow.
 
 ## Order of operations

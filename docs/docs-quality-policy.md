@@ -37,8 +37,8 @@ arrays are allowed only when `intentionalGaps` explains the missing surface.
 
 ## Style rules
 
-- Use exact package names: `clockify-sdk-ts-115`, `@clockify115/cli`, and
-  `@clockify115/mcp-server`.
+- Use exact package names: `clockify-sdk-ts-115`, `@apet97/clockify-cli-115`, and
+  `@apet97/clockify-mcp-115`.
 - Keep changelog package/import examples on the same exact package names as
   the READMEs; changelogs are user-facing migration documents, not historical
   excuses for stale copy-paste commands.

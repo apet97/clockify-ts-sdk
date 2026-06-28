@@ -151,8 +151,8 @@
           "contains": [
             "npm pack",
             "clockify-sdk-ts-115",
-            "@clockify115/cli",
-            "@clockify115/mcp-server",
+            "@apet97/clockify-cli-115",
+            "@apet97/clockify-mcp-115",
             "validateContractShape",
             "safeRelativePath",
             "pack-consumer-smoke-contract.json",
@@ -990,8 +990,8 @@
           "path": "docs/package-contract.json",
           "contains": [
             "clockify-sdk-ts-115",
-            "@clockify115/cli",
-            "@clockify115/mcp-server",
+            "@apet97/clockify-cli-115",
+            "@apet97/clockify-mcp-115",
             "requiredScripts",
             "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke",
             "npm run type-check && npm test && npm run build",
@@ -1200,7 +1200,7 @@
           "contains": [
             "nodeFloor",
             ">=20",
-            "@clockify115/mcp-server",
+            "@apet97/clockify-mcp-115",
             "wiring"
           ]
         },
@@ -2026,8 +2026,8 @@
           "path": "docs/supply-chain-contract.json",
           "contains": [
             "clockify-sdk-ts-115",
-            "@clockify115/cli",
-            "@clockify115/mcp-server",
+            "@apet97/clockify-cli-115",
+            "@apet97/clockify-mcp-115",
             "requiredScripts",
             "provenance",
             "wiring",
@@ -2469,8 +2469,8 @@
           "path": "SECURITY.md",
           "contains": [
             "clockify-sdk-ts-115",
-            "@clockify115/cli",
-            "@clockify115/mcp-server"
+            "@apet97/clockify-cli-115",
+            "@apet97/clockify-mcp-115"
           ]
         },
         {

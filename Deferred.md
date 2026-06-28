@@ -111,7 +111,7 @@ const r1 = gate(await agent({
   inputs: { plan: "Deferred.md#item-1", castBaseline: 24 },
   schema: itemSchema,
   // gate: make consumer-cast-budget green; both type-checks 0; both suites pass;
-  //       npm run lint -w @clockify115/mcp-server; cast-operator count == 22.
+  //       npm run lint -w @apet97/clockify-mcp-115; cast-operator count == 22.
 }));
 
 // Phase 2 — Item 3 B1+B4 (independent; simplest sequential on the same branch).
@@ -311,8 +311,8 @@ expenses/webhooks/invoices list ops.
    ```
             });
    ```
-   **Verify (per edit):** `npm run type-check -w @clockify115/cli` and
-   `-w @clockify115/mcp-server` stay green with the cast removed.
+   **Verify (per edit):** `npm run type-check -w @apet97/clockify-cli-115` and
+   `-w @apet97/clockify-mcp-115` stay green with the cast removed.
 
 3. **Ratchet the annotations.** After each cast drops, delete its
    `KEEP as never` comment line. Leave only the Bucket-C `KEEP`s.
@@ -376,13 +376,13 @@ to `gen-clockify-openapi`.
 subagents — no shared state.
 - *Subagent 3a (CLI).* Files:
   `cli/src/commands/{expenses,timeoff,users,webhooks}.ts`. Removes A/B casts +
-  `KEEP` comments. **Gate:** `npm run type-check -w @clockify115/cli && npm test
-  -w @clockify115/cli && npm run lint -w @clockify115/cli`.
+  `KEEP` comments. **Gate:** `npm run type-check -w @apet97/clockify-cli-115 && npm test
+  -w @apet97/clockify-cli-115 && npm run lint -w @apet97/clockify-cli-115`.
 - *Subagent 3b (MCP).* Files:
   `mcp/src/tools/{entries,expenses,invoices,timeOff,users}.ts`. Removes A/B
   casts; leaves Bucket-C `KEEP`s. **Gate:** `npm run type-check
-  -w @clockify115/mcp-server && npm test -w @clockify115/mcp-server && npm run
-  lint -w @clockify115/mcp-server`.
+  -w @apet97/clockify-mcp-115 && npm test -w @apet97/clockify-mcp-115 && npm run
+  lint -w @apet97/clockify-mcp-115`.
 - *Subagent 3c (docs/contract).* Updates
   `docs/consumer-cast-budget-contract.json` `purpose` +
   `spec/evidence/discrepancies.md`. **Gate:** `make consumer-cast-budget` green.
@@ -1036,8 +1036,8 @@ mcp/package.json | sort -u` → one line `"vitest": "^4.1.4"`.
 **Step 3 — reinstall + per-package coverage run.**
 ```
 cd clockify-ts-sdk && npm ci
-npm test -w @clockify115/cli && npm test -w @clockify115/mcp-server
-npm run test -w @clockify115/cli -- --coverage && npm run test -w @clockify115/mcp-server -- --coverage
+npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115
+npm run test -w @apet97/clockify-cli-115 -- --coverage && npm run test -w @apet97/clockify-mcp-115 -- --coverage
 npm ls vitest    # expect a single 4.x line, no 2.x dedupe
 ```
 **Verify:** all suites PASS; `npm ls vitest` shows one major. If the v4 v8-reporter
@@ -1094,12 +1094,12 @@ or keep it conditional and **drop the `as never`**. Flip `discrepancies.md` from
 **Step gate (offline pre-check before the live run):**
 ```
 grep -n "as never" mcp/src/tools/timeOff.ts        # expect exactly the :267 site
-npm test -w @clockify115/mcp-server                # baseline green
+npm test -w @apet97/clockify-mcp-115                # baseline green
 ```
 **Verify (post-fix):** `grep -A2 'time-off.change-status.union-and-note'
 spec/evidence/discrepancies.md` no longer shows `PARTIAL`; `grep -n "as never"
 mcp/src/tools/timeOff.ts` no longer returns the `:267` site; `make
-mcp-write-safety` and `npm test -w @clockify115/mcp-server` PASS.
+mcp-write-safety` and `npm test -w @apet97/clockify-mcp-115` PASS.
 
 **Perfect end state.** The `union-and-note` discrepancy header reads
 compensated/resolved with the probe outcome; the `as never` at `timeOff.ts:267` is

@@ -6,10 +6,10 @@ Pick your surface:
 
 - **SDK** (`clockify-sdk-ts-115`) — 24 runnable TypeScript scripts in
   [`wrapper/examples/`](../wrapper/examples/README.md).
-- **CLI** (`@clockify115/cli`) — runnable shell scripts in
+- **CLI** (`@apet97/clockify-cli-115`) — runnable shell scripts in
   [`cli/examples/`](../cli/examples/) (status, log time, list projects,
   daily timesheet, JSON export, mock run).
-- **MCP** (`@clockify115/mcp-server`) — agent tool-call recipes plus
+- **MCP** (`@apet97/clockify-mcp-115`) — agent tool-call recipes plus
   `claude-desktop.json`, a compact `agent-mode.md`, and `workflow-transcripts/`
   in [`mcp/examples/`](../mcp/examples/README.md).
 
