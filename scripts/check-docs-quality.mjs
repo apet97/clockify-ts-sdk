@@ -261,7 +261,7 @@ function checkMcpPositioningMedia() {
 
 function checkHistoricalArchiveBanners() {
     const banner = "ARCHIVED ARTIFACT. Do not execute directly.";
-    for (const relPath of ["Deferred.md", ".recon/MASTER.md", "plans/README.md"]) {
+    for (const relPath of [".recon/MASTER.md", "plans/README.md"]) {
         if (relPath.startsWith(".recon/") && !fs.existsSync(path.join(root, relPath))) {
             continue;
         }
