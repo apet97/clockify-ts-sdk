@@ -6,10 +6,10 @@ TypeScript stdio MCP server for Clockify, built on
 local user, one pinned `CLOCKIFY_WORKSPACE_ID`, workflow tools first,
 domain CRUD second.
 
-This package now advertises 135 tools: 22 workflow tools plus 113
-domain tools across Clockify's major resources. It is
-unpublished by default in this repo, but keeps npm metadata and
-`prepublishOnly` gates so a later publisher inherits the right checks.
+This package now advertises 140 tools: 22 workflow tools plus 118
+domain tools across Clockify's major resources. It is published to npm
+under the unofficial `@apet97` scope; the `prepublishOnly` gates run on
+every publish.
 
 Product posture: this is the pure-Node, SDK-vendor-style MCP sibling to
 the Go reference server. Keep it workflow-first, easy to install, and
@@ -299,14 +299,14 @@ the source of truth.
 | `tags` | 5 | list, get, create, update, delete |
 | `entries` | 6 | list, get, log, update, delete, mark_invoiced |
 | `timer` | 2 | start, stop |
-| `invoices` | 8 | list, get, create, update, delete, update_status, export, import_time |
+| `invoices` | 11 | list, get, create, update, delete, update_status, export, import_time, info, items_list, payments_list |
 | `expenses` | 10 | expense list/get/create/update/delete; category CRUD plus archive |
-| `webhooks` | 5 | list, get, create, update, delete |
+| `webhooks` | 6 | list, get, create, update, delete, events |
 | `custom_fields` | 7 | workspace CRUD plus project field list/update/remove |
 | `time_off` | 12 | requests, policies, and balances |
 | `users` | 7 | list, member_profile_get, grant_role, revoke_role, set_member_rate, invite, member_profile_update |
 | `scheduling` | 7 | assignments list/create/update/delete plus publish and capacity |
-| `reports` | 4 | summary, detailed, weekly, attendance |
+| `reports` | 5 | summary, detailed, weekly, attendance, expense |
 | `shared_reports` | 5 | list, view, create, update, delete |
 | `groups` | 8 | CRUD plus membership tools |
 | `holidays` | 5 | list/create/update/delete |

@@ -34,9 +34,9 @@ describe("mcp tool manifest", () => {
         const { summary, tools } = manifest;
         expect(summary.totalTools).toBe(tools.length);
         expect(summary.workflowTools + summary.domainTools).toBe(summary.totalTools);
-        expect(summary.totalTools).toBeGreaterThanOrEqual(134);
+        expect(summary.totalTools).toBeGreaterThanOrEqual(140);
         expect(summary.workflowTools).toBeGreaterThanOrEqual(21);
-        expect(summary.domainTools).toBeGreaterThanOrEqual(113);
+        expect(summary.domainTools).toBeGreaterThanOrEqual(118);
         expect(summary.destructiveTools).toBeGreaterThan(0);
         expect(summary.destructiveTools).toBeLessThanOrEqual(summary.totalTools);
         expect(summary.destructiveTools).toBeGreaterThanOrEqual(23);

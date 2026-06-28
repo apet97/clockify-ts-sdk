@@ -138,4 +138,25 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
         },
         "Confirm the date range and that attendanceFilter is set.",
     );
+
+    defineTool(
+        server,
+        "clockify_reports_expense",
+        {
+            title: "Expense detailed report",
+            description:
+                "Generate a detailed expenses report over a date range (served from the reports host). Pass approvalState, billable, clients, projects, categories, etc. via `extra`; exportType defaults to JSON.",
+            inputSchema: { ...reportCore },
+            annotations: { readOnlyHint: true, idempotentHint: true },
+        },
+        async (args) => {
+            const data = await ctx.client.expenseReport.generateDetailedReportV1(
+                wireBody<ClockifyApi.GenerateDetailedReportV1ExpenseReportRequest>(
+                    reportRequest(ctx, args),
+                ),
+            );
+            return successResult("clockify_reports_expense", data, undefined, { entity: "report" });
+        },
+        "Confirm the date range; the expenses report uses the reports host.",
+    );
 }

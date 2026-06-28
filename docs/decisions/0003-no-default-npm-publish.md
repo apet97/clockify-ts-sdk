@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Updated 2026-06-28: tag-gated npm publication enabled under the
+unofficial `@apet97` scope (the default dev loop is still packable-only).
 
 ## Context
 
@@ -16,14 +17,15 @@ known legacy risk that needs a maintainer decision before use.
 
 ## Decision
 
-Do not publish by default. Keep package manifests packable and publish-safe; prepublishOnly remains present in each manifest; keep provenance enabled for any future publish; and require explicit maintainer approval before running `npm publish` or changing release workflow behavior.
+Do not publish by default — nothing publishes on a routine commit. Publication is deliberate and tag-gated: a pushed prefixed version tag (`wrapper-v*`/`cli-v*`/`mcp-v*`) publishes via CI with provenance under the unofficial `@apet97` scope. Keep package manifests packable and publish-safe; prepublishOnly remains present in each manifest; keep provenance enabled; and require explicit maintainer approval before changing release workflow triggers or auth.
 
 ## Consequences
 
-- Local readiness means packable and smoke-tested, not published.
-- Release workflow changes remain out of scope without explicit approval.
-- The risk register must keep release automation risk visible until a
-  maintainer chooses to address it.
+- Local readiness means packable and smoke-tested; publishing is a separate,
+  deliberate tag push.
+- Release workflow trigger/auth changes remain out of scope without explicit
+  approval.
+- The risk register keeps release automation risk visible.
 
 ## Proof
 

@@ -58,8 +58,8 @@ subdirectory:
   Output controls: `--output table|json|ndjson`, `--compact`,
   `--select <dot-path>`. Local build artefact: `cli/dist/`.
 - **`mcp/`** → `@apet97/clockify-mcp-115` — stdio Model Context Protocol
-  server, sibling to the Go MCP in GOCLMCP. **135 tools**: 22
-  workflow/orientation tools plus 113 domain tools across 19 resource groups.
+  server, sibling to the Go MCP in GOCLMCP. **140 tools**: 22
+  workflow/orientation tools plus 118 domain tools across 19 resource groups.
   Workflow tools cover daily time tracking, work-package setup,
   review/fix, invoices, expenses, time off, scheduling, webhooks,
   and demo seed/cleanup; read-only orientation tools
@@ -373,8 +373,8 @@ end-to-end and green before push. Drift gates are non-negotiable.
     splits its `status`:
     time-off **policies** scope `"ACTIVE"`, holidays keep `"ALL"`
     (`spec/evidence/discrepancies.md`
-    `time-off.policies.scope.status-active-not-all`). Adds no tools
-    (the surface is 135); arg-shape coercion (`zStringList` /
+    `time-off.policies.scope.status-active-not-all`). Adds no tools;
+    arg-shape coercion (`zStringList` /
     `zNumberLike` in `mcp/src/arg-shapes.ts`) keeps the
     model-visible JSON Schema unchanged. Change the tool, its test,
     and the ledger together.

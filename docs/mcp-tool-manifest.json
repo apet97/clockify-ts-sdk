@@ -3,9 +3,9 @@
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
-    "totalTools": 135,
+    "totalTools": 140,
     "workflowTools": 22,
-    "domainTools": 113,
+    "domainTools": 118,
     "destructiveTools": 23
   },
   "tools": [
@@ -615,8 +615,41 @@
       "destructiveHint": false
     },
     {
+      "name": "clockify_invoices_info",
+      "title": "Filter invoice info",
+      "group": "domain",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_invoices_items_list",
+      "title": "List invoice line items",
+      "group": "domain",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "destructiveHint": false
+    },
+    {
       "name": "clockify_invoices_list",
       "title": "List invoices",
+      "group": "domain",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_invoices_payments_list",
+      "title": "List invoice payments",
       "group": "domain",
       "annotations": {
         "readOnlyHint": true,
@@ -826,6 +859,17 @@
     {
       "name": "clockify_reports_detailed",
       "title": "Detailed report",
+      "group": "domain",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "destructiveHint": false
+    },
+    {
+      "name": "clockify_reports_expense",
+      "title": "Expense detailed report",
       "group": "domain",
       "annotations": {
         "readOnlyHint": true,
@@ -1460,6 +1504,17 @@
         "idempotentHint": false
       },
       "destructiveHint": true
+    },
+    {
+      "name": "clockify_webhooks_events",
+      "title": "List webhook event types",
+      "group": "domain",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true
+      },
+      "destructiveHint": false
     },
     {
       "name": "clockify_webhooks_get",

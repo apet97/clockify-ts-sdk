@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.4.0]
+
 ### Changed
 
 - Renamed the package to `@apet97/clockify-mcp-115` (was `@clockify115/mcp-server`)
@@ -13,6 +15,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Added
 
+- 5 read-only domain tools — tool surface 135 -> 140 (22 workflow + 118 domain):
+  `clockify_invoices_info` (the richer POST /invoices/info filter projection),
+  `clockify_invoices_items_list` (an invoice's line items), `clockify_invoices_payments_list`
+  (recorded payments), `clockify_reports_expense` (detailed expenses report on the
+  reports host), and `clockify_webhooks_events` (offline registry of subscribable
+  webhook event types).
 - `clockify_doctor`: a read-only live connection-check tool. It validates
   CLOCKIFY_API_KEY against `/user`, confirms the pinned CLOCKIFY_WORKSPACE_ID
   is reachable for that key, reports base-URL posture (host only), and

@@ -82,7 +82,7 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "node": ">=20",
       "bins": [
         "clockify115-mcp"
@@ -92,9 +92,9 @@
         "LICENSE",
         "README.md"
       ],
-      "declaredToolCount": 135,
+      "declaredToolCount": 140,
       "declaredWorkflowToolCount": 22,
-      "declaredDomainToolCount": 113,
+      "declaredDomainToolCount": 118,
       "prepublishOnly": "npm run type-check && npm test && npm run build",
       "gates": [
         "npm run type-check",

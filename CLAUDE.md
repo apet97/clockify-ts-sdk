@@ -32,7 +32,7 @@ This standalone repo ships three sibling packages:
 |---|---|---|
 | `wrapper/` | `clockify-sdk-ts-115` | v0.9.0 SDK; dual ESM/CJS; 92 public names; 27 subpaths (incl. `money`, `invoice-body`, `resolve`, `dates`, `ensure`, `requests`, `reports`, `bulk`, `compose`) |
 | `cli/` | `@apet97/clockify-cli-115` | v0.1.0 CLI; bins `clockify115` and `clk115`; 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, `api`, `doctor`, `completion`; `--output table\|json\|ndjson`/`--compact`/`--select` controls |
-| `mcp/` | `@apet97/clockify-mcp-115` | v0.3.0 stdio MCP; bin `clockify115-mcp`; 135 tools (22 workflow + 113 domain); 6 resources |
+| `mcp/` | `@apet97/clockify-mcp-115` | v0.4.0 stdio MCP; bin `clockify115-mcp`; 140 tools (22 workflow + 118 domain); 6 resources |
 
 The `-115` / `115` suffix and the personal `@apet97` scope are
 intentional trademark distance. These three are published to npm as
@@ -272,7 +272,7 @@ make docs-drift
   through; unresolved or ambiguous names stop before mutation as either
   a grounded `clarification` receipt or a structured error, depending
   on the resolver path. Read-filter slots stay list-free. This wiring
-  added no tools (the surface is 135).
+  added no tools.
 - MCP arg-shape forgiveness: list fields accept a bare string
   (`"Bob"` -> `["Bob"]`) and number fields a numeric string
   (`"75"` -> `75`, never `""` -> `0`), via `zStringList` / `zNumberLike`

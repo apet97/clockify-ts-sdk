@@ -50,12 +50,13 @@ function envelope(res: unknown): Record<string, unknown> {
 }
 
 describe("reports tools", () => {
-    it("registers the four report tools as read-only", async () => {
+    it("registers the five report tools as read-only", async () => {
         const client = await connect(reportsContext({}));
         const tools = (await client.listTools()).tools.filter((tool) => tool.name.startsWith("clockify_reports_"));
         expect(tools.map((tool) => tool.name).sort()).toEqual([
             "clockify_reports_attendance",
             "clockify_reports_detailed",
+            "clockify_reports_expense",
             "clockify_reports_summary",
             "clockify_reports_weekly",
         ]);

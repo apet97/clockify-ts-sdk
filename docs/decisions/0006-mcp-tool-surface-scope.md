@@ -6,7 +6,8 @@ Accepted.
 
 ## Context
 
-The TypeScript MCP (`@apet97/clockify-mcp-115`) advertises 135 tools; the sibling
+The TypeScript MCP (`@apet97/clockify-mcp-115`) advertises 140 tools (135 at the
+2026-06-22 triage below; +5 read tools shipped 2026-06-28); the sibling
 Go MCP reference (`../GOCLMCP`) loads 156. The operation-parity matrix
 (`docs/operation-parity.md`) also shows 13 of the 169 OpenAPI operations with no
 SDK method name (the SDK column is `-`). Quality work requires each gap to be
@@ -18,8 +19,9 @@ exact-name parity (94) exceeds Go (84).
 
 ## Decision
 
-The 135-tool TS surface is a deliberate product decision, not an arbitrary
-ceiling. The 58 Go-only names decompose as:
+The 140-tool TS surface is a deliberate product decision, not an arbitrary
+ceiling (135 at the 2026-06-22 triage below; +5 read tools shipped 2026-06-28).
+As of the triage, the 58 Go-only names decompose as:
 
 - **8 intentional Go-only exclusions.** Two raw API-fallback tools
   (`clockify_api_get`, `clockify_api_request`) — raw passthrough is the Go MCP's
@@ -37,8 +39,10 @@ ceiling. The 58 Go-only names decompose as:
   `clockify_entries_log`; Go `clockify_groups_add_user` → TS
   `clockify_groups_add_member`). Curated parity reasons live in
   `docs/operation-parity-overrides.json`.
-- **22 documented "could-add" backlog candidates** (real, live, SDK-backed ops Go
-  surfaces but TS does not yet ship). Highest value: `invoices_payments_list` /
+- **17 documented "could-add" backlog candidates** (real, live, SDK-backed ops Go
+  surfaces but TS does not yet ship; down from 22 — the first read-tranche of 5
+  (`invoices_info`, `invoices_items_list`, `invoices_payments_list`,
+  `reports_expense`, `webhooks_events`) shipped 2026-06-28). Earlier highest value: `invoices_payments_list` /
   `_create` / `_delete`, `invoices_items_add` / `_delete` / `_list`,
   `invoices_info` (filterInvoices), `reports_export` (CSV/XLSX/PDF file output),
   `reports_expense`. Secondary: `projects_templates_create` / `_list`,
@@ -69,8 +73,11 @@ convention — so it stays as-is.
 
 ## Consequences
 
-The MCP surface stays at 135 advertised tools by intent; the 58-name parity gap
-is fully accounted for (8 + 28 + 22) with no silent ceiling. The 22 backlog
+The MCP surface is 140 advertised tools (the 2026-06-28 read-tranche shipped 5
+from the backlog: `clockify_invoices_info`, `clockify_invoices_items_list`,
+`clockify_invoices_payments_list`, `clockify_reports_expense`,
+`clockify_webhooks_events`); the 2026-06-22 Go-only parity gap was accounted for
+(8 + 28 + 22) with no silent ceiling, leaving 17 backlog candidates. The 22 backlog
 candidates are an explicit, prioritized to-do in `docs/mcp-backlog.md`; the 12
 unstamped ops are reachable via their operationId-derived methods and
 intentionally unstamped per convention. Changing the tool count or shipping a backlog tool is a
@@ -82,5 +89,5 @@ implied to be missing by accident.
 `make operation-parity` regenerates `docs/operation-parity.{json,md}` by joining
 the OpenAPI operations, SDK method stamps, TS MCP tool names, and the GOCLMCP
 tool catalog; `docs/operation-parity-overrides.json` carries the curated rename
-map. `make mcp-contract` pins the 135-tool count and split (22 workflow + 113
+map. `make mcp-contract` pins the 140-tool count and split (22 workflow + 118
 domain). `make decision-records` verifies this record.
