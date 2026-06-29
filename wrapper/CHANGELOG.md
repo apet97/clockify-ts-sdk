@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
+## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.9.0...wrapper-v0.10.0) (2026-06-29)
+
+
+### Features
+
+* **mcp:** ship the low-risk read-tool tranche (135 -&gt; 140) + follow-up findings ([7c9b69a](https://github.com/apet97/clockify-ts-sdk/commit/7c9b69af9914c6b191139218f5d3927e2c386ba6))
+
+
+### Bug Fixes
+
+* implement 47 adversarial-review findings (plan 011) ([443b1a2](https://github.com/apet97/clockify-ts-sdk/commit/443b1a24509338d28482695df64b9a68194a44c0))
+
 ## [Unreleased]
 
 ### Changed
