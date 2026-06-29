@@ -196,7 +196,11 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureTagHelper<NamedRecord>({
             name,
-            list: async () => await this.client.tags.list({ workspaceId }),
+            list: async () => {
+                const out: NamedRecord[] = [];
+                for await (const t of this.iterTags()) out.push(t);
+                return out;
+            },
             create: async (n) => await this.client.tags.create({ workspaceId, name: n }),
         });
     }
@@ -206,7 +210,11 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureProjectHelper<NamedRecord>({
             name,
-            list: async () => await this.client.projects.list({ workspaceId }),
+            list: async () => {
+                const out: NamedRecord[] = [];
+                for await (const p of this.iterProjects()) out.push(p);
+                return out;
+            },
             create: async (n) => await this.client.projects.create({ workspaceId, name: n }),
         });
     }
@@ -216,7 +224,11 @@ export class Workspace {
         const workspaceId = this.workspaceId;
         return ensureClientHelper<NamedRecord>({
             name,
-            list: async () => await this.client.clients.list({ workspaceId }),
+            list: async () => {
+                const out: NamedRecord[] = [];
+                for await (const c of this.iterClients()) out.push(c);
+                return out;
+            },
             create: async (n) => await this.client.clients.create({ workspaceId, body: { name: n } }),
         });
     }

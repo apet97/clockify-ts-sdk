@@ -60,11 +60,18 @@ describe("RateLimitError", () => {
     });
 
     it("treats Retry-After: 0 as 0ms (retry immediately), not undefined", () => {
+        const before = Date.now();
         const err = new RateLimitError({
             statusCode: 429,
             rawResponse: H({ "Retry-After": "0" }) as never,
         });
+        const after = Date.now();
         expect(err.retryAfterMs).toBe(0);
+        // rateLimitResetAt for a 0-second delay is ~now, NOT a bogus 1999/2000 date
+        // (regression: new Date("0") parses to 1999-12-31, ~26.5 years in the past).
+        expect(err.rateLimitResetAt).toBeInstanceOf(Date);
+        expect(err.rateLimitResetAt!.getTime()).toBeGreaterThanOrEqual(before);
+        expect(err.rateLimitResetAt!.getTime()).toBeLessThanOrEqual(after);
     });
 
     it("parses Retry-After as HTTP-date", () => {
@@ -512,6 +519,20 @@ describe("stable SDK error classification", () => {
         });
         expect(classification?.recovery).toContain("returned IDs");
         expect(getStableErrorCode(err)).toBe("not_found");
+    });
+
+    it("classifies a plan-gated 402 ClockifyApiError as feature_unavailable", () => {
+        const err = new ClockifyApiError({
+            statusCode: 402,
+            message: "This feature is not available on your plan",
+        });
+
+        expect(classifyClockifyError(err)).toMatchObject({
+            code: "feature_unavailable",
+            retryable: false,
+            statusCode: 402,
+        });
+        expect(getStableErrorCode(err)).toBe("feature_unavailable");
     });
 
     it("keeps retry guidance for rate limits and upstream errors", () => {

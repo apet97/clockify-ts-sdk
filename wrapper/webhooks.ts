@@ -134,6 +134,7 @@ export interface VerifyClockifyWebhookInput {
  * ```
  */
 export function verifyClockifyWebhook(input: VerifyClockifyWebhookInput): boolean {
+    if (!input.expectedToken) return false;
     const received = getClockifySignatureToken(input.headers);
     if (received == null) return false;
     return constantTimeStringEqual(received, input.expectedToken);
@@ -184,6 +185,11 @@ export interface ConstructEventInput {
 export function constructEvent<TPayload = ClockifyWebhookEvent>(
     input: ConstructEventInput,
 ): TPayload {
+    if (!input.expectedToken) {
+        throw new WebhookSignatureMismatchError(
+            "Refusing to verify a Clockify webhook against an empty expectedToken.",
+        );
+    }
     const received = getClockifySignatureToken(input.headers);
     if (received == null) {
         throw new WebhookSignatureMismatchError(
@@ -208,6 +214,10 @@ export function constructEvent<TPayload = ClockifyWebhookEvent>(
  * length is fine since the token length (32) is fixed.
  */
 function constantTimeStringEqual(a: string, b: string): boolean {
+    // Fail closed: an empty string can never be a valid 32-char token, and
+    // timingSafeEqual(<empty>, <empty>) returns true — reject before compare so
+    // an empty configured token + empty signature header cannot pass.
+    if (a.length === 0 || b.length === 0) return false;
     const aBuf = Buffer.from(a, "utf8");
     const bBuf = Buffer.from(b, "utf8");
     if (aBuf.length !== bBuf.length) return false;

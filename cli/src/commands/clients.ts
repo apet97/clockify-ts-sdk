@@ -25,7 +25,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
         )
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by client name substring.")
-        .option("--archived", "Include archived clients.", false)
+        .option("--archived", "Show only archived clients (default lists both archived and active).", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListClientsRequest = {

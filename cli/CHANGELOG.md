@@ -18,6 +18,18 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- Adversarial-review pass (plan 011):
+  - `expenses list --start/--end` now apply a client-side date-range filter on the
+    fetched page (they were silent no-ops).
+  - `clk115 status` reports a running timer's `elapsed` from wall-clock instead of
+    always `0s`.
+  - `--select` with a missing path now emits `null` instead of literal `undefined`
+    (which produced invalid JSON) in `--output json`/`ndjson`.
+  - Corrected the inverted `--archived` help text on `projects`/`clients`/`tags list`.
+  - `log --end` is canonicalized to full RFC3339 before the wire (no more
+    start-canonical/end-raw asymmetry).
+  - `shared-reports --type` allowlist synced to the 19-member generated wire union.
+  - The "workspace ID not set" setup error now classifies as `auth_or_permission`.
 - `clk115 api --all` now honors Clockify's `Last-Page` response header when it
   is present, so a full final page stops cleanly and a short non-final page
   continues instead of truncating scripted reads.

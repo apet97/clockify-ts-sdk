@@ -7,7 +7,8 @@
     "clockify_record_expense",
     "clockify_request_time_off",
     "clockify_schedule_work",
-    "clockify_setup_webhook"
+    "clockify_setup_webhook",
+    "clockify_demo_cleanup"
   ],
   "confirmationGuardedDomainTools": [
     "clockify_entries_delete",
@@ -29,12 +30,11 @@
     "clockify_shared_reports_delete"
   ],
   "idempotentWorkflowTools": [
-    "clockify_demo_seed",
-    "clockify_demo_cleanup"
+    "clockify_demo_seed"
   ],
   "confirmationExemptDestructiveTools": [],
   "confirmationExemptDestructiveToolsNote": "Destructive delete/remove tools intentionally NOT behind the dry_run->confirm guard; each entry needs a written reason in this note. This list is empty: every destructive domain delete/remove tool is guarded via confirmationGuardedDomainTools.",
-  "_destructiveSupersetNote": "The manifest (docs/mcp-tool-manifest.json) reports 23 destructiveHint:true tools; this contract guards 17 (confirmationGuardedDomainTools). The 23 is a superset: 17 confirmation-guarded domain delete/remove tools + 5 highRiskWorkflowTools (clockify_invoice_client_work, clockify_record_expense, clockify_request_time_off, clockify_schedule_work, clockify_setup_webhook), which use the same shared guard via maybeConfirm rather than the domain confirmationGuardedDomainTools list + 1 idempotentWorkflowTool (clockify_demo_cleanup). scripts/check-mcp-write-safety.mjs enforces both directions: every destructive _delete/_remove domain tool is guarded-or-exempt, and every confirmationGuardedDomainTools entry is in the manifest destructive set. Update this note if the counts change.",
+  "_destructiveSupersetNote": "The manifest (docs/mcp-tool-manifest.json) reports 23 destructiveHint:true tools; this contract guards 17 (confirmationGuardedDomainTools). The 23 is a superset: 17 confirmation-guarded domain delete/remove tools + 6 highRiskWorkflowTools (clockify_invoice_client_work, clockify_record_expense, clockify_request_time_off, clockify_schedule_work, clockify_setup_webhook, clockify_demo_cleanup), which use the same shared guard via maybeConfirm rather than the domain confirmationGuardedDomainTools list. scripts/check-mcp-write-safety.mjs enforces both directions: every destructive _delete/_remove domain tool is guarded-or-exempt, and every confirmationGuardedDomainTools entry is in the manifest destructive set. Update this note if the counts change.",
   "requiredFiles": [
     {
       "path": "docs/mcp-write-safety-policy.md",
@@ -128,7 +128,8 @@
     "workflowFiles": [
       "mcp/src/tools/workflows/index.ts",
       "mcp/src/tools/workflows/business.ts",
-      "mcp/src/tools/workflows/resolve.ts"
+      "mcp/src/tools/workflows/resolve.ts",
+      "mcp/src/tools/workflows/demo.ts"
     ],
     "confirmGuardFile": "mcp/src/orchestration/confirm-guard.ts",
     "docsIndexPolicy": "mcp-write-safety-policy.md",

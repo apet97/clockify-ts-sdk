@@ -175,13 +175,36 @@ if (server) {
     for (const header of contract.requiredHeaders ?? []) {
         if (!server.includes(header)) fail(`mock server missing header ${header}`);
     }
-    for (const route of contract.requiredRoutes ?? []) {
-        const [method, routePath] = route.split(" ");
-        if (!server.includes(`req.method === "${method}"`)) fail(`mock server missing method ${method} for ${route}`);
-        for (const segment of routePath.split("/").filter(Boolean)) {
-            if (segment.startsWith("{")) continue;
-            if (!server.includes(segment)) fail(`mock server missing route segment ${segment} for ${route}`);
+    // Boot the mock on loopback and probe each required route so a dropped or
+    // mis-wired handler cannot pass on loose source tokens. (Method + path
+    // segments used to be checked independently against the file text, so a
+    // missing GET /clients stayed green because the bare word "clients"
+    // survives in the seeded state object.)
+    const { createMockClockifyServer } = await import("./mock-clockify-server.mjs");
+    const probe = createMockClockifyServer();
+    const probeBase = await probe.listen(); // returns http://host:port/api/v1
+    const seededTagId = probe.state.tags[0]?.id ?? "000000000000000000000101";
+    const seededInvoiceId = probe.state.invoices[0]?.id ?? "000000000000000000000401";
+    try {
+        for (const route of contract.requiredRoutes ?? []) {
+            const [method, routePath] = route.split(" ");
+            const concretePath = routePath
+                .replaceAll("{workspaceId}", probe.workspaceId)
+                .replaceAll("{tagId}", seededTagId)
+                .replaceAll("{invoiceId}", seededInvoiceId);
+            try {
+                const response = await fetch(`${probeBase}${concretePath}`, {
+                    method,
+                    headers: { "X-Api-Key": "mock" },
+                });
+                await response.text().catch(() => {});
+                if (response.status === 404) fail(`mock server does not serve ${route} (404)`);
+            } catch (error) {
+                fail(`mock server route ${route} probe failed: ${error.message}`);
+            }
         }
+    } finally {
+        await probe.close();
     }
 }
 

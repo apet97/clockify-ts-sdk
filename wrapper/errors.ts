@@ -539,11 +539,14 @@ function parseRateLimitResetAt(headers: HeaderReader | undefined): Date | undefi
     const retryAfter = headers.get("Retry-After") ?? headers.get("retry-after");
     if (retryAfter != null) {
         const seconds = Number.parseInt(retryAfter, 10);
-        if (Number.isFinite(seconds) && seconds > 0) {
-            return new Date(Date.now() + seconds * 1000);
+        if (Number.isFinite(seconds)) {
+            // Retry-After: 0 (RFC 9110 delay-seconds=0) means retry immediately → now.
+            // Negative delay-seconds are invalid; fall through to undefined (matches parseRetryAfterMs).
+            if (seconds >= 0) return new Date(Date.now() + seconds * 1000);
+        } else {
+            const date = new Date(retryAfter);
+            if (Number.isFinite(date.getTime())) return date;
         }
-        const date = new Date(retryAfter);
-        if (Number.isFinite(date.getTime())) return date;
     }
     return undefined;
 }

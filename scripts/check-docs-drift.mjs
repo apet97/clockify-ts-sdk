@@ -241,8 +241,11 @@ for (const rel of await collectFiles()) {
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
-if (!makefile.includes("perfect-fast:") || !makefile.includes("docs-drift")) {
-    failures.push("Makefile perfect-fast/perfect-full wiring missing docs-drift");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("docs-drift")) {
+        failures.push(`Makefile ${aggregateTarget} wiring missing docs-drift`);
+    }
 }
 if (!qualityGates.includes("allowlisted docs drift is checked")) {
     failures.push("docs/quality-gates.md missing docs drift quality-gate wording");

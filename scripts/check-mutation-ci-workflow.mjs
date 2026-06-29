@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { perfectFullRunsLocalMutation } from "./lib/perfect-full-prereqs.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -48,7 +49,7 @@ mustContain("Makefile", makefile, "node scripts/check-mutation-ci-workflow.mjs")
 
 const perfectFullLine = makefile.split("\n").find((line) => line.startsWith("perfect-full:")) ?? "";
 if (!perfectFullLine.includes("mutation-ci")) fail("perfect-full must include mutation-ci");
-if (perfectFullLine.includes(" mutation ")) fail("perfect-full must not run local mutation");
+if (perfectFullRunsLocalMutation(perfectFullLine)) fail("perfect-full must not run local mutation");
 
 for (const [label, text] of [
     ["wrapper/stryker.conf.json", wrapperStryker],

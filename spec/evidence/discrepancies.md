@@ -2675,8 +2675,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   - *Still `KEEP as never`* and why: the multipart-file omission on expense
     create/update scalar bodies (`expenses.ts` cli+mcp), the too-narrow invoice
     status PATCH body (`invoices.ts`), the `changeTimeOffRequestStatus` status/note
-    mismatch and the policy-archive `archived` body vs generated status naming
-    (`timeOff.ts`), and the `timeEntries.listForUser` list/search/view
+    mismatch (`timeOff.ts`), and the `timeEntries.listForUser` list/search/view
     request+response envelope mismatch (`workflows/review.ts` + `workflows/resolve.ts`).
     These are the documented Bucket-C generated-type residue (response-narrows,
     multipart-file, status-naming).

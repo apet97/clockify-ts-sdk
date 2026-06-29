@@ -140,21 +140,114 @@ if (process.env[contract.bypassEnv] === "1") {
 }
 
 function gitNames(args) {
-    const result = spawnSync("git", args, { encoding: "utf8" });
-    if (result.status !== 0) return [];
+    const result = spawnSync("git", args, { encoding: "utf8", cwd: root });
+    if (result.error || result.status !== 0) {
+        console.error(`generated edit guard: \`git ${args.join(" ")}\` failed (status ${result.status ?? "n/a"})`);
+        if (result.stderr) console.error(String(result.stderr).trim());
+        process.exit(1);
+    }
     return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean);
 }
+
+function isIgnoredPrefix(prefix) {
+    const result = spawnSync("git", ["check-ignore", "-q", prefix.replace(/\/+$/, "")], { cwd: root });
+    return result.status === 0;
+}
+
+const WRAPPER_SYNC_EXCLUDES = new Set([
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "tsconfig.json",
+    "codegen-receipt.json",
+    ".npmignore",
+    ".gitignore",
+]);
+
+function isSyncExcluded(relativeFile) {
+    const base = relativeFile.split("/").pop();
+    return WRAPPER_SYNC_EXCLUDES.has(base) || /^tsconfig\..*\.json$/.test(base);
+}
+
+function listTreeFiles(dir) {
+    const files = [];
+    const walk = (current) => {
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+            if (entry.name === "node_modules" || entry.name === ".git") continue;
+            const absolute = path.join(current, entry.name);
+            if (entry.isDirectory()) walk(absolute);
+            else if (entry.isFile()) files.push(path.relative(dir, absolute).split(path.sep).join("/"));
+        }
+    };
+    walk(dir);
+    return files;
+}
+
+function compareSyncTree(sourceDir, syncedDir) {
+    const drift = [];
+    const expected = listTreeFiles(sourceDir).filter((file) => !isSyncExcluded(file)).sort();
+    const actual = new Set(listTreeFiles(syncedDir));
+    const expectedSet = new Set(expected);
+    for (const file of expected) {
+        if (!actual.has(file)) {
+            drift.push(`missing ${file}`);
+            continue;
+        }
+        const sourceText = fs.readFileSync(path.join(sourceDir, file), "utf8");
+        const syncedText = fs.readFileSync(path.join(syncedDir, file), "utf8");
+        if (sourceText !== syncedText) drift.push(`changed ${file}`);
+    }
+    for (const file of actual) {
+        if (!expectedSet.has(file)) drift.push(`extra ${file}`);
+    }
+    return drift;
+}
+
+const trackedPrefixes = guardedPrefixes.filter((prefix) => !isIgnoredPrefix(prefix));
+const ignoredPrefixes = new Set(guardedPrefixes.filter((prefix) => isIgnoredPrefix(prefix)));
 
 const changed = new Set([
     ...gitNames(["diff", "--name-only"]),
     ...gitNames(["diff", "--name-only", "--cached"]),
 ]);
 
-const blocked = [...changed].filter((file) => guardedPrefixes.some((prefix) => file.startsWith(prefix)));
+const blocked = [...changed].filter((file) => trackedPrefixes.some((prefix) => file.startsWith(prefix)));
 
-if (blocked.length > 0) {
+const tamperEdits = [];
+
+// output/ts-sdk/ is gitignored, so `git diff` can never list it. Detect a
+// hand-edit by regenerating into a temp dir and diffing against the working
+// tree (same machinery as `make sdk-codegen-drift`). Skip-if-absent so a fresh
+// clone before `make sdk-codegen` still passes.
+if (ignoredPrefixes.has("output/ts-sdk/") && fs.existsSync(path.join(root, "output", "ts-sdk"))) {
+    const check = spawnSync("node", ["scripts/generate-sdk-from-openapi.mjs", "--check"], {
+        cwd: root,
+        encoding: "utf8",
+    });
+    if (check.status !== 0) {
+        tamperEdits.push("output/ts-sdk/ diverges from a fresh codegen (hand-edit or stale snapshot):");
+        const detail = `${check.stdout ?? ""}${check.stderr ?? ""}`.trim();
+        if (detail) tamperEdits.push(detail);
+    }
+}
+
+// wrapper/src/ is gitignored too. It must be a verbatim copy of output/ts-sdk/
+// (minus package metadata). Detect a hand-edit by comparing the two trees.
+if (ignoredPrefixes.has("wrapper/src/")
+    && fs.existsSync(path.join(root, "wrapper", "src"))
+    && fs.existsSync(path.join(root, "output", "ts-sdk"))) {
+    const drift = compareSyncTree(path.join(root, "output", "ts-sdk"), path.join(root, "wrapper", "src"));
+    if (drift.length > 0) {
+        tamperEdits.push("wrapper/src/ diverges from output/ts-sdk/ (hand-edit — re-run `cd wrapper && npm run sync`):");
+        for (const entry of drift.slice(0, 50)) tamperEdits.push(`  - ${entry}`);
+    }
+}
+
+if (blocked.length > 0 || tamperEdits.length > 0) {
     console.error("Generated or snapshot surfaces changed:");
     for (const file of blocked.sort()) console.error(`  - ${file}`);
+    for (const line of tamperEdits) console.error(line);
     console.error("");
     console.error(contract.regenerationGuidance);
     console.error(`If this is a deliberate generated-chain diff, rerun via make perfect-full and set ${contract.bypassEnv}=1 only for this guard.`);

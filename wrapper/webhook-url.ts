@@ -56,13 +56,23 @@ export function assertSafeWebhookUrl(candidate: string): URL {
 function classifyHost(host: string): string | null {
     if (host.length === 0) return "empty host";
 
-    const ipv4Reason = classifyIpv4(host);
+    // Node's WHATWG URL parser folds only a SINGLE trailing dot into the IPv4
+    // form (127.0.0.1. -> 127.0.0.1); two or more are preserved verbatim
+    // (127.0.0.1.. stays 127.0.0.1..). Such a host slips past parseIpv4
+    // (split('.') yields length != 4) and past classifyHostname's single-dot
+    // strip, leaking a loopback/metadata IPv4 literal. Collapse all trailing
+    // dots once before classification. (Leading/internal empty labels make
+    // `new URL()` itself throw, so trailing dots are the only live vector.)
+    const normalized = host.replace(/\.+$/, "");
+    if (normalized.length === 0) return "empty host";
+
+    const ipv4Reason = classifyIpv4(normalized);
     if (ipv4Reason !== "not-ipv4") return ipv4Reason;
 
-    const ipv6Reason = classifyIpv6(host);
+    const ipv6Reason = classifyIpv6(normalized);
     if (ipv6Reason !== "not-ipv6") return ipv6Reason;
 
-    return classifyHostname(host);
+    return classifyHostname(normalized);
 }
 
 function classifyHostname(host: string): string | null {
@@ -184,6 +194,24 @@ function ipv6Reason(groups: number[]): string | null {
             lo & 0xff,
         ]);
         if (embedded) return `IPv4-mapped IPv6 of a ${embedded}`;
+        return null;
+    }
+
+    // IPv4-translated IPv6 address (::ffff:0:0:0/96, RFC 2765 SIIT): sibling of
+    // the ::ffff:0:0/96 mapped prefix, but with 0xffff in group[4] and
+    // group[5] == 0, so the low 32 bits embed an IPv4 reachable through a
+    // stateless (SIIT) translator on the egress path (e.g. ::ffff:0:a9fe:a9fe
+    // -> 169.254.169.254). Node serializes the literal in hex (and folds the
+    // dotted ::ffff:0:a.b.c.d form to hex too), so classifyIpv6's dotted-tail
+    // branch never sees it. Decode and re-check like the mapped branch; a
+    // translated address embedding a public v4 stays allowed.
+    const isTranslated =
+        groups.slice(0, 4).every((g) => g === 0) && groups[4] === 0xffff && groups[5] === 0;
+    if (isTranslated) {
+        const hi = groups[6]!;
+        const lo = groups[7]!;
+        const embedded = ipv4Reason([(hi >> 8) & 0xff, hi & 0xff, (lo >> 8) & 0xff, lo & 0xff]);
+        if (embedded) return `IPv4-translated IPv6 of a ${embedded}`;
         return null;
     }
 

@@ -137,3 +137,33 @@ describe("CLOCKIFY_SIGNATURE_HEADER", () => {
         expect(CLOCKIFY_SIGNATURE_HEADER).toBe("Clockify-Signature-Token");
     });
 });
+
+describe("empty-token fail-closed (wrapper-webhook-security-2)", () => {
+    it("verifyClockifyWebhook returns false when expectedToken and the signature header are both empty", () => {
+        expect(
+            verifyClockifyWebhook({
+                headers: { "Clockify-Signature-Token": "" },
+                expectedToken: "",
+            }),
+        ).toBe(false);
+    });
+
+    it("constructEvent throws WebhookSignatureMismatchError when expectedToken and the signature header are both empty", () => {
+        expect(() =>
+            constructEvent({
+                headers: { "Clockify-Signature-Token": "" },
+                payload: JSON.stringify({ attacker: "payload", webhookEvent: "NEW_TAG" }),
+                expectedToken: "",
+            }),
+        ).toThrow(WebhookSignatureMismatchError);
+    });
+
+    it("verifyClockifyWebhook still returns false for a non-empty header against an empty expectedToken", () => {
+        expect(
+            verifyClockifyWebhook({
+                headers: { "Clockify-Signature-Token": TOKEN },
+                expectedToken: "",
+            }),
+        ).toBe(false);
+    });
+});

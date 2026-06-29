@@ -276,4 +276,30 @@ describe("users, tags, and shared report read branches", () => {
             ]),
         ).rejects.toThrow(/Unknown --type/);
     });
+
+    it("shared-reports create accepts the wire-union type KIOSK_PIN_LIST", async () => {
+        const calls: Record<string, unknown>[] = [];
+        const client = {
+            sharedReports: {
+                create: async (req: Record<string, unknown>) => {
+                    calls.push(req);
+                    return { id: "sr-4", name: (req.body as { name?: string }).name };
+                },
+            },
+        };
+        await makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "shared-reports",
+            "create",
+            "--name",
+            "Kiosk",
+            "--type",
+            "kiosk_pin_list",
+            "--filter",
+            "{\"dateRangeStart\":\"2026-06-01\"}",
+        ]);
+        expect(calls[0].body).toMatchObject({ name: "Kiosk", type: "KIOSK_PIN_LIST" });
+    });
 });

@@ -1,9 +1,15 @@
-import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
+import { ClockifyConnectionError, ConflictError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
 import { FAILURE_HINTS, failureCode, failureHint } from "../src/diagnose.js";
 
-const http = (status: number, message = "x") => Object.assign(new Error(message), { statusCode: status });
+// Build a REAL ClockifyApiError (the production shape) rather than a plain
+// Error+statusCode. A plain Error skips the SDK classifier and takes the
+// HTTP-status fallback in errorCodeForError -- the opposite path from production,
+// which masks the 402 -> feature_unavailable regression. 402 is not in the
+// subclass-promotion table, so a ConflictError carrying an arbitrary statusCode
+// classifies exactly as the base ClockifyApiError(status) the runtime throws.
+const http = (status: number, message = "x") => new ConflictError({ statusCode: status, message });
 
 describe("failureCode", () => {
     it("classifies HTTP status the same way errorResult does", () => {

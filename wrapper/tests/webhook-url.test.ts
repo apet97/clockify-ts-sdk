@@ -62,6 +62,27 @@ describe("validateWebhookUrl", () => {
         });
     }
 
+    // Regression for deep-ssrf-1: Node's URL parser folds ONE trailing dot into
+    // the IPv4 form but preserves 2+ verbatim (127.0.0.1.. stays 127.0.0.1..),
+    // and ideographic / percent-encoded dots fold to the same "..". All of these
+    // must be rejected as the internal literal they normalize to.
+    const trailingDotIpv4 = [
+        "https://127.0.0.1../",
+        "https://169.254.169.254../",
+        "https://10.0.0.1../",
+        "https://127.0.0.1。。/",
+        "https://10.0.0.1%2e%2e/",
+    ];
+    for (const candidate of trailingDotIpv4) {
+        it(`rejects trailing-dot internal IPv4: ${candidate}`, () => {
+            const result = validateWebhookUrl(candidate);
+            expect(result.ok).toBe(false);
+            if (!result.ok) {
+                expect(result.reason).toMatch(/private|loopback|metadata|reserved|nat|multicast|broadcast/i);
+            }
+        });
+    }
+
     it("accepts routable public IPv4 literals", () => {
         expect(validateWebhookUrl("https://8.8.8.8/hook").ok).toBe(true);
         expect(validateWebhookUrl("https://172.32.0.1/hook").ok).toBe(true);
@@ -92,6 +113,12 @@ describe("validateWebhookUrl", () => {
         // ::a9fe:a9fe -> 169.254.169.254; ::7f00:1 -> 127.0.0.1.
         "https://[::a9fe:a9fe]/hook",
         "https://[::7f00:1]/hook",
+        // IPv4-translated IPv6 (::ffff:0:0:0/96, RFC 2765) embedding a private/metadata v4.
+        // ::ffff:0:a9fe:a9fe -> 169.254.169.254; ::ffff:0:7f00:1 -> 127.0.0.1.
+        // The dotted ::ffff:0:169.254.169.254 form folds to the same hex literal.
+        "https://[::ffff:0:a9fe:a9fe]/hook",
+        "https://[::ffff:0:7f00:1]/hook",
+        "https://[::ffff:0:169.254.169.254]/hook",
         // ff00::/8 multicast (firstByte 0xff): ff02::1 all-nodes link-local,
         // ff0e::1 global. `new URL()` keeps these un-folded, so the guard sees
         // 0xff and the `firstByte === 0xff` arm blocks them.
@@ -125,6 +152,14 @@ describe("validateWebhookUrl", () => {
         expect(validateWebhookUrl("https://[::808:808]/hook").ok).toBe(true);
     });
 
+    it("accepts an IPv4-translated IPv6 literal embedding a PUBLIC v4", () => {
+        // ::ffff:0:0:0/96 (RFC 2765) decodes like the mapped branch: only a
+        // private/metadata embedded v4 is blocked. ::ffff:0:0808:0808 embeds
+        // 8.8.8.8 (public), so it must stay allowed — kills the
+        // ConditionalExpression->true mutant on the new isTranslated branch.
+        expect(validateWebhookUrl("https://[::ffff:0:808:808]/hook").ok).toBe(true);
+    });
+
     it("treats near-miss embedding prefixes as normal public literals", () => {
         // Each host is ONE group off a private-embedding prefix, so it must NOT be
         // decoded as that embedding — pins the prefix-match operators in ipv6Reason.
@@ -154,6 +189,7 @@ describe("validateWebhookUrl", () => {
         expect(reasonFor("64:ff9b::a9fe:a9fe")).toMatch(/NAT64/);
         expect(reasonFor("2002:a9fe:a9fe::")).toMatch(/6to4/);
         expect(reasonFor("::a9fe:a9fe")).toMatch(/IPv4-compatible/);
+        expect(reasonFor("::ffff:0:a9fe:a9fe")).toMatch(/IPv4-translated/);
         // ff00::/8 multicast routes to its OWN reason, distinct from the fc00/fe80
         // ranges above — a mutant misrouting it would flip the reason and be killed.
         expect(reasonFor("ff02::1")).toMatch(/multicast/);

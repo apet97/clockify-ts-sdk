@@ -95,7 +95,7 @@
 - `page` (`number`, optional) — Page number.
 - `pageSize` (`number`, optional) — Page size.
 - `projectId` (`string`, optional) — If provided, returns users that have access to the project.
-- `roles` (`"WORKSPACE_ADMIN" \| "OWNER" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"[]`, optional) — Filters users that have any of the specified roles.
+- `roles` (`("WORKSPACE_ADMIN" \| "OWNER" \| "TEAM_MANAGER" \| "PROJECT_MANAGER")[]`, optional) — Filters users that have any of the specified roles.
 - `sortColumn` (`"ID" \| "EMAIL" \| "NAME" \| "NAME_LOWERCASE" \| "ACCESS" \| "HOURLYRATE" \| "COSTRATE"`, optional) — Sorting criteria.
 - `sortOrder` (`"ASCENDING" \| "DESCENDING"`, optional) — Sorting mode.
 - `status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Filters users with the corresponding status.
@@ -110,7 +110,7 @@
 - `page` (`number`, optional) — Page number.
 - `pageSize` (`number`, optional) — Page size.
 - `projectId` (`string`, optional) — If provided, returns users that have access to the project.
-- `roles` (`"WORKSPACE_ADMIN" \| "OWNER" \| "TEAM_MANAGER" \| "PROJECT_MANAGER"[]`, optional) — Filters users that have any of the specified roles.
+- `roles` (`("WORKSPACE_ADMIN" \| "OWNER" \| "TEAM_MANAGER" \| "PROJECT_MANAGER")[]`, optional) — Filters users that have any of the specified roles.
 - `sortColumn` (`"ID" \| "EMAIL" \| "NAME" \| "NAME_LOWERCASE" \| "ACCESS" \| "HOURLYRATE" \| "COSTRATE"`, optional) — Sorting criteria.
 - `sortOrder` (`"ASCENDING" \| "DESCENDING"`, optional) — Sorting mode.
 - `status` (`"PENDING" \| "ACTIVE" \| "DECLINED" \| "INACTIVE" \| "ALL"`, optional) — Filters users with the corresponding status.

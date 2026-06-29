@@ -58,13 +58,17 @@ describe("iterPages properties", () => {
         );
     });
 
-    it("Last-Page false overrides a short page", async () => {
+    it("Last-Page false overrides a short (but non-empty) page", async () => {
         await fc.assert(
             fc.asyncProperty(
                 fc.integer({ min: 2, max: 20 }),
                 fc.integer({ min: 0, max: 18 }),
                 async (pageSize, rawShortCount) => {
-                    const shortCount = rawShortCount % pageSize;
+                    // A short but NON-EMPTY page (1..pageSize-1) with Last-Page:false
+                    // continues. An *empty* page terminates on every branch (see the
+                    // "stops on an empty page even when Last-Page: false" unit test in
+                    // iter.test.ts), so it is excluded here by construction.
+                    const shortCount = (rawShortCount % (pageSize - 1)) + 1;
                     const seen: number[] = [];
                     const fetcher = (req: PaginatedRequest) => {
                         seen.push(req.page!);

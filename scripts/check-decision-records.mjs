@@ -206,8 +206,11 @@ for (const record of contract.records ?? []) {
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
-if (!makefile.includes("perfect-fast:") || !makefile.includes("decision-records")) {
-    failures.push("Makefile perfect-fast/perfect-full wiring missing decision-records");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("decision-records")) {
+        failures.push(`Makefile ${aggregateTarget} wiring missing decision-records`);
+    }
 }
 if (!qualityGates.includes("make decision-records")) {
     failures.push("docs/quality-gates.md missing make decision-records");

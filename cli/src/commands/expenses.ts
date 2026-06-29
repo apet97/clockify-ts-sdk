@@ -64,9 +64,10 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // Generated `ListExpensesRequest` carries only page/page-size; the CLI
-            // still surfaces --start/--end as date filters, so wireBody bridges the
-            // narrower request type with a sanctioned typed escape.
+            // Generated `ListExpensesRequest` carries only page/page-size, so the live
+            // wire DROPS --start/--end. We still forward them via the sanctioned
+            // wireBody escape (harmless; ignored upstream) and apply the date range as
+            // a client-side filter on the fetched page below.
             const req: ClockifyApi.ListExpensesRequest & { start?: string; end?: string } = {
                 workspaceId,
                 page: opts.page,
@@ -118,7 +119,24 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     billable: e.billable === true,
                 };
             });
-            printRecords(rows, output);
+            // The wire ignores --start/--end (see comment above), so apply the date
+            // range here. Clockify expense `date` is ISO-8601, so a lexicographic
+            // compare against the YYYY-MM-DD bounds is correct. This filters only the
+            // rows on the fetched page (default 25, max 200 via --limit); a range
+            // spanning multiple pages needs a larger --limit.
+            const startDay = opts.start as string | undefined;
+            const endDay = opts.end as string | undefined;
+            const visible =
+                startDay || endDay
+                    ? rows.filter((r) => {
+                          const day = (r.date ?? "").slice(0, 10);
+                          if (!day) return false;
+                          if (startDay && day < startDay) return false;
+                          if (endDay && day > endDay) return false;
+                          return true;
+                      })
+                    : rows;
+            printRecords(visible, output);
         });
 
     expenses

@@ -257,8 +257,11 @@ if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-if (!makefile.includes("perfect-fast:") || !makefile.includes("generator-portability")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing generator-portability");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("generator-portability")) {
+        fail("Makefile", `${aggregateTarget} wiring missing generator-portability`);
+    }
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

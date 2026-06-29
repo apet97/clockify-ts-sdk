@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { ConflictError } from "clockify-sdk-ts-115/errors";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
@@ -100,7 +101,7 @@ describe("clockify_audit_log_search", () => {
                 authorIds: ["user-1", "SYSTEM"],
                 authorsMode: "DOES_NOT_CONTAIN",
                 page: 3,
-                pageSize: 200,
+                pageSize: 50,
             },
         });
         expect(res.isError).toBeFalsy();
@@ -111,7 +112,7 @@ describe("clockify_audit_log_search", () => {
             actions: ["DELETE_TASK"],
             authors: { authorIds: ["user-1", "SYSTEM"], contains: "DOES_NOT_CONTAIN" },
             page: 3,
-            "page-size": 200,
+            "page-size": 50,
         });
         expect(envelope(res).ok).toBe(true);
     });
@@ -122,8 +123,16 @@ describe("clockify_audit_log_search", () => {
         const client = await connect(
             auditContext(captured, async () => {
                 calls += 1;
-                throw Object.assign(new Error("This feature is not available on your plan"), {
+                // Reproduce the PRODUCTION error shape: the generated client throws a
+                // real ClockifyApiError (not a plain Error) for a 402. A plain
+                // Error+statusCode would skip the SDK classifier and take the
+                // HTTP-status fallback in errorCodeForError -- the OPPOSITE path from
+                // production, masking the bug. 402 is not in the subclass-promotion
+                // table, so a ConflictError carrying statusCode 402 classifies
+                // identically to the base ClockifyApiError(402) the runtime throws.
+                throw new ConflictError({
                     statusCode: 402,
+                    body: { message: "This feature is not available on your plan" },
                 });
             }),
         );
@@ -140,7 +149,7 @@ describe("clockify_audit_log_search", () => {
         const json = envelope(res);
         const error = json.error as { code: string; message: string };
         expect(error.code).toBe("feature_unavailable");
-        expect(error.message).toBe("This feature is not available on your plan");
+        expect(error.message).toContain("This feature is not available on your plan");
         expect((json.recovery as { retryable?: boolean }).retryable).toBe(false);
     });
 
@@ -200,7 +209,7 @@ describe("clockify_audit_log_search", () => {
         expect(captured.search).toBeUndefined();
     });
 
-    it("rejects an out-of-range pageSize (>200) before reaching the SDK", async () => {
+    it("rejects an out-of-range pageSize (>50) before reaching the SDK", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(auditContext(captured));
         const res = await client.callTool({
@@ -209,7 +218,7 @@ describe("clockify_audit_log_search", () => {
                 start: "2026-06-01T00:00:00Z",
                 end: "2026-06-07T00:00:00Z",
                 actions: ["CREATE_PROJECT"],
-                pageSize: 201,
+                pageSize: 51,
             },
         });
         expect(res.isError).toBe(true);

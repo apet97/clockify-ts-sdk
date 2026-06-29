@@ -24,6 +24,23 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- Adversarial-review pass (plan 011):
+  - `parseRateLimitResetAt` no longer turns `Retry-After: 0` (or a finite negative
+    delay) into a year-2000 reset `Date`; it now floors at "now".
+  - Plan-gated `402` responses now classify as `feature_unavailable` instead of a
+    catch-all `error` (error registry gains `sdk` as a `feature_unavailable` surface).
+  - `composedFetch` no longer fires `onRetry`/`retry.count` for cancelled or
+    timed-out (`AbortError`) requests — `onError`/error metrics still fire.
+  - `iterPages` terminates on an empty page even when `Last-Page: false`, closing an
+    unbounded-loop hole (the default `maxPages` is `Infinity`).
+  - `PaginatedList.toArray({ limit: 0 })` now returns `[]` with zero fetches.
+  - Scoped `ensureTag`/`ensureProject`/`ensureClient` walk every page before
+    matching, so they no longer create duplicates of entities past the first page.
+  - OTel hooks: the reserved metric name previously used as a span attribute is
+    renamed to a namespaced, unit-explicit key, and `http.request.resend_count` is
+    emitted only on retried attempts (semconv).
+  - Generated SDK types: array-of-union item types now emit as `(A | B)[]` instead
+    of the mis-parsed `A | B[]`, and structured union members keep balanced brackets.
 - Restored `Client.ccEmails` and `Client.currencyId` to the generated types — both are
   returned by the live API (`GET /clients`) and present in official `ClientDtoV1`, but a
   thin upstream schema had dropped them (first-writer schema-name race in the generator).
@@ -62,6 +79,13 @@ once v1.0.0 ships.
 
 ### Security
 
+- Adversarial-review pass (plan 011):
+  - The webhook SSRF guard now blocks the RFC 2765 IPv4-translated IPv6 prefix
+    (`::ffff:0:0:0/96`) and normalizes 2+ trailing dots before host classification,
+    closing two residual bypasses; public hosts stay allowed (boundary-pinned).
+  - `verifyClockifyWebhook` / `constructEvent` fail closed when the configured
+    webhook token is empty — an empty `Clockify-Signature-Token` header no longer
+    matches an empty configured token.
 - `validateWebhookUrl` / `assertSafeWebhookUrl` now reject IPv4 multicast
   (224.0.0.0/4), reserved Class E (240.0.0.0/4) and the 255.255.255.255 limited
   broadcast, plus IPv6 multicast (ff00::/8, e.g. `ff02::1`, `ff0e::1`). These

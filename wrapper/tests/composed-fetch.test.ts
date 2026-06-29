@@ -478,6 +478,41 @@ describe("composedFetch — abort during retry backoff", () => {
     });
 });
 
+describe("composedFetch — abort thrown by fetch itself (not during backoff)", () => {
+    it("does not fire onRetry or retry.count when the in-flight fetch rejects with AbortError", async () => {
+        const controller = new AbortController();
+        const onError = vi.fn();
+        const onRetry = vi.fn();
+        const metricNames: string[] = [];
+        const f = composedFetch({
+            // The wrapped fetch rejects with a DOMException AbortError as soon as
+            // the request is issued, simulating a cancellation/timeout mid-flight.
+            fetch: (async () => {
+                controller.abort();
+                throw new DOMException("aborted", "AbortError");
+            }) as typeof fetch,
+            retryPolicy: { maxRetries: 2, initialDelayMs: 0, jitter: 0 },
+            hooks: {
+                onError,
+                onRetry,
+                onMetric: (metric) => {
+                    metricNames.push(metric.name);
+                },
+            },
+        });
+
+        await expect(
+            f("https://example.test/x", { method: "GET", signal: controller.signal }),
+        ).rejects.toThrow(/abort/i);
+
+        // onError is appropriate (the request failed); onRetry / retry.count are not
+        // (the request was cancelled, no further attempt was ever issued).
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onRetry).not.toHaveBeenCalled();
+        expect(metricNames).not.toContain("retry.count");
+    });
+});
+
 describe("composedFetch — default retry policy (no override of the internals)", () => {
     // These tests deliberately do NOT pass computeDelay/retryableMethods so the
     // module's own DEFAULT_RETRY_POLICY + computeRetryDelay/applyJitter/mergeRetryPolicy

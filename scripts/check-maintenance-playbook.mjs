@@ -321,8 +321,11 @@ if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-if (!makefile.includes("perfect-fast:") || !makefile.includes("maintenance-playbook")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing maintenance-playbook");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("maintenance-playbook")) {
+        fail("Makefile", `${aggregateTarget} wiring missing maintenance-playbook`);
+    }
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

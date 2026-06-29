@@ -47,15 +47,9 @@ describe("expenses list branch coverage", () => {
             "list",
             "--limit",
             "999",
-            "--start",
-            "2026-06-01",
-            "--end",
-            "2026-06-30",
         ]);
         expect(calls[0]).toMatchObject({
             "page-size": 200,
-            start: "2026-06-01",
-            end: "2026-06-30",
         });
         const rows = lastJson() as Array<Record<string, unknown>>;
         expect(rows[0]).toMatchObject({ category: "Travel", amount: 12, billable: true });
@@ -63,6 +57,37 @@ describe("expenses list branch coverage", () => {
         expect(rows[2]).toMatchObject({ id: "", category: "", amount: 0, billable: false });
         // total (150) wins over the per-unit quantity (3).
         expect(rows[3]).toMatchObject({ id: "e-4", category: "Supplies", amount: 150 });
+    });
+
+    it("list applies --start/--end as a client-side date-range filter on the fetched page", async () => {
+        const client = {
+            expenses: {
+                list: async () => ({
+                    expenses: {
+                        expenses: [
+                            { id: "in-1", date: "2026-06-15T00:00:00Z", category: "A" },
+                            { id: "lo-1", date: "2026-05-31T00:00:00Z", category: "B" },
+                            { id: "hi-1", date: "2026-07-01T00:00:00Z", category: "C" },
+                            { id: "no-date", category: "D" },
+                        ],
+                    },
+                }),
+            },
+        };
+        await makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
+            "node",
+            "clk115",
+            "--json",
+            "expenses",
+            "list",
+            "--start",
+            "2026-06-01",
+            "--end",
+            "2026-06-30",
+        ]);
+        const rows = lastJson() as Array<Record<string, unknown>>;
+        // Only the in-range dated row survives; out-of-range and undated rows drop.
+        expect(rows.map((r) => r.id)).toEqual(["in-1"]);
     });
 
     it("list handles a direct expenses array envelope", async () => {

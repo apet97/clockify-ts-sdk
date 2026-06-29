@@ -4,6 +4,34 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Adversarial-review pass (plan 011):
+  - **`clockify_fix_entry`** no longer wipes `end`/`projectId`/`taskId`/`tagIds`/
+    `billable`/`description` on a partial fix. The time-entry update is a
+    replace-`PUT`, so every field is now preserved from the already-fetched entry
+    and overridden only when an argument supplies a value — a description-only fix
+    on a finished entry no longer converts it into a running timer. (data-loss, HIGH)
+  - `clockify_time_off_policies_archive` sends the required `{status}` wire field
+    instead of the ignored `{archived}`.
+  - The MCP result envelope classifies a real `402` `ClockifyApiError` as
+    `feature_unavailable` instead of a catch-all `error`.
+  - `clockify_audit_log_search` clamps `pageSize` to the audit-log host's
+    documented max of 50 (was 200).
+  - `clockify_review_day`/`clockify_review_week` no longer advertise gap/overlap
+    detection or accept the inert `min_gap_minutes`/`workday_start`/`workday_end`
+    fields — the contract now matches behavior.
+  - `shared-reports` `type` allowlist synced to the 19-member generated wire union.
+  - A blank/whitespace-only `CLOCKIFY_BASE_URL` is normalized to unset, so the
+    server falls back to the default Clockify host instead of crashing at startup.
+
+### Security
+
+- Adversarial-review pass (plan 011):
+  - `clockify_demo_cleanup` is gated behind the shared `dry_run` → `confirm_token`
+    handshake and restricted to the reserved `DEMO-`/`sdk-demo-` prefix; it marks a
+    task `DONE` before deleting it (active-task `DELETE` 400s).
+
 ## [0.4.0]
 
 ### Changed

@@ -95,6 +95,16 @@ describe("MCP base URL allowlist (H1)", () => {
         expect(ctx.workspaceId).toBe("ws");
     });
 
+    it("treats a blank CLOCKIFY_BASE_URL as unset (default Clockify host, no crash)", () => {
+        const ctx = loadContext({ ...goodEnv, CLOCKIFY_BASE_URL: "" });
+        expect(ctx.workspaceId).toBe("ws");
+    });
+
+    it("treats a whitespace-only CLOCKIFY_BASE_URL as unset (default Clockify host, no crash)", () => {
+        const ctx = loadContext({ ...goodEnv, CLOCKIFY_BASE_URL: "   " });
+        expect(ctx.workspaceId).toBe("ws");
+    });
+
     it("allows a configured loopback test/mock CLOCKIFY_BASE_URL", () => {
         const ctx = loadContext({ ...goodEnv, CLOCKIFY_BASE_URL: "http://127.0.0.1:19091/api/v1" });
         expect(ctx.workspaceId).toBe("ws");

@@ -484,6 +484,20 @@ async function runWithRetries(
             // retryable method — it is a deliberate security stop, not a
             // transient transport failure.
             if (error instanceof RedirectNotAllowedError) throw error;
+            // A cancelled/timed-out request is terminal, not a transient
+            // transport error: never fire onRetry / retry.count for it (onError
+            // already fired). Mirrors the generated layer's shouldRetryError,
+            // which returns false for AbortError. The init.signal?.aborted clause
+            // is the workhorse — it also catches custom abort reasons that
+            // surface as a non-DOMException Error (e.g. controller.abort(new Error())).
+            if (
+                (typeof DOMException !== "undefined" &&
+                    error instanceof DOMException &&
+                    error.name === "AbortError") ||
+                init.signal?.aborted
+            ) {
+                throw toError(error);
+            }
             if (attempt >= policy.maxRetries || !policy.retryableMethods.includes(base.method)) {
                 throw toError(error);
             }

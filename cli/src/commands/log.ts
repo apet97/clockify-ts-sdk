@@ -56,13 +56,14 @@ export const registerLogCommand: Registrar = (program, services) => {
                     ? await resolveTagIds(client, workspaceId, opts.tag)
                     : undefined;
             const seconds = parseDuration(duration);
-            const endIso = opts.end ?? new Date().toISOString();
-            const endMs = Date.parse(endIso);
+            const endInput = opts.end ?? new Date().toISOString();
+            const endMs = Date.parse(endInput);
             if (Number.isNaN(endMs)) {
                 throw new Error(
                     `--end ${JSON.stringify(opts.end)} is not a valid ISO 8601 timestamp`,
                 );
             }
+            const endIso = new Date(endMs).toISOString();
             const startIso = new Date(endMs - seconds * 1000).toISOString();
 
             const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {

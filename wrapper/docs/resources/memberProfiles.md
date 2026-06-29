@@ -25,7 +25,7 @@
 - `userCustomFields` (`ClockifyApi.UpsertUserCustomFieldRequest[]`, optional) — Represents a list of upsert user custom field objects.
 - `weekStart` (`ClockifyApi.UsersDayOfWeek`, optional)
 - `workCapacity` (`string`, optional) — Represents work capacity as a time duration in ISO-8601 format. For example, PT7H.
-- `workingDays` (`"MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY"[]`, optional) — Live Clockify serializes working days as an array of day enum strings; JSON-encoded strings are rejected.
+- `workingDays` (`("MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY")[]`, optional) — Live Clockify serializes working days as an array of day enum strings; JSON-encoded strings are rejected.
 - `workspaceId` (`string`, required) — Represents a workspace identifier across the system.
 - `userId` (`string`, required) — Represents a user identifier across the system.
 - `body` (`UpdateMemberProfilesRequestBody`, required)
@@ -35,5 +35,5 @@
 - `userCustomFields` (`ClockifyApi.UpsertUserCustomFieldRequest[]`, optional) — Represents a list of upsert user custom field objects.
 - `weekStart` (`ClockifyApi.UsersDayOfWeek`, optional)
 - `workCapacity` (`string`, optional) — Represents work capacity as a time duration in ISO-8601 format. For example, PT7H.
-- `workingDays` (`"MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY"[]`, optional) — Live Clockify serializes working days as an array of day enum strings; JSON-encoded strings are rejected.
+- `workingDays` (`("MONDAY" \| "TUESDAY" \| "WEDNESDAY" \| "THURSDAY" \| "FRIDAY" \| "SATURDAY" \| "SUNDAY")[]`, optional) — Live Clockify serializes working days as an array of day enum strings; JSON-encoded strings are rejected.
 

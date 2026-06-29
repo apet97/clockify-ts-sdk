@@ -55,6 +55,22 @@ for (const pkg of policy.packages ?? []) {
     versions[pkg.id] = manifest.version;
 }
 
+const declaredIds = new Set(
+    (policy.packages ?? [])
+        .map((pkg) => pkg?.id)
+        .filter((id) => typeof id === "string"),
+);
+if (
+    typeof policy.manifestKeyForReleasePlease === "string" &&
+    !declaredIds.has(policy.manifestKeyForReleasePlease)
+) {
+    fail(
+        "version-policy",
+        `versionConsistency.manifestKeyForReleasePlease ${JSON.stringify(policy.manifestKeyForReleasePlease)} ` +
+            `is not one of the configured package ids`,
+    );
+}
+
 const releaseManifest = readJson(
     policy.releasePleaseManifest ?? ".release-please-manifest.json",
     "release-please-manifest",

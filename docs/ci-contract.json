@@ -74,7 +74,10 @@
         "name: CodeQL",
         "security-and-quality",
         "security-events: write",
-        "wrapper/composed-fetch.ts",
+        "- cli/src",
+        "- mcp/src",
+        "paths-ignore:",
+        "- wrapper/src",
         ".github/workflows"
       ]
     },

@@ -32,7 +32,7 @@ Retryable: no
 
 Recovery: Use a supported workspace plan, skip the gated workflow, or fall back to a lower-level read operation.
 
-Surfaces: cli, mcp
+Surfaces: sdk, cli, mcp
 
 ## `not_found`
 
