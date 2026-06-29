@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-29
+
 ### Fixed
 
 - Adversarial-review pass (plan 011):
