@@ -19,8 +19,20 @@ to capture the conventions below — prefer the matching one over re-deriving:
 - **`clockify-sdk-add-mcp-tool`** — the full tool-count/contract/test/doc cascade.
 - **`clockify-sdk-publish`** — the tag-gated CI release flow (`wrapper-v*`/`cli-v*`/`mcp-v*`).
 
-## Current Hardening Checkpoint (2026-06-27)
+## Current Hardening Checkpoint (2026-06-29)
 
+- **Adversarial-review plan 011 landed (2026-06-29):** all 47 proven
+  findings from `plans/011-adversarial-review-findings.md` are
+  implemented and `perfect-fast` + `perfect-full` are both green. This
+  fixed the HIGH `clockify_fix_entry` PUT-replace data-loss, the
+  `ci.yml` packsnapshot self-overwrite false-green, and the codegen
+  `(A | B)[]` mis-parse; hardened several false-green
+  `scripts/check-*.mjs` gates (write-safety name-based delete backstop,
+  `changelog-drift` now enforces vs the base ref, generated-edit /
+  aggregate-wiring / mock-contract / version-consistency checks); and
+  added webhook-SSRF + demo-cleanup-guard safety. MCP tool count is
+  unchanged at 140. New per-gate test scripts live next to their gates
+  (`scripts/*.test.mjs`, `scripts/lib/`).
 - `main` is the integration branch. Before a direct push, verify the
   branch is even with `origin/main`, make one focused commit, push, and
   watch the resulting GitHub Actions runs.
