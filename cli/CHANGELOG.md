@@ -18,6 +18,9 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- Dropped the stale `dist/sdk-narrow.js` entry from the committed `cli/.packsnapshot`
+  (there is no `cli/src/sdk-narrow.ts`, so a clean build never produces it); the
+  published tarball contents are unchanged.
 - Adversarial-review pass (plan 011):
   - `expenses list --start/--end` now apply a client-side date-range filter on the
     fetched page (they were silent no-ops).

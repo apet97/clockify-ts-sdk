@@ -31,5 +31,4 @@ dist/error-codes.js
 dist/index.js
 dist/output.js
 dist/receipt.js
-dist/sdk-narrow.js
 package.json
