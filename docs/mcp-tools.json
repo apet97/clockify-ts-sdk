@@ -18,7 +18,7 @@
     { "tool": "clockify_start_work", "purpose": "Start a running work timer." },
     { "tool": "clockify_stop_work", "purpose": "Stop the current running timer." },
     { "tool": "clockify_switch_work", "purpose": "Stop current work and start another timer." },
-    { "tool": "clockify_review_day", "purpose": "Review daily totals, gaps, running timers, and missing fields." },
+    { "tool": "clockify_review_day", "purpose": "Review daily totals, running timers, and missing fields." },
     { "tool": "clockify_review_week", "purpose": "Review weekly totals and issues." },
     { "tool": "clockify_fix_entry", "purpose": "Find one entry and update selected fields." },
     { "tool": "clockify_invoice_client_work", "purpose": "Create a draft invoice for a client." },

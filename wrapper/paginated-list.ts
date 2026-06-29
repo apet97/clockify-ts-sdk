@@ -64,6 +64,7 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
      *  have been collected. */
     async toArray(options: PaginatedListToArrayOptions = {}): Promise<TItem[]> {
         const limit = options.limit;
+        if (limit !== undefined && limit <= 0) return [];
         const out: TItem[] = [];
         for await (const item of this) {
             out.push(item);

@@ -83,4 +83,9 @@ jobs:
         # node-version invariant.
         if: matrix.node-version == '22'
         working-directory: cli
-        run: node ../scripts/pack-snapshot.mjs --pkg=cli --check
+        run: |
+          # `make sdk-codegen` ran pack-snapshot in WRITE mode and overwrote the
+          # committed cli/.packsnapshot; restore the blessed baseline so --check
+          # diffs the built tarball against the committed source-of-truth.
+          git checkout -- .packsnapshot
+          node ../scripts/pack-snapshot.mjs --pkg=cli --check

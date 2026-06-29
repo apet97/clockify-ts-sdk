@@ -48,7 +48,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                         {
                             group: "review",
                             tools: ["clockify_review_day", "clockify_review_week"],
-                            useFor: ["daily totals", "weekly totals", "gaps", "overlaps", "missing details"],
+                            useFor: ["daily totals", "weekly totals", "running timers", "missing details"],
                         },
                         {
                             group: "business workflows",
@@ -187,7 +187,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         "clockify_review_day",
         {
             title: "Review day",
-            description: "Review one day of entries for totals, gaps, running timers, and missing details.",
+            description: "Review one day of entries for totals, running timers, and missing details.",
             inputSchema: reviewInputSchema({ week: false }),
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -199,7 +199,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
         "clockify_review_week",
         {
             title: "Review week",
-            description: "Review a week of entries for totals, gaps, running timers, and missing details.",
+            description: "Review a week of entries for totals, running timers, and missing details.",
             inputSchema: reviewInputSchema({ week: true }),
             annotations: { readOnlyHint: true, idempotentHint: true },
         },
@@ -401,6 +401,8 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 prefix: z.string().optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
+                dry_run: z.boolean().optional(),
+                confirm_token: z.string().optional(),
             },
             annotations: { destructiveHint: true, idempotentHint: true },
         },

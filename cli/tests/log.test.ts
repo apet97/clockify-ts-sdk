@@ -81,6 +81,16 @@ describe("log command", () => {
         );
     });
 
+    it("canonicalizes a parseable-but-non-RFC3339 --end to full RFC3339 on the wire", async () => {
+        const { client, created } = makeClient();
+        await run(client, ["30m", "work", "--end", "2026-06-01"]);
+        const body = (created[0] as { body?: { end?: string; start?: string } })?.body;
+        // Bare date is promoted to a full UTC instant, not sent raw.
+        expect(body?.end).toBe("2026-06-01T00:00:00.000Z");
+        // start derives from the same instant: end - 30m.
+        expect(body?.start).toBe("2026-05-31T23:30:00.000Z");
+    });
+
     it("errors when --task is given without --project", async () => {
         const { client } = makeClient();
         await expect(run(client, ["30m", "work", "--end", END, "--task", "tk-1"])).rejects.toThrow(

@@ -20,7 +20,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by project name substring.")
-        .option("--archived", "Include archived projects.", false)
+        .option("--archived", "Show only archived projects (default lists both archived and active).", false)
         .option("--client <id>", "Filter by client ID.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);

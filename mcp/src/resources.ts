@@ -84,7 +84,7 @@ Time tracking
 - "log / record N hours of finished work" -> clockify_log_work
 - "start / stop a timer", "clock in / out" -> clockify_start_work / clockify_stop_work
 - "switch what I'm working on" -> clockify_switch_work
-- "what did I do today / this week", "any gaps" -> clockify_review_day / clockify_review_week
+- "what did I do today / this week" -> clockify_review_day / clockify_review_week
 - "fix / correct an entry" -> clockify_review_day first, then clockify_fix_entry
 
 Setting up work

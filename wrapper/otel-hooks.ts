@@ -64,7 +64,7 @@ const ATTR_HTTP_STATUS = "http.response.status_code" as const;
 const ATTR_PEER_SERVICE = "peer.service" as const;
 const ATTR_SERVER_ADDRESS = "server.address" as const;
 const ATTR_RETRY_ATTEMPT = "http.request.resend_count" as const;
-const ATTR_DURATION_MS = "http.client.request.duration" as const;
+const ATTR_DURATION_MS = "clockify.http.client.request.duration_ms" as const;
 
 const SPAN_STATUS_OK = 1 as const;
 const SPAN_STATUS_ERROR = 2 as const;
@@ -100,8 +100,13 @@ export function otelHooks(options: OtelHooksOptions): ComposedFetchHooks {
                 [ATTR_HTTP_METHOD]: ctx.method,
                 [ATTR_HTTP_URL]: ctx.url,
                 [ATTR_PEER_SERVICE]: "clockify",
-                [ATTR_RETRY_ATTEMPT]: ctx.attempt,
             };
+            // `http.request.resend_count` is "Recommended: if and only if request
+            // was retried" (OTel HTTP semconv v1.27) — emit only on resends, never
+            // on the initial request.
+            if (ctx.attempt > 0) {
+                initialAttrs[ATTR_RETRY_ATTEMPT] = ctx.attempt;
+            }
             try {
                 initialAttrs[ATTR_SERVER_ADDRESS] = new URL(ctx.url).host;
             } catch {

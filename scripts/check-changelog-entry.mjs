@@ -169,11 +169,24 @@ function git(args) {
     return result.stdout.split("\n").map((line) => line.trim()).filter(Boolean);
 }
 
-const changed = new Set([
+// Working-tree changes — covers a local pre-commit run (dirty tree).
+const worktree = [
     ...git(["diff", "--name-only"]),
     ...git(["diff", "--name-only", "--cached"]),
     ...git(["ls-files", "--others", "--exclude-standard"]),
-]);
+];
+// Committed changes vs the integration base — covers post-commit CI (clean tree).
+// PR builds: GITHUB_BASE_REF (target branch). Push builds: GITHUB_EVENT_BEFORE
+// (pre-push tip). CHANGELOG_BASE_REF overrides. All-zero SHA (new branch) ignored.
+const ZERO_SHA = "0000000000000000000000000000000000000000";
+const baseRef =
+    process.env.CHANGELOG_BASE_REF ||
+    (process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : "") ||
+    (process.env.GITHUB_EVENT_BEFORE && process.env.GITHUB_EVENT_BEFORE !== ZERO_SHA
+        ? process.env.GITHUB_EVENT_BEFORE
+        : "");
+const committed = baseRef ? git(["diff", "--name-only", `${baseRef}...HEAD`]) : [];
+const changed = new Set([...worktree, ...committed]);
 const failures = [];
 
 for (const scope of contract.packageScopes) {

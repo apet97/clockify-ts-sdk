@@ -201,21 +201,26 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
         (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
+    const ivl = (entry.timeInterval ?? {}) as AnyRecord;
     const body: AnyRecord = {
         workspaceId: ctx.workspaceId,
         timeEntryId: entryId,
-        start:
-            str(args.start) ||
-            str(entry.start) ||
-            str(entry.timeInterval && (entry.timeInterval as AnyRecord).start),
+        start: str(args.start) || str(entry.start) || str(ivl.start),
     };
     const nextDescription = str(args.new_description) || str(args.description);
-    if (nextDescription) body.description = nextDescription;
-    if (str(args.end)) body.end = str(args.end);
-    if (projectId) body.projectId = projectId;
-    if (taskId) body.taskId = taskId;
-    if (tagIds.length) body.tagIds = tagIds;
-    if (args.billable !== undefined) body.billable = args.billable;
+    // timeEntries.update is a PUT-replace: every omitted field is wiped on the
+    // live wire. Preserve each existing field from the already-fetched entry,
+    // overriding only when args supply a value (mirrors how `start` is handled).
+    body.description = nextDescription || str(entry.description);
+    const nextEnd = str(args.end) || str(entry.end) || str(ivl.end);
+    if (nextEnd) body.end = nextEnd; // omit only for a genuine running timer (no existing end)
+    const nextProjectId = projectId || str(entry.projectId);
+    if (nextProjectId) body.projectId = nextProjectId;
+    const nextTaskId = taskId || str(entry.taskId);
+    if (nextTaskId) body.taskId = nextTaskId;
+    const nextTagIds = tagIds.length ? tagIds : arrayOfStrings(entry.tagIds);
+    if (nextTagIds.length) body.tagIds = nextTagIds;
+    body.billable = args.billable !== undefined ? args.billable : entry.billable === true;
     if (!body.start) throw new Error("entry start is required to update this time entry");
     const { workspaceId, timeEntryId, ...updateBody } = body;
     const updated = await ctx.client.timeEntries.update(

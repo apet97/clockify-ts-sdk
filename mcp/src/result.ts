@@ -169,8 +169,21 @@ export function writeReceipt(
 export function errorCodeForError(err: unknown): ClockifyErrorCode {
     const message = err instanceof Error ? err.message : String(err);
     const status = (err as { statusCode?: number }).statusCode;
+    // The SDK classifier's catch-all "error" is a non-answer here: it means the
+    // classifier recognized a ClockifyApiError but had no specific code for it.
+    // The clearest case is a real 402, whose feature_unavailable code is
+    // cli/mcp-only and therefore invisible to the SDK-surface status map the
+    // classifier consults — so the classifier falls through to "error". Treat
+    // that "error" as undefined so the unfiltered HTTP-status map can supply the
+    // cross-surface code (402 -> feature_unavailable) before the message matcher.
+    // Cause-aware codes (connection_error/aborted) are non-"error", so they still
+    // win first. Blast radius is exactly 402: it is the only status-bearing
+    // error-code entry lacking the "sdk" surface, so for every other "error"-
+    // classified ClockifyApiError errorCodeForStatus(status) stays undefined and
+    // the message matcher reproduces the prior "error" result unchanged.
+    const classified = classifyClockifyError(err)?.code;
     return (
-        classifyClockifyError(err)?.code ??
+        (classified !== undefined && classified !== "error" ? classified : undefined) ??
         errorCodeForStatus(status) ??
         errorCodeForMessage(message)
     );

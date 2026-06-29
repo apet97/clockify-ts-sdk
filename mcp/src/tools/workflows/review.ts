@@ -13,9 +13,6 @@ export function reviewInputSchema({ week }: { week: boolean }) {
         week_start: week ? z.string().optional() : z.never().optional(),
         start: z.string().optional(),
         end: z.string().optional(),
-        workday_start: z.string().optional(),
-        workday_end: z.string().optional(),
-        min_gap_minutes: z.number().int().min(0).optional(),
         include_entries: z.boolean().optional(),
         max_rows: z.number().int().min(0).optional(),
     };

@@ -267,8 +267,11 @@ for (const target of contract.requiredTargets ?? []) {
     if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
-if (!makefile.includes("perfect-fast:") || !makefile.includes("support-bundle")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing support-bundle");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("support-bundle")) {
+        fail("Makefile", `${aggregateTarget} wiring missing support-bundle`);
+    }
 }
 if (!qualityGates.includes("make support-bundle")) {
     fail("docs/quality-gates.md", "missing make support-bundle");

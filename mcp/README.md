@@ -112,7 +112,7 @@ only be used for mock/replay gateways or private test environments.
 | `clockify_start_work` | Start a running work timer. |
 | `clockify_stop_work` | Stop the current running timer. |
 | `clockify_switch_work` | Stop current work and start another timer. |
-| `clockify_review_day` | Review daily totals, gaps, running timers, and missing fields. |
+| `clockify_review_day` | Review daily totals, running timers, and missing fields. |
 | `clockify_review_week` | Review weekly totals and issues. |
 | `clockify_fix_entry` | Find one entry and update selected fields. |
 | `clockify_invoice_client_work` | Create a draft invoice for a client. |

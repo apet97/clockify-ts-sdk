@@ -159,13 +159,13 @@ export function printJson(
     value: unknown,
     options: Pick<OutputOptions, "compact" | "select"> = {},
 ): void {
-    const selected = selectValue(value, options.select);
+    const selected = selectValue(value, options.select) ?? null;
     console.log(JSON.stringify(selected, null, options.compact ? 0 : 2));
 }
 
 /** Print a value as newline-delimited JSON; arrays emit one line per item. */
 export function printNdjson(value: unknown, options: Pick<OutputOptions, "select"> = {}): void {
-    const selected = selectValue(value, options.select);
+    const selected = selectValue(value, options.select) ?? null;
     if (Array.isArray(selected)) {
         for (const item of selected) {
             console.log(JSON.stringify(item));

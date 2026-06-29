@@ -142,6 +142,11 @@ components:
           type: string
         name:
           type: string
+        colors:
+          type: array
+          items:
+            type: string
+            enum: [RED, GREEN]
     TagCreate:
       type: object
       required: [name]

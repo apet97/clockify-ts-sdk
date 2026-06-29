@@ -87,7 +87,7 @@ const INTENTS: Intent[] = [
         match: /review|report|summary|audit|totals|gaps/i,
         label: "review time",
         steps: [
-            { tool: "clockify_review_week", mutates: false, requiresConfirmation: false, why: "Read-only totals, gaps, overlaps, and missing details." },
+            { tool: "clockify_review_week", mutates: false, requiresConfirmation: false, why: "Read-only totals, running timers, and missing details." },
         ],
     },
     {

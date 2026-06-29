@@ -10,7 +10,7 @@ const contract = await readJson("docs/mcp-write-safety-contract.json", "contract
 // regex-scanning mcp/src/tools/*.ts. Per-tool body markers are still scanned on
 // source after the manifest has supplied the destructive tool names.
 const toolManifest = await readJson(
-    contract.wiring?.toolManifest ?? "docs/mcp-tool-manifest.json",
+    process.env.MCP_WRITE_SAFETY_MANIFEST ?? contract.wiring?.toolManifest ?? "docs/mcp-tool-manifest.json",
     "toolManifest",
 );
 
@@ -338,9 +338,6 @@ for (const tool of destructiveTools) {
         if (!tool.registration.includes("idempotentHint: true")) {
             failures.push(`${tool.name} is idempotent workflow but lacks idempotentHint: true`);
         }
-        if (!tool.body.includes("clockify_demo_cleanup")) {
-            failures.push(`${tool.name} does not point to demo cleanup`);
-        }
         continue;
     }
 
@@ -363,7 +360,10 @@ for (const tool of destructiveTools) {
 }
 
 // Every destructive DELETE/REMOVE domain tool must be guarded (dry_run->confirm)
-// or explicitly exempted, so a new unguarded delete cannot ship silently.
+// or explicitly exempted, so a new unguarded delete cannot ship silently. The
+// name-keyed loop below (over the full toolManifest.tools list) enforces this
+// even for a tool that forgot its destructiveHint:true annotation, so it cannot
+// hide from the manifest-derived destructive set.
 //
 // The match must catch every name segment that ENDS in delete/remove, not just
 // those immediately followed by `_` or end-of-name. `_(delete|remove)\b` was too
@@ -429,6 +429,51 @@ for (const guardedName of contract.confirmationGuardedDomainTools) {
                 "(missing destructiveHint:true) — confirm-guarded tools MUST be destructive",
         );
     }
+}
+
+// Name-based completeness backstop over the FULL manifest (independent of the
+// self-declared destructiveHint:true set): any tool whose NAME ends in
+// _delete/_remove must (a) declare annotations.destructiveHint:true so it
+// surfaces in the structural destructive set, and (b) be confirmation-guarded or
+// explicitly exempt. Workflow writes guard via maybeConfirm and are skipped.
+// Without this, a delete-named tool that under-declares destructiveHint never
+// enters `destructiveTools`, so it could ship with no dry_run->confirm handshake
+// while this gate stays green.
+function nameBasedDeleteCoverageFailures(tools) {
+    const out = [];
+    for (const tool of tools ?? []) {
+        if (typeof tool?.name !== "string") continue;
+        if (!destructiveNamePattern.test(tool.name)) continue;
+        if (workflowSet.has(tool.name)) continue; // workflow writes guard via maybeConfirm
+        if (tool.destructiveHint !== true) {
+            out.push(
+                `tool ${tool.name} has a destructive _delete/_remove name but is not marked ` +
+                    "destructiveHint:true (it would be invisible to the destructive-tool guard check)",
+            );
+        }
+        if (!guardedSet.has(tool.name) && !exemptSet.has(tool.name)) {
+            out.push(
+                `destructive domain tool ${tool.name} is neither in confirmationGuardedDomainTools ` +
+                    "nor confirmationExemptDestructiveTools",
+            );
+        }
+    }
+    return out;
+}
+failures.push(...nameBasedDeleteCoverageFailures(toolManifest.tools));
+
+// Regression self-check (mirrors the regex/registration self-checks above): a
+// synthetic delete-named tool that under-declares destructiveHint AND is absent
+// from every guarded/exempt/workflow set MUST produce exactly two failures. If a
+// future edit weakens nameBasedDeleteCoverageFailures, this fails loudly instead
+// of silently letting an unguarded delete ship.
+const nameCoverageSelfCheck = nameBasedDeleteCoverageFailures([
+    { name: "clockify_selfcheck_delete", destructiveHint: false },
+]);
+if (nameCoverageSelfCheck.length !== 2) {
+    failures.push(
+        "name-based delete coverage self-check regressed: an unguarded, hint-false `_delete` tool must produce exactly two failures",
+    );
 }
 
 if (!confirmGuard.includes("confirm_token: issued.confirmToken")) {

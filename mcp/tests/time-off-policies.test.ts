@@ -47,6 +47,10 @@ function policiesContext(captured: Record<string, unknown>, policy = existingPol
                     captured.create = req;
                     return { id: "pol-9" };
                 },
+                updateStatus: async (req: unknown) => {
+                    captured.updateStatus = req;
+                    return { id: "pol-1", archived: true };
+                },
             },
             // The scope tools now resolve a name in an id slot through the list/filter
             // resolvers; the resolver matches a non-hex ref against listed ids first, so
@@ -177,5 +181,38 @@ describe("clockify_time_off_policies_create — flat body + scope", () => {
         const create = captured.create as Record<string, unknown>;
         expect((create.users as { status: string }).status).toBe("ACTIVE");
         expect((create.userGroups as { status: string }).status).toBe("ACTIVE");
+    });
+});
+
+describe("clockify_time_off_policies_archive — maps the boolean to the wire {status} field", () => {
+    it("sends status ARCHIVED (not archived) when archived is true", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_policies_archive",
+            arguments: { policyId: "pol-1", archived: true },
+        });
+        expect(res.isError).toBeFalsy();
+        const sent = captured.updateStatus as {
+            workspaceId: string;
+            policyId: string;
+            body: Record<string, unknown>;
+        };
+        expect(sent.workspaceId).toBe("ws-1");
+        expect(sent.policyId).toBe("pol-1");
+        expect(sent.body).toEqual({ status: "ARCHIVED" });
+        expect(sent.body.archived).toBeUndefined();
+    });
+
+    it("sends status ACTIVE when archived is false", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_policies_archive",
+            arguments: { policyId: "pol-1", archived: false },
+        });
+        expect(res.isError).toBeFalsy();
+        const sent = captured.updateStatus as { body: Record<string, unknown> };
+        expect(sent.body).toEqual({ status: "ACTIVE" });
     });
 });

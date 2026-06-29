@@ -108,7 +108,7 @@ export function loadContext(
 ): Context {
     const apiKey = env.CLOCKIFY_API_KEY;
     const workspaceId = env.CLOCKIFY_WORKSPACE_ID;
-    const environment = env.CLOCKIFY_BASE_URL;
+    const environment = env.CLOCKIFY_BASE_URL?.trim() || undefined;
 
     if (!apiKey || !workspaceId) {
         // Deferred: the server still starts; each tool throws on first

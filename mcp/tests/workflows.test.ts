@@ -105,6 +105,13 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                     state.tasks.push(task);
                     return task;
                 },
+                update: async (body: { projectId: string; taskId: string; name?: string; status?: string }) => {
+                    state.cleanupRequests.push({ type: "task.update", body });
+                    const task = state.tasks.find((item) => item.id === body.taskId);
+                    if (!task) throw Object.assign(new Error("task not found"), { statusCode: 404 });
+                    Object.assign(task, body);
+                    return task;
+                },
                 delete: async (body: { taskId: string }) => {
                     state.cleanupRequests.push({ type: "task.delete", body });
                     state.tasks = state.tasks.filter((task) => task.id !== body.taskId);
@@ -246,6 +253,21 @@ describe("workflow tools", () => {
         expect(tools.find((tool) => tool.name === "clockify_setup_webhook")?.annotations).toMatchObject({
             destructiveHint: true,
         });
+    });
+
+    it("review tools do not advertise gap/overlap detection or accept inert threshold fields", async () => {
+        const client = await connect(fakeContext());
+        const tools = (await client.listTools()).tools;
+        for (const name of ["clockify_review_day", "clockify_review_week"]) {
+            const tool = tools.find((t) => t.name === name);
+            expect(tool, `${name} should be registered`).toBeDefined();
+            expect(tool?.description ?? "").not.toMatch(/gap|overlap/i);
+            const props =
+                ((tool?.inputSchema as { properties?: Record<string, unknown> }).properties) ?? {};
+            expect(Object.keys(props)).not.toContain("workday_start");
+            expect(Object.keys(props)).not.toContain("workday_end");
+            expect(Object.keys(props)).not.toContain("min_gap_minutes");
+        }
     });
 
     it("create_work_package creates missing objects and reports change sets plus next actions", async () => {
@@ -640,7 +662,7 @@ describe("workflow tools", () => {
         });
     });
 
-    it("demo_cleanup deletes deterministic entries and objects after archiving active parents", async () => {
+    it("demo_cleanup requires dry_run confirmation, then deletes after archiving active parents", async () => {
         const ctx = fakeContext({
             clients: [
                 { id: "c-demo", name: "DEMO-clean-client" },
@@ -665,11 +687,42 @@ describe("workflow tools", () => {
         });
         const client = await connect(ctx);
 
-        const res = await client.callTool({
+        // dry_run:true issues a preview + confirm_token and performs NO deletion.
+        const previewRes = await client.callTool({
+            name: "clockify_demo_cleanup",
+            arguments: { prefix: "DEMO-clean", dry_run: true },
+        });
+        expect(previewRes.isError).toBeFalsy();
+        const preview = parse(previewRes);
+        expect(preview.ok).toBe(true);
+        expect((preview.data as { preview: Record<string, unknown> }).preview).toEqual({
+            prefix: "DEMO-clean",
+            entries: 1,
+            projects: 1,
+            tasks: 1,
+            tags: 1,
+            clients: 1,
+        });
+        const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
+        expect(typeof confirmToken).toBe("string");
+        expect(ctx.state.cleanupRequests).toEqual([]);
+        expect(ctx.state.clients).toHaveLength(2);
+        expect(ctx.state.entries).toHaveLength(2);
+
+        // A bare call (neither dry_run nor confirm_token) is refused with no deletion.
+        const refused = await client.callTool({
             name: "clockify_demo_cleanup",
             arguments: { prefix: "DEMO-clean" },
         });
+        expect(refused.isError).toBe(true);
+        expect(parse(refused).ok).toBe(false);
+        expect(ctx.state.cleanupRequests).toEqual([]);
 
+        // The confirm_token executes the archive-then-delete cleanup.
+        const res = await client.callTool({
+            name: "clockify_demo_cleanup",
+            arguments: { prefix: "DEMO-clean", confirm_token: confirmToken },
+        });
         expect(res.isError).toBeFalsy();
         expect(parse(res)).toMatchObject({
             ok: true,
@@ -687,8 +740,17 @@ describe("workflow tools", () => {
         expect(ctx.state.cleanupRequests).toEqual(
             expect.arrayContaining([
                 { type: "entry.delete", body: expect.objectContaining({ timeEntryId: "e-demo" }) },
-                { type: "task.delete", body: expect.objectContaining({ taskId: "ta-demo" }) },
                 { type: "tag.delete", body: expect.objectContaining({ tagId: "tg-demo" }) },
+                {
+                    type: "task.update",
+                    body: expect.objectContaining({
+                        projectId: "p-demo",
+                        taskId: "ta-demo",
+                        name: "DEMO-clean-task",
+                        status: "DONE",
+                    }),
+                },
+                { type: "task.delete", body: expect.objectContaining({ taskId: "ta-demo" }) },
                 {
                     type: "project.update",
                     body: expect.objectContaining({
@@ -713,6 +775,21 @@ describe("workflow tools", () => {
         expect(ctx.state.tasks).toEqual([{ id: "ta-other", name: "Other", projectId: "p-other" }]);
         expect(ctx.state.tags).toEqual([{ id: "tg-other", name: "Other" }]);
         expect(ctx.state.entries).toEqual([{ id: "e-other", description: "Other" }]);
+    });
+
+    it("demo_cleanup refuses a non-demo prefix before any delete", async () => {
+        const ctx = fakeContext({
+            clients: [{ id: "c-prod", name: "Acme-client" }],
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_demo_cleanup",
+            arguments: { prefix: "Acme", dry_run: true },
+        });
+        expect(res.isError).toBe(true);
+        expect((parse(res).error as { message: string }).message).toMatch(/reserved DEMO-/);
+        expect(ctx.state.cleanupRequests).toEqual([]);
+        expect(ctx.state.clients).toEqual([{ id: "c-prod", name: "Acme-client" }]);
     });
 });
 
@@ -813,6 +890,57 @@ describe("P0 correctness — pagination + validation", () => {
         const entry = ctx.state.entries[0]!;
         expect(entry.taskId).toBe("ta9");
         expect(entry.tagIds).toEqual(["tg9"]);
+    });
+
+    it("fix_entry preserves end/projectId/taskId/tagIds/billable on a description-only fix (replace-PUT semantics)", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e1",
+                    userId: "u1",
+                    description: "Original",
+                    billable: true,
+                    projectId: "p9",
+                    taskId: "ta9",
+                    tagIds: ["tg9"],
+                    timeInterval: {
+                        start: "2026-06-15T09:00:00.000Z",
+                        end: "2026-06-15T10:00:00.000Z",
+                    },
+                },
+            ],
+        });
+        // The live wire is a PUT-replace: model update as DROPPING every key the
+        // caller omits (the opposite of the default merge fake), so any field
+        // fix_entry forgets to forward is provably wiped.
+        (ctx.client.timeEntries as { update: unknown }).update = async (
+            payload: Record<string, unknown>,
+        ) => {
+            const idx = ctx.state.entries.findIndex((e) => e.id === payload.timeEntryId);
+            if (idx === -1) throw Object.assign(new Error("entry not found"), { statusCode: 404 });
+            const sent = (payload.body ?? payload) as Record<string, unknown>;
+            const replaced = {
+                id: ctx.state.entries[idx]!.id,
+                userId: ctx.state.entries[idx]!.userId,
+                ...sent,
+            };
+            ctx.state.entries[idx] = replaced;
+            return replaced;
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", new_description: "Updated" },
+        });
+        expect(res.isError).toBeFalsy();
+        const entry = ctx.state.entries[0]!;
+        expect(entry.description).toBe("Updated");
+        expect(entry.end).toBe("2026-06-15T10:00:00.000Z");
+        expect(entry.start).toBe("2026-06-15T09:00:00.000Z");
+        expect(entry.projectId).toBe("p9");
+        expect(entry.taskId).toBe("ta9");
+        expect(entry.tagIds).toEqual(["tg9"]);
+        expect(entry.billable).toBe(true);
     });
 
     it("review rejects an explicit start+end range with a garbage end (offline, field-named)", async () => {

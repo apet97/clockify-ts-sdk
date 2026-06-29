@@ -34,6 +34,7 @@ const wrapperPkg = readJson("wrapper/package.json");
 const cliPkg = readJson("cli/package.json");
 const mcpPkg = readJson("mcp/package.json");
 const mcpTools = readJson("docs/mcp-tools.json");
+let goMcpVerified = true;
 function goMcpMetadata() {
     const goCatalog = maybeReadJson("../GOCLMCP/docs/tool-catalog.json");
     const goTools = Array.isArray(goCatalog?.tools) ? goCatalog.tools : [];
@@ -49,6 +50,7 @@ function goMcpMetadata() {
         };
     }
 
+    goMcpVerified = false;
     const current = maybeReadJson("docs/product-surface.json");
     const currentGoMcp = current?.packages?.goMcp ?? {};
     return {
@@ -346,6 +348,11 @@ if (args.has("--check")) {
     if (stale.length > 0) {
         console.error(`Product surface drift: ${stale.join(", ")}. Run make product-surface.`);
         process.exit(1);
+    }
+    if (!goMcpVerified) {
+        console.warn(
+            "WARNING: ../GOCLMCP/docs/tool-catalog.json absent; packages.goMcp.detectedToolCount/detectedCategoryCounts were echoed from docs/product-surface.json and NOT verified. Re-run with the GOCLMCP sibling checked out (perfect-full) to verify the Go MCP tool counts.",
+        );
     }
     console.log("product surface is current");
     process.exit(0);

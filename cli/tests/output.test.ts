@@ -122,6 +122,18 @@ describe("printSuccess / printError", () => {
         printError("Project doesn't belong to Workspace", json, 400);
         expect(JSON.parse(errored[0] ?? "").code).toBe("not_found");
     });
+
+    it("classifies the workspace-not-set setup error as auth_or_permission, not invalid_request", () => {
+        // requireWorkspaceId throws "Clockify workspace ID not set. ..."; that is a
+        // credential-setup failure with no HTTP status, so it must classify as
+        // auth_or_permission (whose recovery names the workspace ID) instead of the
+        // request-payload bucket invalid_request.
+        printError(
+            "Clockify workspace ID not set. Provide --workspace, set CLOCKIFY_WORKSPACE_ID, or add `workspaceId` to ~/.clockifyrc.json.",
+            json,
+        );
+        expect(JSON.parse(errored[0] ?? "").code).toBe("auth_or_permission");
+    });
 });
 
 describe("selectValue", () => {
@@ -152,6 +164,23 @@ describe("printJson / printNdjson", () => {
     it("prints a non-array ndjson value as a single line", () => {
         printNdjson({ id: "x" });
         expect(logged).toEqual(['{"id":"x"}']);
+    });
+
+    it("emits valid JSON null (not bare undefined) for a missing --select path in json mode", () => {
+        printJson({ data: {} }, { select: "data.missing" });
+        expect(logged).toEqual(["null"]);
+        expect(() => JSON.parse(logged[0] ?? "")).not.toThrow();
+    });
+
+    it("emits valid JSON null (not bare undefined) for a missing --select path in ndjson mode", () => {
+        printNdjson({ data: {} }, { select: "data.missing" });
+        expect(logged).toEqual(["null"]);
+        expect(() => JSON.parse(logged[0] ?? "")).not.toThrow();
+    });
+
+    it("passes legitimate falsy selected values through unchanged (does not coerce to null)", () => {
+        printJson({ data: 0 }, { compact: true, select: "data" });
+        expect(logged[0]).toBe("0");
     });
 });
 

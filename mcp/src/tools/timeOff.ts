@@ -599,9 +599,8 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             const updated = await ctx.client.timeOffPolicies.updateStatus({
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
-                body: { archived: args.archived },
-                // KEEP as never: policy archive uses live archived body despite generated status naming.
-            } as never);
+                body: { status: args.archived ? "ARCHIVED" : "ACTIVE" },
+            });
             return successResult(
                 "clockify_time_off_policies_archive",
                 updated,

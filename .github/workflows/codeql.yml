@@ -40,23 +40,23 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: security-and-quality
-          # Scope the analysis to the hand-written wrapper surface
-          # + workflow files. wrapper/src/** is locally generated
-          # output (regenerated); any finding there belongs
-          # upstream in GOCLMCP, not in this repo's security tab.
+          # Scope the analysis to the hand-written surface across all
+          # three packages (wrapper root, cli/src, mcp/src) plus the
+          # repo automation scripts and workflow files. wrapper/src/**
+          # is locally generated output (regenerated); any finding
+          # there belongs upstream in GOCLMCP, not in this repo's
+          # security tab, so it is excluded via paths-ignore. Built
+          # output (**/dist) is excluded as a belt-and-suspenders.
           config: |
             paths:
-              - wrapper/index.ts
-              - wrapper/create-client.ts
-              - wrapper/composed-fetch.ts
-              - wrapper/iter.ts
-              - wrapper/webhooks.ts
-              - wrapper/pagination.ts
-              - wrapper/with-response.ts
-              - wrapper/tests
-              - wrapper/scripts
-              - wrapper/examples
+              - wrapper
+              - cli/src
+              - mcp/src
+              - scripts
               - .github/workflows
+            paths-ignore:
+              - wrapper/src
+              - "**/dist"
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v4

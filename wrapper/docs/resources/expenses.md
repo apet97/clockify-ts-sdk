@@ -57,7 +57,7 @@
 - `amount` (`number`, required) — Represents an expense amount as the double data type.
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
-- `changeFields` (`"USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE"[]`, required) — Represents a list of expense change fields.
+- `changeFields` (`("USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE")[]`, required) — Represents a list of expense change fields.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
 - `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
 - `notes` (`string`, optional) — Represents notes for an expense.
@@ -70,7 +70,7 @@
 - `amount` (`number`, required) — Represents an expense amount as the double data type.
 - `billable` (`boolean`, optional) — Indicates whether expense is billable or not.
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
-- `changeFields` (`"USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE"[]`, required) — Represents a list of expense change fields.
+- `changeFields` (`("USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE")[]`, required) — Represents a list of expense change fields.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
 - `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
 - `notes` (`string`, optional) — Represents notes for an expense.

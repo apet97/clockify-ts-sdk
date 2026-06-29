@@ -275,12 +275,14 @@ export async function* iterPages<TRequest, TItem>(
         // even if this page came back short — filtered/partial pages are
         // legitimate, so trusting `false` avoids silently under-fetching).
         // We only fall back to the legacy `items.length === pageSize`
-        // heuristic when the header is absent (`undefined`). The
-        // `endPage`/`maxPages` bound above still caps the walk if a buggy
-        // server keeps returning `Last-Page: false` forever.
+        // heuristic when the header is absent (`undefined`). An empty page
+        // (zero items) terminates the walk on EVERY branch, because the
+        // default `maxPages` is unbounded (`Number.POSITIVE_INFINITY`) and
+        // does NOT cap the walk — so a misbehaving server stuck on
+        // `Last-Page: false` cannot loop forever.
         const hasNextPage =
             lastPageFromHeader === true ? false
-            : lastPageFromHeader === false ? true
+            : lastPageFromHeader === false ? items.length > 0
             : items.length === pageSize;
         options.onPage?.({ page, count: items.length });
         yield { items, page, pageSize, hasNextPage };

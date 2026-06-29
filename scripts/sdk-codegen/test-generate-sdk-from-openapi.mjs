@@ -6,6 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { typeFromSchema } from "./schema.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const generator = path.join(root, "scripts/generate-sdk-from-openapi.mjs");
 const fixtures = path.join(root, "scripts/sdk-codegen/__fixtures__");
@@ -48,6 +50,12 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
         assert.match(tagClient, /"page-size": request\["page-size"\]/);
         assert.match(tagClient, /core\.bodyFromRequest/);
 
+        const tagType = await readGenerated(out, "api/types/Tag.ts");
+        assert.match(tagType, /colors\?: \("RED" \| "GREEN"\)\[\];/);
+
+        const customFieldValueArray = await readGenerated(out, "api/types/CustomFieldValue.ts");
+        assert.match(customFieldValueArray, /string\[\]/);
+
         const filesClient = await readGenerated(out, "api/resources/files/client/Client.ts");
         assert.match(filesClient, /multipart: true/);
         const uploadRequest = await readGenerated(out, "api/resources/files/client/requests/UploadImageFilesRequest.ts");
@@ -77,6 +85,30 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
             "--receipt",
             path.join(temp, "check-receipt.json"),
         ]);
+    } finally {
+        await rm(temp, { recursive: true, force: true });
+    }
+});
+
+test("emitted request runtime keeps per-operation baseUrl routing and retry/timeout", async () => {
+    const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-runtime-"));
+    try {
+        const out = path.join(temp, "out");
+        await runGenerator([
+            "--write",
+            "--input",
+            path.join(fixtures, "golden.openapi.yaml"),
+            "--out",
+            out,
+            "--receipt",
+            path.join(temp, "receipt.json"),
+        ]);
+
+        const requestRuntime = await readGenerated(out, "core/request.ts");
+        assert.match(requestRuntime, /baseUrl\?: string;/);
+        assert.match(requestRuntime, /\?\? operation\.baseUrl \?\? ClockifyApiEnvironment\.Default/);
+        assert.match(requestRuntime, /fetchWithTimeout\(/);
+        assert.match(requestRuntime, /for \(let attempt = 0; ; attempt\+\+\)/);
     } finally {
         await rm(temp, { recursive: true, force: true });
     }
@@ -114,6 +146,22 @@ test("unsupported schema features fail with JSON-pointer diagnostics and a recei
     } finally {
         await rm(temp, { recursive: true, force: true });
     }
+});
+
+test("union members keep balanced brackets when a structured member has an internal union", () => {
+    const schema = {
+        oneOf: [
+            { type: "object", additionalProperties: { oneOf: [{ type: "string" }, { type: "number" }] } },
+            { type: "object", additionalProperties: { oneOf: [{ type: "string" }, { type: "boolean" }] } },
+        ],
+    };
+    assert.equal(
+        typeFromSchema(schema, { doc: {} }),
+        "Record<string, string | number> | Record<string, string | boolean>",
+    );
+
+    const flat = { oneOf: [{ type: "string" }, { type: "string" }, { type: "number" }] };
+    assert.equal(typeFromSchema(flat, { doc: {} }), "string | number");
 });
 
 async function readGenerated(out, relativePath) {

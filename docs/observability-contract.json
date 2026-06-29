@@ -50,7 +50,7 @@
         "otelHooks",
         "http.request.method",
         "http.response.status_code",
-        "http.client.request.duration",
+        "clockify.http.client.request.duration_ms",
         "peer.service"
       ]
     },

@@ -31,6 +31,18 @@ describe("PaginatedList", () => {
         expect(fetcher).toHaveBeenCalledTimes(2);
     });
 
+    it("toArray({ limit: 0 }) returns [] and performs no fetch", async () => {
+        const pages = [["a", "b", "c"], ["d", "e", "f"], ["g"]];
+        const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {
+            const i = (req.page ?? 1) - 1;
+            return pages[i] ?? [];
+        });
+        const list = paginatedList(fetcher, {}, { pageSize: 3 });
+        expect(await list.toArray({ limit: 0 })).toEqual([]);
+        // at-most-0 must short-circuit before any page fetch.
+        expect(fetcher).toHaveBeenCalledTimes(0);
+    });
+
     it("toArray() with no limit walks until the last page", async () => {
         const pages = [["a", "b"], ["c"]];
         const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {

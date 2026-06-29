@@ -23,7 +23,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
         )
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option("--name <text>", "Filter by tag name substring.")
-        .option("--archived", "Include archived tags.", false)
+        .option("--archived", "Show only archived tags (default lists both archived and active).", false)
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: ClockifyApi.ListTagsRequest = {

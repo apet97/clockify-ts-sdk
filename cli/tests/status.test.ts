@@ -110,7 +110,41 @@ describe("status command", () => {
         expect(lastJson().runningEntry).toBe("(no timer running)");
     });
 
-    it("normalizes a data envelope and falls back when duration is absent", async () => {
+    it("normalizes a data envelope and computes elapsed from start when duration is absent", async () => {
+        const startIso = "2026-06-18T10:00:00Z";
+        const nowMs = Date.parse(startIso) + 90 * 60 * 1000; // 1h30m after start
+        const nowSpy = vi.spyOn(Date, "now").mockReturnValue(nowMs);
+        try {
+            const client = {
+                users: { getCurrentUser: async () => ({ id: "u-1" }) },
+                workspaces: { list: async () => [] },
+                timeEntries: {
+                    listInProgress: async () => ({
+                        data: [
+                            {
+                                id: "te-2",
+                                userId: "u-1",
+                                description: "open",
+                                timeInterval: { start: startIso },
+                            },
+                        ],
+                    }),
+                },
+            };
+            await makeProgram(client as unknown as ClockifyClient, {
+                apiKey: "k",
+                workspaceId: "ws-1",
+            }).parseAsync(["node", "clk115", "--json", "status"]);
+            const running = lastJson().runningEntry as Record<string, unknown>;
+            expect(running.id).toBe("te-2");
+            expect(running.elapsed).toBe("1h30m");
+            expect(lastJson().email).toBe("");
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
+
+    it("falls back to 0s for a running entry with no duration and no parseable start", async () => {
         const client = {
             users: { getCurrentUser: async () => ({ id: "u-1" }) },
             workspaces: { list: async () => [] },
@@ -118,10 +152,10 @@ describe("status command", () => {
                 listInProgress: async () => ({
                     data: [
                         {
-                            id: "te-2",
+                            id: "te-3",
                             userId: "u-1",
                             description: "open",
-                            timeInterval: { start: "2026-06-18T10:00:00Z" },
+                            timeInterval: {},
                         },
                     ],
                 }),
@@ -132,8 +166,7 @@ describe("status command", () => {
             workspaceId: "ws-1",
         }).parseAsync(["node", "clk115", "--json", "status"]);
         const running = lastJson().runningEntry as Record<string, unknown>;
-        expect(running.id).toBe("te-2");
+        expect(running.id).toBe("te-3");
         expect(running.elapsed).toBe("0s");
-        expect(lastJson().email).toBe("");
     });
 });

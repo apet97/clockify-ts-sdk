@@ -231,8 +231,11 @@ if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-if (!makefile.includes("perfect-fast:") || !makefile.includes("config-precedence")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing config-precedence");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("config-precedence")) {
+        fail("Makefile", `${aggregateTarget} wiring missing config-precedence`);
+    }
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

@@ -50,7 +50,7 @@ describe("otelHooks", () => {
         expect(span.attrs["http.request.method"]).toBe("GET");
         expect(span.attrs["url.full"]).toBe("https://api.clockify.me/api/v1/workspaces");
         expect(span.attrs["peer.service"]).toBe("clockify");
-        expect(span.attrs["http.request.resend_count"]).toBe(0);
+        expect(span.attrs["http.request.resend_count"]).toBeUndefined();
         expect(span.ended).toBe(false);
     });
 
@@ -75,7 +75,7 @@ describe("otelHooks", () => {
         });
 
         expect(span.attrs["http.response.status_code"]).toBe(200);
-        expect(span.attrs["http.client.request.duration"]).toBe(142);
+        expect(span.attrs["clockify.http.client.request.duration_ms"]).toBe(142);
         expect(span.statusCode).toBe(1); // OK
         expect(span.ended).toBe(true);
     });
@@ -216,7 +216,32 @@ describe("otelHooks", () => {
         });
 
         expect(startSpan).toHaveBeenCalledTimes(2);
-        expect(spans[0]?.attrs["http.request.resend_count"]).toBe(0);
+        expect(spans[0]?.attrs["http.request.resend_count"]).toBeUndefined();
         expect(spans[1]?.attrs["http.request.resend_count"]).toBe(1);
+    });
+
+    it("omits resend_count on the initial attempt but emits it on retries", async () => {
+        const spans: ReturnType<typeof mockSpan>[] = [];
+        const startSpan = () => {
+            const s = mockSpan();
+            spans.push(s);
+            return s;
+        };
+        const hooks = otelHooks({ startSpan });
+
+        const baseCtx = {
+            url: "https://api.clockify.me/api/v1/workspaces",
+            method: "GET" as const,
+            headers: new Headers(),
+            requestId: "req-resend",
+        };
+
+        await hooks.beforeRequest?.({ ...baseCtx, attempt: 0 });
+        await hooks.beforeRequest?.({ ...baseCtx, attempt: 1 });
+        await hooks.beforeRequest?.({ ...baseCtx, attempt: 2 });
+
+        expect("http.request.resend_count" in spans[0]!.attrs).toBe(false);
+        expect(spans[1]?.attrs["http.request.resend_count"]).toBe(1);
+        expect(spans[2]?.attrs["http.request.resend_count"]).toBe(2);
     });
 });

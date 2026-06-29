@@ -75,7 +75,7 @@ export function errorCodeForMessage(message: string): ClockifyErrorCode {
     // the auth/invalid matchers so the bare "workspace"/"invalid" tokens can't
     // claim it.
     if (/does(?:n'?t| not) (?:belong to|exist)/i.test(message)) return "not_found";
-    if (/(unauthorized|forbidden|permission|api[\\s_-]?key|addon[\\s_-]?token|CLOCKIFY_API_KEY|CLOCKIFY_ADDON_TOKEN)/i.test(message)) return "auth_or_permission";
+    if (/(unauthorized|forbidden|permission|api[\\s_-]?key|addon[\\s_-]?token|CLOCKIFY_API_KEY|CLOCKIFY_ADDON_TOKEN|workspace id not set)/i.test(message)) return "auth_or_permission";
     if (/(required|provide|missing|invalid|unknown option|unknown command|could not parse|not valid|must use|must not|confirmation token)/i.test(message)) {
         return "invalid_request";
     }

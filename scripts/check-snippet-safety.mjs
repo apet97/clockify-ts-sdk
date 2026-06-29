@@ -264,8 +264,11 @@ for (const target of contract.requiredTargets ?? []) {
     if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing target ${target}`);
 }
 
-if (!makefile.includes("perfect-fast:") || !makefile.includes("snippet-safety")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing snippet-safety");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("snippet-safety")) {
+        fail("Makefile", `${aggregateTarget} wiring missing snippet-safety`);
+    }
 }
 if (!qualityGates.includes("make snippet-safety")) {
     fail("docs/quality-gates.md", "missing make snippet-safety");

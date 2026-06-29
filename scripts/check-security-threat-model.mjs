@@ -268,8 +268,11 @@ for (const target of contract.requiredTargets ?? []) {
     if (!isLiveTarget(makefile, target, retiredGates)) fail("Makefile", `missing required target ${target}`);
 }
 
-if (!makefile.includes("perfect-fast:") || !makefile.includes("security-threat-model")) {
-    fail("Makefile", "perfect-fast/perfect-full wiring missing security-threat-model");
+for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
+    if (!targetLine.split(/\s+/).includes("security-threat-model")) {
+        fail("Makefile", `${aggregateTarget} wiring missing security-threat-model`);
+    }
 }
 if (!qualityGates.includes("make security-threat-model")) {
     fail("docs/quality-gates.md", "missing make security-threat-model");

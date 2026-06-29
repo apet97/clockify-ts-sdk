@@ -57,7 +57,7 @@ export const registerStatusCommand: Registrar = (program, services) => {
                               description: (running as { description?: string }).description ?? "",
                               projectId: (running as { projectId?: string | null }).projectId ?? "",
                               startedAt: extractStart(running),
-                              elapsed: formatIsoDuration(extractIsoDuration(running)),
+                              elapsed: formatRunningElapsed(running),
                           }
                         : "(no timer running)",
                 },
@@ -89,4 +89,24 @@ function extractStart(entry: unknown): string {
 function extractIsoDuration(entry: unknown): string | null {
     const interval = (entry as { timeInterval?: { duration?: string | null } }).timeInterval;
     return interval?.duration ?? null;
+}
+
+function humanizeSeconds(total: number): string {
+    if (total <= 0) return "0s";
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
+    const parts: string[] = [];
+    if (hours) parts.push(`${hours}h`);
+    if (minutes) parts.push(`${minutes}m`);
+    if (seconds) parts.push(`${seconds}s`);
+    return parts.length > 0 ? parts.join("") : "0s";
+}
+
+function formatRunningElapsed(entry: unknown): string {
+    const iso = extractIsoDuration(entry);
+    if (iso) return formatIsoDuration(iso);
+    const startMs = Date.parse(extractStart(entry));
+    if (!Number.isFinite(startMs)) return "0s";
+    return humanizeSeconds(Math.max(0, Math.round((Date.now() - startMs) / 1000)));
 }

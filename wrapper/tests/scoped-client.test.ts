@@ -180,6 +180,36 @@ describe("Workspace ensure helpers", () => {
         expect(result.created).toBe(true);
         expect(result.id).toBe("c_new");
     });
+
+    it("ensureProject reuses a match on page 2 (>50 records) without creating a duplicate", async () => {
+        const page1 = Array.from({ length: 50 }, (_, i) => ({ id: `p_${i}`, name: `Project ${i}` }));
+        const page2 = [{ id: "p_target", name: "Existing" }];
+        let getCall = 0;
+        let postCalled = false;
+        const fetchMock = vi.fn(async (_input: unknown, init?: { method?: string }) => {
+            const method = (init?.method ?? "GET").toUpperCase();
+            if (method !== "GET") {
+                postCalled = true;
+                return new Response(JSON.stringify({ id: "p_new", name: "Existing" }), {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                });
+            }
+            const body = getCall === 0 ? page1 : page2;
+            const last = getCall >= 1;
+            getCall += 1;
+            return new Response(JSON.stringify(body), {
+                status: 200,
+                headers: { "content-type": "application/json", "Last-Page": last ? "true" : "false" },
+            });
+        });
+        const ws = createClockifyClient({ apiKey: "test", fetch: fetchMock as typeof fetch }).workspace("ws-pg");
+        const result = await ws.ensureProject("Existing");
+        expect(result.created).toBe(false);
+        expect(result.id).toBe("p_target");
+        expect(postCalled).toBe(false);
+        expect(getCall).toBe(2);
+    });
 });
 
 describe("Workspace iterators", () => {

@@ -87,7 +87,10 @@ export function typeFromSchema(schema, model) {
     if (resolved.enum) type = unionTypes(resolved.enum.map(literal));
     else if (resolved.oneOf || resolved.anyOf) type = unionTypes([...(resolved.oneOf ?? []), ...(resolved.anyOf ?? [])].map((part) => typeFromSchema(part, model)));
     else if (resolved.allOf) type = resolved.allOf.map((part) => typeFromSchema(part, model)).join(" & ") || "unknown";
-    else if (resolved.type === "array") type = `${typeFromSchema(resolved.items, model)}[]`;
+    else if (resolved.type === "array") {
+        const item = typeFromSchema(resolved.items, model);
+        type = item.includes(" | ") ? `(${item})[]` : `${item}[]`;
+    }
     else if (resolved.type === "integer" || resolved.type === "number") type = "number";
     else if (resolved.type === "boolean") type = "boolean";
     else if (resolved.type === "null") type = "null";
@@ -119,14 +122,30 @@ function withNullable(type, ...schemas) {
 function unionTypes(types) {
     const flattened = [];
     for (const type of types) {
-        for (const part of String(type)
-            .split(" | ")
+        for (const part of splitTopLevelUnion(String(type))
             .map((entry) => entry.trim())
             .filter(Boolean)) {
             if (!flattened.includes(part)) flattened.push(part);
         }
     }
     return flattened.join(" | ") || "unknown";
+}
+
+function splitTopLevelUnion(type) {
+    const parts = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < type.length; i++) {
+        const ch = type[i];
+        if (ch === "<" || ch === "(" || ch === "[" || ch === "{") depth++;
+        else if (ch === ">" || ch === ")" || ch === "]" || ch === "}") depth--;
+        else if (depth === 0 && ch === "|" && type[i - 1] === " " && type[i + 1] === " ") {
+            parts.push(type.slice(start, i - 1));
+            start = i + 2;
+        }
+    }
+    parts.push(type.slice(start));
+    return parts;
 }
 
 export function deref(schema, model) {

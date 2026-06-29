@@ -233,6 +233,21 @@ describe("iterPages — Last-Page header consumption", () => {
         expect(seen).toEqual([1, 2, 3]);
     });
 
+    it("stops on an empty page even when Last-Page: false and no maxPages is set", async () => {
+        // Regression guard for wrapper-pagination-1: the default maxPages is
+        // unbounded (Number.POSITIVE_INFINITY), so a server stuck on
+        // Last-Page: false must still terminate. An empty page (zero items)
+        // ends the walk on the header-trust branch with NO maxPages passed.
+        const seen: number[] = [];
+        const fetcher = (req: PaginatedRequest) => {
+            seen.push(req.page!);
+            return fakeHttpResponsePromise([] as number[], "false");
+        };
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+        expect(pages).toEqual([{ items: [], page: 1, pageSize: 2, hasNextPage: false }]);
+        expect(seen).toEqual([1]);
+    });
+
     it("ignores Last-Page when fetcher returns a plain Promise (no .withRawResponse)", async () => {
         // A test fetcher (or a non-Fern variant) that returns a bare
         // array without the .withRawResponse hook should still work via
