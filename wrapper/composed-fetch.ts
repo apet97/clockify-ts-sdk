@@ -36,7 +36,7 @@ import { platform, arch } from "node:os";
  *  is updated automatically on release by release-please via the
  *  `x-release-please-version` marker below (see `release-please-config.json`,
  *  which lists this file under `extra-files`). Do not remove the marker. */
-const PACKAGE_VERSION = "0.9.0" as const; // x-release-please-version
+const PACKAGE_VERSION = "0.10.0" as const; // x-release-please-version
 const PACKAGE_NAME = "clockify-sdk-ts-115" as const;
 
 /** Header name carrying the per-request UUID. */
