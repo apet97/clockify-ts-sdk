@@ -4,6 +4,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-29
+
 ### Changed
 
 - Renamed the package to `@apet97/clockify-cli-115` (was `@clockify115/cli`) and

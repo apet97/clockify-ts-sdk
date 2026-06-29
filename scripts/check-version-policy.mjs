@@ -216,7 +216,9 @@ function productSurfacePackage(id) {
 }
 
 function versionHeadingRegex(version) {
-    return new RegExp(`^## \\[${escapeRegExp(version)}\\](?:\\s|$)`, "m");
+    // Accept both the hand-written `## [x.y.z] - date` form and release-please's
+    // `## [x.y.z](compare-url) (date)` form (a markdown link, so `(` follows `]`).
+    return new RegExp(`^## \\[${escapeRegExp(version)}\\](?:[\\s(]|$)`, "m");
 }
 
 for (const pkgPolicy of policy.packages ?? []) {

@@ -18,9 +18,9 @@ Single metadata surface for SDK, CLI, TypeScript MCP, Go MCP, docs, and gates.
 
 | Surface | Folder | Package | Version | Runtime | Ship files | Last-resort publish gate | Main gates |
 |---|---|---|---|---|---|---|---|
-| sdk | `wrapper` | clockify-sdk-ts-115 | 0.9.0 | >=20 | dist<br>LICENSE<br>README.md | `npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke` | npm run type-check<br>npm test<br>npm run build<br>npm run build:smoke<br>npm pack --dry-run |
-| cli | `cli` | @apet97/clockify-cli-115 | 0.1.0 | >=20 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
-| tsMcp | `mcp` | @apet97/clockify-mcp-115 | 0.4.0 | >=20 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
+| sdk | `wrapper` | clockify-sdk-ts-115 | 0.10.0 | >=20 | dist<br>LICENSE<br>README.md | `npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke` | npm run type-check<br>npm test<br>npm run build<br>npm run build:smoke<br>npm pack --dry-run |
+| cli | `cli` | @apet97/clockify-cli-115 | 0.1.1 | >=20 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
+| tsMcp | `mcp` | @apet97/clockify-mcp-115 | 0.4.1 | >=20 | dist<br>LICENSE<br>README.md | `npm run type-check && npm test && npm run build` | npm run type-check<br>npm test<br>npm run build<br>npm pack --dry-run |
 | goMcp | `../GOCLMCP` | - | - | - | - | - | make openapi-drift<br>make catalog-drift<br>make selfinspect-drift<br>make raw-allowlist-drift<br>go test ./internal/tools/... |
 
 ## Workflow parity
