@@ -1,4 +1,3 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 // Installed as every tool's output schema for CallToolResult.structuredContent.
@@ -63,17 +62,3 @@ export const MCP_RESULT_OUTPUT_SCHEMA = z
         recovery: recoverySchema.optional(),
     })
     .passthrough();
-
-type RegisterToolLike = (name: string, config: Record<string, unknown>, callback: unknown) => unknown;
-
-export function installDefaultOutputSchema(server: McpServer): void {
-    const mutable = server as unknown as { registerTool: RegisterToolLike };
-    const original = mutable.registerTool.bind(server);
-    mutable.registerTool = ((name: string, config: Record<string, unknown>, callback: unknown) => {
-        const nextConfig =
-            config && typeof config === "object" && !("outputSchema" in config)
-                ? { ...config, outputSchema: MCP_RESULT_OUTPUT_SCHEMA }
-                : config;
-        return original(name, nextConfig, callback);
-    });
-}

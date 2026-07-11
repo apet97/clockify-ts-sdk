@@ -31,8 +31,8 @@ Use one of the private disclosure channels below:
 ### What to include
 
 - The package and version affected, for example
-  `clockify-sdk-ts-115@0.9.0`, `@apet97/clockify-cli-115@0.1.0`, or
-  `@apet97/clockify-mcp-115@0.3.0`.
+  `clockify-sdk-ts-115@0.11.0`, `@apet97/clockify-cli-115@0.2.0`, or
+  `@apet97/clockify-mcp-115@0.5.0`.
 - A minimal reproducer (TypeScript or JavaScript). Don't include
   real API keys or workspace IDs.
 - The expected vs actual behavior.

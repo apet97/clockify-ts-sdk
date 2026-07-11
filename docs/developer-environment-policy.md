@@ -8,7 +8,7 @@ working on, and run root gates when you need platform proof.
 
 | Requirement | Policy |
 |---|---|
-| Node.js | Use Node `>=20`. CI also exercises Node 20 and 22. |
+| Node.js | Use Node `>=22.13.0`. CI also exercises Node 22.13 and 24. |
 | Package manager | Use `npm` with the root `package-lock.json`. |
 | Root package | The root `package.json` owns the `wrapper`, `cli`, and `mcp` npm workspaces. |
 | Local SDK generator | `scripts/generate-sdk-from-openapi.mjs` reads the corrected OpenAPI snapshot and emits `output/ts-sdk/**`. |

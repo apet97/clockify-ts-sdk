@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "purpose": "Runtime support contract for the SDK, CLI, and MCP packages. Keep package engines and docs aligned so users do not hit install/runtime traps.",
-  "nodeFloor": ">=20",
+  "nodeFloor": ">=22.13.0",
   "moduleType": "module",
   "expectedPackageCount": 3,
   "requiredPackageIds": [
@@ -19,7 +19,7 @@
       "id": "wrapper",
       "manifest": "wrapper/package.json",
       "name": "clockify-sdk-ts-115",
-      "engine": ">=20",
+      "engine": ">=22.13.0",
       "docs": [
         "wrapper/README.md",
         "docs/dependency-policy.md"
@@ -29,7 +29,7 @@
       "id": "cli",
       "manifest": "cli/package.json",
       "name": "@apet97/clockify-cli-115",
-      "engine": ">=20",
+      "engine": ">=22.13.0",
       "docs": [
         "docs/dependency-policy.md"
       ]
@@ -38,7 +38,7 @@
       "id": "mcp",
       "manifest": "mcp/package.json",
       "name": "@apet97/clockify-mcp-115",
-      "engine": ">=20",
+      "engine": ">=22.13.0",
       "docs": [
         "mcp/README.md",
         "docs/dependency-policy.md"
@@ -46,7 +46,7 @@
     }
   ],
   "requiredDocsMarkers": [
-    "Node 20",
-    ">=20"
+    "Node 22.13",
+    ">=22.13.0"
   ]
 }

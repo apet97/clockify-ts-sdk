@@ -286,6 +286,20 @@ before emitting tags.
 
 ## Known discrepancies (seed list — port from CLAUDE.md "Clockify API notes")
 
+### `audit-log.actions.closed-enum` — RESOLVED 2026-07-11
+
+- **Official claim:** the source fragment modeled `actions` as arbitrary strings.
+- **Actual behavior:** the audit-log service accepts a closed action vocabulary; an invented action
+  fails the request rather than acting as an open filter.
+- **Live evidence:** the existing Go live suite uses accepted values including
+  `CREATE_PROJECT`, `CREATE_CLIENT`, `UPDATE_PROJECT`, and `CREATE_TIME_PERSONAL_MANUAL`; the invalid
+  action observed during CLI live proof motivated closing the contract.
+- **MCP tools affected:** `clockify_audit_log_search` and CLI `audit-log search`.
+- **Open questions:** expand the enum only when a newly observed service action is proven.
+- **Status:** `fixed-in-canonical-generator`. GOCLMCP's source fragment now owns `AuditLogAction`, a
+  Go test compares it exactly with the tool enum, and the generated SDK exports
+  `AUDIT_LOG_ACTIONS` plus `AuditLogAction` for local CLI/MCP validation.
+
 Each of the items below already lives in CLAUDE.md as a one-line
 operational rule. Each deserves its own entry here with concrete
 probe evidence before the corrected spec is allowed to claim

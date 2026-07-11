@@ -94,10 +94,18 @@ describe("audit-log search command", () => {
         );
     });
 
-    it("clamps an above-range page size down to 200", async () => {
+    it("clamps an above-range page size down to 50", async () => {
         const high = makeClient();
         await run(high.client, [...WINDOW, "--actions", "CREATE_PROJECT", "--limit", "500"]);
-        expect((high.calls[0] as Record<string, unknown>)["page-size"]).toBe(200);
+        expect((high.calls[0] as Record<string, unknown>)["page-size"]).toBe(50);
+    });
+
+    it("rejects an unknown action before any wire call", async () => {
+        const invalid = makeClient();
+        await expect(run(invalid.client, [...WINDOW, "--actions", "NOT_A_REAL_ACTION"])).rejects.toThrow(
+            /unknown audit action/i,
+        );
+        expect(invalid.calls).toHaveLength(0);
     });
 
     it("rejects a zero/negative --limit before any wire call", async () => {

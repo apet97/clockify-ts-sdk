@@ -34,7 +34,7 @@ local package gates without becoming the source of product truth.
   permissions, or release settings during routine SDK polish.
 - Keep checkout credentials non-persistent unless a workflow explicitly
   needs write access.
-- Keep package workflow matrices on Node 20 and 22 until runtime policy
+- Keep package workflow matrices on Node 22.13 and 24 until runtime policy
   changes intentionally.
 - Keep live Clockify credentials out of package CI. The only GitHub-hosted
   workflow that reads Clockify secrets is `sandbox-key-health.yml`, and it

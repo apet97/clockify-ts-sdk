@@ -121,6 +121,8 @@ export interface ClockifyClientEnhancements {
      *
      * Off by default.
      */
+    allowNonClockifyHttpsHost?: boolean;
+    /** @deprecated Use `allowNonClockifyHttpsHost`. Removed in 1.0. */
     allowInsecureBaseUrl?: boolean;
 }
 
@@ -177,6 +179,23 @@ const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
 function readEnv(name: string): string | undefined {
     const value = typeof process !== "undefined" ? process.env?.[name] : undefined;
     return value != null && value !== "" ? value : undefined;
+}
+
+function authenticatedBoundaryFetch(
+    underlying: typeof fetch | undefined,
+    allowNonClockifyHttpsHost: boolean,
+): typeof fetch {
+    const dispatch = underlying ?? globalThis.fetch;
+    return async (input, init) => {
+        const destination =
+            typeof input === "string"
+                ? input
+                : input instanceof URL
+                  ? input.toString()
+                  : input.url;
+        validateClockifyBaseUrl(destination, allowNonClockifyHttpsHost);
+        return await dispatch(input, init);
+    };
 }
 
 /** Official Clockify API hosts. These are the only non-loopback hosts
@@ -391,6 +410,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         retryPolicy,
         maxRetries,
         debug,
+        allowNonClockifyHttpsHost,
         allowInsecureBaseUrl,
         // Pull auth fields off the rest spread so `passthrough` only
         // carries the non-auth BaseClientOptions fields (environment,
@@ -411,8 +431,9 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // — and their auth headers — to an attacker-controlled host. String
     // suppliers resolve at request time and pass through unvalidated.
     const { environment: rawEnvironment, baseUrl: rawBaseUrl, ...basePassthrough } = passthrough;
-    const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowInsecureBaseUrl);
-    const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowInsecureBaseUrl);
+    const allowAlternateHost = allowNonClockifyHttpsHost ?? allowInsecureBaseUrl ?? false;
+    const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowAlternateHost);
+    const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowAlternateHost);
     const sanitizedPassthrough = {
         ...basePassthrough,
         ...(validatedEnvironment !== undefined ? { environment: validatedEnvironment } : {}),
@@ -451,7 +472,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     const effectiveHooks = debug ? mixDebugHooks(hooks) : hooks;
 
     const wrappedFetch = composedFetch({
-        ...(rawFetch !== undefined ? { fetch: rawFetch } : {}),
+        fetch: authenticatedBoundaryFetch(rawFetch, allowAlternateHost),
         ...(userAgent !== undefined ? { userAgent } : {}),
         ...(requestId !== undefined ? { requestId } : {}),
         ...(effectiveHooks !== undefined ? { hooks: effectiveHooks } : {}),
@@ -466,6 +487,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
 
     const base = {
         ...sanitizedPassthrough,
+        allowNonClockifyHttpsHost: allowAlternateHost,
         fetch: wrappedFetch,
         ...(effectiveMaxRetries !== undefined ? { maxRetries: effectiveMaxRetries } : {}),
     };

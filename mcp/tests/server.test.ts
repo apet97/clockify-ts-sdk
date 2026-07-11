@@ -259,18 +259,15 @@ describe("@apet97/clockify-mcp-115", () => {
     });
 
     it("advertises the version from package.json (server.ts literal must not drift)", () => {
-        // The McpServer version string is reported to every client in `initialize`.
-        // It is a hand-typed literal, so a release-please bump of package.json would
-        // otherwise leave it stale with nothing failing. Pin them equal here, the way
-        // the CLI pins program.version() in cli/tests/index.test.ts.
-        const serverSrc = readFileSync(new URL("../src/server.ts", import.meta.url), "utf8");
+        // The initialize version is generated from package.json before checks/builds.
         const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
             version: string;
         };
-        const advertised = serverSrc.match(
-            /name:\s*"@apet97\/clockify-mcp-115",\s*version:\s*"([^"]+)"/,
-        );
-        expect(advertised?.[1]).toBe(pkg.version);
+        const generated = readFileSync(
+            new URL("../src/generated/version.ts", import.meta.url),
+            "utf8",
+        ).match(/PACKAGE_VERSION = "([^"]+)"/);
+        expect(generated?.[1]).toBe(pkg.version);
     });
 
     it("clockify_timer_start creates a running entry and emits a created receipt", async () => {

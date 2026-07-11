@@ -419,7 +419,7 @@ wrapper/
 ├── scripts/
 │   ├── sync-sdk.sh           ← rsync from ../output/ts-sdk/ → src/; chains gen-resource-docs.ts
 │   ├── finalize-cjs.sh       ← writes dist/cjs/package.json after the CJS tsc pass
-│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (92 names, 27 subpaths @ v0.9.0)
+│   ├── verify-dual-build.sh  ← smoke: both ESM + CJS imports against dist/ (governed by docs/sdk-public-api.json)
 │   └── gen-resource-docs.ts  ← parses src/api/resources/*/client/{Client.ts,requests/*.ts}
 │                                → emits docs/resources/<name>.md (committed; one per resource).
 ├── examples/                 ← runnable starter scripts; each imports from `clockify-sdk-ts-115`
@@ -471,7 +471,7 @@ whitelists what `npm pack` includes. Do not add without a
 pack/readiness review. `CHANGELOG.md` is intentionally omitted to
 keep the tarball lean.
 
-Twenty-seven subpaths in `package.json` `exports` at v0.9.0 (the root `.` plus 26 named), each with `import` +
+The governed subpaths in `package.json` `exports` (the root `.` plus named entries), each with `import` +
 `require` conditions (modern dual-tier shape: `{ types, default }` per condition so
 TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
 `docs/sdk-public-api.json` (`subpaths` + `tsconfigAliases`), kept in lockstep with

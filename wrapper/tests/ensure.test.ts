@@ -17,6 +17,22 @@ const tags: NamedRecord[] = [
 ];
 
 describe("ensureTag", () => {
+    it("coalesces concurrent calls sharing a scopeKey into one create", async () => {
+        let creates = 0;
+        const options = {
+            name: "Concurrent",
+            scopeKey: "workspace-1:tag:concurrent",
+            list: async () => [],
+            create: async (name: string) => {
+                creates += 1;
+                await Promise.resolve();
+                return { id: "tag-new", name };
+            },
+        };
+        const [first, second] = await Promise.all([ensureTag(options), ensureTag(options)]);
+        expect(creates).toBe(1);
+        expect(first).toEqual(second);
+    });
     it("reuses an existing tag by case-insensitive name without creating", async () => {
         let created = 0;
         const result = await ensureTag({

@@ -58,6 +58,18 @@ import type { WebhooksClient } from "./src/api/resources/webhooks/client/Client.
 import type { WorkspacesClient } from "./src/api/resources/workspaces/client/Client.js";
 import type { ClockifyApi, ClockifyApiClient } from "./src/index.js";
 
+type ScopedRequest<T> = T extends object
+    ? Omit<T, "workspaceId"> & { workspaceId?: never }
+    : T;
+type ScopedMethod<T> = T extends (
+    request: infer Request,
+    ...rest: infer Rest
+) => infer Result
+    ? (request?: ScopedRequest<Request>, ...rest: Rest) => Result
+    : T;
+export type ScopedResource<T> = {
+    [Key in keyof T]: ScopedMethod<T[Key]>;
+};
 
 /** Sub-client view of `ClockifyApiClient` with `workspaceId`
  *  pre-bound on every resource method.
@@ -85,101 +97,101 @@ export class Workspace {
     // completion — the Proxy is transparent at the type level.
     // -----------------------------------------------------------------------
 
-    get approvals(): ApprovalsClient {
-        return this.scoped("approvals") as ApprovalsClient;
+    get approvals(): ScopedResource<ApprovalsClient> {
+        return this.scoped("approvals");
     }
-    get auditLogReport(): AuditLogReportClient {
-        return this.scoped("auditLogReport") as AuditLogReportClient;
+    get auditLogReport(): ScopedResource<AuditLogReportClient> {
+        return this.scoped("auditLogReport");
     }
-    get balances(): BalancesClient {
-        return this.scoped("balances") as BalancesClient;
+    get balances(): ScopedResource<BalancesClient> {
+        return this.scoped("balances");
     }
-    get clients(): ClientsClient {
-        return this.scoped("clients") as ClientsClient;
+    get clients(): ScopedResource<ClientsClient> {
+        return this.scoped("clients");
     }
-    get customFields(): CustomFieldsClient {
-        return this.scoped("customFields") as CustomFieldsClient;
+    get customFields(): ScopedResource<CustomFieldsClient> {
+        return this.scoped("customFields");
     }
     /**
      * @experimental
      * @beta Clockify's entity-changes API is experimental and may change or
      *   be withdrawn without a major-version bump on our side.
      */
-    get entityChangesExperimental(): EntityChangesExperimentalClient {
+    get entityChangesExperimental(): ScopedResource<EntityChangesExperimentalClient> {
         warnOnce(
             "Workspace.entityChangesExperimental",
             "`entityChangesExperimental` is experimental; the underlying Clockify API may change or be withdrawn without notice.",
         );
-        return this.scoped("entityChangesExperimental") as EntityChangesExperimentalClient;
+        return this.scoped("entityChangesExperimental");
     }
-    get expenseCategories(): ExpenseCategoriesClient {
-        return this.scoped("expenseCategories") as ExpenseCategoriesClient;
+    get expenseCategories(): ScopedResource<ExpenseCategoriesClient> {
+        return this.scoped("expenseCategories");
     }
-    get expenseReport(): ExpenseReportClient {
-        return this.scoped("expenseReport") as ExpenseReportClient;
+    get expenseReport(): ScopedResource<ExpenseReportClient> {
+        return this.scoped("expenseReport");
     }
-    get expenses(): ExpensesClient {
-        return this.scoped("expenses") as ExpensesClient;
+    get expenses(): ScopedResource<ExpensesClient> {
+        return this.scoped("expenses");
     }
-    get files(): FilesClient {
-        return this.scoped("files") as FilesClient;
+    get files(): ScopedResource<FilesClient> {
+        return this.scoped("files");
     }
-    get holidays(): HolidaysClient {
-        return this.scoped("holidays") as HolidaysClient;
+    get holidays(): ScopedResource<HolidaysClient> {
+        return this.scoped("holidays");
     }
-    get invoiceItems(): InvoiceItemsClient {
-        return this.scoped("invoiceItems") as InvoiceItemsClient;
+    get invoiceItems(): ScopedResource<InvoiceItemsClient> {
+        return this.scoped("invoiceItems");
     }
-    get invoicePayments(): InvoicePaymentsClient {
-        return this.scoped("invoicePayments") as InvoicePaymentsClient;
+    get invoicePayments(): ScopedResource<InvoicePaymentsClient> {
+        return this.scoped("invoicePayments");
     }
-    get invoices(): InvoicesClient {
-        return this.scoped("invoices") as InvoicesClient;
+    get invoices(): ScopedResource<InvoicesClient> {
+        return this.scoped("invoices");
     }
-    get invoiceSettings(): InvoiceSettingsClient {
-        return this.scoped("invoiceSettings") as InvoiceSettingsClient;
+    get invoiceSettings(): ScopedResource<InvoiceSettingsClient> {
+        return this.scoped("invoiceSettings");
     }
-    get memberProfiles(): MemberProfilesClient {
-        return this.scoped("memberProfiles") as MemberProfilesClient;
+    get memberProfiles(): ScopedResource<MemberProfilesClient> {
+        return this.scoped("memberProfiles");
     }
-    get projects(): ProjectsClient {
-        return this.scoped("projects") as ProjectsClient;
+    get projects(): ScopedResource<ProjectsClient> {
+        return this.scoped("projects");
     }
-    get reports(): ReportsClient {
-        return this.scoped("reports") as ReportsClient;
+    get reports(): ScopedResource<ReportsClient> {
+        return this.scoped("reports");
     }
-    get scheduling(): SchedulingClient {
-        return this.scoped("scheduling") as SchedulingClient;
+    get scheduling(): ScopedResource<SchedulingClient> {
+        return this.scoped("scheduling");
     }
-    get sharedReports(): SharedReportsClient {
-        return this.scoped("sharedReports") as SharedReportsClient;
+    get sharedReports(): ScopedResource<SharedReportsClient> {
+        return this.scoped("sharedReports");
     }
-    get tags(): TagsClient {
-        return this.scoped("tags") as TagsClient;
+    get tags(): ScopedResource<TagsClient> {
+        return this.scoped("tags");
     }
-    get tasks(): TasksClient {
-        return this.scoped("tasks") as TasksClient;
+    get tasks(): ScopedResource<TasksClient> {
+        return this.scoped("tasks");
     }
-    get timeEntries(): TimeEntriesClient {
-        return this.scoped("timeEntries") as TimeEntriesClient;
+    get timeEntries(): ScopedResource<TimeEntriesClient> {
+        return this.scoped("timeEntries");
     }
-    get timeOff(): TimeOffClient {
-        return this.scoped("timeOff") as TimeOffClient;
+    get timeOff(): ScopedResource<TimeOffClient> {
+        return this.scoped("timeOff");
     }
-    get timeOffPolicies(): TimeOffPoliciesClient {
-        return this.scoped("timeOffPolicies") as TimeOffPoliciesClient;
+    get timeOffPolicies(): ScopedResource<TimeOffPoliciesClient> {
+        return this.scoped("timeOffPolicies");
     }
-    get userGroups(): UserGroupsClient {
-        return this.scoped("userGroups") as UserGroupsClient;
+    get userGroups(): ScopedResource<UserGroupsClient> {
+        return this.scoped("userGroups");
     }
-    get users(): UsersClient {
-        return this.scoped("users") as UsersClient;
+    get users(): ScopedResource<UsersClient> {
+        return this.scoped("users");
     }
-    get webhooks(): WebhooksClient {
-        return this.scoped("webhooks") as WebhooksClient;
+    get webhooks(): ScopedResource<WebhooksClient> {
+        return this.scoped("webhooks");
     }
-    get workspaces(): WorkspacesClient {
-        return this.scoped("workspaces") as WorkspacesClient;
+    get workspaces(): ScopedResource<WorkspacesClient> {
+        return this.scoped("workspaces");
     }
 
     // -----------------------------------------------------------------------
@@ -270,21 +282,21 @@ export class Workspace {
 
     /** Internal: build a Proxy over the named resource. Cached per resource
      *  name so repeated `ws.tags` accesses return the same Proxy instance. */
-    private scoped(name: string): unknown {
+    private scoped<T extends object>(name: string): ScopedResource<T> {
         const cached = this.resourceCache.get(name);
-        if (cached != null) return cached;
+        if (cached != null) return cached as ScopedResource<T>;
 
         const target = (this.client as unknown as Record<string, unknown>)[name];
         if (target == null || typeof target !== "object") {
             // The generated client does not have this resource; return the raw value.
             // This is defensive; in practice every name above maps to a real
             // resource client.
-            return target;
+            return target as ScopedResource<T>;
         }
 
         const wrapped = wrapResource(target, this.workspaceId);
         this.resourceCache.set(name, wrapped);
-        return wrapped;
+        return wrapped as ScopedResource<T>;
     }
 }
 
@@ -300,7 +312,7 @@ export class Workspace {
  *
  *  This is exposed publicly so advanced callers can scope arbitrary
  *  objects (e.g., third-party SDK clients with the same shape). */
-export function wrapResource<T extends object>(resource: T, workspaceId: string): T {
+export function wrapResource<T extends object>(resource: T, workspaceId: string): ScopedResource<T> {
     return new Proxy(resource, {
         get(target, prop, receiver) {
             const value = Reflect.get(target, prop, receiver);
@@ -322,5 +334,5 @@ export function wrapResource<T extends object>(resource: T, workspaceId: string)
                 return (value as (...a: unknown[]) => unknown).apply(target, args);
             };
         },
-    });
+    }) as ScopedResource<T>;
 }

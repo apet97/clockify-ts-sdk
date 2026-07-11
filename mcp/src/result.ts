@@ -31,6 +31,7 @@ import {
     retryableForCode,
     type ClockifyErrorCode,
 } from "./error-codes.js";
+import { MCP_RESULT_OUTPUT_SCHEMA } from "./output-schema.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -239,7 +240,7 @@ function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {
     });
 }
 
-/** The registerTool config shape, minus the auto-injected `outputSchema`. */
+/** The registerTool config shape; defineTool injects the canonical output schema. */
 export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> {
     title: string;
     description: string;
@@ -262,8 +263,7 @@ export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>
  * per-tool Zod inference is preserved for the implementer (a zero-arg / no-`inputSchema`
  * tool falls back to the `ZodRawShapeCompat` default and stays working).
  *
- * MUST go through `server.registerTool` so the `installDefaultOutputSchema` monkeypatch
- * still injects the canonical `outputSchema`. The two `as never` casts sit on the
+ * The two `as never` casts sit on the
  * `registerTool` forwarding boundary, NOT on the handler's `args` — the same kind of
  * sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the model sees
  * (and `server.test.ts` asserts) is unchanged.
@@ -277,7 +277,7 @@ export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeComp
 ): void {
     server.registerTool(
         name,
-        config as never,
+        { ...config, outputSchema: MCP_RESULT_OUTPUT_SCHEMA } as never,
         (async (args: unknown, extra: unknown) => {
             try {
                 return await handler(args as ShapeOutput<InputArgs>, extra);

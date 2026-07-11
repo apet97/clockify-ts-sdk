@@ -78,14 +78,11 @@ describe("CLI exit and JSON error contract", () => {
         // re-resolves the flags to format that error — which previously threw
         // AGAIN on the same bad --output and escaped as an uncaught rejection.
         // It must instead resolve to a clean non-zero exit code. A throwaway
-        // --api-key gets past the client factory so resolveMode is the first
-        // throw (no network call is made — resolveFlags throws before status
-        // reaches the wire).
+        // resolveMode throws before status reaches the wire.
+        vi.stubEnv("CLOCKIFY_API_KEY", "fake-key-for-output-test");
         const promise = main([
             "node",
             "clk115",
-            "--api-key",
-            "fake-key-for-output-test",
             "--output",
             "totally-bogus",
             "status",
@@ -101,7 +98,7 @@ describe("CLI exit and JSON error contract", () => {
             const code = await main(["node", "clk115", "--version"]);
             expect(code).toBe(0);
             const written = writeSpy.mock.calls.map((args) => String(args[0])).join("");
-            expect(written).toContain("0.1.0");
+            expect(written).toContain("0.2.0");
         } finally {
             writeSpy.mockRestore();
         }

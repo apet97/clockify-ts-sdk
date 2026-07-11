@@ -206,12 +206,15 @@ describe("validateWebhookUrl", () => {
         expect(reasonFor("255.255.255.255")).toMatch(/multicast|reserved|broadcast/);
     });
 
-    it("accepts routable public IPv6 literals", () => {
+    it("rejects deprecated IPv6 site-local literals", () => {
         expect(validateWebhookUrl("https://[2606:4700:4700::1111]/hook").ok).toBe(true);
         // first group 0xfec0 sits just ABOVE the fe80::/10 link-local band (<=0xfebf),
         // so it must be accepted — kills the ConditionalExpression->true mutant at
         // webhook-url.ts:189.
-        expect(validateWebhookUrl("https://[fec0::1]/hook").ok).toBe(true);
+        expect(validateWebhookUrl("https://[fec0::1]/hook")).toMatchObject({
+            ok: false,
+            reason: expect.stringMatching(/site-local.*fec0::\/10/i),
+        });
         // 0xfebf is the EXACT top of the fe80::/10 band, so it must be REJECTED.
         // This pins the inclusive upper bound and kills the EqualityOperator
         // mutant (<=0xfebf -> <0xfebf) at webhook-url.ts:189, which [fec0::1]

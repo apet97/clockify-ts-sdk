@@ -111,7 +111,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .command("update")
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
-        .option("--name <text>", "New task name.")
+        .requiredOption("--name <text>", "Task name (required by Clockify's replace update).")
         .option("--status <status>", "ACTIVE or DONE.")
         .option("--estimate <iso>", "ISO-8601 duration estimate (e.g. PT8H).")
         .option("--billable", "Mark as billable.")
@@ -120,8 +120,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
         .description("Update a task by project ID and task ID.")
         .action(async function (this: Command, projectId: string, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>> = {};
-            if (opts.name) body.name = opts.name;
+            const body: ClockifyRequestBody<ClockifyApi.UpdateTasksRequest> = { name: opts.name };
             if (opts.status)
                 body.status = String(opts.status).toUpperCase() as ClockifyApi.TaskStatus;
             if (opts.estimate) body.estimate = opts.estimate;

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import { createClockifyClient } from "../create-client.js";
 import { _resetWarnOnceForTests } from "../deprecation.js";
 import { Workspace, wrapResource } from "../scoped-client.js";
-import type { ClockifyApi } from "../src/index.js";
 
 /** Helper: extract the URL string from the first fetch call of a mock. */
 function firstUrl(mock: ReturnType<typeof vi.fn>): string {
@@ -36,10 +35,18 @@ describe("Workspace scoped client", () => {
             fetch: fetchMock as typeof fetch,
         });
         const ws = client.workspace("ws-abc");
-        // Cast: workspaceId is required by the Fern type but the Proxy injects it.
-        await ws.tags.list({} as ClockifyApi.ListTagsRequest);
+        await ws.tags.list();
 
         expect(firstUrl(fetchMock)).toContain("/workspaces/ws-abc/tags");
+    });
+
+    it("rejects an explicit cross-workspace override at the type boundary", () => {
+        const ws = createClockifyClient({ apiKey: "test" }).workspace("ws-scoped");
+        if (false) {
+            // @ts-expect-error scoped resources never accept workspaceId overrides
+            void ws.tags.list({ workspaceId: "other" });
+        }
+        expect(ws.workspaceId).toBe("ws-scoped");
     });
 
     it("preserves the same workspaceId across multiple resource calls", async () => {
@@ -55,8 +62,8 @@ describe("Workspace scoped client", () => {
             fetch: fetchMock as typeof fetch,
         });
         const ws = client.workspace("ws-shared");
-        await ws.tags.list({} as ClockifyApi.ListTagsRequest);
-        await ws.projects.list({} as ClockifyApi.ListProjectsRequest);
+        await ws.tags.list();
+        await ws.projects.list();
 
         const url1 = firstUrl(fetchMock);
         const url2 = (() => {
@@ -87,7 +94,7 @@ describe("Workspace scoped client", () => {
         });
         const ws = client.workspace("ws-scoped");
         // Cast to bypass TS — we're testing runtime behavior on conflicting input.
-        await ws.tags.list({ workspaceId: "ws-explicit" } as ClockifyApi.ListTagsRequest);
+        await ws.tags.list({ workspaceId: "ws-explicit" } as never);
 
         expect(firstUrl(fetchMock)).toContain("/workspaces/ws-scoped/tags");
     });

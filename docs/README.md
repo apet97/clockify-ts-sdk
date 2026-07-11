@@ -220,7 +220,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Snippet safety | `make snippet-safety` | Check SDK/CLI/MCP README and cookbook snippets avoid secrets, internals, and unsafe live defaults. |
 | Snippet method parity | `make snippet-method-parity` | Check MCP and README SDK snippets against generated SDK method names. |
 | Snippet compile pins | `make snippet-compile` | Check tagged SDK fences against compiled curated examples. |
-| Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 20+. |
+| Runtime support | `make runtime-support` | Check package engines and runtime docs agree on Node 22.13+. |
 | Env/config contract | `make env-contract` | Check SDK/CLI/MCP environment variables and mock/replay base URL docs. |
 | Config precedence | `make config-precedence` | Check SDK option/env fallback, CLI flag/env/rc order, MCP env-only startup, and base URL override safety. |
 | SDK public API | `make sdk-public-api` | Check SDK root symbols and package subpaths against the public API snapshot. |

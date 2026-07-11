@@ -72,7 +72,7 @@ describe("users, tags, and shared report read branches", () => {
             "MONDAY",
             "TUESDAY",
         ]);
-        expect(calls[0].body).toMatchObject({
+        expect(calls[0]!.body).toMatchObject({
             name: "Ana",
             imageUrl: "https://img",
             removeProfileImage: true,
@@ -171,12 +171,12 @@ describe("users, tags, and shared report read branches", () => {
             "{\"dateRangeStart\":\"2026-06-01\"}",
             "--public",
         ]);
-        expect(calls[1].body).toMatchObject({
+        expect(calls[1]!.body).toMatchObject({
             name: "Public",
             type: "SUMMARY",
             isPublic: true,
         });
-        expect(calls[1].body).not.toHaveProperty("public");
+        expect(calls[1]!.body).not.toHaveProperty("public");
         expect((lastJson() as Record<string, unknown>).action).toBe("shared-reports.update");
     });
 
@@ -258,8 +258,8 @@ describe("users, tags, and shared report read branches", () => {
             "--filter",
             "{\"dateRangeStart\":\"2026-06-01\"}",
         ]);
-        expect(calls[0].body).toMatchObject({ name: "Visible", type: "WEEKLY" });
-        expect(calls[0].body).not.toHaveProperty("public");
+        expect(calls[0]!.body).toMatchObject({ name: "Visible", type: "WEEKLY" });
+        expect(calls[0]!.body).not.toHaveProperty("public");
 
         await expect(
             makeProgram(registerSharedReportsCommand, client as unknown as ClockifyClient).parseAsync([
@@ -300,6 +300,6 @@ describe("users, tags, and shared report read branches", () => {
             "--filter",
             "{\"dateRangeStart\":\"2026-06-01\"}",
         ]);
-        expect(calls[0].body).toMatchObject({ name: "Kiosk", type: "KIOSK_PIN_LIST" });
+        expect(calls[0]!.body).toMatchObject({ name: "Kiosk", type: "KIOSK_PIN_LIST" });
     });
 });

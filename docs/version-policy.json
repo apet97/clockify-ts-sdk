@@ -25,7 +25,7 @@
       "changelog": "wrapper/CHANGELOG.md",
       "productSurfaceId": "sdk",
       "readme": "wrapper/README.md",
-      "installExampleMustContain": "clockify-sdk-ts-115-0.9.0.tgz",
+      "installExampleMustContain": "clockify-sdk-ts-115-<version>.tgz",
       "requireCurrentVersionHeading": true
     },
     {

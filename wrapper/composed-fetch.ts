@@ -32,11 +32,12 @@
 import { randomUUID } from "node:crypto";
 import { platform, arch } from "node:os";
 
+import { PACKAGE_VERSION } from "./generated/version.js";
+
 /** The npm package version baked into the User-Agent string. This line
  *  is updated automatically on release by release-please via the
  *  `x-release-please-version` marker below (see `release-please-config.json`,
  *  which lists this file under `extra-files`). Do not remove the marker. */
-const PACKAGE_VERSION = "0.10.0" as const; // x-release-please-version
 const PACKAGE_NAME = "clockify-sdk-ts-115" as const;
 
 /** Header name carrying the per-request UUID. */

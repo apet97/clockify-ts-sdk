@@ -30,7 +30,7 @@ describe("MCP starts without credentials", () => {
         // Any tool that needs Clockify returns the friendly setup receipt.
         const res = await client.callTool({ name: "clockify_status", arguments: {} });
         expect(res.isError).toBe(true);
-        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0].text);
+        const parsed = JSON.parse((res.content as Array<{ text: string }>)[0]!.text);
         expect(parsed.ok).toBe(false);
         expect(parsed.error.code).toBe("setup_required");
         expect(parsed.error.message).toMatch(/clockify115-mcp/);

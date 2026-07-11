@@ -76,7 +76,7 @@ describe("project and task read command branches", () => {
             "#123456",
             "--billable",
         ]);
-        expect(calls[0].body).toMatchObject({
+        expect(calls[0]!.body).toMatchObject({
             name: "Website",
             clientId: "c-1",
             color: "#123456",
@@ -108,7 +108,7 @@ describe("project and task read command branches", () => {
             "create",
             "Minimal",
         ]);
-        expect(calls[0].body).toEqual({ name: "Minimal" });
+        expect(calls[0]!.body).toEqual({ name: "Minimal" });
 
         await makeProgram(registerProjectsCommand, client as unknown as ClockifyClient).parseAsync([
             "node",
@@ -126,7 +126,7 @@ describe("project and task read command branches", () => {
             "--no-billable",
             "--no-archived",
         ]);
-        expect(calls[1].body).toMatchObject({
+        expect(calls[1]!.body).toMatchObject({
             clientId: "c-1",
             color: "#abcdef",
             note: "",
@@ -197,7 +197,7 @@ describe("project and task read command branches", () => {
             "u-1",
             "u-2",
         ]);
-        expect(calls[0].body).toMatchObject({
+        expect(calls[0]!.body).toMatchObject({
             name: "QA",
             estimate: "PT8H",
             billable: true,

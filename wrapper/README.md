@@ -76,7 +76,8 @@ npm install
 npm run build
 npm pack --dry-run
 npm pack
-npm install ./clockify-sdk-ts-115-0.9.0.tgz
+npm pack --json
+npm install ./clockify-sdk-ts-115-<version>.tgz
 ```
 
 ## Quick start
@@ -187,7 +188,7 @@ const health = await client.health();
 
 The diagnostics receipt includes `checks`, `warnings`, and `next` fields
 for operator runbooks and support bundles. It checks `CLOCKIFY_API_KEY`,
-`CLOCKIFY_ADDON_TOKEN`, `CLOCKIFY_WORKSPACE_ID`, Node.js 20+, and base URL
+`CLOCKIFY_ADDON_TOKEN`, `CLOCKIFY_WORKSPACE_ID`, Node.js 22.13+, and base URL
 overrides without creating network traffic.
 
 ## Resource modules
@@ -859,7 +860,7 @@ name uniqueness, so a naive create silently makes a second "Acme".
 
 ## Supported runtimes
 
-The SDK supports Node 20+.
+The SDK requires Node 22.13 or newer and is tested on Node 22.13 and Node 24 LTS.
 
 | Runtime    | Minimum                                                             | Tested         |
 | ---------- | ------------------------------------------------------------------- | -------------- |

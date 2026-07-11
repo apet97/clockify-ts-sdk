@@ -41,7 +41,7 @@
         "picocolors"
       ],
       "peerDependencies": {
-        "clockify-sdk-ts-115": ">=0.9.0"
+        "clockify-sdk-ts-115": ">=0.11.0 <1"
       },
       "devDependencies": {
         "clockify-sdk-ts-115": "*"
@@ -62,7 +62,7 @@
         "zod"
       ],
       "peerDependencies": {
-        "clockify-sdk-ts-115": ">=0.9.0"
+        "clockify-sdk-ts-115": ">=0.11.0 <1"
       },
       "devDependencies": {
         "clockify-sdk-ts-115": "*"

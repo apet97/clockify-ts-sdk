@@ -9,7 +9,6 @@
       "clk115"
     ],
     "globalFlags": [
-      "--api-key",
       "--workspace",
       "--base-url",
       "--json",

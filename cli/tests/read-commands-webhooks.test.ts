@@ -119,7 +119,7 @@ describe("webhooks read and create commands", () => {
             "--trigger-source",
             "p1, p2 ,p3",
         ]);
-        const body = calls[0].body as Record<string, unknown>;
+        const body = calls[0]!.body as Record<string, unknown>;
         expect(body.webhookEvent).toBe("NEW_PROJECT");
         expect(body.triggerSource).toEqual(["p1", "p2", "p3"]);
         expect((lastJson() as Record<string, unknown>).action).toBe("webhooks.create");
@@ -170,7 +170,7 @@ describe("webhooks read and create commands", () => {
             "--event",
             "NEW_TIME_ENTRY",
         ]);
-        expect(calls[1].body).toMatchObject({
+        expect(calls[1]!.body).toMatchObject({
             name: "plain",
             url: "https://plain",
             webhookEvent: "NEW_TIME_ENTRY",

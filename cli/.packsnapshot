@@ -28,6 +28,7 @@ dist/completions.js
 dist/config.js
 dist/duration.js
 dist/error-codes.js
+dist/generated/version.js
 dist/index.js
 dist/output.js
 dist/receipt.js

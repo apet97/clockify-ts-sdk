@@ -115,7 +115,7 @@ make perfect-fast              # the local gate: type-check, build, dual-build s
 ```
 
 `node scripts/repo-doctor.mjs` runs no network, git, or build steps — it just confirms the repo
-shape (Node 20+, the three workspaces, the local-generator wiring) so a fresh clone fails fast
+shape (Node 22.13+, the three workspaces, the local-generator wiring) so a fresh clone fails fast
 before `npm ci`. The three gate tiers:
 
 | Gate | What it proves |
@@ -148,9 +148,9 @@ clockify-ts-sdk/
 
 | Package | Version | Surface |
 |---|---|---|
-| `clockify-sdk-ts-115` | 0.9.0 | 29 resource modules, 169 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
-| `@apet97/clockify-cli-115` | 0.1.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, env/config auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
-| `@apet97/clockify-mcp-115` | 0.4.0 | 140 stdio tools (22 workflow + 118 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
+| `clockify-sdk-ts-115` | 0.11.0 | 29 resource modules, 169 operations, dual ESM/CJS, pagination, webhook verification, typed errors, scoped clients, OTel/health/rate-limit helpers, name/date resolution |
+| `@apet97/clockify-cli-115` | 0.2.0 | 59 commands incl. CRUD for `projects`/`clients`/`tags`/`tasks`/`expenses`, `reports`, `shared-reports`, `users`, a scriptable raw `api`, environment-only credential auth, `table`/`json`/`ndjson` output, recovery hints, shell completion |
+| `@apet97/clockify-mcp-115` | 0.5.0 | 140 stdio tools (22 workflow + 118 domain), guide resources, `changed`/`next` envelopes, dry-run confirmation |
 
 Release history is in each package's `CHANGELOG.md`; the repo-level quality bar is
 [`docs/product-north-star.md`](./docs/product-north-star.md). Publication is a deliberate,

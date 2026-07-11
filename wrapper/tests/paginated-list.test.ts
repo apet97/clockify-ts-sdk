@@ -43,6 +43,14 @@ describe("PaginatedList", () => {
         expect(fetcher).toHaveBeenCalledTimes(0);
     });
 
+    it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+        "rejects invalid toArray limit %s",
+        async (limit) => {
+            const list = paginatedList(async () => ["a"], {});
+            await expect(list.toArray({ limit })).rejects.toThrow(/limit.*non-negative finite integer/i);
+        },
+    );
+
     it("toArray() with no limit walks until the last page", async () => {
         const pages = [["a", "b"], ["c"]];
         const fetcher = vi.fn(async (req: { page?: number; "page-size"?: number }) => {

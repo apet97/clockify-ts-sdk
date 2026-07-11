@@ -38,7 +38,7 @@ async function connect(): Promise<Client> {
 function promptText(
     messages: { role: string; content: { type: string; text?: string } }[],
 ): string {
-    const first = messages[0];
+    const first = messages[0]!;
     expect(first.role).toBe("user");
     expect(first.content.type).toBe("text");
     return first.content.text ?? "";

@@ -45,7 +45,10 @@ export async function mapBounded<T, R>(
     fn: (item: T, index: number) => Promise<R>,
     opts: MapBoundedOptions = {},
 ): Promise<BulkResult<T, R>> {
-    const concurrency = Math.max(1, opts.concurrency ?? 4);
+    const concurrency = opts.concurrency ?? 4;
+    if (!Number.isFinite(concurrency) || !Number.isInteger(concurrency) || concurrency <= 0) {
+        throw new RangeError("concurrency must be a positive finite integer");
+    }
     const continueOnError = opts.continueOnError ?? true;
     const ok: R[] = [];
     const failures: BulkFailure<T>[] = [];
@@ -58,6 +61,7 @@ export async function mapBounded<T, R>(
     // so the resolved/rejected contract is unchanged; only the count of new
     // calls made after the first failure shrinks.
     let aborted = false;
+    let firstError: unknown;
 
     async function worker(): Promise<void> {
         while (cursor < items.length) {
@@ -71,7 +75,8 @@ export async function mapBounded<T, R>(
             } catch (error) {
                 if (!continueOnError) {
                     aborted = true;
-                    throw error;
+                    firstError ??= error;
+                    return;
                 }
                 failures.push({ item, error, index });
             }
@@ -80,5 +85,8 @@ export async function mapBounded<T, R>(
 
     const poolSize = Math.min(concurrency, items.length);
     await Promise.all(Array.from({ length: poolSize }, () => worker()));
+    if (firstError !== undefined) {
+        throw firstError instanceof Error ? firstError : new Error("Bulk operation rejected");
+    }
     return { ok, failures };
 }

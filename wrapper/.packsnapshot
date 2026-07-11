@@ -20,6 +20,8 @@ dist/cjs/error-codes.d.ts
 dist/cjs/error-codes.js
 dist/cjs/errors.d.ts
 dist/cjs/errors.js
+dist/cjs/generated/version.d.ts
+dist/cjs/generated/version.js
 dist/cjs/health.d.ts
 dist/cjs/health.js
 dist/cjs/index.d.ts
@@ -749,6 +751,8 @@ dist/cjs/src/api/types/AttendanceReportResponse.d.ts
 dist/cjs/src/api/types/AttendanceReportResponse.js
 dist/cjs/src/api/types/AuditFilter.d.ts
 dist/cjs/src/api/types/AuditFilter.js
+dist/cjs/src/api/types/AuditLogAction.d.ts
+dist/cjs/src/api/types/AuditLogAction.js
 dist/cjs/src/api/types/AuditLogEntry.d.ts
 dist/cjs/src/api/types/AuditLogEntry.js
 dist/cjs/src/api/types/AuditLogRequest.d.ts
@@ -1411,6 +1415,8 @@ dist/esm/error-codes.d.ts
 dist/esm/error-codes.js
 dist/esm/errors.d.ts
 dist/esm/errors.js
+dist/esm/generated/version.d.ts
+dist/esm/generated/version.js
 dist/esm/health.d.ts
 dist/esm/health.js
 dist/esm/index.d.ts
@@ -2139,6 +2145,8 @@ dist/esm/src/api/types/AttendanceReportResponse.d.ts
 dist/esm/src/api/types/AttendanceReportResponse.js
 dist/esm/src/api/types/AuditFilter.d.ts
 dist/esm/src/api/types/AuditFilter.js
+dist/esm/src/api/types/AuditLogAction.d.ts
+dist/esm/src/api/types/AuditLogAction.js
 dist/esm/src/api/types/AuditLogEntry.d.ts
 dist/esm/src/api/types/AuditLogEntry.js
 dist/esm/src/api/types/AuditLogRequest.d.ts

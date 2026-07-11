@@ -8,10 +8,21 @@
     "mcp"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13.0"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
+    "esbuild": "0.28.1",
+    "qs": "6.15.2",
     "yaml": "^2.9.0"
+  },
+  "overrides": {
+    "vitest": "4.1.9",
+    "qs": "6.15.2",
+    "typed-rest-client@2.3.1": {
+      "qs": "6.15.2"
+    }
   },
   "scripts": {
     "type-check": "npm run type-check -w clockify-sdk-ts-115 && npm run type-check -w @apet97/clockify-cli-115 && npm run type-check -w @apet97/clockify-mcp-115",

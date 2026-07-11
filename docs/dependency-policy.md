@@ -35,9 +35,9 @@ stack as historical evidence only.
 
 | Package | Node floor |
 |---|---:|
-| `clockify-sdk-ts-115` | `>=20` |
-| `@apet97/clockify-cli-115` | `>=20` |
-| `@apet97/clockify-mcp-115` | `>=20` |
+| `clockify-sdk-ts-115` | `>=22.13.0` |
+| `@apet97/clockify-cli-115` | `>=22.13.0` |
+| `@apet97/clockify-mcp-115` | `>=22.13.0` |
 
 The CLI and MCP package floors intentionally match the SDK floor.
 They depend on `clockify-sdk-ts-115` as the runtime API client, so

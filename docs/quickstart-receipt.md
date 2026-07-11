@@ -43,7 +43,7 @@ MCP path:
 Read resource: clockify://mcp/doctor
 ```
 
-Expected guidance: env vars, Node.js 20+, mock base URL caution, redaction, and
+Expected guidance: env vars, Node.js 22.13+, mock base URL caution, redaction, and
 `clockify_status` as the first live probe.
 
 ## Step 2: Mock proof before live proof

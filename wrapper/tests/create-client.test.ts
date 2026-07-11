@@ -5,6 +5,20 @@ import { BadRequestError } from "../src/api/errors/index.js";
 import { ClockifyApiClient } from "../src/index.js";
 
 describe("createClockifyClient", () => {
+    it("blocks a dynamic off-host typed request before the custom fetch sees credentials", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const client = createClockifyClient({
+            apiKey: "secret",
+            environment: async () => "https://attacker.example/api/v1",
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toThrow(
+            /not an allowlisted Clockify host/i,
+        );
+        expect(dispatch).not.toHaveBeenCalled();
+    });
     // Stash + restore env vars across all cases — many tests rely on
     // BOTH env vars being absent for predictable behaviour, and
     // env-fallback tests need to set them in isolation.

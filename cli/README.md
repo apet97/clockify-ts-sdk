@@ -26,7 +26,7 @@ clk115 stop
 
 In precedence order (highest wins):
 
-1. **Command-line flags:** `--api-key`, `--workspace`, `--base-url`
+1. **Command-line flags:** `--workspace`, `--base-url` (credentials are never accepted on argv)
 2. **Environment variables:** `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`,
    optional `CLOCKIFY_BASE_URL` for mock/replay or private gateway tests
 3. **Rc file:** `~/.clockifyrc.json` (or `clockifyrc.json` in
@@ -36,11 +36,13 @@ Rc file shape:
 
 ```json
 {
-    "apiKey": "abcd1234…",
     "workspaceId": "65b382b6…",
     "baseUrl": "https://api.clockify.me/api/v1"
 }
 ```
+
+Legacy rc files containing `apiKey` are rejected with migration guidance. Remove the secret and
+set `CLOCKIFY_API_KEY` in the process environment instead.
 
 Do not set `baseUrl` for normal Clockify use. It exists so tests can
 point the CLI at `make mock-clockify` or a replay gateway without

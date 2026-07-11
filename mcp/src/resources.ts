@@ -122,7 +122,7 @@ Local setup checks:
 - Confirm the MCP process has CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID set.
 - Confirm CLOCKIFY_BASE_URL is unset for live Clockify work, or intentionally points at a mock/replay server.
 - Confirm logs, receipts, and support bundles redact secrets, tokens, and full workspace identifiers.
-- Confirm package runtime is Node.js 20 or newer.
+- Confirm package runtime is Node.js 22.13 or newer.
 
 Safe next steps:
 

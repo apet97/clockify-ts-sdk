@@ -97,7 +97,7 @@ describe("reports command", () => {
             "project,task",
         ]);
         expect(captured.summary).toHaveLength(1);
-        const req = captured.summary[0];
+        const req = captured.summary[0]!;
         expect(req.workspaceId).toBe("ws-1");
         expect(typeof req.dateRangeStart).toBe("string");
         expect(typeof req.dateRangeEnd).toBe("string");
@@ -116,7 +116,7 @@ describe("reports command", () => {
             "Website",
         ]);
         expect(captured.projectLists).toHaveLength(1);
-        expect(captured.summary[0].projects).toMatchObject({
+        expect(captured.summary[0]!.projects).toMatchObject({
             ids: ["p-9"],
             contains: "CONTAINS",
         });
@@ -133,7 +133,7 @@ describe("reports command", () => {
             ID,
         ]);
         expect(captured.projectLists).toHaveLength(0);
-        expect(captured.summary[0].projects).toMatchObject({
+        expect(captured.summary[0]!.projects).toMatchObject({
             ids: [ID],
             contains: "CONTAINS",
         });
@@ -179,7 +179,7 @@ describe("reports command", () => {
             "99999",
         ]);
         expect(captured.detailed).toHaveLength(1);
-        expect(JSON.stringify(captured.detailed[0].detailedFilter)).toContain("1000");
+        expect(JSON.stringify(captured.detailed[0]!.detailedFilter)).toContain("1000");
     });
 
     it("weekly upper-cases report group options", async () => {
@@ -195,7 +195,7 @@ describe("reports command", () => {
             "time",
         ]);
         expect(captured.weekly).toHaveLength(1);
-        expect(JSON.stringify(captured.weekly[0].weeklyFilter)).toContain("PROJECT");
+        expect(JSON.stringify(captured.weekly[0]!.weeklyFilter)).toContain("PROJECT");
     });
 
     it("attendance sends workspaceId, range, and the required (empty) attendanceFilter", async () => {
@@ -203,10 +203,10 @@ describe("reports command", () => {
         await makeProgram(client).parseAsync(["node", "clk115", "reports", "attendance"]);
         expect(captured.attendance).toHaveLength(1);
         expect(captured.attendance[0]).toMatchObject({ workspaceId: "ws-1" });
-        expect(captured.attendance[0].dateRangeStart).toBeTypeOf("string");
-        expect(captured.attendance[0].dateRangeEnd).toBeTypeOf("string");
+        expect(captured.attendance[0]!.dateRangeStart).toBeTypeOf("string");
+        expect(captured.attendance[0]!.dateRangeEnd).toBeTypeOf("string");
         // attendanceFilter is REQUIRED on the wire (the report 400s "Please provide
         // filters." without it, live-verified); an empty filter is accepted.
-        expect(captured.attendance[0].attendanceFilter).toEqual({});
+        expect(captured.attendance[0]!.attendanceFilter).toEqual({});
     });
 });

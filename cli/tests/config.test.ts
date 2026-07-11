@@ -42,17 +42,17 @@ describe("loadConfig", () => {
         });
     });
 
-    it("reads ~/.clockifyrc.json (clockifyrc.json variant)", () => {
+    it("reads non-secret values from ~/.clockifyrc.json", () => {
         writeFileSync(
             join(home, "clockifyrc.json"),
-            JSON.stringify({ apiKey: "rc-key", workspaceId: "rc-ws", baseUrl: "https://rc.test" }),
+            JSON.stringify({ workspaceId: "rc-ws", baseUrl: "https://rc.test" }),
         );
         const config = loadConfig({}, envWithHome());
-        expect(config).toEqual({ apiKey: "rc-key", workspaceId: "rc-ws", baseUrl: "https://rc.test" });
+        expect(config).toEqual({ workspaceId: "rc-ws", baseUrl: "https://rc.test" });
     });
 
     it("env vars beat rc file", () => {
-        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key", baseUrl: "https://rc.test" }));
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ baseUrl: "https://rc.test" }));
         const config = loadConfig(
             {},
             envWithHome({ CLOCKIFY_API_KEY: "env-key", CLOCKIFY_BASE_URL: "https://env.test" }),
@@ -61,20 +61,25 @@ describe("loadConfig", () => {
         expect(config.baseUrl).toBe("https://env.test");
     });
 
-    it("treats a blank env var as absent so the rc file is not shadowed", () => {
-        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "rc-key", workspaceId: "rc-ws" }));
+    it("does not source credentials from the rc file when the env var is blank", () => {
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ workspaceId: "rc-ws" }));
         const config = loadConfig({}, envWithHome({ CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "   " }));
-        expect(config.apiKey).toBe("rc-key");
+        expect(config.apiKey).toBeUndefined();
         expect(config.workspaceId).toBe("rc-ws");
     });
 
-    it("flags beat env vars", () => {
+    it("non-secret flags beat env vars", () => {
         const config = loadConfig(
-            { apiKey: "flag-key", baseUrl: "https://flag.test" },
+            { baseUrl: "https://flag.test" },
             envWithHome({ CLOCKIFY_API_KEY: "env-key", CLOCKIFY_BASE_URL: "https://env.test" }),
         );
-        expect(config.apiKey).toBe("flag-key");
+        expect(config.apiKey).toBe("env-key");
         expect(config.baseUrl).toBe("https://flag.test");
+    });
+
+    it("rejects legacy rc-file apiKey secrets with migration guidance", () => {
+        writeFileSync(join(home, "clockifyrc.json"), JSON.stringify({ apiKey: "legacy-secret" }));
+        expect(() => loadConfig({}, envWithHome())).toThrow(/remove apiKey.*CLOCKIFY_API_KEY/i);
     });
 
     it("throws a helpful message on malformed rc file", () => {

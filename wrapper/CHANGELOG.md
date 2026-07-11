@@ -19,6 +19,23 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Security
+
+- Raw authenticated fetches reject cross-origin destinations before dispatch, validate dynamic
+  base URL suppliers, preserve `Request` headers, and enforce auth-header precedence.
+- Non-loopback cleartext origins always reject; `allowNonClockifyHttpsHost` replaces the deprecated
+  `allowInsecureBaseUrl` alias.
+
+### Changed
+
+- Require Node.js 22.13 or newer.
+- Workspace resources expose `ScopedResource<T>`, omitting `workspaceId` from scoped request types.
+- Pagination/bulk numeric controls reject non-finite, fractional, and out-of-range values; fail-fast
+  bulk work now settles already-started operations before rejecting.
+- Ensure helpers accept `scopeKey` for in-process single-flight coordination.
+- Audit actions are a canonical runtime constant/type generated from the corrected OpenAPI snapshot.
+- Webhook literal-IP validation rejects deprecated IPv6 site-local `fec0::/10` destinations.
+
 ### Changed
 
 - Published to npm as an unofficial, community-built package under the unscoped
