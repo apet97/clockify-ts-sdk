@@ -64,7 +64,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: make sdk-codegen
-      - run: make contract-gates coverage mutation-ci
+      - name: Executable contract and coverage proof
+        run: >-
+          make sdk-codegen-drift sdk-codegen-test codegen-determinism
+          build-determinism generator-comparison pack-smoke coverage mutation-ci
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
