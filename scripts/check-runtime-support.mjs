@@ -90,8 +90,8 @@ function assertContractShape(value) {
         failShape("purpose must be a non-empty string");
     }
 
-    if (!isNonEmptyString(value.nodeFloor) || !/^>=\d+$/.test(value.nodeFloor)) {
-        failShape(`nodeFloor must use a >=N engine floor, got ${value.nodeFloor ?? "(missing)"}`);
+    if (!isNonEmptyString(value.nodeFloor) || !/^>=\d+(?:\.\d+){0,2}$/.test(value.nodeFloor)) {
+        failShape(`nodeFloor must use a >=N[.N[.N]] engine floor, got ${value.nodeFloor ?? "(missing)"}`);
     }
 
     if (value.moduleType !== "module") {

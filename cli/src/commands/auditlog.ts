@@ -5,7 +5,11 @@
  * `actions` and `authors` filters; this surface mirrors that contract
  * so a missing flag fails locally instead of round-tripping to a 400.
  */
-import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
+import {
+    AUDIT_LOG_ACTIONS,
+    type AuditLogAction,
+    type ClockifyApi,
+} from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -47,6 +51,11 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
             if (actions.length === 0) {
                 throw new Error("--actions must include at least one action name");
             }
+            const knownActions = new Set<string>(AUDIT_LOG_ACTIONS);
+            const invalidActions = actions.filter((action) => !knownActions.has(action));
+            if (invalidActions.length > 0) {
+                throw new Error(`Unknown audit action(s): ${invalidActions.join(", ")}`);
+            }
             const authorIds = opts.authors ? splitList(opts.authors) : [];
             const authors: Record<string, unknown> = {
                 authorIds,
@@ -56,10 +65,10 @@ export const registerAuditLogCommand: Registrar = (program, services) => {
                 workspaceId,
                 start: opts.start,
                 end: opts.end,
-                actions,
+                actions: actions as AuditLogAction[],
                 authors,
                 page: opts.page,
-                "page-size": clampPageSize(opts.limit, 200),
+                "page-size": clampPageSize(opts.limit, 50),
             };
             const response = (await client.auditLogReport.search(req)) as
                 | { entries?: unknown[] }

@@ -15,7 +15,6 @@ export interface CliConfig {
 }
 
 export interface GlobalFlags {
-    apiKey?: string;
     workspace?: string;
     baseUrl?: string;
 }
@@ -24,7 +23,7 @@ export interface GlobalFlags {
  * Resolve CLI config from (lowest → highest precedence):
  *   1. ~/.clockifyrc.json (or $CLOCKIFY_HOME/clockifyrc.json)
  *   2. CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID / CLOCKIFY_BASE_URL env vars
- *   3. --api-key / --workspace / --base-url command-line flags
+ *   3. --workspace / --base-url command-line flags
  *
  * Returns the resolved values without throwing — call requireApiKey /
  * requireWorkspaceId at the point of use for the error message that
@@ -32,7 +31,7 @@ export interface GlobalFlags {
  */
 export function loadConfig(flags: GlobalFlags = {}, env: NodeJS.ProcessEnv = process.env): CliConfig {
     const file = loadRcFile(env);
-    const apiKey = firstPresent(flags.apiKey, env.CLOCKIFY_API_KEY, file.apiKey);
+    const apiKey = firstPresent(env.CLOCKIFY_API_KEY);
     const workspaceId = firstPresent(flags.workspace, env.CLOCKIFY_WORKSPACE_ID, file.workspaceId);
     const baseUrl = firstPresent(flags.baseUrl, env.CLOCKIFY_BASE_URL, file.baseUrl);
     // firstPresent treats an empty/whitespace value as absent, so a blank env var
@@ -53,7 +52,7 @@ function firstPresent(...values: Array<string | undefined>): string | undefined 
 export function requireApiKey(config: CliConfig): string {
     if (!config.apiKey) {
         throw new Error(
-            "Clockify API key not set. Provide --api-key, set CLOCKIFY_API_KEY, or add `apiKey` to ~/.clockifyrc.json.",
+            "Clockify API key not set. Set CLOCKIFY_API_KEY in the process environment.",
         );
     }
     return config.apiKey;
@@ -78,8 +77,12 @@ function loadRcFile(env: NodeJS.ProcessEnv): CliConfig {
         try {
             const raw = readFileSync(path, "utf8");
             const parsed = JSON.parse(raw) as Record<string, unknown>;
+            if (Object.prototype.hasOwnProperty.call(parsed, "apiKey")) {
+                throw new Error(
+                    "legacy rc-file secret detected: remove apiKey from the rc file and set CLOCKIFY_API_KEY in the process environment",
+                );
+            }
             const out: CliConfig = {};
-            if (typeof parsed.apiKey === "string") out.apiKey = parsed.apiKey;
             if (typeof parsed.workspaceId === "string") out.workspaceId = parsed.workspaceId;
             if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
             return out;

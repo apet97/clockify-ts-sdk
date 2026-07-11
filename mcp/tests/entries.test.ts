@@ -42,7 +42,7 @@ function envelope(res: unknown): Record<string, unknown> {
 
 describe("clockify_entries_list", () => {
     it("lists the current user's entries with the right request + paginated receipt", async () => {
-        const listForUser = vi.fn(() =>
+        const listForUser = vi.fn((_request: Record<string, unknown>) =>
             responseAware([{ id: "e1" }, { id: "e2" }], { "Last-Page": "false" }),
         );
         const client = await connect({
@@ -60,7 +60,7 @@ describe("clockify_entries_list", () => {
 
         expect(res.isError).toBeFalsy();
         expect(listForUser).toHaveBeenCalledTimes(1);
-        const req = listForUser.mock.calls[0]?.[0] as Record<string, unknown>;
+        const req = listForUser.mock.calls[0]![0];
         expect(req).toMatchObject({
             workspaceId: "ws-1",
             userId: "user-1",

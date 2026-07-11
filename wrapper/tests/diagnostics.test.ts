@@ -1,11 +1,11 @@
-// Diagnostics tests cover SDK clockifyDiagnostics on Node.js 20 and above.
+// Diagnostics tests cover SDK clockifyDiagnostics on Node.js 22.13 and above.
 import { describe, expect, it } from "vitest";
 
 import { clockifyDiagnostics } from "../diagnostics.js";
 
 describe("clockifyDiagnostics", () => {
     it("reports missing auth without contacting Clockify", () => {
-        const result = clockifyDiagnostics({ env: {}, nodeVersion: "20.0.0" });
+        const result = clockifyDiagnostics({ env: {}, nodeVersion: "22.13.0" });
 
         expect(result.ok).toBe(false);
         expect(result.readiness).toBe("configuration_incomplete");
@@ -19,7 +19,7 @@ describe("clockifyDiagnostics", () => {
                 CLOCKIFY_API_KEY: "super-secret-token",
                 CLOCKIFY_WORKSPACE_ID: "1234567890abcdef12345678",
             },
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(true);
@@ -43,7 +43,7 @@ describe("clockifyDiagnostics", () => {
                 CLOCKIFY_WORKSPACE_ID: "env-workspace-should-not-win",
                 CLOCKIFY_BASE_URL: "http://env.example/api/v1",
             },
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(true);
@@ -62,7 +62,7 @@ describe("clockifyDiagnostics", () => {
         const result = clockifyDiagnostics({
             apiKey: "api",
             env: { CLOCKIFY_BASE_URL: "http://127.0.0.1:45881/api/v1" },
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(true);
@@ -78,7 +78,7 @@ describe("clockifyDiagnostics", () => {
             apiKey: "api",
             addonToken: "addon",
             env: {},
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(false);
@@ -93,7 +93,7 @@ describe("clockifyDiagnostics", () => {
                 CLOCKIFY_API_KEY: "api-token",
                 CLOCKIFY_ADDON_TOKEN: "addon-token",
             },
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(true);
@@ -108,14 +108,14 @@ describe("clockifyDiagnostics", () => {
 
         expect(result.ok).toBe(false);
         expect(result.readiness).toBe("runtime_unsupported");
-        expect(result.checks.runtime.recovery).toMatch(/Node\.js 20/);
+        expect(result.checks.runtime.recovery).toMatch(/Node\.js 22\.13/);
     });
     it("reports an allowlisted Clockify base URL override as allowed", () => {
         const result = clockifyDiagnostics({
             apiKey: "api",
             baseUrl: "https://api.clockify.me/api/v1",
             env: {},
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         expect(result.ok).toBe(true);
@@ -127,7 +127,7 @@ describe("clockifyDiagnostics", () => {
             apiKey: "api",
             baseUrl: "https://evil.example.com/api/v1",
             env: {},
-            nodeVersion: "22.1.0",
+            nodeVersion: "22.13.0",
         });
 
         // Diagnostics never throws — it reports advisory readiness — so ok

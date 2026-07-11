@@ -101,7 +101,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
     clients
         .command("update")
         .argument("<id>", "Client ID.")
-        .option("--name <text>", "New client name.")
+        .requiredOption("--name <text>", "Client name (required by Clockify's replace update).")
         .option("--note <text>", "Client note.")
         .option("--address <text>", "Client address.")
         .option("--archived", "Archive the client.")
@@ -109,10 +109,9 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Update a client by ID.")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>> & {
+            const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> & {
                 archived?: boolean;
-            } = {};
-            if (opts.name) body.name = opts.name;
+            } = { name: opts.name };
             if (opts.note !== undefined) body.note = opts.note;
             if (opts.address !== undefined) body.address = opts.address;
             if (opts.archived !== undefined) body.archived = opts.archived;

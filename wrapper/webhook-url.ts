@@ -182,6 +182,7 @@ function ipv6Reason(groups: number[]): string | null {
     if (groups.slice(0, 7).every((g) => g === 0) && groups[7] === 1) {
         return "loopback address (::1)";
     }
+    if ((groups[0]! & 0xffc0) === 0xfec0) return "site-local address (fec0::/10)";
 
     const isMapped = groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff;
     if (isMapped) {

@@ -416,7 +416,7 @@ const server = buildServer(ctx);
 
 | | `@apet97/clockify-mcp-115` | `go-clockify` |
 |---|---|---|
-| Language | TypeScript / Node 20+ | Go |
+| Language | TypeScript / Node 22.13+ | Go |
 | Transport | stdio | stdio |
 | Tools | 135 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |

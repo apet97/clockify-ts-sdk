@@ -71,8 +71,8 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                     const project = {
                         id: `p${state.projects.length + 1}`,
                         name: body.name,
-                        clientId: body.clientId,
-                        billable: body.billable,
+                        ...(body.clientId !== undefined ? { clientId: body.clientId } : {}),
+                        ...(body.billable !== undefined ? { billable: body.billable } : {}),
                     };
                     state.projects.push(project);
                     return project;

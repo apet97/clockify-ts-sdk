@@ -4,7 +4,7 @@
   "policyDocument": {
     "path": "docs/developer-environment-policy.md",
     "mustContain": [
-      "Node `>=20`",
+      "Node `>=22.13.0`",
       "npm workspaces",
       "root `package.json`",
       "exact `prepublishOnly` command shapes",
@@ -87,7 +87,7 @@
       "requiredScriptValues": {
         "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
       },
-      "engine": ">=20"
+      "engine": ">=22.13.0"
     },
     {
       "id": "cli",
@@ -102,7 +102,7 @@
       "requiredScriptValues": {
         "prepublishOnly": "npm run type-check && npm test && npm run build"
       },
-      "engine": ">=20"
+      "engine": ">=22.13.0"
     },
     {
       "id": "mcp",
@@ -118,7 +118,7 @@
       "requiredScriptValues": {
         "prepublishOnly": "npm run type-check && npm test && npm run build"
       },
-      "engine": ">=20"
+      "engine": ">=22.13.0"
     }
   ],
   "localGenerator": {
@@ -147,7 +147,7 @@
     {
       "path": "docs/runtime-support.json",
       "mustContain": [
-        "\"nodeFloor\": \">=20\"",
+        "\"nodeFloor\": \">=22.13.0\"",
         "\"moduleType\": \"module\""
       ]
     },

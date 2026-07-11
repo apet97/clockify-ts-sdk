@@ -21,15 +21,21 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const req: { workspaceId: string; type?: string } = { workspaceId };
-            if (opts.type) req.type = opts.type;
+            if (opts.type) {
+                const type = String(opts.type).toUpperCase();
+                if (!["WEBHOOK", "ADDON_WEBHOOK"].includes(type)) {
+                    throw new Error(`Unknown webhook type: ${opts.type}`);
+                }
+                req.type = type;
+            }
             // Live Clockify returns {workspaceWebhookCount, webhooks: [...]};
             // the typed SDK return is wider than the runtime shape, so we
             // normalise here rather than upstream.
             // wireBody bridges the narrower generated `type` (a WebhookType literal
             // union) since the CLI accepts a free-form --type filter string.
-            const response = (await client.webhooks.list(
-                wireBody<ClockifyApi.ListWebhooksRequest>(req),
-            )) as unknown[] | { webhooks?: unknown[] };
+            const response = (await client.webhooks.list(wireBody<ClockifyApi.ListWebhooksRequest>(req))) as
+                | unknown[]
+                | { webhooks?: unknown[] };
             const items = Array.isArray(response) ? response : (response.webhooks ?? []);
             const rows = items.map((raw) => {
                 const w = raw as {
@@ -75,18 +81,19 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
                     `webhooks.create: ${err instanceof Error ? err.message : String(err)}`,
                 );
             }
-            const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
-                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "name" | "url"> & {
-                    webhookEvent: string;
-                } = {
+            const triggerSourceType = (opts.triggerSourceType ?? "WORKSPACE_ID") as ClockifyApi.WebhookEventTriggerSourceType;
+            const triggerSource = opts.triggerSource
+                ? splitList(String(opts.triggerSource))
+                : triggerSourceType === "WORKSPACE_ID"
+                  ? [workspaceId]
+                  : [];
+            const body: ClockifyRequestBody<ClockifyApi.WebhookRequest> = {
                 name: opts.name,
                 url: opts.url,
-                webhookEvent: opts.event,
+                webhookEvent: opts.event as ClockifyApi.WebhookEventType,
+                triggerSourceType,
+                triggerSource,
             };
-            if (opts.triggerSourceType) body.triggerSourceType = opts.triggerSourceType;
-            if (opts.triggerSource) {
-                body.triggerSource = splitList(String(opts.triggerSource));
-            }
             const created = (await client.webhooks.create(
                 wireBody<ClockifyApi.WebhookRequest>({
                     workspaceId,

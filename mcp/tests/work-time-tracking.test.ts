@@ -72,7 +72,7 @@ describe("clockify_start_work", () => {
         expect(env.action).toBe("clockify_start_work");
         expect(calls.create).toHaveLength(1);
         expect(calls.create[0]).toMatchObject({ workspaceId: "ws-1", start: "2026-06-01T08:00:00.000Z", description: "writing" });
-        expect(calls.create[0].end).toBeUndefined(); // a running timer has no end
+        expect(calls.create[0]!.end).toBeUndefined(); // a running timer has no end
         expect((env.changed as { created?: unknown[] }).created).toHaveLength(1);
         expect((env.next as Array<{ tool: string }>).map((n) => n.tool)).toEqual([
             "clockify_stop_work",
@@ -83,7 +83,7 @@ describe("clockify_start_work", () => {
     it("defaults a missing start to now and records the resolved value in meta", async () => {
         const { ctx, calls } = makeCtx();
         const env = envelopeOf(await startWork(ctx, { description: "x" }));
-        const sentStart = calls.create[0].start as string;
+        const sentStart = calls.create[0]!.start as string;
         expect(typeof sentStart).toBe("string");
         expect(Number.isNaN(Date.parse(sentStart))).toBe(false);
         const meta = env.meta as { startWasDefaulted?: boolean; resolvedStart?: string };

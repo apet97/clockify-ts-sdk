@@ -11,7 +11,7 @@
 **Request fields** (`SearchAuditLogReportRequest`):
 
 - `workspaceId` (`string`, required)
-- `actions` (`string[]`, required)
+- `actions` (`ClockifyApi.AuditLogAction[]`, required)
 - `authors` (`Record<string, unknown>`, required) — Author filter. Include SYSTEM to retrieve system audit logs.
 - `end` (`string`, required) — Audit window end.
 - `page` (`number`, optional)
@@ -19,7 +19,7 @@
 - `start` (`string`, required) — Audit window start.
 - `workspaceId` (`string`, required)
 - `body` (`SearchAuditLogReportRequestBody`, required)
-- `actions` (`string[]`, required)
+- `actions` (`ClockifyApi.AuditLogAction[]`, required)
 - `authors` (`Record<string, unknown>`, required) — Author filter. Include SYSTEM to retrieve system audit logs.
 - `end` (`string`, required) — Audit window end.
 - `page` (`number`, optional)

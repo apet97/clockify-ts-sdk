@@ -133,11 +133,11 @@ describe("scheduling read and create commands", () => {
             "6",
         ];
         await makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync(args);
-        expect(calls[0].body as Record<string, unknown>).toMatchObject({
+        expect(calls[0]!.body as Record<string, unknown>).toMatchObject({
             start: "2026-06-01",
             end: "2026-06-07",
         });
-        expect((calls[0].body as Record<string, unknown>).period).toBeUndefined();
+        expect((calls[0]!.body as Record<string, unknown>).period).toBeUndefined();
         expect(publishes).toHaveLength(0);
 
         await makeProgram(registerSchedulingCommand, client as unknown as ClockifyClient).parseAsync([
@@ -185,7 +185,7 @@ describe("scheduling read and create commands", () => {
             "--include-non-working-days",
             "--publish",
         ]);
-        expect(calls[0].body).toMatchObject({
+        expect(calls[0]!.body).toMatchObject({
             taskId: "tk-1",
             note: "Plan",
             billable: true,

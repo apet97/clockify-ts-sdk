@@ -175,14 +175,14 @@ function runtimeCheck(nodeVersion: string | undefined): ClockifyDiagnosticCheck 
             ok: true,
             status: "unknown",
             source: "unavailable",
-            recovery: "Runtime version is unavailable; this SDK is packaged for Node.js 20+.",
+            recovery: "Runtime version is unavailable; this SDK requires Node.js 22.13+.",
         };
     }
-    const major = Number.parseInt(nodeVersion.split(".")[0] ?? "0", 10);
-    const ok = Number.isFinite(major) && major >= 20;
+    const [major = 0, minor = 0] = nodeVersion.split(".").map((part) => Number.parseInt(part, 10));
+    const ok = major > 22 || (major === 22 && minor >= 13);
     const recovery = ok
         ? undefined
-        : "Install Node.js 20 or newer before using clockify-sdk-ts-115.";
+        : "Install Node.js 22.13 or newer before using clockify-sdk-ts-115.";
     return {
         ok,
         status: ok ? "supported" : "unsupported",
@@ -288,7 +288,7 @@ function nextSteps(input: {
     base: ClockifyDiagnosticCheck;
 }): string[] {
     const steps: string[] = [];
-    if (!input.runtime.ok) steps.push("Install Node.js 20 or newer.");
+    if (!input.runtime.ok) steps.push("Install Node.js 22.13 or newer.");
     if (input.auth.status === "conflict")
         steps.push("Keep exactly one auth scheme: apiKey or addonToken.");
     if (!input.auth.ok && input.auth.status !== "conflict") {

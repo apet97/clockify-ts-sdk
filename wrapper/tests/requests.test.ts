@@ -10,10 +10,10 @@ describe("wireBody", () => {
     });
 
     it("acts as an explicit typed seam for validated object records", () => {
-        const request: Record<string, unknown> = {
+        const request = {
             workspaceId: "workspace-1",
             body: { name: "Acme" },
-        };
+        } satisfies { workspaceId: string; body: { name: string } };
         const typed = wireBody<{ workspaceId: string; body: { name: string } }>(request);
 
         expect(typed.body.name).toBe("Acme");

@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { mapBounded } from "../bulk.js";
 
 describe("mapBounded", () => {
+    it.each([0, -1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+        "rejects invalid concurrency %s",
+        async (concurrency) => {
+            await expect(mapBounded([1], async (n) => n, { concurrency })).rejects.toThrow(
+                /concurrency.*positive finite integer/i,
+            );
+        },
+    );
     it("collects every success when all items succeed (continueOnError default)", async () => {
         const { ok, failures } = await mapBounded([1, 2, 3, 4], async (n) => n * 2);
         expect([...ok].sort((a, b) => a - b)).toEqual([2, 4, 6, 8]);

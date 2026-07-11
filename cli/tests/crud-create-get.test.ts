@@ -132,7 +132,7 @@ describe("tags create/get/update coverage", () => {
         ]);
         // The boolean negation branch: opts.archived === false -> body.archived = false.
         expect(calls.updates[0]).toMatchObject({ tagId: "t-1", body: { archived: false } });
-        expect((calls.updates[0].body as { name?: string }).name).toBeUndefined();
+        expect((calls.updates[0]!.body as { name?: string }).name).toBeUndefined();
     });
 });
 
@@ -230,12 +230,14 @@ describe("clients update --no-archived coverage", () => {
             "clients",
             "update",
             "c-1",
+            "--name",
+            "Client",
             "--no-archived",
         ]);
         expect(calls.updates[0]).toMatchObject({
             workspaceId: "ws-1",
             clientId: "c-1",
-            body: { archived: false },
+            body: { name: "Client", archived: false },
         });
         const payload = lastPayload();
         expect(payload.action).toBe("clients.update");

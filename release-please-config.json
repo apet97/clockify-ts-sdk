@@ -7,13 +7,17 @@
         "wrapper": {
             "package-name": "clockify-sdk-ts",
             "component": "wrapper",
-            "changelog-path": "CHANGELOG.md",
-            "extra-files": [
-                {
-                    "type": "generic",
-                    "path": "composed-fetch.ts"
-                }
-            ]
+            "changelog-path": "CHANGELOG.md"
+        },
+        "cli": {
+            "package-name": "@apet97/clockify-cli-115",
+            "component": "cli",
+            "changelog-path": "CHANGELOG.md"
+        },
+        "mcp": {
+            "package-name": "@apet97/clockify-mcp-115",
+            "component": "mcp",
+            "changelog-path": "CHANGELOG.md"
         }
     }
 }

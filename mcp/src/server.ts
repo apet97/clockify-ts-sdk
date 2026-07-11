@@ -6,7 +6,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import type { Context } from "./client.js";
-import { installDefaultOutputSchema } from "./output-schema.js";
+import { PACKAGE_VERSION } from "./generated/version.js";
 import { registerClockifyPrompts } from "./prompts.js";
 import { registerClockifyResources } from "./resources.js";
 import { registerAgentDocsTools } from "./tools/agent-docs.js";
@@ -49,14 +49,13 @@ export function buildServer(ctx: Context): McpServer {
     const server = new McpServer(
         {
             name: "@apet97/clockify-mcp-115",
-            version: "0.4.1",
+            version: PACKAGE_VERSION,
         },
         {
             instructions: SERVER_INSTRUCTIONS,
             capabilities: { tools: {}, resources: {}, prompts: {} },
         },
     );
-    installDefaultOutputSchema(server);
     registerClockifyResources(server);
     registerClockifyPrompts(server);
 

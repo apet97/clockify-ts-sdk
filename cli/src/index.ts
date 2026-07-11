@@ -32,6 +32,7 @@ import { registerWebhooksCommand } from "./commands/webhooks.js";
 import { parseCompletionShell, renderCompletion } from "./completions.js";
 import type { GlobalFlags } from "./config.js";
 import { loadConfig } from "./config.js";
+import { PACKAGE_VERSION } from "./generated/version.js";
 import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
 
@@ -46,8 +47,7 @@ export function buildProgram(): Command {
     program
         .name("clockify115")
         .description("Clockify CLI from @apet97/clockify-cli-115, built on clockify-sdk-ts-115.")
-        .version("0.1.0")
-        .option("--api-key <key>", "Clockify personal API key (or CLOCKIFY_API_KEY env var).")
+        .version(PACKAGE_VERSION)
         .option("--workspace <id>", "Clockify workspace ID (or CLOCKIFY_WORKSPACE_ID env var).")
         .option(
             "--base-url <url>",
@@ -148,9 +148,8 @@ function resolveMode(output: string | undefined, json: boolean | undefined): Out
 }
 
 export function globalFlags(program: Command): GlobalFlags {
-    const opts = program.opts<{ apiKey?: string; workspace?: string; baseUrl?: string }>();
+    const opts = program.opts<{ workspace?: string; baseUrl?: string }>();
     const out: GlobalFlags = {};
-    if (opts.apiKey) out.apiKey = opts.apiKey;
     if (opts.workspace) out.workspace = opts.workspace;
     if (opts.baseUrl) out.baseUrl = opts.baseUrl;
     return out;

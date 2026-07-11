@@ -71,7 +71,7 @@ describe("stop command", () => {
         await run(client);
         expect(calls.updateForUser).toHaveLength(1);
         expect(calls.updateForUser[0]).toMatchObject({ workspaceId: "ws-1", userId: "user-1" });
-        expect(typeof calls.updateForUser[0].end).toBe("string");
+        expect(typeof calls.updateForUser[0]!.end).toBe("string");
     });
 
     it("ignores an in-progress timer that belongs to another user", async () => {

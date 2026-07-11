@@ -196,7 +196,7 @@ describe("errorResult", () => {
     it("maps a MissingCredentialsError to a setup_required envelope", () => {
         const out = errorResult("clockify_status", new MissingCredentialsError(["CLOCKIFY_API_KEY"]));
         expect(out.isError).toBe(true);
-        const parsed = JSON.parse((out.content as Array<{ text: string }>)[0].text);
+        const parsed = JSON.parse((out.content as Array<{ text: string }>)[0]!.text);
         expect(parsed.ok).toBe(false);
         expect(parsed.error.code).toBe("setup_required");
         expect(parsed.error.message).toMatch(/CLOCKIFY_API_KEY is not set/);

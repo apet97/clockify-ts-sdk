@@ -21,7 +21,65 @@ export async function generate(model, outDir, options = {}) {
 }
 
 async function writeBaseClient(outDir) {
-    await write(outDir, "BaseClient.ts", `${GENERATED_BANNER}import { HeaderAuthProvider } from "./auth/HeaderAuthProvider.js";\nimport { mergeHeaders } from "./core/headers.js";\nimport * as core from "./core/index.js";\nimport type * as environments from "./environments.js";\n\nexport type AuthOption = false | core.AuthProvider["getAuthRequest"] | core.AuthProvider | HeaderAuthProvider.AuthOptions;\n\nexport type BaseClientCommonOptions = {\n    environment?: core.Supplier<environments.ClockifyApiEnvironment | string>;\n    baseUrl?: core.Supplier<string>;\n    headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;\n    timeoutInSeconds?: number;\n    maxRetries?: number;\n    fetch?: typeof fetch;\n    logging?: core.logging.LogConfig | core.logging.Logger;\n    auth?: AuthOption;\n};\n\nexport type BaseClientOptions = BaseClientCommonOptions & HeaderAuthProvider.AuthOptions;\n\nexport interface BaseRequestOptions {\n    timeoutInSeconds?: number;\n    maxRetries?: number;\n    abortSignal?: AbortSignal;\n    addonToken?: string;\n    queryParams?: Record<string, unknown>;\n    headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;\n}\n\nexport type NormalizedClientOptions<T extends BaseClientOptions = BaseClientOptions> = T & {\n    logging: core.logging.Logger;\n    authProvider?: core.AuthProvider;\n};\n\nexport type NormalizedClientOptionsWithAuth<T extends BaseClientOptions = BaseClientOptions> = NormalizedClientOptions<T> & {\n    authProvider: core.AuthProvider;\n};\n\nexport function normalizeClientOptions<T extends BaseClientOptions = BaseClientOptions>(options: T): NormalizedClientOptions<T> {\n    return {\n        ...options,\n        logging: core.logging.createLogger(options?.logging),\n        headers: mergeHeaders(options?.headers),\n    } as NormalizedClientOptions<T>;\n}\n\nexport function normalizeClientOptionsWithAuth<T extends BaseClientOptions = BaseClientOptions>(options: T): NormalizedClientOptionsWithAuth<T> {\n    const normalized = normalizeClientOptions(options) as NormalizedClientOptionsWithAuth<T>;\n    if (options.auth === false) {\n        normalized.authProvider = new core.NoOpAuthProvider();\n        return normalized;\n    }\n    if (options.auth != null) {\n        if (typeof options.auth === "function") {\n            normalized.authProvider = { getAuthRequest: options.auth };\n            return normalized;\n        }\n        if (core.isAuthProvider(options.auth)) {\n            normalized.authProvider = options.auth;\n            return normalized;\n        }\n        Object.assign(normalized, options.auth);\n    }\n    normalized.authProvider ??= new HeaderAuthProvider(normalized);\n    return normalized;\n}\n`);
+    await write(
+        outDir,
+        "BaseClient.ts",
+        `${GENERATED_BANNER}import { HeaderAuthProvider } from "./auth/HeaderAuthProvider.js";
+import { mergeHeaders } from "./core/headers.js";
+import * as core from "./core/index.js";
+import type * as environments from "./environments.js";
+
+export type AuthOption = false | core.AuthProvider["getAuthRequest"] | core.AuthProvider | HeaderAuthProvider.AuthOptions;
+
+export type BaseClientCommonOptions = {
+    environment?: core.Supplier<environments.ClockifyApiEnvironment | string>;
+    baseUrl?: core.Supplier<string>;
+    allowNonClockifyHttpsHost?: boolean;
+    headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;
+    timeoutInSeconds?: number;
+    maxRetries?: number;
+    fetch?: typeof fetch;
+    logging?: core.logging.LogConfig | core.logging.Logger;
+    auth?: AuthOption;
+};
+
+export type BaseClientOptions = BaseClientCommonOptions & HeaderAuthProvider.AuthOptions;
+
+export interface BaseRequestOptions {
+    timeoutInSeconds?: number;
+    maxRetries?: number;
+    abortSignal?: AbortSignal;
+    addonToken?: string;
+    queryParams?: Record<string, unknown>;
+    headers?: Record<string, string | core.Supplier<string | null | undefined> | null | undefined>;
+}
+
+export type NormalizedClientOptions<T extends BaseClientOptions = BaseClientOptions> = T & {
+    logging: core.logging.Logger;
+    authProvider?: core.AuthProvider;
+};
+
+export type NormalizedClientOptionsWithAuth<T extends BaseClientOptions = BaseClientOptions> = NormalizedClientOptions<T> & {
+    authProvider: core.AuthProvider;
+};
+
+export function normalizeClientOptions<T extends BaseClientOptions = BaseClientOptions>(options: T): NormalizedClientOptions<T> {
+    return { ...options, logging: core.logging.createLogger(options?.logging), headers: mergeHeaders(options?.headers) } as NormalizedClientOptions<T>;
+}
+
+export function normalizeClientOptionsWithAuth<T extends BaseClientOptions = BaseClientOptions>(options: T): NormalizedClientOptionsWithAuth<T> {
+    const normalized = normalizeClientOptions(options) as NormalizedClientOptionsWithAuth<T>;
+    if (options.auth === false) { normalized.authProvider = new core.NoOpAuthProvider(); return normalized; }
+    if (options.auth != null) {
+        if (typeof options.auth === "function") { normalized.authProvider = { getAuthRequest: options.auth }; return normalized; }
+        if (core.isAuthProvider(options.auth)) { normalized.authProvider = options.auth; return normalized; }
+        Object.assign(normalized, options.auth);
+    }
+    normalized.authProvider ??= new HeaderAuthProvider(normalized);
+    return normalized;
+}
+`,
+    );
 }
 
 async function writeCore(outDir) {
@@ -254,12 +312,48 @@ function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+const CLOCKIFY_API_HOSTS = new Set(["api.clockify.me", "reports.api.clockify.me", "auditlog-api.api.clockify.me", "pto.api.clockify.me", "developer.clockify.me"]);
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
+
+function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): URL {
+    let parsed: URL;
+    try { parsed = new URL(String(value)); }
+    catch { throw new TypeError("ClockifyApiClient: base URL must be an absolute URL"); }
+    const loopback = LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
+    if (!loopback && parsed.protocol !== "https:") throw new TypeError("ClockifyApiClient: base URL must use HTTPS for non-loopback hosts");
+    if (!loopback && !CLOCKIFY_API_HOSTS.has(parsed.hostname.toLowerCase()) && !allowNonClockifyHttpsHost) {
+        throw new TypeError("ClockifyApiClient: base URL host " + JSON.stringify(parsed.hostname) + " is not an allowlisted Clockify host");
+    }
+    return parsed;
+}
+
+function passthroughInputUrl(input: Request | string | URL, baseUrl: URL): URL {
+    const raw = input instanceof Request ? input.url : input instanceof URL ? input.toString() : input;
+    if (/^https?:\/\//i.test(raw)) return new URL(raw);
+    return new URL(url.join(baseUrl.toString(), raw));
+}
+
+function appendPassthroughQuery(target: URL, query: Record<string, unknown> | undefined): void {
+    for (const [key, value] of Object.entries(query ?? {})) {
+        if (value == null) continue;
+        for (const item of Array.isArray(value) ? value : [value]) if (item != null) target.searchParams.append(key, String(item));
+    }
+}
+
 export async function makePassthroughRequest(input: Request | string | URL, init: RequestInit = {}, clientOptions: any, requestOptions?: RequestOptionsShape): Promise<Response> {
-    const baseUrl = (await Supplier.get(clientOptions.baseUrl)) ?? ClockifyApiEnvironment.Default;
-    const target = typeof input === "string" && !/^https?:\/\//.test(input) ? url.join(String(baseUrl), input) : input;
-    const auth = clientOptions.getAuthHeaders ? { headers: await clientOptions.getAuthHeaders() } : { headers: {} };
-    const headers = new Headers({ ...(auth.headers ?? {}), ...(await resolveHeaders(clientOptions.headers)), ...(init.headers as Record<string, string> | undefined), ...(await resolveHeaders(requestOptions?.headers)) });
-    return await fetchWithTimeout(clientOptions.fetch ?? fetch, target, { ...init, headers, signal: requestOptions?.abortSignal ?? null }, requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    const baseUrl = validatedBaseUrl((await Supplier.get(clientOptions.baseUrl)) ?? ClockifyApiEnvironment.Default, clientOptions.allowNonClockifyHttpsHost === true);
+    const target = passthroughInputUrl(input, baseUrl);
+    if (target.origin !== baseUrl.origin) throw new TypeError("ClockifyApiClient.fetch: refusing authenticated cross-origin request from " + baseUrl.origin + " to " + target.origin);
+    appendPassthroughQuery(target, requestOptions?.queryParams);
+
+    const headers = new Headers(input instanceof Request ? input.headers : undefined);
+    for (const [key, value] of Object.entries(await resolveHeaders(clientOptions.headers))) headers.set(key, value);
+    new Headers(init.headers).forEach((value, key) => headers.set(key, value));
+    for (const [key, value] of Object.entries(await resolveHeaders(requestOptions?.headers))) headers.set(key, value);
+    const authHeaders = clientOptions.getAuthHeaders ? await clientOptions.getAuthHeaders() : {};
+    for (const [key, value] of Object.entries(authHeaders ?? {})) if (value != null) headers.set(key, String(value));
+
+    return await fetchWithTimeout(clientOptions.fetch ?? fetch, target.toString(), { ...init, headers, signal: requestOptions?.abortSignal ?? init.signal ?? null }, requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
 }
 
 export function pickDefined(source: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
@@ -404,7 +498,42 @@ async function writeClient(model, outDir) {
     const getters = model.resources
         .map((resource) => `public get ${resource}(): ${toPascal(resource)}Client { return (this._${resource} ??= new ${toPascal(resource)}Client(this._options)); }`)
         .join("\n\n    ");
-    await write(outDir, "Client.ts", `${GENERATED_BANNER}${imports}\nimport type { BaseClientOptions, BaseRequestOptions } from "./BaseClient.js";\nimport { type NormalizedClientOptionsWithAuth, normalizeClientOptionsWithAuth } from "./BaseClient.js";\nimport * as core from "./core/index.js";\n\nexport declare namespace ClockifyApiClient {\n    export type Options = BaseClientOptions;\n    export interface RequestOptions extends BaseRequestOptions {}\n}\n\nexport class ClockifyApiClient {\n    protected readonly _options: NormalizedClientOptionsWithAuth<ClockifyApiClient.Options>;\n    ${fields}\n\n    constructor(options: ClockifyApiClient.Options) { this._options = normalizeClientOptionsWithAuth(options); }\n\n    ${getters}\n\n    public async fetch(input: Request | string | URL, init?: RequestInit, requestOptions?: core.PassthroughRequest.RequestOptions): Promise<Response> {\n        return core.makePassthroughRequest(input, init, {\n            baseUrl: this._options.baseUrl ?? this._options.environment,\n            headers: this._options.headers,\n            timeoutInSeconds: this._options.timeoutInSeconds,\n            maxRetries: this._options.maxRetries,\n            fetch: this._options.fetch,\n            logging: this._options.logging,\n            getAuthHeaders: async () => (await this._options.authProvider.getAuthRequest()).headers,\n        }, requestOptions);\n    }\n}\n`);
+    await write(
+        outDir,
+        "Client.ts",
+        `${GENERATED_BANNER}${imports}
+import type { BaseClientOptions, BaseRequestOptions } from "./BaseClient.js";
+import { type NormalizedClientOptionsWithAuth, normalizeClientOptionsWithAuth } from "./BaseClient.js";
+import * as core from "./core/index.js";
+
+export declare namespace ClockifyApiClient {
+    export type Options = BaseClientOptions;
+    export interface RequestOptions extends BaseRequestOptions {}
+}
+
+export class ClockifyApiClient {
+    protected readonly _options: NormalizedClientOptionsWithAuth<ClockifyApiClient.Options>;
+    ${fields}
+
+    constructor(options: ClockifyApiClient.Options) { this._options = normalizeClientOptionsWithAuth(options); }
+
+    ${getters}
+
+    public async fetch(input: Request | string | URL, init?: RequestInit, requestOptions?: core.PassthroughRequest.RequestOptions): Promise<Response> {
+        return core.makePassthroughRequest(input, init, {
+            baseUrl: this._options.baseUrl ?? this._options.environment,
+            allowNonClockifyHttpsHost: this._options.allowNonClockifyHttpsHost,
+            headers: this._options.headers,
+            timeoutInSeconds: this._options.timeoutInSeconds,
+            maxRetries: this._options.maxRetries,
+            fetch: this._options.fetch,
+            logging: this._options.logging,
+            getAuthHeaders: async () => (await this._options.authProvider.getAuthRequest()).headers,
+        }, requestOptions);
+    }
+}
+`,
+    );
 }
 
 function bodyFieldNames(operation) {

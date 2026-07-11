@@ -42,7 +42,11 @@ export interface FindOrCreateOptions<T extends NamedRecord> {
     create: (name: string) => Promise<T>;
     /** Match archived entities too (default: active-only, so a reuse re-activates nothing). */
     includeArchived?: boolean;
+    /** Optional in-process single-flight key. Concurrent calls with the same key share one operation. */
+    scopeKey?: string;
 }
+
+const ensureFlights = new Map<string, Promise<EnsureResult<NamedRecord>>>();
 
 /**
  * Find an entity by name or create it. Throws on an ambiguous match (more than one
@@ -54,6 +58,18 @@ async function findOrCreate<T extends NamedRecord>(
     noun: string,
     opts: FindOrCreateOptions<T>,
 ): Promise<EnsureResult<T>> {
+    if (opts.scopeKey) {
+        const current = ensureFlights.get(opts.scopeKey);
+        if (current) return (await current) as EnsureResult<T>;
+        const { scopeKey: _scopeKey, ...unscoped } = opts;
+        const flight = findOrCreate(noun, unscoped);
+        ensureFlights.set(opts.scopeKey, flight);
+        try {
+            return await flight;
+        } finally {
+            if (ensureFlights.get(opts.scopeKey) === flight) ensureFlights.delete(opts.scopeKey);
+        }
+    }
     const match = matchByName(
         await opts.list(),
         opts.name,

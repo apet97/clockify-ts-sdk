@@ -14,6 +14,8 @@ import type { ClockifyApi } from "./index.js";
  * type-only seam from `clockify-sdk-ts-115/requests`.
  */
 export type { ClockifyApi };
+export { AUDIT_LOG_ACTIONS } from "./src/api/types/AuditLogAction.js";
+export type { AuditLogAction } from "./src/api/types/AuditLogAction.js";
 
 /**
  * Extract the typed `body` object from a generated request union's body-envelope

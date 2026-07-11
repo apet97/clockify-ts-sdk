@@ -20,7 +20,7 @@ const packages = [
         id: "wrapper",
         manifest: "wrapper/package.json",
         lockfile: "package-lock.json",
-        engine: ">=20",
+        engine: ">=22.13.0",
         requiredScripts: ["sync", "type-check", "build", "build:smoke", "test", "prepublishOnly"],
         requiredScriptValues: {
             prepublishOnly: "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke",
@@ -30,7 +30,7 @@ const packages = [
         id: "cli",
         manifest: "cli/package.json",
         lockfile: "package-lock.json",
-        engine: ">=20",
+        engine: ">=22.13.0",
         requiredScripts: ["type-check", "build", "test", "prepublishOnly"],
         requiredScriptValues: {
             prepublishOnly: "npm run type-check && npm test && npm run build",
@@ -40,7 +40,7 @@ const packages = [
         id: "mcp",
         manifest: "mcp/package.json",
         lockfile: "package-lock.json",
-        engine: ">=20",
+        engine: ">=22.13.0",
         requiredScripts: ["type-check", "build", "test", "verify:live-cleanup", "prepublishOnly"],
         requiredScriptValues: {
             prepublishOnly: "npm run type-check && npm test && npm run build",
@@ -153,10 +153,11 @@ async function packageChecks(pkg) {
 export async function buildReport() {
     const checks = [];
     const major = nodeMajor();
+    const minor = Number.parseInt(process.versions.node.split(".")[1] ?? "0", 10);
 
     checks.push(
-        check("node.floor", major >= 20 ? "pass" : "fail", `Node.js ${process.versions.node}`, {
-            expected: ">=20",
+        check("node.floor", major > 22 || (major === 22 && minor >= 13) ? "pass" : "fail", `Node.js ${process.versions.node}`, {
+            expected: ">=22.13.0",
         }),
     );
 

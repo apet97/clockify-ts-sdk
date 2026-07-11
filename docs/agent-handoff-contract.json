@@ -40,7 +40,7 @@
       "mustContain": [
         "canonical",
         "AGENTS.md",
-        "92 public names",
+        "docs/sdk-public-api.json",
         "make perfect-fast",
         "make perfect-full",
         "make perfect-live",

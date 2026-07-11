@@ -4,7 +4,7 @@
  * caller can route accordingly.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { AUDIT_LOG_ACTIONS, type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -24,7 +24,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
                 start: z.string().min(1).describe("RFC3339 window start."),
                 end: z.string().min(1).describe("RFC3339 window end."),
                 actions: z
-                    .array(z.string().min(1))
+                    .array(z.enum(AUDIT_LOG_ACTIONS))
                     .min(1)
                     .describe("Audit action names, e.g. CREATE_PROJECT, UPDATE_PROJECT."),
                 authorIds: z

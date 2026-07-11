@@ -10,7 +10,7 @@ describe("buildProgram", () => {
         expect(program.name()).toBe("clockify115");
         expect(program.description()).toContain("@apet97/clockify-cli-115");
         expect(program.description()).toContain("clockify-sdk-ts-115");
-        expect(program.version()).toBe("0.1.0");
+        expect(program.version()).toBe("0.2.0");
         expect(commandNames).toEqual([
             "api",
             "audit-log",

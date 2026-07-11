@@ -11,7 +11,7 @@ cd wrapper
 npm install
 npm run build
 npm pack
-npm install ./clockify-sdk-ts-115-0.9.0.tgz
+npm install ./clockify-sdk-ts-115-<version>.tgz
 ```
 
 Minimal code:
@@ -97,7 +97,7 @@ for each path. They install the same packages (`clockify-sdk-ts-115`,
 You consume a `npm pack` artifact directly — no registry involved.
 
 - **Install:** `cd wrapper && npm run build && npm pack`, then
-  `npm install ./clockify-sdk-ts-115-0.9.0.tgz` in your project (same shape for
+  `npm install ./clockify-sdk-ts-115-<version>.tgz` in your project (same shape for
   `cli`/`mcp`). Commit the resolved tarball integrity to your lockfile.
 - **Smoke test:** `make pack-smoke` (builds, packs, installs into a throwaway
   consumer, and imports the public surface) and `make pack-snapshot-check` (the

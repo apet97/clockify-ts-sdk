@@ -64,7 +64,13 @@ export class PaginatedList<TItem> implements AsyncIterable<TItem> {
      *  have been collected. */
     async toArray(options: PaginatedListToArrayOptions = {}): Promise<TItem[]> {
         const limit = options.limit;
-        if (limit !== undefined && limit <= 0) return [];
+        if (
+            limit !== undefined &&
+            (!Number.isFinite(limit) || !Number.isInteger(limit) || limit < 0)
+        ) {
+            throw new RangeError("limit must be a non-negative finite integer");
+        }
+        if (limit === 0) return [];
         const out: TItem[] = [];
         for await (const item of this) {
             out.push(item);

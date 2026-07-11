@@ -40,6 +40,7 @@ spec/evidence/probes/*.hdr
 
 # Recon / scratch output from agent sessions.
 /.recon/
+/.worktrees/
 
 # Local env files — never commit secrets (CLOCKIFY_API_KEY etc.). The
 # secret-hygiene gate is best-effort and self-disclaims completeness, so keep
@@ -52,3 +53,8 @@ spec/evidence/probes/*.hdr
 # rebuildable from source and intentionally not committed; distribution is a
 # separate maintainer decision.
 *.mcpb
+
+# Manifest-derived runtime constants. Generated before test/type-check/build.
+/wrapper/generated/
+/cli/src/generated/
+/mcp/src/generated/

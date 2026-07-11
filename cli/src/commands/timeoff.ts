@@ -5,7 +5,7 @@
  * tools stay behind the broader `clockify-sdk-ts-115` surface until enough
  * demand surfaces to justify the CLI ergonomics work.
  */
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printRecords } from "../output.js";
@@ -20,7 +20,7 @@ interface TimeOffListRequest {
     pageSize: number;
     start?: string;
     end?: string;
-    statuses?: string[];
+    statuses?: ClockifyApi.RequestStatusType[];
     users?: string[];
 }
 
@@ -53,13 +53,15 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             };
             if (opts.start) req.start = opts.start;
             if (opts.end) req.end = opts.end;
-            if (opts.status) req.statuses = splitList(opts.status);
+            if (opts.status) {
+                const statuses = splitList(opts.status);
+                const known = new Set(["PENDING", "APPROVED", "REJECTED", "ALL"]);
+                const invalid = statuses.filter((status) => !known.has(status));
+                if (invalid.length > 0) throw new Error(`Unknown time-off status: ${invalid.join(", ")}`);
+                req.statuses = statuses as ClockifyApi.RequestStatusType[];
+            }
             if (opts.user) req.users = splitList(opts.user);
-            // wireBody bridges the narrower generated `statuses` (a RequestStatusType
-            // literal union) since the CLI accepts free-form --status filter values.
-            const items = (await client.timeOff.list(
-                wireBody<ClockifyApi.ListTimeOffRequest>(req),
-            )) as unknown[];
+            const items = (await client.timeOff.list(req)) as unknown[];
             const rows = items.map((raw) => {
                 const r = raw as {
                     id?: string;

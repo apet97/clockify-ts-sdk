@@ -179,7 +179,7 @@ sequencing is human.
    ```
 5. **Open a `chore(release): vX.Y.Z` PR**. Title + body match the
    CHANGELOG entry. Wait for all CI checks to pass — including the
-   Node 20 + 22 matrix, CodeQL, Bun smoke, Deno smoke, spec check,
+   Node 22.13 + 24 matrix, CodeQL, Bun smoke, Deno smoke, spec check,
    size, lint, type tests, and the pack snapshot.
 6. **Merge** (squash). Pull `main`.
 7. **Tag + push** the version:

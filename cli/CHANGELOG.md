@@ -4,6 +4,18 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Breaking
+
+- Require Node.js 22.13 or newer.
+- Removed `--api-key` and rc-file `apiKey`; credentials are accepted only from
+  `CLOCKIFY_API_KEY`, and legacy rc secrets fail with migration guidance.
+
+### Fixed
+
+- Runtime version output is generated from the package manifest.
+- Audit actions validate locally against the SDK enum and page size is capped at 50.
+- Full type checking now includes CLI tests; builds use a source-only build config.
+
 ## [0.1.1] - 2026-06-29
 
 ### Changed

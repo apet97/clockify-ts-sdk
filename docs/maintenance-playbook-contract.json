@@ -151,7 +151,7 @@
       "contains": [
         "Dependency",
         "Node",
-        ">=20"
+        ">=22.13.0"
       ]
     },
     {

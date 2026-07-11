@@ -1,6 +1,9 @@
 import { identifier, literal, refToName } from "./naming.mjs";
 
 export function schemaToDeclaration(name, schema, model) {
+    if (name === "AuditLogAction" && Array.isArray(schema?.enum)) {
+        return `export const AUDIT_LOG_ACTIONS = ${JSON.stringify(schema.enum)} as const;\nexport type AuditLogAction = typeof AUDIT_LOG_ACTIONS[number];`;
+    }
     if (schema?.enum || schema?.oneOf || schema?.anyOf || schema?.type === "array" || primitiveType(schema?.type)) {
         return `export type ${name} = ${typeFromSchema(schema, model)};`;
     }

@@ -85,7 +85,7 @@ async function connect(ctx: Context): Promise<Client> {
 }
 
 function parse(res: { content: { text: string }[] }) {
-    return JSON.parse(res.content[0].text);
+    return JSON.parse(res.content[0]!.text);
 }
 
 describe("clockify_doctor", () => {

@@ -89,5 +89,5 @@ These are new public names, not replacements — existing imports are unchanged,
 
 - SDK `clockify-sdk-ts-115/resolve` gained list/filter name→id resolvers `resolveUserRefs`, `resolveGroupRefs`, `resolveTagRefs`, and `resolveUserFilter`, alongside the existing `resolveEntityRef` / `resolveUserRef` / `matchByName`.
 - SDK `clockify-sdk-ts-115/errors` gained `mapAddonTokenRestriction` and `AddonTokenRestrictionError` (a pure catch-site helper that names an add-on-token 401 hitting an out-of-reach endpoint; API-key 401s stay raw).
-- This grew the SDK root public surface from 75 to 81 names at that release; the current surface is 92 names across 27 subpaths (v0.9.0).
+- This grew the SDK root public surface from 75 to 81 names at that release; use `docs/sdk-public-api.json` for the generated current surface.
 - MCP behavior (this wiring added no tools): the holidays, time-off (policy/request/balance), scheduling, `groups add_member`, and `users` grant/revoke-role tools now resolve a name passed where a user/group/project id is expected to a real id before any write, returning a grounded `clarification` receipt with no API call on an ambiguous or unknown name. 24-hex ids pass through unchanged, and read-filter slots stay list-free. List fields also accept a bare string and number fields a numeric string; the model-visible JSON Schema is unchanged.

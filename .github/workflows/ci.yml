@@ -1,4 +1,4 @@
-name: CI
+name: Workspace CI
 
 on:
   push:
@@ -6,415 +6,66 @@ on:
   pull_request:
     branches: [main]
 
-# Opt in to the Node.js 24 runner for actions still pinned to Node 20
-# major versions. GitHub announced (2026-05) that Node.js 20 actions
-# will be force-promoted on 2026-06-02; setting this flag locks in
-# that behaviour today so the workflow's runtime doesn't change
-# silently mid-flight. Once we bump checkout / setup-node to majors
-# whose default runtime is already Node 24, this flag can be removed.
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+permissions:
+  contents: read
 
 jobs:
-  build-and-test:
-    name: Build, type-check, test (node ${{ matrix.node-version }})
+  packages:
+    name: ${{ matrix.target.package }} / Node ${{ matrix.node }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["20", "22"]
+        node: ["22.13.0", "24"]
+        target:
+          - package: wrapper
+            workspace: clockify-sdk-ts-115
+          - package: cli
+            workspace: "@apet97/clockify-cli-115"
+          - package: mcp
+            workspace: "@apet97/clockify-mcp-115"
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node }}
           cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Generate + sync TS SDK (local generator)
-        run: make sdk-codegen
-
-      - name: Drift check (sync output sanity)
-        working-directory: wrapper
+      - run: npm ci
+      - name: Generate SDK and build dependency
         run: |
-          file_count=$(find src -name '*.ts' | wc -l | tr -d ' ')
-          if [ "$file_count" -lt 650 ] || [ "$file_count" -gt 750 ]; then
-            echo "::error::wrapper/src/ TS file count $file_count outside expected range [650,750]. Possible drift in the synced SDK; investigate before merging."
-            exit 1
-          fi
-          echo "Sync OK: $file_count TS files in wrapper/src/"
+          make sdk-codegen
+          npm run build -w clockify-sdk-ts-115
+      - run: npm run lint -w ${{ matrix.target.workspace }}
+      - run: npm run type-check -w ${{ matrix.target.workspace }}
+      - run: npm test -w ${{ matrix.target.workspace }}
+      - run: npm run build -w ${{ matrix.target.workspace }}
+      - if: matrix.target.package == 'wrapper'
+        run: npm run build:smoke -w clockify-sdk-ts-115
+      - if: matrix.node == '22.13.0'
+        run: node scripts/pack-snapshot.mjs --pkg=${{ matrix.target.package }} --check
 
-      - name: Type-check
-        working-directory: wrapper
-        run: npm run type-check
-
-      - name: Build (dist/esm/ + dist/cjs/)
-        working-directory: wrapper
-        run: npm run build
-
-      - name: Verify dual build (ESM + CJS surface)
-        working-directory: wrapper
-        run: npm run build:smoke
-
-      - name: Run tests
-        working-directory: wrapper
-        run: npm test
-        # The sandbox-flow tests in tests/sandbox.test.ts skip cleanly
-        # when CLOCKIFY_API_KEY / CLOCKIFY_WORKSPACE_ID are absent.
-        # GitHub-hosted CI deliberately does not get production creds.
-
-      - name: Run type tests (vitest --typecheck.only)
-        # Locks the public type surface against regressions when the
-        # generator changes. Skipped by default `npm test`; opt-in via
-        # the dedicated script.
-        working-directory: wrapper
-        run: npm run test:types
-
-      - name: Pack snapshot verification
-        # Only on node 22 (the release runner). The tarball contents are
-        # node-version invariant; duplicating across matrix entries adds
-        # only flaky duplicate failure modes.
-        if: matrix.node-version == '22'
-        working-directory: wrapper
-        run: |
-          # `make sdk-codegen` ran pack-snapshot in WRITE mode and overwrote the
-          # committed wrapper/.packsnapshot; restore the blessed baseline so the
-          # diff compares the built tarball against the committed source-of-truth.
-          git checkout -- .packsnapshot
-          npm pack --dry-run --json \
-            | node -e "let s=''; process.stdin.on('data',c=>s+=c); process.stdin.on('end',()=>{console.log(JSON.parse(s)[0].files.map(f=>f.path).sort().join('\n'));})" \
-            > .packsnapshot.actual
-          if ! diff -u .packsnapshot .packsnapshot.actual; then
-            echo "::error::Tarball contents drifted from .packsnapshot baseline. If intentional, regenerate the baseline locally and commit."
-            exit 1
-          fi
-          echo "Pack snapshot matches baseline ($(wc -l < .packsnapshot | tr -d ' ') entries)."
-
-  contract-gates:
-    name: Contract + doc drift gates (offline)
+  contracts:
+    name: Contracts and coverage / Node 22.13.0
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
+    timeout-minutes: 25
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
           fetch-depth: 0
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          node-version: "22"
+          node-version: "22.13.0"
           cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      # Runs the deterministic, network-free contract/doc/drift suite
-      # (`make contract-gates`) that previously only ran locally via
-      # `make perfect-fast`. No hosted generator or live API. Most src-dependent
-      # checks skip when wrapper/src is absent; the MCP tool-manifest check
-      # prepares the local wrapper build it imports. Package test gates stay
-      # in build-and-test / ci-cli / ci-mcp.
-      - name: Run contract + doc drift gates
-        run: make contract-gates
+      - run: npm ci
+      - run: make sdk-codegen
+      - run: make contract-gates coverage mutation-ci
         env:
-          GITHUB_BASE_REF: ${{ github.base_ref }}        # pull_request events
-          GITHUB_EVENT_BEFORE: ${{ github.event.before }} # push events
-
-  size:
-    name: Bundle size ceiling (size-limit)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Generate + sync TS SDK (local generator)
-        run: make sdk-codegen
-
-      - name: Build
-        working-directory: wrapper
-        run: npm run build
-
-      - name: Size check
-        working-directory: wrapper
-        run: npm run size
-
-  lint:
-    name: Lint (eslint on hand-written surface)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Generate + sync TS SDK (local generator)
-        # Needed because type-aware lint follows imports into src/.
-        # src/ is gitignored / wiped on every sync; lint config ignores
-        # src/** itself but the parser still needs the files on disk.
-        run: make sdk-codegen
-
-      - name: Lint
-        working-directory: wrapper
-        run: npm run lint
-
-  spec-check:
-    name: Spec + generator check (corrected snapshot stays clean)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Check OpenAPI contract invariants
-        run: make openapi-lint
-
-      - name: Generate + sync TS SDK (local generator)
-        run: make sdk-codegen
-
-      - name: Check local SDK codegen reproducibility
-        run: make sdk-codegen-drift
-
-  bun-smoke:
-    name: Bun smoke (vitest under Bun)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Setup Node.js 22 (for npm + tsx)
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces via npm (lockfile-pinned)
-        run: npm ci
-
-      - name: Generate + sync TS SDK (local generator)
-        run: make sdk-codegen
-
-      - name: Run unit tests under Bun (no live API)
-        working-directory: wrapper
-        run: bun run vitest run tests/pagination.test.ts tests/create-client.test.ts tests/iter.test.ts tests/webhooks.test.ts tests/composed-fetch.test.ts
-        env:
-          CLOCKIFY_API_KEY: ""
-          CLOCKIFY_WORKSPACE_ID: ""
-
-  deno-smoke:
-    name: Deno smoke (import surface)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Setup Node.js 22 (for npm-driven build)
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Sync + build wrapper
-        run: |
-          make sdk-codegen
-          npm run build -w clockify-sdk-ts-115
-
-      - name: Run Deno smoke (import + name resolution)
-        working-directory: wrapper
-        run: deno run --allow-env --allow-read --allow-write --node-modules-dir=auto scripts/deno-smoke.ts
-
-  cross-gate:
-    name: Cross-gate composite (parity + openapi + surface drift)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      # The cross-gate drift checks join OpenAPI operations, SDK method stamps,
-      # and MCP tool names. operation-parity-drift scans mcp/src/tools and the
-      # SDK stamps, so the generated SDK must be present.
-      - name: Generate + build wrapper + mcp
-        run: |
-          make sdk-codegen
-          npm run build -w clockify-sdk-ts-115
-          npm run build -w @apet97/clockify-mcp-115
-
-      # Catches the per-package-green-but-cross-gate-broken gap: a tool rename
-      # or SDK naming change can pass every per-package suite yet break the
-      # parity/openapi/surface joins.
-      - name: Operation parity drift
-        run: make operation-parity-drift
-
-      - name: OpenAPI operations drift
-        run: make openapi-operations-drift
-
-      - name: OpenAPI contract lint
-        run: make openapi-lint
-
-      - name: Product surface drift
-        run: make product-surface-drift
-
-  coverage:
-    name: Coverage ratchet (measured floors)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      # `make coverage` depends on sdk-codegen, runs each package's coverage
-      # suite with blanked live creds, then enforces the monotonic floors in
-      # docs/coverage-contract.json via scripts/check-coverage-floor.mjs.
-      - name: Measure coverage + enforce floors
-        run: make coverage
-        env:
-          CLOCKIFY_API_KEY: ""
-          CLOCKIFY_WORKSPACE_ID: ""
-
-  performance-budgets:
-    name: Performance budgets (size + crash-safety; timing de-flaked)
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: package-lock.json
-
-      - name: Install workspaces (root)
-        run: npm ci
-
-      - name: Generate + build all three packages
-        run: |
-          make sdk-codegen
-          npm run build -w clockify-sdk-ts-115
-          npm run build -w @apet97/clockify-cli-115
-          npm run build -w @apet97/clockify-mcp-115
-
-      # CLOCKIFY_PERF_TIMING=0 keeps file-size ceilings and the in-smoke MCP
-      # tool-count assertion fatal while downgrading only load-sensitive
-      # wall-clock timing to advisory output on shared CI runners.
-      - name: Performance budgets (size + crash-safety)
-        run: make performance-budgets
-        env:
-          CLOCKIFY_PERF_TIMING: "0"
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+      - run: npm audit --omit=dev

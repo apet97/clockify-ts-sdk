@@ -32,7 +32,7 @@ function makeClient(
     let index = 0;
     const client = {
         fetch: async (input: string | URL | Request, init?: RequestInit) => {
-            calls.push({ input: String(input), init });
+            calls.push({ input: String(input), ...(init !== undefined ? { init } : {}) });
             const page = pages[index] ?? [];
             const body = Array.isArray(page) ? page : page.body;
             const headers = Array.isArray(page) ? {} : (page.headers ?? {});

@@ -54,7 +54,7 @@ function buildDoctorReceipt(
     env: NodeJS.ProcessEnv,
 ): DoctorReceipt {
     const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
-    const nodeOk = nodeMajor >= 20;
+    const nodeOk = nodeMajor >= 22;
     const apiKeySource = sourceFor("apiKey", config, flags, env);
     const workspaceSource = sourceFor("workspaceId", config, flags, env);
     const baseUrlSource = sourceFor("baseUrl", config, flags, env) ?? "default";
@@ -77,7 +77,7 @@ function buildDoctorReceipt(
                 ok: nodeOk,
                 status: nodeOk ? "supported" : "unsupported",
                 value: process.versions.node,
-                ...(nodeOk ? {} : { recovery: "Install Node.js 20 or newer before using @apet97/clockify-cli-115." }),
+                ...(nodeOk ? {} : { recovery: "Install Node.js 22.13 or newer before using @apet97/clockify-cli-115." }),
             },
             apiKey: {
                 ok: apiKeyOk,
@@ -86,7 +86,7 @@ function buildDoctorReceipt(
                 ...(apiKeyOk ? { value: "configured (redacted)" } : {}),
                 ...(apiKeyOk
                     ? {}
-                    : { recovery: "Provide --api-key, set CLOCKIFY_API_KEY, or add apiKey to ~/.clockifyrc.json." }),
+                    : { recovery: "Set CLOCKIFY_API_KEY in the process environment." }),
             },
             workspaceId: {
                 ok: workspaceOk,
@@ -126,8 +126,8 @@ function nextSteps(input: {
     hasBaseUrlOverride: boolean;
 }): string[] {
     const steps: string[] = [];
-    if (!input.nodeOk) steps.push("Install Node.js 20 or newer.");
-    if (!input.apiKeyOk) steps.push("Set CLOCKIFY_API_KEY or pass --api-key.");
+    if (!input.nodeOk) steps.push("Install Node.js 22.13 or newer.");
+    if (!input.apiKeyOk) steps.push("Set CLOCKIFY_API_KEY in the process environment.");
     if (!input.workspaceOk) steps.push("Set CLOCKIFY_WORKSPACE_ID or pass --workspace.");
     if (input.hasBaseUrlOverride) {
         steps.push("Confirm CLOCKIFY_BASE_URL or --base-url is intentional before live work.");
@@ -146,9 +146,7 @@ function sourceFor(
     env: NodeJS.ProcessEnv,
 ): DoctorCheck["source"] | undefined {
     if (field === "apiKey") {
-        if (isPresent(flags.apiKey)) return "flag";
         if (isPresent(env.CLOCKIFY_API_KEY)) return "env";
-        if (isPresent(config.apiKey)) return "rc";
         return undefined;
     }
     if (field === "workspaceId") {
