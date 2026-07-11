@@ -19,7 +19,8 @@ for (const command of [
     "npm test -w",
     "npm run build -w",
     "pack-snapshot.mjs",
-    "make contract-gates coverage mutation-ci",
+    "make sdk-codegen-drift sdk-codegen-test codegen-determinism",
+    "build-determinism generator-comparison pack-smoke coverage mutation-ci",
     "npm audit --omit=dev",
 ]) requireText(command, `missing executable CI proof: ${command}`);
 
