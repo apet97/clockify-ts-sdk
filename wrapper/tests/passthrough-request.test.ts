@@ -1238,9 +1238,13 @@ describe("ClockifyApiClient.fetch", () => {
                 (input, init) =>
                     new Promise<Response>((_resolve, reject) => {
                         const signal = requestFromFetchArgs(input, init).signal;
-                        if (signal.aborted) reject(signal.reason);
+                        const rejectFromSignal = () => {
+                            expect(signal.reason).toBeInstanceOf(Error);
+                            reject(signal.reason as Error);
+                        };
+                        if (signal.aborted) rejectFromSignal();
                         else
-                            signal.addEventListener("abort", () => reject(signal.reason), {
+                            signal.addEventListener("abort", rejectFromSignal, {
                                 once: true,
                             });
                     }),
