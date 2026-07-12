@@ -6,9 +6,16 @@ function client(fetchImpl: typeof fetch, environment = "https://api.clockify.me/
     return new ClockifyApiClient({ apiKey: "secret", environment, fetch: fetchImpl });
 }
 
+function requestFromFetchArgs(
+    input: Parameters<typeof fetch>[0],
+    init?: Parameters<typeof fetch>[1],
+): Request {
+    return new Request(input, init);
+}
+
 function dispatchedRequest(dispatch: ReturnType<typeof vi.fn>, callIndex = 0): Request {
     const [input, init] = dispatch.mock.calls[callIndex] as Parameters<typeof fetch>;
-    return new Request(input, init);
+    return requestFromFetchArgs(input, init);
 }
 
 function governedInputRequest(signal = new AbortController().signal): Request {
@@ -554,12 +561,12 @@ describe("ClockifyApiClient.fetch", () => {
         vi.useFakeTimers();
         try {
             const dispatch = vi.fn<typeof fetch>().mockImplementation(
-                (_input, init) =>
+                (input, init) =>
                     new Promise<Response>((_resolve, reject) => {
-                        const signal = init?.signal;
-                        if (signal?.aborted) reject(signal.reason);
+                        const signal = requestFromFetchArgs(input, init).signal;
+                        if (signal.aborted) reject(signal.reason);
                         else
-                            signal?.addEventListener("abort", () => reject(signal.reason), {
+                            signal.addEventListener("abort", () => reject(signal.reason), {
                                 once: true,
                             });
                     }),
