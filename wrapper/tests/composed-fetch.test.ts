@@ -29,6 +29,42 @@ function mockFetch(
     return { fn, calls };
 }
 
+type FetchOutcome =
+    | { status: "fulfilled"; value: Response }
+    | { status: "rejected"; reason: unknown };
+
+function observeFetch(promise: Promise<Response>): Promise<FetchOutcome> {
+    return promise.then(
+        (value) => ({ status: "fulfilled", value }),
+        (reason: unknown) => ({ status: "rejected", reason }),
+    );
+}
+
+function deferredVoid(): { promise: Promise<void>; resolve(): void } {
+    let resolve!: () => void;
+    const promise = new Promise<void>((accept) => {
+        resolve = accept;
+    });
+    return { promise, resolve };
+}
+
+async function fetchOutcomeWithin(
+    outcome: Promise<FetchOutcome>,
+    timeoutMs = 25,
+): Promise<FetchOutcome | { status: "timed_out" }> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            outcome,
+            new Promise<{ status: "timed_out" }>((resolve) => {
+                timer = setTimeout(() => resolve({ status: "timed_out" }), timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
+}
+
 describe("defaultUserAgent", () => {
     it("starts with the package name + version", () => {
         expect(defaultUserAgent()).toMatch(/^clockify-sdk-ts-115\/[\d.]+/);
@@ -243,26 +279,72 @@ describe("composedFetch — retry policy", () => {
         }
     });
 
-    it("rejects a non-cloneable retryable body before the first dispatch", async () => {
+    it.each(["used", "locked"] as const)(
+        "replaces a %s original Request body before composed replay preflight",
+        async (state) => {
+            const input = new Request("https://example.test/x", {
+                method: "POST",
+                body: "stale original body",
+            });
+            const reader = state === "locked" ? input.body?.getReader() : undefined;
+            if (state === "used") await input.text();
+
+            const requests: Request[] = [];
+            const bodies: string[] = [];
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(async (request, init) => {
+                expect(request).toBeInstanceOf(Request);
+                expect(init).toBeUndefined();
+                const actual = request as Request;
+                requests.push(actual);
+                bodies.push(await actual.text());
+                return new Response(null, { status: requests.length === 1 ? 503 : 204 });
+            });
+            const f = composedFetch({
+                fetch: dispatch,
+                retryPolicy: {
+                    maxRetries: 1,
+                    initialDelayMs: 0,
+                    jitter: 0,
+                    retryableMethods: ["POST"],
+                },
+            });
+
+            try {
+                await expect(f(input, { body: "fresh replacement body" })).resolves.toHaveProperty(
+                    "status",
+                    204,
+                );
+                expect(requests).toHaveLength(2);
+                expect(new Set(requests).size).toBe(2);
+                expect(bodies).toEqual(["fresh replacement body", "fresh replacement body"]);
+            } finally {
+                reader?.releaseLock();
+            }
+        },
+    );
+
+    it("rejects a non-cloneable finalized retryable body before the first dispatch", async () => {
         const dispatch = vi.fn<typeof fetch>();
         const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries: 1 } });
-        const input = new Request("https://example.test/x", {
-            method: "PUT",
-            body: new ReadableStream<Uint8Array>({
-                start(controller) {
-                    controller.enqueue(new TextEncoder().encode("stream"));
-                    controller.close();
-                },
-            }),
-            duplex: "half",
-        } as RequestInit);
-        Object.defineProperty(input.body, "tee", {
+        const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+                controller.enqueue(new TextEncoder().encode("stream"));
+                controller.close();
+            },
+        });
+        Object.defineProperty(stream, "tee", {
             value: () => {
                 throw new TypeError("cannot clone body");
             },
         });
 
-        await expect(f(input)).rejects.toThrow(/cannot clone body/i);
+        await expect(
+            f("https://example.test/x", {
+                method: "PUT",
+                body: stream,
+                duplex: "half",
+            } as RequestInit),
+        ).rejects.toThrow(/cannot clone body/i);
         expect(dispatch).not.toHaveBeenCalled();
     });
 
@@ -316,6 +398,38 @@ describe("composedFetch — retry policy", () => {
             vi.clearAllTimers();
             vi.useRealTimers();
         }
+    });
+
+    it("aborts immediately while composed retry-response cancellation is pending", async () => {
+        const cancellation = deferredVoid();
+        const cancel = vi.fn(() => cancellation.promise);
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValueOnce(
+                new Response(new ReadableStream<Uint8Array>({ cancel }), {
+                    status: 503,
+                }),
+            )
+            .mockResolvedValueOnce(new Response(null, { status: 204 }));
+        const controller = new AbortController();
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+        });
+        const outcome = observeFetch(
+            f("https://example.test/x", { signal: controller.signal }),
+        );
+        while (cancel.mock.calls.length === 0) await Promise.resolve();
+
+        const reason = new Error("abort pending composed response cancellation");
+        controller.abort(reason);
+        const raced = await fetchOutcomeWithin(outcome);
+        cancellation.resolve();
+        await outcome;
+        await Promise.resolve();
+
+        expect(raced).toEqual({ status: "rejected", reason });
+        expect(dispatch).toHaveBeenCalledOnce();
     });
 
     it.each([-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY])(

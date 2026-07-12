@@ -172,7 +172,7 @@ configuration.
 that is not yet represented by a generated method. Relative targets resolve
 against the configured base path; absolute strings, `URL` values, and
 `Request` inputs must have the same origin as that base. Base suppliers resolve
-in `baseUrl` → `environment` → operation/default order and are validated before
+in `baseUrl` → `environment` → default order and are validated before
 authentication. Non-loopback HTTP is always rejected, and a non-Clockify HTTPS
 host requires `allowNonClockifyHttpsHost: true`.
 

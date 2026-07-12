@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ClockifyApiClient } from "../index.js";
+import { ClockifyApiClient, ClockifyApiTimeoutError } from "../index.js";
 
 function client(fetchImpl: typeof fetch, environment = "https://api.clockify.me/api/v1") {
     return new ClockifyApiClient({ apiKey: "secret", environment, fetch: fetchImpl });
@@ -23,11 +23,41 @@ type PromiseOutcome<T> =
     | { status: "fulfilled"; value: T }
     | { status: "rejected"; reason: unknown };
 
+type Deferred<T> = {
+    promise: Promise<T>;
+    resolve(value: T): void;
+};
+
+function deferred<T>(): Deferred<T> {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((accept) => {
+        resolve = accept;
+    });
+    return { promise, resolve };
+}
+
 function observePromise<T>(promise: Promise<T>): Promise<PromiseOutcome<T>> {
     return promise.then(
         (value) => ({ status: "fulfilled", value }),
         (reason: unknown) => ({ status: "rejected", reason }),
     );
+}
+
+async function outcomeWithin<T>(
+    outcome: Promise<PromiseOutcome<T>>,
+    timeoutMs = 25,
+): Promise<PromiseOutcome<T> | { status: "timed_out" }> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            outcome,
+            new Promise<{ status: "timed_out" }>((resolve) => {
+                timer = setTimeout(() => resolve({ status: "timed_out" }), timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
 }
 
 async function withFakeTimers(run: () => Promise<void>): Promise<void> {
@@ -195,6 +225,62 @@ describe("ClockifyApiClient.fetch", () => {
         expect(apiKey).not.toHaveBeenCalled();
         expect(dispatch).not.toHaveBeenCalled();
     });
+
+    it.each(["base", "header", "auth"] as const)(
+        "aborts a never-settling raw %s supplier immediately and never dispatches later",
+        async (stage) => {
+            const pending = deferred<string>();
+            const dispatch = vi.fn<typeof fetch>();
+            const entered = vi.fn();
+            const apiKey = vi.fn(() => {
+                if (stage === "auth") {
+                    entered();
+                    return pending.promise;
+                }
+                return "secret";
+            });
+            const controller = new AbortController();
+            const sdk = new ClockifyApiClient({
+                apiKey,
+                baseUrl:
+                    stage === "base"
+                        ? () => {
+                              entered();
+                              return pending.promise;
+                          }
+                        : "https://api.clockify.me/api/v1",
+                headers:
+                    stage === "header"
+                        ? {
+                              "X-Deferred": () => {
+                                  entered();
+                                  return pending.promise;
+                              },
+                          }
+                        : undefined,
+                fetch: dispatch,
+                maxRetries: 0,
+            });
+
+            const outcome = observePromise(
+                sdk.fetch("users", undefined, { abortSignal: controller.signal }),
+            );
+            while (entered.mock.calls.length === 0) await Promise.resolve();
+            const reason = new Error(`abort raw ${stage} supplier`);
+            controller.abort(reason);
+            const raced = await outcomeWithin(outcome);
+
+            pending.resolve(
+                stage === "base" ? "https://api.clockify.me/api/v1" : "late-value",
+            );
+            await outcome;
+            await Promise.resolve();
+
+            expect(raced).toEqual({ status: "rejected", reason });
+            expect(dispatch).not.toHaveBeenCalled();
+            if (stage !== "auth") expect(apiKey).not.toHaveBeenCalled();
+        },
+    );
 
     it("falls through an undefined base URL supplier to the environment", async () => {
         const dispatch = vi
@@ -946,6 +1032,56 @@ describe("ClockifyApiClient.fetch", () => {
             });
         });
 
+        it.each(["used", "locked"] as const)(
+            "replaces a %s original Request body before replay preflight",
+            async (state) => {
+                await withFakeTimers(async () => {
+                    const input = new Request("https://api.clockify.me/api/v1/users", {
+                        method: "PUT",
+                        body: "stale original body",
+                        redirect: "manual",
+                    });
+                    const reader = state === "locked" ? input.body?.getReader() : undefined;
+                    if (state === "used") await input.text();
+
+                    const requests: Request[] = [];
+                    const bodies: string[] = [];
+                    const dispatch = vi.fn<typeof fetch>().mockImplementation(async (request, init) => {
+                        expect(request).toBeInstanceOf(Request);
+                        expect(init).toBeUndefined();
+                        const actual = request as Request;
+                        requests.push(actual);
+                        bodies.push(await actual.text());
+                        return new Response(null, {
+                            status: requests.length === 1 ? 503 : 204,
+                        });
+                    });
+
+                    try {
+                        const outcome = observePromise(
+                            client(dispatch).fetch(
+                                input,
+                                { body: "fresh replacement body" },
+                                { maxRetries: 1 },
+                            ),
+                        );
+                        await vi.runAllTimersAsync();
+                        const settled = await outcome;
+
+                        expect(settled.status).toBe("fulfilled");
+                        expect(requests).toHaveLength(2);
+                        expect(new Set(requests).size).toBe(2);
+                        expect(bodies).toEqual([
+                            "fresh replacement body",
+                            "fresh replacement body",
+                        ]);
+                    } finally {
+                        reader?.releaseLock();
+                    }
+                });
+            },
+        );
+
         it("rejects a retryable used body before its first dispatch", async () => {
             const dispatch = vi
                 .fn<typeof fetch>()
@@ -985,7 +1121,7 @@ describe("ClockifyApiClient.fetch", () => {
             }
         });
 
-        it("rejects an otherwise non-replayable retryable body before dispatch", async () => {
+        it("rejects a non-replayable finalized retryable body before dispatch", async () => {
             const dispatch = vi
                 .fn<typeof fetch>()
                 .mockResolvedValue(new Response(null, { status: 204 }));
@@ -995,23 +1131,22 @@ describe("ClockifyApiClient.fetch", () => {
                     controller.close();
                 },
             });
-            const input = new Request("https://api.clockify.me/api/v1/users", {
-                method: "PUT",
-                body: stream,
-                redirect: "manual",
-                duplex: "half",
-            } as RequestInit);
-            Object.defineProperty(input.body, "tee", {
+            Object.defineProperty(stream, "tee", {
                 value: () => {
                     throw new TypeError("body cannot be replayed");
                 },
             });
-            expect(input.bodyUsed).toBe(false);
-            expect(input.body?.locked).toBe(false);
-            expect(() => input.clone()).toThrow(/cannot be replayed/i);
+            const input = new Request("https://api.clockify.me/api/v1/users", {
+                method: "PUT",
+                redirect: "manual",
+            });
 
             await expect(
-                client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+                client(dispatch).fetch(
+                    input,
+                    { body: stream, duplex: "half" } as RequestInit,
+                    { maxRetries: 1 },
+                ),
             ).rejects.toBeDefined();
             expect(dispatch).not.toHaveBeenCalled();
         });
@@ -1062,6 +1197,37 @@ describe("ClockifyApiClient.fetch", () => {
                 expect(settled?.status).toBe("fulfilled");
                 expect(settled?.status === "fulfilled" && settled.value.status).toBe(204);
             });
+        });
+
+        it("aborts immediately while raw retry-response cancellation is pending", async () => {
+            const cancellation = deferred<void>();
+            const cancel = vi.fn(() => cancellation.promise);
+            const dispatch = vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(
+                    new Response(new ReadableStream<Uint8Array>({ cancel }), {
+                        status: 503,
+                    }),
+                )
+                .mockResolvedValueOnce(new Response(null, { status: 204 }));
+            const controller = new AbortController();
+            const outcome = observePromise(
+                client(dispatch).fetch("users", undefined, {
+                    maxRetries: 1,
+                    abortSignal: controller.signal,
+                }),
+            );
+            while (cancel.mock.calls.length === 0) await Promise.resolve();
+
+            const reason = new Error("abort pending raw response cancellation");
+            controller.abort(reason);
+            const raced = await outcomeWithin(outcome);
+            cancellation.resolve();
+            await outcome;
+            await Promise.resolve();
+
+            expect(raced).toEqual({ status: "rejected", reason });
+            expect(dispatch).toHaveBeenCalledOnce();
         });
 
         it.each(["request options", "init", "input Request"] as const)(
@@ -1272,6 +1438,77 @@ describe("ClockifyApiClient.fetch", () => {
             vi.clearAllTimers();
             vi.useRealTimers();
         }
+    });
+
+    it("keeps an SDK timeout as the winner when caller abort happens later", async () => {
+        await withFakeTimers(async () => {
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(
+                () =>
+                    new Promise<Response>((resolve) => {
+                        setTimeout(() => resolve(new Response(null, { status: 204 })), 30);
+                    }),
+            );
+            const controller = new AbortController();
+            const outcome = observePromise(
+                client(dispatch).fetch("users", undefined, {
+                    timeoutInSeconds: 0.01,
+                    maxRetries: 0,
+                    abortSignal: controller.signal,
+                }),
+            );
+            let settled: PromiseOutcome<Response> | undefined;
+            void outcome.then((value) => {
+                settled = value;
+            });
+
+            await vi.advanceTimersByTimeAsync(10);
+            expect(settled?.status).toBe("rejected");
+            expect(settled?.status === "rejected" && settled.reason).toBeInstanceOf(
+                ClockifyApiTimeoutError,
+            );
+            const laterCallerReason = new Error("caller aborted after timeout");
+            controller.abort(laterCallerReason);
+            await vi.advanceTimersByTimeAsync(20);
+            await outcome;
+
+            expect(settled?.status).toBe("rejected");
+            expect(settled?.status === "rejected" && settled.reason).toBeInstanceOf(
+                ClockifyApiTimeoutError,
+            );
+        });
+    });
+
+    it("keeps the exact caller reason when caller abort wins before SDK timeout", async () => {
+        await withFakeTimers(async () => {
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(
+                () =>
+                    new Promise<Response>((resolve) => {
+                        setTimeout(() => resolve(new Response(null, { status: 204 })), 30);
+                    }),
+            );
+            const controller = new AbortController();
+            const outcome = observePromise(
+                client(dispatch).fetch("users", undefined, {
+                    timeoutInSeconds: 0.02,
+                    maxRetries: 0,
+                    abortSignal: controller.signal,
+                }),
+            );
+            let settled: PromiseOutcome<Response> | undefined;
+            void outcome.then((value) => {
+                settled = value;
+            });
+
+            const callerReason = new Error("caller aborted first");
+            await vi.advanceTimersByTimeAsync(10);
+            controller.abort(callerReason);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(settled).toEqual({ status: "rejected", reason: callerReason });
+            await vi.advanceTimersByTimeAsync(20);
+            await outcome;
+
+            expect(settled).toEqual({ status: "rejected", reason: callerReason });
+        });
     });
 
     it("lets a longer per-call timeout override a shorter client timeout", async () => {

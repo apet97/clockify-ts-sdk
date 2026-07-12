@@ -4,6 +4,42 @@ import { createClockifyClient, type CreateClockifyClientOptions } from "../creat
 import { BadRequestError } from "../src/api/errors/index.js";
 import { ClockifyApiClient } from "../src/index.js";
 
+type TestOutcome<T> =
+    | { status: "fulfilled"; value: T }
+    | { status: "rejected"; reason: unknown };
+
+function observe<T>(promise: Promise<T>): Promise<TestOutcome<T>> {
+    return promise.then(
+        (value) => ({ status: "fulfilled", value }),
+        (reason: unknown) => ({ status: "rejected", reason }),
+    );
+}
+
+function createDeferred<T>(): { promise: Promise<T>; resolve(value: T): void } {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((accept) => {
+        resolve = accept;
+    });
+    return { promise, resolve };
+}
+
+async function outcomeWithin<T>(
+    outcome: Promise<TestOutcome<T>>,
+    timeoutMs = 25,
+): Promise<TestOutcome<T> | { status: "timed_out" }> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+        return await Promise.race([
+            outcome,
+            new Promise<{ status: "timed_out" }>((resolve) => {
+                timer = setTimeout(() => resolve({ status: "timed_out" }), timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timer !== undefined) clearTimeout(timer);
+    }
+}
+
 describe("createClockifyClient", () => {
     it("validates a typed request destination before resolving authentication", async () => {
         const dispatch = vi.fn<typeof fetch>();
@@ -48,13 +84,74 @@ describe("createClockifyClient", () => {
         );
     });
 
+    it.each(["base", "header", "auth"] as const)(
+        "aborts a never-settling typed %s supplier immediately and never dispatches later",
+        async (stage) => {
+            const pending = createDeferred<string>();
+            const dispatch = vi.fn<typeof fetch>();
+            const entered = vi.fn();
+            const apiKey = vi.fn(() => {
+                if (stage === "auth") {
+                    entered();
+                    return pending.promise;
+                }
+                return "secret";
+            });
+            const controller = new AbortController();
+            const client = new ClockifyApiClient({
+                apiKey,
+                baseUrl:
+                    stage === "base"
+                        ? () => {
+                              entered();
+                              return pending.promise;
+                          }
+                        : "https://api.clockify.me/api/v1",
+                headers:
+                    stage === "header"
+                        ? {
+                              "X-Deferred": () => {
+                                  entered();
+                                  return pending.promise;
+                              },
+                          }
+                        : undefined,
+                fetch: dispatch,
+                maxRetries: 0,
+            });
+
+            const outcome = observe(
+                client.tags.list(
+                    { workspaceId: "workspace" },
+                    { abortSignal: controller.signal },
+                ),
+            );
+            while (entered.mock.calls.length === 0) await Promise.resolve();
+            const reason = new Error(`abort typed ${stage} supplier`);
+            controller.abort(reason);
+            const raced = await outcomeWithin(outcome);
+
+            pending.resolve(
+                stage === "base" ? "https://api.clockify.me/api/v1" : "late-value",
+            );
+            await outcome;
+            await Promise.resolve();
+
+            expect(raced).toEqual({ status: "rejected", reason });
+            expect(dispatch).not.toHaveBeenCalled();
+            if (stage !== "auth") expect(apiKey).not.toHaveBeenCalled();
+        },
+    );
+
     it("replays a typed PUT body with a fresh Request for every retry", async () => {
         vi.useFakeTimers();
         try {
             const requests: Request[] = [];
             const bodies: string[] = [];
             const dispatch = vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
-                const request = new Request(input, init);
+                expect(input).toBeInstanceOf(Request);
+                expect(init).toBeUndefined();
+                const request = input as Request;
                 requests.push(request);
                 bodies.push(await request.text());
                 return new Response(
@@ -114,6 +211,43 @@ describe("createClockifyClient", () => {
 
         const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
         expect(new Request(input, init).headers.get("X-Api-Key")).toBe("secret");
+    });
+
+    it("aborts immediately while typed retry-response cancellation is pending", async () => {
+        const cancellation = createDeferred<void>();
+        const cancel = vi.fn(() => cancellation.promise);
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValueOnce(
+                new Response(new ReadableStream<Uint8Array>({ cancel }), {
+                    status: 503,
+                }),
+            )
+            .mockResolvedValueOnce(
+                new Response("[]", {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                }),
+            );
+        const controller = new AbortController();
+        const client = new ClockifyApiClient({ apiKey: "secret", fetch: dispatch });
+        const outcome = observe(
+            client.tags.list(
+                { workspaceId: "workspace" },
+                { maxRetries: 1, abortSignal: controller.signal },
+            ),
+        );
+        while (cancel.mock.calls.length === 0) await Promise.resolve();
+
+        const reason = new Error("abort pending typed response cancellation");
+        controller.abort(reason);
+        const raced = await outcomeWithin(outcome);
+        cancellation.resolve();
+        await outcome;
+        await Promise.resolve();
+
+        expect(raced).toEqual({ status: "rejected", reason });
+        expect(dispatch).toHaveBeenCalledOnce();
     });
 
     it("blocks a dynamic off-host typed request before the custom fetch sees credentials", async () => {
