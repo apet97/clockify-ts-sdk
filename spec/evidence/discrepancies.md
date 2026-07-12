@@ -251,7 +251,7 @@ before emitting tags.
   project-less probe entry, not a body-shape problem: `{ end }` alone is sufficient
   for a real running timer.
 - **Which live test proves it?** Probed 2026-06-16 (workspace
-  `65b382b606de527a7ee2b60e`): `PATCH .../stop` → 404. Re-probed 2026-06-17 with a
+  `<REDACTED_WORKSPACE_ID>`): `PATCH .../stop` → 404. Re-probed 2026-06-17 with a
   project-bearing running entry: `PATCH .../time-entries` with `{ end }` → **200**
   (timer stopped, `end` applied), `DELETE` cleanup → 204. The `/stop` suffix still
   404s.
@@ -400,7 +400,7 @@ Each of these needs:
   concrete > templated.
 
 - **Actual behavior (live probes, 2026-05-24, workspace
-  `65b382b606de527a7ee2b60e`):**
+  `<REDACTED_WORKSPACE_ID>`):**
   - `GET /expenses/categories` → 200, 140 categories returned
     (probes/`20260524-expenses-categories-list.json`).
   - `GET /expenses/aaaaaaaaaaaaaaaaaaaaaaaa` → 400, error code 501
@@ -423,7 +423,7 @@ Each of these needs:
   observed precedence; the spec models reality.
 
 - **Live evidence:** the six probe fixtures listed above, all
-  captured 2026-05-24 against `CLOCKIFY_WORKSPACE_ID=65b382b606de527a7ee2b60e`
+  captured 2026-05-24 against `CLOCKIFY_WORKSPACE_ID=<REDACTED_WORKSPACE_ID>`
   with `curl -H "X-Api-Key: $CLOCKIFY_API_KEY"`. Each fixture is the
   raw response body (no editing).
 
@@ -525,7 +525,7 @@ Each of these needs:
   `getBalancesForPolicy`, `getBalanceForUser`,
   `getTimeOffPolicies`, `findWorkspaceUsers`, `findUserTeamManagers`.
 - **Actual behavior (live, 2026-05-24, workspace
-  `65b382b606de527a7ee2b60e`):** the live API accepts `?page=N&page-size=M`
+  `<REDACTED_WORKSPACE_ID>`):** the live API accepts `?page=N&page-size=M`
   and returns a `Last-Page: <bool>` header on 11 *additional* list
   endpoints whose source-spec declarations omit those params. Probe
   evidence (raw JSON bodies + raw response headers) saved as
@@ -1009,7 +1009,7 @@ on the bare route (the granular variants — already in
   (`spec/corrected/clockify.corrected.openapi.yaml`) lists all three
   as first-class `200 OK → array<T>` operations.
 - **Actual behavior (live, 2026-05-24, sandbox workspace
-  `65b382b606de527a7ee2b60e`):**
+  `<REDACTED_WORKSPACE_ID>`):**
   1. `GET /workspaces?page=1&page-size=1` returned **all 28** records
      (200 102 bytes). Also tried `?per_page=1`, `?size=1`, `?limit=1`,
      `?pageSize=1` — every variant returned the full 28-record list
@@ -1471,7 +1471,7 @@ on the bare route (the granular variants — already in
 
 ### `surface.audit.2026-06-23` — DOCUMENTED 2026-06-23 / RESOLVED 2026-06-23
 
-API-key probe campaign against the sacrificial sandbox (WS `65b382b606de527a7ee2b60e`).
+API-key probe campaign against the sacrificial sandbox (WS `<REDACTED_WORKSPACE_ID>`).
 Three outcomes:
 
 - **Promoted to live-success (18 ops, real 2xx).** Stamped `live-success` in the
@@ -1577,7 +1577,7 @@ unpaginated methods").
   consistently" vs "does not".
 
 - **Actual behaviour (live, 2026-05-25, sandbox workspace
-  `65b382b606de527a7ee2b60e`):** each endpoint was probed with
+  `<REDACTED_WORKSPACE_ID>`):** each endpoint was probed with
   `?page=1&page-size=2` (results-available) and the paginated
   endpoints additionally with `?page=999&page-size=2` (results-
   exhausted). Result:
@@ -1685,7 +1685,7 @@ unpaginated methods").
 Three additional `Time Off` / `Balances`-tagged routes were
 probed during the G.1 domain edge-case sweep that was deferred
 out of v0.5.0. All three returned HTTP 404 or 405 + Clockify
-error code 3000 against sandbox `65b382b606de527a7ee2b60e`:
+error code 3000 against sandbox `<REDACTED_WORKSPACE_ID>`:
 
 - `POST /workspaces/{wsId}/time-off/requests/users/{userId}` →
   HTTP 404 "No static resource". Looked like an admin
@@ -1745,7 +1745,7 @@ routes that return 404/405 live exist.
   YAML under the `Time Off` tag.
 
 - **Actual behaviour (live probe, 2026-05-25, sandbox workspace
-  `65b382b606de527a7ee2b60e`):** the three legacy routes all return
+  `<REDACTED_WORKSPACE_ID>`):** the three legacy routes all return
   `HTTP 404 + {"message":"No static resource v1/workspaces/{ws}/
   policies/{pid}/requests[/{rid}].","code":3000}`. Probed with
   policyId `696fd7f25dd6c5510bafa772`, fake requestId
@@ -1813,7 +1813,7 @@ routes that return 404/405 live exist.
   when user is already a member"), not header support.
 
 - **Actual behaviour (live probe, 2026-05-25, sandbox workspace
-  `65b382b606de527a7ee2b60e`):** sent two `POST /workspaces/{wsId}/tags`
+  `<REDACTED_WORKSPACE_ID>`):** sent two `POST /workspaces/{wsId}/tags`
   requests with the SAME `Idempotency-Key` header value (a freshly
   minted UUID `3DBEBD67…`) and DIFFERENT bodies
   (`{"name":"sdk-idemp-test-1779660515-a"}` and
@@ -1874,7 +1874,7 @@ routes that return 404/405 live exist.
   `projects.update({ workspaceId, projectId, ...fields })`.
 
 - **Actual behaviour (live probe, 2026-05-26, sandbox workspace
-  `65b382b606de527a7ee2b60e`):** Clockify accepts client archive
+  `<REDACTED_WORKSPACE_ID>`):** Clockify accepts client archive
   updates only with the nested client body shape
   (`body: { name, archived: true }`). Sending client update fields
   at the top level returns "Required request body is missing".
@@ -2066,7 +2066,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   existing `clockify_expenses_create` already passes major units, consistent with
   this table; rate tools (below) should funnel through `toMinor`. Tests:
   `wrapper/tests/money.test.ts`.
-- Re-verified 2026-06-20: confirmed-still-holds. Live sandbox 65b382b606de527a7ee2b60e: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MAJOR/dollars; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense surface uses `total` (no `amount` key on expenses) on both list and single-GET.
+- Re-verified 2026-06-20: confirmed-still-holds. Live sandbox <REDACTED_WORKSPACE_ID>: expense GET 200 carries money as FLOAT `total` (200.0 at qty 1, 10000.0 at qty 50) = MAJOR/dollars; invoice GET 200 carries money as INTEGER `amount` (100000, 105800 AUD = $1,000.00 / $1,058.00) = MINOR/cents. Note: live expense surface uses `total` (no `amount` key on expenses) on both list and single-GET.
 
 ### `holidays.update.replace-and-scope-filter` — COMPENSATED 2026-06-14
 
@@ -2132,7 +2132,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   create/update sites in `mcp/src/tools/timeOff.ts` pass `"ACTIVE"`, holiday
   sites keep the default `"ALL"`. Tests: `mcp/tests/time-off-policies.test.ts`
   (policy → ACTIVE), `mcp/tests/holidays.test.ts` (holiday → ALL).
-- Re-verified 2026-06-20: confirmed-still-holds — GET /workspaces/65b382b606de527a7ee2b60e/time-off/policies returned HTTP 200 with 50 policy objects all carrying the userIds/userGroupIds/everyoneIncludingNew scope model; no policy echoes a {contains,status} filter (0/50), so the ACTIVE-vs-ALL split remains a write-side request-filter behavior unchanged at the read layer.
+- Re-verified 2026-06-20: confirmed-still-holds — GET /workspaces/<REDACTED_WORKSPACE_ID>/time-off/policies returned HTTP 200 with 50 policy objects all carrying the userIds/userGroupIds/everyoneIncludingNew scope model; no policy echoes a {contains,status} filter (0/50), so the ACTIVE-vs-ALL split remains a write-side request-filter behavior unchanged at the read layer.
 
 ### `rates.put-minor-units-no-get` — PARTIALLY COMPENSATED 2026-06-14
 
@@ -2319,7 +2319,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `PATCH /workspaces/{workspaceId}/time-entries/invoiced`
   (`timeEntries.markInvoiced`) is `live-success`.
 - **Live evidence:** GOCLMCP sandbox probe (commit `d570aed`, workspace
-  `65b382b606de527a7ee2b60e`): the `/invoiced` row was promoted to 200 while
+  `<REDACTED_WORKSPACE_ID>`): the `/invoiced` row was promoted to 200 while
   `/invoiced/bulk` was left unpromoted as a live 404; `findings/time-entries.md`
   carries only the `/invoiced` row. The official Clockify snapshot
   (`spec/official/clockify.official.openapi.yaml`) carries only
