@@ -1,6 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { archiveThenDeleteClient } from "clockify-sdk-ts-115/ensure";
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -8,6 +7,44 @@ import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
+
+type ClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
+
+function clientUpdateBody(current: unknown): ClientUpdateBody {
+    if (current == null || typeof current !== "object") {
+        throw new TypeError("Cannot update client: current client state is unavailable.");
+    }
+    const value = current as Record<string, unknown>;
+    if (typeof value.name !== "string" || value.name.length === 0) {
+        throw new TypeError("Cannot update client: current client name is missing.");
+    }
+    const body: ClientUpdateBody = { name: value.name };
+    for (const field of ["address", "email", "note"] as const) {
+        const fieldValue = value[field];
+        if (fieldValue === undefined || fieldValue === null) continue;
+        if (typeof fieldValue !== "string") {
+            throw new TypeError(`Cannot update client: current ${field} is invalid.`);
+        }
+        body[field] = fieldValue;
+    }
+    if (value.currencyCode !== undefined && value.currencyCode !== null) {
+        if (typeof value.currencyCode !== "string") {
+            throw new TypeError("Cannot update client: current currencyCode is invalid.");
+        }
+        body.currencyCode = value.currencyCode;
+    }
+    if (value.archived !== undefined) {
+        if (typeof value.archived !== "boolean") {
+            throw new TypeError("Cannot update client: current archived state is invalid.");
+        }
+        body.archived = value.archived;
+    }
+    return body;
+}
+
+function sameClientField(left: unknown, right: unknown): boolean {
+    return left === right;
+}
 
 export function registerClientsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -118,7 +155,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             description: "Update client metadata such as name, note, address, or archived state.",
             inputSchema: {
                 clientId: z.string().min(1),
-                name: z.string().optional(),
+                name: z.string().min(1).optional(),
                 note: z.string().optional(),
                 address: z.string().optional(),
                 archived: z.boolean().optional(),
@@ -126,18 +163,36 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>> & {
-                archived?: boolean;
-            } = {};
-            if (args.name) body.name = args.name;
-            if (args.note !== undefined) body.note = args.note;
-            if (args.address !== undefined) body.address = args.address;
-            if (args.archived !== undefined) body.archived = args.archived;
-            const req = wireBody<ClockifyApi.UpdateClientsRequest>({
+            const current = await ctx.client.clients.get({
                 workspaceId: ctx.workspaceId,
                 clientId: args.clientId,
-                body,
             });
+            const body = clientUpdateBody(current);
+            let changed = false;
+            if (args.name !== undefined) {
+                changed ||= !sameClientField(body.name, args.name);
+                body.name = args.name;
+            }
+            if (args.note !== undefined) {
+                changed ||= !sameClientField(body.note, args.note);
+                body.note = args.note;
+            }
+            if (args.address !== undefined) {
+                changed ||= !sameClientField(body.address, args.address);
+                body.address = args.address;
+            }
+            if (args.archived !== undefined) {
+                changed ||= !sameClientField(body.archived, args.archived);
+                body.archived = args.archived;
+            }
+            if (!changed) {
+                throw new TypeError("Client update is a no-op; supply at least one changed field.");
+            }
+            const req: ClockifyApi.UpdateClientsRequest = {
+                body,
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
+            };
             const updated = await ctx.client.clients.update(req);
             return successResult(
                 "clockify_clients_update",
@@ -175,18 +230,23 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 preview,
             );
             if (confirmation) return confirmation;
-            // archiveThenDeleteClient owns the live-verified sequence (GET name →
-            // archive via the BODY-ENVELOPE PUT that bypasses the clients.update
-            // field whitelist [address, currencyCode, email, name, note] via
-            // core.bodyFromRequest, landing archived:true on the wire → DELETE)
-            // AND the empty-name guard (throws → errorResult via defineTool's
-            // catch). Bare DELETE of an ACTIVE client 400s (live-verified
-            // 2026-06-15) and clients.archive 404s. See
-            // spec/evidence/discrepancies.md `deletes.archive-first.clients-blocked`.
-            await archiveThenDeleteClient({
+            const current = await ctx.client.clients.get({
                 workspaceId: ctx.workspaceId,
-                id: args.clientId,
-                resource: ctx.client.clients,
+                clientId: args.clientId,
+            });
+            const body = clientUpdateBody(current);
+            if (body.archived !== true) {
+                body.archived = true;
+                const request: ClockifyApi.UpdateClientsRequest = {
+                    body,
+                    workspaceId: ctx.workspaceId,
+                    clientId: args.clientId,
+                };
+                await ctx.client.clients.update(request);
+            }
+            await ctx.client.clients.delete({
+                workspaceId: ctx.workspaceId,
+                clientId: args.clientId,
             });
             return successResult(
                 "clockify_clients_delete",

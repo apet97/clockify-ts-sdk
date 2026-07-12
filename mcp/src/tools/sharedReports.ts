@@ -5,7 +5,7 @@
  * workspace-scoped. Delete is destructive and confirm-guarded.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -33,6 +33,137 @@ const SHARED_REPORT_TYPES = [
     "TIMEOFF_BALANCE",
     "EXPENSE_SUMMARY",
 ] as const;
+
+const containsSchema = z.enum(["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"]);
+const sharedUsersFilterSchema = z
+    .object({
+        contains: containsSchema.optional(),
+        ids: z.array(z.string()).optional(),
+        status: z.enum(["ALL", "ACTIVE", "INACTIVE"]).optional(),
+    })
+    .strict();
+const sharedAttendanceFilterSchema = z
+    .object({
+        page: z.number().int().min(1).optional(),
+        pageSize: z.number().int().min(1).optional(),
+        users: sharedUsersFilterSchema.optional(),
+    })
+    .strict();
+const sharedDetailedFilterSchema = z
+    .object({
+        auditFilter: z.record(z.unknown()).optional(),
+        options: z.record(z.unknown()).optional(),
+        page: z.number().int().min(1).optional(),
+        pageSize: z.number().int().min(1).optional(),
+        sortColumn: z.string().optional(),
+        sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
+    })
+    .strict();
+const sharedSummaryFilterSchema = z
+    .object({
+        groups: z
+            .array(
+                z.enum([
+                    "CLIENT",
+                    "PROJECT",
+                    "TASK",
+                    "DATE",
+                    "WEEK",
+                    "MONTH",
+                    "TIMEENTRY",
+                    "USER",
+                    "TAG",
+                ]),
+            )
+            .min(1)
+            .max(3),
+        sortColumn: z.string().optional(),
+    })
+    .strict();
+const sharedWeeklyFilterSchema = z
+    .object({
+        group: z.enum(["PROJECT", "USER"]),
+        subgroup: z.literal("TIME"),
+    })
+    .strict();
+const sharedReportFilterSchema = z
+    .object({
+        attendanceFilter: sharedAttendanceFilterSchema.optional(),
+        dateRangeEnd: z.string(),
+        dateRangeStart: z.string(),
+        detailedFilter: sharedDetailedFilterSchema.optional(),
+        exportType: z.enum(["JSON_V1", "JSON", "CSV", "XLSX", "PDF"]),
+        summaryFilter: sharedSummaryFilterSchema.optional(),
+        weeklyFilter: sharedWeeklyFilterSchema.optional(),
+    })
+    .strict();
+
+function sharedReportFilter(
+    value: z.infer<typeof sharedReportFilterSchema>,
+): ClockifyApi.SharedReportFilter {
+    return {
+        dateRangeEnd: value.dateRangeEnd,
+        dateRangeStart: value.dateRangeStart,
+        exportType: value.exportType,
+        ...(value.attendanceFilter !== undefined
+            ? {
+                  attendanceFilter: {
+                      ...(value.attendanceFilter.page !== undefined
+                          ? { page: value.attendanceFilter.page }
+                          : {}),
+                      ...(value.attendanceFilter.pageSize !== undefined
+                          ? { pageSize: value.attendanceFilter.pageSize }
+                          : {}),
+                      ...(value.attendanceFilter.users !== undefined
+                          ? { users: value.attendanceFilter.users }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.detailedFilter !== undefined
+            ? {
+                  detailedFilter: {
+                      ...(value.detailedFilter.auditFilter !== undefined
+                          ? { auditFilter: value.detailedFilter.auditFilter }
+                          : {}),
+                      ...(value.detailedFilter.options !== undefined
+                          ? { options: value.detailedFilter.options }
+                          : {}),
+                      ...(value.detailedFilter.page !== undefined
+                          ? { page: value.detailedFilter.page }
+                          : {}),
+                      ...(value.detailedFilter.pageSize !== undefined
+                          ? { pageSize: value.detailedFilter.pageSize }
+                          : {}),
+                      ...(value.detailedFilter.sortColumn !== undefined
+                          ? { sortColumn: value.detailedFilter.sortColumn }
+                          : {}),
+                      ...(value.detailedFilter.sortOrder !== undefined
+                          ? { sortOrder: value.detailedFilter.sortOrder }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.summaryFilter !== undefined
+            ? {
+                  summaryFilter: {
+                      groups: value.summaryFilter.groups,
+                      ...(value.summaryFilter.sortColumn !== undefined
+                          ? { sortColumn: value.summaryFilter.sortColumn }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.weeklyFilter !== undefined
+            ? {
+                  weeklyFilter: {
+                      group: value.weeklyFilter.group,
+                      subgroup: value.weeklyFilter.subgroup,
+                  },
+              }
+            : {}),
+    };
+}
 
 export function registerSharedReportsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -86,24 +217,25 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
             inputSchema: {
                 name: z.string().min(1),
                 type: z.enum(SHARED_REPORT_TYPES),
-                filter: z
-                    .record(z.unknown())
-                    .describe("The report filter object (shape mirrors the reports API filter)."),
+                filter: sharedReportFilterSchema.describe(
+                    "The report filter object (shape mirrors the reports API filter).",
+                ),
                 public: z.boolean().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = {
                 name: args.name,
                 type: args.type,
-                filter: args.filter,
+                filter: sharedReportFilter(args.filter),
+                ...(args.public !== undefined ? { isPublic: args.public } : {}),
             };
-            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
-            if (args.public !== undefined) body.isPublic = args.public;
-            const created = await ctx.client.sharedReports.create(
-                wireBody<ClockifyApi.SharedReportCreate>({ workspaceId: ctx.workspaceId, body }),
-            );
+            const request: ClockifyApi.SharedReportCreate = {
+                workspaceId: ctx.workspaceId,
+                body,
+            };
+            const created = await ctx.client.sharedReports.create(request);
             const id = String(entityId(created) ?? "");
             return successResult(
                 "clockify_shared_reports_create",
@@ -125,26 +257,26 @@ export function registerSharedReportsTools(server: McpServer, ctx: Context): voi
                 shared_report_id: z.string().min(1),
                 name: z.string().min(1),
                 type: z.enum(SHARED_REPORT_TYPES),
-                filter: z.record(z.unknown()).describe("The report filter object (full replace)."),
+                filter: sharedReportFilterSchema.describe(
+                    "The report filter object (full replace).",
+                ),
                 public: z.boolean().optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Record<string, unknown> = {
+            const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> = {
                 name: args.name,
                 type: args.type,
-                filter: args.filter,
+                filter: sharedReportFilter(args.filter),
+                ...(args.public !== undefined ? { isPublic: args.public } : {}),
             };
-            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
-            if (args.public !== undefined) body.isPublic = args.public;
-            const updated = await ctx.client.sharedReports.update(
-                wireBody<ClockifyApi.UpdateSharedReportsRequest>({
-                    workspaceId: ctx.workspaceId,
-                    sharedReportId: args.shared_report_id,
-                    body,
-                }),
-            );
+            const request: ClockifyApi.UpdateSharedReportsRequest = {
+                workspaceId: ctx.workspaceId,
+                sharedReportId: args.shared_report_id,
+                body,
+            };
+            const updated = await ctx.client.sharedReports.update(request);
             return successResult(
                 "clockify_shared_reports_update",
                 updated,

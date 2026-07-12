@@ -198,7 +198,7 @@ describe("clockify_approvals_list", () => {
 });
 
 describe("clockify_approvals_submit", () => {
-    it("wraps the period/periodStart into a wireBody envelope and pins the workspace", async () => {
+    it("wraps period/periodStart in a typed body envelope and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
         const res = await client.callTool({
@@ -206,7 +206,7 @@ describe("clockify_approvals_submit", () => {
             arguments: { period: "SEMI_MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
         expect(res.isError).toBeFalsy();
-        // wireBody returns the value verbatim → { workspaceId, body: {...} }.
+        // The generated request uses { workspaceId, body: {...} }.
         expect(captured.submit).toEqual({
             workspaceId: "ws-1",
             body: { period: "SEMI_MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
@@ -399,7 +399,7 @@ describe("clockify_approvals_update_state", () => {
 });
 
 describe("clockify_approvals_resubmit", () => {
-    it("passes a flat request (no wireBody envelope) and pins the workspace", async () => {
+    it("passes a flat generated request and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
         const res = await client.callTool({

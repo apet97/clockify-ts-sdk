@@ -38,7 +38,20 @@ function customFieldsContext(
     const customFields: CustomFieldsResource = {
         listForWorkspace: async (req: unknown) => {
             captured.listForWorkspace = req;
-            return [{ id: FIELD_ID, name: "Cost Center" }];
+            return [
+                {
+                    id: FIELD_ID,
+                    name: "Cost Center",
+                    type: "TXT",
+                    allowedValues: [],
+                    description: "",
+                    placeholder: "",
+                    onlyAdminCanEdit: false,
+                    required: true,
+                    status: "VISIBLE",
+                    workspaceDefaultValue: "",
+                },
+            ];
         },
         createForWorkspace: async (req: unknown) => {
             captured.createForWorkspace = req;
@@ -166,8 +179,12 @@ describe("clockify_custom_fields_create", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("custom_field");
-        const changed = json.changed as { created: Array<{ type: string; id: string; name: string }> };
-        expect(changed.created).toEqual([{ type: "custom_field", id: FIELD_ID, name: "Cost Center" }]);
+        const changed = json.changed as {
+            created: Array<{ type: string; id: string; name: string }>;
+        };
+        expect(changed.created).toEqual([
+            { type: "custom_field", id: FIELD_ID, name: "Cost Center" },
+        ]);
     });
 
     it("threads every optional, including required:false via the !== undefined guard", async () => {
@@ -230,7 +247,9 @@ describe("clockify_custom_fields_create", () => {
         const client = await connect(
             customFieldsContext(captured, {
                 createForWorkspace: async () => {
-                    throw Object.assign(new Error("Custom field already exists"), { statusCode: 409 });
+                    throw Object.assign(new Error("Custom field already exists"), {
+                        statusCode: 409,
+                    });
                 },
             }),
         );
@@ -247,7 +266,7 @@ describe("clockify_custom_fields_create", () => {
 });
 
 describe("clockify_custom_fields_update", () => {
-    it("sends only the supplied fields in a body envelope, forwarding required:false", async () => {
+    it("preserves the full listed definition and overlays supplied fields, including false", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(customFieldsContext(captured));
         const res = await client.callTool({
@@ -261,11 +280,20 @@ describe("clockify_custom_fields_update", () => {
         });
 
         expect(res.isError).toBeFalsy();
-        // name (truthy) lands; required:false lands via the !== undefined guard; status lands.
         expect(captured.updateForWorkspace).toEqual({
             workspaceId: "ws-1",
             customFieldId: FIELD_ID,
-            body: { name: "Renamed", required: false, status: "INACTIVE" },
+            body: {
+                name: "Renamed",
+                type: "TXT",
+                allowedValues: [],
+                description: "",
+                placeholder: "",
+                onlyAdminCanEdit: false,
+                required: false,
+                status: "INACTIVE",
+                workspaceDefaultValue: "",
+            },
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
@@ -276,7 +304,7 @@ describe("clockify_custom_fields_update", () => {
         expect(changed.updated).toEqual([{ type: "custom_field", id: FIELD_ID }]);
     });
 
-    it("sends an empty body when only the id is supplied", async () => {
+    it("rejects a no-op after list-scanning and never mutates", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(customFieldsContext(captured));
         const res = await client.callTool({
@@ -284,12 +312,88 @@ describe("clockify_custom_fields_update", () => {
             arguments: { customFieldId: FIELD_ID },
         });
 
+        expect(res.isError).toBe(true);
+        expect(captured.listForWorkspace).toEqual({
+            workspaceId: "ws-1",
+            page: 1,
+            "page-size": 200,
+        });
+        expect(captured.updateForWorkspace).toBeUndefined();
+    });
+
+    it("continues the list scan until it finds a field on a later page", async () => {
+        const captured: Record<string, unknown> = {};
+        const pages: number[] = [];
+        const client = await connect(
+            customFieldsContext(captured, {
+                listForWorkspace: async (req: unknown) => {
+                    const page = (req as { page: number }).page;
+                    pages.push(page);
+                    if (page === 1) {
+                        return Array.from({ length: 200 }, (_, index) => ({
+                            id: `other-${index}`,
+                            name: `Other ${index}`,
+                            type: "TXT",
+                        }));
+                    }
+                    return [{ id: FIELD_ID, name: "Cost Center", type: "TXT", required: false }];
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_custom_fields_update",
+            arguments: { customFieldId: FIELD_ID, name: "Renamed" },
+        });
         expect(res.isError).toBeFalsy();
+        expect(pages).toEqual([1, 2]);
         expect(captured.updateForWorkspace).toEqual({
             workspaceId: "ws-1",
             customFieldId: FIELD_ID,
-            body: {},
+            body: { name: "Renamed", type: "TXT", required: false },
         });
+    });
+
+    it("stops when a full page repeats instead of scanning forever", async () => {
+        const captured: Record<string, unknown> = {};
+        let calls = 0;
+        const repeated = Array.from({ length: 200 }, (_, index) => ({
+            id: `other-${index}`,
+            name: `Other ${index}`,
+            type: "TXT",
+        }));
+        const client = await connect(
+            customFieldsContext(captured, {
+                listForWorkspace: async () => {
+                    calls += 1;
+                    if (calls > 2) throw new Error("repeated scan did not terminate");
+                    return repeated;
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_custom_fields_update",
+            arguments: { customFieldId: FIELD_ID, name: "Renamed" },
+        });
+        expect(res.isError).toBe(true);
+        expect(calls).toBe(2);
+        expect(captured.updateForWorkspace).toBeUndefined();
+    });
+
+    it("rejects an unreconstructable current default value before mutation", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            customFieldsContext(captured, {
+                listForWorkspace: async () => [
+                    { id: FIELD_ID, name: "Cost Center", type: "TXT", workspaceDefaultValue: [1] },
+                ],
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_custom_fields_update",
+            arguments: { customFieldId: FIELD_ID, name: "Renamed" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.updateForWorkspace).toBeUndefined();
     });
 
     it("rejects a missing customFieldId at the schema boundary before any write", async () => {
@@ -366,7 +470,10 @@ describe("clockify_custom_fields_delete", () => {
         });
 
         expect(res.isError).toBeFalsy();
-        expect(captured.deleteForWorkspace).toEqual({ workspaceId: "ws-1", customFieldId: FIELD_ID });
+        expect(captured.deleteForWorkspace).toEqual({
+            workspaceId: "ws-1",
+            customFieldId: FIELD_ID,
+        });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("custom_field");
@@ -489,7 +596,11 @@ describe("clockify_project_custom_fields_update", () => {
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("project_custom_field");
         const meta = json.meta as { workspaceId: string; projectId: string; customFieldId: string };
-        expect(meta).toEqual({ workspaceId: "ws-1", projectId: PROJECT_ID, customFieldId: FIELD_ID });
+        expect(meta).toEqual({
+            workspaceId: "ws-1",
+            projectId: PROJECT_ID,
+            customFieldId: FIELD_ID,
+        });
         const changed = json.changed as { updated: Array<{ type: string; id: string }> };
         expect(changed.updated).toEqual([{ type: "project_custom_field", id: FIELD_ID }]);
     });
@@ -517,7 +628,7 @@ describe("clockify_project_custom_fields_update", () => {
         expect("allowedValues" in sent.body).toBe(false);
     });
 
-    it("sends an empty body when only the ids are supplied", async () => {
+    it("rejects an empty update before calling the SDK", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(customFieldsContext(captured));
         const res = await client.callTool({
@@ -525,13 +636,19 @@ describe("clockify_project_custom_fields_update", () => {
             arguments: { projectId: PROJECT_ID, customFieldId: FIELD_ID },
         });
 
-        expect(res.isError).toBeFalsy();
-        expect(captured.updateForProject).toEqual({
-            workspaceId: "ws-1",
-            projectId: PROJECT_ID,
-            customFieldId: FIELD_ID,
-            body: {},
+        expect(res.isError).toBe(true);
+        expect(captured.updateForProject).toBeUndefined();
+    });
+
+    it("rejects an invalid status before calling the SDK", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(customFieldsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_project_custom_fields_update",
+            arguments: { projectId: PROJECT_ID, customFieldId: FIELD_ID, status: "HIDDEN" },
         });
+        expect(res.isError).toBe(true);
+        expect(captured.updateForProject).toBeUndefined();
     });
 
     it("maps an upstream 404 to a structured not_found error", async () => {
@@ -545,11 +662,11 @@ describe("clockify_project_custom_fields_update", () => {
         );
         const res = await client.callTool({
             name: "clockify_project_custom_fields_update",
-            arguments: { projectId: PROJECT_ID, customFieldId: FIELD_ID, status: "HIDDEN" },
+            arguments: { projectId: PROJECT_ID, customFieldId: FIELD_ID, status: "INACTIVE" },
         });
 
         expect(res.isError).toBe(true);
-        expect((envelope(res).error as { code: string; message: string })).toEqual({
+        expect(envelope(res).error as { code: string; message: string }).toEqual({
             code: "not_found",
             message: "Not Found",
         });
@@ -611,11 +728,13 @@ describe("clockify_project_custom_fields_remove", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("project_custom_field");
-        expect(json.data as { removed: boolean; projectId: string; customFieldId: string }).toEqual({
-            removed: true,
-            projectId: PROJECT_ID,
-            customFieldId: FIELD_ID,
-        });
+        expect(json.data as { removed: boolean; projectId: string; customFieldId: string }).toEqual(
+            {
+                removed: true,
+                projectId: PROJECT_ID,
+                customFieldId: FIELD_ID,
+            },
+        );
         const changed = json.changed as { deleted: Array<{ type: string; id: string }> };
         expect(changed.deleted).toEqual([{ type: "project_custom_field", id: FIELD_ID }]);
     });
@@ -646,7 +765,11 @@ describe("clockify_project_custom_fields_remove", () => {
         // Same custom field, different project id -> the hashed payload no longer matches.
         const res = await client.callTool({
             name: "clockify_project_custom_fields_remove",
-            arguments: { projectId: "000000000000000000000888", customFieldId: FIELD_ID, confirm_token: token },
+            arguments: {
+                projectId: "000000000000000000000888",
+                customFieldId: FIELD_ID,
+                confirm_token: token,
+            },
         });
 
         expect(res.isError).toBe(true);

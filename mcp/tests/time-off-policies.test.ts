@@ -17,10 +17,25 @@ function existingPolicy(): Record<string, unknown> {
         id: "pol-1",
         name: "PTO",
         color: "#00ff00",
-        negativeBalance: 5,
+        negativeBalance: {
+            amount: 5,
+            amountValidForTimeUnit: false,
+            period: "YEAR",
+            shouldReset: false,
+            timeUnit: "DAYS",
+        },
+        allowHalfDay: false,
         allowNegativeBalance: true,
-        approve: true,
+        approve: {
+            requiresApproval: false,
+            specificMembers: false,
+            teamManagers: false,
+            userIds: [],
+        },
         archived: false,
+        everyoneIncludingNew: false,
+        hasExpiration: false,
+        icon: "UMBRELLA",
         userIds: ["u1", "u2"],
         userGroupIds: ["g1"],
     };
@@ -117,9 +132,23 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
         expect(update.name).toBe("Vacation");
         // Carried forward from the GET (replace-safety).
         expect(update.color).toBe("#00ff00");
-        expect(update.negativeBalance).toBe(5);
+        expect(update.negativeBalance).toEqual({
+            amount: 5,
+            amountValidForTimeUnit: false,
+            period: "YEAR",
+            shouldReset: false,
+            timeUnit: "DAYS",
+        });
+        expect(update.allowHalfDay).toBe(false);
         expect(update.allowNegativeBalance).toBe(true);
-        expect(update.approve).toBe(true);
+        expect(update.approve).toEqual({
+            requiresApproval: false,
+            specificMembers: false,
+            teamManagers: false,
+            userIds: [],
+        });
+        expect(update.everyoneIncludingNew).toBe(false);
+        expect(update.hasExpiration).toBe(false);
         // Scope reconstructed from flat userIds/userGroupIds.
         expect(update.users).toEqual({ contains: "CONTAINS", ids: ["u1", "u2"], status: "ACTIVE" });
         expect(update.userGroups).toEqual({ contains: "CONTAINS", ids: ["g1"], status: "ACTIVE" });
@@ -152,6 +181,31 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
         expect((update.users as { status: string }).status).not.toBe("ALL");
         expect((update.userGroups as { status: string }).status).toBe("ACTIVE");
         expect((update.userGroups as { status: string }).status).not.toBe("ALL");
+    });
+
+    it("rejects a no-op and never sends the replacement", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(policiesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_time_off_policies_update",
+            arguments: { policyId: "pol-1", name: "PTO" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({ workspaceId: "ws-1", policyId: "pol-1" });
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects missing required replacement state before mutation", async () => {
+        const captured: Record<string, unknown> = {};
+        const incomplete = existingPolicy();
+        delete incomplete.hasExpiration;
+        const client = await connect(policiesContext(captured, incomplete));
+        const res = await client.callTool({
+            name: "clockify_time_off_policies_update",
+            arguments: { policyId: "pol-1", name: "Vacation" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.update).toBeUndefined();
     });
 });
 

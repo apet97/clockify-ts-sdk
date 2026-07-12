@@ -15,6 +15,7 @@ const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice" };
 function fakeContext(overrides?: {
     clientsUpdate?: (req: unknown) => Promise<unknown>;
     listInProgress?: () => Promise<unknown>;
+    projectsCreate?: (req: unknown) => Promise<unknown>;
     projectsList?: (req: unknown) => PromiseLike<unknown[]>;
     projectsUpdate?: (req: unknown) => Promise<unknown>;
 }): Context {
@@ -35,13 +36,16 @@ function fakeContext(overrides?: {
             },
             projects: {
                 list: overrides?.projectsList ?? (async () => [{ id: "p1", name: "Proj" }]),
-                create: async (body: Record<string, unknown>) => ({ id: "p2", ...body }),
+                create:
+                    overrides?.projectsCreate ??
+                    (async (body: Record<string, unknown>) => ({ id: "p2", ...body })),
                 get: async () => ({ id: "p1", name: "Proj" }),
                 update: overrides?.projectsUpdate ?? (async (req: unknown) => req),
             },
             clients: {
                 list: async () => [],
                 create: async (body: Record<string, unknown>) => ({ id: "c1", ...body }),
+                get: async () => ({ id: "c1", name: "Client" }),
                 update: overrides?.clientsUpdate ?? (async (req: unknown) => req),
             },
             tasks: {
@@ -62,7 +66,10 @@ function responseAware<T>(data: T, headers: Record<string, string>) {
     const promise = Promise.resolve(data) as Promise<T> & {
         withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
     };
-    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    promise.withRawResponse = async () => ({
+        data,
+        rawResponse: { headers: new Headers(headers) },
+    });
     return promise;
 }
 
@@ -260,7 +267,9 @@ describe("@apet97/clockify-mcp-115", () => {
 
     it("advertises the version from package.json (server.ts literal must not drift)", () => {
         // The initialize version is generated from package.json before checks/builds.
-        const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+        const pkg = JSON.parse(
+            readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+        ) as {
             version: string;
         };
         const generated = readFileSync(
@@ -348,7 +357,9 @@ describe("@apet97/clockify-mcp-115", () => {
         expect((cookbook.contents[0] as { text?: string }).text).toContain("clockify_status");
 
         const doctor = await client.readResource({ uri: "clockify://mcp/doctor" });
-        expect((doctor.contents[0] as { text?: string }).text).toContain("no-network diagnostics checklist");
+        expect((doctor.contents[0] as { text?: string }).text).toContain(
+            "no-network diagnostics checklist",
+        );
         expect((doctor.contents[0] as { text?: string }).text).toContain("CLOCKIFY_API_KEY");
     });
 
@@ -464,9 +475,15 @@ describe("@apet97/clockify-mcp-115", () => {
         const client = await connect(
             fakeContext({
                 projectsList: () =>
-                    responseAware([{ id: "p1", name: "A" }, { id: "p2", name: "B" }], {
-                        "Last-Page": "true",
-                    }),
+                    responseAware(
+                        [
+                            { id: "p1", name: "A" },
+                            { id: "p2", name: "B" },
+                        ],
+                        {
+                            "Last-Page": "true",
+                        },
+                    ),
             }),
         );
         const res = await client.callTool({
@@ -504,6 +521,55 @@ describe("@apet97/clockify-mcp-115", () => {
                 archived: true,
             },
         });
+    });
+
+    it.each([
+        ["short name", { name: "x" }],
+        ["long name", { name: "x".repeat(251) }],
+        ["invalid color", { name: "Valid", color: "red" }],
+        ["long note", { name: "Valid", note: "x".repeat(16_385) }],
+    ])("clockify_projects_create rejects %s before dispatch", async (_label, arguments_) => {
+        let dispatches = 0;
+        const client = await connect(
+            fakeContext({
+                projectsCreate: async () => {
+                    dispatches += 1;
+                    return { id: "p1" };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_projects_create",
+            arguments: arguments_ as Record<string, unknown>,
+        });
+        expect(res.isError).toBe(true);
+        expect(dispatches).toBe(0);
+    });
+
+    it.each([
+        ["no fields", {}],
+        ["empty name", { name: "" }],
+        ["short name", { name: "x" }],
+        ["invalid color", { color: "#12345" }],
+        ["long note", { note: "x".repeat(16_385) }],
+    ])("clockify_projects_update rejects %s before dispatch", async (_label, fields) => {
+        let dispatches = 0;
+        const client = await connect(
+            fakeContext({
+                projectsUpdate: async () => {
+                    dispatches += 1;
+                    return { id: "p1" };
+                },
+            }),
+        );
+
+        const res = await client.callTool({
+            name: "clockify_projects_update",
+            arguments: { projectId: "p1", ...(fields as Record<string, unknown>) },
+        });
+        expect(res.isError).toBe(true);
+        expect(dispatches).toBe(0);
     });
 
     it("clockify_clients_update passes update fields in the generated SDK body", async () => {

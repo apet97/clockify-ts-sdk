@@ -9,6 +9,11 @@ let teardown: () => Promise<void> = async () => {};
 
 const REPORT_ID = "000000000000000000000301";
 const OTHER_REPORT_ID = "000000000000000000000999";
+const SHARED_FILTER = {
+    dateRangeStart: "2026-07-01T00:00:00Z",
+    dateRangeEnd: "2026-09-30T23:59:59Z",
+    exportType: "JSON" as const,
+};
 
 afterEach(async () => {
     await teardown();
@@ -207,7 +212,7 @@ describe("clockify_shared_reports_create", () => {
             arguments: {
                 name: "Q3 summary",
                 type: "SUMMARY",
-                filter: { dateRangeStart: "2026-07-01", dateRangeEnd: "2026-09-30" },
+                filter: SHARED_FILTER,
             },
         });
 
@@ -218,7 +223,7 @@ describe("clockify_shared_reports_create", () => {
             body: {
                 name: "Q3 summary",
                 type: "SUMMARY",
-                filter: { dateRangeStart: "2026-07-01", dateRangeEnd: "2026-09-30" },
+                filter: SHARED_FILTER,
             },
         });
         const json = envelope(res);
@@ -228,7 +233,9 @@ describe("clockify_shared_reports_create", () => {
         const changed = json.changed as {
             created: Array<{ type: string; id: string; name: string }>;
         };
-        expect(changed.created).toEqual([{ type: "shared_report", id: REPORT_ID, name: "Q3 summary" }]);
+        expect(changed.created).toEqual([
+            { type: "shared_report", id: REPORT_ID, name: "Q3 summary" },
+        ]);
 
         const tool = (await client.listTools()).tools.find(
             (t) => t.name === "clockify_shared_reports_create",
@@ -241,14 +248,14 @@ describe("clockify_shared_reports_create", () => {
         const client = await connect(sharedReportsContext(captured));
         const res = await client.callTool({
             name: "clockify_shared_reports_create",
-            arguments: { name: "Private", type: "DETAILED", filter: {}, public: false },
+            arguments: { name: "Private", type: "DETAILED", filter: SHARED_FILTER, public: false },
         });
 
         expect(res.isError).toBeFalsy();
         // A falsy `public` must still land in the body envelope.
         expect(captured.create).toEqual({
             workspaceId: "ws-1",
-            body: { name: "Private", type: "DETAILED", filter: {}, isPublic: false },
+            body: { name: "Private", type: "DETAILED", filter: SHARED_FILTER, isPublic: false },
         });
     });
 
@@ -265,7 +272,7 @@ describe("clockify_shared_reports_create", () => {
         );
         const res = await client.callTool({
             name: "clockify_shared_reports_create",
-            arguments: { name: "anon", type: "WEEKLY", filter: {} },
+            arguments: { name: "anon", type: "WEEKLY", filter: SHARED_FILTER },
         });
 
         expect(res.isError).toBeFalsy();
@@ -280,7 +287,7 @@ describe("clockify_shared_reports_create", () => {
         const client = await connect(sharedReportsContext(captured));
         const res = await client.callTool({
             name: "clockify_shared_reports_create",
-            arguments: { name: "", type: "SUMMARY", filter: {} },
+            arguments: { name: "", type: "SUMMARY", filter: SHARED_FILTER },
         });
 
         expect(res.isError).toBe(true);
@@ -293,7 +300,7 @@ describe("clockify_shared_reports_create", () => {
         const client = await connect(sharedReportsContext(captured));
         const res = await client.callTool({
             name: "clockify_shared_reports_create",
-            arguments: { name: "Bad type", type: "NOT_A_TYPE", filter: {} },
+            arguments: { name: "Bad type", type: "NOT_A_TYPE", filter: SHARED_FILTER },
         });
 
         expect(res.isError).toBe(true);
@@ -311,13 +318,25 @@ describe("clockify_shared_reports_create", () => {
         );
         const res = await client.callTool({
             name: "clockify_shared_reports_create",
-            arguments: { name: "X", type: "SUMMARY", filter: {} },
+            arguments: { name: "X", type: "SUMMARY", filter: SHARED_FILTER },
         });
 
         expect(res.isError).toBe(true);
         const json = envelope(res);
         expect((json.error as { code: string }).code).toBe("invalid_request");
         expect(json.changed).toBeUndefined();
+    });
+
+    it("rejects a filter missing required dates/export type before any write", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(sharedReportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_shared_reports_create",
+            arguments: { name: "Incomplete", type: "SUMMARY", filter: {} },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
     });
 });
 
@@ -331,7 +350,10 @@ describe("clockify_shared_reports_update", () => {
                 shared_report_id: REPORT_ID,
                 name: "Renamed",
                 type: "DETAILED",
-                filter: { billable: true },
+                filter: {
+                    ...SHARED_FILTER,
+                    detailedFilter: { auditFilter: { billable: true } },
+                },
             },
         });
 
@@ -340,19 +362,28 @@ describe("clockify_shared_reports_update", () => {
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             sharedReportId: REPORT_ID,
-            body: { name: "Renamed", type: "DETAILED", filter: { billable: true } },
+            body: {
+                name: "Renamed",
+                type: "DETAILED",
+                filter: {
+                    ...SHARED_FILTER,
+                    detailedFilter: { auditFilter: { billable: true } },
+                },
+            },
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("shared_report");
-        expect((json.meta as { workspaceId: string; sharedReportId: string })).toEqual({
+        expect(json.meta as { workspaceId: string; sharedReportId: string }).toEqual({
             workspaceId: "ws-1",
             sharedReportId: REPORT_ID,
         });
         const changed = json.changed as {
             updated: Array<{ type: string; id: string; name: string }>;
         };
-        expect(changed.updated).toEqual([{ type: "shared_report", id: REPORT_ID, name: "Renamed" }]);
+        expect(changed.updated).toEqual([
+            { type: "shared_report", id: REPORT_ID, name: "Renamed" },
+        ]);
     });
 
     it("forwards public=true into the body envelope when supplied", async () => {
@@ -364,7 +395,7 @@ describe("clockify_shared_reports_update", () => {
                 shared_report_id: REPORT_ID,
                 name: "Made public",
                 type: "WEEKLY",
-                filter: {},
+                filter: SHARED_FILTER,
                 public: true,
             },
         });
@@ -373,7 +404,7 @@ describe("clockify_shared_reports_update", () => {
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             sharedReportId: REPORT_ID,
-            body: { name: "Made public", type: "WEEKLY", filter: {}, isPublic: true },
+            body: { name: "Made public", type: "WEEKLY", filter: SHARED_FILTER, isPublic: true },
         });
     });
 
@@ -382,12 +413,57 @@ describe("clockify_shared_reports_update", () => {
         const client = await connect(sharedReportsContext(captured));
         const res = await client.callTool({
             name: "clockify_shared_reports_update",
-            arguments: { name: "x", type: "SUMMARY", filter: {} },
+            arguments: { name: "x", type: "SUMMARY", filter: SHARED_FILTER },
         });
 
         expect(res.isError).toBe(true);
         expect(captured.update).toBeUndefined();
     });
+
+    it.each([
+        ["shared filter", { ...SHARED_FILTER, unsupported: true }],
+        ["detailed filter", { ...SHARED_FILTER, detailedFilter: { page: 1, unsupported: true } }],
+        [
+            "attendance filter",
+            { ...SHARED_FILTER, attendanceFilter: { page: 1, unsupported: true } },
+        ],
+        [
+            "attendance users filter",
+            {
+                ...SHARED_FILTER,
+                attendanceFilter: { users: { ids: ["user-1"], unsupported: true } },
+            },
+        ],
+        [
+            "summary filter",
+            { ...SHARED_FILTER, summaryFilter: { groups: ["USER"], unsupported: true } },
+        ],
+        [
+            "weekly filter",
+            {
+                ...SHARED_FILTER,
+                weeklyFilter: { group: "USER", subgroup: "TIME", unsupported: true },
+            },
+        ],
+    ] as const)(
+        "rejects unknown keys on the closed %s before any write",
+        async (_label, filter) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(sharedReportsContext(captured));
+            const res = await client.callTool({
+                name: "clockify_shared_reports_update",
+                arguments: {
+                    shared_report_id: REPORT_ID,
+                    name: "Closed",
+                    type: "DETAILED",
+                    filter,
+                },
+            });
+
+            expect(res.isError).toBe(true);
+            expect(captured.update).toBeUndefined();
+        },
+    );
 
     it("maps an upstream 404 on a stale id to a structured not_found error", async () => {
         const captured: Record<string, unknown> = {};
@@ -400,7 +476,12 @@ describe("clockify_shared_reports_update", () => {
         );
         const res = await client.callTool({
             name: "clockify_shared_reports_update",
-            arguments: { shared_report_id: REPORT_ID, name: "x", type: "SUMMARY", filter: {} },
+            arguments: {
+                shared_report_id: REPORT_ID,
+                name: "x",
+                type: "SUMMARY",
+                filter: SHARED_FILTER,
+            },
         });
 
         expect(res.isError).toBe(true);
@@ -458,7 +539,7 @@ describe("clockify_shared_reports_delete", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.entity).toBe("shared_report");
-        expect((json.data as { deleted: boolean; sharedReportId: string })).toEqual({
+        expect(json.data as { deleted: boolean; sharedReportId: string }).toEqual({
             deleted: true,
             sharedReportId: REPORT_ID,
         });
@@ -543,7 +624,7 @@ describe("clockify_shared_reports_delete", () => {
         const json = envelope(res);
         expect(json.ok).toBe(false);
         // 403 -> auth_or_permission; the destructive write was attempted (guard passed) then failed upstream.
-        expect((json.error as { code: string; message: string })).toEqual({
+        expect(json.error as { code: string; message: string }).toEqual({
             code: "auth_or_permission",
             message: "Forbidden",
         });

@@ -124,8 +124,13 @@ describe("users and roles tools", () => {
             "send-email": "false",
             email: "new@acme.test",
         });
-        const changed = envelope(res).changed as { created: Array<{ type: string; name?: string }> };
-        expect(changed.created[0]).toMatchObject({ type: "workspace_member", name: "new@acme.test" });
+        const changed = envelope(res).changed as {
+            created: Array<{ type: string; name?: string }>;
+        };
+        expect(changed.created[0]).toMatchObject({
+            type: "workspace_member",
+            name: "new@acme.test",
+        });
     });
 
     it("clockify_member_profile_update assembles ONLY the provided fields into the body", async () => {
@@ -149,6 +154,24 @@ describe("users and roles tools", () => {
         expect(changed.updated[0]).toEqual({ type: "member_profile", id: "user-1" });
     });
 
+    it.each([
+        ["weekStart", { weekStart: "FUNDAY" }],
+        ["workingDays", { workingDays: ["MONDAY", "FUNDAY"] }],
+    ] as const)(
+        "clockify_member_profile_update rejects invalid %s before dispatch",
+        async (_field, invalid) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(usersContext(captured));
+            const res = await client.callTool({
+                name: "clockify_member_profile_update",
+                arguments: { userId: "user-1", ...invalid },
+            });
+
+            expect(res.isError).toBe(true);
+            expect(captured.profileUpdate).toBeUndefined();
+        },
+    );
+
     it("clockify_users_grant_role forwards the role assignment and is a privileged write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
@@ -163,7 +186,9 @@ describe("users and roles tools", () => {
             role: "PROJECT_MANAGER",
             entityId: "proj-1",
         });
-        const tool = (await client.listTools()).tools.find((t) => t.name === "clockify_users_grant_role");
+        const tool = (await client.listTools()).tools.find(
+            (t) => t.name === "clockify_users_grant_role",
+        );
         expect(tool?.annotations?.readOnlyHint).toBe(false);
         expect(tool?.description ?? "").toContain("privileged");
     });
@@ -176,7 +201,11 @@ describe("users and roles tools", () => {
             arguments: { userId: "user-1", role: "TEAM_MANAGER", entityId: "ws-1" },
         });
         expect(res.isError).toBeFalsy();
-        expect(captured.removeRole).toMatchObject({ userId: "user-1", role: "TEAM_MANAGER", entityId: "ws-1" });
+        expect(captured.removeRole).toMatchObject({
+            userId: "user-1",
+            role: "TEAM_MANAGER",
+            entityId: "ws-1",
+        });
         expect((envelope(res).data as { revoked?: boolean }).revoked).toBe(true);
     });
 

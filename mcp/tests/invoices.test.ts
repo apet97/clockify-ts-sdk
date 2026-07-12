@@ -15,7 +15,10 @@ afterEach(async () => {
  * Mock the invoice client. `get` returns a representative GET shape: tax/discount
  * are ×100-scaled ints, plus read-only fields (amount/status) the PUT rejects.
  */
-function invoicesContext(captured: Record<string, unknown>): Context {
+function invoicesContext(
+    captured: Record<string, unknown>,
+    invoiceOverrides: Record<string, unknown> = {},
+): Context {
     return {
         workspaceId: "ws-1",
         client: {
@@ -30,11 +33,17 @@ function invoicesContext(captured: Record<string, unknown>): Context {
                         note: "Original note",
                         subject: "Original subject",
                         billFrom: "ACME Inc.",
+                        clientAddress: "Main Street 1",
+                        issuedDate: "2026-06-01T00:00:00Z",
+                        dueDate: "2026-07-01T00:00:00Z",
+                        taxType: "NONE",
+                        visibleZeroFields: ["TAX_2"],
                         discount: 1000, // 10%
                         tax: 1500, // 15%
                         tax2: 0,
                         amount: 99999, // read-only/computed — must not echo back
                         status: "SENT",
+                        ...invoiceOverrides,
                     };
                 },
                 update: async (req: unknown) => {
@@ -93,7 +102,10 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
         // …and the untouched ones survived the replace-semantics PUT…
         expect(update.subject).toBe("Original subject");
         expect(update.billFrom).toBe("ACME Inc.");
+        expect(update.clientAddress).toBe("Main Street 1");
         expect(update.number).toBe("INV-001");
+        expect(update.taxType).toBe("NONE");
+        expect(update.visibleZeroFields).toEqual(["TAX_2"]);
         // …and tax/discount were name+scale mapped, not zeroed…
         expect(update.taxPercent).toBe(15);
         expect(update.discountPercent).toBe(10);
@@ -119,6 +131,42 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
         const update = captured.update as Record<string, unknown>;
         expect(update.taxPercent).toBe(20);
         expect(update.discountPercent).toBe(0);
+    });
+
+    it("rejects a no-op without sending PUT", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_update",
+            arguments: { invoiceId: "inv-1", note: "Original note" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({ workspaceId: "ws-1", invoiceId: "inv-1" });
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects invalid patch dates locally before GET or PUT", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_update",
+            arguments: { invoiceId: "inv-1", dueDate: "not-a-date" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toBeUndefined();
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects missing current replacement fields before PUT", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured, { dueDate: undefined }));
+        const res = await client.callTool({
+            name: "clockify_invoices_update",
+            arguments: { invoiceId: "inv-1", note: "New note" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({ workspaceId: "ws-1", invoiceId: "inv-1" });
+        expect(captured.update).toBeUndefined();
     });
 });
 
@@ -169,9 +217,27 @@ describe("clockify_invoices_create — note/subject applied via follow-up PUT", 
         expect(captured.update).toBeUndefined();
         expect(captured.get).toBeUndefined();
     });
+
+    it("rejects an unknown timeViewMode before create", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(invoicesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_invoices_create",
+            arguments: {
+                clientId: "client-1",
+                number: "INV-010",
+                currency: "USD",
+                issuedDate: "2026-06-01",
+                dueDate: "2026-07-01",
+                timeViewMode: "NOPE",
+            },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.create).toBeUndefined();
+    });
 });
 
-describe("clockify_invoices_list — typed multi-status + sort (no wireBody escape)", () => {
+describe("clockify_invoices_list — typed multi-status + sort", () => {
     it("pins only the workspace when no filters are given", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
@@ -270,7 +336,11 @@ describe("clockify_invoices_update_status — sends the invoiceStatus wire field
             arguments: { invoiceId: "inv-1", status: "PAID" },
         });
         expect(res.isError).toBeFalsy();
-        const sent = captured.updateStatus as { workspaceId: string; invoiceId: string; body: Record<string, unknown> };
+        const sent = captured.updateStatus as {
+            workspaceId: string;
+            invoiceId: string;
+            body: Record<string, unknown>;
+        };
         expect(sent.workspaceId).toBe("ws-1");
         expect(sent.invoiceId).toBe("inv-1");
         // The wire requires `invoiceStatus`; a top-level/`status` body is rejected.

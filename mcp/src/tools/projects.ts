@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { archiveThenDeleteProject } from "clockify-sdk-ts-115/ensure";
 import { toMinor } from "clockify-sdk-ts-115/money";
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
@@ -10,6 +10,10 @@ import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
+
+const PROJECT_NAME_SCHEMA = z.string().min(2).max(250);
+const PROJECT_COLOR_SCHEMA = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
+const PROJECT_NOTE_SCHEMA = z.string().max(16_384);
 
 export function registerProjectsTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -57,11 +61,12 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             title: "Create a project",
             description: "Create a project in the pinned workspace.",
             inputSchema: {
-                name: z.string().min(1),
-                clientId: z.string().optional(),
-                color: z.string().optional(),
+                name: PROJECT_NAME_SCHEMA,
+                clientId: z.string().min(1).optional(),
+                color: PROJECT_COLOR_SCHEMA.optional(),
                 billable: z.boolean().optional(),
                 isPublic: z.boolean().optional(),
+                note: PROJECT_NOTE_SCHEMA.optional(),
             },
             annotations: { destructiveHint: false, idempotentHint: false },
         },
@@ -74,6 +79,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                     ...(args.color ? { color: args.color } : {}),
                     ...(args.billable !== undefined ? { billable: args.billable } : {}),
                     ...(args.isPublic !== undefined ? { isPublic: args.isPublic } : {}),
+                    ...(args.note !== undefined ? { note: args.note } : {}),
                 },
             };
             const project = await ctx.client.projects.create(req);
@@ -131,21 +137,32 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 "Update project metadata such as name, client, visibility, color, or archive state.",
             inputSchema: {
                 projectId: z.string().min(1),
-                name: z.string().optional(),
-                clientId: z.string().optional(),
-                color: z.string().optional(),
+                name: PROJECT_NAME_SCHEMA.optional(),
+                clientId: z.string().min(1).optional(),
+                color: PROJECT_COLOR_SCHEMA.optional(),
                 billable: z.boolean().optional(),
                 isPublic: z.boolean().optional(),
                 archived: z.boolean().optional(),
-                note: z.string().optional(),
+                note: PROJECT_NOTE_SCHEMA.optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
+            if (
+                args.name === undefined &&
+                args.clientId === undefined &&
+                args.color === undefined &&
+                args.billable === undefined &&
+                args.isPublic === undefined &&
+                args.archived === undefined &&
+                args.note === undefined
+            ) {
+                throw new Error("at least one project update field is required");
+            }
             const body: ClockifyRequestBody<ClockifyApi.UpdateProjectsRequest> = {};
-            if (args.name) body.name = args.name;
-            if (args.clientId) body.clientId = args.clientId;
-            if (args.color) body.color = args.color;
+            if (args.name !== undefined) body.name = args.name;
+            if (args.clientId !== undefined) body.clientId = args.clientId;
+            if (args.color !== undefined) body.color = args.color;
             if (args.billable !== undefined) body.billable = args.billable;
             if (args.isPublic !== undefined) body.isPublic = args.isPublic;
             if (args.archived !== undefined) body.archived = args.archived;
@@ -231,28 +248,35 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 rateKind: z
                     .enum(["HOURLY", "COST"])
                     .describe("HOURLY = billable rate; COST = internal cost rate."),
-                amount: zNumberLike(z.number()).describe("Rate in major units, e.g. 75 for $75/hr."),
+                amount: zNumberLike(z.number()).describe(
+                    "Rate in major units, e.g. 75 for $75/hr.",
+                ),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             const amountMinor = toMinor(args.amount, "major");
-            const req: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                userId: args.userId,
-                amount: amountMinor,
-            };
-            if (args.since) req.since = args.since;
-            const updated =
-                args.rateKind === "COST"
-                    ? await ctx.client.projects.updateUserCostRate(
-                          wireBody<ClockifyApi.UpdateUserCostRateProjectsRequest>(req),
-                      )
-                    : await ctx.client.projects.updateUserHourlyRate(
-                          wireBody<ClockifyApi.UpdateUserHourlyRateProjectsRequest>(req),
-                      );
+            let updated: unknown;
+            if (args.rateKind === "COST") {
+                const request: ClockifyApi.UpdateUserCostRateProjectsRequest = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                    ...(args.since ? { since: args.since } : {}),
+                };
+                updated = await ctx.client.projects.updateUserCostRate(request);
+            } else {
+                const request: ClockifyApi.UpdateUserHourlyRateProjectsRequest = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                    ...(args.since ? { since: args.since } : {}),
+                };
+                updated = await ctx.client.projects.updateUserHourlyRate(request);
+            }
             return successResult(
                 "clockify_projects_set_member_rate",
                 updated,

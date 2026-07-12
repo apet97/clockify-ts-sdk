@@ -2,7 +2,7 @@
  * Timesheet approval workflow tools.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -77,12 +77,11 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
-            const submitted = await ctx.client.approvals.submit(
-                wireBody<ClockifyApi.SubmitApprovalsRequest>({
-                    workspaceId: ctx.workspaceId,
-                    body: { period: args.period, periodStart: args.periodStart },
-                }),
-            );
+            const request: ClockifyApi.SubmitApprovalsRequest = {
+                workspaceId: ctx.workspaceId,
+                body: { period: args.period, periodStart: args.periodStart },
+            };
+            const submitted = await ctx.client.approvals.submit(request);
             return successResult("clockify_approvals_submit", submitted, {
                 workspaceId: ctx.workspaceId,
             });
@@ -103,16 +102,15 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const updated = await ctx.client.approvals.updateStatus(
-                wireBody<ClockifyApi.UpdateStatusApprovalsRequest>({
-                    workspaceId: ctx.workspaceId,
-                    approvalRequestId: args.approvalRequestId,
-                    body: {
-                        state: args.state,
-                        ...(args.note !== undefined ? { note: args.note } : {}),
-                    },
-                }),
-            );
+            const request: ClockifyApi.UpdateStatusApprovalsRequest = {
+                workspaceId: ctx.workspaceId,
+                approvalRequestId: args.approvalRequestId,
+                body: {
+                    state: args.state,
+                    ...(args.note !== undefined ? { note: args.note } : {}),
+                },
+            };
+            const updated = await ctx.client.approvals.updateStatus(request);
             return successResult("clockify_approvals_update_state", updated, {
                 workspaceId: ctx.workspaceId,
                 approvalRequestId: args.approvalRequestId,

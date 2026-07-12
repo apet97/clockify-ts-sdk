@@ -1,4 +1,4 @@
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 
 import { errorResult, successResult } from "../../result.js";
 
@@ -7,6 +7,78 @@ import { logWork } from "./time-tracking.js";
 import type { AnyRecord, EntityRef, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
 import type { ChangeSet } from "./types.js";
+
+type DemoTaskUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>;
+type DemoClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
+
+function demoEntity(value: unknown, type: "task" | "client"): AnyRecord {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error(`cannot archive demo ${type}: current state is missing or invalid`);
+    }
+    return value as AnyRecord;
+}
+
+function requiredDemoName(value: AnyRecord, type: "task" | "client"): string {
+    const name = value.name;
+    if (typeof name !== "string" || name.length === 0) {
+        throw new Error(`cannot archive demo ${type}: current name is missing or invalid`);
+    }
+    return name;
+}
+
+function stringArrayField(value: unknown, field: string): string[] {
+    if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+        throw new Error(`cannot archive demo task: current ${field} is invalid`);
+    }
+    return [...value];
+}
+
+function demoTaskUpdateBody(value: unknown): DemoTaskUpdateBody {
+    const task = demoEntity(value, "task");
+    const body: DemoTaskUpdateBody = { name: requiredDemoName(task, "task"), status: "DONE" };
+    if (task.assigneeId !== undefined) {
+        if (typeof task.assigneeId !== "string") {
+            throw new Error("cannot archive demo task: current assigneeId is invalid");
+        }
+        body.assigneeId = task.assigneeId;
+    }
+    for (const field of ["assigneeIds", "userGroupIds"] as const) {
+        if (task[field] !== undefined) body[field] = stringArrayField(task[field], field);
+    }
+    if (task.billable !== undefined) {
+        if (typeof task.billable !== "boolean") {
+            throw new Error("cannot archive demo task: current billable is invalid");
+        }
+        body.billable = task.billable;
+    }
+    if (task.budgetEstimate !== undefined) {
+        if (typeof task.budgetEstimate !== "number" || !Number.isFinite(task.budgetEstimate)) {
+            throw new Error("cannot archive demo task: current budgetEstimate is invalid");
+        }
+        body.budgetEstimate = task.budgetEstimate;
+    }
+    if (task.estimate !== undefined) {
+        if (typeof task.estimate !== "string") {
+            throw new Error("cannot archive demo task: current estimate is invalid");
+        }
+        body.estimate = task.estimate;
+    }
+    return body;
+}
+
+function demoClientUpdateBody(value: unknown): DemoClientUpdateBody {
+    const client = demoEntity(value, "client");
+    const body: DemoClientUpdateBody = { name: requiredDemoName(client, "client"), archived: true };
+    for (const field of ["address", "currencyCode", "email", "note"] as const) {
+        if (client[field] !== undefined) {
+            if (typeof client[field] !== "string") {
+                throw new Error(`cannot archive demo client: current ${field} is invalid`);
+            }
+            body[field] = client[field];
+        }
+    }
+    return body;
+}
 
 export async function demoSeed(ctx: Context, args: AnyRecord) {
     const prefix = str(args.prefix) || `DEMO-${str(args.run_id) || "phase1"}`;
@@ -60,7 +132,9 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
     if (!/^(DEMO-|sdk-demo-)/.test(prefix)) {
         return errorResult(
             "clockify_demo_cleanup",
-            new Error("demo cleanup only deletes objects under the reserved DEMO-/sdk-demo- prefix"),
+            new Error(
+                "demo cleanup only deletes objects under the reserved DEMO-/sdk-demo- prefix",
+            ),
             {
                 hint: "Use a DEMO- or sdk-demo- prefix, or delete production objects via the confirm-guarded clockify_*_delete tools.",
             },
@@ -76,14 +150,16 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
 
     // Phase 1: read-only discovery of everything the cleanup would touch. No
     // mutation happens before the dry_run -> confirm_token handshake below.
-    const matchedEntries: AnyRecord[] = (await ctx.client.timeEntries.listForUser({
-        workspaceId: ctx.workspaceId,
-        userId,
-        start: str(args.start) || "2026-01-01T00:00:00.000Z",
-        end: str(args.end) || "2026-12-31T23:59:59.999Z",
-        page: 1,
-        "page-size": 200,
-    }))
+    const matchedEntries: AnyRecord[] = (
+        await ctx.client.timeEntries.listForUser({
+            workspaceId: ctx.workspaceId,
+            userId,
+            start: str(args.start) || "2026-01-01T00:00:00.000Z",
+            end: str(args.end) || "2026-12-31T23:59:59.999Z",
+            page: 1,
+            "page-size": 200,
+        })
+    )
         .map((entry) => ({ ...entry }))
         .filter((item) => str(item.description).startsWith(prefix));
 
@@ -154,15 +230,18 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
                 // active task", live-verified) - mark DONE first, like
                 // clockify_tasks_delete and the createWorkPackage undo. The list
                 // row already carries the name the replace-PUT requires.
-                await ctx.client.tasks.update(
-                    wireBody<ClockifyApi.UpdateTasksRequest>({
-                        workspaceId: ctx.workspaceId,
-                        projectId: idOf(project),
-                        taskId: idOf(task),
-                        name: str(task.name),
-                        status: "DONE",
-                    }),
-                );
+                const current = await ctx.client.tasks.get({
+                    workspaceId: ctx.workspaceId,
+                    projectId: idOf(project),
+                    taskId: idOf(task),
+                });
+                const request: ClockifyApi.UpdateTasksRequest = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: idOf(project),
+                    taskId: idOf(task),
+                    body: demoTaskUpdateBody(current),
+                };
+                await ctx.client.tasks.update(request);
                 await ctx.client.tasks.delete({
                     workspaceId: ctx.workspaceId,
                     projectId: idOf(project),
@@ -195,13 +274,16 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
 
     for (const client of clients) {
         await cleanupEntity("client", client, deleted, warnings, async () => {
-            await ctx.client.clients.update(
-                wireBody<ClockifyApi.UpdateClientsRequest>({
-                    workspaceId: ctx.workspaceId,
-                    clientId: idOf(client),
-                    body: { name: str(client.name), archived: true },
-                }),
-            );
+            const current = await ctx.client.clients.get({
+                workspaceId: ctx.workspaceId,
+                clientId: idOf(client),
+            });
+            const request: ClockifyApi.UpdateClientsRequest = {
+                workspaceId: ctx.workspaceId,
+                clientId: idOf(client),
+                body: demoClientUpdateBody(current),
+            };
+            await ctx.client.clients.update(request);
             await ctx.client.clients.delete({
                 workspaceId: ctx.workspaceId,
                 clientId: idOf(client),

@@ -38,8 +38,8 @@ function capturingContext(calls: string[]): Context {
             },
             tasks: {
                 get: async () => ({ id: "t1", name: "Task" }),
-                update: async (req: { status?: string }) => {
-                    calls.push(`task.update:status=${req.status}`);
+                update: async (req: { body?: { status?: string } }) => {
+                    calls.push(`task.update:status=${req.body?.status}`);
                     return req;
                 },
                 delete: async () => {
@@ -76,10 +76,16 @@ async function connect(ctx: Context): Promise<Client> {
 }
 
 function dataOf(res: unknown): Record<string, unknown> {
-    return JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}") as Record<string, unknown>;
+    return JSON.parse(
+        (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}",
+    ) as Record<string, unknown>;
 }
 
-async function confirmAndExecute(client: Client, name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
+async function confirmAndExecute(
+    client: Client,
+    name: string,
+    args: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
     const dry = dataOf(await client.callTool({ name, arguments: { ...args, dry_run: true } }));
     const token = (dry.data as { confirm_token?: string }).confirm_token;
     expect(token).toBeTruthy();
@@ -90,7 +96,9 @@ describe("destructive deletes archive/DONE before deleting", () => {
     it("clockify_projects_delete archives (archived:true) BEFORE deleting", async () => {
         const calls: string[] = [];
         const client = await connect(capturingContext(calls));
-        const res = await confirmAndExecute(client, "clockify_projects_delete", { projectId: "p1" });
+        const res = await confirmAndExecute(client, "clockify_projects_delete", {
+            projectId: "p1",
+        });
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["project.update:archived=true", "project.delete"]);
@@ -101,7 +109,10 @@ describe("destructive deletes archive/DONE before deleting", () => {
     it("clockify_tasks_delete marks the task DONE BEFORE deleting", async () => {
         const calls: string[] = [];
         const client = await connect(capturingContext(calls));
-        const res = await confirmAndExecute(client, "clockify_tasks_delete", { projectId: "p1", taskId: "t1" });
+        const res = await confirmAndExecute(client, "clockify_tasks_delete", {
+            projectId: "p1",
+            taskId: "t1",
+        });
         expect(res.ok).toBe(true);
         expect((res.data as { deleted?: boolean }).deleted).toBe(true);
         expect(calls).toEqual(["task.update:status=DONE", "task.delete"]);
@@ -125,7 +136,8 @@ describe("destructive deletes archive/DONE before deleting", () => {
     it("clockify_clients_delete errors (no update/delete) when the client has no name", async () => {
         const calls: string[] = [];
         const ctx = capturingContext(calls);
-        (ctx.client as unknown as { clients: { get: () => Promise<unknown> } }).clients.get = async () => ({ id: "c1" });
+        (ctx.client as unknown as { clients: { get: () => Promise<unknown> } }).clients.get =
+            async () => ({ id: "c1" });
         const client = await connect(ctx);
         const res = await confirmAndExecute(client, "clockify_clients_delete", { clientId: "c1" });
         expect(res.ok).toBe(false);

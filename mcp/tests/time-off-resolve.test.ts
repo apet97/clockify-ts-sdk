@@ -24,9 +24,12 @@ function existingPolicy(): Record<string, unknown> {
         id: "pol-1",
         name: "PTO",
         color: "#00ff00",
+        allowHalfDay: false,
         allowNegativeBalance: true,
-        approve: true,
+        approve: { requiresApproval: false },
         archived: false,
+        everyoneIncludingNew: false,
+        hasExpiration: false,
         userIds: [BOB],
         userGroupIds: [ENG],
     };
@@ -117,7 +120,10 @@ describe("time-off policies resolve NAME -> id", () => {
             arguments: { name: "Sick", userIds: ["Alice"], userGroupIds: ["Engineering"] },
         });
         expect(res.isError).toBeFalsy();
-        const create = captured.create as { users?: { ids?: string[] }; userGroups?: { ids?: string[] } };
+        const create = captured.create as {
+            users?: { ids?: string[] };
+            userGroups?: { ids?: string[] };
+        };
         expect(create.users?.ids).toEqual([ALICE]);
         expect(create.userGroups?.ids).toEqual([ENG]);
     });
@@ -144,7 +150,10 @@ describe("time-off policies resolve NAME -> id", () => {
             arguments: { policyId: "pol-1", userIds: ["Alice"] },
         });
         expect(res.isError).toBeFalsy();
-        const update = captured.update as { users?: { ids?: string[] }; userGroups?: { ids?: string[] } };
+        const update = captured.update as {
+            users?: { ids?: string[] };
+            userGroups?: { ids?: string[] };
+        };
         expect(update.users?.ids).toEqual([ALICE]);
         // Group not supplied -> carried-forward ENG untouched (not re-resolved).
         expect(update.userGroups?.ids).toEqual([ENG]);

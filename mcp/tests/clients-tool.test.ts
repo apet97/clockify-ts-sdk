@@ -9,8 +9,7 @@
  *   - create: note-present vs note-absent body branch, the
  *     `changed.created` write receipt + id, and 4xx mapping
  *   - get: pin-through plus 4xx mapping
- *   - update: each optional-field branch (the truthy `name` guard vs the
- *     `!== undefined` note/address/archived guards), the wireBody body
+ *   - update: full-replacement preservation, no-op rejection, the typed body
  *     envelope, the `changed.updated` receipt, and 4xx mapping
  *   - delete: the confirm-guard "no dry_run / no token" rejection, the
  *     dry_run preview shape (token/expiry/hash/risk-class/next), and a
@@ -47,7 +46,10 @@ interface ClientsStubOptions {
  * configured error). Mirrors the `as never` client idiom used by the
  * sibling domain-tool tests.
  */
-function clientsContext(captured: Record<string, unknown>, options: ClientsStubOptions = {}): Context {
+function clientsContext(
+    captured: Record<string, unknown>,
+    options: ClientsStubOptions = {},
+): Context {
     return {
         workspaceId: "ws-1",
         client: {
@@ -100,7 +102,10 @@ function responseAware<T>(data: T, headers: Record<string, string>) {
     const promise = Promise.resolve(data) as Promise<T> & {
         withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
     };
-    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    promise.withRawResponse = async () => ({
+        data,
+        rawResponse: { headers: new Headers(headers) },
+    });
     return promise;
 }
 
@@ -112,14 +117,21 @@ function httpError(status: number, message: string): Error {
 describe("clockify_clients_list", () => {
     it("applies defaults and omits the name/archived filter slots when absent", async () => {
         const captured: Record<string, unknown> = {};
-        const client = await connect(clientsContext(captured, { listResult: [{ id: "c-1" }, { id: "c-2" }] }));
+        const client = await connect(
+            clientsContext(captured, { listResult: [{ id: "c-1" }, { id: "c-2" }] }),
+        );
         const res = await client.callTool({ name: "clockify_clients_list", arguments: {} });
         expect(res.isError).toBeFalsy();
         // Defaults: page 1, page-size 50. No name/archived keys when not supplied.
         expect(captured.list).toEqual({ workspaceId: "ws-1", page: 1, "page-size": 50 });
         const json = envelope(res);
         expect(json.ok).toBe(true);
-        const meta = json.meta as { count?: number; page?: number; pageSize?: number; hasMore?: boolean };
+        const meta = json.meta as {
+            count?: number;
+            page?: number;
+            pageSize?: number;
+            hasMore?: boolean;
+        };
         expect(meta.count).toBe(2);
         expect(meta.page).toBe(1);
         expect(meta.pageSize).toBe(50);
@@ -129,7 +141,9 @@ describe("clockify_clients_list", () => {
 
     it("threads the name + archived filters and explicit pagination onto the request", async () => {
         const captured: Record<string, unknown> = {};
-        const client = await connect(clientsContext(captured, { listResult: [{ id: "c-1" }, { id: "c-2" }] }));
+        const client = await connect(
+            clientsContext(captured, { listResult: [{ id: "c-1" }, { id: "c-2" }] }),
+        );
         await client.callTool({
             name: "clockify_clients_list",
             arguments: { page: 3, pageSize: 2, name: "Acme", archived: true },
@@ -152,7 +166,9 @@ describe("clockify_clients_list", () => {
 
     it("reports hasMore:true when the returned rows fill the page", async () => {
         const captured: Record<string, unknown> = {};
-        const client = await connect(clientsContext(captured, { listResult: [{ id: "a" }, { id: "b" }] }));
+        const client = await connect(
+            clientsContext(captured, { listResult: [{ id: "a" }, { id: "b" }] }),
+        );
         const res = await client.callTool({
             name: "clockify_clients_list",
             arguments: { pageSize: 2 },
@@ -205,7 +221,9 @@ describe("clockify_clients_create", () => {
         expect(captured.create).toEqual({ workspaceId: "ws-1", body: { name: "Acme" } });
         const json = envelope(res);
         expect(json.entity).toBe("client");
-        const created = (json.changed as { created?: Array<{ id?: string; name?: string; type?: string }> }).created;
+        const created = (
+            json.changed as { created?: Array<{ id?: string; name?: string; type?: string }> }
+        ).created;
         expect(created?.[0]).toEqual({ type: "client", id: "c-99", name: "Acme" });
         // Chain-to-next hint: create a project for the new client, carrying its id.
         const next = json.next as Array<{ tool?: string; args?: { clientId?: string } }>;
@@ -220,7 +238,10 @@ describe("clockify_clients_create", () => {
             name: "clockify_clients_create",
             arguments: { name: "Acme", note: "VIP" },
         });
-        expect(captured.create).toEqual({ workspaceId: "ws-1", body: { name: "Acme", note: "VIP" } });
+        expect(captured.create).toEqual({
+            workspaceId: "ws-1",
+            body: { name: "Acme", note: "VIP" },
+        });
     });
 
     it("rejects a blank name at the schema before any create call", async () => {
@@ -281,7 +302,7 @@ describe("clockify_clients_get", () => {
 });
 
 describe("clockify_clients_update", () => {
-    it("only includes the supplied fields and wraps them in the wireBody envelope", async () => {
+    it("overlays supplied fields on the current replacement state", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(clientsContext(captured));
         const res = await client.callTool({
@@ -300,20 +321,16 @@ describe("clockify_clients_update", () => {
         expect(updated?.[0]?.id).toBe("c-1");
     });
 
-    it("keeps empty-string note/address (!== undefined) but drops an empty name (truthy guard)", async () => {
+    it("rejects an empty replacement name before reading or writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(clientsContext(captured));
-        await client.callTool({
+        const res = await client.callTool({
             name: "clockify_clients_update",
             arguments: { clientId: "c-1", name: "", note: "", address: "" },
         });
-        // The truthy `if (args.name)` guard drops "" but the `!== undefined`
-        // guards keep "" for note/address.
-        expect(captured.update).toEqual({
-            workspaceId: "ws-1",
-            clientId: "c-1",
-            body: { note: "", address: "" },
-        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toBeUndefined();
+        expect(captured.update).toBeUndefined();
     });
 
     it("supports an archived:false update via the !== undefined branch", async () => {
@@ -323,7 +340,56 @@ describe("clockify_clients_update", () => {
             name: "clockify_clients_update",
             arguments: { clientId: "c-1", archived: false },
         });
-        expect((captured.update as { body?: { archived?: boolean } }).body).toEqual({ archived: false });
+        expect((captured.update as { body?: { archived?: boolean; name?: string } }).body).toEqual({
+            name: "Acme",
+            archived: false,
+        });
+    });
+
+    it("preserves false, zero-like empty strings, currency, and untouched editable fields", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            clientsContext(captured, {
+                getResult: {
+                    id: "c-1",
+                    name: "Acme",
+                    address: "",
+                    currencyCode: "USD",
+                    email: "",
+                    note: "old",
+                    archived: false,
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_clients_update",
+            arguments: { clientId: "c-1", note: "" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            clientId: "c-1",
+            body: {
+                name: "Acme",
+                address: "",
+                currencyCode: "USD",
+                email: "",
+                note: "",
+                archived: false,
+            },
+        });
+    });
+
+    it("rejects a no-op after reading current state and never mutates", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(clientsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_clients_update",
+            arguments: { clientId: "c-1" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({ workspaceId: "ws-1", clientId: "c-1" });
+        expect(captured.update).toBeUndefined();
     });
 
     it("maps a 400 from update to invalid_request", async () => {
@@ -354,7 +420,11 @@ describe("clockify_clients_delete confirm-guard", () => {
         expect(captured.update).toBeUndefined();
         const json = envelope(res);
         expect((json.error as { code?: string }).code).toBe("invalid_request");
-        const recovery = json.recovery as { hint?: string; args?: { dry_run?: boolean }; retryable?: boolean };
+        const recovery = json.recovery as {
+            hint?: string;
+            args?: { dry_run?: boolean };
+            retryable?: boolean;
+        };
         expect(recovery.hint).toMatch(/dry_run/);
         expect(recovery.args?.dry_run).toBe(true);
         expect(recovery.retryable).toBe(true);
@@ -387,7 +457,10 @@ describe("clockify_clients_delete confirm-guard", () => {
         expect(typeof data.expires_at).toBe("string");
         expect(typeof data.preview_hash).toBe("string");
         expect(data.risk_class).toBe("client_delete");
-        const next = json.next as Array<{ tool?: string; args?: { clientId?: string; confirm_token?: string } }>;
+        const next = json.next as Array<{
+            tool?: string;
+            args?: { clientId?: string; confirm_token?: string };
+        }>;
         expect(next[0]?.tool).toBe("clockify_clients_delete");
         expect(next[0]?.args?.clientId).toBe("c-1");
         expect(next[0]?.args?.confirm_token).toBe(data.confirm_token);

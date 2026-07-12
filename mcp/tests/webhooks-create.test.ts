@@ -23,14 +23,37 @@ afterEach(async () => {
     teardown = async () => {};
 });
 
-function webhooksContext(captured: Record<string, unknown>): Context {
+function webhooksContext(
+    captured: Record<string, unknown>,
+    currentOverrides: Record<string, unknown> = {},
+): Context {
     return {
         workspaceId: "ws-1",
         client: {
             webhooks: {
+                get: async (req: unknown) => {
+                    captured.get = req;
+                    return {
+                        id: "wh-1",
+                        name: "stripe",
+                        url: "https://example.com/hook",
+                        webhookEvent: "NEW_PROJECT",
+                        triggerSourceType: "WORKSPACE_ID",
+                        triggerSource: ["ws-1"],
+                        ...currentOverrides,
+                    };
+                },
                 create: async (req: unknown) => {
                     captured.create = req;
-                    return { id: "wh-1", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" };
+                    return {
+                        id: "wh-1",
+                        url: "https://example.com/hook",
+                        webhookEvent: "NEW_PROJECT",
+                    };
+                },
+                update: async (req: unknown) => {
+                    captured.update = req;
+                    return { id: "wh-1" };
                 },
             },
         } as never,
@@ -87,6 +110,8 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
             name: "stripe",
             url: "https://example.com/hook",
             webhookEvent: "NEW_PROJECT",
+            triggerSourceType: "WORKSPACE_ID",
+            triggerSource: ["ws-1"],
         });
         const json = envelope(res);
         const changed = json.changed as { created: Array<Record<string, unknown>> };
@@ -130,6 +155,72 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
         expect(res.isError).toBe(true);
         expect(captured.create).toBeUndefined();
     });
+});
+
+describe("clockify_webhooks_update — full replacement", () => {
+    it("GETs the webhook and preserves all five required fields", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_update",
+            arguments: { webhookId: "wh-1", name: "renamed" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.get).toEqual({ workspaceId: "ws-1", webhookId: "wh-1" });
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            webhookId: "wh-1",
+            body: {
+                name: "renamed",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+                triggerSourceType: "WORKSPACE_ID",
+                triggerSource: ["ws-1"],
+            },
+        });
+    });
+
+    it("rejects a no-op after GET and never updates", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(webhooksContext(captured));
+        const res = await client.callTool({
+            name: "clockify_webhooks_update",
+            arguments: { webhookId: "wh-1" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({ workspaceId: "ws-1", webhookId: "wh-1" });
+        expect(captured.update).toBeUndefined();
+    });
+
+    it.each(["x", "x".repeat(31)])(
+        "rejects non-canonical webhook name %j before GET",
+        async (name) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(webhooksContext(captured));
+            const res = await client.callTool({
+                name: "clockify_webhooks_update",
+                arguments: { webhookId: "wh-1", name },
+            });
+            expect(res.isError).toBe(true);
+            expect(captured.get).toBeUndefined();
+            expect(captured.update).toBeUndefined();
+        },
+    );
+
+    it.each(["x", "x".repeat(31)])(
+        "rejects legacy current name %j before replacing another field",
+        async (name) => {
+            const captured: Record<string, unknown> = {};
+            const client = await connect(webhooksContext(captured, { name }));
+            const res = await client.callTool({
+                name: "clockify_webhooks_update",
+                arguments: { webhookId: "wh-1", webhookEvent: "NEW_TASK" },
+            });
+            expect(res.isError).toBe(true);
+            expect(captured.get).toEqual({ workspaceId: "ws-1", webhookId: "wh-1" });
+            expect(captured.update).toBeUndefined();
+        },
+    );
 });
 
 describe("clockify_setup_webhook — full WebhookEventType set (MCP-01)", () => {

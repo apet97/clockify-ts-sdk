@@ -4,18 +4,36 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
+import { recordExpense, scheduleWork } from "../src/tools/workflows/business.js";
+import { createWorkPackage } from "../src/tools/workflows/resolve.js";
 
 const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice Example" };
 
 type FakeState = {
-    clients: Array<{ id: string; name: string; archived?: boolean }>;
-    projects: Array<{ id: string; name: string; clientId?: string; billable?: boolean; archived?: boolean }>;
+    clients: Array<{
+        id: string;
+        name: string;
+        archived?: boolean;
+        address?: string;
+        currencyCode?: string;
+        email?: string;
+        note?: string;
+    }>;
+    projects: Array<{
+        id: string;
+        name: string;
+        clientId?: string;
+        billable?: boolean;
+        archived?: boolean;
+    }>;
     tasks: Array<{ id: string; name: string; projectId: string }>;
     tags: Array<{ id: string; name: string }>;
     entries: Array<Record<string, unknown>>;
     clientListRequests: unknown[];
     cleanupRequests: unknown[];
     webhookCreates: number;
+    webhookRequests: unknown[];
+    schedulingCreates: number;
 };
 
 function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } {
@@ -28,6 +46,8 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
         clientListRequests: [],
         cleanupRequests: [],
         webhookCreates: 0,
+        webhookRequests: [],
+        schedulingCreates: 0,
     };
     return {
         state,
@@ -43,15 +63,31 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                     return state.clients.filter((client) => !req.name || client.name === req.name);
                 },
                 create: async (body: { name?: string; body?: { name?: string } }) => {
-                    const client = { id: `c${state.clients.length + 1}`, name: body.name ?? body.body?.name ?? "" };
+                    const client = {
+                        id: `c${state.clients.length + 1}`,
+                        name: body.name ?? body.body?.name ?? "",
+                    };
                     state.clients.push(client);
                     return client;
                 },
-                update: async (body: { clientId: string; name?: string; archived?: boolean }) => {
+                get: async (body: { clientId: string }) => {
+                    state.cleanupRequests.push({ type: "client.get", body });
+                    const client = state.clients.find((item) => item.id === body.clientId);
+                    if (!client)
+                        throw Object.assign(new Error("client not found"), { statusCode: 404 });
+                    return client;
+                },
+                update: async (body: {
+                    clientId: string;
+                    name?: string;
+                    archived?: boolean;
+                    body?: Record<string, unknown>;
+                }) => {
                     state.cleanupRequests.push({ type: "client.update", body });
                     const client = state.clients.find((item) => item.id === body.clientId);
-                    if (!client) throw Object.assign(new Error("client not found"), { statusCode: 404 });
-                    Object.assign(client, body);
+                    if (!client)
+                        throw Object.assign(new Error("client not found"), { statusCode: 404 });
+                    Object.assign(client, body.body ?? body);
                     return client;
                 },
                 delete: async (body: { clientId: string }) => {
@@ -64,7 +100,8 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 list: async (req: { name?: string; clients?: string[] }) =>
                     state.projects.filter((project) => {
                         if (req.name && project.name !== req.name) return false;
-                        if (req.clients?.length && !req.clients.includes(project.clientId ?? "")) return false;
+                        if (req.clients?.length && !req.clients.includes(project.clientId ?? ""))
+                            return false;
                         return true;
                     }),
                 create: async (body: { name: string; clientId?: string; billable?: boolean }) => {
@@ -85,31 +122,54 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 update: async (body: { projectId: string; name?: string; archived?: boolean }) => {
                     state.cleanupRequests.push({ type: "project.update", body });
                     const project = state.projects.find((item) => item.id === body.projectId);
-                    if (!project) throw Object.assign(new Error("project not found"), { statusCode: 404 });
+                    if (!project)
+                        throw Object.assign(new Error("project not found"), { statusCode: 404 });
                     Object.assign(project, body);
                     return project;
                 },
                 delete: async (body: { projectId: string }) => {
                     state.cleanupRequests.push({ type: "project.delete", body });
-                    state.projects = state.projects.filter((project) => project.id !== body.projectId);
+                    state.projects = state.projects.filter(
+                        (project) => project.id !== body.projectId,
+                    );
                     return {};
                 },
             },
             tasks: {
                 list: async (req: { projectId: string; name?: string }) =>
                     state.tasks.filter(
-                        (task) => task.projectId === req.projectId && (!req.name || task.name === req.name),
+                        (task) =>
+                            task.projectId === req.projectId &&
+                            (!req.name || task.name === req.name),
                     ),
                 create: async (body: { projectId: string; name: string }) => {
-                    const task = { id: `ta${state.tasks.length + 1}`, name: body.name, projectId: body.projectId };
+                    const task = {
+                        id: `ta${state.tasks.length + 1}`,
+                        name: body.name,
+                        projectId: body.projectId,
+                    };
                     state.tasks.push(task);
                     return task;
                 },
-                update: async (body: { projectId: string; taskId: string; name?: string; status?: string }) => {
+                get: async (body: { projectId: string; taskId: string }) => {
+                    state.cleanupRequests.push({ type: "task.get", body });
+                    const task = state.tasks.find((item) => item.id === body.taskId);
+                    if (!task)
+                        throw Object.assign(new Error("task not found"), { statusCode: 404 });
+                    return task;
+                },
+                update: async (body: {
+                    projectId: string;
+                    taskId: string;
+                    name?: string;
+                    status?: string;
+                    body?: Record<string, unknown>;
+                }) => {
                     state.cleanupRequests.push({ type: "task.update", body });
                     const task = state.tasks.find((item) => item.id === body.taskId);
-                    if (!task) throw Object.assign(new Error("task not found"), { statusCode: 404 });
-                    Object.assign(task, body);
+                    if (!task)
+                        throw Object.assign(new Error("task not found"), { statusCode: 404 });
+                    Object.assign(task, body.body ?? body);
                     return task;
                 },
                 delete: async (body: { taskId: string }) => {
@@ -144,7 +204,11 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                     return state.entries.slice((page - 1) * size, page * size);
                 },
                 create: async (body: Record<string, unknown>) => {
-                    const entry = { id: `e${state.entries.length + 1}`, userId: fakeUser.id, ...body };
+                    const entry = {
+                        id: `e${state.entries.length + 1}`,
+                        userId: fakeUser.id,
+                        ...body,
+                    };
                     state.entries.push(entry);
                     return entry;
                 },
@@ -154,8 +218,11 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                         description: "missing",
                     },
                 update: async (body: Record<string, unknown>) => {
-                    const entry = state.entries.find((candidate) => candidate.id === body.timeEntryId);
-                    if (!entry) throw Object.assign(new Error("entry not found"), { statusCode: 404 });
+                    const entry = state.entries.find(
+                        (candidate) => candidate.id === body.timeEntryId,
+                    );
+                    if (!entry)
+                        throw Object.assign(new Error("entry not found"), { statusCode: 404 });
                     Object.assign(entry, body.body ?? body);
                     return entry;
                 },
@@ -183,11 +250,16 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
             },
             scheduling: {
                 create: async (body: Record<string, unknown>) => ({ id: "sch-1", ...body }),
+                createRecurring: async (body: Record<string, unknown>) => {
+                    state.schedulingCreates += 1;
+                    return [{ id: "sch-1", ...body }];
+                },
                 list: async () => [],
             },
             webhooks: {
                 create: async (body: Record<string, unknown>) => {
                     state.webhookCreates += 1;
+                    state.webhookRequests.push(body);
                     return { id: "wh-1", ...body };
                 },
                 list: async () => ({ webhooks: [] }),
@@ -247,10 +319,14 @@ describe("workflow tools", () => {
             ]),
         );
         expect(tools.length).toBeGreaterThanOrEqual(105);
-        expect(tools.find((tool) => tool.name === "clockify_review_day")?.annotations).toMatchObject({
+        expect(
+            tools.find((tool) => tool.name === "clockify_review_day")?.annotations,
+        ).toMatchObject({
             readOnlyHint: true,
         });
-        expect(tools.find((tool) => tool.name === "clockify_setup_webhook")?.annotations).toMatchObject({
+        expect(
+            tools.find((tool) => tool.name === "clockify_setup_webhook")?.annotations,
+        ).toMatchObject({
             destructiveHint: true,
         });
     });
@@ -263,7 +339,7 @@ describe("workflow tools", () => {
             expect(tool, `${name} should be registered`).toBeDefined();
             expect(tool?.description ?? "").not.toMatch(/gap|overlap/i);
             const props =
-                ((tool?.inputSchema as { properties?: Record<string, unknown> }).properties) ?? {};
+                (tool?.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
             expect(Object.keys(props)).not.toContain("workday_start");
             expect(Object.keys(props)).not.toContain("workday_end");
             expect(Object.keys(props)).not.toContain("min_gap_minutes");
@@ -346,8 +422,27 @@ describe("workflow tools", () => {
             },
         });
         expect(ctx.state.clients).toHaveLength(1);
-        expect(ctx.state.clientListRequests).toContainEqual(expect.objectContaining({ name: "Acme" }));
+        expect(ctx.state.clientListRequests).toContainEqual(
+            expect.objectContaining({ name: "Acme" }),
+        );
     });
+
+    it.each([
+        ["billable", { billable: "yes" }],
+        ["is_public", { is_public: 1 }],
+        ["color", { color: "not-a-hex-color" }],
+    ] as const)(
+        "createWorkPackage rejects invalid project %s before mutation",
+        async (_field, invalid) => {
+            const ctx = fakeContext();
+
+            await expect(createWorkPackage(ctx, { project: "Launch", ...invalid })).rejects.toThrow(
+                /billable|is_public|color/i,
+            );
+            expect(ctx.state.projects).toHaveLength(0);
+            expect(ctx.state.clients).toHaveLength(0);
+        },
+    );
 
     it("log_work accepts names, resolves them, and returns entry change guidance", async () => {
         const client = await connect(
@@ -442,6 +537,8 @@ describe("workflow tools", () => {
             name: "Audit",
             url: "https://example.com/clockify",
             webhook_event: "NEW_TIME_ENTRY",
+            trigger_source_type: "USER_ID",
+            trigger_source: ["attacker-user"],
         };
         const directRes = await client.callTool({
             name: "clockify_setup_webhook",
@@ -482,6 +579,15 @@ describe("workflow tools", () => {
             changed: { created: [{ type: "webhook", id: "wh-1", name: "Audit" }] },
         });
         expect(ctx.state.webhookCreates).toBe(1);
+        expect(ctx.state.webhookRequests).toEqual([
+            {
+                workspaceId: "ws-1",
+                body: expect.objectContaining({
+                    triggerSourceType: "WORKSPACE_ID",
+                    triggerSource: ["ws-1"],
+                }),
+            },
+        ]);
 
         const replayRes = await client.callTool({
             name: "clockify_setup_webhook",
@@ -520,7 +626,9 @@ describe("workflow tools", () => {
         // Capture what reaches timeOff.submit so we can prove the DAYS-unit shape.
         const ctx = fakeContext();
         const submits: Array<Record<string, unknown>> = [];
-        (ctx.client.timeOff as { submit: unknown }).submit = async (body: Record<string, unknown>) => {
+        (ctx.client.timeOff as { submit: unknown }).submit = async (
+            body: Record<string, unknown>,
+        ) => {
             submits.push(body);
             return { id: "to-1", ...body };
         };
@@ -533,8 +641,20 @@ describe("workflow tools", () => {
         const preview = parse(previewRes);
         // The previewed body carries the DAYS shape: {start, days}, no end.
         expect(
-            (preview.data as { preview: { body: { timeOffPeriod: { period: Record<string, unknown> } } } })
-                .preview.body.timeOffPeriod.period,
+            (
+                preview.data as {
+                    preview: {
+                        body: { note: string; timeOffPeriod: { period: Record<string, unknown> } };
+                    };
+                }
+            ).preview.body,
+        ).toMatchObject({ note: "" });
+        expect(
+            (
+                preview.data as {
+                    preview: { body: { timeOffPeriod: { period: Record<string, unknown> } } };
+                }
+            ).preview.body.timeOffPeriod.period,
         ).toEqual({ start: "2026-07-01", days: 3 });
 
         const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
@@ -544,9 +664,9 @@ describe("workflow tools", () => {
         });
         expect(createRes.isError).toBeFalsy();
         // The actual wire body has period:{start,days} with no `end` key.
-        const period = (
-            submits[0]?.body as { timeOffPeriod: { period: Record<string, unknown> } }
-        ).timeOffPeriod.period;
+        const period = (submits[0]?.body as { timeOffPeriod: { period: Record<string, unknown> } })
+            .timeOffPeriod.period;
+        expect((submits[0]?.body as { note?: string }).note).toBe("");
         expect(period).toEqual({ start: "2026-07-01", days: 3 });
         expect("end" in period).toBe(false);
     });
@@ -554,7 +674,9 @@ describe("workflow tools", () => {
     it("request_time_off errors before any write when neither end nor days is given", async () => {
         const ctx = fakeContext();
         let submitted = 0;
-        (ctx.client.timeOff as { submit: unknown }).submit = async (body: Record<string, unknown>) => {
+        (ctx.client.timeOff as { submit: unknown }).submit = async (
+            body: Record<string, unknown>,
+        ) => {
             submitted += 1;
             return { id: "to-1", ...body };
         };
@@ -566,7 +688,33 @@ describe("workflow tools", () => {
         expect(res.isError).toBe(true);
         const env = parse(res);
         expect(env.ok).toBe(false);
-        expect((env.error as { message: string }).message).toMatch(/provide either .*end.* or .*days/);
+        expect((env.error as { message: string }).message).toMatch(
+            /provide either .*end.* or .*days/,
+        );
+        expect(submitted).toBe(0);
+    });
+
+    it("request_time_off rejects end and days together before preview or write", async () => {
+        const ctx = fakeContext();
+        let submitted = 0;
+        (ctx.client.timeOff as { submit: unknown }).submit = async () => {
+            submitted += 1;
+            return { id: "to-1" };
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_request_time_off",
+            arguments: {
+                policy_id: "pol-1",
+                start: "2026-07-01",
+                end: "2026-07-02",
+                days: 2,
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({ ok: false, error: { code: "invalid_request" } });
         expect(submitted).toBe(0);
     });
 
@@ -605,6 +753,29 @@ describe("workflow tools", () => {
         });
     });
 
+    it("invoice workflow does not advertise or preview an unsupported note", async () => {
+        const client = await connect(fakeContext());
+        const tool = (await client.listTools()).tools.find(
+            (item) => item.name === "clockify_invoice_client_work",
+        );
+        const properties = (tool?.inputSchema as { properties?: Record<string, unknown> })
+            .properties;
+        expect(properties).not.toHaveProperty("note");
+
+        const previewRes = await client.callTool({
+            name: "clockify_invoice_client_work",
+            arguments: {
+                client_id: "c1",
+                currency: "USD",
+                number: "INV-NOTE",
+                note: "must not be silently promised",
+                dry_run: true,
+            },
+        });
+        const preview = (parse(previewRes).data as { preview: Record<string, unknown> }).preview;
+        expect(preview).not.toHaveProperty("note");
+    });
+
     it("record_expense with no date is confirmable: the default date is stable across dry_run and confirm", async () => {
         // The defaulted expense date must be that day's midnight-UTC (a sliced
         // YYYY-MM-DD widened by normalizeDate), not a fresh ms wall-clock — else
@@ -613,7 +784,9 @@ describe("workflow tools", () => {
         // un-confirmable forever.
         const ctx = fakeContext();
         const creates: Array<Record<string, unknown>> = [];
-        (ctx.client.expenses as { create: unknown }).create = async (body: Record<string, unknown>) => {
+        (ctx.client.expenses as { create: unknown }).create = async (
+            body: Record<string, unknown>,
+        ) => {
             creates.push(body);
             return { id: "ex-1", ...body };
         };
@@ -645,6 +818,53 @@ describe("workflow tools", () => {
         // The mutation ran exactly once — the defaulted date survived the round-trip.
         expect(creates).toHaveLength(1);
     });
+
+    it.each([
+        ["amount", { amount: "ten" }],
+        ["billable", { amount: 10, billable: "false" }],
+    ] as const)(
+        "recordExpense rejects invalid %s before preview or mutation",
+        async (_field, invalid) => {
+            const ctx = fakeContext();
+            let creates = 0;
+            (ctx.client.expenses as { create: unknown }).create = async () => {
+                creates += 1;
+                return { id: "ex-1" };
+            };
+
+            await expect(
+                recordExpense(ctx, {
+                    category_id: "cat-1",
+                    dry_run: true,
+                    ...invalid,
+                }),
+            ).rejects.toThrow(/amount|billable/i);
+            expect(creates).toBe(0);
+        },
+    );
+
+    it.each([
+        ["hours_per_day", { hours_per_day: "8" }],
+        ["billable", { hours_per_day: 8, billable: "true" }],
+        ["include_non_working_days", { hours_per_day: 8, include_non_working_days: "false" }],
+    ] as const)(
+        "scheduleWork rejects invalid %s before preview or mutation",
+        async (_field, invalid) => {
+            const ctx = fakeContext();
+
+            await expect(
+                scheduleWork(ctx, {
+                    user_id: "user-1",
+                    project_id: "project-1",
+                    start: "2026-07-01T09:00:00Z",
+                    end: "2026-07-01T17:00:00Z",
+                    dry_run: true,
+                    ...invalid,
+                }),
+            ).rejects.toThrow(/hours_per_day|billable|include_non_working_days/i);
+            expect(ctx.state.schedulingCreates).toBe(0);
+        },
+    );
 
     it("recoverable workflow errors include a concrete recovery tool", async () => {
         const client = await connect(fakeContext());
@@ -742,12 +962,15 @@ describe("workflow tools", () => {
                 { type: "entry.delete", body: expect.objectContaining({ timeEntryId: "e-demo" }) },
                 { type: "tag.delete", body: expect.objectContaining({ tagId: "tg-demo" }) },
                 {
+                    type: "task.get",
+                    body: expect.objectContaining({ projectId: "p-demo", taskId: "ta-demo" }),
+                },
+                {
                     type: "task.update",
                     body: expect.objectContaining({
                         projectId: "p-demo",
                         taskId: "ta-demo",
-                        name: "DEMO-clean-task",
-                        status: "DONE",
+                        body: { name: "DEMO-clean-task", status: "DONE" },
                     }),
                 },
                 { type: "task.delete", body: expect.objectContaining({ taskId: "ta-demo" }) },
@@ -760,6 +983,10 @@ describe("workflow tools", () => {
                     }),
                 },
                 { type: "project.delete", body: expect.objectContaining({ projectId: "p-demo" }) },
+                {
+                    type: "client.get",
+                    body: expect.objectContaining({ clientId: "c-demo" }),
+                },
                 {
                     type: "client.update",
                     body: expect.objectContaining({
@@ -794,7 +1021,10 @@ describe("workflow tools", () => {
 });
 
 describe("P0 correctness — pagination + validation", () => {
-    function bulkEntries(n: number, overrides: (i: number) => Record<string, unknown> = () => ({})) {
+    function bulkEntries(
+        n: number,
+        overrides: (i: number) => Record<string, unknown> = () => ({}),
+    ) {
         return Array.from({ length: n }, (_, i) => ({
             id: `e${i}`,
             description: `entry ${i}`,
@@ -840,8 +1070,14 @@ describe("P0 correctness — pagination + validation", () => {
             entries: bulkEntries(2, () => ({ description: "DUP" })),
         });
         let updates = 0;
-        const realUpdate = (ctx.client.timeEntries as unknown as { update: (b: Record<string, unknown>) => Promise<unknown> }).update;
-        (ctx.client.timeEntries as { update: unknown }).update = async (body: Record<string, unknown>) => {
+        const realUpdate = (
+            ctx.client.timeEntries as unknown as {
+                update: (b: Record<string, unknown>) => Promise<unknown>;
+            }
+        ).update;
+        (ctx.client.timeEntries as { update: unknown }).update = async (
+            body: Record<string, unknown>,
+        ) => {
             updates += 1;
             return realUpdate(body);
         };
@@ -853,7 +1089,9 @@ describe("P0 correctness — pagination + validation", () => {
         expect(res.isError).toBe(true);
         const env = parse(res);
         expect(env.ok).toBe(false);
-        expect((env.error as { message: string }).message).toMatch(/found at least|expected exactly one/);
+        expect((env.error as { message: string }).message).toMatch(
+            /found at least|expected exactly one/,
+        );
         // No write fired and neither entry was mutated.
         expect(updates).toBe(0);
         expect(ctx.state.entries.map((e) => e.description)).toEqual(["DUP", "DUP"]);
@@ -871,12 +1109,21 @@ describe("P0 correctness — pagination + validation", () => {
         expect(res.isError).toBe(true);
         const env = parse(res);
         expect(env.ok).toBe(false);
-        expect((env.error as { message: string }).message).toMatch(/scanned more than|narrow the window/);
+        expect((env.error as { message: string }).message).toMatch(
+            /scanned more than|narrow the window/,
+        );
     });
 
     it("fix_entry resolves task & tag names into the update body (was a silent no-op)", async () => {
         const ctx = fakeContext({
-            entries: [{ id: "e1", description: "Work", start: "2026-06-15T09:00:00.000Z", projectId: "p9" }],
+            entries: [
+                {
+                    id: "e1",
+                    description: "Work",
+                    start: "2026-06-15T09:00:00.000Z",
+                    projectId: "p9",
+                },
+            ],
             projects: [{ id: "p9", name: "Launch" }],
             tasks: [{ id: "ta9", name: "Build", projectId: "p9" }],
             tags: [{ id: "tg9", name: "Deep Work" }],
@@ -960,12 +1207,19 @@ describe("P0 correctness — pagination + validation", () => {
         const client = await connect(fakeContext({ projects: [{ id: "p9", name: "Launch" }] }));
         const res = await client.callTool({
             name: "clockify_log_work",
-            arguments: { description: "x", start: "2026-06-01T09:00:00.000Z", end: "garbage", project: "Launch" },
+            arguments: {
+                description: "x",
+                start: "2026-06-01T09:00:00.000Z",
+                end: "garbage",
+                project: "Launch",
+            },
         });
         expect(res.isError).toBe(true);
         const env = parse(res);
         expect(env.ok).toBe(false);
-        expect((env.error as { message: string }).message).toMatch(/not a valid ISO 8601 timestamp/);
+        expect((env.error as { message: string }).message).toMatch(
+            /not a valid ISO 8601 timestamp/,
+        );
     });
 });
 
@@ -974,6 +1228,12 @@ describe("create_work_package — transactional rollback (P1-2 compose)", () => 
         const ctx = fakeContext();
         // Force task creation to fail after client + project were created.
         (ctx.client.tasks as { create: unknown }).create = async () => {
+            Object.assign(ctx.state.clients[0]!, {
+                address: "",
+                currencyCode: "USD",
+                email: "ops@example.test",
+                note: "",
+            });
             throw new Error("tasks.create 400 boom");
         };
         const client = await connect(ctx);
@@ -985,13 +1245,33 @@ describe("create_work_package — transactional rollback (P1-2 compose)", () => 
         const env = parse(res);
         expect(env.ok).toBe(false);
         expect((env.error as { message: string }).message).toMatch(/failed at task/);
-        expect((env.error as { message: string }).message).toMatch(/Nothing partial was left behind/);
+        expect((env.error as { message: string }).message).toMatch(
+            /Nothing partial was left behind/,
+        );
         // created project rolled back via archive-then-delete (active delete 400s)
         expect(ctx.state.cleanupRequests).toEqual(
             expect.arrayContaining([
                 { type: "project.update", body: expect.objectContaining({ archived: true }) },
                 { type: "project.delete", body: expect.objectContaining({}) },
-                { type: "client.update", body: expect.objectContaining({ body: expect.objectContaining({ archived: true }) }) },
+                {
+                    type: "client.get",
+                    body: { workspaceId: "ws-1", clientId: "c1" },
+                },
+                {
+                    type: "client.update",
+                    body: {
+                        workspaceId: "ws-1",
+                        clientId: "c1",
+                        body: {
+                            name: "Acme",
+                            archived: true,
+                            address: "",
+                            currencyCode: "USD",
+                            email: "ops@example.test",
+                            note: "",
+                        },
+                    },
+                },
                 { type: "client.delete", body: expect.objectContaining({}) },
             ]),
         );
