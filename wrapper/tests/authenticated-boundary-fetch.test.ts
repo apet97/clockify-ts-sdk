@@ -47,10 +47,16 @@ describe("authenticatedBoundaryFetch", () => {
             .fn<typeof fetch>()
             .mockResolvedValue(new Response(null, { status: 204 }));
         const guarded = authenticatedBoundaryFetch(dispatch, true);
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-        await expect(
-            guarded("https://trusted-proxy.example/api/v1/user", { redirect: "manual" }),
-        ).resolves.toHaveProperty("status", 204);
-        expect(dispatch).toHaveBeenCalledOnce();
+        try {
+            await expect(
+                guarded("https://trusted-proxy.example/api/v1/user", { redirect: "manual" }),
+            ).resolves.toHaveProperty("status", 204);
+            expect(dispatch).toHaveBeenCalledOnce();
+            expect(warn).toHaveBeenCalledOnce();
+        } finally {
+            warn.mockRestore();
+        }
     });
 });

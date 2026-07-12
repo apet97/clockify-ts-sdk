@@ -286,13 +286,6 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
         }
 
         validateRetryPolicy(retryPolicy);
-        if (
-            input instanceof Request &&
-            retryPolicy.maxRetries > 0 &&
-            retryPolicy.retryableMethods.includes(method)
-        ) {
-            input.clone();
-        }
         const template = buildRequestTemplate(input, finalInit);
         assertSignalNotAborted(template.signal);
         if (retryPolicy.maxRetries > 0 && retryPolicy.retryableMethods.includes(method)) {
@@ -476,7 +469,7 @@ async function runWithRetries(
         assertSignalNotAborted(template.signal);
 
         try {
-            response = await baseFetch(template.clone());
+            response = await abortable(template.signal, () => baseFetch(template.clone()));
             // A blocked redirect is terminal, not transient: surface it as an
             // error (so auth headers are never re-sent to the target) and do
             // NOT retry. Converting to the error branch routes it through the
@@ -537,7 +530,7 @@ async function runWithRetries(
             ) {
                 return response;
             }
-            await response.body?.cancel();
+            await abortable(template.signal, () => response.body?.cancel());
             assertSignalNotAborted(template.signal);
             const delayMs = computeRetryDelay(attempt, response, policy);
             await safeHook(hooks?.onRetry, {
@@ -586,6 +579,49 @@ function validateRetryPolicy(policy: ReturnType<typeof mergeRetryPolicy>): void 
 
 function assertSignalNotAborted(signal: AbortSignal): void {
     if (signal.aborted) throw abortReason(signal);
+}
+
+function abortable<T>(
+    signal: AbortSignal | null | undefined,
+    start: () => T | PromiseLike<T>,
+): Promise<T> {
+    if (signal == null) return Promise.resolve().then(start);
+    // AbortSignal.reason is intentionally `unknown`: the public contract preserves
+    // primitive reasons instead of wrapping them in an Error.
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+    if (signal.aborted) return Promise.reject(abortReason(signal));
+    return new Promise<T>((resolve, reject) => {
+        let settled = false;
+        const finish = (complete: () => void): void => {
+            if (settled) return;
+            settled = true;
+            signal.removeEventListener("abort", onAbort);
+            complete();
+        };
+        const onAbort = (): void =>
+            finish(() => {
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                reject(abortReason(signal));
+            });
+        signal.addEventListener("abort", onAbort, { once: true });
+        if (signal.aborted) {
+            onAbort();
+            return;
+        }
+        let started: T | PromiseLike<T>;
+        try {
+            started = start();
+        } catch (cause) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            finish(() => reject(cause));
+            return;
+        }
+        Promise.resolve(started).then(
+            (value) => finish(() => resolve(value)),
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            (cause: unknown) => finish(() => reject(cause)),
+        );
+    });
 }
 
 function toError(value: unknown): Error {

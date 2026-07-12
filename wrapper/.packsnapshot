@@ -26,6 +26,8 @@ dist/cjs/health.d.ts
 dist/cjs/health.js
 dist/cjs/index.d.ts
 dist/cjs/index.js
+dist/cjs/internal/authenticated-boundary-fetch.d.ts
+dist/cjs/internal/authenticated-boundary-fetch.js
 dist/cjs/invoice-body.d.ts
 dist/cjs/invoice-body.js
 dist/cjs/iter.d.ts
@@ -1421,6 +1423,8 @@ dist/esm/health.d.ts
 dist/esm/health.js
 dist/esm/index.d.ts
 dist/esm/index.js
+dist/esm/internal/authenticated-boundary-fetch.d.ts
+dist/esm/internal/authenticated-boundary-fetch.js
 dist/esm/invoice-body.d.ts
 dist/esm/invoice-body.js
 dist/esm/iter.d.ts

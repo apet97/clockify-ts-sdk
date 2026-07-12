@@ -23,9 +23,18 @@ import {
     type RetryPolicy,
 } from "./composed-fetch.js";
 import { clockifyHealth, type HealthCheckResult } from "./health.js";
+import {
+    authenticatedBoundaryFetch,
+    classifyClockifyBaseUrl,
+    validateClockifyBaseUrl,
+    type ClockifyBaseUrlClassification,
+} from "./internal/authenticated-boundary-fetch.js";
 import { Workspace } from "./scoped-client.js";
 import type { BaseClientOptions } from "./src/BaseClient.js";
 import { ClockifyApiClient } from "./src/index.js";
+
+export { classifyClockifyBaseUrl, validateClockifyBaseUrl };
+export type { ClockifyBaseUrlClassification };
 
 /** Mix debug logging into the user's hooks. Debug logs fire FIRST,
  *  then the user's hooks run — order chosen so the user's hook
@@ -179,166 +188,6 @@ const ENV_ADDON_TOKEN = "CLOCKIFY_ADDON_TOKEN";
 function readEnv(name: string): string | undefined {
     const value = typeof process !== "undefined" ? process.env?.[name] : undefined;
     return value != null && value !== "" ? value : undefined;
-}
-
-function authenticatedBoundaryFetch(
-    underlying: typeof fetch | undefined,
-    allowNonClockifyHttpsHost: boolean,
-): typeof fetch {
-    const dispatch = underlying ?? globalThis.fetch;
-    return async (input, init) => {
-        const destination =
-            typeof input === "string"
-                ? input
-                : input instanceof URL
-                  ? input.toString()
-                  : input.url;
-        validateClockifyBaseUrl(destination, allowNonClockifyHttpsHost);
-        const redirect = init?.redirect ?? (input instanceof Request ? input.redirect : undefined);
-        if (redirect === "follow") {
-            throw new TypeError(
-                "createClockifyClient: redirect follow is not allowed for authenticated requests.",
-            );
-        }
-        return await dispatch(input, init);
-    };
-}
-
-/** Official Clockify API hosts. These are the only non-loopback hosts
- *  the factory accepts unless `allowInsecureBaseUrl` is explicitly set.
- *  Matches the host set the Clockify SDK environments target (core API
- *  plus the reports / audit-log / PTO sub-APIs and the developer host). */
-const CLOCKIFY_PROD_HOSTS = new Set([
-    "api.clockify.me",
-    "reports.api.clockify.me",
-    "auditlog-api.api.clockify.me",
-    "pto.api.clockify.me",
-    "developer.clockify.me",
-]);
-
-/** Loopback hostnames accepted on any port for testing/mocking. The
- *  IPv6 loopback may arrive bracketed (`[::1]`) from a URL or bare
- *  (`::1`) from raw config; accept both shapes. */
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
-
-/** Outcome of {@link classifyClockifyBaseUrl} — the allowlist decision
- *  plus a stable category so diagnostics can render allowlisted vs
- *  rejected hosts without re-implementing the parse. */
-export interface ClockifyBaseUrlClassification {
-    /** Whether the URL is allowed without `allowInsecureBaseUrl`. */
-    allowed: boolean;
-    /** Stable category: `prod` (a Clockify host), `loopback` (testing),
-     *  `non-https` (rejected — not HTTPS on a non-loopback host),
-     *  `non-clockify` (rejected — arbitrary HTTPS host, allowed only with
-     *  opt-in), or `unparseable`. */
-    category: "prod" | "loopback" | "non-https" | "non-clockify" | "unparseable";
-    /** Parsed hostname when the URL parsed, else `undefined`. */
-    host?: string;
-    /** Human-readable reason when `allowed` is false. */
-    reason?: string;
-}
-
-/**
- * Classify a base URL against the Clockify host allowlist without
- * throwing. Pure + side-effect free so both the constructing factory
- * and the no-network diagnostics report can share one decision.
- *
- * Loopback over plain `http://` is permitted (mock servers commonly
- * serve HTTP on 127.0.0.1); every non-loopback host must be HTTPS.
- */
-export function classifyClockifyBaseUrl(baseUrl: string): ClockifyBaseUrlClassification {
-    let parsed: URL;
-    try {
-        parsed = new URL(baseUrl);
-    } catch {
-        return {
-            allowed: false,
-            category: "unparseable",
-            reason: `base URL ${JSON.stringify(baseUrl)} is not a valid absolute URL.`,
-        };
-    }
-
-    const host = parsed.hostname;
-    const isLoopback = LOOPBACK_HOSTS.has(host) || LOOPBACK_HOSTS.has(host.toLowerCase());
-
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        return {
-            allowed: false,
-            category: "unparseable",
-            host,
-            reason: `base URL must use the http:// or https:// protocol; got ${parsed.protocol}`,
-        };
-    }
-
-    // Loopback may use http or https — local mock servers commonly use
-    // http on 127.0.0.1. Everything else must be https.
-    if (isLoopback) {
-        return { allowed: true, category: "loopback", host };
-    }
-
-    if (parsed.protocol !== "https:") {
-        return {
-            allowed: false,
-            category: "non-https",
-            host,
-            reason: `base URL must use https:// for non-loopback hosts; got ${parsed.protocol}//${host}.`,
-        };
-    }
-
-    if (CLOCKIFY_PROD_HOSTS.has(host.toLowerCase())) {
-        return { allowed: true, category: "prod", host };
-    }
-
-    return {
-        allowed: false,
-        category: "non-clockify",
-        host,
-        reason: `base URL host ${JSON.stringify(host)} is not an allowlisted Clockify host (expected an *.clockify.me API host or a loopback host).`,
-    };
-}
-
-/**
- * Validate a base URL override before it is handed to the underlying
- * client, enforcing the Clockify host allowlist.
- *
- * Returns the input unchanged when it is `undefined` (no override) or
- * when it is a non-string {@link BaseClientOptions} `Supplier`
- * (function) — supplier values resolve at request time and cannot be
- * statically vetted here. Throws a `TypeError` with recovery guidance
- * when a plain-string override resolves to a rejected host and
- * `allowInsecureBaseUrl` is not set.
- *
- * @param value the `environment`/`baseUrl` override (string, Supplier, or undefined).
- * @param allowInsecure when `true`, downgrade a rejected non-Clockify
- *   HTTPS host to a `console.warn` instead of throwing. Plain `http://`
- *   on a non-loopback host is always rejected, opt-in or not.
- */
-export function validateClockifyBaseUrl<T>(value: T, allowInsecure = false): T {
-    if (typeof value !== "string") return value;
-
-    const result = classifyClockifyBaseUrl(value);
-    if (result.allowed) return value;
-
-    // Plain http:// (and unparseable input) is always rejected — the
-    // opt-in is for trusting a different HTTPS host, never for sending
-    // credentials in cleartext.
-    if (result.category === "non-https" || result.category === "unparseable") {
-        throw new TypeError(`createClockifyClient: ${result.reason}`);
-    }
-
-    if (allowInsecure) {
-        console.warn(
-            `[clockify] WARNING: ${result.reason} Proceeding because allowInsecureBaseUrl was set — ` +
-                `confirm this endpoint is trusted; auth headers (X-Api-Key / X-Addon-Token) will be sent to it.`,
-        );
-        return value;
-    }
-
-    throw new TypeError(
-        `createClockifyClient: ${result.reason} ` +
-            `Set allowInsecureBaseUrl: true to opt in to a non-Clockify HTTPS endpoint, ` +
-            `or use an *.clockify.me API host / a loopback host for testing.`,
-    );
 }
 
 /**

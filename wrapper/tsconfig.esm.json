@@ -12,6 +12,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "internal/**/*.ts",
     "index.ts",
     "create-client.ts",
     "composed-fetch.ts",
