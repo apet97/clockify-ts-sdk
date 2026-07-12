@@ -93,6 +93,29 @@ describe("createClockifyClient", () => {
         }
     });
 
+    it("keeps configured authentication last in typed header precedence", async () => {
+        const dispatch = vi.fn<typeof fetch>().mockResolvedValue(
+            new Response("[]", {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        const client = new ClockifyApiClient({
+            apiKey: "secret",
+            headers: { "X-Api-Key": "client-attacker" },
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list(
+            { workspaceId: "workspace" },
+            { headers: { "X-Api-Key": "request-attacker" } },
+        );
+
+        const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
+        expect(new Request(input, init).headers.get("X-Api-Key")).toBe("secret");
+    });
+
     it("blocks a dynamic off-host typed request before the custom fetch sees credentials", async () => {
         const dispatch = vi.fn<typeof fetch>();
         const client = createClockifyClient({

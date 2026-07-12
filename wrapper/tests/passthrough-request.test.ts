@@ -435,6 +435,20 @@ describe("ClockifyApiClient.fetch", () => {
         expect(target.searchParams.has("omitted")).toBe(false);
     });
 
+    it("removes an existing query key when its replacement array is empty", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch("users?status=OLD&keep=yes", undefined, {
+            queryParams: { status: [] },
+        });
+
+        const target = new URL(dispatchedRequest(dispatch).url);
+        expect(target.searchParams.has("status")).toBe(false);
+        expect(target.searchParams.get("keep")).toBe("yes");
+    });
+
     it("prefers the request-options signal over init and input Request signals", async () => {
         const dispatch = vi
             .fn<typeof fetch>()
@@ -1105,6 +1119,19 @@ describe("ClockifyApiClient.fetch", () => {
                 await vi.runAllTimersAsync();
                 expect(dispatch).toHaveBeenCalledOnce();
             });
+        });
+
+        it("preserves a primitive pre-abort reason by identity", async () => {
+            const controller = new AbortController();
+            controller.abort("primitive-stop");
+            const dispatch = vi.fn<typeof fetch>();
+
+            await expect(
+                client(dispatch).fetch("users", undefined, {
+                    abortSignal: controller.signal,
+                }),
+            ).rejects.toBe("primitive-stop");
+            expect(dispatch).not.toHaveBeenCalled();
         });
 
         it.each(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] as const)(
