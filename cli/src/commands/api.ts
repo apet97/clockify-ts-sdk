@@ -11,6 +11,7 @@ import type { ClockifyClient } from "../client.js";
 import { printJson, printNdjson, type OutputOptions } from "../output.js";
 
 import { resolveBaseContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 const METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
@@ -26,8 +27,7 @@ interface ApiOptions {
 }
 
 export const registerApiCommand: Registrar = (program, services) => {
-    program
-        .command("api")
+    leafCommand(program, "api", "destructive")
         .description("Call a Clockify API path directly through the SDK client.")
         .argument("<method>", "HTTP method: GET, POST, PUT, PATCH, or DELETE.")
         .argument("<path>", "API path, e.g. /workspaces/{workspaceId}/tags.")

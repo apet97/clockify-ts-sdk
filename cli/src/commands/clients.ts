@@ -9,6 +9,7 @@ import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 type ClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
@@ -65,8 +66,7 @@ function reconstructClientBody(
 export const registerClientsCommand: Registrar = (program, services) => {
     const clients = program.command("clients").description("Manage clients.");
 
-    clients
-        .command("list")
+    leafCommand(clients, "list", "read")
         .description("List clients in the workspace.")
         .option(
             "--limit <n>",
@@ -104,8 +104,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    clients
-        .command("create")
+    leafCommand(clients, "create", "write")
         .argument("<name>", "Client name.")
         .option("--note <text>", "Client note.")
         .description("Create a client in the workspace.")
@@ -139,8 +138,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             );
         });
 
-    clients
-        .command("get")
+    leafCommand(clients, "get", "read")
         .argument("<id>", "Client ID.")
         .description("Get one client by ID.")
         .action(async function (this: Command, id: string) {
@@ -149,8 +147,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             printObject(result, output);
         });
 
-    clients
-        .command("update")
+    leafCommand(clients, "update", "write")
         .argument("<id>", "Client ID.")
         .option("--name <text>", "Client name.")
         .option("--note <text>", "Client note.")
@@ -218,8 +215,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
             );
         });
 
-    clients
-        .command("delete")
+    leafCommand(clients, "delete", "destructive")
         .argument("<id>", "Client ID.")
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
         .action(async function (this: Command, id: string) {

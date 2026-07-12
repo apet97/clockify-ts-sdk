@@ -10,6 +10,7 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext, splitList } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 const WEBHOOK_LIST_TYPES = ["WEBHOOK", "ADDON_WEBHOOK"] as const;
@@ -120,8 +121,7 @@ function webhookTriggerSourceType(value: unknown): ClockifyApi.WebhookEventTrigg
 export const registerWebhooksCommand: Registrar = (program, services) => {
     const webhooks = program.command("webhooks").description("Manage outbound webhooks.");
 
-    webhooks
-        .command("list")
+    leafCommand(webhooks, "list", "read")
         .description("List webhooks in the workspace.")
         .option("--type <type>", "Filter by webhook type (e.g. WEBHOOK, ADDON_WEBHOOK).")
         .action(async function (this: Command, opts) {
@@ -168,8 +168,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    webhooks
-        .command("create")
+    leafCommand(webhooks, "create", "write")
         .description("Create a webhook subscription.")
         .requiredOption("--name <text>", "Webhook label.")
         .requiredOption("--url <url>", "Target URL (HTTPS).")
@@ -250,8 +249,7 @@ export const registerWebhooksCommand: Registrar = (program, services) => {
             );
         });
 
-    webhooks
-        .command("delete")
+    leafCommand(webhooks, "delete", "destructive")
         .argument("<id>", "Webhook ID.")
         .description("Delete a webhook subscription.")
         .action(async function (this: Command, id: string) {

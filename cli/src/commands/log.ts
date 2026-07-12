@@ -10,6 +10,7 @@ import { parseDuration } from "../duration.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
@@ -22,8 +23,7 @@ interface LogOpts {
 }
 
 export const registerLogCommand: Registrar = (program, services) => {
-    program
-        .command("log")
+    leafCommand(program, "log", "write")
         .description("Log a finished time entry. Duration accepts 1h30m / 90m / PT1H30M.")
         .argument("<duration>", "Duration like '1h30m', '45m', or ISO 8601 'PT1H30M'.")
         .argument("<description>", "What you worked on.")

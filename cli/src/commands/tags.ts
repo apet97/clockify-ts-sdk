@@ -8,12 +8,13 @@ import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerTagsCommand: Registrar = (program, services) => {
     const tags = program.command("tags").description("Manage tags.");
 
-    tags.command("list")
+    leafCommand(tags, "list", "read")
         .description("List tags in the workspace.")
         .option(
             "--limit <n>",
@@ -45,7 +46,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    tags.command("create")
+    leafCommand(tags, "create", "write")
         .argument("<name>", "Tag name.")
         .description("Create a tag in the workspace.")
         .action(async function (this: Command, name: string) {
@@ -72,7 +73,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             );
         });
 
-    tags.command("get")
+    leafCommand(tags, "get", "read")
         .argument("<id>", "Tag ID.")
         .description("Get one tag by ID.")
         .action(async function (this: Command, id: string) {
@@ -81,7 +82,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             printObject(tag, output);
         });
 
-    tags.command("update")
+    leafCommand(tags, "update", "write")
         .argument("<id>", "Tag ID.")
         .option("--name <text>", "New tag name.")
         .option("--archived", "Archive the tag.")
@@ -109,7 +110,7 @@ export const registerTagsCommand: Registrar = (program, services) => {
             );
         });
 
-    tags.command("delete")
+    leafCommand(tags, "delete", "destructive")
         .argument("<id>", "Tag ID.")
         .description("Delete a tag by ID.")
         .action(async function (this: Command, id: string) {

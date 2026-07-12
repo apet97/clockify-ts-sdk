@@ -1,33 +1,33 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
-const contract = await readJson("docs/cli-write-safety-contract.json", "contractPath");
+const contract = await readJson("docs/cli-write-safety-contract.json");
 
 function fail(label, message) {
     failures.push(`${label}: ${message}`);
 }
 
-function safeRelativePath(label, relPath) {
-    if (typeof relPath !== "string" || relPath.trim().length === 0) {
+function safeRelativePath(label, value) {
+    if (typeof value !== "string" || value.trim() === "") {
         fail(label, "must be a non-empty string");
         return null;
     }
-    const normalized = path.normalize(relPath);
-    if (path.isAbsolute(relPath) || normalized === ".." || normalized.startsWith(`..${path.sep}`)) {
+    const normalized = path.normalize(value);
+    if (path.isAbsolute(value) || normalized === ".." || normalized.startsWith(`..${path.sep}`)) {
         fail(label, "must be a repo-relative path without parent traversal");
         return null;
     }
     return normalized;
 }
 
-async function readRel(relPath, label = relPath) {
-    const safePath = safeRelativePath(label, relPath);
+async function readRel(relPath) {
+    const safePath = safeRelativePath(relPath, relPath);
     if (safePath == null) return "";
-
     try {
         return await readFile(path.join(root, safePath), "utf8");
     } catch {
@@ -36,197 +36,177 @@ async function readRel(relPath, label = relPath) {
     }
 }
 
-async function readJson(relPath, label = relPath) {
-    const text = await readRel(relPath, label);
+async function readJson(relPath) {
+    const text = await readRel(relPath);
     if (!text) return {};
     try {
         return JSON.parse(text);
     } catch (error) {
-        fail(label, `invalid JSON: ${error.message}`);
+        fail(relPath, `invalid JSON: ${error.message}`);
         return {};
     }
 }
 
-function assertContains(text, markers, label) {
-    for (const marker of markers) {
-        if (!text.includes(marker)) failures.push(`${label} missing marker: ${marker}`);
-    }
-}
-
-function assertNonEmptyString(label, value) {
-    if (typeof value !== "string" || value.trim().length === 0) {
-        fail(label, "must be a non-empty string");
-    }
-}
-
-function assertObject(label, value) {
-    if (value == null || typeof value !== "object" || Array.isArray(value)) {
-        fail(label, "must be an object");
-        return false;
-    }
-    return true;
-}
-
-function assertStringArray(label, value, { allowEmpty = true } = {}) {
-    if (!Array.isArray(value)) {
-        fail(label, "must be an array");
+function stringArray(label, value, { nonEmpty = true } = {}) {
+    if (!Array.isArray(value) || (nonEmpty && value.length === 0)) {
+        fail(label, `must be ${nonEmpty ? "a non-empty" : "an"} array`);
         return [];
     }
-    if (!allowEmpty && value.length === 0) {
-        fail(label, "must be a non-empty array");
+    const valid = value.filter((entry) => typeof entry === "string" && entry.trim() !== "");
+    if (valid.length !== value.length) fail(label, "contains a non-string or empty entry");
+    if (new Set(valid).size !== valid.length) fail(label, "contains duplicate entries");
+    return valid;
+}
+
+function objectValue(label, value) {
+    if (value == null || typeof value !== "object" || Array.isArray(value)) {
+        fail(label, "must be an object");
+        return {};
     }
-    for (const entry of value) {
-        if (typeof entry !== "string" || entry.trim().length === 0) {
-            fail(label, "contains non-string or empty entry");
+    return value;
+}
+
+function positiveInteger(label, value) {
+    if (!Number.isInteger(value) || value <= 0) fail(label, "must be a positive integer");
+}
+
+function sorted(values) {
+    return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+if (contract.schemaVersion !== 2) fail("schemaVersion", "must be 2");
+if (typeof contract.purpose !== "string" || contract.purpose.trim() === "") {
+    fail("purpose", "must be a non-empty string");
+}
+
+const expected = objectValue("expected", contract.expected);
+positiveInteger("expected.totalLeaves", expected.totalLeaves);
+positiveInteger("expected.mutatingLeaves", expected.mutatingLeaves);
+const expectedCounts = objectValue("expected.riskCounts", expected.riskCounts);
+for (const risk of ["read", "write", "destructive"]) {
+    positiveInteger(`expected.riskCounts.${risk}`, expectedCounts[risk]);
+}
+
+const riskPaths = objectValue("riskPaths", contract.riskPaths);
+const expectedByPath = new Map();
+for (const risk of ["read", "write", "destructive"]) {
+    for (const commandPath of stringArray(`riskPaths.${risk}`, riskPaths[risk])) {
+        if (expectedByPath.has(commandPath)) {
+            fail("riskPaths", `${commandPath} appears in more than one risk class`);
+        }
+        expectedByPath.set(commandPath, risk);
+    }
+}
+
+const behavioralTests = stringArray("behavioralTests", contract.behavioralTests);
+for (const testPath of behavioralTests) await readRel(testPath);
+const requiredDocs = stringArray("requiredDocs", contract.requiredDocs);
+for (const docPath of requiredDocs) await readRel(docPath);
+
+const wiring = objectValue("wiring", contract.wiring);
+for (const field of [
+    "makeTarget",
+    "checker",
+    "docsIndexPolicy",
+    "docsIndexContract",
+    "qualityGate",
+    "inventoryId",
+    "auditId",
+]) {
+    if (typeof wiring[field] !== "string" || wiring[field].trim() === "") {
+        fail(`wiring.${field}`, "must be a non-empty string");
+    }
+}
+
+if (expectedByPath.size !== expected.totalLeaves) {
+    fail("riskPaths", `contains ${expectedByPath.size} leaves, expected ${expected.totalLeaves}`);
+}
+for (const risk of ["read", "write", "destructive"]) {
+    const actual = [...expectedByPath.values()].filter((value) => value === risk).length;
+    if (actual !== expectedCounts[risk]) {
+        fail(`riskPaths.${risk}`, `contains ${actual} leaves, expected ${expectedCounts[risk]}`);
+    }
+}
+if ((expectedCounts.write ?? 0) + (expectedCounts.destructive ?? 0) !== expected.mutatingLeaves) {
+    fail("expected.mutatingLeaves", "must equal write + destructive risk counts");
+}
+
+if (failures.length === 0) {
+    const source = [
+        'import { buildProgram } from "./cli/src/index.ts";',
+        'import { collectClassifiedLeaves } from "./cli/src/commands/leaf-command.ts";',
+        "const leaves = collectClassifiedLeaves(buildProgram());",
+        'console.log(JSON.stringify(leaves.map(({ path, risk }) => ({ path: path.join(" "), risk }))));',
+    ].join("\n");
+    const inspected = spawnSync(
+        process.execPath,
+        ["--import", "tsx", "--input-type=module", "--eval", source],
+        { cwd: root, encoding: "utf8", env: { ...process.env, CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "" } },
+    );
+    if (inspected.status !== 0) {
+        fail("Commander introspection", inspected.stderr.trim() || `exited ${inspected.status}`);
+    } else {
+        try {
+            const actualLeaves = JSON.parse(inspected.stdout);
+            const actualByPath = new Map(actualLeaves.map((leaf) => [leaf.path, leaf.risk]));
+            if (actualByPath.size !== actualLeaves.length) {
+                fail("Commander introspection", "returned duplicate leaf paths");
+            }
+            const actualPairs = sorted([...actualByPath].map(([commandPath, risk]) => `${risk}\t${commandPath}`));
+            const expectedPairs = sorted([...expectedByPath].map(([commandPath, risk]) => `${risk}\t${commandPath}`));
+            if (JSON.stringify(actualPairs) !== JSON.stringify(expectedPairs)) {
+                fail(
+                    "Commander introspection",
+                    `risk manifest drift\n  expected: ${expectedPairs.join(", ")}\n  actual: ${actualPairs.join(", ")}`,
+                );
+            }
+        } catch (error) {
+            fail("Commander introspection", `invalid JSON: ${error.message}`);
         }
     }
-    return value.filter((entry) => typeof entry === "string" && entry.trim().length > 0);
 }
 
-function assertUnique(label, values) {
-    const seen = new Set();
-    for (const value of values ?? []) {
-        if (seen.has(value)) fail(label, `duplicate ${value}`);
-        seen.add(value);
-    }
-}
-
-function validateMarkerEntry(label, entry, markerField = "contains") {
-    if (!assertObject(label, entry)) return;
-    safeRelativePath(`${label}.path`, entry.path);
-    const markers = assertStringArray(`${label}.${markerField}`, entry[markerField], {
-        allowEmpty: false,
-    });
-    assertUnique(`${label}.${markerField}`, markers);
-}
-
-function validateContractShape() {
-    if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
-    assertNonEmptyString("purpose", contract.purpose);
-
-
-    if (!Array.isArray(contract.requiredFiles) || contract.requiredFiles.length === 0) {
-        fail("requiredFiles", "must be a non-empty array");
-    }
-    assertUnique(
-        "requiredFiles.path",
-        (contract.requiredFiles ?? []).map((file) => file?.path).filter((filePath) => typeof filePath === "string"),
+if (failures.length === 0) {
+    const behavioral = spawnSync(
+        process.execPath,
+        ["node_modules/vitest/vitest.mjs", "run", ...behavioralTests],
+        {
+            cwd: root,
+            encoding: "utf8",
+            env: { ...process.env, CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "" },
+        },
     );
-    for (const [index, file] of (contract.requiredFiles ?? []).entries()) {
-        validateMarkerEntry(`requiredFiles[${index}]`, file);
+    if (behavioral.status !== 0) {
+        fail(
+            "behavioral proof",
+            `${behavioral.stdout.trim()}\n${behavioral.stderr.trim()}`.trim() ||
+                `exited ${behavioral.status}`,
+        );
     }
-
-    if (!Array.isArray(contract.writeCommands) || contract.writeCommands.length === 0) {
-        fail("writeCommands", "must be a non-empty array");
-    }
-    assertUnique(
-        "writeCommands.name",
-        (contract.writeCommands ?? [])
-            .map((command) => command?.name)
-            .filter((commandName) => typeof commandName === "string"),
-    );
-    for (const [index, command] of (contract.writeCommands ?? []).entries()) {
-        const label = command?.name ?? `writeCommands[${index}]`;
-        if (!assertObject(label, command)) continue;
-        assertNonEmptyString(`${label}.name`, command.name);
-        safeRelativePath(`${label}.path`, command.path);
-        assertNonEmptyString(`${label}.readmeCommand`, command.readmeCommand);
-        const markers = assertStringArray(`${label}.markers`, command.markers, { allowEmpty: false });
-        assertUnique(`${label}.markers`, markers);
-    }
-
-    const forbiddenPolicyMarkers = assertStringArray(
-        "forbiddenPolicyMarkers",
-        contract.forbiddenPolicyMarkers,
-        { allowEmpty: false },
-    );
-    assertUnique("forbiddenPolicyMarkers", forbiddenPolicyMarkers);
-
-    if (assertObject("wiring", contract.wiring)) {
-        assertNonEmptyString("wiring.makeTarget", contract.wiring.makeTarget);
-        safeRelativePath("wiring.checker", contract.wiring.checker);
-        assertNonEmptyString("wiring.docsIndexPolicy", contract.wiring.docsIndexPolicy);
-        assertNonEmptyString("wiring.docsIndexContract", contract.wiring.docsIndexContract);
-        assertNonEmptyString("wiring.qualityGate", contract.wiring.qualityGate);
-        assertNonEmptyString("wiring.inventoryId", contract.wiring.inventoryId);
-        assertNonEmptyString("wiring.auditId", contract.wiring.auditId);
-    }
-}
-
-validateContractShape();
-if (failures.length > 0) {
-    console.error("CLI write-safety contract shape failed:");
-    for (const failure of failures) console.error(`- ${failure}`);
-    process.exit(1);
-}
-
-const readme = await readRel("cli/README.md");
-
-for (const file of contract.requiredFiles) {
-    const text = await readRel(file.path);
-    assertContains(text, file.contains, file.path);
-    for (const marker of contract.forbiddenPolicyMarkers) {
-        if (text.includes(marker)) failures.push(`${file.path} contains forbidden marker: ${marker}`);
-    }
-}
-
-for (const command of contract.writeCommands) {
-    const text = await readRel(command.path);
-    assertContains(text, command.markers, command.name);
-    if (!readme.includes(command.readmeCommand)) {
-        failures.push(`cli/README.md missing command marker for ${command.name}: ${command.readmeCommand}`);
-    }
-}
-
-for (const command of contract.writeCommands.filter((item) => item.name.includes("delete"))) {
-    const text = await readRel(command.path);
-    if (!text.includes(".argument(\"<id>\"")) {
-        failures.push(`${command.name} is destructive but lacks explicit <id> argument`);
-    }
-    if (!text.includes("printReceipt") || !text.includes("deleted: true")) {
-        failures.push(`${command.name} is destructive but lacks receipt-shaped deleted-resource success receipt`);
-    }
-}
-
-if (!readme.includes("Exit codes")) {
-    failures.push("cli/README.md missing Exit codes section");
-}
-if (!readme.includes("Errors go to stderr")) {
-    failures.push("cli/README.md missing JSON error stream contract");
 }
 
 const makefile = await readRel("Makefile");
-const wiring = contract.wiring ?? {};
-if (!makefile.includes(`${wiring.makeTarget}:`)) failures.push(`Makefile missing ${wiring.makeTarget} target`);
+if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
+if (!makefile.includes(`node ${wiring.checker}`)) {
+    fail("Makefile", `${wiring.makeTarget} target does not run ${wiring.checker}`);
+}
 for (const target of ["perfect-fast", "perfect-full"]) {
     const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) failures.push(`Makefile ${target} missing ${wiring.makeTarget}`);
-}
-if (!makefile.includes(`node ${wiring.checker}`)) {
-    failures.push(`Makefile ${wiring.makeTarget} target does not run checker`);
+    if (!line.includes(wiring.makeTarget)) fail("Makefile", `${target} missing ${wiring.makeTarget}`);
 }
 
 const qualityGates = await readRel("docs/quality-gates.md");
-if (!qualityGates.includes(wiring.qualityGate)) {
-    failures.push(`docs/quality-gates.md missing ${wiring.qualityGate}`);
-}
-
+if (!qualityGates.includes(wiring.qualityGate)) fail("docs/quality-gates.md", `missing ${wiring.qualityGate}`);
 const docsIndex = await readRel("docs/README.md");
-if (!docsIndex.includes(`./${wiring.docsIndexPolicy}`)) {
-    failures.push("docs/README.md missing CLI write safety policy link");
-}
-if (!docsIndex.includes(`./${wiring.docsIndexContract}`)) {
-    failures.push("docs/README.md missing CLI write safety contract link");
-}
-
+if (!docsIndex.includes(`./${wiring.docsIndexPolicy}`)) fail("docs/README.md", "missing policy link");
+if (!docsIndex.includes(`./${wiring.docsIndexContract}`)) fail("docs/README.md", "missing contract link");
 const contractInventory = await readRel("docs/contract-inventory.json");
 if (!contractInventory.includes(`"id": "${wiring.inventoryId}"`)) {
-    failures.push("docs/contract-inventory.json missing cli-write-safety entry");
+    fail("docs/contract-inventory.json", `missing ${wiring.inventoryId}`);
 }
-
 const enterpriseAudit = await readRel("docs/enterprise-hardening-audit.json");
 if (!enterpriseAudit.includes(`"id": "${wiring.auditId}"`)) {
-    failures.push("docs/enterprise-hardening-audit.json missing cli-write-safety audit entry");
+    fail("docs/enterprise-hardening-audit.json", `missing ${wiring.auditId}`);
 }
 
 if (failures.length > 0) {
@@ -235,5 +215,6 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-const writeCommandCount = Array.isArray(contract.writeCommands) ? contract.writeCommands.length : 0;
-console.log(`CLI write-safety contract passed (${writeCommandCount} write commands checked).`);
+console.log(
+    `CLI write-safety contract passed (${expected.totalLeaves} classified leaves; ${expected.mutatingLeaves} mutation handlers behaviorally proved).`,
+);

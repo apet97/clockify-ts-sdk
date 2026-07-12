@@ -20,6 +20,7 @@ import type { Command } from "commander";
 import { printObject } from "../output.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import { resolveClientId, resolveProjectId } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
@@ -116,8 +117,7 @@ const PERIOD_HELP = `Named period: ${REPORT_PERIODS.join(", ")} (default this_mo
 export const registerReportsCommand: Registrar = (program, services) => {
     const reports = program.command("reports").description("Run Clockify reports (read-only).");
 
-    reports
-        .command("summary")
+    leafCommand(reports, "summary", "read")
         .description("Summary report totals over a date range, grouped per --groups.")
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start (YYYY-MM-DD, ISO, or a period); overrides --period.")
@@ -159,8 +159,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             printObject(data, output);
         });
 
-    reports
-        .command("detailed")
+    leafCommand(reports, "detailed", "read")
         .description("Detailed report listing individual time entries over a date range.")
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")
@@ -188,8 +187,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             printObject(data, output);
         });
 
-    reports
-        .command("weekly")
+    leafCommand(reports, "weekly", "read")
         .description("Weekly report aggregating tracked time per week over a date range.")
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")
@@ -212,8 +210,7 @@ export const registerReportsCommand: Registrar = (program, services) => {
             printObject(data, output);
         });
 
-    reports
-        .command("attendance")
+    leafCommand(reports, "attendance", "read")
         .description("Attendance report of clock-in/out activity over a date range.")
         .option("--period <p>", PERIOD_HELP)
         .option("--from <date>", "Range start; overrides --period.")

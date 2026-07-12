@@ -21,6 +21,7 @@ import {
     promoteDateBoundary,
     resolveContext,
 } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 // Clockify's expense PUT needs an explicit list of which fields to apply;
@@ -55,8 +56,7 @@ function expenseChangeFields(fields: ExpenseUpdateFields): string[] {
 export const registerExpensesCommand: Registrar = (program, services) => {
     const expenses = program.command("expenses").description("Inspect workspace expenses.");
 
-    expenses
-        .command("list")
+    leafCommand(expenses, "list", "read")
         .description("List expenses in the workspace.")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
@@ -133,8 +133,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             printRecords(visible, output);
         });
 
-    expenses
-        .command("create")
+    leafCommand(expenses, "create", "write")
         .requiredOption("--amount <n>", "Amount.", parseFloatArg)
         .requiredOption("--category <id>", "Expense category ID.")
         .requiredOption("--date <date>", "Expense date (YYYY-MM-DD or ISO).")
@@ -195,8 +194,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             );
         });
 
-    expenses
-        .command("get")
+    leafCommand(expenses, "get", "read")
         .argument("<id>", "Expense ID.")
         .description("Get one expense by ID.")
         .action(async function (this: Command, id: string) {
@@ -205,8 +203,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             printObject(expense, output);
         });
 
-    expenses
-        .command("update")
+    leafCommand(expenses, "update", "write")
         .argument("<id>", "Expense ID.")
         .requiredOption("--amount <n>", "Amount.", parseFloatArg)
         .requiredOption("--category <id>", "Expense category ID.")
@@ -259,8 +256,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             );
         });
 
-    expenses
-        .command("delete")
+    leafCommand(expenses, "delete", "destructive")
         .argument("<id>", "Expense ID.")
         .description("Delete an expense by ID.")
         .action(async function (this: Command, id: string) {
