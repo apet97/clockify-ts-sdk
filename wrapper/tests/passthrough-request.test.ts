@@ -10,6 +10,7 @@ function requestFromFetchArgs(
     input: Parameters<typeof fetch>[0],
     init?: Parameters<typeof fetch>[1],
 ): Request {
+    if (input instanceof Request && init === undefined) return input;
     return new Request(input, init);
 }
 

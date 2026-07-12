@@ -267,8 +267,8 @@ describe("createClockifyClient", () => {
 
     it("serializes generated request body envelopes without dropping write fields", async () => {
         let capturedBody: string | null | undefined;
-        const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-            capturedBody = init?.body as string | null | undefined;
+        const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            capturedBody = await new Request(input, init).text();
             return new Response(JSON.stringify({ id: "client-1", name: "Acme" }), {
                 status: 200,
                 headers: { "content-type": "application/json" },
@@ -297,8 +297,8 @@ describe("createClockifyClient", () => {
         // subsequent live DELETE 400s ("Cannot delete an active client"). This pins
         // the exact wire bytes for that path end-to-end.
         let capturedBody: string | null | undefined;
-        const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
-            capturedBody = init?.body as string | null | undefined;
+        const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+            capturedBody = await new Request(input, init).text();
             return new Response(JSON.stringify({ id: "client-1", name: "Globex", archived: true }), {
                 status: 200,
                 headers: { "content-type": "application/json" },
