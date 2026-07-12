@@ -90,7 +90,7 @@ test("fixture generation preserves schema fidelity and runtime compatibility", a
     }
 });
 
-test("emitted request runtime keeps per-operation baseUrl routing and retry/timeout", async () => {
+test("emitted request runtime shares replay-safe typed and passthrough execution", async () => {
     const temp = await mkdtemp(path.join(os.tmpdir(), "clockify-codegen-runtime-"));
     try {
         const out = path.join(temp, "out");
@@ -107,8 +107,15 @@ test("emitted request runtime keeps per-operation baseUrl routing and retry/time
         const requestRuntime = await readGenerated(out, "core/request.ts");
         assert.match(requestRuntime, /baseUrl\?: string;/);
         assert.match(requestRuntime, /\?\? operation\.baseUrl \?\? ClockifyApiEnvironment\.Default/);
-        assert.match(requestRuntime, /fetchWithTimeout\(/);
-        assert.match(requestRuntime, /for \(let attempt = 0; ; attempt\+\+\)/);
+        assert.match(requestRuntime, /resolveBaseUrl\(/);
+        assert.match(requestRuntime, /executeRequest\(/);
+        assert.match(requestRuntime, /template\.clone\(\)/);
+        assert.match(requestRuntime, /response\.body\?\.cancel\(\)/);
+        assert.match(requestRuntime, /validateMaxRetries\(/);
+
+        const client = await readGenerated(out, "Client.ts");
+        assert.match(client, /baseUrl: this\._options\.baseUrl,/);
+        assert.match(client, /environment: this\._options\.environment,/);
     } finally {
         await rm(temp, { recursive: true, force: true });
     }
