@@ -21,6 +21,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   The 56 business, external-side-effect, privileged, and destructive writes now
   require a five-minute, one-use token and execute the exact canonical preview
   captured by `dry_run`; read and routine writes remain one-call operations.
+- Live sandbox proof verifies that a guarded business write cannot mutate on a bare or
+  dry-run call and executes only from its one-use stored preview token, with deterministic
+  prefixed cleanup through the root four-surface orchestrator.
 
 ## [0.4.1] - 2026-06-29
 

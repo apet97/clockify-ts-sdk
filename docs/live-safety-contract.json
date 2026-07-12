@@ -1,15 +1,17 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Live Clockify test safety contract for SDK/CLI/MCP proof. Guards sandbox-only language, cleanup scripts, deferral rules, and mock alternatives.",
+  "schemaVersion": 2,
+  "purpose": "Live Clockify test safety contract for the aggregate SDK, CLI, MCP, and GOCLMCP proof. Guards workspace confirmation, exclusive locking, result aggregation, cleanup, and secret-free receipts.",
   "policyDocument": {
     "path": "docs/live-tests.md",
     "mustContain": [
       "Never run live gates against a customer workspace",
       "CLOCKIFY_API_KEY",
       "CLOCKIFY_WORKSPACE_ID",
+      "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
+      "CLOCKIFY_LIVE_PREFIX",
       "make perfect-live",
-      "verify:live-cleanup",
-      "assert-clean-prefixes.mjs",
+      "sanitized JSON receipt",
+      "zero leftovers",
       "DEFER_LIVE_REASON",
       "make mock-clockify"
     ],
@@ -18,32 +20,96 @@
       "TBD"
     ]
   },
+  "sandboxFingerprint": {
+    "path": "docs/live-sandbox-fingerprint.json",
+    "mustContain": [
+      "\"schemaVersion\": 1",
+      "\"algorithm\": \"sha256\"",
+      "\"workspaceIdSha256\"",
+      "Non-reversible identity pin",
+      "Never replace this from ambient credentials"
+    ]
+  },
   "makefile": {
     "path": "Makefile",
     "mustContain": [
-      "perfect-live:",
-      "CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are required",
+      "perfect-live: live-safety test-data-lifecycle sdk-wrapper-build",
+      "node scripts/run-live-proof.mjs"
+    ],
+    "forbiddenMarkers": [
       "cd mcp && npm run verify:live-cleanup",
       "cd ../GOCLMCP && $(MAKE) perfect-live"
     ]
   },
-  "mcpPackage": {
-    "path": "mcp/package.json",
-    "requiredScript": {
-      "name": "verify:live-cleanup",
-      "mustContain": "node scripts/assert-clean-prefixes.mjs"
-    }
-  },
-  "cleanupScript": {
-    "path": "mcp/scripts/assert-clean-prefixes.mjs",
+  "orchestrator": {
+    "path": "scripts/live/orchestrator.mjs",
     "mustContain": [
-      "sdk-test-",
-      "mcp-sandbox-",
-      "mcp-workflow-",
-      "mcp-log-",
-      "mcp-fix-",
-      "DEMO-",
-      "process.exitCode = total === 0 ? 0 : 1"
+      "/tmp/clockify115-live.lock",
+      "CLOCKIFY_LIVE_WORKSPACE_CONFIRM",
+      "clockify115-live-",
+      "wrapper",
+      "cli",
+      "mcp",
+      "goclmcp",
+      "finally",
+      "cleanupLivePrefixes",
+      "outputSha256",
+      "live_lock_active",
+      "live_lock_not_stale",
+      "live_lock_reap_active",
+      "terminateProcessTree",
+      "SIGKILL",
+      "CLOCKIFY_ADDON_TOKEN: \"\"",
+      "CLOCKIFY_BASE_URL: \"\"",
+      "CLOCKIFY_HOME: isolatedHome",
+      "2000-01-01T00:00:00.000Z",
+      "2100-01-01T00:00:00.000Z"
+    ]
+  },
+  "orchestratorTests": {
+    "path": "scripts/live/orchestrator.test.mjs",
+    "mustContain": [
+      "all four surfaces run after a failure",
+      "malformed lock files fail closed",
+      "only explicit 402/feature-unavailable markers",
+      "recovery lock prevents concurrent stale-lock reaping",
+      "already-aborted proof dispatches no surface",
+      "cleanup actions are projected to count-only receipt fields"
+    ]
+  },
+  "entrypoint": {
+    "path": "scripts/run-live-proof.mjs",
+    "mustContain": [
+      "AbortController",
+      "SIGINT",
+      "SIGTERM",
+      "runLiveProof({ signal: controller.signal })",
+      "JSON.stringify(receipt)"
+    ]
+  },
+  "cleanupLibrary": {
+    "path": "scripts/live/cleanup.mjs",
+    "mustContain": [
+      "CLEANUP_ENTITY_ORDER",
+      "cleanupLivePrefixes",
+      "sanitizedIdCount",
+      "remainingCount"
+    ]
+  },
+  "cleanupTests": {
+    "path": "scripts/live/cleanup.test.mjs",
+    "mustContain": [
+      "node:test",
+      "cleanupLivePrefixes"
+    ]
+  },
+  "verifyRunner": {
+    "path": "scripts/verify.mjs",
+    "mustContain": [
+      "CLOCKIFY_LIVE_WORKSPACE_CONFIRM: \"\"",
+      "CLOCKIFY_LIVE_PREFIX: \"\"",
+      "CLOCKIFY_RUN_LIVE_E2E: \"\"",
+      "CLOCKIFY_LIVE_WORKSPACE_CONFIRM: process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM"
     ]
   },
   "riskRegister": {
@@ -55,7 +121,8 @@
   },
   "docsIndex": [
     "live-tests.md",
-    "live-safety-contract.json"
+    "live-safety-contract.json",
+    "live-sandbox-fingerprint.json"
   ],
   "wiring": {
     "makeTarget": "live-safety",

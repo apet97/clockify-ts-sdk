@@ -256,8 +256,9 @@ Demo fixture helpers:
 ```
 
 `clockify_demo_seed` and `clockify_demo_cleanup` ship by default rather
-than behind a flag: they back `npm run verify:live-cleanup`, the
-sandbox proof that the server leaves no objects behind. `demo_seed`
+than behind a flag: they participate in the root `make perfect-live`
+sandbox proof that all SDK/CLI/MCP/GOCLMCP surfaces leave zero objects
+behind. `demo_seed`
 creates only prefix-namespaced objects, and `clockify_demo_cleanup` requires a
 stored-preview confirmation token and publishes `destructiveHint:true` so a
 client surfaces it as destructive before execution.
@@ -439,12 +440,14 @@ npm run build
 npm pack --dry-run
 ```
 
-After live sandbox tests, assert deterministic test/demo objects were
-not left behind:
+Run live sandbox proof only through the repository-root orchestrator. It
+requires an explicit match for the sacrificial workspace, supplies one
+governed prefix, and emits a sanitized zero-leftover receipt:
 
 ```sh
-CLOCKIFY_API_KEY="$CLOCKIFY_API_KEY" CLOCKIFY_WORKSPACE_ID="$CLOCKIFY_WORKSPACE_ID" \
-  npm run verify:live-cleanup
+cd ..
+export CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"
+make perfect-live
 ```
 
 Runtime tool-count smoke:

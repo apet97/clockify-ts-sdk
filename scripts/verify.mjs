@@ -10,7 +10,16 @@ if (!new Set(["fast", "full", "live", "release"]).has(phase)) {
 function run(command, args, env = {}) {
     const result = spawnSync(command, args, {
         stdio: "inherit",
-        env: { ...process.env, CLOCKIFY_API_KEY: "", CLOCKIFY_WORKSPACE_ID: "", ...env },
+        env: {
+            ...process.env,
+            CLOCKIFY_API_KEY: "",
+            CLOCKIFY_ADDON_TOKEN: "",
+            CLOCKIFY_WORKSPACE_ID: "",
+            CLOCKIFY_LIVE_WORKSPACE_CONFIRM: "",
+            CLOCKIFY_LIVE_PREFIX: "",
+            CLOCKIFY_RUN_LIVE_E2E: "",
+            ...env,
+        },
     });
     if (result.status !== 0) process.exit(result.status ?? 1);
 }
@@ -49,9 +58,10 @@ if (phase === "full" || phase === "release") {
         "mutation-ci",
     ]) run("make", [target]);
 }
-if (phase === "live") run("make", ["perfect-live"] , {
+if (phase === "live") run("make", ["perfect-live"], {
     CLOCKIFY_API_KEY: process.env.CLOCKIFY_API_KEY ?? "",
     CLOCKIFY_WORKSPACE_ID: process.env.CLOCKIFY_WORKSPACE_ID ?? "",
+    CLOCKIFY_LIVE_WORKSPACE_CONFIRM: process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM ?? "",
 });
 if (phase === "release") {
     run("npm", ["audit"]);

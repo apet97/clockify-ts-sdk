@@ -17,8 +17,8 @@ sacrificial sandbox workspace for `CLOCKIFY_API_KEY` and
 |---|---:|---|
 | `CLOCKIFY_API_KEY` | yes | Authenticates the SDK, CLI, and MCP live clients. |
 | `CLOCKIFY_WORKSPACE_ID` | yes | Selects the sacrificial workspace. |
-| `CLOCKIFY_CLEANUP_START` | optional | Narrows MCP cleanup scans for time entries. |
-| `CLOCKIFY_CLEANUP_END` | optional | Narrows MCP cleanup scans for time entries. |
+| `CLOCKIFY_LIVE_WORKSPACE_CONFIRM` | yes | Must exactly equal the workspace id; the orchestrator refuses every mutation otherwise. |
+| `CLOCKIFY_LIVE_PREFIX` | generated | The orchestrator replaces any caller value with one unique `clockify115-live-<timestamp>-<random>-` prefix. |
 
 Do not print, paste, or commit token values. If the environment is not
 known to be sandbox-safe, stop and use mock/replay proof instead.
@@ -29,20 +29,35 @@ known to be sandbox-safe, stop and use mock/replay proof instead.
 make perfect-live
 ```
 
-The TS MCP live cleanup path runs:
+`make perfect-live` first runs the offline live-safety and lifecycle tests, builds
+the SDK, then invokes the root orchestrator:
 
 ```bash
-cd mcp && npm run verify:live-cleanup
+node scripts/run-live-proof.mjs
 ```
 
-That script builds the MCP package and runs
-`mcp/scripts/assert-clean-prefixes.mjs`. The cleanup assertion scans
-for known test prefixes such as `sdk-test-`, `mcp-sandbox-`,
-`mcp-workflow-`, `mcp-log-`, `mcp-fix-`, and `DEMO-`.
+The orchestrator validates the confirmation without printing either credential,
+acquires the exclusive `/tmp/clockify115-live.lock`, creates one run prefix, and
+runs the wrapper, CLI, TypeScript MCP, and GOCLMCP suites separately. A failed
+surface does not suppress the remaining suites. Cleanup runs in `finally` for
+the exact run prefix and the governed legacy families (`clockify115-live-`,
+`sdk-test-`, `mcp-sandbox-`, `mcp-workflow-`, `mcp-log-`, `mcp-fix-`, and
+`DEMO-`). The broad `clockify115-live-` family lets a later run recover
+objects stranded by an earlier root-orchestrator run.
 
-If `../GOCLMCP` is present, `make perfect-live` also delegates to the
-Go MCP live proof. Treat the final cleanup receipt as the source of
-truth, not an intermediate green line.
+The command prints one sanitized JSON receipt. It contains surface status,
+output hashes, per-entity cleanup counts, and the final leftover count; it never
+contains a token, workspace identifier, object identifier, or child-process
+log. A successful proof requires wrapper and GOCLMCP to pass, CLI and MCP to
+pass or report only stable HTTP 402 / `feature_unavailable` entitlement limits,
+cleanup to pass, and zero leftovers. Generic HTTP 403 or 404 is a failure.
+The aggregate cleanup window is fixed at 2000-01-01 through 2100-01-01;
+ambient narrowing variables cannot hide exact-run or governed legacy entries.
+
+The lock is cleared only when its recorded process is gone and it is older than
+the governed stale threshold. An active, fresh-dead, changed, or malformed lock
+fails closed. Treat the final sanitized JSON receipt as the source of truth,
+not an intermediate green line.
 
 ## Deferring live proof
 

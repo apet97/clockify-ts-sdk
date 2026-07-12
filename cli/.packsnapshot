@@ -9,6 +9,7 @@ dist/commands/entries.js
 dist/commands/expenses.js
 dist/commands/helpers.js
 dist/commands/invoices.js
+dist/commands/leaf-command.js
 dist/commands/log.js
 dist/commands/projects.js
 dist/commands/reports.js

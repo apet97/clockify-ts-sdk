@@ -168,6 +168,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`release-readiness-contract.json`](./release-readiness-contract.json) | edit intentionally | Release and handoff readiness evidence contract. |
 | [`ci-contract.json`](./ci-contract.json) | edit intentionally | GitHub workflow posture and release-safety contract. |
 | [`live-safety-contract.json`](./live-safety-contract.json) | edit intentionally | Sandbox-only live-test safety and cleanup contract. |
+| [`live-sandbox-fingerprint.json`](./live-sandbox-fingerprint.json) | edit intentionally | Non-reversible identity pin for the governed sacrificial live-test workspace. |
 | [`test-data-lifecycle-contract.json`](./test-data-lifecycle-contract.json) | edit intentionally | Live sandbox test-data prefix, cleanup, leftover scan, and receipt contract. |
 | [`risk-register.json`](./risk-register.json) | edit intentionally | Evidence-backed risk and limitation register. |
 | [`user-docs-contract.json`](./user-docs-contract.json) | edit intentionally | User-facing documentation parity contract. |
@@ -249,8 +250,8 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Release decision plan | `make release-decision-plan` | Print no-network release workflow decision options without granting publish permission. |
 | CI contract | `make ci-contract` | Check GitHub workflow posture, package workflow gates, docs/release workflow safety rails, and release decision boundary. |
 | Sandbox key health | `make sandbox-key-health` | Optional live Clockify sandbox key preflight; skips cleanly when credentials are blank. |
-| Live safety | `make live-safety` | Check sandbox-only live-test docs, env gates, cleanup prefixes, and mock alternative. |
-| Test data lifecycle | `make test-data-lifecycle` | Check live sandbox prefixes, create/delete pairing, cleanup script coverage, leftover scans, and sanitized cleanup receipts. |
+| Live safety | `make live-safety` | Check confirmed sandbox scope, exclusive lock behavior, four-surface aggregation, finally cleanup, and secret-free receipts. |
+| Test data lifecycle | `make test-data-lifecycle` | Check exact/legacy prefixes, create/delete pairing, dependency-ordered cleanup, complete rescans, and zero-leftover receipts. |
 | Risk register | `make risk-register` | Check known risks, accepted constraints, evidence paths, and closure gates. |
 | Risk status report | `make risk-status-report` | Print no-network open/provisional risk and file-state signals. |
 | Performance budgets | `make performance-budgets` | Check built SDK/CLI/MCP artifact size/startup ceilings and generated calibration-plan policy alignment. |

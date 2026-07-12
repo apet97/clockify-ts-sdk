@@ -496,38 +496,49 @@ that belongs only to the archived Fern discrepancy notes.
 
 ## 7. Live tests (env-gated; sandbox-only)
 
-Three live sandbox suites read `CLOCKIFY_API_KEY` and
-`CLOCKIFY_WORKSPACE_ID`. All skip cleanly if either is absent (CI
-runs without them deliberately):
+Three live sandbox suites run under `scripts/run-live-proof.mjs`, which
+provides `CLOCKIFY_API_KEY`, `CLOCKIFY_WORKSPACE_ID`, an exact matching
+`CLOCKIFY_LIVE_WORKSPACE_CONFIRM`, and one generated
+`clockify115-live-<timestamp>-<random>-` prefix. They skip cleanly only
+when credentials are wholly absent (CI runs without them deliberately);
+partially armed, unconfirmed, or unprefixed mutation runs fail closed.
 
 - `wrapper/tests/sandbox.test.ts` — 7 SDK-level flows (CRUD on tags,
   pagination walks via `paginate` / `iterAll` / `iterPages`,
   `withResponse` headers smoke).
-- `cli/tests/sandbox.test.ts` — 8 CLI flows invoking `main()` in
-  `--json` mode and parsing stdout. Covers `status`, `tags list`,
-  `projects list`, `clients list`, `webhooks list`, `invoices list`,
-  `expenses list`, and `audit-log search`. The audit-log test
-  self-skips when the workspace plan gates the endpoint.
-- `mcp/tests/sandbox.test.ts` — 11 MCP flows. Uses real
+- `cli/tests/sandbox.test.ts` — 12 CLI flows invoking `main()` in
+  `--json` mode and parsing stdout. Covers timer start/stop/delete, tag
+  CRUD, the client/project/task archive-delete chain, an entitled invoice
+  draft round trip, and the existing read smokes. Only stable HTTP 402 or
+  `feature_unavailable` can limit an entitled flow; 403/404 fail.
+- `mcp/tests/sandbox.test.ts` — 12 MCP flows. Uses real
   `loadContext()` + `buildServer()` piped through
   `InMemoryTransport.createLinkedPair()`. Covers `clockify_status`,
   list tools, tag create/delete, work-package create/reuse cleanup,
   derived-start work logging, review-day totals, and fix-entry update
-  cleanup.
+  cleanup, plus one guarded business write through bare rejection,
+  dry-run/token preview, and one-use execution.
 
 **Never run live tests against a customer workspace.** Every CRUD
 round-trip creates and deletes records on the pinned sandbox.
 
 When adding live flows:
 - Pair create with delete in the same `it` block.
-- Use timestamp-prefixed slugs (`sdk-test-${Date.now()}`,
-  `mcp-sandbox-${Date.now()}`) so litter from aborted runs is
-  identifiable.
+- Derive every mutable name from `CLOCKIFY_LIVE_PREFIX`; never invent a
+  surface-local prefix for an armed run.
+- Keep the entity discoverable by the dependency-ordered root cleanup in
+  `scripts/live/cleanup.mjs`, which always runs in `finally` and emits only
+  count-based receipts.
 - `testTimeout: 30_000` is already in `vitest.config.ts` (wrapper)
   and inline on each `it` in cli/mcp suites.
 - Treat any 401 / 5xx as a test bug, not a spec bug, until proven
   otherwise. Run the curl equivalent by hand before changing
   assertions.
+
+Run `make perfect-live` only in the sacrificial sandbox. The root
+orchestrator runs wrapper, CLI, MCP, and GOCLMCP independently, retains all
+four statuses, then requires cleanup success and zero leftovers in one
+sanitized JSON receipt.
 
 ## 8. Known deferred / blocked items
 

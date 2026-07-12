@@ -103,20 +103,22 @@ function validateMarkerEntry(label, entry) {
 }
 
 function validateContractShape() {
-    if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
+    if (contract.schemaVersion !== 2) fail("schemaVersion", "must be 2");
     assertNonEmptyString("purpose", contract.purpose);
 
-
-    for (const field of ["policyDocument", "makefile", "cleanupScript", "riskRegister"]) {
+    for (const field of [
+        "policyDocument",
+        "sandboxFingerprint",
+        "makefile",
+        "orchestrator",
+        "orchestratorTests",
+        "entrypoint",
+        "cleanupLibrary",
+        "cleanupTests",
+        "verifyRunner",
+        "riskRegister",
+    ]) {
         validateMarkerEntry(field, contract[field]);
-    }
-
-    if (assertObject("mcpPackage", contract.mcpPackage)) {
-        safeRelativePath("mcpPackage.path", contract.mcpPackage.path);
-        if (assertObject("mcpPackage.requiredScript", contract.mcpPackage.requiredScript)) {
-            assertNonEmptyString("mcpPackage.requiredScript.name", contract.mcpPackage.requiredScript.name);
-            assertNonEmptyString("mcpPackage.requiredScript.mustContain", contract.mcpPackage.requiredScript.mustContain);
-        }
     }
 
     const docsIndex = assertStringArray("docsIndex", contract.docsIndex, { allowEmpty: false });
@@ -137,22 +139,24 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-const policyText = readRelative(contract.policyDocument.path);
-checkContains(contract.policyDocument.path, policyText, contract.policyDocument.mustContain);
-for (const marker of contract.policyDocument.forbiddenMarkers ?? []) {
-    if (policyText.includes(marker)) fail(contract.policyDocument.path, `contains forbidden marker ${marker}`);
-}
-
-checkContains(contract.makefile.path, readRelative(contract.makefile.path), contract.makefile.mustContain);
-checkContains(contract.cleanupScript.path, readRelative(contract.cleanupScript.path), contract.cleanupScript.mustContain);
-checkContains(contract.riskRegister.path, readRelative(contract.riskRegister.path), contract.riskRegister.mustContain);
-
-const mcpPackage = readJson(contract.mcpPackage.path, "mcpPackage.path");
-const actualScript = mcpPackage.scripts?.[contract.mcpPackage.requiredScript.name];
-if (typeof actualScript !== "string") {
-    fail(contract.mcpPackage.path, `missing script ${contract.mcpPackage.requiredScript.name}`);
-} else if (!actualScript.includes(contract.mcpPackage.requiredScript.mustContain)) {
-    fail(contract.mcpPackage.path, `script ${contract.mcpPackage.requiredScript.name} missing cleanup command`);
+for (const field of [
+    "policyDocument",
+    "sandboxFingerprint",
+    "makefile",
+    "orchestrator",
+    "orchestratorTests",
+    "entrypoint",
+    "cleanupLibrary",
+    "cleanupTests",
+    "verifyRunner",
+    "riskRegister",
+]) {
+    const entry = contract[field];
+    const text = readRelative(entry.path);
+    checkContains(entry.path, text, entry.mustContain);
+    for (const marker of entry.forbiddenMarkers ?? []) {
+        if (text.includes(marker)) fail(entry.path, `contains forbidden marker ${marker}`);
+    }
 }
 
 const docsIndex = readRelative("docs/README.md");

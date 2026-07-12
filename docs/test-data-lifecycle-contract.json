@@ -1,21 +1,24 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Live sandbox test data lifecycle contract for SDK, CLI, MCP, prefixes, cleanup, leftover scans, and safe final proof receipts.",
+  "schemaVersion": 2,
+  "purpose": "Live sandbox test-data lifecycle contract for SDK, CLI, MCP, GOCLMCP, the exact-run prefix, governed legacy prefixes, dependency-ordered cleanup, and a zero-leftover final receipt.",
   "policyDocument": {
     "path": "docs/test-data-lifecycle-policy.md",
     "mustContain": [
       "Prefix ledger",
       "Lifecycle rules",
+      "Dependency order",
       "Cleanup proof",
       "Stop conditions",
       "make test-data-lifecycle"
     ],
     "forbiddenMarkers": [
       "TODO",
-      "TBD"
+      "TBD",
+      "CLI live tests stay read-only"
     ]
   },
   "prefixes": [
+    "clockify115-live-",
     "sdk-test-",
     "mcp-sandbox-",
     "mcp-workflow-",
@@ -23,26 +26,48 @@
     "mcp-fix-",
     "DEMO-"
   ],
-  "cleanupScript": {
-    "path": "mcp/scripts/assert-clean-prefixes.mjs",
+  "entityOrder": [
+    "time_entries",
+    "scheduling_assignments",
+    "time_off_requests",
+    "expenses",
+    "invoices",
+    "shared_reports",
+    "webhooks",
+    "tasks",
+    "projects",
+    "clients",
+    "tags"
+  ],
+  "orchestrator": {
+    "path": "scripts/live/orchestrator.mjs",
     "mustContain": [
-      "DEFAULT_PREFIXES",
-      "sdk-test-",
-      "mcp-sandbox-",
-      "mcp-workflow-",
-      "mcp-log-",
-      "mcp-fix-",
-      "DEMO-",
-      "leftovers",
-      "process.exitCode = total === 0 ? 0 : 1"
+      "GOVERNED_LEGACY_PREFIXES",
+      "clockify115-live-",
+      "cleanupLivePrefixes",
+      "rangeStart",
+      "rangeEnd"
+    ]
+  },
+  "cleanupLibrary": {
+    "path": "scripts/live/cleanup.mjs",
+    "mustContain": [
+      "CLEANUP_ENTITY_ORDER",
+      "validateCleanupOptions",
+      "cleanupLivePrefixes",
+      "sanitizedIdCount",
+      "deletedCount",
+      "failedCount",
+      "remainingCount",
+      "complete"
     ]
   },
   "liveTests": [
     {
       "path": "wrapper/tests/sandbox.test.ts",
       "mustContain": [
-        "sdk-test-",
-        "creates, fetches by id, and deletes a tag",
+        "CLOCKIFY_LIVE_PREFIX",
+        "creates, gets, updates, and deletes a prefixed tag in try/finally",
         "CLOCKIFY_API_KEY",
         "CLOCKIFY_WORKSPACE_ID"
       ]
@@ -50,19 +75,23 @@
     {
       "path": "cli/tests/sandbox.test.ts",
       "mustContain": [
+        "CLOCKIFY_LIVE_PREFIX",
+        "starts, stops, and deletes one project-bound prefixed time entry",
+        "creates and archive-deletes a prefixed client/project/task chain",
+        "round-trips an entitled prefixed invoice draft",
+        "finally"
+      ],
+      "forbiddenMarkers": [
         "Tests are deliberately read-only",
-        "CLOCKIFY_API_KEY",
-        "CLOCKIFY_WORKSPACE_ID",
-        "--json"
+        "Generic 403",
+        "Generic 404"
       ]
     },
     {
       "path": "mcp/tests/sandbox.test.ts",
       "mustContain": [
-        "mcp-sandbox-",
-        "mcp-workflow-",
-        "mcp-log-",
-        "mcp-fix-",
+        "CLOCKIFY_LIVE_PREFIX",
+        "guards an entitled business write with bare rejection, dry-run, and one-use execution",
         "finally",
         "cleanupPackage"
       ]
@@ -70,19 +99,27 @@
   ],
   "supportingEvidence": [
     {
+      "path": "scripts/live/cleanup.test.mjs",
+      "mustContain": [
+        "cleanupLivePrefixes",
+        "continues later cleanup",
+        "server clamps below requested page size"
+      ]
+    },
+    {
       "path": "docs/live-tests.md",
       "mustContain": [
         "sacrificial sandbox",
-        "cleanup receipt",
+        "sanitized JSON receipt",
         "make perfect-live"
       ]
     },
     {
       "path": "docs/live-safety-contract.json",
       "mustContain": [
-        "verify:live-cleanup",
-        "assert-clean-prefixes.mjs",
-        "DEFER_LIVE_REASON"
+        "scripts/run-live-proof.mjs",
+        "cleanupLivePrefixes",
+        "live_lock_active"
       ]
     },
     {

@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "workspaceIdSha256": "7955161f32bc2ee229c34e8d4a6b0bccdf8353affdfc93889537df6d2e8f2f12",
+  "purpose": "Non-reversible identity pin for the governed sacrificial Clockify workspace. Never replace this from ambient credentials."
+}

@@ -37,6 +37,8 @@ once v1.0.0 ships.
 ### Changed
 
 - Require Node.js 22.13 or newer.
+- Live sandbox proof now performs a prefixed tag create/get/update/delete round trip with
+  dependency-safe cleanup through the root four-surface orchestrator.
 - Workspace resources expose `ScopedResource<T>`, omitting `workspaceId` from scoped request types.
 - Pagination/bulk numeric controls reject non-finite, fractional, and out-of-range values; fail-fast
   bulk work now settles already-started operations before rejecting.

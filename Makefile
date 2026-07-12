@@ -131,7 +131,7 @@ perfect: perfect-fast
 # proofs (pack-smoke/coverage/mutation). It stays a FATAL prerequisite: the
 # file-size and import/startup-crash budgets still block. Keep it last when
 # editing these prerequisite lists.
-perfect-fast: official-openapi-drift mutation-safety mcp-write-safety mcp-agent-ux cli-write-safety generator-comparison config-precedence sdk-public-api cli-contract mcp-contract runtime-support package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
+perfect-fast: official-openapi-drift mutation-safety mcp-write-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle generator-comparison config-precedence sdk-public-api cli-contract mcp-contract runtime-support package-contract version-consistency changelog-drift docs-index-drift agent-handoff ci-contract
 	node scripts/verify.mjs fast
 
 # Deterministic, offline, network-free contract/doc/drift gates only.
@@ -144,21 +144,11 @@ perfect-fast: official-openapi-drift mutation-safety mcp-write-safety mcp-agent-
 # and contract drift suite that previously only ran locally.
 contract-gates: generated-edit-check openapi-evidence upstream-drift official-openapi-drift operation-coverage generator-config generator-independence generator-comparison doc-correctness-anchor generator-portability package-contract examples-contract examples-matrix snippet-safety snippet-method-parity snippet-compile runtime-support env-contract config-precedence sdk-public-api sdk-runtime-contract decision-records contract-inventory workflow-cookbook acceptance-scenarios naming-taxonomy change-impact version-policy tag-hygiene version-consistency secret-hygiene data-handling security-threat-model supply-chain dependency-boundary dependency-license compatibility-contract breaking-change-review observability diagnostics support-bundle issue-intake release-support-contract release-readiness ci-contract live-safety test-data-lifecycle risk-register user-docs docs-quality axioms-contract agent-handoff agent-tasks developer-environment operator-toolbox operator-onboarding api-docs mcp-contract mcp-agent-ux mcp-write-safety cli-contract cli-write-safety consumer-cast-budget test-matrix mock-contract cassettes fixture-mock-parity maintenance-playbook mutation-safety error-docs-drift error-registry troubleshooting-drift readme-tables-drift changelog-drift docs-index-drift enterprise-audit docs-counts conformance-drift docs-drift schema-quality
 
-perfect-full: official-openapi-drift mutation-safety mcp-write-safety mcp-agent-ux cli-write-safety generator-comparison config-precedence sdk-public-api cli-contract mcp-contract runtime-support package-contract version-consistency changelog-drift docs-index-drift agent-handoff mutation-ci ci-contract
+perfect-full: official-openapi-drift mutation-safety mcp-write-safety mcp-agent-ux cli-write-safety live-safety test-data-lifecycle generator-comparison config-precedence sdk-public-api cli-contract mcp-contract runtime-support package-contract version-consistency changelog-drift docs-index-drift agent-handoff mutation-ci ci-contract
 	node scripts/verify.mjs full
 
-perfect-live:
-	@if [ -z "$${CLOCKIFY_API_KEY:-}" ] || [ -z "$${CLOCKIFY_WORKSPACE_ID:-}" ]; then \
-		echo 'perfect-live: CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are required.' >&2; \
-		echo 'Use only the sacrificial sandbox workspace described in docs/live-tests.md.' >&2; \
-		exit 1; \
-	fi
-	cd mcp && npm run verify:live-cleanup
-	@if [ -d ../GOCLMCP ]; then \
-		cd ../GOCLMCP && $(MAKE) perfect-live; \
-	else \
-		echo 'perfect-live: ../GOCLMCP not found; skipped Go MCP live gate.' >&2; \
-	fi
+perfect-live: live-safety test-data-lifecycle sdk-wrapper-build
+	node scripts/run-live-proof.mjs
 
 wrapper-gates:
 	cd wrapper && npm run type-check && npm test && npm run build && npm run build:smoke && npm pack --dry-run
@@ -466,9 +456,11 @@ ci-contract:
 
 live-safety:
 	node scripts/check-live-safety.mjs
+	node --test scripts/live/orchestrator.test.mjs
 
 test-data-lifecycle:
 	node scripts/check-test-data-lifecycle.mjs
+	node --test scripts/live/cleanup.test.mjs
 
 risk-register:
 	node scripts/check-risk-register.mjs

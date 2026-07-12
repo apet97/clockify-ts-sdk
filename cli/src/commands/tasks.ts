@@ -45,6 +45,11 @@ function optionalTaskString(value: unknown, field: string): string | undefined {
     return value;
 }
 
+function optionalNullableTaskString(value: unknown, field: string): string | undefined {
+    if (value === null) return undefined;
+    return optionalTaskString(value, field);
+}
+
 function requiredTaskBoolean(value: unknown, field: string): boolean {
     if (typeof value !== "boolean") {
         throw new Error(`Current task has invalid or missing ${field}; refusing to mutate.`);
@@ -74,7 +79,7 @@ function reconstructTaskBody(
                 ? requireTaskName(suppliedName, "Task update request")
                 : requireTaskName(current.name, "Current task"),
     };
-    const assigneeId = optionalTaskString(current.assigneeId, "assigneeId");
+    const assigneeId = optionalNullableTaskString(current.assigneeId, "assigneeId");
     if (assigneeId !== undefined) body.assigneeId = assigneeId;
     const assigneeIds = stringList(current.assigneeIds, "assigneeIds");
     if (assigneeIds !== undefined) body.assigneeIds = assigneeIds;

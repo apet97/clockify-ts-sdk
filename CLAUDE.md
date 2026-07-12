@@ -157,12 +157,18 @@ npm test -w @apet97/clockify-cli-115
 npm run build -w @apet97/clockify-mcp-115
 ```
 
-For live MCP sandbox cleanup proof, run from the repo root so the
-shell env is inherited:
+For aggregate live sandbox proof, confirm the sacrificial workspace and
+run from the repo root so the shell env is inherited:
 
 ```bash
-cd mcp && npm run verify:live-cleanup
+export CLOCKIFY_LIVE_WORKSPACE_CONFIRM="$CLOCKIFY_WORKSPACE_ID"
+make perfect-live
 ```
+
+The root orchestrator generates the run prefix, executes SDK/CLI/MCP/GOCLMCP
+separately, always performs dependency-ordered cleanup, and prints one
+sanitized JSON receipt. Do not invoke a package live suite directly with
+credentials; armed suites require the orchestrator prefix and confirmation.
 
 Docs-only changes still need:
 
@@ -460,7 +466,8 @@ make docs-drift
 | CLI name→id resolution (`start`/`log`) | `cli/src/commands/resolve-refs.ts` (shared) |
 | MCP domain tool | `mcp/src/tools/*.ts`, wired in `mcp/src/server.ts` |
 | MCP workflow | `mcp/src/tools/workflows/index.ts` (+ siblings) + `mcp/tests/workflows.test.ts` |
-| Live cleanup proof | `mcp/scripts/assert-clean-prefixes.mjs` |
+| Aggregate live proof + lock/receipt | `scripts/live/orchestrator.mjs` |
+| Dependency-ordered live cleanup | `scripts/live/cleanup.mjs` |
 | Spec/live discrepancy | `spec/evidence/discrepancies.md` |
 | Product direction | `docs/product-north-star.md` |
 
