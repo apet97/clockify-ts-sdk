@@ -18,6 +18,27 @@ function dispatchedRequest(dispatch: ReturnType<typeof vi.fn>, callIndex = 0): R
     return requestFromFetchArgs(input, init);
 }
 
+type PromiseOutcome<T> =
+    | { status: "fulfilled"; value: T }
+    | { status: "rejected"; reason: unknown };
+
+function observePromise<T>(promise: Promise<T>): Promise<PromiseOutcome<T>> {
+    return promise.then(
+        (value) => ({ status: "fulfilled", value }),
+        (reason: unknown) => ({ status: "rejected", reason }),
+    );
+}
+
+async function withFakeTimers(run: () => Promise<void>): Promise<void> {
+    vi.useFakeTimers();
+    try {
+        await run();
+    } finally {
+        vi.clearAllTimers();
+        vi.useRealTimers();
+    }
+}
+
 function governedInputRequest(signal = new AbortController().signal): Request {
     return new Request("https://api.clockify.me/api/v1/user", {
         method: "POST",
@@ -556,6 +577,498 @@ describe("ClockifyApiClient.fetch", () => {
             expect(dispatch).toHaveBeenCalledOnce();
         },
     );
+
+    describe("retry, replay, and abort behavior", () => {
+        it("retries a GET transport failure twice by default", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockRejectedValueOnce(new TypeError("first transport failure"))
+                    .mockRejectedValueOnce(new TypeError("second transport failure"))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                const outcome = observePromise(client(dispatch).fetch("users"));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(dispatch).toHaveBeenCalledTimes(3);
+            });
+        });
+
+        it("retries a GET retryable response twice by default", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                const outcome = observePromise(client(dispatch).fetch("users"));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(dispatch).toHaveBeenCalledTimes(3);
+            });
+        });
+
+        it.each(["POST", "PATCH"] as const)(
+            "does not retry a %s retryable response by default",
+            async (method) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(client(dispatch).fetch("users", { method }));
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(503);
+                    expect(dispatch).toHaveBeenCalledOnce();
+                });
+            },
+        );
+
+        it.each(["POST", "PATCH"] as const)(
+            "does not retry a %s transport failure by default",
+            async (method) => {
+                await withFakeTimers(async () => {
+                    const transportError = new TypeError(`${method} transport failure`);
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockRejectedValueOnce(transportError)
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(client(dispatch).fetch("users", { method }));
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("rejected");
+                    expect(dispatch).toHaveBeenCalledOnce();
+                });
+            },
+        );
+
+        it("lets per-call retries override a disabled client retry policy", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+                const sdk = new ClockifyApiClient({
+                    apiKey: "secret",
+                    environment: "https://api.clockify.me/api/v1",
+                    fetch: dispatch,
+                    maxRetries: 0,
+                });
+
+                const outcome = observePromise(sdk.fetch("users", undefined, { maxRetries: 2 }));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(dispatch).toHaveBeenCalledTimes(3);
+            });
+        });
+
+        it("lets per-call zero retries override client retries", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+                const sdk = new ClockifyApiClient({
+                    apiKey: "secret",
+                    environment: "https://api.clockify.me/api/v1",
+                    fetch: dispatch,
+                    maxRetries: 2,
+                });
+
+                const outcome = observePromise(sdk.fetch("users", undefined, { maxRetries: 0 }));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(503);
+                expect(dispatch).toHaveBeenCalledOnce();
+            });
+        });
+
+        it("uses client retries before the default retry count", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+                const sdk = new ClockifyApiClient({
+                    apiKey: "secret",
+                    environment: "https://api.clockify.me/api/v1",
+                    fetch: dispatch,
+                    maxRetries: 1,
+                });
+
+                const outcome = observePromise(sdk.fetch("users"));
+                await vi.runAllTimersAsync();
+
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(503);
+                expect(dispatch).toHaveBeenCalledTimes(2);
+            });
+        });
+
+        it("treats Retry-After: 0 as an immediate retry", async () => {
+            await withFakeTimers(async () => {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(
+                        new Response(null, {
+                            status: 429,
+                            headers: { "Retry-After": "0" },
+                        }),
+                    )
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                let settled: PromiseOutcome<Response> | undefined;
+                void observePromise(
+                    client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                ).then((outcome) => {
+                    settled = outcome;
+                });
+                await vi.advanceTimersByTimeAsync(0);
+
+                expect(dispatch).toHaveBeenCalledTimes(2);
+                expect(settled).toBeDefined();
+                expect(settled?.status).toBe("fulfilled");
+                expect(settled?.status === "fulfilled" && settled.value.status).toBe(204);
+            });
+        });
+
+        it("waits until X-RateLimit-Reset before retrying", async () => {
+            await withFakeTimers(async () => {
+                vi.setSystemTime(new Date("2026-07-12T12:00:00.000Z"));
+                const resetEpochSeconds = Math.floor(Date.now() / 1000) + 2;
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(
+                        new Response(null, {
+                            status: 429,
+                            headers: { "X-RateLimit-Reset": String(resetEpochSeconds) },
+                        }),
+                    )
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                let settled: PromiseOutcome<Response> | undefined;
+                void observePromise(
+                    client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                ).then((outcome) => {
+                    settled = outcome;
+                });
+                await vi.advanceTimersByTimeAsync(0);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                await vi.advanceTimersByTimeAsync(1_999);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                await vi.advanceTimersByTimeAsync(1);
+                expect(dispatch).toHaveBeenCalledTimes(2);
+                expect(settled).toBeDefined();
+                expect(settled?.status).toBe("fulfilled");
+                expect(settled?.status === "fulfilled" && settled.value.status).toBe(204);
+            });
+        });
+
+        it("replays identical PUT body bytes with a fresh Request per attempt", async () => {
+            await withFakeTimers(async () => {
+                const inputs: Parameters<typeof fetch>[0][] = [];
+                const inits: Array<Parameters<typeof fetch>[1]> = [];
+                const bodies: Uint8Array[] = [];
+                const dispatch = vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
+                    inputs.push(input);
+                    inits.push(init);
+                    if (input instanceof Request && init === undefined) {
+                        bodies.push(new Uint8Array(await input.arrayBuffer()));
+                    }
+                    return new Response(null, { status: inputs.length < 3 ? 503 : 204 });
+                });
+
+                const outcome = observePromise(
+                    client(dispatch).fetch("users", {
+                        method: "PUT",
+                        body: "same bytes on every attempt",
+                    }),
+                );
+                await vi.runAllTimersAsync();
+
+                const expectedBody = new TextEncoder().encode("same bytes on every attempt");
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(inputs).toHaveLength(3);
+                expect(inputs.every((input) => input instanceof Request)).toBe(true);
+                expect(inits).toEqual([undefined, undefined, undefined]);
+                expect(bodies).toEqual([expectedBody, expectedBody, expectedBody]);
+                expect(new Set(inputs).size).toBe(3);
+            });
+        });
+
+        it("rejects a retryable used body before its first dispatch", async () => {
+            const dispatch = vi
+                .fn<typeof fetch>()
+                .mockResolvedValue(new Response(null, { status: 204 }));
+            const input = new Request("https://api.clockify.me/api/v1/users", {
+                method: "PUT",
+                body: "already consumed",
+                redirect: "manual",
+            });
+            await input.text();
+
+            await expect(
+                client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+            ).rejects.toBeDefined();
+            expect(dispatch).not.toHaveBeenCalled();
+        });
+
+        it("rejects a retryable locked body before its first dispatch", async () => {
+            const dispatch = vi
+                .fn<typeof fetch>()
+                .mockResolvedValue(new Response(null, { status: 204 }));
+            const input = new Request("https://api.clockify.me/api/v1/users", {
+                method: "PUT",
+                body: "locked body",
+                redirect: "manual",
+            });
+            const reader = input.body?.getReader();
+            expect(reader).toBeDefined();
+
+            try {
+                await expect(
+                    client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+                ).rejects.toBeDefined();
+                expect(dispatch).not.toHaveBeenCalled();
+            } finally {
+                reader?.releaseLock();
+            }
+        });
+
+        it("rejects an otherwise non-replayable retryable body before dispatch", async () => {
+            const dispatch = vi
+                .fn<typeof fetch>()
+                .mockResolvedValue(new Response(null, { status: 204 }));
+            const stream = new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(new TextEncoder().encode("stream body"));
+                    controller.close();
+                },
+            });
+            const input = new Request("https://api.clockify.me/api/v1/users", {
+                method: "PUT",
+                body: stream,
+                redirect: "manual",
+                duplex: "half",
+            } as RequestInit);
+            Object.defineProperty(input.body, "tee", {
+                value: () => {
+                    throw new TypeError("body cannot be replayed");
+                },
+            });
+            expect(input.bodyUsed).toBe(false);
+            expect(input.body?.locked).toBe(false);
+            expect(() => input.clone()).toThrow(/cannot be replayed/i);
+
+            await expect(
+                client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+            ).rejects.toBeDefined();
+            expect(dispatch).not.toHaveBeenCalled();
+        });
+
+        it("cancels a retryable response body before backoff", async () => {
+            await withFakeTimers(async () => {
+                let finishCancellation!: () => void;
+                const cancellationFinished = new Promise<void>((resolve) => {
+                    finishCancellation = resolve;
+                });
+                const cancelBody = vi.fn(() => cancellationFinished);
+                const retryableResponse = new Response(
+                    new ReadableStream<Uint8Array>({ cancel: cancelBody }),
+                    {
+                        status: 503,
+                        headers: { "Retry-After": "5" },
+                    },
+                );
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(retryableResponse)
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                let settled: PromiseOutcome<Response> | undefined;
+                void observePromise(
+                    client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                ).then((outcome) => {
+                    settled = outcome;
+                });
+                await vi.advanceTimersByTimeAsync(0);
+
+                expect(dispatch).toHaveBeenCalledOnce();
+                expect(cancelBody).toHaveBeenCalledOnce();
+
+                await vi.advanceTimersByTimeAsync(5_000);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                finishCancellation();
+                await vi.advanceTimersByTimeAsync(0);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                await vi.advanceTimersByTimeAsync(4_999);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                await vi.advanceTimersByTimeAsync(1);
+                expect(dispatch).toHaveBeenCalledTimes(2);
+                expect(settled).toBeDefined();
+                expect(settled?.status).toBe("fulfilled");
+                expect(settled?.status === "fulfilled" && settled.value.status).toBe(204);
+            });
+        });
+
+        it.each(["request options", "init", "input Request"] as const)(
+            "rejects an already-aborted %s signal with zero dispatches",
+            async (source) => {
+                const reason = new Error(`${source} already aborted`);
+                const controller = new AbortController();
+                controller.abort(reason);
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValue(new Response(null, { status: 204 }));
+                const sdk = client(dispatch);
+
+                const result =
+                    source === "request options"
+                        ? sdk.fetch("users", undefined, { abortSignal: controller.signal })
+                        : source === "init"
+                          ? sdk.fetch("users", { signal: controller.signal })
+                          : sdk.fetch(
+                                new Request("https://api.clockify.me/api/v1/users", {
+                                    signal: controller.signal,
+                                    redirect: "manual",
+                                }),
+                            );
+
+                await expect(result).rejects.toBe(reason);
+                expect(dispatch).not.toHaveBeenCalled();
+            },
+        );
+
+        it("rejects immediately with the caller reason when aborted during backoff", async () => {
+            await withFakeTimers(async () => {
+                const controller = new AbortController();
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValueOnce(
+                        new Response(null, {
+                            status: 503,
+                            headers: { "Retry-After": "60" },
+                        }),
+                    )
+                    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                let settled: PromiseOutcome<Response> | undefined;
+                void observePromise(
+                    client(dispatch).fetch("users", undefined, {
+                        maxRetries: 1,
+                        abortSignal: controller.signal,
+                    }),
+                ).then((outcome) => {
+                    settled = outcome;
+                });
+                await vi.advanceTimersByTimeAsync(0);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                const reason = new Error("caller stopped retry backoff");
+                controller.abort(reason);
+                await vi.advanceTimersByTimeAsync(0);
+
+                expect(settled).toBeDefined();
+                expect(settled?.status).toBe("rejected");
+                expect(settled?.status === "rejected" && settled.reason).toBe(reason);
+                expect(dispatch).toHaveBeenCalledOnce();
+            });
+        });
+
+        it.each(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"] as const)(
+            "retries status failures for the default %s method",
+            async (method) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValueOnce(new Response(null, { status: 503 }))
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(
+                        client(dispatch).fetch("users", { method }, { maxRetries: 1 }),
+                    );
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                    expect(dispatch).toHaveBeenCalledTimes(2);
+                });
+            },
+        );
+
+        it.each([408, 429, 500, 502, 503, 504])(
+            "retries the default %i response status",
+            async (status) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValueOnce(new Response(null, { status }))
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(
+                        client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                    );
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                    expect(dispatch).toHaveBeenCalledTimes(2);
+                });
+            },
+        );
+
+        it.each([400, 409, 501, 505])(
+            "does not retry the non-retryable %i response status",
+            async (status) => {
+                await withFakeTimers(async () => {
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValueOnce(new Response(null, { status }))
+                        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+                    const outcome = observePromise(
+                        client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                    );
+                    await vi.runAllTimersAsync();
+
+                    const settled = await outcome;
+                    expect(settled.status).toBe("fulfilled");
+                    expect(settled.status === "fulfilled" && settled.value.status).toBe(status);
+                    expect(dispatch).toHaveBeenCalledOnce();
+                });
+            },
+        );
+    });
 
     it("lets a shorter per-call timeout override a longer client timeout", async () => {
         vi.useFakeTimers();
