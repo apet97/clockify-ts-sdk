@@ -22,7 +22,8 @@ once v1.0.0 ships.
 ### Security
 
 - Raw authenticated fetches reject cross-origin destinations before dispatch, validate dynamic
-  base URL suppliers, preserve `Request` headers, and enforce auth-header precedence.
+  base URL suppliers, preserve `Request` properties, enforce auth-header precedence, reject
+  redirect following, and replay retryable bodies from fresh preflighted `Request` clones.
 - Non-loopback cleartext origins always reject; `allowNonClockifyHttpsHost` replaces the deprecated
   `allowInsecureBaseUrl` alias.
 

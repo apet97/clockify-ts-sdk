@@ -166,6 +166,39 @@ exclusive. `createClockifyClient` remains the recommended entry because
 it adds env fallback, request IDs, user-agent headers, hooks, and retry
 configuration.
 
+### Authenticated raw requests
+
+`ClockifyApiClient.fetch()` is the authenticated escape hatch for an endpoint
+that is not yet represented by a generated method. Relative targets resolve
+against the configured base path; absolute strings, `URL` values, and
+`Request` inputs must have the same origin as that base. Base suppliers resolve
+in `baseUrl` → `environment` → operation/default order and are validated before
+authentication. Non-loopback HTTP is always rejected, and a non-Clockify HTTPS
+host requires `allowNonClockifyHttpsHost: true`.
+
+```typescript
+const response = await client.fetch("workspaces/ws-id/example", {
+    method: "PUT",
+    body: JSON.stringify({ enabled: true }),
+});
+```
+
+Input `Request` properties are preserved unless `init` overrides them. Header
+precedence is input Request → client defaults → `init` → request options → SDK
+authentication, so callers cannot replace the configured auth header. Query
+overrides replace existing values; arrays become ordered repeated values and an
+empty array removes the key. Signal precedence is request options → `init` →
+input Request. Timeout precedence is request options → client options; retry
+precedence is request options → client options → two retries.
+
+Only `GET`, `HEAD`, `OPTIONS`, `PUT`, and `DELETE` retry by default, for status
+`408`, `429`, `500`, `502`, `503`, or `504`. Retry and timeout controls are
+validated before dispatch. Retryable bodies must be cloneable: the SDK builds
+one finalized `Request` template, preflights replayability, and dispatches a
+fresh clone for every attempt. Caller abort reasons are preserved, retryable
+response bodies are cancelled before abort-aware backoff, and authenticated
+requests never follow redirects (`redirect: "follow"` is rejected).
+
 ## No-network diagnostics
 
 Use `clockifyDiagnostics()` before constructing a client when you want a

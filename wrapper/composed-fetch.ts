@@ -258,7 +258,8 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
         // Clockify endpoint answers with a direct 2xx/4xx, so a redirect is
         // surfaced as an explicit error below (see `assertNotRedirect`). A
         // caller that deliberately sets `redirect` keeps full control.
-        const effectiveRedirect: RequestRedirect = init?.redirect ?? "manual";
+        const effectiveRedirect: RequestRedirect =
+            init?.redirect ?? (input instanceof Request ? input.redirect : "manual");
         const finalInit: RequestInit = {
             ...init,
             headers: initHeaders,
@@ -284,10 +285,22 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
             );
         }
 
+        validateRetryPolicy(retryPolicy);
+        if (
+            input instanceof Request &&
+            retryPolicy.maxRetries > 0 &&
+            retryPolicy.retryableMethods.includes(method)
+        ) {
+            input.clone();
+        }
+        const template = buildRequestTemplate(input, finalInit);
+        assertSignalNotAborted(template.signal);
+        if (retryPolicy.maxRetries > 0 && retryPolicy.retryableMethods.includes(method)) {
+            template.clone();
+        }
         return await runWithRetries(
             baseFetch,
-            input,
-            finalInit,
+            template,
             retryPolicy,
             hooks,
             {
@@ -296,7 +309,6 @@ export function composedFetch(options: ComposedFetchOptions = {}): typeof fetch 
                 headers: initHeaders,
                 requestId,
             },
-            effectiveRedirect,
         );
     } satisfies typeof fetch;
 }
@@ -445,31 +457,31 @@ async function runSingleAttempt(
 
 async function runWithRetries(
     baseFetch: typeof fetch,
-    input: RequestInfo | URL,
-    init: RequestInit,
+    template: Request,
     policy: ReturnType<typeof mergeRetryPolicy>,
     hooks: ComposedFetchHooks | undefined,
     base: Omit<RequestContext, "attempt">,
-    redirect: RequestRedirect,
 ): Promise<Response> {
     let lastResponse: Response | undefined;
     let lastError: unknown;
 
     for (let attempt = 0; attempt <= policy.maxRetries; attempt++) {
+        assertSignalNotAborted(template.signal);
         const ctx: RequestContext = { ...base, attempt };
         const start = Date.now();
         let response: Response | undefined;
         let error: unknown;
 
         await safeHook(hooks?.beforeRequest, ctx);
+        assertSignalNotAborted(template.signal);
 
         try {
-            response = await baseFetch(input, init);
+            response = await baseFetch(template.clone());
             // A blocked redirect is terminal, not transient: surface it as an
             // error (so auth headers are never re-sent to the target) and do
             // NOT retry. Converting to the error branch routes it through the
             // existing `onError` path and the post-loop `throw`.
-            assertNotRedirect(response, redirect);
+            assertNotRedirect(response, template.redirect);
         } catch (e) {
             error = e;
             response = undefined;
@@ -491,11 +503,11 @@ async function runWithRetries(
             // which returns false for AbortError. The init.signal?.aborted clause
             // is the workhorse — it also catches custom abort reasons that
             // surface as a non-DOMException Error (e.g. controller.abort(new Error())).
+            if (template.signal.aborted) throw abortReason(template.signal);
             if (
                 (typeof DOMException !== "undefined" &&
                     error instanceof DOMException &&
-                    error.name === "AbortError") ||
-                init.signal?.aborted
+                    error.name === "AbortError")
             ) {
                 throw toError(error);
             }
@@ -510,7 +522,7 @@ async function runWithRetries(
                 delayMs,
             });
             await emitRetryMetric(hooks, base.method, attempt + 1, "network_error");
-            await sleep(delayMs, init.signal);
+            await sleep(delayMs, template.signal);
             continue;
         }
 
@@ -525,6 +537,8 @@ async function runWithRetries(
             ) {
                 return response;
             }
+            await response.body?.cancel();
+            assertSignalNotAborted(template.signal);
             const delayMs = computeRetryDelay(attempt, response, policy);
             await safeHook(hooks?.onRetry, {
                 ...ctx,
@@ -533,7 +547,7 @@ async function runWithRetries(
                 delayMs,
             });
             await emitRetryMetric(hooks, base.method, attempt + 1, String(response.status));
-            await sleep(delayMs, init.signal);
+            await sleep(delayMs, template.signal);
         }
     }
 
@@ -541,6 +555,37 @@ async function runWithRetries(
     throw lastError != null
         ? toError(lastError)
         : new Error("composedFetch: exhausted retries with no response and no error");
+}
+
+function buildRequestTemplate(input: RequestInfo | URL, init: RequestInit): Request {
+    if (!(input instanceof Request)) return new Request(input, init);
+    return new Request(input, {
+        method: input.method,
+        cache: input.cache,
+        credentials: input.credentials,
+        integrity: input.integrity,
+        keepalive: input.keepalive,
+        mode: input.mode,
+        redirect: input.redirect,
+        referrer: input.referrer,
+        referrerPolicy: input.referrerPolicy,
+        signal: input.signal,
+        ...init,
+    });
+}
+
+function validateRetryPolicy(policy: ReturnType<typeof mergeRetryPolicy>): void {
+    if (
+        !Number.isFinite(policy.maxRetries) ||
+        !Number.isInteger(policy.maxRetries) ||
+        policy.maxRetries < 0
+    ) {
+        throw new TypeError("composedFetch: maxRetries must be a finite integer greater than or equal to zero");
+    }
+}
+
+function assertSignalNotAborted(signal: AbortSignal): void {
+    if (signal.aborted) throw abortReason(signal);
 }
 
 function toError(value: unknown): Error {
@@ -607,25 +652,12 @@ function sleep(ms: number, signal: AbortSignal | null | undefined): Promise<void
             reject(abortReason(signal));
         };
         signal.addEventListener("abort", onAbort, { once: true });
+        if (signal.aborted) onAbort();
     });
 }
 
-function abortReason(signal: AbortSignal): Error {
-    const reason = signal.reason as unknown;
-    if (reason instanceof Error) return reason;
-    if (typeof DOMException !== "undefined") {
-        return new DOMException("The operation was aborted.", "AbortError");
-    }
-    return new Error(abortReasonMessage(reason));
-}
-
-function abortReasonMessage(reason: unknown): string {
-    if (reason == null) return "The operation was aborted.";
-    if (typeof reason === "string") return reason;
-    if (typeof reason === "number" || typeof reason === "boolean" || typeof reason === "bigint") {
-        return String(reason);
-    }
-    return "The operation was aborted.";
+function abortReason(signal: AbortSignal): unknown {
+    return signal.reason;
 }
 
 async function emitResponseMetrics(

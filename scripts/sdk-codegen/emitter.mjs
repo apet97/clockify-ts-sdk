@@ -137,7 +137,11 @@ export interface RequestOptionsShape {
 }
 
 export async function request<T>(clientOptions: any, operation: OperationSpec, requestOptions?: RequestOptionsShape): Promise<WithRawResponse<T>> {
-    const baseUrl = (await Supplier.get(clientOptions.baseUrl)) ?? (await Supplier.get(clientOptions.environment)) ?? operation.baseUrl ?? ClockifyApiEnvironment.Default;
+    const maxRetries = validateMaxRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
+    const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    assertNotAborted(requestOptions?.abortSignal);
+    const baseUrl = await resolveBaseUrl(clientOptions, operation.baseUrl);
+    assertNotAborted(requestOptions?.abortSignal);
     let pathname = operation.path.replace(/^\/+/, "");
     for (const [key, value] of Object.entries(operation.pathParams ?? {})) {
         pathname = pathname.replace(new RegExp("\\{" + key + "\\}", "g"), url.encodePathParam(String(value)));
@@ -152,14 +156,24 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
         }
     }
 
-    const auth = await clientOptions.authProvider.getAuthRequest({ endpointMetadata: { method: operation.method, path: operation.path } });
     const optionHeaders = await resolveHeaders(clientOptions.headers);
     const requestHeaders = await resolveHeaders(requestOptions?.headers);
-    const headers = new Headers({ ...auth.headers, ...optionHeaders, ...requestHeaders });
+    assertNotAborted(requestOptions?.abortSignal);
+    const headers = new Headers({ ...optionHeaders, ...requestHeaders });
     const addonToken = requestOptions?.addonToken ?? (await Supplier.get(clientOptions.addonToken));
-    if (addonToken != null && addonToken !== "") headers.set("X-Addon-Token", String(addonToken));
+    assertNotAborted(requestOptions?.abortSignal);
+    const auth = await clientOptions.authProvider.getAuthRequest({ endpointMetadata: { method: operation.method, path: operation.path } });
+    assertNotAborted(requestOptions?.abortSignal);
+    const configuredAuth = Object.keys(auth.headers).some((key) => {
+        const normalized = key.toLowerCase();
+        return normalized === "x-api-key" || normalized === "x-addon-token";
+    });
+    if (!configuredAuth && addonToken != null && addonToken !== "") {
+        headers.set("X-Addon-Token", String(addonToken));
+    }
+    for (const [key, value] of Object.entries(auth.headers)) headers.set(key, String(value));
 
-    const init: RequestInit = { method: operation.method, headers, signal: requestOptions?.abortSignal ?? null };
+    const init: RequestInit = { method: operation.method, headers, redirect: "manual", signal: requestOptions?.abortSignal ?? null };
     if (operation.body !== undefined) {
         if (operation.multipart) {
             const form = new FormData();
@@ -173,31 +187,23 @@ export async function request<T>(clientOptions: any, operation: OperationSpec, r
         }
     }
 
-    const fetchFn = clientOptions.fetch ?? fetch;
-    const maxRetries = normalizedRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
-    const timeoutInSeconds = requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds;
-    for (let attempt = 0; ; attempt++) {
-        let response: Response;
-        try {
-            response = await fetchWithTimeout(fetchFn, requestUrl, init, timeoutInSeconds);
-        } catch (cause) {
-            if (shouldRetryError(cause, operation.method, attempt, maxRetries)) {
-                await delay(retryDelayMs(undefined, attempt));
-                continue;
-            }
-            if (cause instanceof ClockifyApiTimeoutError) throw cause;
-            throw new ClockifyApiError({ message: cause instanceof Error ? cause.message : "Request failed", cause });
-        }
-
-        const rawResponse = toRawResponse(response);
-        if (!response.ok && shouldRetryResponse(response, operation.method, attempt, maxRetries)) {
-            await delay(retryDelayMs(response, attempt));
-            continue;
-        }
-        const data = await parseBody(response, operation.responseType);
-        if (!response.ok) throw errorForResponse(response.status, data, rawResponse);
-        return { data: data as T, rawResponse };
+    const template = new Request(requestUrl, init);
+    assertNotAborted(requestOptions?.abortSignal);
+    let response: Response;
+    try {
+        response = await executeRequest(clientOptions.fetch ?? fetch, template, {
+            maxRetries,
+            timeoutInSeconds,
+        });
+    } catch (cause) {
+        if (requestOptions?.abortSignal?.aborted) throw abortReason(requestOptions.abortSignal);
+        if (cause instanceof ClockifyApiTimeoutError) throw cause;
+        throw new ClockifyApiError({ message: cause instanceof Error ? cause.message : "Request failed", cause });
     }
+    const rawResponse = toRawResponse(response);
+    const data = await parseBody(response, operation.responseType);
+    if (!response.ok) throw errorForResponse(response.status, data, rawResponse);
+    return { data: data as T, rawResponse };
 }
 
 async function parseBody(response: Response, responseType: OperationSpec["responseType"]): Promise<unknown> {
@@ -247,42 +253,100 @@ function appendFormValue(form: FormData, key: string, value: unknown): void {
     form.append(key, String(value));
 }
 
-async function fetchWithTimeout(fetchFn: typeof fetch, input: Request | string | URL, init: RequestInit, timeoutInSeconds?: number): Promise<Response> {
-    if (timeoutInSeconds == null || timeoutInSeconds <= 0) return await fetchFn(input, init);
+const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
+const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"]);
+
+interface ExecuteRequestOptions {
+    maxRetries: number;
+    timeoutInSeconds: number | undefined;
+}
+
+async function executeRequest(fetchFn: typeof fetch, template: Request, options: ExecuteRequestOptions): Promise<Response> {
+    const method = template.method.toUpperCase();
+    const mayRetry = options.maxRetries > 0 && RETRYABLE_METHODS.has(method);
+    assertNotAborted(template.signal);
+    if (mayRetry) template.clone();
+
+    for (let attempt = 0; ; attempt++) {
+        assertNotAborted(template.signal);
+        let response: Response;
+        try {
+            response = await dispatchTemplate(fetchFn, template, options.timeoutInSeconds);
+        } catch (cause) {
+            assertNotAborted(template.signal);
+            if (!mayRetry || attempt >= options.maxRetries) throw cause;
+            await abortableDelay(retryDelayMs(undefined, attempt), template.signal);
+            continue;
+        }
+        assertNotAborted(template.signal);
+        if (
+            !mayRetry ||
+            attempt >= options.maxRetries ||
+            !RETRYABLE_STATUS_CODES.has(response.status)
+        ) {
+            return response;
+        }
+        await response.body?.cancel();
+        assertNotAborted(template.signal);
+        await abortableDelay(retryDelayMs(response, attempt), template.signal);
+    }
+}
+
+async function dispatchTemplate(fetchFn: typeof fetch, template: Request, timeoutInSeconds: number | undefined): Promise<Response> {
+    assertNotAborted(template.signal);
+    const attempt = template.clone();
+    if (timeoutInSeconds === undefined) return await fetchFn(attempt);
+
     const controller = new AbortController();
     let timedOut = false;
-    const upstreamSignal = init.signal;
-    const onAbort = () => controller.abort(upstreamSignal?.reason);
-    if (upstreamSignal?.aborted) controller.abort(upstreamSignal.reason);
-    else upstreamSignal?.addEventListener("abort", onAbort, { once: true });
-    const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutInSeconds * 1000);
+    const onAbort = () => controller.abort(abortReason(template.signal));
+    template.signal.addEventListener("abort", onAbort, { once: true });
+    const timeout = setTimeout(() => {
+        timedOut = true;
+        controller.abort(new ClockifyApiTimeoutError("Request timed out"));
+    }, timeoutInSeconds * 1000);
     try {
-        return await fetchFn(input, { ...init, signal: controller.signal });
+        assertNotAborted(template.signal);
+        const timedAttempt = new Request(attempt, {
+            ...preservedRequestInit(attempt),
+            headers: attempt.headers,
+            signal: controller.signal,
+        });
+        const response = await fetchFn(timedAttempt);
+        assertNotAborted(template.signal);
+        if (timedOut) throw new ClockifyApiTimeoutError("Request timed out");
+        return response;
     } catch (cause) {
+        if (template.signal.aborted) throw abortReason(template.signal);
         if (timedOut) throw new ClockifyApiTimeoutError("Request timed out", { cause });
         throw cause;
     } finally {
         clearTimeout(timeout);
-        upstreamSignal?.removeEventListener("abort", onAbort);
+        template.signal.removeEventListener("abort", onAbort);
     }
 }
 
-const RETRYABLE_STATUS_CODES = new Set([408, 429, 500, 502, 503, 504]);
-const RETRYABLE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "PUT", "DELETE"]);
-
-function normalizedRetries(value: unknown): number {
-    const retries = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : 2;
-    return Math.max(0, retries);
+function validateMaxRetries(value: unknown): number {
+    if (typeof value !== "number" || !Number.isFinite(value) || !Number.isInteger(value) || value < 0) {
+        throw new TypeError("ClockifyApiClient: maxRetries must be a finite integer greater than or equal to zero");
+    }
+    return value;
 }
 
-function shouldRetryResponse(response: Response, method: string, attempt: number, maxRetries: number): boolean {
-    return attempt < maxRetries && RETRYABLE_METHODS.has(method) && RETRYABLE_STATUS_CODES.has(response.status);
+function validateTimeout(value: unknown): number | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+        throw new TypeError("ClockifyApiClient: timeoutInSeconds must be finite and greater than zero");
+    }
+    return value;
 }
 
-function shouldRetryError(cause: unknown, method: string, attempt: number, maxRetries: number): boolean {
-    if (cause instanceof ClockifyApiTimeoutError) return attempt < maxRetries && RETRYABLE_METHODS.has(method);
-    if (cause instanceof DOMException && cause.name === "AbortError") return false;
-    return attempt < maxRetries && RETRYABLE_METHODS.has(method);
+function abortReason(signal: AbortSignal): unknown {
+    return signal.reason;
+}
+
+function assertNotAborted(signal: AbortSignal | null | undefined): void {
+    if (signal?.aborted) throw abortReason(signal);
 }
 
 const RETRY_MAX_DELAY_MS = 60_000;
@@ -294,22 +358,35 @@ function jitter(ms: number): number {
 
 function retryDelayMs(response: Response | undefined, attempt: number): number {
     const retryAfter = response?.headers.get("Retry-After");
-    if (retryAfter) {
+    if (retryAfter != null) {
         const seconds = Number.parseInt(retryAfter, 10);
         if (Number.isFinite(seconds)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, seconds * 1000));
         const dateMs = Date.parse(retryAfter);
         if (Number.isFinite(dateMs)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, dateMs - Date.now()));
     }
     const reset = response?.headers.get("X-RateLimit-Reset");
-    if (reset) {
+    if (reset != null) {
         const seconds = Number.parseInt(reset, 10);
         if (Number.isFinite(seconds)) return Math.min(RETRY_MAX_DELAY_MS, Math.max(0, seconds * 1000 - Date.now()));
     }
     return jitter(Math.min(RETRY_MAX_DELAY_MS, 1000 * 2 ** attempt));
 }
 
-function delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function abortableDelay(ms: number, signal: AbortSignal): Promise<void> {
+    assertNotAborted(signal);
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            signal.removeEventListener("abort", onAbort);
+            resolve();
+        }, ms);
+        const onAbort = () => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", onAbort);
+            reject(abortReason(signal));
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+        if (signal.aborted) onAbort();
+    });
 }
 
 const CLOCKIFY_API_HOSTS = new Set(["api.clockify.me", "reports.api.clockify.me", "auditlog-api.api.clockify.me", "pto.api.clockify.me", "developer.clockify.me"]);
@@ -327,33 +404,106 @@ function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): U
     return parsed;
 }
 
+async function resolveBaseUrl(clientOptions: any, operationBaseUrl?: string): Promise<URL> {
+    const suppliedBaseUrl = await Supplier.get(clientOptions.baseUrl);
+    const suppliedEnvironment = suppliedBaseUrl === undefined
+        ? await Supplier.get(clientOptions.environment)
+        : undefined;
+    return validatedBaseUrl(
+        suppliedBaseUrl ?? suppliedEnvironment ?? operationBaseUrl ?? ClockifyApiEnvironment.Default,
+        clientOptions.allowNonClockifyHttpsHost === true,
+    );
+}
+
 function passthroughInputUrl(input: Request | string | URL, baseUrl: URL): URL {
     const raw = input instanceof Request ? input.url : input instanceof URL ? input.toString() : input;
-    if (/^https?:\/\//i.test(raw)) return new URL(raw);
+    if (/^[a-z][a-z\d+.-]*:/i.test(raw) || raw.startsWith("//")) return new URL(raw, baseUrl);
     return new URL(url.join(baseUrl.toString(), raw));
 }
 
 function appendPassthroughQuery(target: URL, query: Record<string, unknown> | undefined): void {
     for (const [key, value] of Object.entries(query ?? {})) {
         if (value == null) continue;
-        for (const item of Array.isArray(value) ? value : [value]) if (item != null) target.searchParams.append(key, String(item));
+        target.searchParams.delete(key);
+        for (const item of Array.isArray(value) ? value : [value]) {
+            if (item != null) target.searchParams.append(key, String(item));
+        }
     }
 }
 
+function preservedRequestInit(request: Request): RequestInit {
+    return {
+        method: request.method,
+        cache: request.cache,
+        credentials: request.credentials,
+        integrity: request.integrity,
+        keepalive: request.keepalive,
+        mode: request.mode,
+        redirect: request.redirect,
+        referrer: request.referrer,
+        referrerPolicy: request.referrerPolicy,
+        signal: request.signal,
+    };
+}
+
+async function retargetRequest(request: Request, target: URL): Promise<Request> {
+    if (request.url === target.toString()) return request;
+    const init: RequestInit = {
+        ...preservedRequestInit(request),
+        headers: request.headers,
+    };
+    if (request.body != null && request.method !== "GET" && request.method !== "HEAD") {
+        init.body = await request.arrayBuffer();
+    }
+    return new Request(target, init);
+}
+
 export async function makePassthroughRequest(input: Request | string | URL, init: RequestInit = {}, clientOptions: any, requestOptions?: RequestOptionsShape): Promise<Response> {
-    const baseUrl = validatedBaseUrl((await Supplier.get(clientOptions.baseUrl)) ?? ClockifyApiEnvironment.Default, clientOptions.allowNonClockifyHttpsHost === true);
+    const maxRetries = validateMaxRetries(requestOptions?.maxRetries ?? clientOptions.maxRetries ?? 2);
+    const timeoutInSeconds = validateTimeout(requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    const effectiveSignal = requestOptions?.abortSignal ?? init.signal ?? (input instanceof Request ? input.signal : undefined);
+    assertNotAborted(effectiveSignal);
+    const effectiveMethod = (init.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+    if (input instanceof Request && maxRetries > 0 && RETRYABLE_METHODS.has(effectiveMethod)) {
+        input.clone();
+    }
+    const baseUrl = await resolveBaseUrl(clientOptions);
+    assertNotAborted(effectiveSignal);
     const target = passthroughInputUrl(input, baseUrl);
     if (target.origin !== baseUrl.origin) throw new TypeError("ClockifyApiClient.fetch: refusing authenticated cross-origin request from " + baseUrl.origin + " to " + target.origin);
     appendPassthroughQuery(target, requestOptions?.queryParams);
 
+    const effectiveRedirect = init.redirect ?? (input instanceof Request ? input.redirect : "manual");
+    if (effectiveRedirect === "follow") {
+        throw new TypeError("ClockifyApiClient.fetch: redirect follow is not allowed for authenticated requests");
+    }
+
     const headers = new Headers(input instanceof Request ? input.headers : undefined);
-    for (const [key, value] of Object.entries(await resolveHeaders(clientOptions.headers))) headers.set(key, value);
+    const clientHeaders = await resolveHeaders(clientOptions.headers);
+    assertNotAborted(effectiveSignal);
+    for (const [key, value] of Object.entries(clientHeaders)) headers.set(key, value);
     new Headers(init.headers).forEach((value, key) => headers.set(key, value));
-    for (const [key, value] of Object.entries(await resolveHeaders(requestOptions?.headers))) headers.set(key, value);
+    const optionHeaders = await resolveHeaders(requestOptions?.headers);
+    assertNotAborted(effectiveSignal);
+    for (const [key, value] of Object.entries(optionHeaders)) headers.set(key, value);
     const authHeaders = clientOptions.getAuthHeaders ? await clientOptions.getAuthHeaders() : {};
+    assertNotAborted(effectiveSignal);
     for (const [key, value] of Object.entries(authHeaders ?? {})) if (value != null) headers.set(key, String(value));
 
-    return await fetchWithTimeout(clientOptions.fetch ?? fetch, target.toString(), { ...init, headers, signal: requestOptions?.abortSignal ?? init.signal ?? null }, requestOptions?.timeoutInSeconds ?? clientOptions.timeoutInSeconds);
+    const propertyInit: RequestInit = {
+        ...(input instanceof Request ? preservedRequestInit(input) : {}),
+        ...init,
+        headers,
+        redirect: effectiveRedirect,
+        signal: effectiveSignal ?? null,
+    };
+    const propertyRequest = new Request(input instanceof Request ? input : target, propertyInit);
+    const template = await retargetRequest(propertyRequest, target);
+    assertNotAborted(effectiveSignal);
+    return await executeRequest(clientOptions.fetch ?? fetch, template, {
+        maxRetries,
+        timeoutInSeconds,
+    });
 }
 
 export function pickDefined(source: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
@@ -521,7 +671,8 @@ export class ClockifyApiClient {
 
     public async fetch(input: Request | string | URL, init?: RequestInit, requestOptions?: core.PassthroughRequest.RequestOptions): Promise<Response> {
         return core.makePassthroughRequest(input, init, {
-            baseUrl: this._options.baseUrl ?? this._options.environment,
+            baseUrl: this._options.baseUrl,
+            environment: this._options.environment,
             allowNonClockifyHttpsHost: this._options.allowNonClockifyHttpsHost,
             headers: this._options.headers,
             timeoutInSeconds: this._options.timeoutInSeconds,

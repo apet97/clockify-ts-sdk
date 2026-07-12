@@ -194,6 +194,12 @@ function authenticatedBoundaryFetch(
                   ? input.toString()
                   : input.url;
         validateClockifyBaseUrl(destination, allowNonClockifyHttpsHost);
+        const redirect = init?.redirect ?? (input instanceof Request ? input.redirect : undefined);
+        if (redirect === "follow") {
+            throw new TypeError(
+                "createClockifyClient: redirect follow is not allowed for authenticated requests.",
+            );
+        }
         return await dispatch(input, init);
     };
 }

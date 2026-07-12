@@ -106,9 +106,14 @@ test("emitted request runtime shares replay-safe typed and passthrough execution
 
         const requestRuntime = await readGenerated(out, "core/request.ts");
         assert.match(requestRuntime, /baseUrl\?: string;/);
-        assert.match(requestRuntime, /\?\? operation\.baseUrl \?\? ClockifyApiEnvironment\.Default/);
+        assert.match(
+            requestRuntime,
+            /suppliedBaseUrl \?\? suppliedEnvironment \?\? operationBaseUrl \?\? ClockifyApiEnvironment\.Default/,
+        );
         assert.match(requestRuntime, /resolveBaseUrl\(/);
         assert.match(requestRuntime, /executeRequest\(/);
+        assert.equal(requestRuntime.match(/async function executeRequest\(/g)?.length, 1);
+        assert.equal(requestRuntime.match(/await executeRequest\(/g)?.length, 2);
         assert.match(requestRuntime, /template\.clone\(\)/);
         assert.match(requestRuntime, /response\.body\?\.cancel\(\)/);
         assert.match(requestRuntime, /validateMaxRetries\(/);
