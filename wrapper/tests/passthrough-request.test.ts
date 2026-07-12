@@ -1252,7 +1252,10 @@ describe("ClockifyApiClient.fetch", () => {
                 timeoutInSeconds: 1,
             });
 
-            const result = sdk.fetch("users", undefined, { timeoutInSeconds: 0.01 });
+            const result = sdk.fetch("users", undefined, {
+                timeoutInSeconds: 0.01,
+                maxRetries: 0,
+            });
             const timedOut = expect(result).rejects.toThrow(/timed out/i);
             await vi.advanceTimersByTimeAsync(0);
             expect(dispatch).toHaveBeenCalledOnce();
