@@ -140,16 +140,18 @@ describe("ensureProject / ensureClient", () => {
  * assert BOTH the call order and the exact archive request body shape (flattened
  * for a project, body-envelope for a client).
  */
-function fakeResource(name: string | undefined) {
+function fakeResource(current: string | undefined | Record<string, unknown>) {
     const order: string[] = [];
     const updateReqs: unknown[] = [];
+    const currentRecord =
+        current !== null && typeof current === "object" ? current : { name: current };
     return {
         order,
         updateReqs,
         resource: {
             get: async (req: { workspaceId: string } & Record<string, unknown>) => {
                 order.push("get");
-                return { name, ...req };
+                return { ...currentRecord, ...req };
             },
             update: async (req: unknown) => {
                 order.push("update");
@@ -234,6 +236,38 @@ describe("archiveThenDeleteClient", () => {
             archived: true,
             deleted: true,
         });
+    });
+
+    it("preserves every current editable value while archiving, including false and empty strings", async () => {
+        const f = fakeResource({
+            name: "Globex",
+            address: "",
+            currencyCode: "USD",
+            email: "",
+            note: "",
+            archived: false,
+        });
+
+        await archiveThenDeleteClient({
+            workspaceId: "ws",
+            id: "c_preserve",
+            resource: f.resource,
+        });
+
+        expect(f.updateReqs).toEqual([
+            {
+                workspaceId: "ws",
+                clientId: "c_preserve",
+                body: {
+                    name: "Globex",
+                    address: "",
+                    currencyCode: "USD",
+                    email: "",
+                    note: "",
+                    archived: true,
+                },
+            },
+        ]);
     });
 
     it("throws (noun 'client') BEFORE archiving when the client has no name", async () => {
