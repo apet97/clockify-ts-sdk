@@ -273,6 +273,7 @@ async function executeRequest(fetchFn: typeof fetch, template: Request, options:
         try {
             response = await dispatchTemplate(fetchFn, template, options.timeoutInSeconds);
         } catch (cause) {
+            if (cause instanceof ClockifyApiTimeoutError && template.signal.aborted) throw cause;
             assertNotAborted(template.signal);
             if (!mayRetry || attempt >= options.maxRetries) throw cause;
             await abortableDelay(retryDelayMs(undefined, attempt), template.signal);
