@@ -27,7 +27,7 @@ export function registerStatusTool(server: McpServer, ctx: Context): void {
         {
             title: "Clockify status",
             description: "Return the pinned workspace ID, the current user, and any running timer for that user.",
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async () => {
             const user = await ctx.client.users.getCurrentUser();

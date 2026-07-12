@@ -139,8 +139,14 @@ describe("destructive deletes archive/DONE before deleting", () => {
         (ctx.client as unknown as { clients: { get: () => Promise<unknown> } }).clients.get =
             async () => ({ id: "c1" });
         const client = await connect(ctx);
-        const res = await confirmAndExecute(client, "clockify_clients_delete", { clientId: "c1" });
+        const res = dataOf(
+            await client.callTool({
+                name: "clockify_clients_delete",
+                arguments: { clientId: "c1", dry_run: true },
+            }),
+        );
         expect(res.ok).toBe(false);
+        expect(res.data).toBeUndefined();
         expect(calls).toEqual([]);
     });
 });

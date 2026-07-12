@@ -19,6 +19,13 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   reports, shared reports, expenses, and webhooks now use typed operation requests
   with local validation instead of request-body type escapes.
 
+### Changed
+
+- Classify all 57 executable command leaves as read, write, or destructive.
+  The classification is internal and keeps writes deterministic and scriptable;
+  behavioral tests now prove success and structured failure for all 30 mutating
+  leaves.
+
 ## [0.1.1] - 2026-06-29
 
 ### Changed

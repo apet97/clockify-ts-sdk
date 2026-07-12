@@ -65,8 +65,8 @@ const CURATED_CLAIMS = [
     {
         claim: "Destructive writes require a dry_run -> confirm_token handshake",
         gates: ["mcp-write-safety"],
-        files: ["mcp/src/orchestration/confirm-guard.ts"],
-        proof: "`make mcp-write-safety` + confirm-guard handshake",
+        files: ["mcp/src/result.ts", "mcp/src/orchestration/confirmation.ts"],
+        proof: "`make mcp-write-safety` + exact stored-preview token tests",
     },
     {
         claim: "Webhook callback URLs are validated offline before any creation",

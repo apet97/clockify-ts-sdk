@@ -11,11 +11,72 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
+import {
+    defineGuardedTool,
+    defineTool,
+    entityId,
+    errorResult,
+    successResult,
+    writeReceipt,
+} from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
+
+const containsFilterSchema = z.enum(["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"]);
+const membershipStatusSchema = z.enum(["PENDING", "ACTIVE", "DECLINED", "INACTIVE", "ALL"]);
+const schedulingUserFilterSchema = z
+    .object({
+        contains: containsFilterSchema.optional(),
+        ids: z.array(z.string()).optional(),
+        sourceType: z.literal("USER_GROUP").optional(),
+        status: membershipStatusSchema.optional(),
+        statuses: z.array(membershipStatusSchema).optional(),
+    })
+    .strict();
+const schedulingUserGroupFilterSchema = z
+    .object({
+        contains: containsFilterSchema.optional(),
+        ids: z.array(z.string()).optional(),
+        status: membershipStatusSchema.optional(),
+    })
+    .strict();
+const schedulingPublishExtraSchema = z
+    .object({
+        userFilter: schedulingUserFilterSchema.optional(),
+        userGroupFilter: schedulingUserGroupFilterSchema.optional(),
+        viewType: z.enum(["PROJECTS", "TEAM", "ALL"]).optional(),
+    })
+    .strict();
+const schedulingCapacityExtraSchema = z
+    .object({
+        statusFilter: z.enum(["PUBLISHED", "UNPUBLISHED", "ALL"]).optional(),
+        userFilter: schedulingUserFilterSchema.optional(),
+        userGroupFilter: schedulingUserGroupFilterSchema.optional(),
+    })
+    .strict();
+
+function schedulingUserFilter(
+    value: z.infer<typeof schedulingUserFilterSchema>,
+): ClockifyApi.ContainsUsersFilterRequestV1 {
+    return {
+        ...(value.contains !== undefined ? { contains: value.contains } : {}),
+        ...(value.ids !== undefined ? { ids: value.ids } : {}),
+        ...(value.sourceType !== undefined ? { sourceType: value.sourceType } : {}),
+        ...(value.status !== undefined ? { status: value.status } : {}),
+        ...(value.statuses !== undefined ? { statuses: value.statuses } : {}),
+    };
+}
+
+function schedulingUserGroupFilter(
+    value: z.infer<typeof schedulingUserGroupFilterSchema>,
+): ClockifyApi.ContainsUserGroupFilterRequestV1 {
+    return {
+        ...(value.contains !== undefined ? { contains: value.contains } : {}),
+        ...(value.ids !== undefined ? { ids: value.ids } : {}),
+        ...(value.status !== undefined ? { status: value.status } : {}),
+    };
+}
 
 export function registerSchedulingTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
@@ -56,7 +117,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
                 name: z.string().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const req: ClockifyApi.ListSchedulingRequest = {
@@ -102,7 +163,7 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             // A single project's totals live at GET .../projects/totals/{projectId}.
@@ -143,8 +204,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_scheduling_assignments_create",
         {
             title: "Create a scheduling assignment",
@@ -162,75 +224,86 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 includeNonWorkingDays: z.boolean().optional(),
                 published: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const u = await resolveUserRef(
-                { id: args.userId },
-                { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
-            );
-            if (!u.ok)
-                return clarifyResult(
-                    "clockify_scheduling_assignments_create",
-                    "userId",
-                    "user",
-                    u.clarify,
+        {
+            preview: async (args) => {
+                const u = await resolveUserRef(
+                    { id: args.userId },
+                    { verb: "schedule", meUserId: await meUserId(), listUsers, trustIds: false },
                 );
-            const p = await resolveEntityRef(
-                { id: args.projectId },
-                { noun: "project", verb: "schedule against", list: listProjects },
-            );
-            if (!p.ok)
-                return clarifyResult(
-                    "clockify_scheduling_assignments_create",
-                    "projectId",
-                    "project",
-                    p.clarify,
+                if (!u.ok)
+                    return clarifyResult(
+                        "clockify_scheduling_assignments_create",
+                        "userId",
+                        "user",
+                        u.clarify,
+                    );
+                const p = await resolveEntityRef(
+                    { id: args.projectId },
+                    { noun: "project", verb: "schedule against", list: listProjects },
                 );
-            // Single-assignment create (POST /scheduling/assignments) 404s on live Clockify;
-            // the recurring endpoint is the real create path (one-off when recurringAssignment
-            // is omitted). args.published maps to the separate range-based publish op.
-            const body: ClockifyRequestBody<ClockifyApi.CreateRecurringSchedulingRequest> = {
-                userId: u.userId,
-                projectId: p.id,
-                hoursPerDay: args.hoursPerDay,
-                start: args.start,
-                end: args.end,
-            };
-            if (args.taskId) body.taskId = args.taskId;
-            if (args.note) body.note = args.note;
-            if (args.billable !== undefined) body.billable = args.billable;
-            if (args.includeNonWorkingDays !== undefined)
-                body.includeNonWorkingDays = args.includeNonWorkingDays;
-            const req: ClockifyApi.CreateRecurringSchedulingRequest = {
-                workspaceId: ctx.workspaceId,
-                body,
-            };
-            const created = await ctx.client.scheduling.createRecurring(req);
-            // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt id.
-            const first = Array.isArray(created) ? created[0] : created;
-            if (args.published === true) {
-                // publish is range-scoped; narrow to the just-assigned user to limit blast radius.
-                await ctx.client.scheduling.publish({
-                    workspaceId: ctx.workspaceId,
+                if (!p.ok)
+                    return clarifyResult(
+                        "clockify_scheduling_assignments_create",
+                        "projectId",
+                        "project",
+                        p.clarify,
+                    );
+                // Single-assignment create (POST /scheduling/assignments) 404s on live Clockify;
+                // the recurring endpoint is the real create path (one-off when recurringAssignment
+                // is omitted). args.published maps to the separate range-based publish op.
+                const body: ClockifyRequestBody<ClockifyApi.CreateRecurringSchedulingRequest> = {
+                    userId: u.userId,
+                    projectId: p.id,
+                    hoursPerDay: args.hoursPerDay,
                     start: args.start,
                     end: args.end,
-                    userFilter: { contains: "CONTAINS", ids: [u.userId] },
-                });
-            }
-            return successResult(
-                "clockify_scheduling_assignments_create",
-                created,
-                {
+                };
+                if (args.taskId) body.taskId = args.taskId;
+                if (args.note) body.note = args.note;
+                if (args.billable !== undefined) body.billable = args.billable;
+                if (args.includeNonWorkingDays !== undefined)
+                    body.includeNonWorkingDays = args.includeNonWorkingDays;
+                const createRequest: ClockifyApi.CreateRecurringSchedulingRequest = {
                     workspaceId: ctx.workspaceId,
-                },
-                writeReceipt("created", "scheduling_assignment", { id: entityId(first) }),
-            );
+                    body,
+                };
+                const publishRequest =
+                    args.published === true
+                        ? ({
+                              workspaceId: ctx.workspaceId,
+                              start: args.start,
+                              end: args.end,
+                              userFilter: { contains: "CONTAINS", ids: [u.userId] },
+                          } satisfies ClockifyApi.PublishSchedulingRequest)
+                        : undefined;
+                return {
+                    action: "create",
+                    entity: "scheduling_assignment",
+                    createRequest,
+                    ...(publishRequest ? { publishRequest } : {}),
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.scheduling.createRecurring(preview.createRequest);
+                // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt id.
+                const first = Array.isArray(created) ? created[0] : created;
+                if (preview.publishRequest) {
+                    await ctx.client.scheduling.publish(preview.publishRequest);
+                }
+                return successResult(
+                    "clockify_scheduling_assignments_create",
+                    created,
+                    { workspaceId: preview.createRequest.workspaceId },
+                    writeReceipt("created", "scheduling_assignment", { id: entityId(first) }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_scheduling_assignments_update",
         {
             title: "Update a scheduling assignment",
@@ -244,7 +317,9 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 start: z
                     .string()
                     .min(1)
-                    .describe("New range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required."),
+                    .describe(
+                        "New range start, ISO-8601 datetime (yyyy-MM-ddThh:mm:ssZ). Required.",
+                    ),
                 end: z
                     .string()
                     .min(1)
@@ -272,56 +347,64 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                         "Not supported by this route — reassigning the project is rejected. Recreate the assignment to move it.",
                     ),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            // The live edit route is PATCH /scheduling/assignments/recurring/{id}
-            // (the bare PUT /assignments/{id} returns a static-resource 404).
-            // AssignmentUpdateRequestV1 carries no user/project field, so this
-            // route cannot reassign an assignment — fail loudly instead of
-            // silently dropping the caller's intent.
-            if (args.userId !== undefined || args.projectId !== undefined) {
-                return errorResult(
+        {
+            preview: (args) => {
+                // The live edit route is PATCH /scheduling/assignments/recurring/{id}
+                // (the bare PUT /assignments/{id} returns a static-resource 404).
+                if (args.userId !== undefined || args.projectId !== undefined) {
+                    return errorResult(
+                        "clockify_scheduling_assignments_update",
+                        new Error(
+                            "The scheduling-assignment edit route cannot reassign the user or project, so you must not " +
+                                "pass userId/projectId here; delete and recreate the assignment to move it.",
+                        ),
+                        {
+                            hint: "Drop userId/projectId from the update, or delete the assignment and create a new one under the target user/project.",
+                            tool: "clockify_scheduling_assignments_create",
+                            retryable: false,
+                        },
+                    );
+                }
+                const body: ClockifyRequestBody<ClockifyApi.UpdateRecurringSchedulingRequest> = {
+                    start: args.start,
+                    end: args.end,
+                };
+                if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
+                if (args.taskId) body.taskId = args.taskId;
+                if (args.note) body.note = args.note;
+                if (args.billable !== undefined) body.billable = args.billable;
+                if (args.seriesUpdateOption) body.seriesUpdateOption = args.seriesUpdateOption;
+                return {
+                    action: "update",
+                    entity: "scheduling_assignment",
+                    id: args.assignmentId,
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        assignmentId: args.assignmentId,
+                        body,
+                    } satisfies ClockifyApi.UpdateRecurringSchedulingRequest,
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.scheduling.updateRecurring(preview.request);
+                return successResult(
                     "clockify_scheduling_assignments_update",
-                    new Error(
-                        "The scheduling-assignment edit route cannot reassign the user or project, so you must not " +
-                            "pass userId/projectId here; delete and recreate the assignment to move it.",
-                    ),
+                    updated,
                     {
-                        hint: "Drop userId/projectId from the update, or delete the assignment and create a new one under the target user/project.",
-                        tool: "clockify_scheduling_assignments_create",
-                        retryable: false,
+                        workspaceId: preview.request.workspaceId,
+                        assignmentId: preview.id,
                     },
+                    writeReceipt("updated", "scheduling_assignment", preview.id),
                 );
-            }
-            const body: ClockifyRequestBody<ClockifyApi.UpdateRecurringSchedulingRequest> = {
-                start: args.start,
-                end: args.end,
-            };
-            if (args.hoursPerDay !== undefined) body.hoursPerDay = args.hoursPerDay;
-            if (args.taskId) body.taskId = args.taskId;
-            if (args.note) body.note = args.note;
-            if (args.billable !== undefined) body.billable = args.billable;
-            if (args.seriesUpdateOption) body.seriesUpdateOption = args.seriesUpdateOption;
-            const updated = await ctx.client.scheduling.updateRecurring({
-                workspaceId: ctx.workspaceId,
-                assignmentId: args.assignmentId,
-                body,
-            });
-            return successResult(
-                "clockify_scheduling_assignments_update",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
-                    assignmentId: args.assignmentId,
-                },
-                writeReceipt("updated", "scheduling_assignment", args.assignmentId),
-            );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_scheduling_assignments_delete",
         {
             title: "Delete a scheduling assignment",
@@ -338,46 +421,36 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                     .describe(
                         "Which occurrences of a recurring series to delete. Defaults to this assignment only.",
                     ),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => {
-            const preview = {
+        {
+            preview: (args) => ({
                 action: "delete",
                 entity: "scheduling_assignment",
                 id: args.assignmentId,
-                ...(args.seriesUpdateOption
-                    ? { seriesUpdateOption: args.seriesUpdateOption }
-                    : {}),
-            };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_scheduling_assignments_delete",
-                "scheduling_assignment_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.scheduling.deleteRecurring({
-                workspaceId: ctx.workspaceId,
-                assignmentId: args.assignmentId,
-                ...(args.seriesUpdateOption
-                    ? { seriesUpdateOption: args.seriesUpdateOption }
-                    : {}),
-            });
-            return successResult(
-                "clockify_scheduling_assignments_delete",
-                { deleted: true, assignmentId: args.assignmentId },
-                { workspaceId: ctx.workspaceId, assignmentId: args.assignmentId },
-                writeReceipt("deleted", "scheduling_assignment", args.assignmentId),
-            );
+                request: {
+                    workspaceId: ctx.workspaceId,
+                    assignmentId: args.assignmentId,
+                    ...(args.seriesUpdateOption
+                        ? { seriesUpdateOption: args.seriesUpdateOption }
+                        : {}),
+                } satisfies ClockifyApi.DeleteRecurringSchedulingRequest,
+            }),
+            execute: async (preview) => {
+                await ctx.client.scheduling.deleteRecurring(preview.request);
+                return successResult(
+                    "clockify_scheduling_assignments_delete",
+                    { deleted: true, assignmentId: preview.id },
+                    { workspaceId: preview.request.workspaceId, assignmentId: preview.id },
+                    writeReceipt("deleted", "scheduling_assignment", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_scheduling_publish",
         {
             title: "Publish scheduling assignments",
@@ -388,30 +461,41 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 end: z.string().min(1),
                 notifyUsers: z.boolean().optional(),
                 search: z.string().optional(),
-                extra: z
-                    .record(z.unknown())
+                extra: schedulingPublishExtraSchema
                     .optional()
-                    .describe(
-                        "Additional publish filters, e.g. userFilter, userGroupFilter, viewType",
-                    ),
+                    .describe("Additional publish filters: userFilter, userGroupFilter, viewType."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const { extra } = args;
-            await ctx.client.scheduling.publish({
-                workspaceId: ctx.workspaceId,
-                start: args.start,
-                end: args.end,
-                ...(args.notifyUsers !== undefined ? { notifyUsers: args.notifyUsers } : {}),
-                ...(args.search !== undefined ? { search: args.search } : {}),
-                ...(extra ?? {}),
-            });
-            return successResult(
-                "clockify_scheduling_publish",
-                { published: true, start: args.start, end: args.end },
-                { workspaceId: ctx.workspaceId },
-            );
+        {
+            preview: (args) => {
+                const request = {
+                    workspaceId: ctx.workspaceId,
+                    start: args.start,
+                    end: args.end,
+                    ...(args.notifyUsers !== undefined ? { notifyUsers: args.notifyUsers } : {}),
+                    ...(args.search !== undefined ? { search: args.search } : {}),
+                    ...(args.extra?.userFilter !== undefined
+                        ? { userFilter: schedulingUserFilter(args.extra.userFilter) }
+                        : {}),
+                    ...(args.extra?.userGroupFilter !== undefined
+                        ? { userGroupFilter: schedulingUserGroupFilter(args.extra.userGroupFilter) }
+                        : {}),
+                    ...(args.extra?.viewType !== undefined ? { viewType: args.extra.viewType } : {}),
+                } satisfies ClockifyApi.PublishSchedulingRequest;
+                return { action: "publish", entity: "scheduling_assignment", request };
+            },
+            execute: async (preview) => {
+                await ctx.client.scheduling.publish(preview.request);
+                return successResult(
+                    "clockify_scheduling_publish",
+                    {
+                        published: true,
+                        start: preview.request.start,
+                        end: preview.request.end,
+                    },
+                    { workspaceId: preview.request.workspaceId },
+                );
+            },
         },
     );
 
@@ -428,26 +512,34 @@ export function registerSchedulingTools(server: McpServer, ctx: Context): void {
                 search: z.string().optional(),
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
-                extra: z
-                    .record(z.unknown())
+                extra: schedulingCapacityExtraSchema
                     .optional()
                     .describe(
-                        "Additional capacity filters, e.g. userFilter, userGroupFilter, statusFilter",
+                        "Additional capacity filters: userFilter, userGroupFilter, statusFilter.",
                     ),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
-            const { extra, page, pageSize, ...rest } = args;
-            const items = await ctx.client.scheduling.getUsersCapacityFiltered({
-                start: rest.start,
-                end: rest.end,
-                ...(rest.search !== undefined ? { search: rest.search } : {}),
+            const { page, pageSize } = args;
+            const request = {
+                workspaceId: ctx.workspaceId,
+                start: args.start,
+                end: args.end,
+                ...(args.search !== undefined ? { search: args.search } : {}),
                 page: page ?? 1,
                 pageSize: pageSize ?? 50,
-                ...(extra ?? {}),
-                workspaceId: ctx.workspaceId,
-            });
+                ...(args.extra?.statusFilter !== undefined
+                    ? { statusFilter: args.extra.statusFilter }
+                    : {}),
+                ...(args.extra?.userFilter !== undefined
+                    ? { userFilter: schedulingUserFilter(args.extra.userFilter) }
+                    : {}),
+                ...(args.extra?.userGroupFilter !== undefined
+                    ? { userGroupFilter: schedulingUserGroupFilter(args.extra.userGroupFilter) }
+                    : {}),
+            } satisfies ClockifyApi.GetUsersCapacityFilteredSchedulingRequest;
+            const items = await ctx.client.scheduling.getUsersCapacityFiltered(request);
             return successResult(
                 "clockify_scheduling_capacity",
                 items,

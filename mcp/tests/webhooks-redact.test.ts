@@ -11,6 +11,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 const SECRET = "shhh-hmac-signing-secret-1234567890";
 
 // Every webhook the fake API returns carries the secret authToken.
@@ -89,7 +91,11 @@ describe("webhook tools redact the HMAC authToken", () => {
     for (const c of cases) {
         it(`${c.name} never emits the raw authToken`, async () => {
             const client = await connect(webhooksContext());
-            const res = await client.callTool({ name: c.name, arguments: c.arguments });
+            const request = { name: c.name, arguments: c.arguments };
+            const res =
+                c.name === "clockify_webhooks_create" || c.name === "clockify_webhooks_update"
+                    ? await callGuarded(client, request)
+                    : await client.callTool(request);
             expect((res as { isError?: boolean }).isError).toBeFalsy();
             const text = rawText(res);
             // The secret must not appear anywhere in the serialized envelope.

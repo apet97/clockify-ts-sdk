@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -66,7 +68,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
     it("clockify_projects_set_member_rate HOURLY → updateUserHourlyRate with minor units", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_projects_set_member_rate",
             arguments: { projectId: "proj-1", userId: "u1", rateKind: "HOURLY", amount: 75 },
         });
@@ -80,7 +82,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
         // that emits the amount as a string still routes the right minor units.
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_projects_set_member_rate",
             arguments: { projectId: "proj-1", userId: "u1", rateKind: "HOURLY", amount: "75" },
         });
@@ -91,7 +93,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
     it("clockify_projects_set_member_rate COST → updateUserCostRate, with float-safe rounding", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_projects_set_member_rate",
             arguments: { projectId: "proj-1", userId: "u1", rateKind: "COST", amount: 75.5, since: "2026-06-01" },
         });
@@ -107,7 +109,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
     it("clockify_tasks_set_rate HOURLY → tasks.updateBillableRate", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_tasks_set_rate",
             arguments: { projectId: "proj-1", taskId: "task-1", rateKind: "HOURLY", amount: 120 },
         });
@@ -122,7 +124,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
     it("clockify_users_set_member_rate COST → workspaces.updateUserCostRate", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_users_set_member_rate",
             arguments: { userId: "u1", rateKind: "COST", amount: 60 },
         });
@@ -132,7 +134,7 @@ describe("rate-setting tools convert MAJOR → integer minor and route by kind",
     it("clockify_users_set_member_rate emits a writeReceipt (entity + changed.updated)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(ratesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_set_member_rate",
             arguments: { userId: "u1", rateKind: "HOURLY", amount: 80 },
         });

@@ -173,9 +173,14 @@ Review and fix:
 { "name": "clockify_fix_entry", "arguments": { "entry_id": "ENTRY_ID", "new_description": "Corrected description" } }
 ```
 
-Business/admin workflows are two-step writes. Run with `dry_run:true`
-first; the preview returns a short-lived, single-use `confirm_token`.
-Re-run the same call with that token to execute the preview.
+Every tool publishes a risk class at
+`_meta["io.github.apet97.clockify115/risk"]` and its confirmation mode at
+`_meta["io.github.apet97.clockify115/confirmation"]`. Read and routine writes
+remain one-call operations. Business writes, external side effects, privileged
+writes, and destructive writes are two-step operations: run with `dry_run:true`
+first, then re-run the same business arguments with the short-lived, single-use
+`confirm_token`. The token executes the exact stored preview instead of resolving
+or rebuilding it again.
 
 ```json
 {
@@ -246,15 +251,16 @@ Demo fixture helpers:
 
 ```json
 { "name": "clockify_demo_seed", "arguments": { "run_id": "smoke" } }
-{ "name": "clockify_demo_cleanup", "arguments": { "run_id": "smoke" } }
+{ "name": "clockify_demo_cleanup", "arguments": { "run_id": "smoke", "dry_run": true } }
+{ "name": "clockify_demo_cleanup", "arguments": { "run_id": "smoke", "confirm_token": "TOKEN_FROM_PREVIEW" } }
 ```
 
 `clockify_demo_seed` and `clockify_demo_cleanup` ship by default rather
 than behind a flag: they back `npm run verify:live-cleanup`, the
 sandbox proof that the server leaves no objects behind. `demo_seed`
-creates only prefix-namespaced objects, and `clockify_demo_cleanup` is
-`destructiveHint`-guarded so a client surfaces it as a destructive
-action before running it.
+creates only prefix-namespaced objects, and `clockify_demo_cleanup` requires a
+stored-preview confirmation token and publishes `destructiveHint:true` so a
+client surfaces it as destructive before execution.
 
 ## Resources and Prompts
 

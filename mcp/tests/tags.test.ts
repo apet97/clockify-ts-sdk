@@ -371,8 +371,13 @@ describe("clockify_tags_delete", () => {
             confirm_token: string;
             risk_class: string;
         };
-        expect(data.preview).toEqual({ action: "delete", entity: "tag", id: TAG_ID });
-        expect(data.risk_class).toBe("tag_delete");
+        expect(data.preview).toMatchObject({
+            action: "delete",
+            entity: "tag",
+            id: TAG_ID,
+            request: { workspaceId: "ws-1", tagId: TAG_ID },
+        });
+        expect(data.risk_class).toBe("destructive");
         expect(typeof data.confirm_token).toBe("string");
         // The `next` action re-invokes the same tool with the issued token.
         const next = json.next as Array<{ tool: string; args: { confirm_token: string } }>;

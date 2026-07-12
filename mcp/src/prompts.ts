@@ -25,8 +25,8 @@ export function registerClockifyPrompts(server: McpServer): void {
                                 `Goal: ${normalizedGoal}\n\n` +
                                 "Return a numbered plan. Start with clockify_status. Prefer workflow tools " +
                                 "before domain tools. Use IDs from receipts instead of re-resolving names. " +
-                                "For invoices, expenses, time off, scheduling, and webhooks, include a dry_run " +
-                                "preview step before any confirmed write. Include the expected receipt fields " +
+                                "For every tool whose confirmation metadata is preview_token, include a dry_run " +
+                                "step before the confirmed business, external, privileged, or destructive write. Include the expected receipt fields " +
                                 "and the recovery code to report if the call fails.",
                         },
                     },
@@ -59,7 +59,7 @@ export function registerClockifyPrompts(server: McpServer): void {
                             "4. Use clockify_create_work_package to create or reuse a project, task, or tag.\n" +
                             "5. Log the first entry with clockify_log_work (finished work) or start a live " +
                             "timer with clockify_start_work.\n" +
-                            "6. For invoices, expenses, time off, scheduling, or webhooks, preview with " +
+                            "6. For any tool whose confirmation metadata is preview_token, preview with " +
                             "dry_run and reuse the returned confirm_token.\n\n" +
                             "If clockify_status fails, report the stable error code and recovery hint instead " +
                             "of retrying blindly.",

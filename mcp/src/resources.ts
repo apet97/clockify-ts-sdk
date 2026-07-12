@@ -13,7 +13,7 @@ const GUIDE_RESOURCES = [
 - Use IDs returned by previous calls instead of re-resolving names.
 - Treat writes as receipts: inspect ids, changed, warnings, and next.
 - Preserve stable error codes and recovery hints when a call fails.
-- For risky business/admin writes, run dry_run first and reuse the returned confirm_token.
+- For business, external-side-effect, privileged, and destructive tools, run dry_run first and reuse the returned confirm_token.
 - Do not use live/customer workspaces for tests, demos, or destructive probes.
 `,
     },
@@ -48,7 +48,7 @@ Common paths:
         text: `# Clockify MCP Safety Notes
 
 - Confirm the workspace before writing.
-- Prefer dry_run for invoices, expenses, time off, scheduling, and webhooks.
+- When confirmation metadata is preview_token, dry_run is required before execution.
 - Reuse confirm_token only for the preview it came from.
 - Preserve request IDs and stable error codes when reporting failures.
 - If a feature is plan-gated, return the recovery hint instead of retrying blindly.
@@ -68,7 +68,7 @@ Start with clockify_status.
 Use clockify_docs_search when the task is unclear.
 Use clockify_operation_guide before long-tail or risky workflows.
 Use clockify_sdk_snippet for compact SDK, CLI, or MCP examples.
-Preview high-risk writes with dry_run and confirm with confirm_token.
+Preview every business, external-side-effect, privileged, and destructive write with dry_run, then confirm with confirm_token.
 `,
     },
     {
@@ -129,7 +129,7 @@ Safe next steps:
 1. Read clockify://guide/axioms and clockify://guide/safety.
 2. Call clockify_status as the first live probe.
 3. Use workflow tools before low-level domain tools.
-4. For invoices, expenses, time off, scheduling, and webhooks, run dry_run first and reuse the matching confirm_token.
+4. For every tool whose confirmation metadata is preview_token, run dry_run first and reuse the matching confirm_token.
 5. Preserve ids, changed, warnings, next, stable error codes, and recovery hints in the final answer.
 
 If clockify_status fails, report the stable error code, recovery hint, and whether any Clockify records were changed.

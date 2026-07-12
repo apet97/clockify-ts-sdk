@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -120,7 +122,7 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
     it("GET-then-PUTs the full body and rebuilds scope as a CONTAINS filter (flat, not nested)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", name: "Vacation" },
         });
@@ -160,7 +162,7 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
     it("lets explicit userIds replace the scope", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", userIds: ["u9"] },
         });
@@ -171,7 +173,7 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
     it("sends status ACTIVE (not ALL) for the policy scope filter", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", name: "Vacation" },
         });
@@ -186,7 +188,7 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
     it("rejects a no-op and never sends the replacement", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", name: "PTO" },
         });
@@ -200,7 +202,7 @@ describe("clockify_time_off_policies_update — replace-safe, flat body, scope r
         const incomplete = existingPolicy();
         delete incomplete.hasExpiration;
         const client = await connect(policiesContext(captured, incomplete));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", name: "Vacation" },
         });
@@ -213,7 +215,7 @@ describe("clockify_time_off_policies_create — flat body + scope", () => {
     it("spreads the body fields flat and sends scope as a CONTAINS filter", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_create",
             arguments: { name: "Sick", timeUnit: "DAYS", userIds: ["u1"] },
         });
@@ -228,7 +230,7 @@ describe("clockify_time_off_policies_create — flat body + scope", () => {
     it("sends status ACTIVE on create scope, not ALL", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_time_off_policies_create",
             arguments: { name: "Sick", userIds: ["u1"], userGroupIds: ["g1"] },
         });
@@ -242,7 +244,7 @@ describe("clockify_time_off_policies_archive — maps the boolean to the wire {s
     it("sends status ARCHIVED (not archived) when archived is true", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_archive",
             arguments: { policyId: "pol-1", archived: true },
         });
@@ -261,7 +263,7 @@ describe("clockify_time_off_policies_archive — maps the boolean to the wire {s
     it("sends status ACTIVE when archived is false", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(policiesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_archive",
             arguments: { policyId: "pol-1", archived: false },
         });

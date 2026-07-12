@@ -4,7 +4,6 @@ import { iterAll } from "clockify-sdk-ts-115/iter";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
-import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
 import { successResult } from "../../result.js";
 import { collectPagedList } from "../paging.js";
 
@@ -369,16 +368,6 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
     );
 }
 
-export function maybeConfirm(
-    ctx: Context,
-    toolName: string,
-    riskClass: string,
-    args: AnyRecord,
-    preview: AnyRecord,
-) {
-    return requireConfirmation(ctx, toolName, riskClass, args, preview);
-}
-
 export function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
     if (action.includes("create_work_package")) {
         return {
@@ -422,13 +411,21 @@ export function defaultRecovery(action: string, args: AnyRecord): RecoveryHint {
         return {
             hint: "Verify the HTTPS callback URL and event. If reusing a preview, run dry_run again for a fresh token.",
             tool: "clockify_setup_webhook",
-            args: stripConfirmationArgs(args),
+            args: businessArgs(args),
         };
     }
     return {
         hint: "Call clockify_status, then retry with IDs returned by previous calls.",
         tool: "clockify_status",
     };
+}
+
+function businessArgs(args: AnyRecord): AnyRecord {
+    return Object.fromEntries(
+        Object.entries(args).filter(
+            ([key, value]) => key !== "dry_run" && key !== "confirm_token" && value !== undefined,
+        ),
+    );
 }
 
 function packageNext(projectId: string, taskId: string, tagIds: string[]): NextAction[] {

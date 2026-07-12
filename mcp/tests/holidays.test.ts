@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -78,7 +80,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
     it("carries untouched fields forward and rebuilds the assignment as a CONTAINS filter", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", name: "Xmas Day" },
         });
@@ -100,7 +102,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
     it("lets explicit userIds replace the assignment", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", userIds: ["u9"] },
         });
@@ -111,7 +113,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
     it("keeps holiday assignment status ALL (not ACTIVE)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", name: "Xmas Day" },
         });
@@ -124,9 +126,13 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
     it("errors clearly instead of dropping a required assignment to nothing", async () => {
         const captured: Record<string, unknown> = {};
         // A holiday with no users/groups and not everyone-assigned.
-        const noScope = { id: "hol-1", name: "Orphan", datePeriod: { startDate: "2026-01-01", endDate: "2026-01-01" } };
+        const noScope = {
+            id: "hol-1",
+            name: "Orphan",
+            datePeriod: { startDate: "2026-01-01", endDate: "2026-01-01" },
+        };
         const client = await connect(holidaysContext(captured, noScope));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", name: "Still orphan" },
         });
@@ -147,7 +153,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             userIds: ["u1"],
         };
         const client = await connect(holidaysContext(captured, multiDay));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", startDate: "2026-12-23" },
         });
@@ -165,7 +171,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             everyoneIncludingNew: true,
         };
         const client = await connect(holidaysContext(captured, everyone));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", name: "All staff day" },
         });
@@ -174,5 +180,51 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect(update.everyoneIncludingNew).toBe(true);
         expect(update.users).toBeUndefined();
         expect(update.userGroups).toBeUndefined();
+    });
+
+    it("rejects a missing holiday during preview before issuing a token", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "missing", name: "Replacement" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(envelope(res))).toMatch(/holiday missing.*not found/i);
+        expect(captured.update).toBeUndefined();
+    });
+
+    it.each([
+        ["name", { ...existingHoliday(), name: undefined }],
+        ["startDate", { ...existingHoliday(), datePeriod: { endDate: "2026-12-25" } }],
+        ["endDate", { ...existingHoliday(), datePeriod: { startDate: "2026-12-25" } }],
+    ])("rejects malformed current %s before mutation", async (field, holiday) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured, holiday));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", color: "#00ff00" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(envelope(res))).toContain(String(field));
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects an identical replacement as a no-op during preview", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(holidaysContext(captured));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", name: "Christmas" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(envelope(res))).toMatch(/no-op/i);
+        expect(captured.update).toBeUndefined();
     });
 });

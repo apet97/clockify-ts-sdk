@@ -35,7 +35,7 @@ export function registerAuditTools(server: McpServer, ctx: Context): void {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(50).default(50).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const req: ClockifyApi.SearchAuditLogReportRequest = {

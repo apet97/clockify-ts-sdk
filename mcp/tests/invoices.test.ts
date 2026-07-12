@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -89,7 +91,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     it("GETs the current invoice, maps tax/discount to *Percent, and preserves untouched fields", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_update",
             arguments: { invoiceId: "inv-1", note: "New note" },
         });
@@ -124,7 +126,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     it("lets an explicit taxPercent/discountPercent override the carried-forward value", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_invoices_update",
             arguments: { invoiceId: "inv-1", taxPercent: 20, discountPercent: 0 },
         });
@@ -136,7 +138,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     it("rejects a no-op without sending PUT", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_update",
             arguments: { invoiceId: "inv-1", note: "Original note" },
         });
@@ -148,7 +150,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     it("rejects invalid patch dates locally before GET or PUT", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_update",
             arguments: { invoiceId: "inv-1", dueDate: "not-a-date" },
         });
@@ -160,7 +162,7 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     it("rejects missing current replacement fields before PUT", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured, { dueDate: undefined }));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_update",
             arguments: { invoiceId: "inv-1", note: "New note" },
         });
@@ -170,48 +172,61 @@ describe("clockify_invoices_update — GET-then-PUT (no silent zeroing / field w
     });
 });
 
-describe("clockify_invoices_create — note/subject applied via follow-up PUT", () => {
-    it("POSTs the minimal body then applies note/subject (POST silently drops them)", async () => {
+describe("clockify_invoices_create — exact stored create request", () => {
+    it("rejects note/subject during preview and directs the caller to guarded update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const args = {
+            clientId: "client-1",
+            number: "INV-009",
+            currency: "USD",
+            issuedDate: "2026-06-01",
+            dueDate: "2026-07-01",
+            note: "Real note",
+            subject: "Real subject",
+        };
+        const dryRun = await client.callTool({
             name: "clockify_invoices_create",
-            arguments: {
-                clientId: "client-1",
-                number: "INV-009",
-                currency: "USD",
-                issuedDate: "2026-06-01",
-                dueDate: "2026-07-01",
-                note: "Real note",
-                subject: "Real subject",
-            },
+            arguments: { ...args, dry_run: true },
         });
-        expect(res.isError).toBeFalsy();
-        const create = (captured.create as { body?: Record<string, unknown> }).body ?? {};
-        // The create body must NOT carry note/subject — they would be dropped.
-        expect(create.note).toBeUndefined();
-        expect(create.subject).toBeUndefined();
-        // Dates promoted to RFC3339.
-        expect(create.issuedDate).toBe("2026-06-01T00:00:00Z");
-        // It applied them via the GET-then-PUT path against the created id.
-        expect((captured.get as { invoiceId?: string }).invoiceId).toBe("inv-9");
-        const update = captured.update as Record<string, unknown>;
-        expect(update.note).toBe("Real note");
-        expect(update.subject).toBe("Real subject");
-        expect(update.invoiceId).toBe("inv-9");
+        expect(dryRun.isError).toBe(true);
+        expect(JSON.stringify(envelope(dryRun))).toMatch(
+            /create the draft first.*clockify_invoices_update/i,
+        );
+        expect(captured.create).toBeUndefined();
+        expect(captured.get).toBeUndefined();
+        expect(captured.update).toBeUndefined();
     });
 
-    it("skips the follow-up PUT when neither note nor subject is supplied", async () => {
+    it("executes only the exact stored create request after token confirmation", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        await client.callTool({
+        const args = {
+            clientId: "client-1",
+            number: "INV-010",
+            currency: "USD",
+            issuedDate: "2026-06-01",
+            dueDate: "2026-07-01",
+        };
+        const dryRun = await client.callTool({
             name: "clockify_invoices_create",
-            arguments: {
+            arguments: { ...args, dry_run: true },
+        });
+        const token = (envelope(dryRun).data as { confirm_token: string }).confirm_token;
+        expect(captured.create).toBeUndefined();
+        const result = await client.callTool({
+            name: "clockify_invoices_create",
+            arguments: { ...args, confirm_token: token },
+        });
+        expect(result.isError).toBeFalsy();
+        expect(captured.create).toEqual({
+            workspaceId: "ws-1",
+            body: {
                 clientId: "client-1",
                 number: "INV-010",
                 currency: "USD",
-                issuedDate: "2026-06-01",
-                dueDate: "2026-07-01",
+                issuedDate: "2026-06-01T00:00:00Z",
+                dueDate: "2026-07-01T00:00:00Z",
             },
         });
         expect(captured.update).toBeUndefined();
@@ -221,7 +236,7 @@ describe("clockify_invoices_create — note/subject applied via follow-up PUT", 
     it("rejects an unknown timeViewMode before create", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_create",
             arguments: {
                 clientId: "client-1",
@@ -331,7 +346,7 @@ describe("clockify_invoices_update_status — sends the invoiceStatus wire field
     it("renames status -> invoiceStatus in the body (live: status alone 400s)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(invoicesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_update_status",
             arguments: { invoiceId: "inv-1", status: "PAID" },
         });

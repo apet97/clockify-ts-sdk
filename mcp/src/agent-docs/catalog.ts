@@ -30,16 +30,16 @@ export const AGENT_DOC_CHUNKS: AgentDocChunk[] = [
     },
     {
         id: "safe-writes",
-        title: "Preview high-risk writes before confirmation",
+        title: "Preview every guarded write before confirmation",
         surface: "safety",
         text:
-            "High-risk MCP workflow writes and destructive domain deletes use dry_run first, " +
-            "then confirm_token. CLI raw writes should use sandbox workspaces and include response headers.",
+            "MCP business writes, external side effects, privileged writes, and destructive writes " +
+            "use dry_run first, then confirm_token. CLI raw writes should use sandbox workspaces and include response headers.",
         tools: [
-            "clockify_fix_entry",
+            "clockify_approvals_submit",
             "clockify_setup_webhook",
             "clockify_projects_delete",
-            "clockify_entries_delete",
+            "clockify_users_grant_role",
         ],
         sdkImports: ["toOperationReceipt", "toOperationErrorReceipt", "withIdempotencyKey"],
         cliExamples: [

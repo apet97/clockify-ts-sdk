@@ -48,7 +48,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.build.json",
+    "build": "node ../scripts/generate-package-versions.mjs && npm run clean && tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
     "dev": "tsx src/index.ts",
     "test": "node ../scripts/generate-package-versions.mjs && vitest run",
     "test:coverage": "vitest run --coverage",

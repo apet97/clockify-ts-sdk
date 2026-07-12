@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -115,7 +117,7 @@ describe("time-off policies resolve NAME -> id", () => {
     it("policies_create resolves user + group names before scopeFilter", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_create",
             arguments: { name: "Sick", userIds: ["Alice"], userGroupIds: ["Engineering"] },
         });
@@ -131,7 +133,7 @@ describe("time-off policies resolve NAME -> id", () => {
     it("policies_create clarifies + does not create on ambiguous user name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_create",
             arguments: { name: "Sick", userIds: ["Sam"] },
         });
@@ -145,7 +147,7 @@ describe("time-off policies resolve NAME -> id", () => {
     it("policies_update resolves explicit names, preserves carried ids", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", userIds: ["Alice"] },
         });
@@ -161,7 +163,7 @@ describe("time-off policies resolve NAME -> id", () => {
         // No explicit user arg -> carried-forward BOB preserved.
         const captured2: Record<string, unknown> = {};
         const client2 = await connect(timeOffContext(captured2));
-        const res2 = await client2.callTool({
+        const res2 = await callGuarded(client2, {
             name: "clockify_time_off_policies_update",
             arguments: { policyId: "pol-1", name: "Vacation" },
         });
@@ -216,7 +218,7 @@ describe("time-off request policy resolution", () => {
     it("time_off_requests_submit resolves a policy name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_requests_submit",
             arguments: {
                 policyId: "PTO",
@@ -232,7 +234,7 @@ describe("time-off request policy resolution", () => {
     it("time_off_requests_submit rejects an unknown policy name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_requests_submit",
             arguments: {
                 policyId: "Not a policy",
@@ -247,7 +249,7 @@ describe("time-off request policy resolution", () => {
     it("time_off_requests_update_status resolves a policy name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(timeOffContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_requests_update_status",
             arguments: {
                 policyId: "PTO",

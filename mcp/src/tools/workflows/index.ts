@@ -3,9 +3,14 @@ import { z } from "zod";
 
 import { zNumberLike } from "../../arg-shapes.js";
 import type { Context } from "../../client.js";
-import { defineTool, successResult } from "../../result.js";
+import { defineGuardedTool, defineTool, successResult } from "../../result.js";
 
 import {
+    executeInvoiceClientWork,
+    executeRecordExpense,
+    executeRequestTimeOff,
+    executeScheduleWork,
+    executeSetupWebhook,
     WEBHOOK_EVENTS,
     invoiceClientWork,
     recordExpense,
@@ -13,11 +18,11 @@ import {
     scheduleWork,
     setupWebhook,
 } from "./business.js";
-import { demoCleanup, demoSeed } from "./demo.js";
+import { demoCleanup, demoSeed, executeDemoCleanup } from "./demo.js";
 import { planChange } from "./plan.js";
-import { createWorkPackage } from "./resolve.js";
+import { createWorkPackage, defaultRecovery } from "./resolve.js";
 import { reviewInputSchema, reviewPeriod } from "./review.js";
-import { runWorkflow } from "./run.js";
+import { prepareWorkflow, runWorkflow } from "./run.js";
 import {
     fixEntry,
     logWork,
@@ -36,7 +41,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Show the workflow-first tool groups and when to use domain tools instead.",
             inputSchema: {},
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async () =>
             successResult(
@@ -137,7 +141,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 goal: z.string().min(1),
                 entity: z.string().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const planArgs = {
@@ -169,7 +172,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 is_public: z.boolean().optional(),
                 upsert: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) =>
             runWorkflow("clockify_create_work_package", args, () => createWorkPackage(ctx, args)),
@@ -183,7 +186,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Log a finished time entry from names or IDs; accepts start/end or duration_seconds plus end.",
             inputSchema: timeEntryInputSchema({ finished: true }),
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => runWorkflow("clockify_log_work", args, () => logWork(ctx, args)),
     );
@@ -195,7 +197,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             title: "Start work",
             description: "Start a running work timer using human-friendly names or returned IDs.",
             inputSchema: timeEntryInputSchema({ finished: false }),
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => runWorkflow("clockify_start_work", args, () => startWork(ctx, args)),
     );
@@ -208,7 +209,7 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Stop the current running work timer. Returns ok when no timer is running.",
             inputSchema: { end: z.string().optional() },
-            annotations: { idempotentHint: true },
+            idempotent: true,
         },
         async (args) => runWorkflow("clockify_stop_work", args, () => stopWork(ctx, args)),
     );
@@ -220,7 +221,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             title: "Switch work",
             description: "Stop the current timer and start a new timer in one workflow call.",
             inputSchema: timeEntryInputSchema({ finished: false }),
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => runWorkflow("clockify_switch_work", args, () => switchWork(ctx, args)),
     );
@@ -233,7 +233,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Review one day of entries for totals, running timers, and missing details.",
             inputSchema: reviewInputSchema({ week: false }),
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) =>
             runWorkflow("clockify_review_day", args, () =>
@@ -249,7 +248,6 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
             description:
                 "Review a week of entries for totals, running timers, and missing details.",
             inputSchema: reviewInputSchema({ week: true }),
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) =>
             runWorkflow("clockify_review_week", args, () =>
@@ -282,13 +280,14 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 end: z.string().optional(),
                 billable: z.boolean().optional(),
             },
-            annotations: { idempotentHint: true },
+            idempotent: true,
         },
         async (args) => runWorkflow("clockify_fix_entry", args, () => fixEntry(ctx, args)),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoice_client_work",
         {
             title: "Invoice client work",
@@ -301,17 +300,21 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 issued_date: z.string().optional(),
                 due_date: z.string().optional(),
                 currency: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) =>
-            runWorkflow("clockify_invoice_client_work", args, () => invoiceClientWork(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_invoice_client_work", args, () =>
+                    invoiceClientWork(ctx, args),
+                ),
+            execute: async (preview) => executeInvoiceClientWork(ctx, preview),
+        },
+        defaultRecovery("clockify_invoice_client_work", {}),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_record_expense",
         {
             title: "Record expense",
@@ -328,17 +331,19 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 user_id: z.string().optional(),
                 notes: z.string().optional(),
                 billable: z.boolean().optional(),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) =>
-            runWorkflow("clockify_record_expense", args, () => recordExpense(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_record_expense", args, () => recordExpense(ctx, args)),
+            execute: async (preview) => executeRecordExpense(ctx, preview),
+        },
+        defaultRecovery("clockify_record_expense", {}),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_request_time_off",
         {
             title: "Request time off",
@@ -373,17 +378,19 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                     .describe(
                         "Which half to take when half_day is true: FIRST_HALF (morning, default) or SECOND_HALF (afternoon).",
                     ),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) =>
-            runWorkflow("clockify_request_time_off", args, () => requestTimeOff(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_request_time_off", args, () => requestTimeOff(ctx, args)),
+            execute: async (preview) => executeRequestTimeOff(ctx, preview),
+        },
+        defaultRecovery("clockify_request_time_off", {}),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_schedule_work",
         {
             title: "Schedule work",
@@ -402,16 +409,19 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 task: z.string().optional(),
                 task_id: z.string().optional(),
                 note: z.string().optional(),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => runWorkflow("clockify_schedule_work", args, () => scheduleWork(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_schedule_work", args, () => scheduleWork(ctx, args)),
+            execute: async (preview) => executeScheduleWork(ctx, preview),
+        },
+        defaultRecovery("clockify_schedule_work", {}),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_setup_webhook",
         {
             title: "Set up webhook",
@@ -424,12 +434,14 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 webhook_event: z.enum(WEBHOOK_EVENTS).optional(),
                 trigger_source_type: z.string().optional(),
                 trigger_source: z.array(z.string()).optional(),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => runWorkflow("clockify_setup_webhook", args, () => setupWebhook(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_setup_webhook", args, () => setupWebhook(ctx, args)),
+            execute: async (preview) => executeSetupWebhook(ctx, preview),
+        },
+        defaultRecovery("clockify_setup_webhook", {}),
     );
 
     defineTool(
@@ -445,13 +457,14 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 date: z.string().optional(),
                 upsert: z.boolean().optional(),
             },
-            annotations: { idempotentHint: true },
+            idempotent: true,
         },
         async (args) => runWorkflow("clockify_demo_seed", args, () => demoSeed(ctx, args)),
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_demo_cleanup",
         {
             title: "Clean demo data",
@@ -462,11 +475,14 @@ export function registerWorkflowTools(server: McpServer, ctx: Context): void {
                 prefix: z.string().optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => runWorkflow("clockify_demo_cleanup", args, () => demoCleanup(ctx, args)),
+        {
+            preview: async (args) =>
+                prepareWorkflow("clockify_demo_cleanup", args, () => demoCleanup(ctx, args)),
+            execute: async (preview) => executeDemoCleanup(ctx, preview),
+        },
+        defaultRecovery("clockify_demo_cleanup", {}),
     );
 }

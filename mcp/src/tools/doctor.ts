@@ -38,7 +38,7 @@ export function registerDoctorTool(server: McpServer, ctx: Context): void {
             title: "Clockify doctor (live preflight)",
             description:
                 "Run a live connection preflight: validate CLOCKIFY_API_KEY against /user, confirm the pinned CLOCKIFY_WORKSPACE_ID is reachable for that key, report base-URL posture, and estimate clock skew. Returns a pass/fail receipt with per-failure remediation.",
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async () => {
             // 0) Not configured: the server started without credentials, so

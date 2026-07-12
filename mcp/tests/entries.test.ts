@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -170,7 +172,7 @@ describe("clockify_entries_mark_invoiced", () => {
             client: { timeEntries: { markInvoiced } } as never,
         });
 
-        const res = (await client.callTool({
+        const res = (await callGuarded(client, {
             name: "clockify_entries_mark_invoiced",
             arguments: { timeEntryIds: ["e1", "e2", "e3"] },
         })) as { isError?: boolean; content: Array<{ text: string }> };

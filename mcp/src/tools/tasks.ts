@@ -5,8 +5,7 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -82,7 +81,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
                 name: z.string().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const page = args.page ?? 1;
@@ -119,7 +118,6 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 estimate: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
                 assigneeIds: z.array(z.string()).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const req: ClockifyApi.TaskCreateRequest = {
@@ -171,7 +169,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const task = await ctx.client.tasks.get({
@@ -203,7 +201,7 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 status: z.enum(["ACTIVE", "DONE"]).optional().describe("ACTIVE | DONE."),
                 assigneeIds: z.array(z.string()).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const current = await ctx.client.tasks.get({
@@ -256,8 +254,9 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_tasks_delete",
         {
             title: "Delete a task",
@@ -266,73 +265,67 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 projectId: z.string().min(1),
                 taskId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => {
-            const preview = {
-                action: "delete",
-                entity: "task",
-                id: args.taskId,
-                projectId: args.projectId,
-            };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_tasks_delete",
-                "task_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            // Clockify rejects DELETE of an ACTIVE task (400 "Cannot delete an
-            // active task", live-verified 2026-06-15) — mark it DONE first via
-            // GET-then-PUT, carrying the name the replace-PUT requires.
-            const current = await ctx.client.tasks.get({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                taskId: args.taskId,
-            });
-            const body = taskUpdateBody(current);
-            if (body.status !== "DONE") {
-                body.status = "DONE";
-                const request: ClockifyApi.UpdateTasksRequest = {
-                    body,
+        {
+            preview: async (args) => {
+                const deleteRequest = {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     taskId: args.taskId,
                 };
-                await ctx.client.tasks.update(request);
-            }
-            await ctx.client.tasks.delete({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                taskId: args.taskId,
-            });
-            return successResult(
-                "clockify_tasks_delete",
-                { deleted: true, projectId: args.projectId, taskId: args.taskId },
-                {
-                    workspaceId: ctx.workspaceId,
+                const current = await ctx.client.tasks.get(deleteRequest);
+                const body = taskUpdateBody(current);
+                const archiveRequest =
+                    body.status === "DONE"
+                        ? undefined
+                        : ({
+                              ...deleteRequest,
+                              body: { ...body, status: "DONE" },
+                          } satisfies ClockifyApi.UpdateTasksRequest);
+                return {
+                    action: "delete",
+                    entity: "task",
+                    id: args.taskId,
                     projectId: args.projectId,
-                    taskId: args.taskId,
-                },
-                writeReceipt("deleted", "task", args.taskId, {
-                    next: [
-                        {
-                            tool: "clockify_tasks_list",
-                            args: { projectId: args.projectId },
-                            reason: "Verify the task no longer appears.",
-                        },
-                    ],
-                }),
-            );
+                    deleteRequest,
+                    ...(archiveRequest ? { archiveRequest } : {}),
+                };
+            },
+            execute: async (preview) => {
+                if (preview.archiveRequest) {
+                    await ctx.client.tasks.update(preview.archiveRequest);
+                }
+                await ctx.client.tasks.delete(preview.deleteRequest);
+                return successResult(
+                    "clockify_tasks_delete",
+                    {
+                        deleted: true,
+                        projectId: preview.projectId,
+                        taskId: preview.id,
+                    },
+                    {
+                        workspaceId: preview.deleteRequest.workspaceId,
+                        projectId: preview.projectId,
+                        taskId: preview.id,
+                    },
+                    writeReceipt("deleted", "task", preview.id, {
+                        next: [
+                            {
+                                tool: "clockify_tasks_list",
+                                args: { projectId: preview.projectId },
+                                reason: "Verify the task no longer appears.",
+                            },
+                        ],
+                    }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_tasks_set_rate",
         {
             title: "Set a task's rate",
@@ -349,41 +342,47 @@ export function registerTasksTools(server: McpServer, ctx: Context): void {
                 ),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const amountMinor = toMinor(args.amount, "major");
-            const body = {
-                amount: amountMinor,
-                ...(args.since !== undefined ? { since: args.since } : {}),
-            };
-            const updated =
-                args.rateKind === "COST"
-                    ? await ctx.client.tasks.updateCostRate({
-                          ...body,
-                          workspaceId: ctx.workspaceId,
-                          projectId: args.projectId,
-                          taskId: args.taskId,
-                      } satisfies ClockifyApi.UpdateCostRateTasksRequest)
-                    : await ctx.client.tasks.updateBillableRate({
-                          ...body,
-                          workspaceId: ctx.workspaceId,
-                          projectId: args.projectId,
-                          taskId: args.taskId,
-                      } satisfies ClockifyApi.UpdateBillableRateTasksRequest);
-            return successResult(
-                "clockify_tasks_set_rate",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    taskId: args.taskId,
+        {
+            preview: (args) => {
+                const amountMinor = toMinor(args.amount, "major");
+                return {
                     rateKind: args.rateKind,
                     amountMajor: args.amount,
                     amountMinor,
-                },
-                writeReceipt("updated", "task", args.taskId),
-            );
+                    request: {
+                        amount: amountMinor,
+                        ...(args.since !== undefined ? { since: args.since } : {}),
+                        workspaceId: ctx.workspaceId,
+                        projectId: args.projectId,
+                        taskId: args.taskId,
+                    },
+                };
+            },
+            execute: async (preview) => {
+                const updated =
+                    preview.rateKind === "COST"
+                        ? await ctx.client.tasks.updateCostRate(
+                              preview.request satisfies ClockifyApi.UpdateCostRateTasksRequest,
+                          )
+                        : await ctx.client.tasks.updateBillableRate(
+                              preview.request satisfies ClockifyApi.UpdateBillableRateTasksRequest,
+                          );
+                return successResult(
+                    "clockify_tasks_set_rate",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        projectId: preview.request.projectId,
+                        taskId: preview.request.taskId,
+                        rateKind: preview.rateKind,
+                        amountMajor: preview.amountMajor,
+                        amountMinor: preview.amountMinor,
+                    },
+                    writeReceipt("updated", "task", preview.request.taskId),
+                );
+            },
         },
     );
 }

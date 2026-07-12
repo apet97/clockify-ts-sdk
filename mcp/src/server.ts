@@ -41,7 +41,7 @@ export const SERVER_INSTRUCTIONS =
     "On first run, get the clockify-getting-started prompt and read the clockify://guide/which-tool resource. " +
     "Prefer workflow tools before low-level domain tools. " +
     "Use IDs returned by previous structured receipts rather than re-resolving names. " +
-    "For invoices, expenses, time off, scheduling, and webhooks, run dry_run first and reuse the returned confirm_token. " +
+    "For every tool whose confirmation metadata is preview_token—business writes, external side effects, privileged writes, and destructive writes—run dry_run first and reuse the returned confirm_token. " +
     "Inspect ids, changed, warnings, next, stable error codes, and recovery hints. " +
     "If a feature is unavailable on the workspace plan, report the recovery hint and continue.";
 

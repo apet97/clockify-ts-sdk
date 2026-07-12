@@ -47,7 +47,7 @@ export function registerAgentDocsTools(server: McpServer): void {
                 query: z.string().min(1),
                 max_results: z.number().int().min(1).max(10).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const results = searchAgentDocs(args.query, args.max_results ?? 5).map((result) => ({
@@ -88,7 +88,7 @@ export function registerAgentDocsTools(server: McpServer): void {
                 operation: z.string().min(1).optional(),
                 tool: z.string().min(1).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const query = [args.task, args.operation, args.tool].filter(Boolean).join(" ");
@@ -134,7 +134,7 @@ export function registerAgentDocsTools(server: McpServer): void {
                 topic: z.enum(["status", "pagination", "safe-write", "raw-api", "webhook"]),
                 surface: z.enum(["sdk", "cli", "mcp"]).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const surface: SnippetSurface = args.surface ?? "sdk";

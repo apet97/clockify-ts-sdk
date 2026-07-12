@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -33,7 +35,7 @@ describe("clockify_time_off_requests_submit halfDayPeriod", () => {
             client: { timeOff: { submit } } as never,
         });
 
-        const res = (await client.callTool({
+        const res = (await callGuarded(client, {
             name: "clockify_time_off_requests_submit",
             arguments: {
                 policyId: "policy-1",
@@ -54,7 +56,7 @@ describe("clockify_time_off_requests_submit halfDayPeriod", () => {
             client: { timeOff: { submit } } as never,
         });
 
-        const res = (await client.callTool({
+        const res = (await callGuarded(client, {
             name: "clockify_time_off_requests_submit",
             arguments: {
                 policyId: "aaaaaaaaaaaaaaaaaaaaaaaa",
@@ -79,10 +81,31 @@ describe("clockify_time_off_requests_submit halfDayPeriod", () => {
             client: { timeOff: { submit } } as never,
         });
 
-        const res = (await client.callTool({
+        const res = (await callGuarded(client, {
             name: "clockify_time_off_requests_submit",
             arguments: { policyId: "aaaaaaaaaaaaaaaaaaaaaaaa", start: "2026-08-01" },
         })) as { isError?: boolean };
+
+        expect(res.isError).toBe(true);
+        expect(submit).not.toHaveBeenCalled();
+    });
+
+    it("rejects a submit with both end and days before issuing a token", async () => {
+        const submit = vi.fn(async (request: unknown) => request);
+        const client = await connect({
+            workspaceId: "ws-1",
+            client: { timeOff: { submit } } as never,
+        });
+
+        const res = await callGuarded(client, {
+            name: "clockify_time_off_requests_submit",
+            arguments: {
+                policyId: "aaaaaaaaaaaaaaaaaaaaaaaa",
+                start: "2026-08-01",
+                end: "2026-08-02",
+                days: 2,
+            },
+        });
 
         expect(res.isError).toBe(true);
         expect(submit).not.toHaveBeenCalled();
@@ -121,8 +144,9 @@ describe("clockify_request_time_off honors half_day_period (afternoon)", () => {
             arguments: { ...args, confirm_token: token },
         });
         expect(submit).toHaveBeenCalledTimes(1);
-        const body = (submit.mock.calls[0]?.[0] as { body: { timeOffPeriod: Record<string, unknown> } })
-            .body;
+        const body = (
+            submit.mock.calls[0]?.[0] as { body: { timeOffPeriod: Record<string, unknown> } }
+        ).body;
         expect(body.timeOffPeriod.isHalfDay).toBe(true);
         expect(body.timeOffPeriod.halfDayPeriod).toBe("SECOND_HALF");
     });
@@ -137,11 +161,18 @@ describe("clockify_request_time_off honors half_day_period (afternoon)", () => {
         const preview = text(
             await client.callTool({
                 name: "clockify_request_time_off",
-                arguments: { policy_id: HEX, start: "2026-08-01", days: 1, half_day: true, dry_run: true },
+                arguments: {
+                    policy_id: HEX,
+                    start: "2026-08-01",
+                    days: 1,
+                    half_day: true,
+                    dry_run: true,
+                },
             }),
         );
-        const period = (preview.data as { preview: { body: { timeOffPeriod: Record<string, unknown> } } })
-            .preview.body.timeOffPeriod;
+        const period = (
+            preview.data as { preview: { body: { timeOffPeriod: Record<string, unknown> } } }
+        ).preview.body.timeOffPeriod;
         expect(period.halfDayPeriod).toBe("FIRST_HALF");
     });
 });

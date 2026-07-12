@@ -15,6 +15,13 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
   report, import, time-entry, expense, scheduling, project, rate, and webhook
   payloads now use generated request types and operation-specific schemas.
 
+### Security
+
+- Publish a governed runtime risk class and confirmation mode for all 140 tools.
+  The 56 business, external-side-effect, privileged, and destructive writes now
+  require a five-minute, one-use token and execute the exact canonical preview
+  captured by `dry_run`; read and routine writes remain one-call operations.
+
 ## [0.4.1] - 2026-06-29
 
 ### Fixed

@@ -11,8 +11,14 @@ import { z } from "zod";
 
 import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
+import {
+    defineGuardedTool,
+    defineTool,
+    entityId,
+    errorResult,
+    successResult,
+    writeReceipt,
+} from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
@@ -270,7 +276,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 statuses: zStringList(z.array(z.enum(REQUEST_SEARCH_STATUSES))).optional(),
                 users: zStringList(z.array(z.string())).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             let users = args.users;
@@ -320,7 +326,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "Get a time-off request",
             description: "Fetch one time-off request by ID from the pinned workspace.",
             inputSchema: { requestId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             // GET /time-off/requests/{id} is a dead 404 route ("No static
@@ -358,8 +364,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_requests_submit",
         {
             title: "Submit a time-off request",
@@ -391,53 +398,62 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("FIRST_HALF | SECOND_HALF | NOT_DEFINED."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            // The submit period shape is policy-unit dependent: DAYS-unit policies
-            // reject {start,end} and want {start,days}; HOURS-unit policies want
-            // {start,end} and reject days (live-verified 2026-06-21). The tool
-            // can't see the policy unit, so require at least one of end / days.
-            if (args.end === undefined && args.days === undefined) {
-                return errorResult(
-                    "clockify_time_off_requests_submit",
-                    new Error(
-                        "provide either `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies) — the live API requires one",
-                    ),
-                );
-            }
-            const policyId = await resolvePolicyId(ctx, args.policyId);
-            const period: ClockifyApi.PeriodV1Request = { start: args.start };
-            if (args.end !== undefined) period.end = args.end;
-            if (args.days !== undefined) period.days = args.days;
-            const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
-                note: args.note ?? "",
-                timeOffPeriod: {
-                    isHalfDay: args.isHalfDay === true,
-                    halfDayPeriod: args.halfDayPeriod ?? "NOT_DEFINED",
-                    period,
-                },
-            };
-            const req: ClockifyApi.SubmitTimeOffRequest = {
-                workspaceId: ctx.workspaceId,
-                policyId,
-                body,
-            };
-            const created = await ctx.client.timeOff.submit(req);
-            return successResult(
-                "clockify_time_off_requests_submit",
-                created,
-                {
-                    workspaceId: ctx.workspaceId,
+        {
+            preview: async (args) => {
+                // The submit period shape is policy-unit dependent: DAYS-unit policies
+                // reject {start,end} and want {start,days}; HOURS-unit policies want
+                // {start,end} and reject days (live-verified 2026-06-21). The tool
+                // can't see the policy unit, so require at least one of end / days.
+                if ((args.end === undefined) === (args.days === undefined)) {
+                    return errorResult(
+                        "clockify_time_off_requests_submit",
+                        new Error(
+                            "provide exactly one of `end` (date-range / HOURS-unit policies) or `days` (DAYS-unit policies)",
+                        ),
+                    );
+                }
+                const policyId = await resolvePolicyId(ctx, args.policyId);
+                const period: ClockifyApi.PeriodV1Request = { start: args.start };
+                if (args.end !== undefined) period.end = args.end;
+                if (args.days !== undefined) period.days = args.days;
+                const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
+                    note: args.note ?? "",
+                    timeOffPeriod: {
+                        isHalfDay: args.isHalfDay === true,
+                        halfDayPeriod: args.halfDayPeriod ?? "NOT_DEFINED",
+                        period,
+                    },
+                };
+                return {
+                    action: "create",
+                    entity: "time_off_request",
                     policyId,
-                },
-                writeReceipt("created", "time_off_request", { id: entityId(created) }),
-            );
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        policyId,
+                        body,
+                    } satisfies ClockifyApi.SubmitTimeOffRequest,
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.timeOff.submit(preview.request);
+                return successResult(
+                    "clockify_time_off_requests_submit",
+                    created,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.policyId,
+                    },
+                    writeReceipt("created", "time_off_request", { id: entityId(created) }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_requests_update_status",
         {
             title: "Update a time-off request status",
@@ -452,47 +468,50 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 statusType: z.enum(["APPROVED", "REJECTED"]),
                 note: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const policyId = await resolvePolicyId(ctx, args.policyId);
-            // The live status endpoint is PATCH
-            // /time-off/policies/{policyId}/requests/{requestId} and the WIRE
-            // field is `status` (`statusType` only appears in responses). The
-            // flat /requests/{id}/status route 404s, so use
-            // changeTimeOffRequestStatus, not updateStatus.
-            // `note` is live-verified OPTIONAL: a status PATCH at
-            // /time-off/policies/{policyId}/requests/{requestId} with only
-            // `{status}` (no note) returns 200 (probed 2026-06-20). The generated
-            // request now marks `note` optional (GOCLMCP apply_live_overrides!), so
-            // build the typed body-envelope form — a clean bind, no cast.
-            // See discrepancies.md (time-off.change-status.union-and-note).
-            const body: ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest> =
-                {
-                    status: args.statusType,
-                };
-            if (args.note) body.note = args.note;
-            const updated = await ctx.client.timeOff.changeTimeOffRequestStatus({
-                workspaceId: ctx.workspaceId,
-                policyId,
-                requestId: args.requestId,
-                body,
-            });
-            return successResult(
-                "clockify_time_off_requests_update_status",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
+        {
+            preview: async (args) => {
+                const policyId = await resolvePolicyId(ctx, args.policyId);
+                // The live status endpoint is policy-scoped and the wire field is
+                // `status` (`statusType` only appears in responses).
+                const body: ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest> =
+                    { status: args.statusType };
+                if (args.note) body.note = args.note;
+                return {
+                    action: "update",
+                    entity: "time_off_request",
+                    id: args.requestId,
                     policyId,
-                    requestId: args.requestId,
-                },
-                writeReceipt("updated", "time_off_request", args.requestId),
-            );
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        policyId,
+                        requestId: args.requestId,
+                        body,
+                    } satisfies ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest,
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.timeOff.changeTimeOffRequestStatus(
+                    preview.request,
+                );
+                return successResult(
+                    "clockify_time_off_requests_update_status",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.policyId,
+                        requestId: preview.id,
+                    },
+                    writeReceipt("updated", "time_off_request", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_requests_delete",
         {
             title: "Delete a time-off request",
@@ -501,42 +520,38 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 policyId: z.string().min(1).describe("Policy id (24-hex) or exact policy name."),
                 requestId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => {
-            const policyId = await resolvePolicyId(ctx, args.policyId);
-            const preview = {
-                action: "delete",
-                entity: "time_off_request",
-                id: args.requestId,
-                policyId,
-            };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_time_off_requests_delete",
-                "time_off_request_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            // The working delete route is policy-scoped: DELETE
-            // /time-off/policies/{policyId}/requests/{requestId} (the generated
-            // `withdraw` method). The flat timeOff.delete route 404s live — see
-            // discrepancies.md time-off.requests.delete.policy-scoped-only-pending.
-            await ctx.client.timeOff.withdraw({
-                workspaceId: ctx.workspaceId,
-                policyId,
-                requestId: args.requestId,
-            });
-            return successResult(
-                "clockify_time_off_requests_delete",
-                { deleted: true, requestId: args.requestId },
-                { workspaceId: ctx.workspaceId, policyId, requestId: args.requestId },
-                writeReceipt("deleted", "time_off_request", args.requestId),
-            );
+        {
+            preview: async (args) => {
+                const policyId = await resolvePolicyId(ctx, args.policyId);
+                return {
+                    action: "delete",
+                    entity: "time_off_request",
+                    id: args.requestId,
+                    policyId,
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        policyId,
+                        requestId: args.requestId,
+                    } satisfies ClockifyApi.WithdrawTimeOffRequest,
+                };
+            },
+            execute: async (preview) => {
+                // The working delete route is policy-scoped; token execution uses
+                // the exact policy id resolved during preview.
+                await ctx.client.timeOff.withdraw(preview.request);
+                return successResult(
+                    "clockify_time_off_requests_delete",
+                    { deleted: true, requestId: preview.id },
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.policyId,
+                        requestId: preview.id,
+                    },
+                    writeReceipt("deleted", "time_off_request", preview.id),
+                );
+            },
         },
     );
 
@@ -552,7 +567,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             // The generated ListTimeOffPolicies type declares `page` as a string
@@ -579,7 +594,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "Get a time-off policy",
             description: "Fetch one time-off policy by ID from the pinned workspace.",
             inputSchema: { policyId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const policy = await ctx.client.timeOffPolicies.get({
@@ -593,8 +608,9 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_policies_create",
         {
             title: "Create a time-off policy",
@@ -611,67 +627,76 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Apply to these user groups (sent as a CONTAINS filter)."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            let resolvedUserIds = args.userIds;
-            let resolvedGroupIds = args.userGroupIds;
-            if (args.userIds?.length) {
-                const r = await resolveUserRefs(args.userIds, {
-                    verb: "apply the policy to",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    verifyIds: true,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_time_off_policies_create",
-                        "userIds",
-                        "user",
-                        r.clarify,
-                    );
-                resolvedUserIds = r.userIds;
-            }
-            if (args.userGroupIds?.length) {
-                const r = await resolveGroupRefs(args.userGroupIds, {
-                    verb: "apply the policy to",
-                    listGroups,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_time_off_policies_create",
-                        "userGroupIds",
-                        "group",
-                        r.clarify,
-                    );
-                resolvedGroupIds = r.groupIds;
-            }
-            const request: ClockifyApi.CreateTimeOffPolicyRequest = {
-                name: args.name,
-                workspaceId: ctx.workspaceId,
-            };
-            if (args.timeUnit !== undefined) request.timeUnit = args.timeUnit;
-            if (args.negativeBalanceAllowed !== undefined)
-                request.allowNegativeBalance = args.negativeBalanceAllowed;
-            if (resolvedUserIds !== undefined) request.users = policyScope(resolvedUserIds);
-            if (resolvedGroupIds !== undefined) request.userGroups = policyScope(resolvedGroupIds);
-            const created = await ctx.client.timeOffPolicies.create(request);
-            return successResult(
-                "clockify_time_off_policies_create",
-                created,
-                {
-                    workspaceId: ctx.workspaceId,
-                },
-                writeReceipt("created", "time_off_policy", {
-                    id: entityId(created),
+        {
+            preview: async (args) => {
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "apply the policy to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_time_off_policies_create",
+                            "userIds",
+                            "user",
+                            r.clarify,
+                        );
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "apply the policy to",
+                        listGroups,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_time_off_policies_create",
+                            "userGroupIds",
+                            "group",
+                            r.clarify,
+                        );
+                    resolvedGroupIds = r.groupIds;
+                }
+                const request: ClockifyApi.CreateTimeOffPolicyRequest = {
                     name: args.name,
-                }),
-            );
+                    workspaceId: ctx.workspaceId,
+                };
+                if (args.timeUnit !== undefined) request.timeUnit = args.timeUnit;
+                if (args.negativeBalanceAllowed !== undefined)
+                    request.allowNegativeBalance = args.negativeBalanceAllowed;
+                if (resolvedUserIds !== undefined) request.users = policyScope(resolvedUserIds);
+                if (resolvedGroupIds !== undefined)
+                    request.userGroups = policyScope(resolvedGroupIds);
+                return {
+                    action: "create",
+                    entity: "time_off_policy",
+                    name: args.name,
+                    request,
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.timeOffPolicies.create(preview.request);
+                return successResult(
+                    "clockify_time_off_policies_create",
+                    created,
+                    { workspaceId: preview.request.workspaceId },
+                    writeReceipt("created", "time_off_policy", {
+                        id: entityId(created),
+                        name: preview.name,
+                    }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_policies_update",
         {
             title: "Update a time-off policy",
@@ -688,82 +713,88 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Replace the scope with these user groups."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            // Resolve the EXPLICIT replacement scope (a name in an id slot) before
-            // reconstructing scope; carried-forward existing ids are not re-resolved.
-            let resolvedUserIds = args.userIds;
-            let resolvedGroupIds = args.userGroupIds;
-            if (args.userIds?.length) {
-                const r = await resolveUserRefs(args.userIds, {
-                    verb: "apply the policy to",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    verifyIds: true,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_time_off_policies_update",
-                        "userIds",
-                        "user",
-                        r.clarify,
-                    );
-                resolvedUserIds = r.userIds;
-            }
-            if (args.userGroupIds?.length) {
-                const r = await resolveGroupRefs(args.userGroupIds, {
-                    verb: "apply the policy to",
-                    listGroups,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_time_off_policies_update",
-                        "userGroupIds",
-                        "group",
-                        r.clarify,
-                    );
-                resolvedGroupIds = r.groupIds;
-            }
-            // PUT /time-off/policies/{id} REPLACES the policy, the generated
-            // method reads body fields FLAT (a nested `body` is dropped), and the
-            // GET echoes the scope FLAT as userIds/userGroupIds. So read the
-            // policy, carry forward its editable fields, overlay the patch, and
-            // reconstruct the scope into the {contains,ids,status} filter form.
-            const existing = await ctx.client.timeOffPolicies.get({
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-            });
-            const currentBody = policyUpdateBody(existing);
-            const body = policyUpdateBody(existing);
-            if (args.name !== undefined) body.name = args.name;
-            if (args.negativeBalanceAllowed !== undefined)
-                body.allowNegativeBalance = args.negativeBalanceAllowed;
-            if (resolvedUserIds !== undefined) body.users = policyScope(resolvedUserIds);
-            if (resolvedGroupIds !== undefined) body.userGroups = policyScope(resolvedGroupIds);
-            if (JSON.stringify(body) === JSON.stringify(currentBody)) {
-                throw new Error("time-off policy update has no changes");
-            }
-            const request: ClockifyApi.UpdateTimeOffPoliciesRequest = {
-                ...body,
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-            };
-            const updated = await ctx.client.timeOffPolicies.update(request);
-            return successResult(
-                "clockify_time_off_policies_update",
-                updated,
-                {
+        {
+            preview: async (args) => {
+                // Resolve the EXPLICIT replacement scope before reconstructing
+                // the replacement request. Stored execution does no resolution.
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "apply the policy to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_time_off_policies_update",
+                            "userIds",
+                            "user",
+                            r.clarify,
+                        );
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "apply the policy to",
+                        listGroups,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_time_off_policies_update",
+                            "userGroupIds",
+                            "group",
+                            r.clarify,
+                        );
+                    resolvedGroupIds = r.groupIds;
+                }
+                const getRequest = {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                },
-                writeReceipt("updated", "time_off_policy", args.policyId),
-            );
+                } satisfies ClockifyApi.GetTimeOffPoliciesRequest;
+                const existing = await ctx.client.timeOffPolicies.get(getRequest);
+                const currentBody = policyUpdateBody(existing);
+                const body = policyUpdateBody(existing);
+                if (args.name !== undefined) body.name = args.name;
+                if (args.negativeBalanceAllowed !== undefined)
+                    body.allowNegativeBalance = args.negativeBalanceAllowed;
+                if (resolvedUserIds !== undefined) body.users = policyScope(resolvedUserIds);
+                if (resolvedGroupIds !== undefined) body.userGroups = policyScope(resolvedGroupIds);
+                if (JSON.stringify(body) === JSON.stringify(currentBody)) {
+                    throw new Error("time-off policy update has no changes");
+                }
+                return {
+                    action: "update",
+                    entity: "time_off_policy",
+                    id: args.policyId,
+                    request: {
+                        ...body,
+                        workspaceId: ctx.workspaceId,
+                        policyId: args.policyId,
+                    } satisfies ClockifyApi.UpdateTimeOffPoliciesRequest,
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.timeOffPolicies.update(preview.request);
+                return successResult(
+                    "clockify_time_off_policies_update",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.id,
+                    },
+                    writeReceipt("updated", "time_off_policy", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_time_off_policies_archive",
         {
             title: "Archive or reactivate a time-off policy",
@@ -772,23 +803,31 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 policyId: z.string().min(1),
                 archived: z.boolean(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const updated = await ctx.client.timeOffPolicies.updateStatus({
-                workspaceId: ctx.workspaceId,
-                policyId: args.policyId,
-                body: { status: args.archived ? "ARCHIVED" : "ACTIVE" },
-            });
-            return successResult(
-                "clockify_time_off_policies_archive",
-                updated,
-                {
+        {
+            preview: (args) => ({
+                action: args.archived ? "archive" : "reactivate",
+                entity: "time_off_policy",
+                id: args.policyId,
+                request: {
                     workspaceId: ctx.workspaceId,
                     policyId: args.policyId,
-                },
-                writeReceipt("updated", "time_off_policy", args.policyId),
-            );
+                    body: { status: args.archived ? "ARCHIVED" : "ACTIVE" },
+                } satisfies ClockifyApi.UpdateStatusTimeOffPoliciesRequest,
+            }),
+            execute: async (preview) => {
+                const updated = await ctx.client.timeOffPolicies.updateStatus(preview.request);
+                return successResult(
+                    "clockify_time_off_policies_archive",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        policyId: preview.id,
+                    },
+                    writeReceipt("updated", "time_off_policy", preview.id),
+                );
+            },
         },
     );
 
@@ -801,7 +840,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             title: "List balances for a policy",
             description: "List user balances for a time-off policy.",
             inputSchema: { policyId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const balances = await ctx.client.balances.listForPolicy({
@@ -826,7 +865,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const filter = await resolveUserFilter(args.userId, {

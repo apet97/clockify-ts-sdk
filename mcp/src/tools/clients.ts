@@ -3,8 +3,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -59,7 +58,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const page = args.page ?? 1;
@@ -92,7 +91,6 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 name: z.string().min(1),
                 note: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const req: ClockifyApi.ClientCreate = {
@@ -133,7 +131,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
             title: "Get a client",
             description: "Fetch one client by ID from the pinned Clockify workspace.",
             inputSchema: { clientId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const client = await ctx.client.clients.get({
@@ -160,7 +158,7 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
                 address: z.string().optional(),
                 archived: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const current = await ctx.client.clients.get({
@@ -206,61 +204,58 @@ export function registerClientsTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_clients_delete",
         {
             title: "Delete a client",
             description:
                 "Permanently delete one client by ID. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                clientId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { clientId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "client", id: args.clientId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_clients_delete",
-                "client_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            const current = await ctx.client.clients.get({
-                workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
-            });
-            const body = clientUpdateBody(current);
-            if (body.archived !== true) {
-                body.archived = true;
-                const request: ClockifyApi.UpdateClientsRequest = {
-                    body,
+        {
+            preview: async (args) => {
+                const deleteRequest = {
                     workspaceId: ctx.workspaceId,
                     clientId: args.clientId,
                 };
-                await ctx.client.clients.update(request);
-            }
-            await ctx.client.clients.delete({
-                workspaceId: ctx.workspaceId,
-                clientId: args.clientId,
-            });
-            return successResult(
-                "clockify_clients_delete",
-                { deleted: true, clientId: args.clientId },
-                { workspaceId: ctx.workspaceId, clientId: args.clientId },
-                writeReceipt("deleted", "client", args.clientId, {
-                    next: [
-                        {
-                            tool: "clockify_clients_list",
-                            reason: "Verify the client no longer appears.",
-                        },
-                    ],
-                }),
-            );
+                const current = await ctx.client.clients.get(deleteRequest);
+                const body = clientUpdateBody(current);
+                const archiveRequest =
+                    body.archived === true
+                        ? undefined
+                        : ({
+                              ...deleteRequest,
+                              body: { ...body, archived: true },
+                          } satisfies ClockifyApi.UpdateClientsRequest);
+                return {
+                    action: "delete",
+                    entity: "client",
+                    id: args.clientId,
+                    deleteRequest,
+                    ...(archiveRequest ? { archiveRequest } : {}),
+                };
+            },
+            execute: async (preview) => {
+                if (preview.archiveRequest) {
+                    await ctx.client.clients.update(preview.archiveRequest);
+                }
+                await ctx.client.clients.delete(preview.deleteRequest);
+                return successResult(
+                    "clockify_clients_delete",
+                    { deleted: true, clientId: preview.id },
+                    { workspaceId: preview.deleteRequest.workspaceId, clientId: preview.id },
+                    writeReceipt("deleted", "client", preview.id, {
+                        next: [
+                            {
+                                tool: "clockify_clients_list",
+                                reason: "Verify the client no longer appears.",
+                            },
+                        ],
+                    }),
+                );
+            },
         },
     );
 }

@@ -17,6 +17,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -201,7 +203,7 @@ describe("clockify_approvals_submit", () => {
     it("wraps period/periodStart in a typed body envelope and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_submit",
             arguments: { period: "SEMI_MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -219,7 +221,7 @@ describe("clockify_approvals_submit", () => {
     it("rejects BIWEEKLY (not a live Clockify period) at the schema before any submit call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_submit",
             arguments: { period: "BIWEEKLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -241,7 +243,7 @@ describe("clockify_approvals_submit", () => {
     it("rejects a missing period at the schema before any submit call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_submit",
             arguments: { periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -253,7 +255,7 @@ describe("clockify_approvals_submit", () => {
     it("rejects an empty periodStart (min length 1) before any submit call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_submit",
             arguments: { period: "WEEKLY", periodStart: "" },
         });
@@ -270,7 +272,7 @@ describe("clockify_approvals_submit", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_submit",
             arguments: { period: "WEEKLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -285,7 +287,7 @@ describe("clockify_approvals_update_state", () => {
     it("omits note from the body when not supplied and reports the approval id", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "ar-1", state: "APPROVED" },
         });
@@ -304,7 +306,7 @@ describe("clockify_approvals_update_state", () => {
     it("includes note in the body when supplied", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "ar-7", state: "REJECTED", note: "Missing entries" },
         });
@@ -329,7 +331,7 @@ describe("clockify_approvals_update_state", () => {
     it("rejects an empty approvalRequestId before any update call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "", state: "APPROVED" },
         });
@@ -340,7 +342,7 @@ describe("clockify_approvals_update_state", () => {
     it("rejects a state outside the APPROVAL_STATES enum before any update call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "ar-1", state: "MAYBE" },
         });
@@ -358,7 +360,7 @@ describe("clockify_approvals_update_state", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "ar-x", state: "WITHDRAWN_APPROVAL" },
         });
@@ -372,7 +374,7 @@ describe("clockify_approvals_update_state", () => {
         async (state) => {
             const captured: Record<string, unknown> = {};
             const client = await connect(approvalsContext(captured));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_approvals_update_state",
                 arguments: { approvalRequestId: "ar-1", state },
             });
@@ -388,7 +390,7 @@ describe("clockify_approvals_update_state", () => {
     it("rejects the bare WITHDRAWN value (not a live state) before any update call", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_update_state",
             arguments: { approvalRequestId: "ar-1", state: "WITHDRAWN" },
         });
@@ -402,7 +404,7 @@ describe("clockify_approvals_resubmit", () => {
     it("passes a flat generated request and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_resubmit",
             arguments: { period: "MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -421,7 +423,7 @@ describe("clockify_approvals_resubmit", () => {
     it("rejects BIWEEKLY which submit allows but resubmit's narrower enum does not", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(approvalsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_resubmit",
             arguments: { period: "BIWEEKLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -439,7 +441,7 @@ describe("clockify_approvals_resubmit", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_resubmit",
             arguments: { period: "WEEKLY", periodStart: "2026-06-01T00:00:00Z" },
         });

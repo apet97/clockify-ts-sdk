@@ -16,6 +16,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -82,7 +84,7 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
     it("rejects a create with no name at the schema boundary", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_create",
             arguments: { url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
         });
@@ -95,7 +97,7 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
     it("includes `name` in the body and the receipt when supplied", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_create",
             arguments: {
                 name: "stripe",
@@ -121,7 +123,7 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
     it("forwards triggerSource / triggerSourceType alongside the required name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_create",
             arguments: {
                 name: "user-hook",
@@ -146,7 +148,7 @@ describe("clockify_webhooks_create — name is required (matches setup_webhook +
     it("rejects a too-short name at the schema boundary (min length 2)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_create",
             arguments: { name: "x", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
         });
@@ -161,7 +163,7 @@ describe("clockify_webhooks_update — full replacement", () => {
     it("GETs the webhook and preserves all five required fields", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_update",
             arguments: { webhookId: "wh-1", name: "renamed" },
         });
@@ -183,7 +185,7 @@ describe("clockify_webhooks_update — full replacement", () => {
     it("rejects a no-op after GET and never updates", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_update",
             arguments: { webhookId: "wh-1" },
         });
@@ -197,7 +199,7 @@ describe("clockify_webhooks_update — full replacement", () => {
         async (name) => {
             const captured: Record<string, unknown> = {};
             const client = await connect(webhooksContext(captured));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_webhooks_update",
                 arguments: { webhookId: "wh-1", name },
             });
@@ -212,7 +214,7 @@ describe("clockify_webhooks_update — full replacement", () => {
         async (name) => {
             const captured: Record<string, unknown> = {};
             const client = await connect(webhooksContext(captured, { name }));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_webhooks_update",
                 arguments: { webhookId: "wh-1", webhookEvent: "NEW_TASK" },
             });
