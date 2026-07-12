@@ -11,7 +11,7 @@
         "payload": {
             "id": "65f7c3a4b8e8a31234567890",
             "name": "Migration: Q3 timesheet review",
-            "workspaceId": "65b382b606de527a7ee2b60e",
+            "workspaceId": "0123456789abcdef01234567",
             "clientId": null,
             "color": "#3498DB",
             "billable": false,

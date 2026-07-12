@@ -11,7 +11,7 @@
         "payload": {
             "id": "65f7c3a4b8e8a31234567893",
             "ownerId": "65a3a1c8e8a31234567890ab",
-            "workspaceId": "65b382b606de527a7ee2b60e",
+            "workspaceId": "0123456789abcdef01234567",
             "status": {
                 "state": "APPROVED",
                 "updatedBy": "65a3a1c8e8a31234567890cd",

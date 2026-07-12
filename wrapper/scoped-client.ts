@@ -18,7 +18,7 @@
  * import { createClockifyClient } from "clockify-sdk-ts-115";
  *
  * const client = createClockifyClient();
- * const ws = client.workspace("65b382b606de527a7ee2b60e");
+ * const ws = client.workspace("your-workspace-id");
  *
  * const tags = await ws.tags.list();
  * const project = await ws.projects.create({ name: "Q1" });
