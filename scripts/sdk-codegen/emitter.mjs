@@ -396,6 +396,9 @@ function validatedBaseUrl(value: unknown, allowNonClockifyHttpsHost: boolean): U
     let parsed: URL;
     try { parsed = new URL(String(value)); }
     catch { throw new TypeError("ClockifyApiClient: base URL must be an absolute URL"); }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new TypeError("ClockifyApiClient: base URL must use the HTTP or HTTPS protocol");
+    }
     const loopback = LOOPBACK_HOSTS.has(parsed.hostname.toLowerCase());
     if (!loopback && parsed.protocol !== "https:") throw new TypeError("ClockifyApiClient: base URL must use HTTPS for non-loopback hosts");
     if (!loopback && !CLOCKIFY_API_HOSTS.has(parsed.hostname.toLowerCase()) && !allowNonClockifyHttpsHost) {

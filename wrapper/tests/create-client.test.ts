@@ -591,6 +591,15 @@ describe("createClockifyClient", () => {
             }
         });
 
+        it("rejects non-HTTP schemes even when the host is loopback", () => {
+            expect(() =>
+                createClockifyClient({
+                    apiKey: "k",
+                    environment: "ftp://localhost/api/v1",
+                }),
+            ).toThrow(/http.*https|scheme|protocol/i);
+        });
+
         it("rejects an arbitrary HTTPS host by default", () => {
             expect(() =>
                 createClockifyClient({

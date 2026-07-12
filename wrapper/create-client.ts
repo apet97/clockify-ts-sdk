@@ -261,6 +261,15 @@ export function classifyClockifyBaseUrl(baseUrl: string): ClockifyBaseUrlClassif
     const host = parsed.hostname;
     const isLoopback = LOOPBACK_HOSTS.has(host) || LOOPBACK_HOSTS.has(host.toLowerCase());
 
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return {
+            allowed: false,
+            category: "unparseable",
+            host,
+            reason: `base URL must use the http:// or https:// protocol; got ${parsed.protocol}`,
+        };
+    }
+
     // Loopback may use http or https — local mock servers commonly use
     // http on 127.0.0.1. Everything else must be https.
     if (isLoopback) {
