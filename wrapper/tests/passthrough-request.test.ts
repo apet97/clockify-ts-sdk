@@ -39,6 +39,47 @@ async function withFakeTimers(run: () => Promise<void>): Promise<void> {
     }
 }
 
+const RETRYABLE_RESPONSE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+const NON_RETRYABLE_RESPONSE_STATUSES = Array.from(
+    { length: 400 },
+    (_, index) => index + 200,
+).filter((status) => !RETRYABLE_RESPONSE_STATUSES.has(status));
+const SUPPORTED_NON_RETRYABLE_METHODS = [
+    "POST",
+    "PATCH",
+    "ACL",
+    "BASELINE-CONTROL",
+    "BIND",
+    "CHECKIN",
+    "CHECKOUT",
+    "COPY",
+    "LABEL",
+    "LINK",
+    "LOCK",
+    "MERGE",
+    "MKACTIVITY",
+    "MKCALENDAR",
+    "MKCOL",
+    "MKREDIRECTREF",
+    "MKWORKSPACE",
+    "MOVE",
+    "ORDERPATCH",
+    "PROPFIND",
+    "PROPPATCH",
+    "PURGE",
+    "QUERY",
+    "REBIND",
+    "REPORT",
+    "SEARCH",
+    "UNBIND",
+    "UNCHECKOUT",
+    "UNLINK",
+    "UNLOCK",
+    "UPDATE",
+    "UPDATEREDIRECTREF",
+    "VERSION-CONTROL",
+] as const;
+
 function governedInputRequest(signal = new AbortController().signal): Request {
     return new Request("https://api.clockify.me/api/v1/user", {
         method: "POST",
@@ -615,45 +656,62 @@ describe("ClockifyApiClient.fetch", () => {
             });
         });
 
-        it.each(["POST", "PATCH"] as const)(
-            "does not retry a %s retryable response by default",
-            async (method) => {
-                await withFakeTimers(async () => {
+        it("does not retry any Request-supported method outside the exact allowlist", async () => {
+            await withFakeTimers(async () => {
+                for (const method of SUPPORTED_NON_RETRYABLE_METHODS) {
+                    expect(new Request("https://api.clockify.me", { method }).method).toBe(method);
+                }
+
+                const statusCases = SUPPORTED_NON_RETRYABLE_METHODS.map((method) => {
                     const dispatch = vi
                         .fn<typeof fetch>()
                         .mockResolvedValueOnce(new Response(null, { status: 503 }))
                         .mockResolvedValueOnce(new Response(null, { status: 204 }));
-
-                    const outcome = observePromise(client(dispatch).fetch("users", { method }));
-                    await vi.runAllTimersAsync();
-
-                    const settled = await outcome;
-                    expect(settled.status).toBe("fulfilled");
-                    expect(settled.status === "fulfilled" && settled.value.status).toBe(503);
-                    expect(dispatch).toHaveBeenCalledOnce();
+                    return {
+                        method,
+                        dispatch,
+                        outcome: observePromise(client(dispatch).fetch("users", { method })),
+                    };
                 });
-            },
-        );
-
-        it.each(["POST", "PATCH"] as const)(
-            "does not retry a %s transport failure by default",
-            async (method) => {
-                await withFakeTimers(async () => {
-                    const transportError = new TypeError(`${method} transport failure`);
+                const transportCases = SUPPORTED_NON_RETRYABLE_METHODS.map((method) => {
                     const dispatch = vi
                         .fn<typeof fetch>()
-                        .mockRejectedValueOnce(transportError)
+                        .mockRejectedValueOnce(new TypeError(`${method} transport failure`))
                         .mockResolvedValueOnce(new Response(null, { status: 204 }));
-
-                    const outcome = observePromise(client(dispatch).fetch("users", { method }));
-                    await vi.runAllTimersAsync();
-
-                    const settled = await outcome;
-                    expect(settled.status).toBe("rejected");
-                    expect(dispatch).toHaveBeenCalledOnce();
+                    return {
+                        method,
+                        dispatch,
+                        outcome: observePromise(client(dispatch).fetch("users", { method })),
+                    };
                 });
-            },
-        );
+
+                await vi.runAllTimersAsync();
+
+                for (const { method, dispatch, outcome } of statusCases) {
+                    const settled = await outcome;
+                    expect({
+                        method,
+                        outcome: settled.status,
+                        responseStatus:
+                            settled.status === "fulfilled" ? settled.value.status : undefined,
+                        dispatches: dispatch.mock.calls.length,
+                    }).toEqual({
+                        method,
+                        outcome: "fulfilled",
+                        responseStatus: 503,
+                        dispatches: 1,
+                    });
+                }
+                for (const { method, dispatch, outcome } of transportCases) {
+                    const settled = await outcome;
+                    expect({
+                        method,
+                        outcome: settled.status,
+                        dispatches: dispatch.mock.calls.length,
+                    }).toEqual({ method, outcome: "rejected", dispatches: 1 });
+                }
+            });
+        });
 
         it("lets per-call retries override a disabled client retry policy", async () => {
             await withFakeTimers(async () => {
@@ -756,7 +814,7 @@ describe("ClockifyApiClient.fetch", () => {
         it("waits until X-RateLimit-Reset before retrying", async () => {
             await withFakeTimers(async () => {
                 vi.setSystemTime(new Date("2026-07-12T12:00:00.000Z"));
-                const resetEpochSeconds = Math.floor(Date.now() / 1000) + 2;
+                const resetEpochSeconds = Math.floor(Date.now() / 1000) + 17;
                 const dispatch = vi
                     .fn<typeof fetch>()
                     .mockResolvedValueOnce(
@@ -776,7 +834,7 @@ describe("ClockifyApiClient.fetch", () => {
                 await vi.advanceTimersByTimeAsync(0);
                 expect(dispatch).toHaveBeenCalledOnce();
 
-                await vi.advanceTimersByTimeAsync(1_999);
+                await vi.advanceTimersByTimeAsync(16_999);
                 expect(dispatch).toHaveBeenCalledOnce();
 
                 await vi.advanceTimersByTimeAsync(1);
@@ -818,6 +876,44 @@ describe("ClockifyApiClient.fetch", () => {
                 expect(inits).toEqual([undefined, undefined, undefined]);
                 expect(bodies).toEqual([expectedBody, expectedBody, expectedBody]);
                 expect(new Set(inputs).size).toBe(3);
+            });
+        });
+
+        it("retries a valid cloneable PUT Request body", async () => {
+            await withFakeTimers(async () => {
+                const bodyText = "cloneable Request body";
+                const input = new Request("https://api.clockify.me/api/v1/users", {
+                    method: "PUT",
+                    body: bodyText,
+                    redirect: "manual",
+                });
+                const cloneProbe = input.clone();
+                expect(await cloneProbe.text()).toBe(bodyText);
+                expect(input.bodyUsed).toBe(false);
+
+                const inputs: Parameters<typeof fetch>[0][] = [];
+                const bodies: Uint8Array[] = [];
+                const dispatch = vi.fn<typeof fetch>().mockImplementation(async (request, init) => {
+                    inputs.push(request);
+                    if (request instanceof Request && init === undefined) {
+                        bodies.push(new Uint8Array(await request.arrayBuffer()));
+                    }
+                    return new Response(null, { status: inputs.length === 1 ? 503 : 204 });
+                });
+
+                const outcome = observePromise(
+                    client(dispatch).fetch(input, undefined, { maxRetries: 1 }),
+                );
+                await vi.runAllTimersAsync();
+
+                const expectedBody = new TextEncoder().encode(bodyText);
+                const settled = await outcome;
+                expect(settled.status).toBe("fulfilled");
+                expect(settled.status === "fulfilled" && settled.value.status).toBe(204);
+                expect(inputs).toHaveLength(2);
+                expect(inputs.every((request) => request instanceof Request)).toBe(true);
+                expect(new Set(inputs).size).toBe(2);
+                expect(bodies).toEqual([expectedBody, expectedBody]);
             });
         });
 
@@ -942,28 +1038,33 @@ describe("ClockifyApiClient.fetch", () => {
         it.each(["request options", "init", "input Request"] as const)(
             "rejects an already-aborted %s signal with zero dispatches",
             async (source) => {
-                const reason = new Error(`${source} already aborted`);
-                const controller = new AbortController();
-                controller.abort(reason);
-                const dispatch = vi
-                    .fn<typeof fetch>()
-                    .mockResolvedValue(new Response(null, { status: 204 }));
-                const sdk = client(dispatch);
+                await withFakeTimers(async () => {
+                    const reason = new Error(`${source} already aborted`);
+                    const controller = new AbortController();
+                    controller.abort(reason);
+                    const dispatch = vi
+                        .fn<typeof fetch>()
+                        .mockResolvedValue(new Response(null, { status: 204 }));
+                    const sdk = client(dispatch);
 
-                const result =
-                    source === "request options"
-                        ? sdk.fetch("users", undefined, { abortSignal: controller.signal })
-                        : source === "init"
-                          ? sdk.fetch("users", { signal: controller.signal })
-                          : sdk.fetch(
-                                new Request("https://api.clockify.me/api/v1/users", {
-                                    signal: controller.signal,
-                                    redirect: "manual",
-                                }),
-                            );
+                    const result =
+                        source === "request options"
+                            ? sdk.fetch("users", undefined, { abortSignal: controller.signal })
+                            : source === "init"
+                              ? sdk.fetch("users", { signal: controller.signal })
+                              : sdk.fetch(
+                                    new Request("https://api.clockify.me/api/v1/users", {
+                                        signal: controller.signal,
+                                        redirect: "manual",
+                                    }),
+                                );
 
-                await expect(result).rejects.toBe(reason);
-                expect(dispatch).not.toHaveBeenCalled();
+                    await expect(result).rejects.toBe(reason);
+                    expect(dispatch).not.toHaveBeenCalled();
+
+                    await vi.runAllTimersAsync();
+                    expect(dispatch).not.toHaveBeenCalled();
+                });
             },
         );
 
@@ -999,6 +1100,9 @@ describe("ClockifyApiClient.fetch", () => {
                 expect(settled).toBeDefined();
                 expect(settled?.status).toBe("rejected");
                 expect(settled?.status === "rejected" && settled.reason).toBe(reason);
+                expect(dispatch).toHaveBeenCalledOnce();
+
+                await vi.runAllTimersAsync();
                 expect(dispatch).toHaveBeenCalledOnce();
             });
         });
@@ -1047,27 +1151,42 @@ describe("ClockifyApiClient.fetch", () => {
             },
         );
 
-        it.each([400, 409, 501, 505])(
-            "does not retry the non-retryable %i response status",
-            async (status) => {
-                await withFakeTimers(async () => {
+        it("does not retry any response status outside the exact allowlist", async () => {
+            await withFakeTimers(async () => {
+                const cases = NON_RETRYABLE_RESPONSE_STATUSES.map((status) => {
                     const dispatch = vi
                         .fn<typeof fetch>()
                         .mockResolvedValueOnce(new Response(null, { status }))
                         .mockResolvedValueOnce(new Response(null, { status: 204 }));
-
-                    const outcome = observePromise(
-                        client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
-                    );
-                    await vi.runAllTimersAsync();
-
-                    const settled = await outcome;
-                    expect(settled.status).toBe("fulfilled");
-                    expect(settled.status === "fulfilled" && settled.value.status).toBe(status);
-                    expect(dispatch).toHaveBeenCalledOnce();
+                    return {
+                        status,
+                        dispatch,
+                        outcome: observePromise(
+                            client(dispatch).fetch("users", undefined, { maxRetries: 1 }),
+                        ),
+                    };
                 });
-            },
-        );
+
+                await vi.runAllTimersAsync();
+
+                expect(cases).toHaveLength(394);
+                for (const { status, dispatch, outcome } of cases) {
+                    const settled = await outcome;
+                    expect({
+                        status,
+                        outcome: settled.status,
+                        responseStatus:
+                            settled.status === "fulfilled" ? settled.value.status : undefined,
+                        dispatches: dispatch.mock.calls.length,
+                    }).toEqual({
+                        status,
+                        outcome: "fulfilled",
+                        responseStatus: status,
+                        dispatches: 1,
+                    });
+                }
+            });
+        });
     });
 
     it("lets a shorter per-call timeout override a longer client timeout", async () => {
