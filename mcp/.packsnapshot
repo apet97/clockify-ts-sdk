@@ -16,8 +16,6 @@ dist/generated/version.d.ts
 dist/generated/version.js
 dist/index.d.ts
 dist/index.js
-dist/orchestration/confirm-guard.d.ts
-dist/orchestration/confirm-guard.js
 dist/orchestration/confirmation.d.ts
 dist/orchestration/confirmation.js
 dist/orchestration/webhook-url.d.ts
@@ -34,6 +32,8 @@ dist/scope-filter.d.ts
 dist/scope-filter.js
 dist/server.d.ts
 dist/server.js
+dist/tool-risk.d.ts
+dist/tool-risk.js
 dist/tools/agent-docs.d.ts
 dist/tools/agent-docs.js
 dist/tools/approvals.d.ts

@@ -110,15 +110,17 @@ function validateMarkerEntry(label, entry) {
 }
 
 function validateContractShape() {
-    if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
+    if (contract.schemaVersion !== 2) fail("schemaVersion", "must be 2");
     assertNonEmptyString("purpose", contract.purpose);
 
-
     validateMarkerEntry("policyDocument", contract.policyDocument);
-    validateMarkerEntry("cleanupScript", contract.cleanupScript);
+    validateMarkerEntry("orchestrator", contract.orchestrator);
+    validateMarkerEntry("cleanupLibrary", contract.cleanupLibrary);
 
     const prefixes = assertStringArray("prefixes", contract.prefixes, { allowEmpty: false });
     assertUnique("prefixes", prefixes);
+    const entityOrder = assertStringArray("entityOrder", contract.entityOrder, { allowEmpty: false });
+    assertUnique("entityOrder", entityOrder);
 
     for (const section of ["liveTests", "supportingEvidence"]) {
         if (!Array.isArray(contract[section]) || contract[section].length === 0) {
@@ -159,10 +161,22 @@ if (failures.length > 0) {
 }
 
 const policyText = checkEntry(contract.policyDocument);
-const cleanupText = checkEntry(contract.cleanupScript);
+const orchestratorText = checkEntry(contract.orchestrator);
+const cleanupText = checkEntry(contract.cleanupLibrary);
 for (const prefix of contract.prefixes ?? []) {
     if (!policyText.includes(prefix)) fail(contract.policyDocument.path, `missing prefix ${prefix}`);
-    if (!cleanupText.includes(prefix)) fail(contract.cleanupScript.path, `missing prefix ${prefix}`);
+    if (!orchestratorText.includes(prefix)) fail(contract.orchestrator.path, `missing prefix ${prefix}`);
+}
+
+let priorOrderIndex = -1;
+for (const entityType of contract.entityOrder ?? []) {
+    const index = cleanupText.indexOf(JSON.stringify(entityType));
+    if (index < 0) {
+        fail(contract.cleanupLibrary.path, `missing cleanup entity ${entityType}`);
+    } else if (index <= priorOrderIndex) {
+        fail(contract.cleanupLibrary.path, `cleanup entity ${entityType} is out of dependency order`);
+    }
+    priorOrderIndex = index;
 }
 for (const entry of contract.liveTests ?? []) checkEntry(entry);
 for (const entry of contract.supportingEvidence ?? []) checkEntry(entry);

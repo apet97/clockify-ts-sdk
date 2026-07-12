@@ -9,7 +9,7 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | See available gates | `make help` | The repo exposes a one-screen command menu. |
 | Fast deterministic proof | `make perfect-fast` | Guarded generated paths are clean, product surface metadata is current, allowlisted docs drift is checked, and SDK/CLI/MCP package gates pass. |
 | Full generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
-| Live sandbox proof | `make perfect-live` | TS MCP live cleanup and GOCLMCP sacrificial-workspace live proof run with explicit live env. |
+| Live sandbox proof | `make perfect-live` | One confirmed, locked run executes SDK/CLI/MCP/GOCLMCP independently, always cleans exact and legacy prefixes, and requires a sanitized zero-leftover receipt. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
 | Check error registry integrity | `make error-registry` | The shared error-code registry keeps its code id set, required fields, mirrored package copies, and grounded reachable-code claims. |
@@ -70,8 +70,8 @@ This file maps the enterprise-SDK polish target to concrete commands. It is writ
 | Print release workflow decision plan | `make release-decision-plan` | Static no-network decision packet for local tarball, tag-only, npm-via-CI, or legacy-workflow retirement paths. |
 | Check CI contract | `make ci-contract` | GitHub workflow roles, package CI gates, docs/release safety rails, and release decision boundary stay explicit. |
 | Check sandbox key health | `make sandbox-key-health` | Optional live preflight verifies the Clockify sandbox key when present and skips cleanly when offline. |
-| Check live safety | `make live-safety` | Sandbox-only live-test policy, env gates, cleanup prefixes, live-proof deferral rules, and mock alternative stay aligned. |
-| Check test data lifecycle | `make test-data-lifecycle` | Sandbox prefixes, create/delete pairing, cleanup scan coverage, leftover counts, and sanitized cleanup receipts stay aligned. |
+| Check live safety | `make live-safety` | Workspace confirmation, exclusive stale-safe locking, aggregate surface execution, finally cleanup, secret-free receipts, and mock deferral stay aligned. |
+| Check test data lifecycle | `make test-data-lifecycle` | Exact/legacy prefixes, create/delete pairing, eleven-class dependency order, failed-discovery handling, rescan counts, and sanitized cleanup receipts stay aligned. |
 | Check risk register | `make risk-register` | Known limitations, accepted constraints, provisional states, evidence paths, closure gates, and generated risk-status report shape stay explicit. |
 | Print risk status report | `make risk-status-report` | Static no-network report of open/provisional risks, closure gates, and performance/temp-context file-state signals. |
 | Check user docs | `make user-docs` | Root, SDK, CLI, MCP, install, migration, and troubleshooting docs keep required onboarding content. |

@@ -5,11 +5,23 @@ import { iterAll } from "../iter.js";
 import { paginate } from "../pagination.js";
 import { withResponse } from "../with-response.js";
 
+import { resolveLiveMutationPrefix, runLiveTagRoundTrip } from "./live-sandbox-support.js";
+
 type ClockifyClient = ReturnType<typeof createClockifyClient>;
 
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
-const liveSandboxAvailable = Boolean(apiKey && workspaceId);
+const livePrefix = resolveLiveMutationPrefix({
+    ...(apiKey !== undefined ? { apiKey } : {}),
+    ...(workspaceId !== undefined ? { workspaceId } : {}),
+    ...(process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM !== undefined
+        ? { workspaceConfirm: process.env.CLOCKIFY_LIVE_WORKSPACE_CONFIRM }
+        : {}),
+    ...(process.env.CLOCKIFY_LIVE_PREFIX !== undefined
+        ? { prefix: process.env.CLOCKIFY_LIVE_PREFIX }
+        : {}),
+});
+const liveSandboxAvailable = livePrefix !== undefined;
 
 const describeLive = liveSandboxAvailable ? describe : describe.skip;
 
@@ -41,33 +53,34 @@ describeLive("clockify-sdk-ts-115 live sandbox", () => {
         expect(tags.length).toBeLessThanOrEqual(5);
     });
 
-    it("creates, fetches by id, and deletes a tag (round-trip)", async () => {
-        const slug = `sdk-test-${Date.now()}`;
-        const created = await client.tags.create({
+    it("creates, gets, updates, and deletes a prefixed tag in try/finally", async () => {
+        const result = await runLiveTagRoundTrip({
             workspaceId: workspaceId!,
-            name: slug,
+            prefix: livePrefix!,
+            operations: {
+                create: (name, scopedWorkspaceId) =>
+                    client.tags.create({ workspaceId: scopedWorkspaceId, body: { name } }),
+                get: (tagId, scopedWorkspaceId) =>
+                    client.tags.get({ workspaceId: scopedWorkspaceId, tagId }),
+                update: (tagId, name, scopedWorkspaceId) =>
+                    client.tags.update({
+                        workspaceId: scopedWorkspaceId,
+                        tagId,
+                        body: { name },
+                    }),
+                delete: (tagId, scopedWorkspaceId) =>
+                    client.tags.delete({ workspaceId: scopedWorkspaceId, tagId }),
+            },
         });
-        expect(created.name).toBe(slug);
-        expect(typeof created.id).toBe("string");
-        const tagId = created.id!;
-
-        const fetched = await client.tags.get({
-            workspaceId: workspaceId!,
-            tagId,
-        });
-        expect(fetched.id).toBe(tagId);
-        expect(fetched.name).toBe(slug);
-
-        await client.tags.delete({
-            workspaceId: workspaceId!,
-            tagId,
-        });
+        expect(result.createdName).toBe(`${livePrefix!}sdk-tag`);
+        expect(result.fetchedName).toBe(`${livePrefix!}sdk-tag`);
+        expect(result.updatedName).toBe(`${livePrefix!}sdk-tag-updated`);
 
         // Confirm 4xx after deletion (server returns 400 "tag doesn't belong to workspace" — code 501 — once deleted).
         await expect(
             client.tags.get({
                 workspaceId: workspaceId!,
-                tagId,
+                tagId: result.tagId,
             }),
         ).rejects.toBeInstanceOf(Error);
     });
@@ -99,9 +112,8 @@ describeLive("clockify-sdk-ts-115 live sandbox", () => {
     });
 
     it("paginates projects via paginate() helper across at least two pages", async () => {
-        // Sandbox workspace 65b382b606de527a7ee2b60e has > 5 projects at
-        // session-start; with pageSize=2 the iterator must cross at least
-        // page-1 → page-2 before stopping.
+        // With pageSize=2 the iterator crosses page 1 → page 2 whenever
+        // the governed sandbox contains more than two projects.
         const pageSize = 2;
         const seenPages: number[] = [];
         const projects: Array<{ id?: string | undefined }> = [];

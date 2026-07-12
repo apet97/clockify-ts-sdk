@@ -13,6 +13,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 ### Fixed
 
 - Runtime version output is generated from the package manifest.
+- Task replacement writes accept Clockify's live `null` value for the deprecated optional
+  `assigneeId` field as absent while continuing to reject malformed non-string values.
 - Audit actions validate locally against the SDK enum and page size is capped at 50.
 - Full type checking now includes CLI tests; builds use a source-only build config.
 - Replace-style client and task writes reconstruct current state before mutation;
@@ -25,6 +27,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   The classification is internal and keeps writes deterministic and scriptable;
   behavioral tests now prove success and structured failure for all 30 mutating
   leaves.
+- Live sandbox proof now covers timer, tag, client/project/task, invoice, and audit flows with
+  prefixed resources and SDK cleanup in `finally`.
 
 ## [0.1.1] - 2026-06-29
 

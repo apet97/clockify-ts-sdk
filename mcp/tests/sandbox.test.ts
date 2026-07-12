@@ -6,13 +6,16 @@
  * inside vitest without spawning a child process.
  *
  * Gated on `CLOCKIFY_API_KEY` + `CLOCKIFY_WORKSPACE_ID`; without
- * them the suite skips cleanly. Mirrors `wrapper/tests/sandbox.test.ts`
- * and `cli/tests/sandbox.test.ts` so GitHub-hosted CI runners (which
- * intentionally don't get production credentials) keep passing.
+ * them the suite skips cleanly. When credentials exist, the root live
+ * orchestrator's governed `CLOCKIFY_LIVE_PREFIX` is mandatory so every
+ * created object belongs to one discoverable cleanup run. Mirrors
+ * `wrapper/tests/sandbox.test.ts` and `cli/tests/sandbox.test.ts` so
+ * GitHub-hosted CI runners (which intentionally don't get production
+ * credentials) keep passing.
  *
  * Coverage includes read-only list/status smoke plus workflow live
  * paths that create and clean up sandbox clients, projects, tasks,
- * tags, and time entries in the same test.
+ * tags, time entries, and one guarded business resource in the same test.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -21,9 +24,30 @@ import { afterEach, describe, expect, it } from "vitest";
 import { loadContext } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import {
+    buildClientArchiveBody,
+    buildProjectArchiveBody,
+    buildTaskDoneBody,
+    countExactInvoiceNumber,
+    entitlementMarker,
+    exerciseGuardedLiveWrite,
+    liveObjectName,
+    parseLiveEnvelope,
+    requireLivePrefix,
+    runCleanupSteps,
+    type LiveCleanupReceipt,
+    type LiveCleanupStep,
+    type LiveEnvelope,
+    type GuardedLiveWriteResult,
+} from "./live-sandbox-support.js";
+
 const apiKey = process.env.CLOCKIFY_API_KEY;
 const workspaceId = process.env.CLOCKIFY_WORKSPACE_ID;
-const liveSandboxAvailable = Boolean(apiKey && workspaceId);
+const liveCredentialsAvailable = Boolean(apiKey && workspaceId);
+// Fail closed when someone supplies credentials outside the governed root
+// orchestrator. A missing prefix must never create unowned sandbox objects.
+const livePrefix = liveCredentialsAvailable ? requireLivePrefix() : undefined;
+const liveSandboxAvailable = liveCredentialsAvailable && livePrefix !== undefined;
 
 const describeLive = liveSandboxAvailable ? describe : describe.skip;
 
@@ -32,17 +56,6 @@ if (!liveSandboxAvailable) {
         "[sandbox.test] CLOCKIFY_API_KEY and/or CLOCKIFY_WORKSPACE_ID not set in env; MCP live tests skipped.",
     );
 }
-
-type EnvelopeOk = {
-    ok: true;
-    action: string;
-    data: unknown;
-    meta?: Record<string, unknown>;
-    ids?: Record<string, string>;
-    changed?: Record<string, unknown>;
-};
-type EnvelopeErr = { ok: false; action: string; error: { message: string; code?: string } };
-type Envelope = EnvelopeOk | EnvelopeErr;
 
 describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
     let teardown: () => Promise<void> = async () => {};
@@ -69,57 +82,106 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
         return client;
     }
 
-    function parse(res: unknown): Envelope {
-        const content = (res as { content?: unknown }).content;
-        const text = (content as Array<{ type: string; text: string }> | undefined)?.[0]?.text ?? "";
-        return JSON.parse(text) as Envelope;
+    function parse(res: unknown): LiveEnvelope {
+        return parseLiveEnvelope(res);
     }
 
-    async function cleanupPackage(ids: Record<string, string>): Promise<void> {
+    function expectClean(receipt: LiveCleanupReceipt): void {
+        expect(receipt.failed).toBe(0);
+        expect(receipt.remaining).toBe(0);
+        expect(receipt.deleted).toBe(receipt.idCount);
+    }
+
+    async function cleanupPackage(
+        ids: Record<string, string>,
+        leadingSteps: readonly LiveCleanupStep[] = [],
+    ): Promise<LiveCleanupReceipt> {
         const ctx = loadContext();
+        const steps: LiveCleanupStep[] = [...leadingSteps];
         if (ids.taskId && ids.projectId) {
-            await ctx.client.tasks
-                .delete({ workspaceId: workspaceId!, projectId: ids.projectId, taskId: ids.taskId })
-                .catch(() => {});
+            const taskId = ids.taskId;
+            const projectId = ids.projectId;
+            steps.push({
+                entityType: "task",
+                idCount: 1,
+                cleanup: async () => {
+                    const current = await ctx.client.tasks.get({
+                        workspaceId: workspaceId!,
+                        projectId,
+                        taskId,
+                    });
+                    await ctx.client.tasks.update({
+                        workspaceId: workspaceId!,
+                        projectId,
+                        taskId,
+                        body: buildTaskDoneBody(current),
+                    } as never);
+                    await ctx.client.tasks.delete({
+                        workspaceId: workspaceId!,
+                        projectId,
+                        taskId,
+                    });
+                },
+            });
         }
         if (ids.projectId) {
-            const project = (await ctx.client.projects
-                .get({ workspaceId: workspaceId!, projectId: ids.projectId })
-                .catch(() => null)) as { name?: string } | null;
-            if (project?.name) {
-                await ctx.client.projects
-                    .update({
+            const projectId = ids.projectId;
+            steps.push({
+                entityType: "project",
+                idCount: 1,
+                cleanup: async () => {
+                    const project = await ctx.client.projects.get({
                         workspaceId: workspaceId!,
-                        projectId: ids.projectId,
-                        name: project.name,
-                        archived: true,
-                    } as never)
-                    .catch(() => {});
-            }
-            await ctx.client.projects
-                .delete({ workspaceId: workspaceId!, projectId: ids.projectId })
-                .catch(() => {});
-        }
-        if (ids.tagId) {
-            await ctx.client.tags.delete({ workspaceId: workspaceId!, tagId: ids.tagId }).catch(() => {});
+                        projectId,
+                    });
+                    await ctx.client.projects.update({
+                        workspaceId: workspaceId!,
+                        projectId,
+                        body: buildProjectArchiveBody(project),
+                    } as never);
+                    await ctx.client.projects.delete({
+                        workspaceId: workspaceId!,
+                        projectId,
+                    });
+                },
+            });
         }
         if (ids.clientId) {
-            const client = (await ctx.client.clients
-                .get({ workspaceId: workspaceId!, clientId: ids.clientId })
-                .catch(() => null)) as { name?: string } | null;
-            if (client?.name) {
-                await ctx.client.clients
-                    .update({
+            const clientId = ids.clientId;
+            steps.push({
+                entityType: "client",
+                idCount: 1,
+                cleanup: async () => {
+                    const current = await ctx.client.clients.get({
                         workspaceId: workspaceId!,
-                        clientId: ids.clientId,
-                        body: { name: client.name, archived: true },
-                    } as never)
-                    .catch(() => {});
-            }
-            await ctx.client.clients
-                .delete({ workspaceId: workspaceId!, clientId: ids.clientId })
-                .catch(() => {});
+                        clientId,
+                    });
+                    await ctx.client.clients.update({
+                        workspaceId: workspaceId!,
+                        clientId,
+                        body: buildClientArchiveBody(current),
+                    } as never);
+                    await ctx.client.clients.delete({
+                        workspaceId: workspaceId!,
+                        clientId,
+                    });
+                },
+            });
         }
+        if (ids.tagId) {
+            const tagId = ids.tagId;
+            steps.push({
+                entityType: "tag",
+                idCount: 1,
+                cleanup: async () => {
+                    await ctx.client.tags.delete({
+                        workspaceId: workspaceId!,
+                        tagId,
+                    });
+                },
+            });
+        }
+        return runCleanupSteps(steps);
     }
 
     it("clockify_status returns the canonical envelope and pinned workspace", async () => {
@@ -189,38 +251,52 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
 
     it("clockify_tags_create + delete round-trips against real Clockify", async () => {
         const client = await connect();
-        const slug = `mcp-sandbox-${Date.now()}`;
+        const slug = liveObjectName(livePrefix!, "mcp-tag");
+        let tagId = "";
+        try {
+            const createRes = await client.callTool({
+                name: "clockify_tags_create",
+                arguments: { name: slug },
+            });
+            expect(createRes.isError).toBeFalsy();
+            const created = parse(createRes);
+            expect(created.ok).toBe(true);
+            if (!created.ok) throw new Error("tag create envelope was not ok");
+            tagId = (created.data as { id?: string }).id ?? "";
+            expect(tagId).toBeTruthy();
 
-        const createRes = await client.callTool({
-            name: "clockify_tags_create",
-            arguments: { name: slug },
-        });
-        expect(createRes.isError).toBeFalsy();
-        const created = parse(createRes);
-        expect(created.ok).toBe(true);
-        if (!created.ok) throw new Error("tag create envelope was not ok");
-        const tagId = (created.data as { id?: string }).id;
-        expect(typeof tagId).toBe("string");
-
-        // Listing should surface the just-created tag (within the
-        // first page; the sandbox workspace has bounded tag count).
-        const listRes = await client.callTool({
-            name: "clockify_tags_list",
-            arguments: { page: 1, pageSize: 200, name: slug },
-        });
-        const listEnv = parse(listRes);
-        expect(listEnv.ok).toBe(true);
-        if (listEnv.ok) {
-            const tags = listEnv.data as Array<{ id?: string; name?: string }>;
-            expect(tags.some((t) => t.id === tagId)).toBe(true);
+            // Listing should surface the just-created tag (within the
+            // first page; the sandbox workspace has bounded tag count).
+            const listRes = await client.callTool({
+                name: "clockify_tags_list",
+                arguments: { page: 1, pageSize: 200, name: slug },
+            });
+            const listEnv = parse(listRes);
+            expect(listEnv.ok).toBe(true);
+            if (listEnv.ok) {
+                const tags = listEnv.data as Array<{ id?: string; name?: string }>;
+                expect(tags.some((t) => t.id === tagId)).toBe(true);
+            }
+        } finally {
+            const ctx = loadContext();
+            const receipt = await runCleanupSteps(
+                tagId
+                    ? [
+                          {
+                              entityType: "tag",
+                              idCount: 1,
+                              cleanup: async () => {
+                                  await ctx.client.tags.delete({
+                                      workspaceId: workspaceId!,
+                                      tagId,
+                                  });
+                              },
+                          },
+                      ]
+                    : [],
+            );
+            expectClean(receipt);
         }
-
-        // Mandatory cleanup — pair every create with a delete per the
-        // sandbox-workspace contract. Reaching through the SDK client
-        // keeps this test focused on the cheapest mutable MCP create
-        // while still proving the workspace is clean afterward.
-        const ctx = loadContext();
-        await ctx.client.tags.delete({ workspaceId: workspaceId!, tagId: tagId! });
     }, 30_000);
 
     it("clockify_tools_guide returns workflow guidance", async () => {
@@ -237,7 +313,7 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
 
     it("clockify_create_work_package creates a client/project/task/tag bundle and cleans it up", async () => {
         const client = await connect();
-        const slug = `mcp-workflow-${Date.now()}`;
+        const slug = liveObjectName(livePrefix!, "mcp-work-package");
         let ids: Record<string, string> = {};
         try {
             const res = await client.callTool({
@@ -260,13 +336,107 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
             expect(ids.tagId).toBeTruthy();
             expect(env.changed).toHaveProperty("created");
         } finally {
-            await cleanupPackage(ids);
+            expectClean(await cleanupPackage(ids));
+        }
+    }, 45_000);
+
+    it("guards an entitled business write with bare rejection, dry-run, and one-use execution", async (testContext) => {
+        const client = await connect();
+        const clientName = liveObjectName(livePrefix!, "mcp-invoice-client");
+        const invoiceNumber = liveObjectName(livePrefix!, "mcp-invoice");
+        let clientId = "";
+        let invoiceId = "";
+        try {
+            const clientResult = parse(
+                await client.callTool({
+                    name: "clockify_clients_create",
+                    arguments: { name: clientName },
+                }),
+            );
+            expect(clientResult.ok).toBe(true);
+            if (!clientResult.ok) throw new Error("invoice client create envelope was not ok");
+            clientId = (clientResult.data as { id?: string }).id ?? "";
+            expect(clientId).toBeTruthy();
+
+            let result: GuardedLiveWriteResult;
+            try {
+                result = await exerciseGuardedLiveWrite(
+                    client,
+                    "clockify_invoices_create",
+                    {
+                        clientId,
+                        number: invoiceNumber,
+                        currency: "USD",
+                        issuedDate: "2026-07-12",
+                        dueDate: "2026-07-19",
+                    },
+                    {
+                        countExactMatches: async () => {
+                            const ctx = loadContext();
+                            return countExactInvoiceNumber(
+                                (page, pageSize) =>
+                                    ctx.client.invoices.list({
+                                        workspaceId: workspaceId!,
+                                        statuses: ["UNSENT"],
+                                        page,
+                                        "page-size": pageSize,
+                                    }),
+                                invoiceNumber,
+                            );
+                        },
+                    },
+                );
+            } catch (error) {
+                const marker = entitlementMarker(error);
+                if (!marker) throw error;
+                console.warn(marker);
+                testContext.skip();
+                return;
+            }
+            if (result.outcome === "entitlement_limited") {
+                // The helper admits only feature_unavailable / HTTP 402. A 403
+                // or 404 throws and fails this test instead of being mislabeled.
+                console.warn(result.marker);
+                testContext.skip();
+                return;
+            }
+
+            invoiceId = (result.executed.data as { id?: string }).id ?? "";
+            expect(invoiceId).toBeTruthy();
+            expect(result.preview.data).toMatchObject({
+                preview: {
+                    action: "create",
+                    entity: "invoice",
+                    number: invoiceNumber,
+                },
+            });
+        } finally {
+            const ctx = loadContext();
+            const invoiceSteps: LiveCleanupStep[] = invoiceId
+                ? [
+                      {
+                          entityType: "invoice",
+                          idCount: 1,
+                          cleanup: async () => {
+                              await ctx.client.invoices.delete({
+                                  workspaceId: workspaceId!,
+                                  invoiceId,
+                              });
+                          },
+                      },
+                  ]
+                : [];
+            const receipt = await cleanupPackage(
+                clientId ? { clientId } : {},
+                invoiceSteps,
+            );
+            expectClean(receipt);
         }
     }, 45_000);
 
     it("clockify_log_work logs a named package entry and deletes it", async () => {
         const client = await connect();
-        const slug = `mcp-log-${Date.now()}`;
+        const slug = liveObjectName(livePrefix!, "mcp-log-work");
         let ids: Record<string, string> = {};
         let entryId = "";
         try {
@@ -301,12 +471,24 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
             expect(logged.changed).toHaveProperty("created");
         } finally {
             const ctx = loadContext();
-            if (entryId) {
-                await ctx.client.timeEntries
-                    .delete({ workspaceId: workspaceId!, timeEntryId: entryId })
-                    .catch(() => {});
-            }
-            await cleanupPackage(ids);
+            const entryReceipt = await runCleanupSteps(
+                entryId
+                    ? [
+                          {
+                              entityType: "time_entry",
+                              idCount: 1,
+                              cleanup: async () => {
+                                  await ctx.client.timeEntries.delete({
+                                      workspaceId: workspaceId!,
+                                      timeEntryId: entryId,
+                                  });
+                              },
+                          },
+                      ]
+                    : [],
+            );
+            expectClean(entryReceipt);
+            expectClean(await cleanupPackage(ids));
         }
     }, 45_000);
 
@@ -327,7 +509,7 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
 
     it("clockify_fix_entry updates a logged entry and deletes it", async () => {
         const client = await connect();
-        const slug = `mcp-fix-${Date.now()}`;
+        const slug = liveObjectName(livePrefix!, "mcp-fix-entry");
         let ids: Record<string, string> = {};
         let entryId = "";
         try {
@@ -365,12 +547,24 @@ describeLive("@apet97/clockify-mcp-115 live sandbox", () => {
             expect(fixed.changed).toHaveProperty("updated");
         } finally {
             const ctx = loadContext();
-            if (entryId) {
-                await ctx.client.timeEntries
-                    .delete({ workspaceId: workspaceId!, timeEntryId: entryId })
-                    .catch(() => {});
-            }
-            await cleanupPackage(ids);
+            const entryReceipt = await runCleanupSteps(
+                entryId
+                    ? [
+                          {
+                              entityType: "time_entry",
+                              idCount: 1,
+                              cleanup: async () => {
+                                  await ctx.client.timeEntries.delete({
+                                      workspaceId: workspaceId!,
+                                      timeEntryId: entryId,
+                                  });
+                              },
+                          },
+                      ]
+                    : [],
+            );
+            expectClean(entryReceipt);
+            expectClean(await cleanupPackage(ids));
         }
     }, 45_000);
 });

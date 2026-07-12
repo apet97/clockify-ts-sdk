@@ -175,6 +175,39 @@ describe("typed task replacement requests", () => {
         expect(updates[0]).toMatchObject({ body: { name: "Repaired" } });
     });
 
+    it("omits a live null assigneeId when marking a task DONE for deletion", async () => {
+        const updates: Record<string, unknown>[] = [];
+        const deletes: Record<string, unknown>[] = [];
+        const client = {
+            tasks: {
+                get: async () => ({
+                    id: "t-1",
+                    projectId: "p-1",
+                    name: "Known task",
+                    status: "ACTIVE",
+                    billable: false,
+                    assigneeId: null,
+                }),
+                update: async (request: Record<string, unknown>) => {
+                    updates.push(request);
+                    return request;
+                },
+                delete: async (request: Record<string, unknown>) => {
+                    deletes.push(request);
+                },
+            },
+        };
+
+        await run(registerTasksCommand, client, "tasks", "delete", "p-1", "t-1");
+
+        expect(updates).toHaveLength(1);
+        expect(updates[0]).toMatchObject({
+            body: { name: "Known task", status: "DONE", billable: false },
+        });
+        expect(updates[0]).not.toHaveProperty("body.assigneeId");
+        expect(deletes).toEqual([{ workspaceId: "ws-1", projectId: "p-1", taskId: "t-1" }]);
+    });
+
     it.each([
         ["missing billable", { billable: undefined }, /billable/i],
         ["malformed billable", { billable: "false" }, /billable/i],

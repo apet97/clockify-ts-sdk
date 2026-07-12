@@ -9,6 +9,7 @@ experiments.
 
 | Prefix | Owner surface | Typical objects | Cleanup expectation |
 |---|---|---|---|
+| `clockify115-live-<timestamp>-<random>-` | Root orchestrator | Every object created by the current SDK, CLI, MCP, and GOCLMCP run | Same-test cleanup first; aggregate cleanup and rescan always run in `finally`. |
 | `sdk-test-` | SDK live tests | tags and other low-risk SDK round trips | Create and delete in the same test. |
 | `mcp-sandbox-` | MCP domain live tests | tags and low-risk domain objects | Create and delete in the same test. |
 | `mcp-workflow-` | MCP workflow package tests | clients, projects, tasks, tags | Cleanup package IDs in `finally`. |
@@ -21,19 +22,43 @@ experiments.
 - Every live create must use a timestamped or clearly prefixed slug.
 - Every live create must have same-test cleanup or a documented cleanup tool.
 - Cleanup code must tolerate partial creation and ambiguous failures.
-- Final live proof must include the cleanup prefix list, the
-  `mcp/scripts/assert-clean-prefixes.mjs` JSON receipt with `"total": 0`,
-  and sanitized object IDs only when needed.
-- CLI live tests stay read-only until a write+cleanup contract exists for each
-  command group.
+- Wrapper, CLI, and MCP mutations require the root-generated prefix and an
+  exact `CLOCKIFY_LIVE_WORKSPACE_CONFIRM` match before the first write.
+- CLI timer, tag, client/project/task, and invoice round trips clean up through
+  SDK calls in `finally`; the root cleanup remains the last-resort sweep.
+- Final live proof must include one sanitized JSON receipt with per-entity
+  counts and `"leftovers": 0`. Object and workspace identifiers are never
+  included.
 - Mock/replay tests may use synthetic IDs, but they must not be cited as live
   cleanup proof.
 
+## Dependency order
+
+The tested root cleanup library processes dependencies in this exact order:
+
+1. Time entries (running and finished).
+2. Scheduling assignments.
+3. Pending time-off requests.
+4. Expenses.
+5. Draft invoices.
+6. Shared reports.
+7. Webhooks.
+8. Tasks.
+9. Projects.
+10. Clients.
+11. Tags.
+
+Each row records `sanitizedIdCount`, `deletedCount`, `failedCount`, and
+`remainingCount`. Discovery failures are incomplete results, never an empty
+success, and later entity types are still attempted.
+
 ## Cleanup proof
 
-`mcp/scripts/assert-clean-prefixes.mjs` is the post-run cleanup assertion. It
-scans known prefixes across clients, projects, tags, time entries, invoices, and
-webhooks. A non-zero leftover count fails the gate.
+`scripts/live/cleanup.mjs` is the dependency-ordered cleanup and post-delete
+rescan library. `scripts/live/orchestrator.mjs` invokes it in `finally` for the
+exact run prefix and all governed legacy prefixes. Any failed deletion,
+incomplete discovery, malformed server state, or non-zero leftover count fails
+the gate.
 
 ## Stop conditions
 
