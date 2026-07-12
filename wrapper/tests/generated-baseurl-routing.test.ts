@@ -23,7 +23,9 @@ describe("generated request runtime base-url routing", () => {
         for (const source of [generator, generatedRequest]) {
             expect(source).toContain("baseUrl?: string;");
             expect(source).toContain("operation.baseUrl");
-            expect(source).toContain("?? operation.baseUrl ?? ClockifyApiEnvironment.Default;");
+            expect(source).toContain(
+                "suppliedBaseUrl ?? suppliedEnvironment ?? operationBaseUrl ?? ClockifyApiEnvironment.Default",
+            );
         }
     });
 });

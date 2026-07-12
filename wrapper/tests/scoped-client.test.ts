@@ -153,8 +153,10 @@ describe("Workspace scoped client", () => {
 describe("Workspace ensure helpers", () => {
     /** Mock that returns a list (GET) or a created record (POST/other). */
     function ensureFetch(listBody: unknown, createBody: unknown): ReturnType<typeof vi.fn> {
-        return vi.fn(async (_input: unknown, init?: { method?: string }) => {
-            const method = (init?.method ?? "GET").toUpperCase();
+        return vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+            const method = (
+                init?.method ?? (input instanceof Request ? input.method : "GET")
+            ).toUpperCase();
             const body = method === "GET" ? listBody : createBody;
             return new Response(JSON.stringify(body), {
                 status: 200,
@@ -193,8 +195,10 @@ describe("Workspace ensure helpers", () => {
         const page2 = [{ id: "p_target", name: "Existing" }];
         let getCall = 0;
         let postCalled = false;
-        const fetchMock = vi.fn(async (_input: unknown, init?: { method?: string }) => {
-            const method = (init?.method ?? "GET").toUpperCase();
+        const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+            const method = (
+                init?.method ?? (input instanceof Request ? input.method : "GET")
+            ).toUpperCase();
             if (method !== "GET") {
                 postCalled = true;
                 return new Response(JSON.stringify({ id: "p_new", name: "Existing" }), {
