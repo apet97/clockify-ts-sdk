@@ -11,6 +11,22 @@ function dispatchedRequest(dispatch: ReturnType<typeof vi.fn>, callIndex = 0): R
     return new Request(input, init);
 }
 
+function governedInputRequest(signal = new AbortController().signal): Request {
+    return new Request("https://api.clockify.me/api/v1/user", {
+        method: "POST",
+        body: "input-body",
+        signal,
+        redirect: "error",
+        cache: "reload",
+        credentials: "omit",
+        integrity: "sha256-input",
+        keepalive: true,
+        referrer: "https://api.clockify.me/input-referrer",
+        referrerPolicy: "no-referrer",
+        mode: "cors",
+    });
+}
+
 describe("ClockifyApiClient.fetch", () => {
     it.each([
         "https://attacker.example/collect",
@@ -128,55 +144,89 @@ describe("ClockifyApiClient.fetch", () => {
         expect(dispatchedRequest(dispatch).url).toBe("https://api.clockify.me/api/v1/users");
     });
 
-    it("preserves the input Request method, body, signal, and fetch properties", async () => {
+    it("preserves the input Request method", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch(governedInputRequest());
+
+        expect(dispatchedRequest(dispatch).method).toBe("POST");
+    });
+
+    it("preserves the input Request body", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch(governedInputRequest());
+
+        expect(await dispatchedRequest(dispatch).text()).toBe("input-body");
+    });
+
+    it("preserves the input Request signal", async () => {
         const dispatch = vi
             .fn<typeof fetch>()
             .mockResolvedValue(new Response(null, { status: 204 }));
         const inputAbort = new AbortController();
-        const input = new Request("https://api.clockify.me/api/v1/user", {
-            method: "POST",
-            body: "input-body",
-            signal: inputAbort.signal,
-            redirect: "error",
-            cache: "reload",
-            credentials: "omit",
-            integrity: "sha256-input",
-            keepalive: true,
-            referrer: "https://api.clockify.me/input-referrer",
-            referrerPolicy: "no-referrer",
-            mode: "cors",
-        });
 
-        await client(dispatch).fetch(input);
+        await client(dispatch).fetch(governedInputRequest(inputAbort.signal));
 
         const sent = dispatchedRequest(dispatch);
-        expect({
-            method: sent.method,
-            redirect: sent.redirect,
-            cache: sent.cache,
-            credentials: sent.credentials,
-            integrity: sent.integrity,
-            keepalive: sent.keepalive,
-            referrer: sent.referrer,
-            referrerPolicy: sent.referrerPolicy,
-            mode: sent.mode,
-        }).toEqual({
-            method: "POST",
-            redirect: "error",
-            cache: "reload",
-            credentials: "omit",
-            integrity: "sha256-input",
-            keepalive: true,
-            referrer: "https://api.clockify.me/input-referrer",
-            referrerPolicy: "no-referrer",
-            mode: "cors",
-        });
-        expect(await sent.text()).toBe("input-body");
         expect(sent.signal.aborted).toBe(false);
         const reason = new Error("input aborted");
         inputAbort.abort(reason);
         expect(sent.signal.aborted).toBe(true);
         expect(sent.signal.reason).toBe(reason);
+    });
+
+    it("preserves input Request redirect, cache, credentials, and mode", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch(governedInputRequest());
+
+        const sent = dispatchedRequest(dispatch);
+        expect({
+            redirect: sent.redirect,
+            cache: sent.cache,
+            credentials: sent.credentials,
+            mode: sent.mode,
+        }).toEqual({
+            redirect: "error",
+            cache: "reload",
+            credentials: "omit",
+            mode: "cors",
+        });
+    });
+
+    it("preserves input Request integrity and keepalive", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch(governedInputRequest());
+
+        const sent = dispatchedRequest(dispatch);
+        expect({ integrity: sent.integrity, keepalive: sent.keepalive }).toEqual({
+            integrity: "sha256-input",
+            keepalive: true,
+        });
+    });
+
+    it("preserves input Request referrer and referrerPolicy", async () => {
+        const dispatch = vi
+            .fn<typeof fetch>()
+            .mockResolvedValue(new Response(null, { status: 204 }));
+
+        await client(dispatch).fetch(governedInputRequest());
+
+        const sent = dispatchedRequest(dispatch);
+        expect({ referrer: sent.referrer, referrerPolicy: sent.referrerPolicy }).toEqual({
+            referrer: "https://api.clockify.me/input-referrer",
+            referrerPolicy: "no-referrer",
+        });
     });
 
     it("applies init overrides over every preserved input Request property", async () => {
@@ -450,6 +500,36 @@ describe("ClockifyApiClient.fetch", () => {
             ["NaN", Number.NaN],
             ["infinite", Number.POSITIVE_INFINITY],
         ])("rejects a %s timeout before dispatch", async (_kind, timeoutInSeconds) => {
+            vi.useFakeTimers();
+            try {
+                const dispatch = vi
+                    .fn<typeof fetch>()
+                    .mockResolvedValue(new Response(null, { status: 204 }));
+                const sdk = new ClockifyApiClient({
+                    apiKey: "secret",
+                    environment: "https://api.clockify.me/api/v1",
+                    fetch: dispatch,
+                    ...(source === "client" ? { timeoutInSeconds } : {}),
+                });
+
+                await expect(
+                    sdk.fetch(
+                        "users",
+                        undefined,
+                        source === "request options" ? { timeoutInSeconds } : undefined,
+                    ),
+                ).rejects.toThrow(/timeout/i);
+                expect(dispatch).not.toHaveBeenCalled();
+            } finally {
+                vi.clearAllTimers();
+                vi.useRealTimers();
+            }
+        });
+    });
+
+    it.each(["client", "request options"] as const)(
+        "accepts zero maxRetries from %s as the valid lower boundary",
+        async (source) => {
             const dispatch = vi
                 .fn<typeof fetch>()
                 .mockResolvedValue(new Response(null, { status: 204 }));
@@ -457,31 +537,56 @@ describe("ClockifyApiClient.fetch", () => {
                 apiKey: "secret",
                 environment: "https://api.clockify.me/api/v1",
                 fetch: dispatch,
-                ...(source === "client" ? { timeoutInSeconds } : {}),
+                ...(source === "client" ? { maxRetries: 0 } : {}),
             });
 
-            await expect(
-                sdk.fetch(
-                    "users",
-                    undefined,
-                    source === "request options" ? { timeoutInSeconds } : undefined,
-                ),
-            ).rejects.toThrow(/timeout/i);
-            expect(dispatch).not.toHaveBeenCalled();
-        });
+            await sdk.fetch(
+                "users",
+                undefined,
+                source === "request options" ? { maxRetries: 0 } : undefined,
+            );
+
+            expect(dispatch).toHaveBeenCalledOnce();
+        },
+    );
+
+    it("lets a shorter per-call timeout override a longer client timeout", async () => {
+        vi.useFakeTimers();
+        try {
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(
+                (_input, init) =>
+                    new Promise<Response>((_resolve, reject) => {
+                        const signal = init?.signal;
+                        if (signal?.aborted) reject(signal.reason);
+                        else
+                            signal?.addEventListener("abort", () => reject(signal.reason), {
+                                once: true,
+                            });
+                    }),
+            );
+            const sdk = new ClockifyApiClient({
+                apiKey: "secret",
+                environment: "https://api.clockify.me/api/v1",
+                fetch: dispatch,
+                timeoutInSeconds: 1,
+            });
+
+            const result = sdk.fetch("users", undefined, { timeoutInSeconds: 0.01 });
+            const timedOut = expect(result).rejects.toThrow(/timed out/i);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(dispatch).toHaveBeenCalledOnce();
+            const sent = dispatchedRequest(dispatch);
+
+            await vi.advanceTimersByTimeAsync(20);
+            expect(sent.signal.aborted).toBe(true);
+            await timedOut;
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
     });
 
-    it("accepts zero maxRetries as the valid lower boundary", async () => {
-        const dispatch = vi
-            .fn<typeof fetch>()
-            .mockResolvedValue(new Response(null, { status: 204 }));
-
-        await client(dispatch).fetch("users", undefined, { maxRetries: 0 });
-
-        expect(dispatch).toHaveBeenCalledOnce();
-    });
-
-    it("lets a per-call timeout override a shorter client timeout", async () => {
+    it("lets a longer per-call timeout override a shorter client timeout", async () => {
         vi.useFakeTimers();
         try {
             let resolveDispatch!: (response: Response) => void;
@@ -507,6 +612,7 @@ describe("ClockifyApiClient.fetch", () => {
             resolveDispatch(new Response(null, { status: 204 }));
             await expect(result).resolves.toHaveProperty("status", 204);
         } finally {
+            vi.clearAllTimers();
             vi.useRealTimers();
         }
     });
