@@ -1,15 +1,8 @@
 name: Release @apet97/clockify-mcp-115 to npm
 
-# Publishes @apet97/clockify-mcp-115 to npm on a pushed `mcp-v*.*.*` tag whose
-# version matches mcp/package.json. A manual `workflow_dispatch` run only
-# type-checks, tests, builds, and dry-run packs — the publish step is gated to
-# tag pushes (`github.ref_type == 'tag'`), so it never fires off a branch.
-#
-# Requires the NPM_TOKEN repo secret. Provenance is emitted via OIDC
-# (id-token: write) from publishConfig.provenance in mcp/package.json.
-#
-# Ordering: the MCP server peer-depends on clockify-sdk-ts-115, so publish the
-# SDK (push `wrapper-v*`) before pushing `mcp-v*`.
+# A pushed mcp-v* tag may publish only after the complete MCP release proof.
+# workflow_dispatch runs the identical proof path but cannot publish to npm or
+# create/update a GitHub release because both external-write steps are tag-only.
 
 on:
   push:
@@ -21,61 +14,145 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  publish:
-    name: Publish @apet97/clockify-mcp-115
+  proof-and-release:
+    name: Prove and release @apet97/clockify-mcp-115
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     permissions:
-      contents: read
-      id-token: write # required for npm provenance via OIDC
-    defaults:
-      run:
-        working-directory: mcp
+      contents: write # tag-only release step; workflow_dispatch never reaches it
+      id-token: write # npm provenance
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           persist-credentials: false
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 22.13.0
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
-          node-version: "22"
+          node-version: "22.13.0"
           registry-url: "https://registry.npmjs.org"
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: Install workspaces (root)
-        working-directory: .
+      - name: Install workspaces
         run: npm ci
 
-      - name: Generate + sync TS SDK (local generator)
-        working-directory: .
-        run: make sdk-codegen
-
-      - name: Type-check, test, build
-        run: |
-          npm run type-check
-          npm test
-          npm run build
-
-      - name: Pack (dry-run smoke before publish)
-        run: npm pack --dry-run
-
-      - name: Verify tag matches package version
-        if: github.event_name == 'push' && github.ref_type == 'tag'
+      - name: Verify package, manifest, tag, and SDK peer
         env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION"
+          MCP_PACKAGE_NAME="$(node -p "require('./mcp/package.json').name")"
+          MCP_VERSION="$(node -p "require('./mcp/package.json').version")"
+          MANIFEST_NAME="$(node -p "require('./mcp/manifest.json').name")"
+          MANIFEST_VERSION="$(node -p "require('./mcp/manifest.json').version")"
+          SDK_PEER_RANGE="$(node -p "require('./mcp/package.json').peerDependencies['clockify-sdk-ts-115']")"
+
+          if [ "$MCP_PACKAGE_NAME" != "@apet97/clockify-mcp-115" ]; then
+            echo "::error::Unexpected MCP package name: $MCP_PACKAGE_NAME"
+            exit 1
+          fi
+          if [ "$MANIFEST_NAME" != "clockify115-mcp" ]; then
+            echo "::error::Unexpected MCPB manifest name: $MANIFEST_NAME"
+            exit 1
+          fi
+          if [ "$MCP_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "::error::mcp/package.json ($MCP_VERSION) does not match mcp/manifest.json ($MANIFEST_VERSION)"
             exit 1
           fi
 
-      - name: Publish to npm (with provenance from publishConfig)
+          SDK_VERSION="$(printf '%s\n' "$SDK_PEER_RANGE" | sed -n 's/^>=\([^ ]*\) <1$/\1/p')"
+          if [ -z "$SDK_VERSION" ]; then
+            echo "::error::Unexpected clockify-sdk-ts-115 peer range: $SDK_PEER_RANGE"
+            exit 1
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            TAG_VERSION="${GITHUB_REF_NAME#mcp-v}"
+            if [ "$GITHUB_REF_NAME" = "$TAG_VERSION" ] || [ "$MCP_VERSION" != "$TAG_VERSION" ]; then
+              echo "::error::Tag $GITHUB_REF_NAME does not match MCP package version $MCP_VERSION"
+              exit 1
+            fi
+          fi
+
+          npm view "clockify-sdk-ts-115@${SDK_VERSION}" version > /dev/null
+          {
+            echo "MCP_VERSION=$MCP_VERSION"
+            echo "SDK_VERSION=$SDK_VERSION"
+          } >> "$GITHUB_ENV"
+
+      - name: Generate and verify the SDK
+        run: |
+          make sdk-codegen
+          make sdk-codegen-drift sdk-codegen-test
+          npm run build -w clockify-sdk-ts-115
+
+      - name: Run full MCP gates
+        run: |
+          npm run lint -w @apet97/clockify-mcp-115
+          npm run type-check -w @apet97/clockify-mcp-115
+          npm test -w @apet97/clockify-mcp-115
+          npm run build -w @apet97/clockify-mcp-115
+          make mcp-tool-manifest-drift mcp-write-safety mcp-contract
+          npm pack --dry-run -w @apet97/clockify-mcp-115
+
+      - name: Audit all dependencies
+        run: npm audit --json
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --json
+
+      - name: Build and validate MCPB and SPDX assets
+        run: |
+          make mcpb-validate
+          make mcpb-smoke
+          make secret-hygiene
+          test -s "mcp/clockify115-mcp-${MCP_VERSION}.mcpb"
+          test -s "mcp/clockify115-mcp-${MCP_VERSION}.spdx.json"
+
+      - name: Publish to npm
         if: github.event_name == 'push' && github.ref_type == 'tag'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+        run: |
+          PUBLISH_DIR="$RUNNER_TEMP/mcp-npm-publish"
+          PACK_JSON="$PUBLISH_DIR/pack.json"
+          mkdir -p "$PUBLISH_DIR"
+          npm pack -w @apet97/clockify-mcp-115 --json --pack-destination "$PUBLISH_DIR" > "$PACK_JSON"
+          PACKAGE_FILENAME="$(node -e '
+            const { readFileSync } = require("node:fs");
+            process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8"))[0].filename);
+          ' "$PACK_JSON")"
+          PACKAGE_TARBALL="$PUBLISH_DIR/$PACKAGE_FILENAME"
+          LOCAL_INTEGRITY="$(node -e '
+            const { createHash } = require("node:crypto");
+            const { readFileSync } = require("node:fs");
+            process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[1])).digest("base64")}`);
+          ' "$PACKAGE_TARBALL")"
+
+          if REMOTE_INTEGRITY="$(npm view "@apet97/clockify-mcp-115@${MCP_VERSION}" dist.integrity 2> /dev/null)"; then
+            if [ -z "$REMOTE_INTEGRITY" ] || [ "$LOCAL_INTEGRITY" != "$REMOTE_INTEGRITY" ]; then
+              echo "::error::Local package integrity does not match the already-published npm artifact"
+              exit 1
+            fi
+            echo "npm package ${MCP_VERSION} already exists with matching integrity; continuing to release assets"
+          else
+            npm publish "$PACKAGE_TARBALL" --access public --provenance
+          fi
+
+      - name: Create or update GitHub release
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "MCP ${MCP_VERSION}"
+          else
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "MCP ${MCP_VERSION}"
+          fi
+          gh release upload "$GITHUB_REF_NAME" \
+            "mcp/clockify115-mcp-${MCP_VERSION}.mcpb" \
+            "mcp/clockify115-mcp-${MCP_VERSION}.spdx.json" \
+            --clobber

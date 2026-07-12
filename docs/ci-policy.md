@@ -15,7 +15,7 @@ local package gates without becoming the source of product truth.
 | `.github/workflows/release-please.yml` | Release PR automation only. |
 | `.github/workflows/release.yml` | Legacy tag-triggered npm release path for `clockify-sdk-ts-115`, now on a pushed `wrapper-v*.*.*` tag; not the default local workflow and not to be changed without explicit maintainer approval. |
 | `.github/workflows/ci-cli-release.yml` | Tag-triggered npm publish for `@apet97/clockify-cli-115` on a pushed `cli-v*.*.*` tag; `workflow_dispatch` runs build/pack only (publish gated to tag pushes). Requires the `NPM_TOKEN` secret; not to be changed without explicit maintainer approval. |
-| `.github/workflows/ci-mcp-release.yml` | Tag-triggered npm publish for `@apet97/clockify-mcp-115` on a pushed `mcp-v*.*.*` tag; same tag-gated posture as the CLI release workflow. |
+| `.github/workflows/ci-mcp-release.yml` | Full MCP release proof on exact Node 22.13.0. `workflow_dispatch` runs the full proof but never publishes or creates a GitHub release; a valid pushed `mcp-v*.*.*` tag may publish only after package/manifest/peer, generation, MCP, audit, MCPB, secret, and SBOM checks, then idempotently attaches the two explicit MCPB and SPDX assets. A rerun accepts an existing npm version only when its registry integrity matches the freshly packed local artifact. |
 | `.github/workflows/sandbox-key-health.yml` | Optional scheduled/workflow-dispatch preflight for the sandbox Clockify key; read-only checkout, no publish, skips cleanly when secrets are absent. |
 
 - **`cross-gate` (ci.yml)** runs the four cross-package drift gates
