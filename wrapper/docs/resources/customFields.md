@@ -28,6 +28,7 @@
 - `name` (`string`, required) — Represents custom field name.
 - `onlyAdminCanEdit` (`boolean`, optional) — Flag to set whether custom field is modifiable only by admin users.
 - `placeholder` (`string`, optional) — Represents custom field placeholder value.
+- `required` (`boolean`, optional) — Flag to set whether custom field is mandatory or not.
 - `status` (`ClockifyApi.CustomFieldStatus`, optional)
 - `type` (`ClockifyApi.CustomFieldType`, required)
 - `workspaceDefaultValue` (`ClockifyApi.CustomFieldValue`, optional)
@@ -39,6 +40,7 @@
 - `name` (`string`, required) — Represents custom field name.
 - `onlyAdminCanEdit` (`boolean`, optional) — Flag to set whether custom field is modifiable only by admin users.
 - `placeholder` (`string`, optional) — Represents custom field placeholder value.
+- `required` (`boolean`, optional) — Flag to set whether custom field is mandatory or not.
 - `status` (`ClockifyApi.CustomFieldStatus`, optional)
 - `type` (`ClockifyApi.CustomFieldType`, required)
 - `workspaceDefaultValue` (`ClockifyApi.CustomFieldValue`, optional)

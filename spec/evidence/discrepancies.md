@@ -2696,9 +2696,9 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 
 ---
 
-## Pending canonical API-truth corrections (2026-07-12)
+## Canonical API-truth corrections (2026-07-12)
 
-### `clients.update.archived-missing-from-canonical-request` — PENDING CANONICAL REGENERATION
+### `clients.update.archived-missing-from-canonical-request` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** the official
   `UpdateClientRequestV1` declares optional boolean `archived`, and the focused
@@ -2716,16 +2716,17 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `client.clients.update`; `clockify_clients_update` and
   `clockify_clients_delete`; CLI `clients update` and the archive-before-delete
   path; client resolution/rollback helpers that preserve editable state.
-- **Open questions:** none about the field itself. The remaining check is that
-  GOCLMCP source precedence selects the corrected update schema after a clean
-  regeneration.
-- **Status/resolution:** `pending-canonical-regeneration`. Correct the canonical
-  GOCLMCP source, refresh its source-manifest hash, run all GOCLMCP drift and Go
-  tests, then copy the committed canonical snapshot downstream and regenerate
-  the SDK. Do not treat the generated request type as fixed before that chain is
-  complete.
+- **Open questions:** none. The previously pending source-precedence check now
+  passes: the regenerated canonical schema selects the composed update shape.
+- **Status/resolution:** `fixed-in-canonical-source`. This was first recorded as
+  pending in downstream ledger commit `90fefb7`. GOCLMCP test commit `b6d4560`
+  locked the composed `ClientUpdate` shape and source commit `a4e72bb` added the
+  optional `archived` field, refreshed the manifest, and regenerated the green
+  canonical document. That document was copied byte-for-byte downstream at
+  SHA-256 `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`;
+  `make sdk-codegen` then regenerated the SDK and resource docs.
 
-### `tasks.create.billable-missing-from-create-request` — PENDING CANONICAL REGENERATION
+### `tasks.create.billable-missing-from-create-request` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** the official schema family is internally
   inconsistent: `TaskRequest` declares optional boolean `billable` with a
@@ -2743,13 +2744,15 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   create field.
 - **Open questions:** omission should retain Clockify's `false` default; no
   claim is made that `billable` should become required.
-- **Status/resolution:** `pending-canonical-regeneration`. Add optional
-  `billable` to the canonical create schema at GOCLMCP source, refresh the
-  manifest and focused schema test, regenerate and pass every upstream drift
-  gate, then copy the committed snapshot and regenerate downstream. Until then,
-  the generated `TaskCreateRequest` remains incomplete.
+- **Status/resolution:** `fixed-in-canonical-source`. This was first recorded as
+  pending in downstream ledger commit `90fefb7`. GOCLMCP test commit `b6d4560`
+  locked optional `billable` plus its `false` example, and source commit
+  `a4e72bb` corrected the create schema, refreshed the manifest, and regenerated
+  the green canonical document. The byte-for-byte downstream copy has SHA-256
+  `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`;
+  `make sdk-codegen` regenerated the request type and resource docs from it.
 
-### `custom-fields.create.required-missing-from-request` — PENDING CANONICAL REGENERATION
+### `custom-fields.create.required-missing-from-request` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** both official `CustomFieldRequestV1` and
   the current canonical `CreateCustomFieldRequest` omit the boolean `required`
@@ -2767,13 +2770,16 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** whether an omitted value and explicit `false` are
   observably different server-side remains unprobed; the correction therefore
   keeps `required` optional and preserves explicit `false`.
-- **Status/resolution:** `pending-canonical-regeneration`. Add optional boolean
-  `required` to the canonical GOCLMCP create schema, refresh its manifest and
-  focused schema proof, complete the upstream generation/drift/Go-test chain,
-  then copy the committed snapshot and regenerate this SDK. The current
-  generated request must not yet be described as corrected.
+- **Status/resolution:** `fixed-in-canonical-source`. This was first recorded as
+  pending in downstream ledger commit `90fefb7`. GOCLMCP test commit `b6d4560`
+  locked optional boolean `required` and the explicit `false` example; source
+  commit `a4e72bb` corrected the create schema, refreshed the manifest, and
+  regenerated the green canonical document. The downstream byte-for-byte copy
+  has SHA-256
+  `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`,
+  after which `make sdk-codegen` regenerated the request type and docs.
 
-### `time-off-policies.create.approve-is-optional` — PENDING CANONICAL REGENERATION
+### `time-off-policies.create.approve-is-optional` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** the official policy write schema and the
   current canonical `CreateTimeOffPolicyRequest` place `approve` in
@@ -2790,13 +2796,19 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** the exact server default approval object when `approve`
   is omitted still needs a safe read-back fixture; omission is the only
   established compatibility claim.
-- **Status/resolution:** `pending-canonical-regeneration`. Remove only
-  `approve` from the create schema's required list in canonical GOCLMCP source,
-  record the provenance caveat in its focused test, refresh the manifest and
-  pass all upstream gates, then copy the committed snapshot and regenerate the
-  SDK. It is not fixed merely because a downstream escape currently compiles.
+- **Status/resolution:** `fixed-in-canonical-source`, not newly live-proven.
+  This was first recorded as pending in downstream ledger commit `90fefb7`.
+  GOCLMCP test commit `b6d4560` deliberately records that no committed live
+  fixture exists while asserting the evidence-neutral optionality; source
+  commit `a4e72bb` removed only `approve` from the create required set, refreshed
+  the manifest, and regenerated the green canonical document. Its byte-for-byte
+  downstream copy has SHA-256
+  `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`;
+  `make sdk-codegen` regenerated the type/docs. The original evidence caveat and
+  open question remain unchanged: this schema correction is not a new live
+  proof of the server default.
 
-### `time-off-policies.response.missing-replacement-fields` — PENDING CANONICAL REGENERATION
+### `time-off-policies.response.missing-replacement-fields` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** official `PolicyDtoV1` and the current
   canonical `Policy` response omit `color`, `icon`, and `hasExpiration`, while
@@ -2814,14 +2826,17 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** response nullability/absence for legacy policies remains
   to be confirmed. Generated response fields should reflect observed wire
   optionality rather than inventing replacement defaults.
-- **Status/resolution:** `pending-canonical-regeneration`. Add
-  `hasExpiration`, `color`, and `icon` to the canonical GOCLMCP response DTO,
-  with types aligned to the write schema and focused tests, refresh the
-  manifest, pass upstream regeneration/drift/Go tests, then copy the committed
-  snapshot and regenerate downstream. Full-replacement consumers must keep
-  failing closed until that read state is available.
+- **Status/resolution:** `fixed-in-canonical-source`. This was first recorded as
+  pending in downstream ledger commit `90fefb7`. GOCLMCP test commit `b6d4560`
+  locked the three response fields and exact icon enum; source commit `a4e72bb`
+  added them to `Policy`, refreshed the manifest, and regenerated the green
+  canonical document. The downstream byte-for-byte copy has SHA-256
+  `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`,
+  and `make sdk-codegen` regenerated the DTO/docs. The legacy-policy
+  nullability/absence question above remains open; consumers still validate
+  required replacement state instead of inventing it.
 
-### `invoices.update.missing-bill-from-and-client-address` — PENDING CANONICAL REGENERATION
+### `invoices.update.missing-bill-from-and-client-address` — FIXED-IN-CANONICAL-SOURCE 2026-07-12
 
 - **Official/current source claim:** invoice read DTOs expose `billFrom` and
   `clientAddress`, but official `UpdateInvoiceRequestV1` and the current
@@ -2839,9 +2854,12 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Open questions:** legacy invoices may return either field empty or null;
   request optionality/nullability must follow captured wire state rather than a
   fabricated non-empty default.
-- **Status/resolution:** `pending-canonical-regeneration`. Add optional
-  `billFrom` and `clientAddress` to canonical GOCLMCP's update request schema,
-  refresh the manifest and focused schema tests, pass the complete upstream
-  generation/drift/Go-test chain, then copy the committed snapshot and
-  regenerate this SDK. Existing runtime preservation is compensation, not proof
-  that the generated request type is already fixed.
+- **Status/resolution:** `fixed-in-canonical-source`. This was first recorded as
+  pending in downstream ledger commit `90fefb7`. GOCLMCP test commit `b6d4560`
+  locked both fields as optional strings and preserved the exact pre-existing
+  required set; source commit `a4e72bb` corrected the update schema and examples,
+  refreshed the manifest, and regenerated the green canonical document. The
+  downstream byte-for-byte copy has SHA-256
+  `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`;
+  `make sdk-codegen` regenerated the request type and docs. Runtime
+  GET-then-PUT preservation remains necessary for replacement semantics.

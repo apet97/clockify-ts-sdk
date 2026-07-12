@@ -50,6 +50,8 @@
 
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
+- `billFrom` (`string`, optional) — Represents to whom the invoice should be billed from.
+- `clientAddress` (`string`, optional) — Represents client address.
 - `clientId` (`string`, optional) — Represents client identifier across the system.
 - `companyId` (`string`, optional) — Represents company identifier across the system.
 - `currency` (`string`, required) — Represents the currency used by the invoice.
@@ -66,6 +68,8 @@
 - `workspaceId` (`string`, required)
 - `invoiceId` (`string`, required)
 - `body` (`UpdateInvoicesRequestBody`, required)
+- `billFrom` (`string`, optional) — Represents to whom the invoice should be billed from.
+- `clientAddress` (`string`, optional) — Represents client address.
 - `clientId` (`string`, optional) — Represents client identifier across the system.
 - `companyId` (`string`, optional) — Represents company identifier across the system.
 - `currency` (`string`, required) — Represents the currency used by the invoice.
