@@ -2693,3 +2693,155 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     request+response envelope mismatch (`workflows/review.ts` + `workflows/resolve.ts`).
     These are the documented Bucket-C generated-type residue (response-narrows,
     multipart-file, status-naming).
+
+---
+
+## Pending canonical API-truth corrections (2026-07-12)
+
+### `clients.update.archived-missing-from-canonical-request` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** the official
+  `UpdateClientRequestV1` declares optional boolean `archived`, and the focused
+  GOCLMCP `openapi-fragments/clients-b.yaml` source declares the same field on
+  `ClientUpdateRequest`. The generated canonical snapshot instead defines
+  `ClientUpdate` as a direct reference to `ClientCreate`, which drops
+  `archived` from the update request type.
+- **Observed evidence/provenance:** the SDK wire regression
+  `wrapper/tests/create-client.test.ts` proves an `archived:true` client update
+  reaches the request body, while `mcp/tests/archive-then-delete.test.ts` proves
+  client deletion depends on that archive update occurring first. This entry
+  records those existing behavioral assertions plus the official/source
+  agreement; it is not a new live probe.
+- **Affected operations/tools:** `updateClient`; generated
+  `client.clients.update`; `clockify_clients_update` and
+  `clockify_clients_delete`; CLI `clients update` and the archive-before-delete
+  path; client resolution/rollback helpers that preserve editable state.
+- **Open questions:** none about the field itself. The remaining check is that
+  GOCLMCP source precedence selects the corrected update schema after a clean
+  regeneration.
+- **Status/resolution:** `pending-canonical-regeneration`. Correct the canonical
+  GOCLMCP source, refresh its source-manifest hash, run all GOCLMCP drift and Go
+  tests, then copy the committed canonical snapshot downstream and regenerate
+  the SDK. Do not treat the generated request type as fixed before that chain is
+  complete.
+
+### `tasks.create.billable-missing-from-create-request` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** the official schema family is internally
+  inconsistent: `TaskRequest` declares optional boolean `billable` with a
+  `false` default, while the create operation's `TaskRequestV1` omits it. The
+  current canonical snapshot preserves that split: `TaskRequest` has
+  `billable`, but `TaskCreateRequest` does not.
+- **Observed evidence/provenance:** CLI `tasks create --billable` deliberately
+  sends the field, and `cli/tests/read-commands-projects-tasks.test.ts` pins the
+  resulting create body. The current CLI must widen the generated body locally,
+  which is deterministic evidence of the schema/type mismatch; no new live
+  mutation was performed for this entry.
+- **Affected operations/tools:** `createTask`; generated
+  `client.tasks.create`; CLI `tasks create`; `clockify_tasks_create` and
+  work-package creation paths that should be able to express the same optional
+  create field.
+- **Open questions:** omission should retain Clockify's `false` default; no
+  claim is made that `billable` should become required.
+- **Status/resolution:** `pending-canonical-regeneration`. Add optional
+  `billable` to the canonical create schema at GOCLMCP source, refresh the
+  manifest and focused schema test, regenerate and pass every upstream drift
+  gate, then copy the committed snapshot and regenerate downstream. Until then,
+  the generated `TaskCreateRequest` remains incomplete.
+
+### `custom-fields.create.required-missing-from-request` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** both official `CustomFieldRequestV1` and
+  the current canonical `CreateCustomFieldRequest` omit the boolean `required`
+  property, even though the custom-field response and update schemas expose the
+  same mandatory-field setting.
+- **Observed evidence/provenance:** the downstream MCP create contract already
+  accepts and forwards `required`, including the important `required:false`
+  case, and `mcp/tests/customFields.test.ts` pins that exact body. This is prior
+  downstream behavioral provenance rather than a newly captured GOCLMCP live
+  fixture.
+- **Affected operations/tools:** `createCustomField` /
+  `createForWorkspace`; generated `client.customFields.createForWorkspace`;
+  `clockify_custom_fields_create`; any typed SDK consumer creating a mandatory
+  workspace custom field.
+- **Open questions:** whether an omitted value and explicit `false` are
+  observably different server-side remains unprobed; the correction therefore
+  keeps `required` optional and preserves explicit `false`.
+- **Status/resolution:** `pending-canonical-regeneration`. Add optional boolean
+  `required` to the canonical GOCLMCP create schema, refresh its manifest and
+  focused schema proof, complete the upstream generation/drift/Go-test chain,
+  then copy the committed snapshot and regenerate this SDK. The current
+  generated request must not yet be described as corrected.
+
+### `time-off-policies.create.approve-is-optional` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** the official policy write schema and the
+  current canonical `CreateTimeOffPolicyRequest` place `approve` in
+  `required[]`, so the generated create request requires a
+  `PolicyApprovalDto`.
+- **Observed evidence/provenance:** the existing downstream policy-create path
+  intentionally omits `approve`, and its prior live evidence/assertion says the
+  create succeeds without that object. There is **no committed GOCLMCP live
+  fixture** for the omission. This entry records that limited provenance
+  explicitly and does not invent a probe, response, or status code.
+- **Affected operations/tools:** `createTimeOffPolicy`; generated
+  `client.timeOffPolicies.create`; `clockify_time_off_policies_create`; any CLI
+  or SDK policy-create consumer currently forced to synthesize approval state.
+- **Open questions:** the exact server default approval object when `approve`
+  is omitted still needs a safe read-back fixture; omission is the only
+  established compatibility claim.
+- **Status/resolution:** `pending-canonical-regeneration`. Remove only
+  `approve` from the create schema's required list in canonical GOCLMCP source,
+  record the provenance caveat in its focused test, refresh the manifest and
+  pass all upstream gates, then copy the committed snapshot and regenerate the
+  SDK. It is not fixed merely because a downstream escape currently compiles.
+
+### `time-off-policies.response.missing-replacement-fields` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** official `PolicyDtoV1` and the current
+  canonical `Policy` response omit `color`, `icon`, and `hasExpiration`, while
+  the policy write schema supports `color`/`icon` and requires
+  `hasExpiration`. The read schema therefore cannot represent all state needed
+  to reconstruct a full replacement update.
+- **Observed evidence/provenance:** existing policy replacement fixtures in
+  `mcp/tests/time-off-policies.test.ts` and
+  `mcp/tests/time-off-resolve.test.ts` preserve these fields from the fetched
+  policy, including `color` and `hasExpiration`. They capture the downstream
+  replacement contract; this entry does not claim a new live probe.
+- **Affected operations/tools:** `getTimeOffPolicy`, `listTimeOffPolicies`, and
+  `updateTimeOffPolicy`; generated policy DTOs; `clockify_time_off_policies_get`,
+  `_list`, `_update`, and `_archive`; any safe GET-then-PUT policy workflow.
+- **Open questions:** response nullability/absence for legacy policies remains
+  to be confirmed. Generated response fields should reflect observed wire
+  optionality rather than inventing replacement defaults.
+- **Status/resolution:** `pending-canonical-regeneration`. Add
+  `hasExpiration`, `color`, and `icon` to the canonical GOCLMCP response DTO,
+  with types aligned to the write schema and focused tests, refresh the
+  manifest, pass upstream regeneration/drift/Go tests, then copy the committed
+  snapshot and regenerate downstream. Full-replacement consumers must keep
+  failing closed until that read state is available.
+
+### `invoices.update.missing-bill-from-and-client-address` — PENDING CANONICAL REGENERATION
+
+- **Official/current source claim:** invoice read DTOs expose `billFrom` and
+  `clientAddress`, but official `UpdateInvoiceRequestV1` and the current
+  canonical `UpdateInvoiceRequest` omit both fields. That request schema is
+  incomplete for an endpoint whose established semantics replace the invoice.
+- **Observed evidence/provenance:** the live-probed
+  `invoices.update.replace-and-tax-discount-zeroing` entry above records that a
+  sparse PUT drops omitted `billFrom` and `clientAddress`. The pure
+  `wrapper/tests/invoice-body.test.ts` and `mcp/tests/invoices.test.ts` fixtures
+  consequently pin preservation of both fields during GET-then-PUT rebuilds.
+- **Affected operations/tools:** `updateInvoice`; generated
+  `client.invoices.update`; `clockify_invoices_update` and the invoice-create
+  follow-up update; CLI invoice update/create flows; the shared invoice
+  replacement-body builder.
+- **Open questions:** legacy invoices may return either field empty or null;
+  request optionality/nullability must follow captured wire state rather than a
+  fabricated non-empty default.
+- **Status/resolution:** `pending-canonical-regeneration`. Add optional
+  `billFrom` and `clientAddress` to canonical GOCLMCP's update request schema,
+  refresh the manifest and focused schema tests, pass the complete upstream
+  generation/drift/Go-test chain, then copy the committed snapshot and
+  regenerate this SDK. Existing runtime preservation is compensation, not proof
+  that the generated request type is already fixed.
