@@ -54,6 +54,8 @@ spec/evidence/probes/*.hdr
 # rebuildable from source and intentionally not committed; distribution is a
 # separate maintainer decision.
 *.mcpb
+mcp/clockify115-mcp-*.spdx.json
+mcp/clockify115-mcp-*.build.json
 
 # Manifest-derived runtime constants. Generated before test/type-check/build.
 /wrapper/generated/

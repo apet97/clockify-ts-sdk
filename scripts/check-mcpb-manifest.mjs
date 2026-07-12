@@ -29,9 +29,22 @@ if (!isObject(manifest)) {
     fail("mcp/manifest.json must contain a JSON object");
 }
 
+let packageManifest;
+try {
+    packageManifest = JSON.parse(readFileSync("mcp/package.json", "utf8"));
+} catch (error) {
+    fail(`mcp/package.json could not be read as JSON: ${error.message}`);
+    packageManifest = {};
+}
+
 requireString(manifest.manifest_version, "manifest_version");
 requireString(manifest.name, "name");
 requireString(manifest.version, "version");
+if (manifest.version !== packageManifest.version) {
+    fail(
+        `version must match mcp/package.json version ${packageManifest.version}, got ${manifest.version}`,
+    );
+}
 
 if (!isObject(manifest.server)) {
     fail("server must be an object");

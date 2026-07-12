@@ -189,17 +189,17 @@ pack-snapshot-check:
 # command only — needs network and emits a binary, so it is intentionally NOT
 # wired into perfect-fast/perfect-full. Builds the wrapper + MCP first, then
 # stages a production install and packs it (scripts/build-mcpb.mjs).
-mcpb:
+mcpb: mcpb-validate
 	npm run build -w clockify-sdk-ts-115
 	npm run build -w @apet97/clockify-mcp-115
 	node scripts/build-mcpb.mjs
 
 mcpb-validate:
 	node scripts/check-mcpb-manifest.mjs
+	node --test scripts/mcpb-artifacts.test.mjs
 
-mcpb-smoke: mcpb-validate
-	$(MAKE) mcpb
-	npx --yes @anthropic-ai/mcpb@2.1.2 info mcp/clockify115-mcp-*.mcpb
+mcpb-smoke: mcpb
+	node scripts/smoke-mcpb.mjs
 
 goclmcp-drift:
 	@if [ ! -d ../GOCLMCP ]; then echo 'goclmcp-drift: ../GOCLMCP not found.' >&2; exit 1; fi
@@ -454,6 +454,9 @@ release-decision-plan:
 
 ci-contract:
 	node scripts/check-ci-contract.mjs
+	node --test scripts/check-mcp-release-workflow.test.mjs
+	node scripts/check-release-dispatch-guard.mjs
+	node scripts/test-release-workflow-sha-pins.mjs
 
 live-safety:
 	node scripts/check-live-safety.mjs
