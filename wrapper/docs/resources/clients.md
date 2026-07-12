@@ -56,6 +56,7 @@
 - `email` (`string`, optional)
 - `name` (`string`, required)
 - `note` (`string`, optional)
+- `archived` (`boolean`, optional) — Indicates if client will be archived or not.
 - `workspaceId` (`string`, required)
 - `clientId` (`string`, required)
 - `body` (`UpdateClientsRequestBody`, required)
@@ -64,6 +65,7 @@
 - `email` (`string`, optional)
 - `name` (`string`, required)
 - `note` (`string`, optional)
+- `archived` (`boolean`, optional) — Indicates if client will be archived or not.
 
 ### `delete`
 

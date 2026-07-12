@@ -29,6 +29,7 @@
 - `contains-assignee` (`boolean`, optional) — Flag to set whether task will have assignee or none.
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
+- `billable` (`boolean`, optional) — Indicates whether a task is billable or not.
 - `budgetEstimate` (`number`, optional) — Represents a task budget estimate as long.
 - `estimate` (`string`, optional) — Represents a task duration estimate in ISO-8601 format.
 - `id` (`string`, optional) — Represents task identifier across the system.
@@ -41,6 +42,7 @@
 - `body` (`TaskCreateRequestBody`, required)
 - `assigneeId` (`string`, optional) — Deprecated task assignee identifier.
 - `assigneeIds` (`string[]`, optional) — Represents list of assignee ids for the task.
+- `billable` (`boolean`, optional) — Indicates whether a task is billable or not.
 - `budgetEstimate` (`number`, optional) — Represents a task budget estimate as long.
 - `estimate` (`string`, optional) — Represents a task duration estimate in ISO-8601 format.
 - `id` (`string`, optional) — Represents task identifier across the system.
