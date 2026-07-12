@@ -182,6 +182,20 @@ describe("ClockifyApiClient.fetch", () => {
         },
     );
 
+    it("rejects a non-HTTP loopback base before authentication", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const apiKey = vi.fn(() => "secret");
+        const sdk = new ClockifyApiClient({
+            apiKey,
+            environment: "ftp://localhost/api/v1",
+            fetch: dispatch,
+        });
+
+        await expect(sdk.fetch("users")).rejects.toThrow(/http.*https|scheme|protocol/i);
+        expect(apiKey).not.toHaveBeenCalled();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it("falls through an undefined base URL supplier to the environment", async () => {
         const dispatch = vi
             .fn<typeof fetch>()

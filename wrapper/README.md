@@ -575,9 +575,9 @@ await client.projects.list(
 );
 ```
 
-Timeouts throw `ClockifyApiTimeoutError`. Aborts throw a
-`ClockifyApiError`; `err.cause` carries the underlying
-`AbortError`.
+Timeouts throw `ClockifyApiTimeoutError`. Caller aborts reject with the
+effective signal's exact `reason` (including custom `Error` or primitive
+reasons), so cancellation remains distinguishable from SDK timeouts.
 
 ### `timeoutMs` shorthand
 
