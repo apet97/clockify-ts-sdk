@@ -37,9 +37,9 @@ describe("invoiceUpdateBodyFromExisting", () => {
         expect(body.taxPercent).toBe(15);
         expect(body.tax2Percent).toBe(0);
         // The raw GET names must NOT leak into the PUT body.
-        expect(body.discount).toBeUndefined();
-        expect(body.tax).toBeUndefined();
-        expect(body.tax2).toBeUndefined();
+        expect(body).not.toHaveProperty("discount");
+        expect(body).not.toHaveProperty("tax");
+        expect(body).not.toHaveProperty("tax2");
     });
 
     it("rebuilds the full editable set so a sparse update never wipes fields", () => {
@@ -58,29 +58,49 @@ describe("invoiceUpdateBodyFromExisting", () => {
 
     it("never copies read-only/computed fields the PUT rejects", () => {
         const body = invoiceUpdateBodyFromExisting(existingInvoice());
-        for (const readOnly of ["amount", "balance", "status", "subtotal", "taxAmount", "items", "id"]) {
-            expect(body[readOnly]).toBeUndefined();
+        for (const readOnly of [
+            "amount",
+            "balance",
+            "status",
+            "subtotal",
+            "taxAmount",
+            "items",
+            "id",
+        ]) {
+            expect(body).not.toHaveProperty(readOnly);
         }
     });
 
     it("lets a caller's *Percent patch override the carried-forward value", () => {
-        const body = invoiceUpdateBodyFromExisting(existingInvoice(), { taxPercent: 20, discountPercent: 0 });
+        const body = invoiceUpdateBodyFromExisting(existingInvoice(), {
+            taxPercent: 20,
+            discountPercent: 0,
+        });
         expect(body.taxPercent).toBe(20);
         expect(body.discountPercent).toBe(0);
     });
 
     it("applies note/subject from the patch (the create-time follow-up path)", () => {
         // Create POSTs a placeholder note/subject; the follow-up PUT applies the real ones.
-        const placeholder = { clientId: "c1", currency: "USD", note: "INPUT BILL INFO HERE", subject: "SUBJECT" };
-        const body = invoiceUpdateBodyFromExisting(placeholder, { note: "Real note", subject: "Real subject" });
+        const placeholder = {
+            ...existingInvoice(),
+            note: "INPUT BILL INFO HERE",
+            subject: "SUBJECT",
+        };
+        const body = invoiceUpdateBodyFromExisting(placeholder, {
+            note: "Real note",
+            subject: "Real subject",
+        });
         expect(body.note).toBe("Real note");
         expect(body.subject).toBe("Real subject");
     });
 
-    it("omits a percent field that is absent or non-numeric on the GET", () => {
-        const body = invoiceUpdateBodyFromExisting({ clientId: "c1", tax: "oops" as unknown as number });
-        expect(body.taxPercent).toBeUndefined();
-        expect(body.discountPercent).toBeUndefined();
+    it("lets a valid patch reconstruct a non-numeric GET percentage", () => {
+        const body = invoiceUpdateBodyFromExisting(
+            { ...existingInvoice(), tax: "oops" },
+            { taxPercent: 7 },
+        );
+        expect(body.taxPercent).toBe(7);
     });
 
     it.each([
@@ -91,11 +111,14 @@ describe("invoiceUpdateBodyFromExisting", () => {
         ["discountPercent", { ...existingInvoice(), discount: Number.NaN }],
         ["taxPercent", { ...existingInvoice(), tax: Number.POSITIVE_INFINITY }],
         ["tax2Percent", { ...existingInvoice(), tax2: "missing" }],
-    ])("rejects before mutation when required replacement field %s cannot be reconstructed", (field, existing) => {
-        expect(() => invoiceUpdateBodyFromExisting(existing)).toThrow(
-            new RegExp(String(field), "i"),
-        );
-    });
+    ])(
+        "rejects before mutation when required replacement field %s cannot be reconstructed",
+        (field, existing) => {
+            expect(() => invoiceUpdateBodyFromExisting(existing)).toThrow(
+                new RegExp(String(field), "i"),
+            );
+        },
+    );
 
     it("preserves required zero percentages and optional empty strings", () => {
         const body = invoiceUpdateBodyFromExisting({
