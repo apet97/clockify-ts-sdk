@@ -127,10 +127,12 @@ describe("webhooks read and create commands", () => {
 
     it("list accepts a type filter and create works without trigger-source options", async () => {
         const calls: Record<string, unknown>[] = [];
+        const listOptions: unknown[] = [];
         const client = {
             webhooks: {
-                list: async (req: Record<string, unknown>) => {
+                list: async (req: Record<string, unknown>, options: unknown) => {
                     calls.push(req);
+                    listOptions.push(options);
                     return { webhooks: [] };
                 },
                 create: async (req: Record<string, unknown>) => {
@@ -155,7 +157,8 @@ describe("webhooks read and create commands", () => {
             "--type",
             "WEBHOOK",
         ]);
-        expect(calls[0]).toMatchObject({ type: "WEBHOOK" });
+        expect(calls[0]).toEqual({ workspaceId: "ws-1" });
+        expect(listOptions[0]).toEqual({ queryParams: { type: "WEBHOOK" } });
 
         await makeProgram(registerWebhooksCommand, client as unknown as ClockifyClient).parseAsync([
             "node",

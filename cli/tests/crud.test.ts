@@ -123,7 +123,7 @@ describe("clients CRUD", () => {
                     calls.creates.push(body);
                     return { id: "c-1", name };
                 },
-                get: async () => ({ id: "c-1", name }),
+                get: async () => ({ id: "c-1", name, archived: false }),
                 update: async (body: Record<string, unknown>) => {
                     calls.updates.push(body);
                     return { id: "c-1", name };
@@ -280,7 +280,12 @@ describe("tasks CRUD", () => {
         const calls: Calls = { updates: [], deletes: [], creates: [] };
         const client = {
             tasks: {
-                get: async () => ({ id: "tk-1", name: "QA" }),
+                get: async () => ({
+                    id: "tk-1",
+                    name: "QA",
+                    status: "ACTIVE",
+                    billable: false,
+                }),
                 create: async (body: Record<string, unknown>) => {
                     calls.creates.push(body);
                     return { id: "tk-1", name: body.name };
@@ -325,9 +330,8 @@ describe("tasks CRUD", () => {
             "tk-1",
         ]);
         expect(calls.updates[calls.updates.length - 1]).toMatchObject({
-            status: "DONE",
-            name: "QA",
             projectId: "p-1",
+            body: { status: "DONE", name: "QA", billable: false },
         });
         expect(calls.deletes).toHaveLength(1);
         expect(lastPayload().deleted).toBe(true);
@@ -492,10 +496,18 @@ describe("shared-reports CRUD", () => {
             "--type",
             "summary",
             "--filter",
-            '{"dateRangeStart":"x"}',
+            '{"dateRangeStart":"2026-06-01","dateRangeEnd":"2026-06-30","exportType":"JSON"}',
         ]);
         expect(calls.creates[0]).toMatchObject({
-            body: { name: "Weekly", type: "SUMMARY", filter: { dateRangeStart: "x" } },
+            body: {
+                name: "Weekly",
+                type: "SUMMARY",
+                filter: {
+                    dateRangeStart: "2026-06-01",
+                    dateRangeEnd: "2026-06-30",
+                    exportType: "JSON",
+                },
+            },
         });
         expect(lastPayload().action).toBe("shared-reports.create");
     });

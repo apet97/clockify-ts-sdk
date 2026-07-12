@@ -2,7 +2,7 @@
  * `clk115 clients {list,create,get,update,delete}`.
  */
 import { archiveThenDeleteClient } from "clockify-sdk-ts-115/ensure";
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -10,6 +10,57 @@ import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
 import type { Registrar } from "./types.js";
+
+type ClientUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateClientsRequest>;
+
+function requireClientName(value: unknown, source: string): string {
+    if (typeof value !== "string" || value.trim() === "") {
+        throw new Error(`${source} is missing the required client name; refusing to mutate.`);
+    }
+    return value;
+}
+
+function optionalClientString(value: unknown, field: string): string | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "string") {
+        throw new Error(`Current client has invalid ${field}; refusing to mutate.`);
+    }
+    return value;
+}
+
+function optionalNullableClientString(value: unknown, field: string): string | undefined {
+    if (value === null) return undefined;
+    return optionalClientString(value, field);
+}
+
+function requiredClientArchived(value: unknown): boolean {
+    if (typeof value !== "boolean") {
+        throw new Error("Current client has invalid or missing archived state; refusing to mutate.");
+    }
+    return value;
+}
+
+function reconstructClientBody(
+    current: Partial<ClockifyApi.Client>,
+    suppliedName?: unknown,
+): ClientUpdateBody {
+    const body: ClientUpdateBody = {
+        name:
+            suppliedName !== undefined
+                ? requireClientName(suppliedName, "Client update request")
+                : requireClientName(current.name, "Current client"),
+    };
+    const address = optionalNullableClientString(current.address, "address");
+    if (address !== undefined) body.address = address;
+    const currencyCode = optionalClientString(current.currencyCode, "currencyCode");
+    if (currencyCode !== undefined) body.currencyCode = currencyCode;
+    const email = optionalNullableClientString(current.email, "email");
+    if (email !== undefined) body.email = email;
+    const note = optionalNullableClientString(current.note, "note");
+    if (note !== undefined) body.note = note;
+    body.archived = requiredClientArchived(current.archived);
+    return body;
+}
 
 export const registerClientsCommand: Registrar = (program, services) => {
     const clients = program.command("clients").description("Manage clients.");
@@ -101,7 +152,7 @@ export const registerClientsCommand: Registrar = (program, services) => {
     clients
         .command("update")
         .argument("<id>", "Client ID.")
-        .requiredOption("--name <text>", "Client name (required by Clockify's replace update).")
+        .option("--name <text>", "Client name.")
         .option("--note <text>", "Client note.")
         .option("--address <text>", "Client address.")
         .option("--archived", "Archive the client.")
@@ -109,22 +160,45 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Update a client by ID.")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> & {
-                archived?: boolean;
-            } = { name: opts.name };
-            if (opts.note !== undefined) body.note = opts.note;
-            if (opts.address !== undefined) body.address = opts.address;
-            if (opts.archived !== undefined) body.archived = opts.archived;
-            const req = wireBody<ClockifyApi.UpdateClientsRequest>({
+            const hasChanges =
+                opts.name !== undefined ||
+                opts.note !== undefined ||
+                opts.address !== undefined ||
+                opts.archived !== undefined;
+            if (!hasChanges) {
+                throw new Error("clients.update requires at least one client field to change.");
+            }
+            const current = (await client.clients.get({
+                workspaceId,
+                clientId: id,
+            })) as Partial<ClockifyApi.Client>;
+            const body = reconstructClientBody(current, opts.name);
+            let changed = opts.name !== undefined && opts.name !== current.name;
+            if (opts.note !== undefined) {
+                changed = changed || opts.note !== body.note;
+                body.note = opts.note;
+            }
+            if (opts.address !== undefined) {
+                changed = changed || opts.address !== body.address;
+                body.address = opts.address;
+            }
+            if (opts.archived !== undefined) {
+                changed = changed || opts.archived !== body.archived;
+                body.archived = opts.archived;
+            }
+            if (!changed) {
+                throw new Error("clients.update values are unchanged; refusing to mutate.");
+            }
+            const req: ClockifyApi.UpdateClientsRequest = {
                 workspaceId,
                 clientId: id,
                 body,
-            });
+            };
             const updated = (await client.clients.update(req)) as {
                 id?: string;
                 name?: string;
             };
-            const data = { id: updated.id ?? id, name: updated.name ?? "" };
+            const data = { id: updated.id ?? id, name: updated.name ?? body.name };
             printReceipt(
                 {
                     ok: true,
@@ -150,9 +224,8 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // archiveThenDeleteClient owns the live-verified sequence (GET name →
-            // archive via the BODY-ENVELOPE PUT that bypasses the clients.update
-            // field whitelist → DELETE) and the empty-name guard: bare DELETE of an
+            // archiveThenDeleteClient owns the live-verified GET → typed replacement
+            // archive → DELETE sequence and its empty-name guard. Bare DELETE of an
             // ACTIVE client 400s and clients.archive 404s.
             await archiveThenDeleteClient({ workspaceId, id, resource: client.clients });
             printReceipt(

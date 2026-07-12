@@ -6,8 +6,9 @@
  * the reports-host baseUrl) and returns the rendered report payload. Mirrors
  * the seven P1-7 MCP `clockify_shared_reports_*` tools.
  */
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
+import { z } from "zod";
 
 import { printObject, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
@@ -56,15 +57,177 @@ const SHARED_REPORT_TYPES = [
     "TIMEOFF_HOLIDAY",
     "TIMEOFF_BALANCE",
     "EXPENSE_SUMMARY",
-];
+] as const;
 
-function parseFilter(raw: string): ClockifyRequestBody<ClockifyApi.SharedReportCreate>["filter"] {
+const SHARED_REPORT_EXPORT_TYPES = ["JSON_V1", "JSON", "CSV", "XLSX", "PDF"] as const;
+const SUMMARY_GROUPS = [
+    "CLIENT",
+    "PROJECT",
+    "TASK",
+    "DATE",
+    "WEEK",
+    "MONTH",
+    "TIMEENTRY",
+    "USER",
+    "TAG",
+] as const;
+
+const nonEmptyStringSchema = z
+    .string()
+    .refine((value) => value.trim() !== "", "must be a non-empty string.");
+const dateStringSchema = nonEmptyStringSchema.refine(
+    (value) => !Number.isNaN(Date.parse(value)),
+    "must be a valid date string.",
+);
+const upperCaseString = (value: unknown): unknown =>
+    typeof value === "string" ? value.toUpperCase() : value;
+const sharedReportTypeSchema = z.preprocess(upperCaseString, z.enum(SHARED_REPORT_TYPES));
+const sharedReportExportTypeSchema = z.preprocess(
+    upperCaseString,
+    z.enum(SHARED_REPORT_EXPORT_TYPES),
+);
+const openObjectSchema = z.record(z.unknown());
+const sharedUsersFilterSchema = z
+    .object({
+        contains: z.enum(["CONTAINS", "DOES_NOT_CONTAIN", "CONTAINS_ONLY"]).optional(),
+        ids: z.array(z.string()).optional(),
+        status: z.enum(["ALL", "ACTIVE", "INACTIVE"]).optional(),
+    })
+    .strict();
+const sharedAttendanceFilterSchema = z
+    .object({
+        page: z.number().finite().int().optional(),
+        pageSize: z.number().finite().int().optional(),
+        users: sharedUsersFilterSchema.optional(),
+    })
+    .strict();
+const sharedDetailedFilterSchema = z
+    .object({
+        auditFilter: openObjectSchema.optional(),
+        options: openObjectSchema.optional(),
+        page: z.number().finite().int().optional(),
+        pageSize: z.number().finite().int().optional(),
+        sortColumn: nonEmptyStringSchema.optional(),
+        sortOrder: z.enum(["ASCENDING", "DESCENDING"]).optional(),
+    })
+    .strict();
+const sharedSummaryFilterSchema = z
+    .object({
+        groups: z.array(z.enum(SUMMARY_GROUPS)).min(1).max(3),
+        sortColumn: nonEmptyStringSchema.optional(),
+    })
+    .strict();
+const sharedWeeklyFilterSchema = z
+    .object({
+        group: z.enum(["PROJECT", "USER"]),
+        subgroup: z.literal("TIME"),
+    })
+    .strict();
+const sharedReportFilterSchema = z
+    .object({
+        attendanceFilter: sharedAttendanceFilterSchema.optional(),
+        dateRangeEnd: dateStringSchema,
+        dateRangeStart: dateStringSchema,
+        detailedFilter: sharedDetailedFilterSchema.optional(),
+        exportType: sharedReportExportTypeSchema,
+        summaryFilter: sharedSummaryFilterSchema.optional(),
+        weeklyFilter: sharedWeeklyFilterSchema.optional(),
+    })
+    .strict();
+const sharedReportBodyShape = {
+    filter: sharedReportFilterSchema,
+    isPublic: z.boolean().optional(),
+    name: nonEmptyStringSchema,
+    type: sharedReportTypeSchema,
+} as const;
+const sharedReportCreateBodySchema = z.object(sharedReportBodyShape).strict();
+const sharedReportUpdateBodySchema = z.object(sharedReportBodyShape).strict();
+
+type ValidatedSharedReportBody = z.infer<typeof sharedReportCreateBodySchema>;
+type SharedReportBody = ClockifyRequestBody<ClockifyApi.SharedReportCreate>;
+
+function toSharedReportFilter(
+    value: z.infer<typeof sharedReportFilterSchema>,
+): ClockifyApi.SharedReportFilter {
+    return {
+        dateRangeEnd: value.dateRangeEnd,
+        dateRangeStart: value.dateRangeStart,
+        exportType: value.exportType,
+        ...(value.attendanceFilter !== undefined
+            ? {
+                  attendanceFilter: {
+                      ...(value.attendanceFilter.page !== undefined
+                          ? { page: value.attendanceFilter.page }
+                          : {}),
+                      ...(value.attendanceFilter.pageSize !== undefined
+                          ? { pageSize: value.attendanceFilter.pageSize }
+                          : {}),
+                      ...(value.attendanceFilter.users !== undefined
+                          ? { users: value.attendanceFilter.users }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.detailedFilter !== undefined
+            ? {
+                  detailedFilter: {
+                      ...(value.detailedFilter.auditFilter !== undefined
+                          ? { auditFilter: value.detailedFilter.auditFilter }
+                          : {}),
+                      ...(value.detailedFilter.options !== undefined
+                          ? { options: value.detailedFilter.options }
+                          : {}),
+                      ...(value.detailedFilter.page !== undefined
+                          ? { page: value.detailedFilter.page }
+                          : {}),
+                      ...(value.detailedFilter.pageSize !== undefined
+                          ? { pageSize: value.detailedFilter.pageSize }
+                          : {}),
+                      ...(value.detailedFilter.sortColumn !== undefined
+                          ? { sortColumn: value.detailedFilter.sortColumn }
+                          : {}),
+                      ...(value.detailedFilter.sortOrder !== undefined
+                          ? { sortOrder: value.detailedFilter.sortOrder }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.summaryFilter !== undefined
+            ? {
+                  summaryFilter: {
+                      groups: value.summaryFilter.groups,
+                      ...(value.summaryFilter.sortColumn !== undefined
+                          ? { sortColumn: value.summaryFilter.sortColumn }
+                          : {}),
+                  },
+              }
+            : {}),
+        ...(value.weeklyFilter !== undefined
+            ? {
+                  weeklyFilter: {
+                      group: value.weeklyFilter.group,
+                      subgroup: value.weeklyFilter.subgroup,
+                  },
+              }
+            : {}),
+    };
+}
+
+function toSharedReportBody(value: ValidatedSharedReportBody): SharedReportBody {
+    return {
+        filter: toSharedReportFilter(value.filter),
+        name: value.name,
+        type: value.type,
+        ...(value.isPublic !== undefined ? { isPublic: value.isPublic } : {}),
+    };
+}
+
+function parseFilterJson(raw: unknown): unknown {
+    if (typeof raw !== "string") {
+        throw new Error("--filter must be a JSON object.");
+    }
     try {
-        const parsed: unknown = JSON.parse(raw);
-        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-            throw new Error("not an object");
-        }
-        return parsed as ClockifyRequestBody<ClockifyApi.SharedReportCreate>["filter"];
+        return JSON.parse(raw);
     } catch {
         throw new Error(
             `--filter must be a JSON object, e.g. '{"dateRangeStart":"…","dateRangeEnd":"…"}'`,
@@ -72,12 +235,63 @@ function parseFilter(raw: string): ClockifyRequestBody<ClockifyApi.SharedReportC
     }
 }
 
-function requireType(raw: string): ClockifyRequestBody<ClockifyApi.SharedReportCreate>["type"] {
-    const type = String(raw).toUpperCase();
-    if (!SHARED_REPORT_TYPES.includes(type)) {
-        throw new Error(`Unknown --type "${raw}". Use one of: ${SHARED_REPORT_TYPES.join(", ")}.`);
+function schemaIssueLabel(issue: z.ZodIssue, operation: string): string {
+    const [root, ...path] = issue.path;
+    if (root === "filter") {
+        return path.length > 0 ? `--filter ${path.join(".")}` : "--filter";
     }
-    return type as ClockifyRequestBody<ClockifyApi.SharedReportCreate>["type"];
+    if (root === "name") return "--name";
+    if (root === "type") return "--type";
+    return operation;
+}
+
+function sharedReportValidationError(
+    error: z.ZodError,
+    operation: string,
+    rawType: unknown,
+): Error {
+    const invalidTypeIssue = error.issues.find(
+        (issue) => issue.path[0] === "type" && issue.code === z.ZodIssueCode.invalid_enum_value,
+    );
+    if (invalidTypeIssue !== undefined) {
+        return new Error(
+            `Unknown --type "${String(rawType)}". Use one of: ${SHARED_REPORT_TYPES.join(", ")}.`,
+        );
+    }
+    const issue = error.issues[0];
+    if (issue === undefined) return new Error(`${operation}: invalid request.`);
+    if (
+        issue.path.length === 1 &&
+        issue.path[0] === "filter" &&
+        issue.code === z.ZodIssueCode.invalid_type &&
+        issue.expected === "object"
+    ) {
+        return new Error("--filter must be a JSON object.");
+    }
+    const label = schemaIssueLabel(issue, operation);
+    if (issue.code === z.ZodIssueCode.unrecognized_keys) {
+        const fieldKind = issue.path[0] === "filter" ? "filter field(s)" : "field(s)";
+        return new Error(`${label} has unknown ${fieldKind}: ${issue.keys.join(", ")}.`);
+    }
+    return new Error(`${label}: ${issue.message}`);
+}
+
+function parseSharedReportBody(
+    schema: typeof sharedReportCreateBodySchema,
+    opts: Record<string, unknown>,
+    operation: string,
+): SharedReportBody {
+    const candidate = {
+        name: opts.name,
+        type: opts.type,
+        filter: parseFilterJson(opts.filter),
+        ...(opts.public === true ? { isPublic: true } : {}),
+    };
+    const result = schema.safeParse(candidate);
+    if (!result.success) {
+        throw sharedReportValidationError(result.error, operation, opts.type);
+    }
+    return toSharedReportBody(result.data);
 }
 
 export const registerSharedReportsCommand: Registrar = (program, services) => {
@@ -126,16 +340,10 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("Create a shared (public-link) report.")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> = {
-                name: opts.name,
-                type: requireType(opts.type),
-                filter: parseFilter(opts.filter),
-            };
-            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
-            if (opts.public) body.isPublic = true;
-            const created = (await client.sharedReports.create(
-                wireBody<ClockifyApi.SharedReportCreate>({ workspaceId, body }),
-            )) as {
+            const body: ClockifyRequestBody<ClockifyApi.SharedReportCreate> =
+                parseSharedReportBody(sharedReportCreateBodySchema, opts, "shared-reports.create");
+            const request: ClockifyApi.SharedReportCreate = { workspaceId, body };
+            const created = (await client.sharedReports.create(request)) as {
                 id?: string;
                 name?: string;
             };
@@ -169,20 +377,17 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .description("Replace a shared report by ID (full replace of name, type, and filter).")
         .action(async function (this: Command, id: string, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> = {
-                name: opts.name,
-                type: requireType(opts.type),
-                filter: parseFilter(opts.filter),
+            const body: ClockifyRequestBody<ClockifyApi.UpdateSharedReportsRequest> =
+                parseSharedReportBody(sharedReportUpdateBodySchema, opts, "shared-reports.update");
+            const request: ClockifyApi.UpdateSharedReportsRequest = {
+                workspaceId,
+                sharedReportId: id,
+                body,
             };
-            // Wire field is `isPublic` (live-verified); sending `public` is a no-op.
-            if (opts.public) body.isPublic = true;
-            const updated = (await client.sharedReports.update(
-                wireBody<ClockifyApi.UpdateSharedReportsRequest>({
-                    workspaceId,
-                    sharedReportId: id,
-                    body,
-                }),
-            )) as { id?: string; name?: string };
+            const updated = (await client.sharedReports.update(request)) as {
+                id?: string;
+                name?: string;
+            };
             const data = { id: updated.id ?? id, name: updated.name ?? opts.name };
             printReceipt(
                 {
