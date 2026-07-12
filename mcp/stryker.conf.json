@@ -10,8 +10,8 @@
     "coverageAnalysis": "perTest",
     "mutate": [
         "mcp/src/orchestration/confirmation.ts",
-        "mcp/src/orchestration/confirm-guard.ts",
         "mcp/src/result.ts",
+        "mcp/src/tool-risk.ts",
         "!mcp/dist/**",
         "!mcp/*.config.*",
         "!mcp/tests/**",

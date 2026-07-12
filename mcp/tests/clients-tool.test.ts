@@ -438,8 +438,8 @@ describe("clockify_clients_delete confirm-guard", () => {
             arguments: { clientId: "c-1", dry_run: true },
         });
         expect(res.isError).toBeFalsy();
-        // Dry-run must not perform any read or write on the resource.
-        expect(captured.get).toBeUndefined();
+        // Dry-run reconstructs the exact archive request, but performs no mutation.
+        expect(captured.get).toEqual({ workspaceId: "ws-1", clientId: "c-1" });
         expect(captured.update).toBeUndefined();
         const json = envelope(res);
         expect(json.ok).toBe(true);
@@ -451,12 +451,22 @@ describe("clockify_clients_delete confirm-guard", () => {
             preview_hash?: string;
             risk_class?: string;
         };
-        expect(data.preview).toEqual({ action: "delete", entity: "client", id: "c-1" });
+        expect(data.preview).toMatchObject({
+            action: "delete",
+            entity: "client",
+            id: "c-1",
+            deleteRequest: { workspaceId: "ws-1", clientId: "c-1" },
+            archiveRequest: {
+                workspaceId: "ws-1",
+                clientId: "c-1",
+                body: { name: "Acme", archived: true },
+            },
+        });
         expect(typeof data.confirm_token).toBe("string");
         expect((data.confirm_token ?? "").length).toBeGreaterThan(0);
         expect(typeof data.expires_at).toBe("string");
         expect(typeof data.preview_hash).toBe("string");
-        expect(data.risk_class).toBe("client_delete");
+        expect(data.risk_class).toBe("destructive");
         const next = json.next as Array<{
             tool?: string;
             args?: { clientId?: string; confirm_token?: string };
@@ -499,7 +509,8 @@ describe("clockify_clients_delete confirm-guard", () => {
             arguments: { clientId: "c-2", confirm_token: token },
         });
         expect(res.isError).toBe(true);
-        expect(captured.get).toBeUndefined();
+        expect(captured.get).toEqual({ workspaceId: "ws-1", clientId: "c-1" });
+        expect(captured.update).toBeUndefined();
         expect((envelope(res).error as { code?: string }).code).toBe("invalid_request");
     });
 });

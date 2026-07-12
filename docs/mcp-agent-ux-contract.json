@@ -119,7 +119,7 @@
       "markers": [
         "dry_run",
         "confirm_token",
-        "destructiveHint: true"
+        "destructiveHint:true"
       ]
     }
   ],

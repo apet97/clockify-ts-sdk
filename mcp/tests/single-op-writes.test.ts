@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -59,7 +61,7 @@ describe("single-operation write tools", () => {
     it("clockify_entries_mark_invoiced defaults invoiced to true and passes the ids through", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(captureContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_entries_mark_invoiced",
             arguments: { timeEntryIds: ["te-1", "te-2"] },
         });
@@ -75,7 +77,7 @@ describe("single-operation write tools", () => {
     it("clockify_approvals_resubmit forwards period and periodStart", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(captureContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_approvals_resubmit",
             arguments: { period: "MONTHLY", periodStart: "2026-06-01T00:00:00Z" },
         });
@@ -90,7 +92,7 @@ describe("single-operation write tools", () => {
     it("clockify_invoices_import_time applies defaults and pins the invoice + workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(captureContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_invoices_import_time",
             arguments: {
                 invoiceId: "inv-1",

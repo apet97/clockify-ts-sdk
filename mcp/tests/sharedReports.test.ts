@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 const REPORT_ID = "000000000000000000000301";
@@ -207,7 +209,7 @@ describe("clockify_shared_reports_create", () => {
     it("wraps name/type/filter in a body envelope, pins the workspace, and emits a created receipt", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: {
                 name: "Q3 summary",
@@ -246,7 +248,7 @@ describe("clockify_shared_reports_create", () => {
     it("forwards public=false into the body (the !== undefined guard, not truthiness)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "Private", type: "DETAILED", filter: SHARED_FILTER, public: false },
         });
@@ -270,7 +272,7 @@ describe("clockify_shared_reports_create", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "anon", type: "WEEKLY", filter: SHARED_FILTER },
         });
@@ -285,7 +287,7 @@ describe("clockify_shared_reports_create", () => {
     it("rejects an empty name at the schema boundary before any write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "", type: "SUMMARY", filter: SHARED_FILTER },
         });
@@ -298,7 +300,7 @@ describe("clockify_shared_reports_create", () => {
     it("rejects an unsupported report type at the schema boundary before any write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "Bad type", type: "NOT_A_TYPE", filter: SHARED_FILTER },
         });
@@ -316,7 +318,7 @@ describe("clockify_shared_reports_create", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "X", type: "SUMMARY", filter: SHARED_FILTER },
         });
@@ -330,7 +332,7 @@ describe("clockify_shared_reports_create", () => {
     it("rejects a filter missing required dates/export type before any write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_create",
             arguments: { name: "Incomplete", type: "SUMMARY", filter: {} },
         });
@@ -344,7 +346,7 @@ describe("clockify_shared_reports_update", () => {
     it("full-replaces by id, pins the workspace + shared-report id, and emits an updated receipt", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_update",
             arguments: {
                 shared_report_id: REPORT_ID,
@@ -389,7 +391,7 @@ describe("clockify_shared_reports_update", () => {
     it("forwards public=true into the body envelope when supplied", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_update",
             arguments: {
                 shared_report_id: REPORT_ID,
@@ -411,7 +413,7 @@ describe("clockify_shared_reports_update", () => {
     it("rejects a missing shared_report_id at the schema boundary before any write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(sharedReportsContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_update",
             arguments: { name: "x", type: "SUMMARY", filter: SHARED_FILTER },
         });
@@ -450,7 +452,7 @@ describe("clockify_shared_reports_update", () => {
         async (_label, filter) => {
             const captured: Record<string, unknown> = {};
             const client = await connect(sharedReportsContext(captured));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_shared_reports_update",
                 arguments: {
                     shared_report_id: REPORT_ID,
@@ -474,7 +476,7 @@ describe("clockify_shared_reports_update", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_shared_reports_update",
             arguments: {
                 shared_report_id: REPORT_ID,
@@ -506,12 +508,22 @@ describe("clockify_shared_reports_delete", () => {
         const json = envelope(res);
         expect(json.ok).toBe(true);
         const data = json.data as {
-            preview: { action: string; entity: string; id: string };
+            preview: {
+                action: string;
+                entity: string;
+                id: string;
+                request: { workspaceId: string; sharedReportId: string };
+            };
             confirm_token: string;
             risk_class: string;
         };
-        expect(data.preview).toEqual({ action: "delete", entity: "shared_report", id: REPORT_ID });
-        expect(data.risk_class).toBe("shared_report_delete");
+        expect(data.preview).toEqual({
+            action: "delete",
+            entity: "shared_report",
+            id: REPORT_ID,
+            request: { workspaceId: "ws-1", sharedReportId: REPORT_ID },
+        });
+        expect(data.risk_class).toBe("destructive");
         expect(typeof data.confirm_token).toBe("string");
         // The `next` action re-invokes the same tool with the issued token.
         const next = json.next as Array<{ tool: string; args: { confirm_token: string } }>;

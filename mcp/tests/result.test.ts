@@ -4,7 +4,13 @@ import { ClockifyConnectionError } from "clockify-sdk-ts-115/errors";
 import { describe, expect, it } from "vitest";
 
 import { MissingCredentialsError } from "../src/client.js";
-import { defineTool, errorCodeForError, errorResult, successResult, type ToolHandler } from "../src/result.js";
+import {
+    defineTool,
+    errorCodeForError,
+    errorResult,
+    successResult,
+    type ToolHandler,
+} from "../src/result.js";
 
 describe("successResult", () => {
     it("wraps the payload in {ok:true, action, data}", () => {
@@ -124,8 +130,12 @@ describe("errorResult", () => {
     it("maps 401/403 to auth_or_permission, 429 to rate_limited", () => {
         const out401 = errorResult("x", Object.assign(new Error("nope"), { statusCode: 401 }));
         const out429 = errorResult("x", Object.assign(new Error("slow"), { statusCode: 429 }));
-        expect(JSON.parse((out401.content[0] as { text: string }).text).error.code).toBe("auth_or_permission");
-        expect(JSON.parse((out429.content[0] as { text: string }).text).error.code).toBe("rate_limited");
+        expect(JSON.parse((out401.content[0] as { text: string }).text).error.code).toBe(
+            "auth_or_permission",
+        );
+        expect(JSON.parse((out429.content[0] as { text: string }).text).error.code).toBe(
+            "rate_limited",
+        );
     });
 
     it("falls back to 'error' for unknown shapes", () => {
@@ -135,7 +145,10 @@ describe("errorResult", () => {
     });
 
     it("maps confirmation-token failures to invalid_request", () => {
-        const out = errorResult("clockify_setup_webhook", new Error("confirmation token does not match this tool call"));
+        const out = errorResult(
+            "clockify_setup_webhook",
+            new Error("confirmation token does not match this tool call"),
+        );
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
         expect(parsed.error).toEqual({
             code: "invalid_request",
@@ -155,7 +168,10 @@ describe("errorResult", () => {
     it("classifies a connection error (statusCode null) as connection_error even when the message says 'workspace'", () => {
         // Without the cause-aware classifier, the message-regex fallback would match
         // /workspace/ and mislabel this as auth_or_permission (retryable:false).
-        const err = new ClockifyConnectionError({ message: "request to workspace API failed", cause: new Error("ENOTFOUND") });
+        const err = new ClockifyConnectionError({
+            message: "request to workspace API failed",
+            cause: new Error("ENOTFOUND"),
+        });
         const out = errorResult("clockify_status", err);
         const parsed = JSON.parse((out.content[0] as { text: string }).text);
         expect(parsed.error.code).toBe("connection_error");
@@ -194,7 +210,10 @@ describe("errorResult", () => {
     });
 
     it("maps a MissingCredentialsError to a setup_required envelope", () => {
-        const out = errorResult("clockify_status", new MissingCredentialsError(["CLOCKIFY_API_KEY"]));
+        const out = errorResult(
+            "clockify_status",
+            new MissingCredentialsError(["CLOCKIFY_API_KEY"]),
+        );
         expect(out.isError).toBe(true);
         const parsed = JSON.parse((out.content as Array<{ text: string }>)[0]!.text);
         expect(parsed.ok).toBe(false);
@@ -216,13 +235,19 @@ describe("errorResult", () => {
 
 describe("errorCodeForError", () => {
     it("derives the stable code with errorResult's precedence", () => {
-        expect(errorCodeForError(Object.assign(new Error("x"), { statusCode: 403 }))).toBe("auth_or_permission");
+        expect(errorCodeForError(Object.assign(new Error("x"), { statusCode: 403 }))).toBe(
+            "auth_or_permission",
+        );
         expect(errorCodeForError("plain string")).toBe("error");
     });
 });
 
 describe("defineTool", () => {
-    type Handler = (args: Record<string, unknown>, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+    const toolName = "clockify_status" as const;
+    type Handler = (
+        args: Record<string, unknown>,
+        extra: unknown,
+    ) => CallToolResult | Promise<CallToolResult>;
     // Capture the wrapped callback defineTool hands to server.registerTool, so we can
     // invoke it and assert the try/catch envelope behavior.
     function register(handler: ToolHandler, recovery?: string): Handler {
@@ -232,18 +257,24 @@ describe("defineTool", () => {
                 captured = cb;
             },
         } as unknown as McpServer;
-        defineTool(fakeServer, "clockify_test_tool", { title: "Test", description: "Test tool envelope." }, handler, recovery);
+        defineTool(
+            fakeServer,
+            toolName,
+            { title: "Test", description: "Test tool envelope." },
+            handler,
+            recovery,
+        );
         if (!captured) throw new Error("registerTool was not called");
         return captured;
     }
 
     it("passes a successful handler result through unchanged", async () => {
-        const run = register(async () => successResult("clockify_test_tool", { ran: true }));
+        const run = register(async () => successResult(toolName, { ran: true }));
         const out = await run({}, {});
         expect(out.isError).toBeUndefined();
         expect(JSON.parse((out.content[0] as { text: string }).text)).toMatchObject({
             ok: true,
-            action: "clockify_test_tool",
+            action: toolName,
             data: { ran: true },
         });
     });
@@ -256,7 +287,7 @@ describe("defineTool", () => {
         expect(out.isError).toBe(true);
         expect(JSON.parse((out.content[0] as { text: string }).text)).toMatchObject({
             ok: false,
-            action: "clockify_test_tool",
+            action: toolName,
             error: { code: "not_found", message: "Not Found" },
             recovery: { hint: "Check the id." },
         });

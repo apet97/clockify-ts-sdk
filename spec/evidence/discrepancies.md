@@ -2028,7 +2028,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `mcp/tests/invoices.test.ts`.
 - Re-verified 2026-06-21 (read-side): live GET of sandbox invoices still returns tax/discount as ×100-scaled integers — #13 `tax:1500`/`discount:800` (15%/8%), #18/#30/INV-2026-042 `tax:2500` (25%) over an integer `subtotal` (100000 = $1,000.00). The GET-then-PUT ÷100 compensator (`INVOICE_PERCENT_FIELD_MAP`) is unchanged; the destructive verbatim-sparse-PUT zeroing was not re-exercised (it would mutate live invoices).
 
-### `invoices.create.note-subject-dropped` — COMPENSATED 2026-06-14
+### `invoices.create.note-subject-dropped` — COMPENSATED 2026-07-12
 
 - **Official claim:** `POST /invoices` accepts `note`/`subject`.
 - **Actual behavior (addon live-probe 2026-06-11):** POST accepts ONLY
@@ -2038,9 +2038,16 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
 - **Live evidence:** addon `src/clockify/rest/invoices.ts:219-242` + unit test.
 - **MCP tools affected:** `clockify_invoices_create`.
 - **Open questions:** none.
-- **Status:** `compensated-in-tool-layer`. `clockify_invoices_create` now accepts
-  note/subject and applies them via the verified GET-then-PUT path after create.
-- Re-verified 2026-06-21 (read-side): every API-created sandbox invoice GETs back the workspace placeholder `note:"INPUT BILL INFO HERE"` / `subject:"SUBJECT EXAMPLE - CHANGABLE"` (#13/#18/#30/INV-2026-042), consistent with POST still dropping both — the post-create GET-then-PUT compensator is still required.
+- **Status:** `compensated-in-tool-layer` (fail closed). `clockify_invoices_create` rejects
+  note/subject during guarded preview, issues no token, and directs the caller to
+  create the draft first and then use guarded `clockify_invoices_update`. This
+  keeps execution bound to the exact stored create request instead of building an
+  unpreviewable replacement request around a future invoice ID.
+- Re-verified 2026-06-21 (read-side): every API-created sandbox invoice GETs back
+  the workspace placeholder `note:"INPUT BILL INFO HERE"` /
+  `subject:"SUBJECT EXAMPLE - CHANGABLE"` (#13/#18/#30/INV-2026-042), consistent
+  with POST still dropping both. The create tool therefore fails closed on these
+  fields; the separately previewed update tool remains the supported path.
 
 ### `money.amount-units.expenses-major-invoices-minor` — COMPENSATED 2026-06-14
 
@@ -2848,8 +2855,8 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `wrapper/tests/invoice-body.test.ts` and `mcp/tests/invoices.test.ts` fixtures
   consequently pin preservation of both fields during GET-then-PUT rebuilds.
 - **Affected operations/tools:** `updateInvoice`; generated
-  `client.invoices.update`; `clockify_invoices_update` and the invoice-create
-  follow-up update; CLI invoice update/create flows; the shared invoice
+  `client.invoices.update`; guarded `clockify_invoices_update`; CLI invoice
+  update flows; the shared invoice
   replacement-body builder.
 - **Open questions:** legacy invoices may return either field empty or null;
   request optionality/nullability must follow captured wire state rather than a

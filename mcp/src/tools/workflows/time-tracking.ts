@@ -316,7 +316,3 @@ function isRecordArray(value: unknown): value is Record<string, unknown>[] {
         value.every((item) => item !== null && typeof item === "object" && !Array.isArray(item))
     );
 }
-
-// maybeConfirm delegates to the shared requireConfirmation guard so the
-// workflow surface and the destructive domain delete tools run one
-// implementation of the dry_run -> confirm_token handshake. Behaviour is

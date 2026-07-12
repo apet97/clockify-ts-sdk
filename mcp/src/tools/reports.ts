@@ -411,7 +411,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     'e.g. { "groups": ["PROJECT", "TASK"] }',
                 ),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const request: ClockifyApi.SummaryReportsRequest = {
@@ -448,7 +448,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                 ...reportCore,
                 detailedFilter: detailedFilterSchema.describe('e.g. { "page": 1, "pageSize": 50 }'),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const request: ClockifyApi.DetailedReportsRequest = {
@@ -481,7 +481,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     'e.g. { "group": "USER", "subgroup": "TIME" }',
                 ),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const request: ClockifyApi.WeeklyReportsRequest = {
@@ -515,7 +515,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     'e.g. { "page": 1, "pageSize": 50, "hasTimeOff": true }',
                 ),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const request: ClockifyApi.AttendanceReportsRequest = {
@@ -550,7 +550,7 @@ export function registerReportsTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Validated optional expense-report fields"),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const request: ClockifyApi.GenerateDetailedReportV1ExpenseReportRequest = {

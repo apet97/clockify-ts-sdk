@@ -73,10 +73,11 @@ subdirectory:
   surface. Domain tools provide broad CRUDL coverage including the four
   report tools; the raw API fallback remains the Go MCP's niche. Local
   build artefact: `mcp/dist/`.
-  MCP write-safety is part of this product contract: high-risk
-  workflow writes and destructive domain deletes share the
-  `dry_run` -> `confirm_token` guard in
-  `mcp/src/orchestration/confirm-guard.ts`, while
+  MCP write-safety is part of this product contract: every tool has a
+  governed runtime risk class in `mcp/src/tool-risk.ts`; business,
+  external-side-effect, privileged, and destructive writes use the
+  exact-stored-preview `dry_run` -> `confirm_token` registration path in
+  `mcp/src/result.ts` and `mcp/src/orchestration/confirmation.ts`, while
   `clockify_setup_webhook` validates callback URLs through
   `mcp/src/orchestration/webhook-url.ts` before either preview or
   creation. That webhook guard is intentionally offline and covers

@@ -327,7 +327,8 @@ describe("workflow tools", () => {
         expect(
             tools.find((tool) => tool.name === "clockify_setup_webhook")?.annotations,
         ).toMatchObject({
-            destructiveHint: true,
+            destructiveHint: false,
+            openWorldHint: true,
         });
     });
 
@@ -560,9 +561,12 @@ describe("workflow tools", () => {
             entity: "confirmation",
             data: {
                 preview: expect.objectContaining({
-                    name: "Audit",
-                    triggerSourceType: "WORKSPACE_ID",
-                    triggerSource: ["ws-1"],
+                    workspaceId: "ws-1",
+                    body: expect.objectContaining({
+                        name: "Audit",
+                        triggerSourceType: "WORKSPACE_ID",
+                        triggerSource: ["ws-1"],
+                    }),
                 }),
             },
         });
@@ -683,7 +687,7 @@ describe("workflow tools", () => {
         const client = await connect(ctx);
         const res = await client.callTool({
             name: "clockify_request_time_off",
-            arguments: { policy_id: "pol-1", start: "2026-07-01" },
+            arguments: { policy_id: "pol-1", start: "2026-07-01", dry_run: true },
         });
         expect(res.isError).toBe(true);
         const env = parse(res);
@@ -915,7 +919,7 @@ describe("workflow tools", () => {
         expect(previewRes.isError).toBeFalsy();
         const preview = parse(previewRes);
         expect(preview.ok).toBe(true);
-        expect((preview.data as { preview: Record<string, unknown> }).preview).toEqual({
+        expect((preview.data as { preview: Record<string, unknown> }).preview).toMatchObject({
             prefix: "DEMO-clean",
             entries: 1,
             projects: 1,
@@ -925,7 +929,13 @@ describe("workflow tools", () => {
         });
         const confirmToken = (preview.data as { confirm_token: string }).confirm_token;
         expect(typeof confirmToken).toBe("string");
-        expect(ctx.state.cleanupRequests).toEqual([]);
+        const previewRequests = [...ctx.state.cleanupRequests];
+        expect(previewRequests).toEqual(
+            expect.arrayContaining([
+                { type: "task.get", body: expect.objectContaining({ taskId: "ta-demo" }) },
+                { type: "client.get", body: expect.objectContaining({ clientId: "c-demo" }) },
+            ]),
+        );
         expect(ctx.state.clients).toHaveLength(2);
         expect(ctx.state.entries).toHaveLength(2);
 
@@ -936,7 +946,7 @@ describe("workflow tools", () => {
         });
         expect(refused.isError).toBe(true);
         expect(parse(refused).ok).toBe(false);
-        expect(ctx.state.cleanupRequests).toEqual([]);
+        expect(ctx.state.cleanupRequests).toEqual(previewRequests);
 
         // The confirm_token executes the archive-then-delete cleanup.
         const res = await client.callTool({

@@ -1,3 +1,4 @@
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 
 import { assertSafeWebhookUrl } from "../../orchestration/webhook-url.js";
@@ -6,7 +7,6 @@ import { redactWebhook } from "../webhooks.js";
 
 import {
     idOf,
-    maybeConfirm,
     normalizeDate,
     ref,
     resolveClientId,
@@ -91,6 +91,12 @@ void _webhookEventsExhaustive;
 
 const WEBHOOK_EVENT_SET: ReadonlySet<string> = new Set(WEBHOOK_EVENTS);
 
+interface TimeOffRequestPreview {
+    workspaceId: string;
+    policyId: string;
+    body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest>;
+}
+
 function requiredFiniteNumber(value: unknown, name: string): number {
     if (typeof value !== "number" || !Number.isFinite(value)) {
         throw new TypeError(`${name} must be a finite number`);
@@ -122,7 +128,7 @@ export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
         Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 14),
     );
     const dueDate = due.toISOString().slice(0, 10);
-    const preview = {
+    return {
         workspaceId: ctx.workspaceId,
         clientId,
         number:
@@ -132,16 +138,18 @@ export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
         issuedDate: normalizeDate(str(args.issued_date) || todayDate),
         dueDate: normalizeDate(str(args.due_date) || dueDate),
     } satisfies ClockifyApi.InvoiceCreateRequest;
-    const confirmation = maybeConfirm(
-        ctx,
-        "clockify_invoice_client_work",
-        "billing_write",
-        args,
-        preview,
-    );
-    if (confirmation) return confirmation;
+}
+
+export async function executeInvoiceClientWork(
+    ctx: Context,
+    preview: Awaited<ReturnType<typeof invoiceClientWork>>,
+) {
     const invoice = await ctx.client.invoices.create(preview);
-    const ids = { workspaceId: ctx.workspaceId, clientId, invoiceId: idOf(invoice) };
+    const ids = {
+        workspaceId: preview.workspaceId,
+        clientId: preview.clientId,
+        invoiceId: idOf(invoice),
+    };
     return successResult(
         "clockify_invoice_client_work",
         invoice,
@@ -183,7 +191,7 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
         (ctx.currentUserId
             ? await ctx.currentUserId()
             : idOf(await ctx.client.users.getCurrentUser()));
-    const preview = {
+    return {
         workspaceId: ctx.workspaceId,
         amount,
         categoryId,
@@ -194,14 +202,12 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
         ...(str(args.notes) ? { notes: str(args.notes) } : {}),
         ...(billable !== undefined ? { billable } : {}),
     } satisfies ClockifyApi.ExpenseCreateRequest;
-    const confirmation = maybeConfirm(
-        ctx,
-        "clockify_record_expense",
-        "expense_write",
-        args,
-        preview,
-    );
-    if (confirmation) return confirmation;
+}
+
+export async function executeRecordExpense(
+    ctx: Context,
+    preview: Awaited<ReturnType<typeof recordExpense>>,
+) {
     const expense = await ctx.client.expenses.create(preview);
     return successResult(
         "clockify_record_expense",
@@ -212,9 +218,9 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
             ids: {
                 workspaceId: ctx.workspaceId,
                 expenseId: idOf(expense),
-                categoryId,
-                projectId,
-                userId,
+                categoryId: preview.categoryId,
+                projectId: preview.projectId,
+                userId: preview.userId,
             },
             changed: { created: [ref("expense", expense)] },
             next: [
@@ -227,7 +233,10 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
     );
 }
 
-export async function requestTimeOff(ctx: Context, args: AnyRecord) {
+export async function requestTimeOff(
+    ctx: Context,
+    args: AnyRecord,
+): Promise<TimeOffRequestPreview | CallToolResult> {
     // The submit period shape is policy-unit dependent: DAYS-unit policies reject
     // {start,end} and want {start,days}; HOURS-unit policies want {start,end} and
     // reject days (live-verified 2026-06-21). The tool can't see the policy unit,
@@ -272,19 +281,14 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
             period,
         },
     };
-    const preview = {
+    return {
         workspaceId: ctx.workspaceId,
         policyId,
         body,
     } satisfies ClockifyApi.SubmitTimeOffRequest;
-    const confirmation = maybeConfirm(
-        ctx,
-        "clockify_request_time_off",
-        "time_off_write",
-        args,
-        preview,
-    );
-    if (confirmation) return confirmation;
+}
+
+export async function executeRequestTimeOff(ctx: Context, preview: TimeOffRequestPreview) {
     const request = await ctx.client.timeOff.submit(preview);
     return successResult(
         "clockify_request_time_off",
@@ -292,7 +296,11 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
         { workspaceId: ctx.workspaceId },
         {
             entity: "time_off_request",
-            ids: { workspaceId: ctx.workspaceId, requestId: idOf(request), policyId },
+            ids: {
+                workspaceId: preview.workspaceId,
+                requestId: idOf(request),
+                policyId: preview.policyId,
+            },
             changed: { created: [ref("time_off_request", request)] },
             next: [
                 {
@@ -322,7 +330,7 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
     const taskId =
         str(args.task_id) ||
         (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");
-    const preview = {
+    return {
         workspaceId: ctx.workspaceId,
         userId,
         projectId,
@@ -334,14 +342,12 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         ...(billable !== undefined ? { billable } : {}),
         ...(includeNonWorkingDays !== undefined ? { includeNonWorkingDays } : {}),
     } satisfies ClockifyApi.CreateRecurringSchedulingRequest;
-    const confirmation = maybeConfirm(
-        ctx,
-        "clockify_schedule_work",
-        "scheduling_write",
-        args,
-        preview,
-    );
-    if (confirmation) return confirmation;
+}
+
+export async function executeScheduleWork(
+    ctx: Context,
+    preview: Awaited<ReturnType<typeof scheduleWork>>,
+) {
     const created = await ctx.client.scheduling.createRecurring(preview);
     // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt.
     const assignment = Array.isArray(created) ? created[0] : created;
@@ -354,9 +360,9 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
             ids: {
                 workspaceId: ctx.workspaceId,
                 assignmentId: idOf(assignment),
-                userId,
-                projectId,
-                taskId,
+                userId: preview.userId,
+                projectId: preview.projectId,
+                taskId: preview.taskId ?? "",
             },
             changed: { created: [ref("assignment", assignment)] },
             next: [
@@ -378,23 +384,23 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
     const url = assertSafeWebhookUrl(str(args.url));
     const eventValue = str(args.webhook_event) || str(args.event);
     if (!eventValue) throw new Error("webhook_event is required");
-    const preview = {
-        name: str(args.name),
-        url: url.toString(),
-        webhookEvent: webhookEvent(eventValue),
-        triggerSourceType: "WORKSPACE_ID",
-        triggerSource: [ctx.workspaceId],
-    } satisfies ClockifyRequestBody<ClockifyApi.WebhookRequest>;
-    const confirmation = maybeConfirm(
-        ctx,
-        "clockify_setup_webhook",
-        "external_side_effect",
-        args,
-        preview,
-    );
-    if (confirmation) return confirmation;
-    const request: ClockifyApi.WebhookRequest = { workspaceId: ctx.workspaceId, body: preview };
-    const webhook = await ctx.client.webhooks.create(request);
+    return {
+        workspaceId: ctx.workspaceId,
+        body: {
+            name: str(args.name),
+            url: url.toString(),
+            webhookEvent: webhookEvent(eventValue),
+            triggerSourceType: "WORKSPACE_ID",
+            triggerSource: [ctx.workspaceId],
+        },
+    } satisfies ClockifyApi.WebhookRequest;
+}
+
+export async function executeSetupWebhook(
+    ctx: Context,
+    preview: Awaited<ReturnType<typeof setupWebhook>>,
+) {
+    const webhook = await ctx.client.webhooks.create(preview);
     return successResult(
         "clockify_setup_webhook",
         // Redact the authToken HMAC secret before it enters the result envelope —
@@ -404,7 +410,7 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
         {
             entity: "webhook",
             ids: { workspaceId: ctx.workspaceId, webhookId: idOf(webhook) },
-            changed: { created: [ref("webhook", webhook, preview.name)] },
+            changed: { created: [ref("webhook", webhook, preview.body.name)] },
             next: [
                 {
                     tool: "clockify_webhooks_get",

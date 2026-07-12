@@ -16,6 +16,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -458,7 +460,7 @@ describe("clockify_tasks_set_rate", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_tasks_set_rate",
             arguments: {
                 projectId: "proj-1",
@@ -502,7 +504,7 @@ describe("clockify_tasks_set_rate", () => {
                 },
             }),
         );
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_tasks_set_rate",
             arguments: { projectId: "proj-1", taskId: "t-1", rateKind: "HOURLY", amount: 50 },
         });
@@ -566,21 +568,22 @@ describe("clockify_tasks_delete confirm-guard handshake", () => {
             arguments: { projectId: "p-1", taskId: "t-1", dry_run: true },
         });
         expect(res.isError).toBeFalsy();
-        // No mutation on a preview.
-        expect(calls).toEqual([]);
+        // Preview reads current replacement state but performs no mutation.
+        expect(calls).toEqual(["get"]);
         const json = envelope(res);
         const data = json.data as {
             preview?: { action?: string; entity?: string; id?: string; projectId?: string };
             confirm_token?: string;
             risk_class?: string;
         };
-        expect(data.preview).toEqual({
+        expect(data.preview).toMatchObject({
             action: "delete",
             entity: "task",
             id: "t-1",
             projectId: "p-1",
+            deleteRequest: { workspaceId: "ws-1", projectId: "p-1", taskId: "t-1" },
         });
-        expect(data.risk_class).toBe("task_delete");
+        expect(data.risk_class).toBe("destructive");
         expect(typeof data.confirm_token).toBe("string");
         expect(data.confirm_token).toBeTruthy();
         // The `next` step echoes the same call with the token wired in.

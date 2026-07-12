@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -19,7 +21,10 @@ const SAM2 = "dddddddddddddddddddddddd";
 const ME = "eeeeeeeeeeeeeeeeeeeeeeee";
 const ENG = "ffffffffffffffffffffffff";
 
-function holidaysContext(captured: Record<string, unknown>, holiday?: Record<string, unknown>): Context {
+function holidaysContext(
+    captured: Record<string, unknown>,
+    holiday?: Record<string, unknown>,
+): Context {
     return {
         workspaceId: "ws-1",
         client: {
@@ -54,9 +59,7 @@ function holidaysContext(captured: Record<string, unknown>, holiday?: Record<str
                 getCurrentUser: async () => ({ id: ME }),
             },
             userGroups: {
-                list: async () => [
-                    { id: ENG, name: "Engineering" },
-                ],
+                list: async () => [{ id: ENG, name: "Engineering" }],
             },
         } as never,
     };
@@ -84,9 +87,14 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
     it("holidays_create resolves a user NAME to its id before scopeFilter", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
-            arguments: { name: "Holiday", startDate: "2026-12-25", endDate: "2026-12-25", userIds: ["Alice"] },
+            arguments: {
+                name: "Holiday",
+                startDate: "2026-12-25",
+                endDate: "2026-12-25",
+                userIds: ["Alice"],
+            },
         });
         expect(res.isError).toBeFalsy();
         const create = captured.create as { users?: { ids?: string[] } };
@@ -96,9 +104,14 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
     it("holidays_create resolves a group NAME to its id", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
-            arguments: { name: "Holiday", startDate: "2026-12-25", endDate: "2026-12-25", userGroupIds: ["Engineering"] },
+            arguments: {
+                name: "Holiday",
+                startDate: "2026-12-25",
+                endDate: "2026-12-25",
+                userGroupIds: ["Engineering"],
+            },
         });
         expect(res.isError).toBeFalsy();
         const create = captured.create as { userGroups?: { ids?: string[] } };
@@ -108,25 +121,40 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
     it("holidays_create returns a clarification and does NOT create on an ambiguous user name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
-            arguments: { name: "Holiday", startDate: "2026-12-25", endDate: "2026-12-25", userIds: ["Sam"] },
+            arguments: {
+                name: "Holiday",
+                startDate: "2026-12-25",
+                endDate: "2026-12-25",
+                userIds: ["Sam"],
+            },
         });
         expect(res.isError).toBeFalsy();
         const env = envelope(res);
         expect(env.ok).toBe(true);
-        const clarification = env.clarification as { field?: string; candidates?: Array<{ id: string }> };
+        const clarification = env.clarification as {
+            field?: string;
+            candidates?: Array<{ id: string }>;
+        };
         expect(clarification.field).toBe("userIds");
-        expect((clarification.candidates ?? []).map((c) => c.id).sort()).toEqual([SAM1, SAM2].sort());
+        expect((clarification.candidates ?? []).map((c) => c.id).sort()).toEqual(
+            [SAM1, SAM2].sort(),
+        );
         expect(captured.create).toBeUndefined();
     });
 
     it("holidays_create returns a clarification and does NOT create on an unknown user name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
-            arguments: { name: "Holiday", startDate: "2026-12-25", endDate: "2026-12-25", userIds: ["Nobody"] },
+            arguments: {
+                name: "Holiday",
+                startDate: "2026-12-25",
+                endDate: "2026-12-25",
+                userIds: ["Nobody"],
+            },
         });
         expect(res.isError).toBeFalsy();
         const env = envelope(res);
@@ -138,9 +166,14 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
     it("holidays_create passes a 24-hex userId through unchanged", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
-            arguments: { name: "Holiday", startDate: "2026-12-25", endDate: "2026-12-25", userIds: [ALICE] },
+            arguments: {
+                name: "Holiday",
+                startDate: "2026-12-25",
+                endDate: "2026-12-25",
+                userIds: [ALICE],
+            },
         });
         expect(res.isError).toBeFalsy();
         const create = captured.create as { users?: { ids?: string[] } };
@@ -158,7 +191,7 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
         };
         const client = await connect(holidaysContext(captured, existing));
         // Explicit name replaces the assignment -> resolves "Alice" to ALICE.
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", userIds: ["Alice"] },
         });
@@ -170,7 +203,7 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
         // (no name resolution, no rewrite).
         const captured2: Record<string, unknown> = {};
         const client2 = await connect(holidaysContext(captured2, existing));
-        const res2 = await client2.callTool({
+        const res2 = await callGuarded(client2, {
             name: "clockify_holidays_update",
             arguments: { holidayId: "hol-1", name: "Xmas" },
         });

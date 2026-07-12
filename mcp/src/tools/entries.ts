@@ -3,8 +3,14 @@ import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/reque
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
+import {
+    defineGuardedTool,
+    defineTool,
+    entityId,
+    errorResult,
+    successResult,
+    writeReceipt,
+} from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -23,7 +29,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 end: z.string().optional().describe("ISO 8601 upper bound (inclusive)."),
                 description: z.string().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             // Use the per-server single-flight memo (fetched at most once) when
@@ -85,7 +91,6 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             let start = args.start;
@@ -134,40 +139,32 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_entries_delete",
         {
             title: "Delete a time entry",
             description:
                 "Permanently delete one time entry by ID. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                timeEntryId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { timeEntryId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "time_entry", id: args.timeEntryId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_entries_delete",
-                "entry_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.timeEntries.delete({
-                workspaceId: ctx.workspaceId,
-                timeEntryId: args.timeEntryId,
-            });
-            return successResult(
-                "clockify_entries_delete",
-                { deleted: true, timeEntryId: args.timeEntryId },
-                undefined,
-                writeReceipt("deleted", "time_entry", args.timeEntryId),
-            );
+        {
+            preview: (args) => ({
+                action: "delete",
+                entity: "time_entry",
+                id: args.timeEntryId,
+                request: { workspaceId: ctx.workspaceId, timeEntryId: args.timeEntryId },
+            }),
+            execute: async (preview) => {
+                await ctx.client.timeEntries.delete(preview.request);
+                return successResult(
+                    "clockify_entries_delete",
+                    { deleted: true, timeEntryId: preview.id },
+                    undefined,
+                    writeReceipt("deleted", "time_entry", preview.id),
+                );
+            },
         },
     );
 
@@ -178,7 +175,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
             title: "Get a time entry",
             description: "Fetch one time entry by ID from the pinned Clockify workspace.",
             inputSchema: { timeEntryId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const entry = await ctx.client.timeEntries.get({
@@ -209,7 +206,7 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
@@ -238,8 +235,9 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_entries_mark_invoiced",
         {
             title: "Mark time entries invoiced",
@@ -249,30 +247,38 @@ export function registerEntriesTools(server: McpServer, ctx: Context): void {
                 timeEntryIds: z.array(z.string().min(1)).min(1),
                 invoiced: z.boolean().default(true).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const invoiced = args.invoiced ?? true;
-            await ctx.client.timeEntries.markInvoiced({
+        {
+            preview: (args) => ({
                 workspaceId: ctx.workspaceId,
-                timeEntryIds: args.timeEntryIds,
-                invoiced,
-            });
-            // One EntityRef per id — comma-joining every id into a single ref id
-            // emitted a malformed `changed.updated[].id` that no consumer could
-            // chain on.
-            return successResult(
-                "clockify_entries_mark_invoiced",
-                { invoiced, timeEntryIds: args.timeEntryIds },
-                { workspaceId: ctx.workspaceId, count: args.timeEntryIds.length },
-                {
-                    entity: "time_entry",
-                    changed: {
-                        updated: args.timeEntryIds.map((id) => ({ type: "time_entry", id })),
+                timeEntryIds: [...args.timeEntryIds],
+                invoiced: args.invoiced ?? true,
+            }),
+            execute: async (request) => {
+                await ctx.client.timeEntries.markInvoiced(request);
+                // One EntityRef per id — comma-joining every id into a single ref id
+                // emitted a malformed `changed.updated[].id` that no consumer could
+                // chain on.
+                return successResult(
+                    "clockify_entries_mark_invoiced",
+                    { invoiced: request.invoiced, timeEntryIds: request.timeEntryIds },
+                    {
+                        workspaceId: request.workspaceId,
+                        count: request.timeEntryIds.length,
                     },
-                    ids: { workspaceId: ctx.workspaceId },
-                },
-            );
+                    {
+                        entity: "time_entry",
+                        changed: {
+                            updated: request.timeEntryIds.map((id) => ({
+                                type: "time_entry",
+                                id,
+                            })),
+                        },
+                        ids: { workspaceId: request.workspaceId },
+                    },
+                );
+            },
         },
     );
 }

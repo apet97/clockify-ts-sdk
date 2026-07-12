@@ -7,6 +7,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildServer } from "../src/server.ts";
+import {
+    CONFIRMATION_META_KEY,
+    GUARDED_TOOL_RISKS,
+    RISK_META_KEY,
+    TOOL_RISK_BY_NAME,
+} from "../src/tool-risk.ts";
 
 import { fakeContext } from "./introspect-harness.mjs";
 
@@ -43,32 +49,71 @@ function render() {
         .map((name) => {
             const reg = registered[name];
             const annotations = reg.annotations ?? {};
+            const meta = reg._meta ?? {};
+            const risk = meta[RISK_META_KEY];
+            const confirmation = meta[CONFIRMATION_META_KEY];
+            const governedRisk = TOOL_RISK_BY_NAME[name];
+            if (governedRisk === undefined) {
+                throw new Error(`registered tool ${name} has no governed risk classification`);
+            }
+            if (risk !== governedRisk) {
+                throw new Error(
+                    `registered tool ${name} publishes risk ${JSON.stringify(risk)}; expected ${governedRisk}`,
+                );
+            }
+            const expectedConfirmation = GUARDED_TOOL_RISKS.includes(risk)
+                ? "preview_token"
+                : "none";
+            if (confirmation !== expectedConfirmation) {
+                throw new Error(
+                    `registered tool ${name} publishes confirmation ${JSON.stringify(confirmation)}; expected ${expectedConfirmation}`,
+                );
+            }
             return {
                 name,
                 title: typeof reg.title === "string" ? reg.title : "",
                 group: workflow.has(name) ? "workflow" : "domain",
+                risk,
+                confirmation,
                 annotations: {
                     readOnlyHint: annotations.readOnlyHint === true,
                     destructiveHint: annotations.destructiveHint === true,
                     idempotentHint: annotations.idempotentHint === true,
+                    openWorldHint: annotations.openWorldHint === true,
                 },
                 destructiveHint: annotations.destructiveHint === true,
             };
         });
+    const riskDistribution = Object.fromEntries(
+        [
+            "read",
+            "routine_write",
+            "business_write",
+            "external_side_effect",
+            "privileged",
+            "destructive",
+        ].map((risk) => [risk, tools.filter((tool) => tool.risk === risk).length]),
+    );
     const summary = {
         totalTools: tools.length,
         workflowTools: tools.filter((tool) => tool.group === "workflow").length,
         domainTools: tools.filter((tool) => tool.group === "domain").length,
         destructiveTools: tools.filter((tool) => tool.destructiveHint).length,
+        guardedTools: tools.filter((tool) => tool.confirmation === "preview_token").length,
+        riskDistribution,
     };
-    return `${JSON.stringify({
-        schemaVersion: 1,
-        purpose:
-            "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
-        generator: "mcp/scripts/generate-tool-manifest.mjs",
-        summary,
-        tools,
-    }, null, 2)}\n`;
+    return `${JSON.stringify(
+        {
+            schemaVersion: 2,
+            purpose:
+                "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
+            generator: "mcp/scripts/generate-tool-manifest.mjs",
+            summary,
+            tools,
+        },
+        null,
+        2,
+    )}\n`;
 }
 
 const content = render();

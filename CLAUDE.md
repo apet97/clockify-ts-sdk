@@ -271,22 +271,16 @@ make docs-drift
   create/update/delete tools populate `entity` + `changed` via the
   `writeReceipt` helper in `mcp/src/result.ts` (read-only tools stay
   receipt-free).
-- `defineTool(server, name, config, handler, recovery?)` in
-  `mcp/src/result.ts` is the registration seam every domain and
-  workflow tool now uses (no remaining raw `server.registerTool`
-  calls in `mcp/src/tools/**`). It forwards the per-tool Zod
-  `inputSchema` generic so the handler `args` keep their inferred
-  types, wraps the body in the shared `errorResult` catch, and still
-  routes through `server.registerTool` so the `output-schema.ts`
-  monkeypatch fires. `scripts/check-mcp-write-safety.mjs` matches
-  both the `defineTool(server, "...")` and legacy
-  `server.registerTool("...")` shapes — keep that matcher in sync if
-  the seam's call shape changes.
-- `mcp/src/orchestration/confirm-guard.ts` is the shared
-  `dry_run` -> `confirm_token` handshake for high-risk workflow
-  writes and destructive domain deletes (`entries`, `projects`,
-  `clients`, `tags`, `tasks`, `webhooks`). If semantics change,
-  update `docs/mcp-write-safety-contract.json`,
+- `defineTool(...)` and `defineGuardedTool(...)` in `mcp/src/result.ts`
+  are the only registration seams (no raw `server.registerTool` calls
+  in `mcp/src/tools/**`). `defineTool` accepts only `read` and
+  `routine_write` names; `defineGuardedTool` accepts only
+  `business_write`, `external_side_effect`, `privileged`, and
+  `destructive` names from `mcp/src/tool-risk.ts`. Both derive protocol
+  annotations and runtime risk metadata. Guarded tools store one
+  canonical preview for five minutes and execute that exact stored
+  preview once; token calls never recompute resolution or state. If
+  semantics change, update `docs/mcp-write-safety-contract.json`,
   `scripts/check-mcp-write-safety.mjs`, tests, and `mcp/README.md`
   together.
 - The holidays, timeOff (policy/request/balance), scheduling, groups
@@ -401,8 +395,8 @@ make docs-drift
   through the typed SDK client and local mock server.
 - `make mutation` runs Stryker against the hand-written wrapper helper
   modules and the MCP safety-critical modules
-  (`mcp/src/orchestration/confirmation.ts`,
-  `mcp/src/orchestration/confirm-guard.ts`, `mcp/src/result.ts`), then
+  (`mcp/src/orchestration/confirmation.ts`, `mcp/src/result.ts`,
+  `mcp/src/tool-risk.ts`), then
   enforces the `docs/mutation-score-contract.json` floors. The MCP run
   mutates the existing Vitest 4 suite — Stryker's vitest-runner accepts
   vitest >=2.0.0, so the unified vitest ^4 across wrapper/cli/mcp is

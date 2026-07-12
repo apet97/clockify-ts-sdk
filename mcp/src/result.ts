@@ -22,8 +22,9 @@ import type {
 } from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { classifyClockifyError } from "clockify-sdk-ts-115/errors";
+import { z } from "zod";
 
-import { MissingCredentialsError } from "./client.js";
+import { MissingCredentialsError, type Context } from "./client.js";
 import {
     errorCodeForMessage,
     errorCodeForStatus,
@@ -31,7 +32,19 @@ import {
     retryableForCode,
     type ClockifyErrorCode,
 } from "./error-codes.js";
+import { ConfirmationTokenStore, type ConfirmationScope } from "./orchestration/confirmation.js";
 import { MCP_RESULT_OUTPUT_SCHEMA } from "./output-schema.js";
+import {
+    CONFIRMATION_META_KEY,
+    type GuardedToolName,
+    RISK_META_KEY,
+    riskForGuardedTool,
+    riskForUnguardedTool,
+    type ToolRisk,
+    type UnguardedToolName,
+} from "./tool-risk.js";
+
+export { CONFIRMATION_META_KEY, RISK_META_KEY } from "./tool-risk.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -240,12 +253,13 @@ function hasChangeSet(changed: ChangeSet | undefined): changed is ChangeSet {
     });
 }
 
-/** The registerTool config shape; defineTool injects the canonical output schema. */
+/** Registration config intentionally excludes raw annotations and _meta. */
 export interface ToolConfig<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat> {
     title: string;
     description: string;
     inputSchema?: InputArgs;
-    annotations?: JsonRecord;
+    /** Controlled source for idempotentHint; risk-derived hints cannot be overridden. */
+    idempotent?: boolean;
 }
 
 /** A tool handler: receives the (schema-validated, per-tool-inferred) args and returns an envelope. */
@@ -263,28 +277,210 @@ export type ToolHandler<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>
  * per-tool Zod inference is preserved for the implementer (a zero-arg / no-`inputSchema`
  * tool falls back to the `ZodRawShapeCompat` default and stays working).
  *
- * The two `as never` casts sit on the
- * `registerTool` forwarding boundary, NOT on the handler's `args` — the same kind of
+ * The single `as never` cast sits on the
+ * `registerTool` callback boundary, NOT on the handler's `args` — the same kind of
  * sanctioned reflective bridge `output-schema.ts` uses; the JSON Schema the model sees
  * (and `server.test.ts` asserts) is unchanged.
  */
 export function defineTool<InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat>(
     server: McpServer,
-    name: string,
+    name: UnguardedToolName,
     config: ToolConfig<InputArgs>,
     handler: ToolHandler<InputArgs>,
     recovery?: string | RecoveryHint | RecoveryResolver,
 ): void {
+    const risk = riskForUnguardedTool(name);
+    server.registerTool(name, registrationConfig(config, risk, "none"), (async (
+        args: unknown,
+        extra: unknown,
+    ) => {
+        try {
+            return await handler(args as ShapeOutput<InputArgs>, extra);
+        } catch (err) {
+            return errorResult(name, err, recovery);
+        }
+    }) as never);
+}
+
+type GuardControlShape = {
+    dry_run: ReturnType<ReturnType<typeof z.boolean>["optional"]>;
+    confirm_token: ReturnType<ReturnType<typeof z.string>["optional"]>;
+};
+
+type GuardedArgs<InputArgs extends ZodRawShapeCompat> = ShapeOutput<InputArgs> & {
+    dry_run?: boolean;
+    confirm_token?: string;
+};
+
+export interface GuardedToolHandlers<InputArgs extends ZodRawShapeCompat, Preview> {
+    preview: (
+        args: ShapeOutput<InputArgs>,
+        extra: unknown,
+    ) => Preview | CallToolResult | Promise<Preview | CallToolResult>;
+    execute: (storedPreview: Preview, extra: unknown) => CallToolResult | Promise<CallToolResult>;
+}
+
+/**
+ * Register a guarded write around one preview and one execution callback.
+ * The dry-run result is canonically cloned into the confirmation store. Token
+ * calls never recompute the preview; execution receives only the stored clone.
+ */
+export function defineGuardedTool<
+    InputArgs extends ZodRawShapeCompat = ZodRawShapeCompat,
+    Preview = unknown,
+>(
+    server: McpServer,
+    ctx: Context,
+    name: GuardedToolName,
+    config: ToolConfig<InputArgs>,
+    handlers: GuardedToolHandlers<InputArgs, Preview>,
+    recovery?: string | RecoveryHint | RecoveryResolver,
+): void {
+    const risk = riskForGuardedTool(name);
+    const inputSchema = config.inputSchema ?? ({} as InputArgs);
+    if (
+        Object.prototype.hasOwnProperty.call(inputSchema, "dry_run") ||
+        Object.prototype.hasOwnProperty.call(inputSchema, "confirm_token")
+    ) {
+        throw new Error(`${name} guard controls are owned by defineGuardedTool`);
+    }
+    const guardedSchema = {
+        ...inputSchema,
+        dry_run: z.boolean().optional(),
+        confirm_token: z.string().min(1).optional(),
+    } as InputArgs & GuardControlShape;
+
     server.registerTool(
         name,
-        { ...config, outputSchema: MCP_RESULT_OUTPUT_SCHEMA } as never,
-        (async (args: unknown, extra: unknown) => {
+        registrationConfig({ ...config, inputSchema: guardedSchema }, risk, "preview_token"),
+        (async (rawArgs: unknown, extra: unknown) => {
             try {
-                return await handler(args as ShapeOutput<InputArgs>, extra);
+                const args = rawArgs as GuardedArgs<InputArgs>;
+                const hasDryRun = Object.prototype.hasOwnProperty.call(args, "dry_run");
+                const hasConfirmToken = Object.prototype.hasOwnProperty.call(args, "confirm_token");
+                const businessArgs = stripGuardControls(args) as ShapeOutput<InputArgs>;
+
+                if (hasDryRun && hasConfirmToken) {
+                    return errorResult(
+                        name,
+                        new Error(
+                            "invalid input: dry_run and confirm_token must not be supplied together",
+                        ),
+                    );
+                }
+
+                if (args.dry_run === true) {
+                    const workspaceId = ctx.workspaceId;
+                    const scope: ConfirmationScope = {
+                        toolName: name,
+                        workspaceId,
+                        risk,
+                        businessArgs,
+                    };
+                    const preview = await handlers.preview(businessArgs, extra);
+                    if (isCallToolResult(preview)) return preview;
+                    const store = confirmationStore(ctx);
+                    const issued = store.issue(scope, preview);
+                    return successResult(
+                        name,
+                        {
+                            preview,
+                            confirm_token: issued.confirmToken,
+                            expires_at: issued.expiresAt,
+                            preview_hash: issued.previewHash,
+                            risk_class: risk,
+                        },
+                        { workspaceId },
+                        {
+                            entity: "confirmation",
+                            ids: { workspaceId },
+                            next: [
+                                {
+                                    tool: name,
+                                    args: {
+                                        ...(businessArgs as JsonRecord),
+                                        confirm_token: issued.confirmToken,
+                                    },
+                                    reason: "Execute this preview.",
+                                },
+                            ],
+                        },
+                    );
+                }
+
+                if (typeof args.confirm_token === "string" && args.confirm_token.trim()) {
+                    const scope: ConfirmationScope = {
+                        toolName: name,
+                        workspaceId: ctx.workspaceId,
+                        risk,
+                        businessArgs,
+                    };
+                    const storedPreview = confirmationStore(ctx).consume(
+                        args.confirm_token.trim(),
+                        scope,
+                    ) as Preview;
+                    return await handlers.execute(storedPreview, extra);
+                }
+
+                return errorResult(
+                    name,
+                    new Error("dry_run confirmation required before executing this tool"),
+                    {
+                        hint: "Run this tool with dry_run:true, review the preview, then retry with the returned confirm_token.",
+                        tool: name,
+                        args: { ...(businessArgs as JsonRecord), dry_run: true },
+                        retryable: true,
+                    },
+                );
             } catch (err) {
                 return errorResult(name, err, recovery);
             }
         }) as never,
+    );
+}
+
+function registrationConfig<InputArgs extends ZodRawShapeCompat>(
+    config: ToolConfig<InputArgs>,
+    risk: ToolRisk,
+    confirmation: "none" | "preview_token",
+): JsonRecord {
+    const { idempotent, ...publicConfig } = config;
+    return {
+        ...publicConfig,
+        outputSchema: MCP_RESULT_OUTPUT_SCHEMA,
+        annotations: {
+            readOnlyHint: risk === "read",
+            destructiveHint: risk === "destructive",
+            idempotentHint: idempotent ?? risk === "read",
+            openWorldHint: risk === "external_side_effect",
+        },
+        _meta: {
+            [RISK_META_KEY]: risk,
+            [CONFIRMATION_META_KEY]: confirmation,
+        },
+    };
+}
+
+function stripGuardControls(args: Record<string, unknown>): JsonRecord {
+    const out: JsonRecord = {};
+    for (const [key, value] of Object.entries(args)) {
+        if (key !== "dry_run" && key !== "confirm_token" && value !== undefined) {
+            out[key] = value;
+        }
+    }
+    return out;
+}
+
+function confirmationStore(ctx: Context) {
+    ctx.confirmationTokens ??= new ConfirmationTokenStore();
+    return ctx.confirmationTokens;
+}
+
+function isCallToolResult(value: unknown): value is CallToolResult {
+    return Boolean(
+        value &&
+        typeof value === "object" &&
+        Array.isArray((value as { content?: unknown }).content),
     );
 }
 

@@ -13,8 +13,7 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../result.js";
 
 const INVOICE_STATUSES = ["UNSENT", "SENT", "PAID", "PARTIALLY_PAID", "VOID", "OVERDUE"] as const;
 const INVOICE_SORT_COLUMNS = ["ID", "CLIENT", "DUE_ON", "ISSUE_DATE", "AMOUNT", "BALANCE"] as const;
@@ -70,7 +69,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Sort order: ASCENDING | DESCENDING."),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             // ListInvoicesRequest is typed for the live GET route: `statuses` is an
@@ -113,7 +111,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             title: "Get an invoice",
             description: "Fetch a single invoice by ID, including its line items.",
             inputSchema: { invoiceId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const invoice = await ctx.client.invoices.get({
@@ -127,8 +124,9 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoices_create",
         {
             title: "Create an invoice draft",
@@ -144,56 +142,58 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 note: z
                     .string()
                     .optional()
-                    .describe("Billing note. POST drops it; applied via a follow-up update."),
+                    .describe(
+                        "Not accepted on create; create the draft, then use invoices_update.",
+                    ),
                 subject: z
                     .string()
                     .optional()
-                    .describe("Invoice subject. POST drops it; applied via a follow-up update."),
+                    .describe(
+                        "Not accepted on create; create the draft, then use invoices_update.",
+                    ),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {
-                clientId: args.clientId,
-                number: args.number,
-                currency: args.currency,
-                issuedDate: normaliseInvoiceDate(args.issuedDate),
-                dueDate: normaliseInvoiceDate(args.dueDate),
-            };
-            if (args.timeViewMode !== undefined) body.timeViewMode = args.timeViewMode;
-            const req: ClockifyApi.InvoiceCreateRequest = { workspaceId: ctx.workspaceId, body };
-            const created = (await ctx.client.invoices.create(req)) as { id?: string };
-            // POST /invoices SILENTLY DROPS note/subject (live-verified) — apply
-            // them via the verified GET-then-PUT path so the billing doc is truthful.
-            if ((args.note !== undefined || args.subject !== undefined) && created?.id) {
-                const patch: InvoicePatch = {};
-                if (args.note !== undefined) patch.note = args.note;
-                if (args.subject !== undefined) patch.subject = args.subject;
-                const existing = (await ctx.client.invoices.get({
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: created.id,
-                })) as InvoiceObject;
-                const updateBody = invoiceUpdateBody(existing, patch);
-                const updateRequest: ClockifyApi.UpdateInvoicesRequest = {
-                    ...updateBody,
-                    workspaceId: ctx.workspaceId,
-                    invoiceId: created.id,
+        {
+            preview: async (args) => {
+                if (args.note !== undefined || args.subject !== undefined) {
+                    throw new TypeError(
+                        "Clockify drops note and subject on invoice creation. Create the draft first, then call guarded clockify_invoices_update with the returned invoiceId.",
+                    );
+                }
+                const body: ClockifyRequestBody<ClockifyApi.InvoiceCreateRequest> = {
+                    clientId: args.clientId,
+                    number: args.number,
+                    currency: args.currency,
+                    issuedDate: normaliseInvoiceDate(args.issuedDate),
+                    dueDate: normaliseInvoiceDate(args.dueDate),
                 };
-                await ctx.client.invoices.update(updateRequest);
-            }
-            return successResult(
-                "clockify_invoices_create",
-                created,
-                {
-                    workspaceId: ctx.workspaceId,
-                },
-                writeReceipt("created", "invoice", { id: created?.id, name: args.number }),
-            );
+                if (args.timeViewMode !== undefined) body.timeViewMode = args.timeViewMode;
+                return {
+                    action: "create",
+                    entity: "invoice",
+                    number: args.number,
+                    request: { workspaceId: ctx.workspaceId, body },
+                };
+            },
+            execute: async (preview) => {
+                const created = (await ctx.client.invoices.create(preview.request)) as {
+                    id?: string;
+                };
+                return successResult(
+                    "clockify_invoices_create",
+                    created,
+                    {
+                        workspaceId: ctx.workspaceId,
+                    },
+                    writeReceipt("created", "invoice", { id: created?.id, name: preview.number }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoices_update",
         {
             title: "Update an invoice",
@@ -227,99 +227,95 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Discount as a percent."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            // PUT /invoices REPLACES the document, and tax/discount are asymmetric
-            // on the wire (GET returns discount/tax/tax2 ×100 ints; PUT wants
-            // *Percent). Read the current invoice and rebuild a clean body so a
-            // sparse update never wipes untouched fields or silently zeroes
-            // tax/discount.
-            const existing = (await ctx.client.invoices.get({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-            })) as InvoiceObject;
-            const patch: InvoicePatch = {};
-            if (args.clientId !== undefined) patch.clientId = args.clientId;
-            if (args.number !== undefined) patch.number = args.number;
-            if (args.currency !== undefined) patch.currency = args.currency;
-            if (args.issuedDate !== undefined)
-                patch.issuedDate = normaliseInvoiceDate(args.issuedDate);
-            if (args.dueDate !== undefined) patch.dueDate = normaliseInvoiceDate(args.dueDate);
-            if (args.note !== undefined) patch.note = args.note;
-            if (args.subject !== undefined) patch.subject = args.subject;
-            if (args.taxPercent !== undefined) patch.taxPercent = args.taxPercent;
-            if (args.tax2Percent !== undefined) patch.tax2Percent = args.tax2Percent;
-            if (args.discountPercent !== undefined) patch.discountPercent = args.discountPercent;
-            if (Object.keys(patch).length === 0) {
-                throw new TypeError(
-                    "Invoice update is a no-op; supply at least one changed field.",
-                );
-            }
-            const currentBody = invoiceUpdateBody(existing, {});
-            const body = invoiceUpdateBody(existing, patch);
-            if (sameInvoiceBody(currentBody, body)) {
-                throw new TypeError(
-                    "Invoice update is a no-op; supplied fields match current state.",
-                );
-            }
-            const request: ClockifyApi.UpdateInvoicesRequest = {
-                ...body,
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-            };
-            const updated = await ctx.client.invoices.update(request);
-            return successResult(
-                "clockify_invoices_update",
-                updated,
-                {
+        {
+            preview: async (args) => {
+                // PUT /invoices REPLACES the document, and tax/discount are asymmetric
+                // on the wire (GET returns discount/tax/tax2 ×100 ints; PUT wants
+                // *Percent). Read the current invoice and rebuild a clean body so a
+                // sparse update never wipes untouched fields or silently zeroes
+                // tax/discount.
+                const existing = (await ctx.client.invoices.get({
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
-                },
-                writeReceipt("updated", "invoice", args.invoiceId),
-            );
+                })) as InvoiceObject;
+                const patch: InvoicePatch = {};
+                if (args.clientId !== undefined) patch.clientId = args.clientId;
+                if (args.number !== undefined) patch.number = args.number;
+                if (args.currency !== undefined) patch.currency = args.currency;
+                if (args.issuedDate !== undefined)
+                    patch.issuedDate = normaliseInvoiceDate(args.issuedDate);
+                if (args.dueDate !== undefined) patch.dueDate = normaliseInvoiceDate(args.dueDate);
+                if (args.note !== undefined) patch.note = args.note;
+                if (args.subject !== undefined) patch.subject = args.subject;
+                if (args.taxPercent !== undefined) patch.taxPercent = args.taxPercent;
+                if (args.tax2Percent !== undefined) patch.tax2Percent = args.tax2Percent;
+                if (args.discountPercent !== undefined)
+                    patch.discountPercent = args.discountPercent;
+                if (Object.keys(patch).length === 0) {
+                    throw new TypeError(
+                        "Invoice update is a no-op; supply at least one changed field.",
+                    );
+                }
+                const currentBody = invoiceUpdateBody(existing, {});
+                const body = invoiceUpdateBody(existing, patch);
+                if (sameInvoiceBody(currentBody, body)) {
+                    throw new TypeError(
+                        "Invoice update is a no-op; supplied fields match current state.",
+                    );
+                }
+                const request: ClockifyApi.UpdateInvoicesRequest = {
+                    ...body,
+                    workspaceId: ctx.workspaceId,
+                    invoiceId: args.invoiceId,
+                };
+                return { action: "update", entity: "invoice", id: args.invoiceId, request };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.invoices.update(preview.request);
+                return successResult(
+                    "clockify_invoices_update",
+                    updated,
+                    { workspaceId: ctx.workspaceId, invoiceId: preview.id },
+                    writeReceipt("updated", "invoice", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoices_delete",
         {
             title: "Delete an invoice",
             description:
                 "Permanently delete an invoice. Billing-impactful; coordinate before running. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                invoiceId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { invoiceId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "invoice", id: args.invoiceId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_invoices_delete",
-                "invoice_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.invoices.delete({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-            });
-            return successResult(
-                "clockify_invoices_delete",
-                { deleted: true, invoiceId: args.invoiceId },
-                { workspaceId: ctx.workspaceId, invoiceId: args.invoiceId },
-                writeReceipt("deleted", "invoice", args.invoiceId),
-            );
+        {
+            preview: async (args) => ({
+                action: "delete",
+                entity: "invoice",
+                id: args.invoiceId,
+                request: { workspaceId: ctx.workspaceId, invoiceId: args.invoiceId },
+            }),
+            execute: async (preview) => {
+                await ctx.client.invoices.delete(preview.request);
+                return successResult(
+                    "clockify_invoices_delete",
+                    { deleted: true, invoiceId: preview.id },
+                    { workspaceId: ctx.workspaceId, invoiceId: preview.id },
+                    writeReceipt("deleted", "invoice", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoices_update_status",
         {
             title: "Update invoice status",
@@ -329,27 +325,29 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 invoiceId: z.string().min(1),
                 status: z.enum(INVOICE_STATUSES),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const updated = await ctx.client.invoices.updateStatus({
-                workspaceId: ctx.workspaceId,
-                invoiceId: args.invoiceId,
-                // The wire field is `invoiceStatus`, NOT `status` — sending `status`
-                // 400s "invalid value for field: [invoiceStatus]... can't be empty"
-                // (live-verified). The generated body type already wants invoiceStatus,
-                // so the typed body-envelope form needs no cast.
-                body: { invoiceStatus: args.status },
-            });
-            return successResult(
-                "clockify_invoices_update_status",
-                updated,
-                {
+        {
+            preview: async (args) => ({
+                action: "update_status",
+                entity: "invoice",
+                id: args.invoiceId,
+                status: args.status,
+                request: {
                     workspaceId: ctx.workspaceId,
                     invoiceId: args.invoiceId,
+                    body: { invoiceStatus: args.status },
                 },
-                writeReceipt("updated", "invoice", args.invoiceId),
-            );
+            }),
+            execute: async (preview) => {
+                const updated = await ctx.client.invoices.updateStatus(preview.request);
+                return successResult(
+                    "clockify_invoices_update_status",
+                    updated,
+                    { workspaceId: ctx.workspaceId, invoiceId: preview.id },
+                    writeReceipt("updated", "invoice", preview.id),
+                );
+            },
         },
     );
 
@@ -367,7 +365,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Locale for the rendered document, e.g. en-US."),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const exported = await ctx.client.invoices.export({
@@ -382,8 +379,9 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_invoices_import_time",
         {
             title: "Import time into an invoice",
@@ -423,52 +421,56 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     .enum(["PROJECT", "USER", "TASK", "DATE", "DESCRIPTION", "NONE"])
                     .optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const { invoiceId, projectFilter } = args;
-            const typedProjectFilter: ClockifyApi.ContainsArchivedFilterRequest = {
-                status: projectFilter?.status ?? "ACTIVE",
-            };
-            if (projectFilter?.contains !== undefined) {
-                typedProjectFilter.contains = projectFilter.contains;
-            }
-            if (projectFilter?.ids !== undefined) typedProjectFilter.ids = projectFilter.ids;
-            const body: ClockifyRequestBody<ClockifyApi.ImportInvoiceItemsRequest> = {
-                from: args.from,
-                to: args.to,
-                importExpenses: args.importExpenses ?? false,
-                timeEntryGroupType: args.timeEntryGroupType ?? "GROUPED",
-                projectFilter: typedProjectFilter,
-            };
-            if (args.expenseFieldsForDetailedGroup !== undefined) {
-                body.expenseFieldsForDetailedGroup = args.expenseFieldsForDetailedGroup;
-            }
-            if (args.expensesGroupBy !== undefined) body.expensesGroupBy = args.expensesGroupBy;
-            if (args.expensesGroupType !== undefined)
-                body.expensesGroupType = args.expensesGroupType;
-            if (args.roundTimeEntryDuration !== undefined) {
-                body.roundTimeEntryDuration = args.roundTimeEntryDuration;
-            }
-            if (args.timeEntryFieldsForDetailedGroup !== undefined) {
-                body.timeEntryFieldsForDetailedGroup = args.timeEntryFieldsForDetailedGroup;
-            }
-            if (args.timeEntryPrimaryGroupBy !== undefined) {
-                body.timeEntryPrimaryGroupBy = args.timeEntryPrimaryGroupBy;
-            }
-            if (args.timeEntrySecondaryGroupBy !== undefined) {
-                body.timeEntrySecondaryGroupBy = args.timeEntrySecondaryGroupBy;
-            }
-            const request: ClockifyApi.ImportInvoiceItemsRequest = {
-                workspaceId: ctx.workspaceId,
-                invoiceId,
-                body,
-            };
-            const imported = await ctx.client.invoiceItems.import(request);
-            return successResult("clockify_invoices_import_time", imported, {
-                workspaceId: ctx.workspaceId,
-                invoiceId,
-            });
+        {
+            preview: async (args) => {
+                const { invoiceId, projectFilter } = args;
+                const typedProjectFilter: ClockifyApi.ContainsArchivedFilterRequest = {
+                    status: projectFilter?.status ?? "ACTIVE",
+                };
+                if (projectFilter?.contains !== undefined) {
+                    typedProjectFilter.contains = projectFilter.contains;
+                }
+                if (projectFilter?.ids !== undefined) typedProjectFilter.ids = projectFilter.ids;
+                const body: ClockifyRequestBody<ClockifyApi.ImportInvoiceItemsRequest> = {
+                    from: args.from,
+                    to: args.to,
+                    importExpenses: args.importExpenses ?? false,
+                    timeEntryGroupType: args.timeEntryGroupType ?? "GROUPED",
+                    projectFilter: typedProjectFilter,
+                };
+                if (args.expenseFieldsForDetailedGroup !== undefined) {
+                    body.expenseFieldsForDetailedGroup = args.expenseFieldsForDetailedGroup;
+                }
+                if (args.expensesGroupBy !== undefined) body.expensesGroupBy = args.expensesGroupBy;
+                if (args.expensesGroupType !== undefined)
+                    body.expensesGroupType = args.expensesGroupType;
+                if (args.roundTimeEntryDuration !== undefined) {
+                    body.roundTimeEntryDuration = args.roundTimeEntryDuration;
+                }
+                if (args.timeEntryFieldsForDetailedGroup !== undefined) {
+                    body.timeEntryFieldsForDetailedGroup = args.timeEntryFieldsForDetailedGroup;
+                }
+                if (args.timeEntryPrimaryGroupBy !== undefined) {
+                    body.timeEntryPrimaryGroupBy = args.timeEntryPrimaryGroupBy;
+                }
+                if (args.timeEntrySecondaryGroupBy !== undefined) {
+                    body.timeEntrySecondaryGroupBy = args.timeEntrySecondaryGroupBy;
+                }
+                const request: ClockifyApi.ImportInvoiceItemsRequest = {
+                    workspaceId: ctx.workspaceId,
+                    invoiceId,
+                    body,
+                };
+                return { action: "import_time", entity: "invoice", id: invoiceId, request };
+            },
+            execute: async (preview) => {
+                const imported = await ctx.client.invoiceItems.import(preview.request);
+                return successResult("clockify_invoices_import_time", imported, {
+                    workspaceId: ctx.workspaceId,
+                    invoiceId: preview.id,
+                });
+            },
         },
     );
 
@@ -500,7 +502,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Sort order: ASCENDING | DESCENDING."),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const response = (await ctx.client.invoices.filter({
@@ -535,7 +536,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
             description:
                 "Return just the line items of an invoice — a focused projection of clockify_invoices_get for when only the items matter.",
             inputSchema: { invoiceId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const invoice = (await ctx.client.invoices.get({
@@ -562,7 +562,6 @@ export function registerInvoicesTools(server: McpServer, ctx: Context): void {
                 page: zNumberLike(z.number().int().min(1).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const payments = (await ctx.client.invoicePayments.list({

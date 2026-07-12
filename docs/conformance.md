@@ -16,7 +16,7 @@ make gates and evidence files, and the gate-coverage table is derived from
 | Time-off request reads scan the POST list (live API rejects GET with 405) | evidence ledger (`time-off.requests.list`) + MCP time-off tool tests |
 | Invoice update preserves tax/discount instead of zeroing them | evidence ledger (`invoices.update.replace-and-tax-discount-zeroing`) + MCP invoice tests |
 | Deleting an active project archives it first (live API 400s on active delete) | evidence ledger (`deletes.archive-first`) + `clockify_projects_delete` MCP test |
-| Destructive writes require a dry_run -> confirm_token handshake | `make mcp-write-safety` + confirm-guard handshake |
+| Destructive writes require a dry_run -> confirm_token handshake | `make mcp-write-safety` + exact stored-preview token tests |
 | Webhook callback URLs are validated offline before any creation | offline URL guard (`webhook-url.ts`) gated by `make mcp-write-safety` |
 | Official-vs-custom OpenAPI drift is reviewed and the diff surfaces stay fresh | `make official-openapi-drift` + the generated drift/confidence/live-evidence surfaces |
 | Phantom / dead Clockify routes are quarantined, not advertised as tools | PHANTOM_RISK in spec-diff-official.md + quarantine list in live-evidence-index.md |

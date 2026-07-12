@@ -663,13 +663,13 @@
     },
     {
       "id": "cli-write-safety",
-      "requirement": "Guard CLI write/delete behavior with an explicit non-interactive, ID-scoped, receipt-oriented contract.",
+      "requirement": "Classify every executable CLI leaf and behaviorally prove deterministic success and structured failure for all mutating handlers.",
       "evidence": [
         {
           "path": "docs/cli-write-safety-policy.md",
           "contains": [
             "CLI writes stay non-interactive",
-            "Destructive commands must be ID-scoped",
+            "Destructive resource commands must be explicitly scoped",
             "Create commands must return identifiers",
             "Errors must stay machine-readable"
           ]
@@ -677,22 +677,21 @@
         {
           "path": "docs/cli-write-safety-contract.json",
           "contains": [
-            "entries delete",
-            "webhooks delete",
-            "invoices create",
-            "scheduling create"
+            "totalLeaves",
+            "mutatingLeaves",
+            "riskCounts",
+            "riskPaths"
           ]
         },
         {
           "path": "scripts/check-cli-write-safety.mjs",
           "contains": [
             "CLI write-safety contract passed",
-            "writeCommands",
-            "explicit <id> argument",
-            "deleted-resource success receipt",
-            "validateContractShape",
+            "Commander introspection",
+            "behavioral proof",
+            "expectedByPath",
             "safeRelativePath",
-            "CLI write-safety contract shape failed"
+            "CLI write-safety contract failed"
           ]
         },
         {
@@ -1199,7 +1198,7 @@
           "path": "docs/runtime-support.json",
           "contains": [
             "nodeFloor",
-            ">=20",
+            ">=22.13.0",
             "@apet97/clockify-mcp-115",
             "wiring"
           ]
@@ -1217,7 +1216,7 @@
         {
           "path": "docs/dependency-policy.md",
           "contains": [
-            ">=20",
+            ">=22.13.0",
             "install-time trap"
           ]
         },
@@ -2571,9 +2570,11 @@
         {
           "path": "scripts/check-ci-contract.mjs",
           "markers": [
-            "validateContractShape",
-            "safeRelativePath",
-            "CI contract shape failed"
+            "Workspace CI",
+            "node: [\"22.13.0\", \"24\"]",
+            "action is not SHA pinned",
+            "CI contract failed",
+            "CI contract passed"
           ]
         },
         {
@@ -3264,13 +3265,13 @@
     },
     {
       "id": "mcp-write-safety",
-      "requirement": "Guard MCP destructive-write behavior with an explicit confirmation, hint, and receipt contract.",
+      "requirement": "Classify every MCP tool at runtime and require an exact stored-preview token for all business, external-side-effect, privileged, and destructive writes.",
       "evidence": [
         {
           "path": "docs/mcp-write-safety-policy.md",
           "contains": [
-            "High-risk workflow writes require preview confirmation",
-            "destructiveHint: true",
+            "Every tool has one runtime-visible risk class",
+            "destructiveHint:true",
             "dry_run",
             "confirm_token",
             "changed",
@@ -3280,22 +3281,24 @@
         {
           "path": "docs/mcp-write-safety-contract.json",
           "contains": [
-            "clockify_invoice_client_work",
-            "clockify_record_expense",
-            "clockify_request_time_off",
-            "minimumDestructiveToolCount"
+            "totalTools",
+            "guardedTools",
+            "riskDistribution",
+            "io.github.apet97.clockify115/risk",
+            "io.github.apet97.clockify115/confirmation"
           ]
         },
         {
           "path": "scripts/check-mcp-write-safety.mjs",
           "contains": [
             "MCP write-safety contract passed",
-            "discoverDestructiveTools",
-            "maybeConfirm",
+            "defineGuardedTool",
             "destructiveHint",
-            "validateContractShape",
+            "validateContract",
+            "validateManifest",
+            "validateRegistrationBoundary",
             "safeRelativePath",
-            "MCP write-safety contract shape failed"
+            "MCP write-safety contract failed"
           ]
         },
         {
@@ -3356,7 +3359,7 @@
     },
     {
       "id": "mutation",
-      "requirement": "Keep wrapper hand-written helper and MCP safety-critical (confirmation/confirm-guard/result) mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
+      "requirement": "Keep wrapper hand-written helper and MCP safety-critical (confirmation/result/tool-risk) mutation scores at or above pinned covered-mutant floors using Stryker, with generated wrapper/src/** excluded.",
       "evidence": [
         {
           "path": "docs/mutation-score-contract.json",

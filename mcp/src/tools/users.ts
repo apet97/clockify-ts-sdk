@@ -11,7 +11,7 @@ import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { defineTool, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, successResult, writeReceipt } from "../result.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
@@ -54,7 +54,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
                 includeRoles: z.boolean().default(false).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const users = (await ctx.client.users.list({
@@ -80,7 +80,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             description:
                 "Fetch one user's member profile (week start, work capacity, working days) by user ID.",
             inputSchema: { userId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const profile = await ctx.client.memberProfiles.get({
@@ -94,86 +94,115 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    // Role grant/revoke skip the dry_run→confirm_token guard used for deletes:
-    // both resolve the target user with trustIds:false (an ambiguous/unknown
-    // name yields a grounded clarification, never a guessed id) and each is
-    // reversible via its sibling tool. Guarding them would expand the
-    // write-safety contract; revisit only if an unclarified id path is added.
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_users_grant_role",
         {
             title: "Grant a workspace role",
             description:
                 "Grants a workspace role (admin, team manager, project manager) to a user — privileged.",
             inputSchema: roleInput,
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const u = await resolveUserRef(
-                { id: args.userId },
-                {
-                    verb: "grant the role to",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    trustIds: false,
-                },
-            );
-            if (!u.ok)
-                return clarifyResult("clockify_users_grant_role", "userId", "user", u.clarify);
-            const assignments = await ctx.client.users.giveRole({
-                workspaceId: ctx.workspaceId,
-                userId: u.userId,
-                role: args.role,
-                entityId: args.entityId,
-                ...(args.sourceType ? { sourceType: args.sourceType } : {}),
-            });
-            return successResult("clockify_users_grant_role", assignments, {
-                workspaceId: ctx.workspaceId,
-                userId: u.userId,
-            });
+        {
+            preview: async (args) => {
+                const user = await resolveUserRef(
+                    { id: args.userId },
+                    {
+                        verb: "grant the role to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        trustIds: false,
+                    },
+                );
+                if (!user.ok) {
+                    return clarifyResult(
+                        "clockify_users_grant_role",
+                        "userId",
+                        "user",
+                        user.clarify,
+                    );
+                }
+                return {
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        userId: user.userId,
+                        role: args.role,
+                        entityId: args.entityId,
+                        ...(args.sourceType ? { sourceType: args.sourceType } : {}),
+                    },
+                };
+            },
+            execute: async (preview) => {
+                const assignments = await ctx.client.users.giveRole(preview.request);
+                return successResult("clockify_users_grant_role", assignments, {
+                    workspaceId: preview.request.workspaceId,
+                    userId: preview.request.userId,
+                });
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_users_revoke_role",
         {
             title: "Revoke a workspace role",
             description:
                 "Revokes a workspace role (admin, team manager, project manager) from a user — privileged.",
             inputSchema: roleInput,
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const u = await resolveUserRef(
-                { id: args.userId },
-                {
-                    verb: "revoke the role from",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    trustIds: false,
-                },
-            );
-            if (!u.ok)
-                return clarifyResult("clockify_users_revoke_role", "userId", "user", u.clarify);
-            await ctx.client.users.removeRole({
-                workspaceId: ctx.workspaceId,
-                userId: u.userId,
-                role: args.role,
-                entityId: args.entityId,
-                ...(args.sourceType ? { sourceType: args.sourceType } : {}),
-            });
-            return successResult(
-                "clockify_users_revoke_role",
-                { revoked: true, userId: u.userId, role: args.role },
-                { workspaceId: ctx.workspaceId, userId: u.userId },
-            );
+        {
+            preview: async (args) => {
+                const user = await resolveUserRef(
+                    { id: args.userId },
+                    {
+                        verb: "revoke the role from",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        trustIds: false,
+                    },
+                );
+                if (!user.ok) {
+                    return clarifyResult(
+                        "clockify_users_revoke_role",
+                        "userId",
+                        "user",
+                        user.clarify,
+                    );
+                }
+                return {
+                    request: {
+                        workspaceId: ctx.workspaceId,
+                        userId: user.userId,
+                        role: args.role,
+                        entityId: args.entityId,
+                        ...(args.sourceType ? { sourceType: args.sourceType } : {}),
+                    },
+                };
+            },
+            execute: async (preview) => {
+                await ctx.client.users.removeRole(preview.request);
+                return successResult(
+                    "clockify_users_revoke_role",
+                    {
+                        revoked: true,
+                        userId: preview.request.userId,
+                        role: preview.request.role,
+                    },
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        userId: preview.request.userId,
+                    },
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_users_set_member_rate",
         {
             title: "Set a workspace member's rate",
@@ -189,45 +218,52 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 ),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const amountMinor = toMinor(args.amount, "major");
-            let updated: unknown;
-            if (args.rateKind === "COST") {
-                const request: ClockifyApi.UpdateUserCostRateWorkspacesRequest = {
+        {
+            preview: (args) => {
+                const amountMinor = toMinor(args.amount, "major");
+                const request = {
                     workspaceId: ctx.workspaceId,
                     userId: args.userId,
                     amount: amountMinor,
                     ...(args.since ? { since: args.since } : {}),
                 };
-                updated = await ctx.client.workspaces.updateUserCostRate(request);
-            } else {
-                const request: ClockifyApi.UpdateUserHourlyRateWorkspacesRequest = {
-                    workspaceId: ctx.workspaceId,
-                    userId: args.userId,
-                    amount: amountMinor,
-                    ...(args.since ? { since: args.since } : {}),
-                };
-                updated = await ctx.client.workspaces.updateUserHourlyRate(request);
-            }
-            return successResult(
-                "clockify_users_set_member_rate",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
-                    userId: args.userId,
+                return {
                     rateKind: args.rateKind,
                     amountMajor: args.amount,
                     amountMinor,
-                },
-                writeReceipt("updated", "workspace_member", args.userId),
-            );
+                    request,
+                };
+            },
+            execute: async (preview) => {
+                const updated =
+                    preview.rateKind === "COST"
+                        ? await ctx.client.workspaces.updateUserCostRate(
+                              preview.request satisfies ClockifyApi.UpdateUserCostRateWorkspacesRequest,
+                          )
+                        : await ctx.client.workspaces.updateUserHourlyRate(
+                              preview.request satisfies ClockifyApi.UpdateUserHourlyRateWorkspacesRequest,
+                          );
+                return successResult(
+                    "clockify_users_set_member_rate",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        userId: preview.request.userId,
+                        rateKind: preview.rateKind,
+                        amountMajor: preview.amountMajor,
+                        amountMinor: preview.amountMinor,
+                    },
+                    writeReceipt("updated", "workspace_member", preview.request.userId),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_users_invite",
         {
             title: "Invite a user to the workspace",
@@ -241,20 +277,25 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Send the invitation email (default true)."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const workspace = await ctx.client.workspaces.addUser({
-                workspaceId: ctx.workspaceId,
-                "send-email": (args.sendEmail ?? true) ? "true" : "false",
+        {
+            preview: (args) => ({
                 email: args.email,
-            });
-            return successResult(
-                "clockify_users_invite",
-                workspace,
-                { workspaceId: ctx.workspaceId },
-                writeReceipt("created", "workspace_member", { name: args.email }),
-            );
+                request: {
+                    workspaceId: ctx.workspaceId,
+                    "send-email": (args.sendEmail ?? true) ? ("true" as const) : ("false" as const),
+                    email: args.email,
+                },
+            }),
+            execute: async (preview) => {
+                const workspace = await ctx.client.workspaces.addUser(preview.request);
+                return successResult(
+                    "clockify_users_invite",
+                    workspace,
+                    { workspaceId: preview.request.workspaceId },
+                    writeReceipt("created", "workspace_member", { name: preview.email }),
+                );
+            },
         },
     );
 
@@ -277,7 +318,7 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                     .optional()
                     .describe("Day enum strings, e.g. [MONDAY, TUESDAY]."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const body: ClockifyRequestBody<ClockifyApi.UpdateMemberProfilesRequest> = {};

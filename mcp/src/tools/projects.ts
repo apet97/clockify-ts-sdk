@@ -1,13 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { archiveThenDeleteProject } from "clockify-sdk-ts-115/ensure";
 import { toMinor } from "clockify-sdk-ts-115/money";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { zNumberLike } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -29,7 +27,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 archived: z.boolean().optional(),
                 clientId: z.string().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const page = args.page ?? 1;
@@ -68,7 +66,6 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 isPublic: z.boolean().optional(),
                 note: PROJECT_NOTE_SCHEMA.optional(),
             },
-            annotations: { destructiveHint: false, idempotentHint: false },
         },
         async (args) => {
             const req: ClockifyApi.CreateProjectRequest = {
@@ -114,7 +111,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
             title: "Get a project",
             description: "Fetch one project by ID from the pinned Clockify workspace.",
             inputSchema: { projectId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const project = await ctx.client.projects.get({
@@ -145,7 +142,7 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 archived: z.boolean().optional(),
                 note: PROJECT_NOTE_SCHEMA.optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             if (
@@ -185,58 +182,66 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_projects_delete",
         {
             title: "Delete a project",
             description:
                 "Permanently delete one project by ID. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                projectId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { projectId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "project", id: args.projectId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_projects_delete",
-                "project_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            // archiveThenDeleteProject owns the live-verified sequence (GET name →
-            // archive PUT archived:true → DELETE) and the empty-name guard: bare
-            // DELETE of an ACTIVE project 400s ("Cannot delete an active project",
-            // live-verified 2026-06-15) and the /archive route 404s. See
-            // spec/evidence/discrepancies.md `deletes.archive-first.projects-tasks`.
-            await archiveThenDeleteProject({
-                workspaceId: ctx.workspaceId,
-                id: args.projectId,
-                resource: ctx.client.projects,
-            });
-            return successResult(
-                "clockify_projects_delete",
-                { deleted: true, projectId: args.projectId },
-                { workspaceId: ctx.workspaceId, projectId: args.projectId },
-                writeReceipt("deleted", "project", args.projectId, {
-                    next: [
-                        {
-                            tool: "clockify_projects_list",
-                            reason: "Verify the project no longer appears.",
-                        },
-                    ],
-                }),
-            );
+        {
+            preview: async (args) => {
+                const deleteRequest = {
+                    workspaceId: ctx.workspaceId,
+                    projectId: args.projectId,
+                };
+                const current = (await ctx.client.projects.get(deleteRequest)) as {
+                    name?: unknown;
+                };
+                if (typeof current.name !== "string" || current.name.length === 0) {
+                    throw new TypeError(
+                        "Cannot archive project before delete: the project has no name to carry through the replace-PUT.",
+                    );
+                }
+                const archiveRequest: ClockifyApi.UpdateProjectsRequest = {
+                    ...deleteRequest,
+                    name: current.name,
+                    archived: true,
+                };
+                return {
+                    action: "delete",
+                    entity: "project",
+                    id: args.projectId,
+                    archiveRequest,
+                    deleteRequest,
+                };
+            },
+            execute: async (preview) => {
+                await ctx.client.projects.update(preview.archiveRequest);
+                await ctx.client.projects.delete(preview.deleteRequest);
+                return successResult(
+                    "clockify_projects_delete",
+                    { deleted: true, projectId: preview.id },
+                    { workspaceId: preview.deleteRequest.workspaceId, projectId: preview.id },
+                    writeReceipt("deleted", "project", preview.id, {
+                        next: [
+                            {
+                                tool: "clockify_projects_list",
+                                reason: "Verify the project no longer appears.",
+                            },
+                        ],
+                    }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_projects_set_member_rate",
         {
             title: "Set a project member's rate",
@@ -253,43 +258,48 @@ export function registerProjectsTools(server: McpServer, ctx: Context): void {
                 ),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const amountMinor = toMinor(args.amount, "major");
-            let updated: unknown;
-            if (args.rateKind === "COST") {
-                const request: ClockifyApi.UpdateUserCostRateProjectsRequest = {
+        {
+            preview: (args) => {
+                const amountMinor = toMinor(args.amount, "major");
+                const request = {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     userId: args.userId,
                     amount: amountMinor,
                     ...(args.since ? { since: args.since } : {}),
                 };
-                updated = await ctx.client.projects.updateUserCostRate(request);
-            } else {
-                const request: ClockifyApi.UpdateUserHourlyRateProjectsRequest = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    userId: args.userId,
-                    amount: amountMinor,
-                    ...(args.since ? { since: args.since } : {}),
-                };
-                updated = await ctx.client.projects.updateUserHourlyRate(request);
-            }
-            return successResult(
-                "clockify_projects_set_member_rate",
-                updated,
-                {
-                    workspaceId: ctx.workspaceId,
-                    projectId: args.projectId,
-                    userId: args.userId,
+                return {
                     rateKind: args.rateKind,
                     amountMajor: args.amount,
                     amountMinor,
-                },
-                writeReceipt("updated", "project", args.projectId),
-            );
+                    request,
+                };
+            },
+            execute: async (preview) => {
+                const updated =
+                    preview.rateKind === "COST"
+                        ? await ctx.client.projects.updateUserCostRate(
+                              preview.request satisfies ClockifyApi.UpdateUserCostRateProjectsRequest,
+                          )
+                        : await ctx.client.projects.updateUserHourlyRate(
+                              preview.request satisfies ClockifyApi.UpdateUserHourlyRateProjectsRequest,
+                          );
+                return successResult(
+                    "clockify_projects_set_member_rate",
+                    updated,
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        projectId: preview.request.projectId,
+                        userId: preview.request.userId,
+                        rateKind: preview.rateKind,
+                        amountMajor: preview.amountMajor,
+                        amountMinor: preview.amountMinor,
+                    },
+                    writeReceipt("updated", "project", preview.request.projectId),
+                );
+            },
         },
     );
 }

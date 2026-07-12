@@ -1,22 +1,34 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "purpose": "Structural manifest of every registered MCP tool, built by runtime-introspecting buildServer(ctx). Source of truth for tool-set discovery in gate scripts.",
   "generator": "mcp/scripts/generate-tool-manifest.mjs",
   "summary": {
     "totalTools": 140,
     "workflowTools": 22,
     "domainTools": 118,
-    "destructiveTools": 23
+    "destructiveTools": 18,
+    "guardedTools": 56,
+    "riskDistribution": {
+      "read": 58,
+      "routine_write": 26,
+      "business_write": 30,
+      "external_side_effect": 5,
+      "privileged": 3,
+      "destructive": 18
+    }
   },
   "tools": [
     {
       "name": "clockify_approvals_list",
       "title": "List approval requests",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -24,10 +36,13 @@
       "name": "clockify_approvals_resubmit",
       "title": "Resubmit entries for approval",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -35,10 +50,13 @@
       "name": "clockify_approvals_submit",
       "title": "Submit a timesheet for approval",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -46,10 +64,13 @@
       "name": "clockify_approvals_update_state",
       "title": "Update an approval request state",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -57,10 +78,13 @@
       "name": "clockify_audit_log_search",
       "title": "Search the workspace audit log",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -68,10 +92,13 @@
       "name": "clockify_clients_create",
       "title": "Create a client",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -79,10 +106,13 @@
       "name": "clockify_clients_delete",
       "title": "Delete a client",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -90,10 +120,13 @@
       "name": "clockify_clients_get",
       "title": "Get a client",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -101,10 +134,13 @@
       "name": "clockify_clients_list",
       "title": "List clients",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -112,10 +148,13 @@
       "name": "clockify_clients_update",
       "title": "Update a client",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -123,10 +162,13 @@
       "name": "clockify_create_work_package",
       "title": "Create work package",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -134,10 +176,13 @@
       "name": "clockify_custom_fields_create",
       "title": "Create a workspace custom field",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -145,10 +190,13 @@
       "name": "clockify_custom_fields_delete",
       "title": "Delete a workspace custom field",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -156,10 +204,13 @@
       "name": "clockify_custom_fields_list",
       "title": "List workspace custom fields",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -167,10 +218,13 @@
       "name": "clockify_custom_fields_update",
       "title": "Update a workspace custom field",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -178,10 +232,13 @@
       "name": "clockify_demo_cleanup",
       "title": "Clean demo data",
       "group": "workflow",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -189,10 +246,13 @@
       "name": "clockify_demo_seed",
       "title": "Seed demo data",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -200,10 +260,13 @@
       "name": "clockify_docs_search",
       "title": "Search Clockify agent docs",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -211,10 +274,13 @@
       "name": "clockify_doctor",
       "title": "Clockify doctor (live preflight)",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -222,10 +288,13 @@
       "name": "clockify_entries_delete",
       "title": "Delete a time entry",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -233,10 +302,13 @@
       "name": "clockify_entries_get",
       "title": "Get a time entry",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -244,10 +316,13 @@
       "name": "clockify_entries_list",
       "title": "List time entries (current user)",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -255,10 +330,13 @@
       "name": "clockify_entries_log",
       "title": "Log a finished time entry",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -266,10 +344,13 @@
       "name": "clockify_entries_mark_invoiced",
       "title": "Mark time entries invoiced",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -277,10 +358,13 @@
       "name": "clockify_entries_update",
       "title": "Update a time entry",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -288,10 +372,13 @@
       "name": "clockify_expenses_categories_archive",
       "title": "Archive or reactivate an expense category",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -299,10 +386,13 @@
       "name": "clockify_expenses_categories_create",
       "title": "Create an expense category",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -310,10 +400,13 @@
       "name": "clockify_expenses_categories_delete",
       "title": "Delete an expense category",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -321,10 +414,13 @@
       "name": "clockify_expenses_categories_list",
       "title": "List expense categories",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -332,10 +428,13 @@
       "name": "clockify_expenses_categories_update",
       "title": "Update an expense category",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -343,10 +442,13 @@
       "name": "clockify_expenses_create",
       "title": "Create an expense",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -354,10 +456,13 @@
       "name": "clockify_expenses_delete",
       "title": "Delete an expense",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -365,10 +470,13 @@
       "name": "clockify_expenses_get",
       "title": "Get an expense",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -376,10 +484,13 @@
       "name": "clockify_expenses_list",
       "title": "List expenses",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -387,10 +498,13 @@
       "name": "clockify_expenses_update",
       "title": "Update an expense",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -398,10 +512,13 @@
       "name": "clockify_fix_entry",
       "title": "Fix time entry",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -409,10 +526,13 @@
       "name": "clockify_groups_add_member",
       "title": "Add a user to a group",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -420,10 +540,13 @@
       "name": "clockify_groups_create",
       "title": "Create a user group",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -431,10 +554,13 @@
       "name": "clockify_groups_delete",
       "title": "Delete a user group",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -442,10 +568,13 @@
       "name": "clockify_groups_get",
       "title": "Get a user group",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -453,10 +582,13 @@
       "name": "clockify_groups_list",
       "title": "List user groups",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -464,10 +596,13 @@
       "name": "clockify_groups_list_members",
       "title": "List members of a user group",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -475,10 +610,13 @@
       "name": "clockify_groups_remove_member",
       "title": "Remove a user from a group",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -486,10 +624,13 @@
       "name": "clockify_groups_update",
       "title": "Update a user group",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -497,10 +638,13 @@
       "name": "clockify_holidays_create",
       "title": "Create a holiday",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -508,10 +652,13 @@
       "name": "clockify_holidays_delete",
       "title": "Delete a holiday",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -519,10 +666,13 @@
       "name": "clockify_holidays_list",
       "title": "List workspace holidays",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -530,10 +680,13 @@
       "name": "clockify_holidays_list_in_period",
       "title": "List holidays in a period for a user",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -541,10 +694,13 @@
       "name": "clockify_holidays_update",
       "title": "Update a holiday",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -552,21 +708,27 @@
       "name": "clockify_invoice_client_work",
       "title": "Invoice client work",
       "group": "workflow",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
       },
-      "destructiveHint": true
+      "destructiveHint": false
     },
     {
       "name": "clockify_invoices_create",
       "title": "Create an invoice draft",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -574,10 +736,13 @@
       "name": "clockify_invoices_delete",
       "title": "Delete an invoice",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -585,10 +750,13 @@
       "name": "clockify_invoices_export",
       "title": "Export an invoice (PDF)",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -596,10 +764,13 @@
       "name": "clockify_invoices_get",
       "title": "Get an invoice",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -607,10 +778,13 @@
       "name": "clockify_invoices_import_time",
       "title": "Import time into an invoice",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -618,10 +792,13 @@
       "name": "clockify_invoices_info",
       "title": "Filter invoice info",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -629,10 +806,13 @@
       "name": "clockify_invoices_items_list",
       "title": "List invoice line items",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -640,10 +820,13 @@
       "name": "clockify_invoices_list",
       "title": "List invoices",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -651,10 +834,13 @@
       "name": "clockify_invoices_payments_list",
       "title": "List invoice payments",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -662,10 +848,13 @@
       "name": "clockify_invoices_update",
       "title": "Update an invoice",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -673,10 +862,13 @@
       "name": "clockify_invoices_update_status",
       "title": "Update invoice status",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -684,10 +876,13 @@
       "name": "clockify_log_work",
       "title": "Log finished work",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -695,10 +890,13 @@
       "name": "clockify_member_profile_get",
       "title": "Get a member profile",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -706,10 +904,13 @@
       "name": "clockify_member_profile_update",
       "title": "Update a member profile",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -717,10 +918,13 @@
       "name": "clockify_operation_guide",
       "title": "Clockify operation guide",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -728,10 +932,13 @@
       "name": "clockify_plan_change",
       "title": "Plan a change (read-only)",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -739,10 +946,13 @@
       "name": "clockify_project_custom_fields_list",
       "title": "List project custom fields",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -750,10 +960,13 @@
       "name": "clockify_project_custom_fields_remove",
       "title": "Remove a custom field from a project",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -761,10 +974,13 @@
       "name": "clockify_project_custom_fields_update",
       "title": "Update a project custom field",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -772,10 +988,13 @@
       "name": "clockify_projects_create",
       "title": "Create a project",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -783,10 +1002,13 @@
       "name": "clockify_projects_delete",
       "title": "Delete a project",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -794,10 +1016,13 @@
       "name": "clockify_projects_get",
       "title": "Get a project",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -805,10 +1030,13 @@
       "name": "clockify_projects_list",
       "title": "List projects",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -816,10 +1044,13 @@
       "name": "clockify_projects_set_member_rate",
       "title": "Set a project member's rate",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -827,10 +1058,13 @@
       "name": "clockify_projects_update",
       "title": "Update a project",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -838,21 +1072,27 @@
       "name": "clockify_record_expense",
       "title": "Record expense",
       "group": "workflow",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
       },
-      "destructiveHint": true
+      "destructiveHint": false
     },
     {
       "name": "clockify_reports_attendance",
       "title": "Attendance report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -860,10 +1100,13 @@
       "name": "clockify_reports_detailed",
       "title": "Detailed report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -871,10 +1114,13 @@
       "name": "clockify_reports_expense",
       "title": "Expense detailed report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -882,10 +1128,13 @@
       "name": "clockify_reports_summary",
       "title": "Summary report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -893,10 +1142,13 @@
       "name": "clockify_reports_weekly",
       "title": "Weekly report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -904,21 +1156,27 @@
       "name": "clockify_request_time_off",
       "title": "Request time off",
       "group": "workflow",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
       },
-      "destructiveHint": true
+      "destructiveHint": false
     },
     {
       "name": "clockify_review_day",
       "title": "Review day",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -926,10 +1184,13 @@
       "name": "clockify_review_week",
       "title": "Review week",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -937,21 +1198,27 @@
       "name": "clockify_schedule_work",
       "title": "Schedule work",
       "group": "workflow",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
       },
-      "destructiveHint": true
+      "destructiveHint": false
     },
     {
       "name": "clockify_scheduling_assignments_create",
       "title": "Create a scheduling assignment",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -959,10 +1226,13 @@
       "name": "clockify_scheduling_assignments_delete",
       "title": "Delete a scheduling assignment",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -970,10 +1240,13 @@
       "name": "clockify_scheduling_assignments_list",
       "title": "List scheduling assignments",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -981,10 +1254,13 @@
       "name": "clockify_scheduling_assignments_list_per_project",
       "title": "List scheduling assignments per project",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -992,10 +1268,13 @@
       "name": "clockify_scheduling_assignments_update",
       "title": "Update a scheduling assignment",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1003,10 +1282,13 @@
       "name": "clockify_scheduling_capacity",
       "title": "Scheduling user capacity",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1014,10 +1296,13 @@
       "name": "clockify_scheduling_publish",
       "title": "Publish scheduling assignments",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1025,10 +1310,13 @@
       "name": "clockify_sdk_snippet",
       "title": "Clockify SDK/CLI/MCP snippet",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1036,21 +1324,27 @@
       "name": "clockify_setup_webhook",
       "title": "Set up webhook",
       "group": "workflow",
+      "risk": "external_side_effect",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
-        "destructiveHint": true,
-        "idempotentHint": false
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
       },
-      "destructiveHint": true
+      "destructiveHint": false
     },
     {
       "name": "clockify_shared_reports_create",
       "title": "Create a shared report",
       "group": "domain",
+      "risk": "external_side_effect",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": true
       },
       "destructiveHint": false
     },
@@ -1058,10 +1352,13 @@
       "name": "clockify_shared_reports_delete",
       "title": "Delete a shared report",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -1069,10 +1366,13 @@
       "name": "clockify_shared_reports_list",
       "title": "List shared reports",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1080,10 +1380,13 @@
       "name": "clockify_shared_reports_update",
       "title": "Update a shared report",
       "group": "domain",
+      "risk": "external_side_effect",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": true
       },
       "destructiveHint": false
     },
@@ -1091,10 +1394,13 @@
       "name": "clockify_shared_reports_view",
       "title": "View a shared report",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1102,10 +1408,13 @@
       "name": "clockify_start_work",
       "title": "Start work",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1113,10 +1422,13 @@
       "name": "clockify_status",
       "title": "Clockify status",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1124,10 +1436,13 @@
       "name": "clockify_stop_work",
       "title": "Stop work",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1135,10 +1450,13 @@
       "name": "clockify_switch_work",
       "title": "Switch work",
       "group": "workflow",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1146,10 +1464,13 @@
       "name": "clockify_tags_create",
       "title": "Create a tag",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1157,10 +1478,13 @@
       "name": "clockify_tags_delete",
       "title": "Delete a tag",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -1168,10 +1492,13 @@
       "name": "clockify_tags_get",
       "title": "Get a tag",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1179,10 +1506,13 @@
       "name": "clockify_tags_list",
       "title": "List tags",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1190,10 +1520,13 @@
       "name": "clockify_tags_update",
       "title": "Update a tag",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1201,10 +1534,13 @@
       "name": "clockify_tasks_create",
       "title": "Create a task",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1212,10 +1548,13 @@
       "name": "clockify_tasks_delete",
       "title": "Delete a task",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -1223,10 +1562,13 @@
       "name": "clockify_tasks_get",
       "title": "Get a task",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1234,10 +1576,13 @@
       "name": "clockify_tasks_list",
       "title": "List tasks",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1245,10 +1590,13 @@
       "name": "clockify_tasks_set_rate",
       "title": "Set a task's rate",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1256,10 +1604,13 @@
       "name": "clockify_tasks_update",
       "title": "Update a task",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1267,10 +1618,13 @@
       "name": "clockify_time_off_balance_for_user",
       "title": "Get a user's time-off balance",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1278,10 +1632,13 @@
       "name": "clockify_time_off_balances_list",
       "title": "List balances for a policy",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1289,10 +1646,13 @@
       "name": "clockify_time_off_policies_archive",
       "title": "Archive or reactivate a time-off policy",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1300,10 +1660,13 @@
       "name": "clockify_time_off_policies_create",
       "title": "Create a time-off policy",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1311,10 +1674,13 @@
       "name": "clockify_time_off_policies_get",
       "title": "Get a time-off policy",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1322,10 +1688,13 @@
       "name": "clockify_time_off_policies_list",
       "title": "List time-off policies",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1333,10 +1702,13 @@
       "name": "clockify_time_off_policies_update",
       "title": "Update a time-off policy",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1344,10 +1716,13 @@
       "name": "clockify_time_off_requests_delete",
       "title": "Delete a time-off request",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -1355,10 +1730,13 @@
       "name": "clockify_time_off_requests_get",
       "title": "Get a time-off request",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1366,10 +1744,13 @@
       "name": "clockify_time_off_requests_list",
       "title": "List time-off requests",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1377,10 +1758,13 @@
       "name": "clockify_time_off_requests_submit",
       "title": "Submit a time-off request",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1388,10 +1772,13 @@
       "name": "clockify_time_off_requests_update_status",
       "title": "Update a time-off request status",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1399,10 +1786,13 @@
       "name": "clockify_timer_start",
       "title": "Start a timer",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1410,10 +1800,13 @@
       "name": "clockify_timer_stop",
       "title": "Stop the running timer",
       "group": "domain",
+      "risk": "routine_write",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1421,10 +1814,13 @@
       "name": "clockify_tools_guide",
       "title": "Clockify tools guide",
       "group": "workflow",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1432,10 +1828,13 @@
       "name": "clockify_users_grant_role",
       "title": "Grant a workspace role",
       "group": "domain",
+      "risk": "privileged",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1443,10 +1842,13 @@
       "name": "clockify_users_invite",
       "title": "Invite a user to the workspace",
       "group": "domain",
+      "risk": "privileged",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1454,10 +1856,13 @@
       "name": "clockify_users_list",
       "title": "List workspace users",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1465,10 +1870,13 @@
       "name": "clockify_users_revoke_role",
       "title": "Revoke a workspace role",
       "group": "domain",
+      "risk": "privileged",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1476,10 +1884,13 @@
       "name": "clockify_users_set_member_rate",
       "title": "Set a workspace member's rate",
       "group": "domain",
+      "risk": "business_write",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1487,10 +1898,13 @@
       "name": "clockify_webhooks_create",
       "title": "Create a webhook subscription",
       "group": "domain",
+      "risk": "external_side_effect",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": true
       },
       "destructiveHint": false
     },
@@ -1498,10 +1912,13 @@
       "name": "clockify_webhooks_delete",
       "title": "Delete a webhook subscription",
       "group": "domain",
+      "risk": "destructive",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": true,
-        "idempotentHint": false
+        "idempotentHint": false,
+        "openWorldHint": false
       },
       "destructiveHint": true
     },
@@ -1509,10 +1926,13 @@
       "name": "clockify_webhooks_events",
       "title": "List webhook event types",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1520,10 +1940,13 @@
       "name": "clockify_webhooks_get",
       "title": "Get a webhook",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1531,10 +1954,13 @@
       "name": "clockify_webhooks_list",
       "title": "List webhooks",
       "group": "domain",
+      "risk": "read",
+      "confirmation": "none",
       "annotations": {
         "readOnlyHint": true,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": false
       },
       "destructiveHint": false
     },
@@ -1542,10 +1968,13 @@
       "name": "clockify_webhooks_update",
       "title": "Update a webhook subscription",
       "group": "domain",
+      "risk": "external_side_effect",
+      "confirmation": "preview_token",
       "annotations": {
         "readOnlyHint": false,
         "destructiveHint": false,
-        "idempotentHint": true
+        "idempotentHint": true,
+        "openWorldHint": true
       },
       "destructiveHint": false
     }

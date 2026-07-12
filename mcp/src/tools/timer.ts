@@ -22,7 +22,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
                 tagIds: z.array(z.string()).optional(),
                 billable: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
+            idempotent: false,
         },
         async (args) => {
             const body: ClockifyRequestBody<ClockifyApi.CreateTimeEntryRequest> = {
@@ -51,7 +51,7 @@ export function registerTimerTools(server: McpServer, ctx: Context): void {
             title: "Stop the running timer",
             description:
                 "Stop the running timer for the current user. Returns ok with a note if no timer was running.",
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async () => {
             // Use the per-server single-flight memo (fetched at most once) when

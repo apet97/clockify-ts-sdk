@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -60,7 +62,7 @@ describe("webhook SSRF guard (create/update preflight)", () => {
         it(`clockify_webhooks_create rejects ${url} without calling the API`, async () => {
             const captured = { created: 0, updated: 0 };
             const client = await connect(webhooksContext(captured));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_webhooks_create",
                 arguments: { name: "evil", url, webhookEvent: "NEW_PROJECT" },
             });
@@ -72,7 +74,7 @@ describe("webhook SSRF guard (create/update preflight)", () => {
         it(`clockify_webhooks_update rejects ${url} without calling the API`, async () => {
             const captured = { created: 0, updated: 0 };
             const client = await connect(webhooksContext(captured));
-            const res = await client.callTool({
+            const res = await callGuarded(client, {
                 name: "clockify_webhooks_update",
                 arguments: { webhookId: "wh-1", url },
             });
@@ -85,7 +87,7 @@ describe("webhook SSRF guard (create/update preflight)", () => {
     it("clockify_webhooks_create accepts a public HTTPS URL", async () => {
         const captured = { created: 0, updated: 0 };
         const client = await connect(webhooksContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_webhooks_create",
             arguments: { name: "ok", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
         });

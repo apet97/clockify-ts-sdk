@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -113,7 +115,7 @@ describe("users and roles tools", () => {
     it("clockify_users_invite adds the user (send-email as string) with a created receipt", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_invite",
             arguments: { email: "new@acme.test", sendEmail: false },
         });
@@ -175,7 +177,7 @@ describe("users and roles tools", () => {
     it("clockify_users_grant_role forwards the role assignment and is a privileged write", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_grant_role",
             arguments: { userId: "user-1", role: "PROJECT_MANAGER", entityId: "proj-1" },
         });
@@ -196,7 +198,7 @@ describe("users and roles tools", () => {
     it("clockify_users_revoke_role returns a receipt for the void delete", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_revoke_role",
             arguments: { userId: "user-1", role: "TEAM_MANAGER", entityId: "ws-1" },
         });
@@ -212,7 +214,7 @@ describe("users and roles tools", () => {
     it("clockify_users_grant_role resolves a user NAME to its id before giveRole", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_grant_role",
             arguments: { userId: "Alicia", role: "PROJECT_MANAGER", entityId: "proj-1" },
         });
@@ -223,7 +225,7 @@ describe("users and roles tools", () => {
     it("clockify_users_grant_role clarifies + does NOT call giveRole on an ambiguous name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_grant_role",
             arguments: { userId: "Sam", role: "PROJECT_MANAGER", entityId: "proj-1" },
         });
@@ -237,7 +239,7 @@ describe("users and roles tools", () => {
     it("clockify_users_grant_role passes a 24-hex userId through", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_users_grant_role",
             arguments: { userId: ALICE, role: "PROJECT_MANAGER", entityId: "proj-1" },
         });
@@ -248,7 +250,7 @@ describe("users and roles tools", () => {
     it("clockify_users_revoke_role resolves a name and clarifies on unknown", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(usersContext(captured));
-        const ok = await client.callTool({
+        const ok = await callGuarded(client, {
             name: "clockify_users_revoke_role",
             arguments: { userId: "Alicia", role: "TEAM_MANAGER", entityId: "ws-1" },
         });
@@ -257,7 +259,7 @@ describe("users and roles tools", () => {
 
         const captured2: Record<string, unknown> = {};
         const client2 = await connect(usersContext(captured2));
-        const bad = await client2.callTool({
+        const bad = await callGuarded(client2, {
             name: "clockify_users_revoke_role",
             arguments: { userId: "Nobody", role: "TEAM_MANAGER", entityId: "ws-1" },
         });

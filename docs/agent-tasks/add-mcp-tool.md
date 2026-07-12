@@ -12,9 +12,10 @@ tool moves every count assertion and several contracts in lockstep.
 - A close existing tool: `mcp/src/tools/status.ts` (read-only), `clients.ts`
   (destructive delete with `dry_run`/`confirm_token`), or
   `mcp/src/tools/workflows/business.ts` (high-risk workflow).
-- `mcp/src/result.ts` and `mcp/src/output-schema.ts` (receipt envelope).
-- `mcp/src/orchestration/confirm-guard.ts` (the `dry_run` → `confirm_token`
-  handshake) for any mutating tool.
+- `mcp/src/result.ts`, `mcp/src/tool-risk.ts`, and
+  `mcp/src/output-schema.ts` (registration, risk, and receipt contract).
+- `mcp/src/orchestration/confirmation.ts` (the five-minute, one-use stored
+  preview token) for guarded writes.
 - `docs/mcp-tools.json`, `docs/mcp-contract.json`, `docs/mcp-agent-ux-contract.json`,
   `docs/mcp-write-safety-contract.json`, `docs/operation-parity-overrides.json`.
 - `docs/mcp-agent-ux-policy.md` — every tool description must convey whether it
@@ -29,7 +30,7 @@ tool moves every count assertion and several contracts in lockstep.
   `toHaveLength`).
 - `docs/mcp-tools.json` (`summary` counts + `workflowTools`/`domainGroups`).
 - `docs/mcp-contract.json`, `docs/mcp-agent-ux-contract.json`,
-  `docs/mcp-write-safety-contract.json` (counts + any new marker).
+  `docs/mcp-write-safety-contract.json` (counts + risk distribution).
 - `docs/operation-parity-overrides.json` (only if the tool maps to an OpenAPI
   operationId).
 - `mcp/CHANGELOG.md` (`## [Unreleased]`) and `mcp/README.md` prose count line.
@@ -58,14 +59,17 @@ make perfect-fast      # plus perfect-full to catch operation-parity-drift
   `mcp/README.md` prose, the `… -tool surface` marker in `mcp/CHANGELOG.md` (kept
   in sync with `docs/docs-quality-contract.json` + `docs/user-docs-contract.json`),
   then `make docs-counts`.
-- Destructive tools: keep `dry_run`/`confirm_token` in the input schema and route
-  through `requireConfirmation`; update `docs/mcp-write-safety-contract.json`.
+- Add every tool to `TOOL_RISK_BY_NAME` exactly once. Read/routine writes use
+  `defineTool`; business/external/privileged/destructive writes use
+  `defineGuardedTool`. The guarded helper owns `dry_run`/`confirm_token`, so do
+  not declare those fields in the business schema. Preview must finish all
+  validation and resolution and return the exact request plan that execute uses.
 
 ## Completion checklist
 
-- [ ] Tool registered; `mcp/tests/server.test.ts` count + name list updated.
+- [ ] Tool registered and risk-classified; `mcp/tests/server.test.ts` count + name list updated.
 - [ ] Description states mutate/dry_run/id-name/next-tool per the agent-UX policy.
-- [ ] Mutating tools use the `dry_run` → `confirm_token` guard.
+- [ ] High-impact writes use `defineGuardedTool`; routine writes remain one-call.
 - [ ] Counts bumped in every count file + `make docs-counts` green.
 - [ ] `make mcp-contract mcp-agent-ux mcp-write-safety` green; `make readme-tables product-surface operation-parity` regenerated.
 - [ ] `make perfect-fast` and `make perfect-full` pass; output cited.

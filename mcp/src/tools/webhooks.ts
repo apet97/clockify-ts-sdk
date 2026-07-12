@@ -8,9 +8,8 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { assertSafeWebhookUrl } from "../orchestration/webhook-url.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 /**
  * A webhook's `authToken` is the HMAC signing secret Clockify uses to sign every
@@ -159,7 +158,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             title: "List webhooks",
             description: "List outbound webhook subscriptions in the workspace.",
             inputSchema: {},
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async () => {
             const response = (await ctx.client.webhooks.list({
@@ -186,7 +185,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             title: "Get a webhook",
             description: "Fetch a single webhook subscription by ID.",
             inputSchema: { webhookId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const webhook = await ctx.client.webhooks.get({
@@ -200,8 +199,9 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_webhooks_create",
         {
             title: "Create a webhook subscription",
@@ -220,53 +220,55 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            assertSafeWebhookUrl(args.url);
-            // `name` is required on the API-key webhook-create path — the only auth
-            // scheme this SDK uses; addon-token creates don't require it
-            // (maintainer-confirmed; see spec/evidence/discrepancies.md
-            // `webhook.create.name-required-on-api-key-not-addon`). The corrected
-            // WebhookRequest marks name minLength:2/maxLength:30 in required[], the
-            // primary clockify_setup_webhook workflow requires it, and the 2026-06-21
-            // live API-key probe supplied one. The schema makes it required, so it is
-            // always present + sent.
-            const triggerSourceType = args.triggerSourceType ?? "WORKSPACE_ID";
-            const triggerSource =
-                args.triggerSource ??
-                (triggerSourceType === "WORKSPACE_ID"
-                    ? [ctx.workspaceId]
-                    : (() => {
-                          throw new TypeError(
-                              "triggerSource is required when triggerSourceType is not WORKSPACE_ID.",
-                          );
-                      })());
-            const body: ClockifyRequestBody<ClockifyApi.WebhookRequest> = {
-                name: args.name,
-                url: args.url,
-                webhookEvent: args.webhookEvent,
-                triggerSourceType,
-                triggerSource,
-            };
-            const request: ClockifyApi.WebhookRequest = {
-                body,
-                workspaceId: ctx.workspaceId,
-            };
-            const created = await ctx.client.webhooks.create(request);
-            return successResult(
-                "clockify_webhooks_create",
-                redactWebhook(created),
-                {
-                    workspaceId: ctx.workspaceId,
-                },
-                writeReceipt("created", "webhook", { id: entityId(created), name: args.name }),
-            );
+        {
+            preview: (args) => {
+                assertSafeWebhookUrl(args.url);
+                const triggerSourceType = args.triggerSourceType ?? "WORKSPACE_ID";
+                const triggerSource =
+                    args.triggerSource ??
+                    (triggerSourceType === "WORKSPACE_ID"
+                        ? [ctx.workspaceId]
+                        : (() => {
+                              throw new TypeError(
+                                  "triggerSource is required when triggerSourceType is not WORKSPACE_ID.",
+                              );
+                          })());
+                const body: ClockifyRequestBody<ClockifyApi.WebhookRequest> = {
+                    name: args.name,
+                    url: args.url,
+                    webhookEvent: args.webhookEvent,
+                    triggerSourceType,
+                    triggerSource,
+                };
+                return {
+                    action: "create",
+                    entity: "webhook",
+                    name: args.name,
+                    request: {
+                        body,
+                        workspaceId: ctx.workspaceId,
+                    } satisfies ClockifyApi.WebhookRequest,
+                };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.webhooks.create(preview.request);
+                return successResult(
+                    "clockify_webhooks_create",
+                    redactWebhook(created),
+                    { workspaceId: preview.request.workspaceId },
+                    writeReceipt("created", "webhook", {
+                        id: entityId(created),
+                        name: preview.name,
+                    }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_webhooks_update",
         {
             title: "Update a webhook subscription",
@@ -279,62 +281,73 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            if (args.url !== undefined) assertSafeWebhookUrl(args.url);
-            const current = await ctx.client.webhooks.get({
-                workspaceId: ctx.workspaceId,
-                webhookId: args.webhookId,
-            });
-            const body = webhookUpdateBody(current);
-            let changed = false;
-            if (args.name !== undefined) {
-                changed ||= !sameWebhookField(body.name, args.name);
-                body.name = args.name;
-            }
-            if (args.url !== undefined) {
-                changed ||= !sameWebhookField(body.url, args.url);
-                body.url = args.url;
-            }
-            if (args.webhookEvent !== undefined) {
-                changed ||= !sameWebhookField(body.webhookEvent, args.webhookEvent);
-                body.webhookEvent = args.webhookEvent;
-            }
-            if (args.triggerSourceType !== undefined) {
-                changed ||= !sameWebhookField(body.triggerSourceType, args.triggerSourceType);
-                body.triggerSourceType = args.triggerSourceType;
-            }
-            if (args.triggerSource !== undefined) {
-                changed ||= !sameWebhookField(body.triggerSource, args.triggerSource);
-                body.triggerSource = args.triggerSource;
-            }
-            assertSafeWebhookUrl(body.url);
-            if (!changed) {
-                throw new TypeError(
-                    "Webhook update is a no-op; supply at least one changed field.",
-                );
-            }
-            const request: ClockifyApi.UpdateWebhooksRequest = {
-                body,
-                workspaceId: ctx.workspaceId,
-                webhookId: args.webhookId,
-            };
-            const updated = await ctx.client.webhooks.update(request);
-            return successResult(
-                "clockify_webhooks_update",
-                redactWebhook(updated),
-                {
+        {
+            preview: async (args) => {
+                if (args.url !== undefined) assertSafeWebhookUrl(args.url);
+                const getRequest = {
                     workspaceId: ctx.workspaceId,
                     webhookId: args.webhookId,
-                },
-                writeReceipt("updated", "webhook", args.webhookId),
-            );
+                } satisfies ClockifyApi.GetWebhooksRequest;
+                const current = await ctx.client.webhooks.get(getRequest);
+                const body = webhookUpdateBody(current);
+                let changed = false;
+                if (args.name !== undefined) {
+                    changed ||= !sameWebhookField(body.name, args.name);
+                    body.name = args.name;
+                }
+                if (args.url !== undefined) {
+                    changed ||= !sameWebhookField(body.url, args.url);
+                    body.url = args.url;
+                }
+                if (args.webhookEvent !== undefined) {
+                    changed ||= !sameWebhookField(body.webhookEvent, args.webhookEvent);
+                    body.webhookEvent = args.webhookEvent;
+                }
+                if (args.triggerSourceType !== undefined) {
+                    changed ||= !sameWebhookField(body.triggerSourceType, args.triggerSourceType);
+                    body.triggerSourceType = args.triggerSourceType;
+                }
+                if (args.triggerSource !== undefined) {
+                    changed ||= !sameWebhookField(body.triggerSource, args.triggerSource);
+                    body.triggerSource = args.triggerSource;
+                }
+                assertSafeWebhookUrl(body.url);
+                if (!changed) {
+                    throw new TypeError(
+                        "Webhook update is a no-op; supply at least one changed field.",
+                    );
+                }
+                return {
+                    action: "update",
+                    entity: "webhook",
+                    id: args.webhookId,
+                    request: {
+                        body,
+                        workspaceId: ctx.workspaceId,
+                        webhookId: args.webhookId,
+                    } satisfies ClockifyApi.UpdateWebhooksRequest,
+                };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.webhooks.update(preview.request);
+                return successResult(
+                    "clockify_webhooks_update",
+                    redactWebhook(updated),
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        webhookId: preview.id,
+                    },
+                    writeReceipt("updated", "webhook", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_webhooks_delete",
         {
             title: "Delete a webhook subscription",
@@ -342,31 +355,27 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                 "Permanently delete a webhook subscription. Run dry_run first, then retry with the returned confirm_token.",
             inputSchema: {
                 webhookId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "webhook", id: args.webhookId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_webhooks_delete",
-                "webhook_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.webhooks.delete({
-                workspaceId: ctx.workspaceId,
-                webhookId: args.webhookId,
-            });
-            return successResult(
-                "clockify_webhooks_delete",
-                { deleted: true, webhookId: args.webhookId },
-                { workspaceId: ctx.workspaceId, webhookId: args.webhookId },
-                writeReceipt("deleted", "webhook", args.webhookId),
-            );
+        {
+            preview: (args) => ({
+                action: "delete",
+                entity: "webhook",
+                id: args.webhookId,
+                request: {
+                    workspaceId: ctx.workspaceId,
+                    webhookId: args.webhookId,
+                } satisfies ClockifyApi.DeleteWebhooksRequest,
+            }),
+            execute: async (preview) => {
+                await ctx.client.webhooks.delete(preview.request);
+                return successResult(
+                    "clockify_webhooks_delete",
+                    { deleted: true, webhookId: preview.id },
+                    { workspaceId: preview.request.workspaceId, webhookId: preview.id },
+                    writeReceipt("deleted", "webhook", preview.id),
+                );
+            },
         },
     );
 
@@ -378,7 +387,7 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             description:
                 "List every valid webhook event type you can subscribe to (static registry; no API call). Use one as `webhookEvent` in clockify_webhooks_create.",
             inputSchema: {},
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async () => {
             return successResult("clockify_webhooks_events", [...WEBHOOK_EVENT_TYPES], {

@@ -103,16 +103,16 @@
       "path": "docs/cli-write-safety-policy.md",
       "contains": [
         "CLI writes stay non-interactive",
-        "Destructive commands must be ID-scoped",
+        "Destructive resource commands must be explicitly scoped",
         "Errors must stay machine-readable"
       ]
     },
     {
       "path": "docs/mcp-write-safety-policy.md",
       "contains": [
-        "High-risk workflow writes require preview confirmation",
+        "Every guarded write requires preview confirmation",
         "Confirmation tokens are scoped and one-use",
-        "destructiveHint: true"
+        "destructiveHint:true"
       ]
     },
     {

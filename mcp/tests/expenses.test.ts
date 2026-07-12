@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 const CATEGORY_ID = "000000000000000000000101";
 
@@ -68,7 +70,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_create defaults the user to the API-key owner and pins the workspace", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 42.5,
@@ -94,7 +96,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_create promotes a date-only date to RFC3339 (wire requires it)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 5,
@@ -113,7 +115,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_create honors an explicit userId", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        await client.callTool({
+        await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 5,
@@ -129,7 +131,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_create resolves an exact category name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 12,
@@ -145,7 +147,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_create rejects an unknown category name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: 12,
@@ -161,7 +163,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_update derives changeFields from supplied fields", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_update",
             arguments: {
                 expenseId: "exp-1",
@@ -196,7 +198,7 @@ describe("expense create/update tools", () => {
     it("clockify_expenses_update resolves an exact category name before writing", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_update",
             arguments: {
                 expenseId: "exp-1",
@@ -217,7 +219,7 @@ describe("expense create/update tools", () => {
     it("dispatches a validated no-file update despite the stale generated requiredness", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_update",
             arguments: {
                 expenseId: "exp-1",
@@ -243,7 +245,7 @@ describe("expense create/update tools", () => {
     it("uses only strict operation fields and cannot inject arbitrary request properties", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_update",
             arguments: {
                 expenseId: "exp-1",
@@ -302,7 +304,7 @@ describe("expense category full-replacement update", () => {
     it("list-scans current state and preserves empty, zero, and false fields", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_categories_update",
             arguments: { categoryId: CATEGORY_ID, name: "Travel costs" },
         });
@@ -317,7 +319,7 @@ describe("expense category full-replacement update", () => {
     it("rejects a no-op before mutation", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_categories_update",
             arguments: { categoryId: CATEGORY_ID, name: "Travel" },
         });
@@ -347,7 +349,7 @@ describe("expense category full-replacement update", () => {
             } as never,
         };
         const client = await connect(ctx);
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_categories_update",
             arguments: { categoryId: CATEGORY_ID, name: "Renamed" },
         });

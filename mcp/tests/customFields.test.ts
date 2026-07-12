@@ -446,8 +446,13 @@ describe("clockify_custom_fields_delete", () => {
             confirm_token: string;
             risk_class: string;
         };
-        expect(data.preview).toEqual({ action: "delete", entity: "custom_field", id: FIELD_ID });
-        expect(data.risk_class).toBe("custom_field_delete");
+        expect(data.preview).toMatchObject({
+            action: "delete",
+            entity: "custom_field",
+            id: FIELD_ID,
+            request: { workspaceId: "ws-1", customFieldId: FIELD_ID },
+        });
+        expect(data.risk_class).toBe("destructive");
         expect(typeof data.confirm_token).toBe("string");
         const next = json.next as Array<{ tool: string; args: { confirm_token: string } }>;
         expect(next[0]?.tool).toBe("clockify_custom_fields_delete");
@@ -691,13 +696,18 @@ describe("clockify_project_custom_fields_remove", () => {
             confirm_token: string;
             risk_class: string;
         };
-        expect(data.preview).toEqual({
+        expect(data.preview).toMatchObject({
             action: "remove",
             entity: "project_custom_field",
             projectId: PROJECT_ID,
             customFieldId: FIELD_ID,
+            request: {
+                workspaceId: "ws-1",
+                projectId: PROJECT_ID,
+                customFieldId: FIELD_ID,
+            },
         });
-        expect(data.risk_class).toBe("project_custom_field_remove");
+        expect(data.risk_class).toBe("destructive");
         expect(typeof data.confirm_token).toBe("string");
         const next = json.next as Array<{ tool: string; args: { confirm_token: string } }>;
         expect(next[0]?.tool).toBe("clockify_project_custom_fields_remove");

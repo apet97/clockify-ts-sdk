@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -67,16 +69,26 @@ function envelope(res: unknown): Record<string, unknown> {
 }
 
 describe("scheduling completion tools", () => {
-    it("clockify_scheduling_publish is a write that pins the workspace and merges extra filters", async () => {
+    it("clockify_scheduling_publish is a write that pins the workspace and forwards only typed extra filters", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_publish",
             arguments: {
                 start: "2026-06-01T00:00:00Z",
                 end: "2026-06-07T00:00:00Z",
                 notifyUsers: true,
-                extra: { userGroupFilter: { ids: ["g-1"] } },
+                extra: {
+                    userFilter: {
+                        contains: "CONTAINS",
+                        ids: ["u-1"],
+                        sourceType: "USER_GROUP",
+                        status: "ACTIVE",
+                        statuses: ["ACTIVE", "PENDING"],
+                    },
+                    userGroupFilter: { contains: "CONTAINS_ONLY", ids: ["g-1"], status: "ALL" },
+                    viewType: "TEAM",
+                },
             },
         });
         expect(res.isError).toBeFalsy();
@@ -85,14 +97,50 @@ describe("scheduling completion tools", () => {
             start: "2026-06-01T00:00:00Z",
             end: "2026-06-07T00:00:00Z",
             notifyUsers: true,
-            userGroupFilter: { ids: ["g-1"] },
+            userFilter: {
+                contains: "CONTAINS",
+                ids: ["u-1"],
+                sourceType: "USER_GROUP",
+                status: "ACTIVE",
+                statuses: ["ACTIVE", "PENDING"],
+            },
+            userGroupFilter: { contains: "CONTAINS_ONLY", ids: ["g-1"], status: "ALL" },
+            viewType: "TEAM",
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.data as { published?: boolean }).published).toBe(true);
 
-        const tool = (await client.listTools()).tools.find((t) => t.name === "clockify_scheduling_publish");
+        const tool = (await client.listTools()).tools.find(
+            (t) => t.name === "clockify_scheduling_publish",
+        );
         expect(tool?.annotations?.readOnlyHint).toBe(false);
+    });
+
+    it.each([
+        ["body", { start: "1900-01-01T00:00:00Z", end: "2100-01-01T00:00:00Z" }],
+        ["workspaceId", "attacker-workspace"],
+        ["start", "1900-01-01T00:00:00Z"],
+        ["end", "2100-01-01T00:00:00Z"],
+        ["page", 99],
+        ["pageSize", 999],
+        ["notifyUsers", true],
+        ["search", "attacker-filter"],
+    ])("clockify_scheduling_publish rejects reserved extra key %s before preview", async (key, value) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await client.callTool({
+            name: "clockify_scheduling_publish",
+            arguments: {
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-06-07T00:00:00Z",
+                extra: { [key]: value },
+                dry_run: true,
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.publish).toBeUndefined();
     });
 
     it("clockify_scheduling_capacity passes pagination + filters and returns the rows read-only", async () => {
@@ -105,7 +153,11 @@ describe("scheduling completion tools", () => {
                 end: "2026-06-07T00:00:00Z",
                 page: 2,
                 pageSize: 10,
-                extra: { statusFilter: "PUBLISHED" },
+                extra: {
+                    statusFilter: "PUBLISHED",
+                    userFilter: { contains: "CONTAINS", ids: ["u-1"], status: "ACTIVE" },
+                    userGroupFilter: { contains: "DOES_NOT_CONTAIN", ids: ["g-1"] },
+                },
             },
         });
         expect(res.isError).toBeFalsy();
@@ -116,14 +168,43 @@ describe("scheduling completion tools", () => {
             page: 2,
             pageSize: 10,
             statusFilter: "PUBLISHED",
+            userFilter: { contains: "CONTAINS", ids: ["u-1"], status: "ACTIVE" },
+            userGroupFilter: { contains: "DOES_NOT_CONTAIN", ids: ["g-1"] },
         });
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect(json.changed).toBeUndefined();
         expect((json.meta as { count?: number }).count).toBe(1);
 
-        const tool = (await client.listTools()).tools.find((t) => t.name === "clockify_scheduling_capacity");
+        const tool = (await client.listTools()).tools.find(
+            (t) => t.name === "clockify_scheduling_capacity",
+        );
         expect(tool?.annotations?.readOnlyHint).toBe(true);
+    });
+
+    it.each([
+        ["body", { start: "1900-01-01T00:00:00Z", end: "2100-01-01T00:00:00Z" }],
+        ["workspaceId", "attacker-workspace"],
+        ["start", "1900-01-01T00:00:00Z"],
+        ["end", "2100-01-01T00:00:00Z"],
+        ["page", 99],
+        ["pageSize", 999],
+        ["notifyUsers", true],
+        ["search", "attacker-filter"],
+    ])("clockify_scheduling_capacity rejects reserved extra key %s before the SDK", async (key, value) => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(schedulingContext(captured));
+        const res = await client.callTool({
+            name: "clockify_scheduling_capacity",
+            arguments: {
+                start: "2026-06-01T00:00:00Z",
+                end: "2026-06-07T00:00:00Z",
+                extra: { [key]: value },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.capacity).toBeUndefined();
     });
 });
 
@@ -131,7 +212,7 @@ describe("scheduling edit/delete re-point to the live recurring routes", () => {
     it("clockify_scheduling_assignments_update calls updateRecurring (PATCH), never the dead bare update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_update",
             arguments: {
                 assignmentId: "assign-1",
@@ -169,7 +250,7 @@ describe("scheduling edit/delete re-point to the live recurring routes", () => {
     it("clockify_scheduling_assignments_update sends only set body fields (start+end minimum)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_update",
             arguments: {
                 assignmentId: "assign-1",
@@ -188,7 +269,7 @@ describe("scheduling edit/delete re-point to the live recurring routes", () => {
     it("clockify_scheduling_assignments_update rejects user/project reassignment without calling the SDK", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_update",
             arguments: {
                 assignmentId: "assign-1",

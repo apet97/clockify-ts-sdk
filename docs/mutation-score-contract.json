@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded). Floors ratchet monotonic-up; raise only after a real test improvement. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, dry_run/confirm_token guard, result envelope helpers) — Stryker's vitest-runner accepts vitest >=2.0.0, so the MCP suite is mutated on its now-unified Vitest 4 toolchain. dates.ts and webhook-url.ts floors were raised after Item 3 added month/weekday-name parse tests and the fe80::/10 [fec0::1]/[febf::1] boundary asserts.",
+  "purpose": "Measured mutation-score floors for the hand-written modules Stryker mutates (generated src/** excluded). Floors ratchet monotonic-up; raise only after a real test improvement. Phase 1 covers the wrapper hand-written modules. Phase 2 adds the MCP safety-critical modules (confirmation token store, centralized guarded registration, and governed risk registry) — Stryker's vitest-runner accepts vitest >=2.0.0, so the MCP suite is mutated on its now-unified Vitest 4 toolchain. dates.ts and webhook-url.ts floors were raised after Item 3 added month/weekday-name parse tests and the fe80::/10 [fec0::1]/[febf::1] boundary asserts.",
   "ratchet": "monotonic-up",
   "packages": [
     {
@@ -22,8 +22,8 @@
       "globalFloor": 71,
       "moduleFloors": {
         "mcp/src/orchestration/confirmation.ts": 77,
-        "mcp/src/orchestration/confirm-guard.ts": 70,
-        "mcp/src/result.ts": 68
+        "mcp/src/result.ts": 68,
+        "mcp/src/tool-risk.ts": 70
       }
     }
   ],

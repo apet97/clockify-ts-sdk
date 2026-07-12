@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -82,7 +84,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
     it("assignments_create resolves a user NAME and a project NAME to ids", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_create",
             arguments: {
                 userId: "Alice",
@@ -94,7 +96,8 @@ describe("scheduling assignments resolve NAME -> id", () => {
         });
         expect(res.isError).toBeFalsy();
         const create =
-            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
+            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ??
+            {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
         // createRecurring returns an array; the receipt id must come from the FIRST element.
@@ -106,7 +109,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
     it("assignments_create clarifies + does not create on an unknown project name", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_create",
             arguments: {
                 userId: "Alice",
@@ -126,7 +129,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
     it("assignments_create clarifies on an ambiguous user name and does not create", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_create",
             arguments: {
                 userId: "Sam",
@@ -146,7 +149,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
     it("assignments_create passes 24-hex userId + projectId through (resolved id equals input)", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_create",
             arguments: {
                 userId: ALICE,
@@ -158,7 +161,8 @@ describe("scheduling assignments resolve NAME -> id", () => {
         });
         expect(res.isError).toBeFalsy();
         const create =
-            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ?? {};
+            (captured.createRecurring as { body?: { userId?: string; projectId?: string } }).body ??
+            {};
         expect(create.userId).toBe(ALICE);
         expect(create.projectId).toBe(PROJ);
         // createRecurring returns an array; the receipt id must come from the FIRST element.
@@ -174,7 +178,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
         // and silently dropping it; neither SDK update method is called.
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_update",
             arguments: {
                 assignmentId: "asg-1",
@@ -195,7 +199,7 @@ describe("scheduling assignments resolve NAME -> id", () => {
     it("assignments_update forwards a plain field edit to updateRecurring (PATCH), not the dead bare update", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(schedulingContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_scheduling_assignments_update",
             arguments: {
                 assignmentId: "asg-1",

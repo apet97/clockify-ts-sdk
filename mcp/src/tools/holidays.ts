@@ -12,12 +12,34 @@ import { z } from "zod";
 
 import { zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
+import { canonicalJson } from "../orchestration/confirmation.js";
+import {
+    defineGuardedTool,
+    defineTool,
+    entityId,
+    errorResult,
+    successResult,
+    writeReceipt,
+} from "../result.js";
 import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
+
+function requiredHolidayString(value: unknown, field: string, holidayId: string): string {
+    if (typeof value !== "string" || value.length === 0) {
+        throw new TypeError(`Holiday ${holidayId} required ${field} is missing or invalid.`);
+    }
+    return value;
+}
+
+function holidayIds(value: unknown, field: string, holidayId: string): string[] {
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+        throw new TypeError(`Holiday ${holidayId} ${field} is invalid.`);
+    }
+    return [...value];
+}
 
 export function registerHolidaysTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
@@ -36,7 +58,6 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
             title: "List workspace holidays",
             description: "List all holidays defined in the workspace.",
             inputSchema: {},
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async () => {
             const items = (await ctx.client.holidays.list({
@@ -60,7 +81,6 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 start: z.string().min(1),
                 end: z.string().min(1),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
         },
         async (args) => {
             const filter = await resolveUserFilter(args.userId, {
@@ -89,8 +109,9 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_holidays_create",
         {
             title: "Create a holiday",
@@ -110,63 +131,77 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     .describe("Assign to these user groups (sent as a CONTAINS filter)."),
                 color: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            let resolvedUserIds = args.userIds;
-            let resolvedGroupIds = args.userGroupIds;
-            if (args.userIds?.length) {
-                const r = await resolveUserRefs(args.userIds, {
-                    verb: "assign the holiday to",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    verifyIds: true,
-                });
-                if (!r.ok)
-                    return clarifyResult("clockify_holidays_create", "userIds", "user", r.clarify);
-                resolvedUserIds = r.userIds;
-            }
-            if (args.userGroupIds?.length) {
-                const r = await resolveGroupRefs(args.userGroupIds, {
-                    verb: "assign the holiday to",
-                    listGroups,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_holidays_create",
-                        "userGroupIds",
-                        "group",
-                        r.clarify,
-                    );
-                resolvedGroupIds = r.groupIds;
-            }
-            const body: Record<string, unknown> = {
-                name: args.name,
-                datePeriod: { startDate: args.startDate, endDate: args.endDate },
-            };
-            if (args.occursAnnually !== undefined) body.occursAnnually = args.occursAnnually;
-            if (args.everyoneIncludingNew !== undefined)
-                body.everyoneIncludingNew = args.everyoneIncludingNew;
-            if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds);
-            if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds);
-            if (args.color) body.color = args.color;
-            const created = await ctx.client.holidays.create({
-                workspaceId: ctx.workspaceId,
-                ...body,
-            } as ClockifyApi.CreateHolidayRequest);
-            return successResult(
-                "clockify_holidays_create",
-                created,
-                {
+        {
+            preview: async (args) => {
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "assign the holiday to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_holidays_create",
+                            "userIds",
+                            "user",
+                            r.clarify,
+                        );
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "assign the holiday to",
+                        listGroups,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_holidays_create",
+                            "userGroupIds",
+                            "group",
+                            r.clarify,
+                        );
+                    resolvedGroupIds = r.groupIds;
+                }
+                const body: Record<string, unknown> = {
+                    name: args.name,
+                    datePeriod: { startDate: args.startDate, endDate: args.endDate },
+                };
+                if (args.occursAnnually !== undefined) body.occursAnnually = args.occursAnnually;
+                if (args.everyoneIncludingNew !== undefined)
+                    body.everyoneIncludingNew = args.everyoneIncludingNew;
+                if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds);
+                if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds);
+                if (args.color) body.color = args.color;
+                const request = {
                     workspaceId: ctx.workspaceId,
-                },
-                writeReceipt("created", "holiday", { id: entityId(created), name: args.name }),
-            );
+                    ...body,
+                } as ClockifyApi.CreateHolidayRequest;
+                return { action: "create", entity: "holiday", name: args.name, request };
+            },
+            execute: async (preview) => {
+                const created = await ctx.client.holidays.create(preview.request);
+                return successResult(
+                    "clockify_holidays_create",
+                    created,
+                    {
+                        workspaceId: ctx.workspaceId,
+                    },
+                    writeReceipt("created", "holiday", {
+                        id: entityId(created),
+                        name: preview.name,
+                    }),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_holidays_update",
         {
             title: "Update a holiday",
@@ -186,137 +221,198 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                     .describe("Replace the assignment with these user groups."),
                 color: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            // Resolve the EXPLICIT replacement assignment (a name in an id slot)
-            // before reconstructing scope. The carried-forward existing ids are
-            // already real and are NOT re-resolved.
-            let resolvedUserIds = args.userIds;
-            let resolvedGroupIds = args.userGroupIds;
-            if (args.userIds?.length) {
-                const r = await resolveUserRefs(args.userIds, {
-                    verb: "assign the holiday to",
-                    meUserId: await meUserId(),
-                    listUsers,
-                    verifyIds: true,
-                });
-                if (!r.ok)
-                    return clarifyResult("clockify_holidays_update", "userIds", "user", r.clarify);
-                resolvedUserIds = r.userIds;
-            }
-            if (args.userGroupIds?.length) {
-                const r = await resolveGroupRefs(args.userGroupIds, {
-                    verb: "assign the holiday to",
-                    listGroups,
-                });
-                if (!r.ok)
-                    return clarifyResult(
-                        "clockify_holidays_update",
-                        "userGroupIds",
-                        "group",
-                        r.clarify,
-                    );
-                resolvedGroupIds = r.groupIds;
-            }
-            // PUT /holidays/{id} REPLACES the document (omitted fields 400 "must
-            // not be null"), and there is no single-GET route — list then scan.
-            // The read-back exposes the assignment FLAT (userIds/userGroupIds);
-            // re-send it in the {contains,ids,status} filter form or the PUT
-            // drops the (required) assignment.
-            const all = (await ctx.client.holidays.list({ workspaceId: ctx.workspaceId })) as Array<
-                Record<string, unknown>
-            >;
-            const existing =
-                (Array.isArray(all) ? all : []).find((h) => h.id === args.holidayId) ?? {};
-            const existingPeriod = (existing.datePeriod ?? {}) as Record<string, unknown>;
-            const body: Record<string, unknown> = {
-                name: args.name ?? existing.name,
-                datePeriod: {
-                    startDate: args.startDate ?? existingPeriod.startDate,
-                    // Preserve the existing endDate when only startDate moves — falling
-                    // back to args.startDate before existingPeriod.endDate would collapse
-                    // a multi-day holiday to a single day on a start-only edit. Only fall
-                    // to startDate when there is genuinely no existing endDate to keep.
-                    endDate: args.endDate ?? existingPeriod.endDate ?? args.startDate,
-                },
-            };
-            const occursAnnually = args.occursAnnually ?? existing.occursAnnually;
-            if (occursAnnually !== undefined) body.occursAnnually = occursAnnually;
-            const color = args.color ?? existing.color;
-            if (color !== undefined) body.color = color;
-            // Scope reconstruction: flat userIds/userGroupIds -> CONTAINS filter.
-            const existingUserIds = Array.isArray(existing.userIds)
-                ? (existing.userIds as string[])
-                : [];
-            const existingGroupIds = Array.isArray(existing.userGroupIds)
-                ? (existing.userGroupIds as string[])
-                : [];
-            if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds);
-            else if (existingUserIds.length) body.users = scopeFilter(existingUserIds);
-            if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds);
-            else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds);
-            if (existing.everyoneIncludingNew !== undefined)
-                body.everyoneIncludingNew = existing.everyoneIncludingNew;
-            if (!body.users && !body.userGroups && body.everyoneIncludingNew !== true) {
-                return errorResult(
-                    "clockify_holidays_update",
-                    new Error(
-                        `Holiday ${args.holidayId} has no resolvable user/group assignment to preserve; pass userIds or userGroupIds.`,
-                    ),
+        {
+            preview: async (args) => {
+                // Resolve the EXPLICIT replacement assignment (a name in an id slot)
+                // before reconstructing scope. The carried-forward existing ids are
+                // already real and are NOT re-resolved.
+                let resolvedUserIds = args.userIds;
+                let resolvedGroupIds = args.userGroupIds;
+                if (args.userIds?.length) {
+                    const r = await resolveUserRefs(args.userIds, {
+                        verb: "assign the holiday to",
+                        meUserId: await meUserId(),
+                        listUsers,
+                        verifyIds: true,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_holidays_update",
+                            "userIds",
+                            "user",
+                            r.clarify,
+                        );
+                    resolvedUserIds = r.userIds;
+                }
+                if (args.userGroupIds?.length) {
+                    const r = await resolveGroupRefs(args.userGroupIds, {
+                        verb: "assign the holiday to",
+                        listGroups,
+                    });
+                    if (!r.ok)
+                        return clarifyResult(
+                            "clockify_holidays_update",
+                            "userGroupIds",
+                            "group",
+                            r.clarify,
+                        );
+                    resolvedGroupIds = r.groupIds;
+                }
+                // PUT /holidays/{id} REPLACES the document (omitted fields 400 "must
+                // not be null"), and there is no single-GET route — list then scan.
+                // The read-back exposes the assignment FLAT (userIds/userGroupIds);
+                // re-send it in the {contains,ids,status} filter form or the PUT
+                // drops the (required) assignment.
+                const all = (await ctx.client.holidays.list({
+                    workspaceId: ctx.workspaceId,
+                })) as Array<Record<string, unknown>>;
+                const existing = (Array.isArray(all) ? all : []).find(
+                    (holiday) => holiday.id === args.holidayId,
                 );
-            }
-            const updated = await ctx.client.holidays.update({
-                workspaceId: ctx.workspaceId,
-                holidayId: args.holidayId,
-                ...body,
-            } as ClockifyApi.UpdateHolidaysRequest);
-            return successResult(
-                "clockify_holidays_update",
-                updated,
-                {
+                if (!existing) {
+                    throw new TypeError(`Holiday ${args.holidayId} was not found.`);
+                }
+                if (
+                    existing.datePeriod == null ||
+                    typeof existing.datePeriod !== "object" ||
+                    Array.isArray(existing.datePeriod)
+                ) {
+                    throw new TypeError(
+                        `Holiday ${args.holidayId} required datePeriod is missing or invalid.`,
+                    );
+                }
+                const existingPeriod = existing.datePeriod as Record<string, unknown>;
+                const name = requiredHolidayString(
+                    args.name ?? existing.name,
+                    "name",
+                    args.holidayId,
+                );
+                const startDate = requiredHolidayString(
+                    args.startDate ?? existingPeriod.startDate,
+                    "startDate",
+                    args.holidayId,
+                );
+                const endDate = requiredHolidayString(
+                    args.endDate ?? existingPeriod.endDate,
+                    "endDate",
+                    args.holidayId,
+                );
+                const currentBody: Record<string, unknown> = {
+                    name: existing.name,
+                    datePeriod: {
+                        startDate: existingPeriod.startDate,
+                        endDate: existingPeriod.endDate,
+                    },
+                };
+                const body: Record<string, unknown> = {
+                    name,
+                    datePeriod: { startDate, endDate },
+                };
+                const occursAnnually = args.occursAnnually ?? existing.occursAnnually;
+                if (occursAnnually !== undefined) {
+                    if (typeof occursAnnually !== "boolean") {
+                        throw new TypeError(`Holiday ${args.holidayId} occursAnnually is invalid.`);
+                    }
+                    body.occursAnnually = occursAnnually;
+                }
+                if (existing.occursAnnually !== undefined) {
+                    currentBody.occursAnnually = existing.occursAnnually;
+                }
+                const color = args.color ?? existing.color;
+                if (color !== undefined) {
+                    if (typeof color !== "string") {
+                        throw new TypeError(`Holiday ${args.holidayId} color is invalid.`);
+                    }
+                    body.color = color;
+                }
+                if (existing.color !== undefined) currentBody.color = existing.color;
+                // Scope reconstruction: flat userIds/userGroupIds -> CONTAINS filter.
+                const existingUserIds = holidayIds(existing.userIds, "userIds", args.holidayId);
+                const existingGroupIds = holidayIds(
+                    existing.userGroupIds,
+                    "userGroupIds",
+                    args.holidayId,
+                );
+                if (existingUserIds.length) currentBody.users = scopeFilter(existingUserIds);
+                if (existingGroupIds.length) currentBody.userGroups = scopeFilter(existingGroupIds);
+                if (args.userIds !== undefined) {
+                    if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds);
+                } else if (existingUserIds.length) body.users = scopeFilter(existingUserIds);
+                if (args.userGroupIds !== undefined) {
+                    if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds);
+                } else if (existingGroupIds.length) body.userGroups = scopeFilter(existingGroupIds);
+                if (existing.everyoneIncludingNew !== undefined) {
+                    if (typeof existing.everyoneIncludingNew !== "boolean") {
+                        throw new TypeError(
+                            `Holiday ${args.holidayId} everyoneIncludingNew is invalid.`,
+                        );
+                    }
+                    body.everyoneIncludingNew = existing.everyoneIncludingNew;
+                    currentBody.everyoneIncludingNew = existing.everyoneIncludingNew;
+                }
+                if (!body.users && !body.userGroups && body.everyoneIncludingNew !== true) {
+                    return errorResult(
+                        "clockify_holidays_update",
+                        new Error(
+                            `Holiday ${args.holidayId} has no resolvable user/group assignment to preserve; pass userIds or userGroupIds.`,
+                        ),
+                    );
+                }
+                if (canonicalJson(currentBody) === canonicalJson(body)) {
+                    throw new TypeError(
+                        "Holiday update is a no-op; supplied fields match current state.",
+                    );
+                }
+                const request = {
                     workspaceId: ctx.workspaceId,
                     holidayId: args.holidayId,
-                },
-                writeReceipt("updated", "holiday", args.holidayId),
-            );
+                    ...body,
+                } as ClockifyApi.UpdateHolidaysRequest;
+                return { action: "update", entity: "holiday", id: args.holidayId, request };
+            },
+            execute: async (preview) => {
+                const updated = await ctx.client.holidays.update(preview.request);
+                return successResult(
+                    "clockify_holidays_update",
+                    updated,
+                    {
+                        workspaceId: ctx.workspaceId,
+                        holidayId: preview.id,
+                    },
+                    writeReceipt("updated", "holiday", preview.id),
+                );
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_holidays_delete",
         {
             title: "Delete a holiday",
             description:
                 "Permanently delete one workspace holiday by ID. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                holidayId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { holidayId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "holiday", id: args.holidayId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_holidays_delete",
-                "holiday_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.holidays.delete({
-                workspaceId: ctx.workspaceId,
-                holidayId: args.holidayId,
-            });
-            return successResult(
-                "clockify_holidays_delete",
-                { deleted: true, holidayId: args.holidayId },
-                { workspaceId: ctx.workspaceId, holidayId: args.holidayId },
-                writeReceipt("deleted", "holiday", args.holidayId),
-            );
+        {
+            preview: async (args) => ({
+                action: "delete",
+                entity: "holiday",
+                id: args.holidayId,
+                request: { workspaceId: ctx.workspaceId, holidayId: args.holidayId },
+            }),
+            execute: async (preview) => {
+                await ctx.client.holidays.delete(preview.request);
+                return successResult(
+                    "clockify_holidays_delete",
+                    { deleted: true, holidayId: preview.id },
+                    { workspaceId: ctx.workspaceId, holidayId: preview.id },
+                    writeReceipt("deleted", "holiday", preview.id),
+                );
+            },
         },
     );
 }

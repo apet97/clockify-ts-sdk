@@ -3,8 +3,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 import { pageWithMeta } from "./paging.js";
 
@@ -21,7 +20,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const page = args.page ?? 1;
@@ -52,7 +51,6 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             description:
                 "Create a tag in the pinned workspace for later time-entry classification.",
             inputSchema: { name: z.string().min(1) },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const req: ClockifyApi.TagCreate = {
@@ -76,7 +74,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
             title: "Get a tag",
             description: "Fetch one tag by ID from the pinned Clockify workspace.",
             inputSchema: { tagId: z.string().min(1) },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const tag = await ctx.client.tags.get({
@@ -101,7 +99,7 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
                 name: z.string().optional(),
                 archived: z.boolean().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const body: ClockifyRequestBody<ClockifyApi.UpdateTagsRequest> = {};
@@ -120,40 +118,32 @@ export function registerTagsTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_tags_delete",
         {
             title: "Delete a tag",
             description:
                 "Permanently delete one tag by ID. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                tagId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { tagId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "tag", id: args.tagId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_tags_delete",
-                "tag_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.tags.delete({
-                workspaceId: ctx.workspaceId,
-                tagId: args.tagId,
-            });
-            return successResult(
-                "clockify_tags_delete",
-                { deleted: true, tagId: args.tagId },
-                { workspaceId: ctx.workspaceId, tagId: args.tagId },
-                writeReceipt("deleted", "tag", args.tagId),
-            );
+        {
+            preview: (args) => ({
+                action: "delete",
+                entity: "tag",
+                id: args.tagId,
+                request: { workspaceId: ctx.workspaceId, tagId: args.tagId },
+            }),
+            execute: async (preview) => {
+                await ctx.client.tags.delete(preview.request);
+                return successResult(
+                    "clockify_tags_delete",
+                    { deleted: true, tagId: preview.id },
+                    { workspaceId: preview.request.workspaceId, tagId: preview.id },
+                    writeReceipt("deleted", "tag", preview.id),
+                );
+            },
         },
     );
 }

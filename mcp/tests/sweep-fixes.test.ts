@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -25,7 +27,9 @@ async function connect(ctx: Context): Promise<Client> {
 }
 
 function dataOf(res: unknown): Record<string, unknown> {
-    return JSON.parse((res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}") as Record<string, unknown>;
+    return JSON.parse(
+        (res as { content: Array<{ text: string }> }).content[0]?.text ?? "{}",
+    ) as Record<string, unknown>;
 }
 
 describe("clockify_time_off_requests_update_status — correct method, path, and field", () => {
@@ -49,9 +53,14 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
             } as never,
         };
         const client = await connect(ctx);
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_requests_update_status",
-            arguments: { policyId: POLICY_ID, requestId: "req-1", statusType: "APPROVED", note: "ok" },
+            arguments: {
+                policyId: POLICY_ID,
+                requestId: "req-1",
+                statusType: "APPROVED",
+                note: "ok",
+            },
         });
         expect(res.isError).toBeFalsy();
         expect(captured.change).toEqual({
@@ -77,7 +86,7 @@ describe("clockify_time_off_requests_update_status — correct method, path, and
             } as never,
         };
         const client = await connect(ctx);
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_time_off_requests_update_status",
             arguments: { policyId: POLICY_ID, requestId: "req-1", statusType: "REJECTED" },
         });
@@ -157,7 +166,11 @@ describe("clockify_expenses_categories_delete — archive before delete", () => 
         });
         expect(res.isError).toBeFalsy();
         expect(order).toEqual(["archive", "delete"]);
-        expect(captured.archive).toEqual({ workspaceId: "ws-1", categoryId: "cat-1", archived: true });
+        expect(captured.archive).toEqual({
+            workspaceId: "ws-1",
+            categoryId: "cat-1",
+            archived: true,
+        });
         expect(captured.delete).toEqual({ workspaceId: "ws-1", categoryId: "cat-1" });
     });
 });

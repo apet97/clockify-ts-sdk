@@ -16,6 +16,7 @@ policy).
 | `time-off.request.missing-top-level-fields` | `fixed-in-canonical-generator` |
 | `routes.literal-vs-parameterized.collisions` | `fixed-in-canonical-generator` |
 | `sdk.resource-duplication` | `fixed-in-canonical-generator` |
+| `audit-log.actions.closed-enum` | `fixed-in-canonical-generator` |
 | `time-off-b.yaml.changedForUserName.malformed-inline-yaml` | `fixed-at-source` |
 | `gen-clockify-openapi.pagination-params-stamped` | `fixed-in-generator-script` |
 | `tag-renames.singular-to-plural` | `fixed-in-generator-script` |

@@ -6,7 +6,7 @@ import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { defineTool, successResult } from "../result.js";
+import { defineGuardedTool, defineTool, successResult } from "../result.js";
 
 // Each value-set is pinned to the generated SDK enum via `satisfies` so it
 // cannot drift from the live Clockify contract: the three differ deliberately.
@@ -44,7 +44,7 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const req: ClockifyApi.ListApprovalsRequest = {
@@ -61,8 +61,9 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_approvals_submit",
         {
             title: "Submit a timesheet for approval",
@@ -74,22 +75,25 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                     .min(1)
                     .describe("RFC3339 timestamp for the start of the period."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const request: ClockifyApi.SubmitApprovalsRequest = {
-                workspaceId: ctx.workspaceId,
-                body: { period: args.period, periodStart: args.periodStart },
-            };
-            const submitted = await ctx.client.approvals.submit(request);
-            return successResult("clockify_approvals_submit", submitted, {
-                workspaceId: ctx.workspaceId,
-            });
+        {
+            preview: (args) =>
+                ({
+                    workspaceId: ctx.workspaceId,
+                    body: { period: args.period, periodStart: args.periodStart },
+                }) satisfies ClockifyApi.SubmitApprovalsRequest,
+            execute: async (request) => {
+                const submitted = await ctx.client.approvals.submit(request);
+                return successResult("clockify_approvals_submit", submitted, {
+                    workspaceId: request.workspaceId,
+                });
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_approvals_update_state",
         {
             title: "Update an approval request state",
@@ -99,27 +103,31 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                 state: z.enum(APPROVAL_UPDATE_STATES),
                 note: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
-        async (args) => {
-            const request: ClockifyApi.UpdateStatusApprovalsRequest = {
-                workspaceId: ctx.workspaceId,
-                approvalRequestId: args.approvalRequestId,
-                body: {
-                    state: args.state,
-                    ...(args.note !== undefined ? { note: args.note } : {}),
-                },
-            };
-            const updated = await ctx.client.approvals.updateStatus(request);
-            return successResult("clockify_approvals_update_state", updated, {
-                workspaceId: ctx.workspaceId,
-                approvalRequestId: args.approvalRequestId,
-            });
+        {
+            preview: (args) =>
+                ({
+                    workspaceId: ctx.workspaceId,
+                    approvalRequestId: args.approvalRequestId,
+                    body: {
+                        state: args.state,
+                        ...(args.note !== undefined ? { note: args.note } : {}),
+                    },
+                }) satisfies ClockifyApi.UpdateStatusApprovalsRequest,
+            execute: async (request) => {
+                const updated = await ctx.client.approvals.updateStatus(request);
+                return successResult("clockify_approvals_update_state", updated, {
+                    workspaceId: request.workspaceId,
+                    approvalRequestId: request.approvalRequestId,
+                });
+            },
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_approvals_resubmit",
         {
             title: "Resubmit entries for approval",
@@ -132,17 +140,20 @@ export function registerApprovalsTools(server: McpServer, ctx: Context): void {
                     .min(1)
                     .describe("RFC3339 timestamp for the start of the period."),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
-        async (args) => {
-            const resubmitted = await ctx.client.approvals.resubmit({
-                workspaceId: ctx.workspaceId,
-                period: args.period,
-                periodStart: args.periodStart,
-            });
-            return successResult("clockify_approvals_resubmit", resubmitted, {
-                workspaceId: ctx.workspaceId,
-            });
+        {
+            preview: (args) =>
+                ({
+                    workspaceId: ctx.workspaceId,
+                    period: args.period,
+                    periodStart: args.periodStart,
+                }) satisfies ClockifyApi.ResubmitApprovalsRequest,
+            execute: async (request) => {
+                const resubmitted = await ctx.client.approvals.resubmit(request);
+                return successResult("clockify_approvals_resubmit", resubmitted, {
+                    workspaceId: request.workspaceId,
+                });
+            },
         },
     );
 }

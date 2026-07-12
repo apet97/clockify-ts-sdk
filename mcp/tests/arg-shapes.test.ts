@@ -7,6 +7,8 @@ import { zNumberLike, zStringList } from "../src/arg-shapes.js";
 import type { Context } from "../src/client.js";
 import { buildServer } from "../src/server.js";
 
+import { callGuarded } from "./guarded-call.js";
+
 let teardown: () => Promise<void> = async () => {};
 
 afterEach(async () => {
@@ -64,7 +66,7 @@ function minimalContext(captured: Record<string, unknown>): Context {
 }
 
 describe("arg-shapes — pure helpers", () => {
-    it("zStringList: bare string \"Bob\" -> [\"Bob\"]", () => {
+    it('zStringList: bare string "Bob" -> ["Bob"]', () => {
         expect(zStringList(z.array(z.string())).parse("Bob")).toEqual(["Bob"]);
     });
 
@@ -72,15 +74,15 @@ describe("arg-shapes — pure helpers", () => {
         expect(zStringList(z.array(z.string())).parse(["a", "b"])).toEqual(["a", "b"]);
     });
 
-    it("zNumberLike: \"75\" -> 75", () => {
+    it('zNumberLike: "75" -> 75', () => {
         expect(zNumberLike(z.number()).parse("75")).toBe(75);
     });
 
-    it("zNumberLike: \"\" does NOT coerce to 0 (money-bug guard)", () => {
+    it('zNumberLike: "" does NOT coerce to 0 (money-bug guard)', () => {
         expect(() => zNumberLike(z.number()).parse("")).toThrow();
     });
 
-    it("zNumberLike: non-numeric string \"abc\" stays a type error", () => {
+    it('zNumberLike: non-numeric string "abc" stays a type error', () => {
         expect(() => zNumberLike(z.number()).parse("abc")).toThrow();
     });
 
@@ -91,10 +93,10 @@ describe("arg-shapes — pure helpers", () => {
 });
 
 describe("arg-shapes — end-to-end coercion through the MCP server", () => {
-    it("clockify_holidays_create coerces userIds:\"Bob\" to [\"Bob\"] before the wire", async () => {
+    it('clockify_holidays_create coerces userIds:"Bob" to ["Bob"] before the wire', async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_holidays_create",
             arguments: {
                 name: "X",
@@ -109,10 +111,10 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect(body.users).toEqual({ contains: "CONTAINS", ids: ["Bob"], status: "ALL" });
     });
 
-    it("clockify_expenses_create coerces amount:\"75\" to 75", async () => {
+    it('clockify_expenses_create coerces amount:"75" to 75', async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: "75",
@@ -126,10 +128,10 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect(body.amount).toBe(75);
     });
 
-    it("clockify_expenses_create rejects amount:\"\" without silently zeroing", async () => {
+    it('clockify_expenses_create rejects amount:"" without silently zeroing', async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
-        const res = await client.callTool({
+        const res = await callGuarded(client, {
             name: "clockify_expenses_create",
             arguments: {
                 amount: "",
@@ -144,7 +146,7 @@ describe("arg-shapes — end-to-end coercion through the MCP server", () => {
         expect(text).toContain("amount");
     });
 
-    it("clockify_scheduling_assignments_list coerces page:\"2\"/pageSize:\"10\"", async () => {
+    it('clockify_scheduling_assignments_list coerces page:"2"/pageSize:"10"', async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(minimalContext(captured));
         const res = await client.callTool({

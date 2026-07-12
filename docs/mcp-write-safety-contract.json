@@ -1,142 +1,34 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Machine-readable MCP write-safety contract. High-risk workflow writes and destructive domain delete tools must require dry-run confirmation through one shared confirmation guard; low-level destructive tools must advertise destructive semantics and return receipts.",
-  "minimumDestructiveToolCount": 20,
-  "highRiskWorkflowTools": [
-    "clockify_invoice_client_work",
-    "clockify_record_expense",
-    "clockify_request_time_off",
-    "clockify_schedule_work",
-    "clockify_setup_webhook",
-    "clockify_demo_cleanup"
-  ],
-  "confirmationGuardedDomainTools": [
-    "clockify_entries_delete",
-    "clockify_projects_delete",
-    "clockify_clients_delete",
-    "clockify_tags_delete",
-    "clockify_tasks_delete",
-    "clockify_webhooks_delete",
-    "clockify_custom_fields_delete",
-    "clockify_project_custom_fields_remove",
-    "clockify_holidays_delete",
-    "clockify_groups_delete",
-    "clockify_groups_remove_member",
-    "clockify_expenses_categories_delete",
-    "clockify_expenses_delete",
-    "clockify_invoices_delete",
-    "clockify_scheduling_assignments_delete",
-    "clockify_time_off_requests_delete",
-    "clockify_shared_reports_delete"
-  ],
-  "idempotentWorkflowTools": [
-    "clockify_demo_seed"
-  ],
-  "confirmationExemptDestructiveTools": [],
-  "confirmationExemptDestructiveToolsNote": "Destructive delete/remove tools intentionally NOT behind the dry_run->confirm guard; each entry needs a written reason in this note. This list is empty: every destructive domain delete/remove tool is guarded via confirmationGuardedDomainTools.",
-  "_destructiveSupersetNote": "The manifest (docs/mcp-tool-manifest.json) reports 23 destructiveHint:true tools; this contract guards 17 (confirmationGuardedDomainTools). The 23 is a superset: 17 confirmation-guarded domain delete/remove tools + 6 highRiskWorkflowTools (clockify_invoice_client_work, clockify_record_expense, clockify_request_time_off, clockify_schedule_work, clockify_setup_webhook, clockify_demo_cleanup), which use the same shared guard via maybeConfirm rather than the domain confirmationGuardedDomainTools list. scripts/check-mcp-write-safety.mjs enforces both directions: every destructive _delete/_remove domain tool is guarded-or-exempt, and every confirmationGuardedDomainTools entry is in the manifest destructive set. Update this note if the counts change.",
-  "requiredFiles": [
-    {
-      "path": "docs/mcp-write-safety-policy.md",
-      "contains": [
-        "High-risk workflow writes require preview confirmation",
-        "destructiveHint: true",
-        "dry_run",
-        "confirm_token",
-        "changed",
-        "recovery"
-      ]
+    "schemaVersion": 2,
+    "purpose": "Machine-readable MCP write-safety contract over the live registered tool manifest. Every tool has one governed runtime risk class; all business, external, privileged, and destructive writes require an exact stored-preview token.",
+    "expected": {
+        "totalTools": 140,
+        "guardedTools": 56,
+        "destructiveTools": 18,
+        "riskDistribution": {
+            "read": 58,
+            "routine_write": 26,
+            "business_write": 30,
+            "external_side_effect": 5,
+            "privileged": 3,
+            "destructive": 18
+        }
     },
-    {
-      "path": "mcp/README.md",
-      "contains": [
-        "confirm_token",
-        "dry_run",
-        "changed",
-        "recovery"
-      ]
+    "metadata": {
+        "riskMetaKey": "io.github.apet97.clockify115/risk",
+        "confirmationMetaKey": "io.github.apet97.clockify115/confirmation",
+        "guardedConfirmation": "preview_token",
+        "unguardedConfirmation": "none"
     },
-    {
-      "path": "mcp/src/orchestration/confirmation.ts",
-      "contains": [
-        "ConfirmationTokenStore",
-        "validate(confirmToken",
-        "tokens.delete",
-        "confirmation token does not match this tool call"
-      ]
-    },
-    {
-      "path": "mcp/src/orchestration/confirm-guard.ts",
-      "contains": [
-        "export function requireConfirmation",
-        "store.issue(payload)",
-        "store.validate(str(args.confirm_token), payload)",
-        "dry_run confirmation required before executing this workflow"
-      ]
-    },
-    {
-      "path": "mcp/src/resources.ts",
-      "contains": [
-        "dry_run",
-        "confirm_token",
-        "recovery"
-      ]
-    },
-    {
-      "path": "mcp/src/prompts.ts",
-      "contains": [
-        "preview step before any confirmed write",
-        "recovery code"
-      ]
-    },
-    {
-      "path": "mcp/src/output-schema.ts",
-      "contains": [
-        "changed",
-        "warnings",
-        "next",
-        "recovery"
-      ]
+    "wiring": {
+        "makeTarget": "mcp-write-safety",
+        "checker": "scripts/check-mcp-write-safety.mjs",
+        "toolsDirectory": "mcp/src/tools",
+        "registrationModule": "mcp/src/result.ts",
+        "toolRiskRegistry": "mcp/src/tool-risk.ts",
+        "toolManifest": "docs/mcp-tool-manifest.json",
+        "qualityGate": "make mcp-write-safety",
+        "inventoryId": "mcp-write-safety",
+        "auditId": "mcp-write-safety"
     }
-  ],
-  "workflowRequiredMarkers": [
-    "destructiveHint: true",
-    "dry_run",
-    "confirm_token",
-    "maybeConfirm"
-  ],
-  "domainDeleteRequiredMarkers": [
-    "dry_run: z.boolean().optional()",
-    "confirm_token: z.string().optional()",
-    "requireConfirmation"
-  ],
-  "confirmationRequiredMarkers": [
-    "confirmationPayload",
-    "store.validate",
-    "dry_run confirmation required before executing this workflow",
-    "Run this workflow with dry_run:true"
-  ],
-  "forbiddenPolicyMarkers": [
-    "TODO",
-    "TBD"
-  ],
-  "wiring": {
-    "makeTarget": "mcp-write-safety",
-    "checker": "scripts/check-mcp-write-safety.mjs",
-    "toolsDirectory": "mcp/src/tools",
-    "workflowsFile": "mcp/src/tools/workflows.ts",
-    "workflowFiles": [
-      "mcp/src/tools/workflows/index.ts",
-      "mcp/src/tools/workflows/business.ts",
-      "mcp/src/tools/workflows/resolve.ts",
-      "mcp/src/tools/workflows/demo.ts"
-    ],
-    "confirmGuardFile": "mcp/src/orchestration/confirm-guard.ts",
-    "docsIndexPolicy": "mcp-write-safety-policy.md",
-    "docsIndexContract": "mcp-write-safety-contract.json",
-    "qualityGate": "make mcp-write-safety",
-    "inventoryId": "mcp-write-safety",
-    "auditId": "mcp-write-safety",
-    "toolManifest": "docs/mcp-tool-manifest.json"
-  }
 }

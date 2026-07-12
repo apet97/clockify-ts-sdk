@@ -2,7 +2,7 @@ import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/reque
 
 import { errorResult, successResult } from "../../result.js";
 
-import { createWorkPackage, idOf, maybeConfirm, mergeChanged, ref, str } from "./resolve.js";
+import { createWorkPackage, idOf, mergeChanged, ref, str } from "./resolve.js";
 import { logWork } from "./time-tracking.js";
 import type { AnyRecord, EntityRef, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
@@ -140,8 +140,6 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
             },
         );
     }
-    const deleted: EntityRef[] = [];
-    const warnings: Warning[] = [];
     // Use the per-server single-flight memo (fetched at most once) when present;
     // fall back to a direct call for hand-built contexts.
     const userId = ctx.currentUserId
@@ -199,100 +197,131 @@ export async function demoCleanup(ctx: Context, args: AnyRecord) {
         prefix,
     );
 
-    // Phase 2: confirmation handshake. dry_run:true returns a preview receipt with
-    // a confirm_token and performs NO deletion; a valid confirm_token returns null
-    // and we proceed; neither returns an error receipt instructing dry_run first.
-    const preview = {
+    const entryPlans = matchedEntries.map((entry) => ({
+        value: entry,
+        request: { workspaceId: ctx.workspaceId, timeEntryId: idOf(entry) },
+    }));
+    const taskPlans: Array<{
+        value: AnyRecord;
+        updateRequest: ClockifyApi.UpdateTasksRequest;
+        deleteRequest: { workspaceId: string; projectId: string; taskId: string };
+    }> = [];
+    for (const project of projects) {
+        for (const task of tasksByProject.get(idOf(project)) ?? []) {
+            const projectId = idOf(project);
+            const taskId = idOf(task);
+            const current = await ctx.client.tasks.get({
+                workspaceId: ctx.workspaceId,
+                projectId,
+                taskId,
+            });
+            taskPlans.push({
+                value: task,
+                updateRequest: {
+                    workspaceId: ctx.workspaceId,
+                    projectId,
+                    taskId,
+                    body: demoTaskUpdateBody(current),
+                },
+                deleteRequest: { workspaceId: ctx.workspaceId, projectId, taskId },
+            });
+        }
+    }
+    const tagPlans = tags.map((tag) => ({
+        value: tag,
+        request: { workspaceId: ctx.workspaceId, tagId: idOf(tag) },
+    }));
+    const projectPlans = projects.map((project) => ({
+        value: project,
+        updateRequest: {
+            workspaceId: ctx.workspaceId,
+            projectId: idOf(project),
+            name: str(project.name),
+            archived: true,
+        },
+        deleteRequest: { workspaceId: ctx.workspaceId, projectId: idOf(project) },
+    }));
+    const clientPlans: Array<{
+        value: AnyRecord;
+        updateRequest: ClockifyApi.UpdateClientsRequest;
+        deleteRequest: { workspaceId: string; clientId: string };
+    }> = [];
+    for (const client of clients) {
+        const clientId = idOf(client);
+        const current = await ctx.client.clients.get({
+            workspaceId: ctx.workspaceId,
+            clientId,
+        });
+        clientPlans.push({
+            value: client,
+            updateRequest: {
+                workspaceId: ctx.workspaceId,
+                clientId,
+                body: demoClientUpdateBody(current),
+            },
+            deleteRequest: { workspaceId: ctx.workspaceId, clientId },
+        });
+    }
+
+    return {
         prefix,
         entries: matchedEntries.length,
         projects: projects.length,
         tasks: matchedTasks.length,
         tags: tags.length,
         clients: clients.length,
+        execution: {
+            entries: entryPlans,
+            tasks: taskPlans,
+            tags: tagPlans,
+            projects: projectPlans,
+            clients: clientPlans,
+        },
     };
-    const confirmation = maybeConfirm(ctx, "clockify_demo_cleanup", "demo_cleanup", args, preview);
-    if (confirmation) return confirmation;
+}
 
-    // Phase 3: execute the irreversible deletes, continuing through partial failures.
-    for (const entry of matchedEntries) {
-        await cleanupEntity("entry", entry, deleted, warnings, () =>
-            ctx.client.timeEntries.delete({
-                workspaceId: ctx.workspaceId,
-                timeEntryId: idOf(entry),
-            }),
+export async function executeDemoCleanup(
+    ctx: Context,
+    preview: Exclude<Awaited<ReturnType<typeof demoCleanup>>, ReturnType<typeof errorResult>>,
+) {
+    const deleted: EntityRef[] = [];
+    const warnings: Warning[] = [];
+
+    for (const plan of preview.execution.entries) {
+        await cleanupEntity("entry", plan.value, deleted, warnings, () =>
+            ctx.client.timeEntries.delete(plan.request),
         );
     }
 
-    for (const project of projects) {
-        for (const task of tasksByProject.get(idOf(project)) ?? []) {
-            await cleanupEntity("task", task, deleted, warnings, async () => {
-                // Clockify 400s on DELETE of an ACTIVE task ("Cannot delete an
-                // active task", live-verified) - mark DONE first, like
-                // clockify_tasks_delete and the createWorkPackage undo. The list
-                // row already carries the name the replace-PUT requires.
-                const current = await ctx.client.tasks.get({
-                    workspaceId: ctx.workspaceId,
-                    projectId: idOf(project),
-                    taskId: idOf(task),
-                });
-                const request: ClockifyApi.UpdateTasksRequest = {
-                    workspaceId: ctx.workspaceId,
-                    projectId: idOf(project),
-                    taskId: idOf(task),
-                    body: demoTaskUpdateBody(current),
-                };
-                await ctx.client.tasks.update(request);
-                await ctx.client.tasks.delete({
-                    workspaceId: ctx.workspaceId,
-                    projectId: idOf(project),
-                    taskId: idOf(task),
-                });
-            });
-        }
-    }
-
-    for (const tag of tags) {
-        await cleanupEntity("tag", tag, deleted, warnings, () =>
-            ctx.client.tags.delete({ workspaceId: ctx.workspaceId, tagId: idOf(tag) }),
-        );
-    }
-
-    for (const project of projects) {
-        await cleanupEntity("project", project, deleted, warnings, async () => {
-            await ctx.client.projects.update({
-                workspaceId: ctx.workspaceId,
-                projectId: idOf(project),
-                name: str(project.name),
-                archived: true,
-            });
-            await ctx.client.projects.delete({
-                workspaceId: ctx.workspaceId,
-                projectId: idOf(project),
-            });
+    for (const plan of preview.execution.tasks) {
+        await cleanupEntity("task", plan.value, deleted, warnings, async () => {
+            await ctx.client.tasks.update(plan.updateRequest);
+            await ctx.client.tasks.delete(plan.deleteRequest);
         });
     }
 
-    for (const client of clients) {
-        await cleanupEntity("client", client, deleted, warnings, async () => {
-            const current = await ctx.client.clients.get({
-                workspaceId: ctx.workspaceId,
-                clientId: idOf(client),
-            });
-            const request: ClockifyApi.UpdateClientsRequest = {
-                workspaceId: ctx.workspaceId,
-                clientId: idOf(client),
-                body: demoClientUpdateBody(current),
-            };
-            await ctx.client.clients.update(request);
-            await ctx.client.clients.delete({
-                workspaceId: ctx.workspaceId,
-                clientId: idOf(client),
-            });
+    for (const plan of preview.execution.tags) {
+        await cleanupEntity("tag", plan.value, deleted, warnings, () =>
+            ctx.client.tags.delete(plan.request),
+        );
+    }
+
+    for (const plan of preview.execution.projects) {
+        await cleanupEntity("project", plan.value, deleted, warnings, async () => {
+            await ctx.client.projects.update(plan.updateRequest);
+            await ctx.client.projects.delete(plan.deleteRequest);
+        });
+    }
+
+    for (const plan of preview.execution.clients) {
+        await cleanupEntity("client", plan.value, deleted, warnings, async () => {
+            await ctx.client.clients.update(plan.updateRequest);
+            await ctx.client.clients.delete(plan.deleteRequest);
         });
     }
     return successResult(
         "clockify_demo_cleanup",
-        { prefix, deleted: deleted.length },
+        { prefix: preview.prefix, deleted: deleted.length },
         { workspaceId: ctx.workspaceId },
         {
             entity: "demo",

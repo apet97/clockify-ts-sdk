@@ -8,8 +8,7 @@ import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/
 import { z } from "zod";
 
 import type { Context } from "../client.js";
-import { requireConfirmation } from "../orchestration/confirm-guard.js";
-import { defineTool, entityId, successResult, writeReceipt } from "../result.js";
+import { defineGuardedTool, defineTool, entityId, successResult, writeReceipt } from "../result.js";
 
 const CUSTOM_FIELD_TYPES = [
     "TXT",
@@ -122,7 +121,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const items = (await ctx.client.customFields.listForWorkspace({
@@ -153,7 +152,6 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 placeholder: z.string().optional(),
                 description: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: false },
         },
         async (args) => {
             const body: ClockifyRequestBody<ClockifyApi.CreateForWorkspaceCustomFieldsRequest> = {
@@ -195,7 +193,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 description: z.string().optional(),
                 status: z.enum(CUSTOM_FIELD_STATUSES).optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             let current: unknown;
@@ -282,40 +280,35 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_custom_fields_delete",
         {
             title: "Delete a workspace custom field",
             description:
                 "Permanently delete a workspace custom field definition. Run dry_run first, then retry with the returned confirm_token.",
-            inputSchema: {
-                customFieldId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
-            },
-            annotations: { destructiveHint: true },
+            inputSchema: { customFieldId: z.string().min(1) },
         },
-        async (args) => {
-            const preview = { action: "delete", entity: "custom_field", id: args.customFieldId };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_custom_fields_delete",
-                "custom_field_delete",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.customFields.deleteForWorkspace({
-                workspaceId: ctx.workspaceId,
-                customFieldId: args.customFieldId,
-            });
-            return successResult(
-                "clockify_custom_fields_delete",
-                { deleted: true, customFieldId: args.customFieldId },
-                { workspaceId: ctx.workspaceId, customFieldId: args.customFieldId },
-                writeReceipt("deleted", "custom_field", args.customFieldId),
-            );
+        {
+            preview: (args) => ({
+                action: "delete",
+                entity: "custom_field",
+                id: args.customFieldId,
+                request: {
+                    workspaceId: ctx.workspaceId,
+                    customFieldId: args.customFieldId,
+                },
+            }),
+            execute: async (preview) => {
+                await ctx.client.customFields.deleteForWorkspace(preview.request);
+                return successResult(
+                    "clockify_custom_fields_delete",
+                    { deleted: true, customFieldId: preview.id },
+                    { workspaceId: preview.request.workspaceId, customFieldId: preview.id },
+                    writeReceipt("deleted", "custom_field", preview.id),
+                );
+            },
         },
     );
 
@@ -330,7 +323,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 page: z.number().int().min(1).default(1).optional(),
                 pageSize: z.number().int().min(1).max(200).default(50).optional(),
             },
-            annotations: { readOnlyHint: true, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             const items = (await ctx.client.customFields.listForProject({
@@ -360,7 +353,7 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
                 status: z.enum(CUSTOM_FIELD_STATUSES).optional(),
                 defaultValue: z.string().optional(),
             },
-            annotations: { readOnlyHint: false, idempotentHint: true },
+            idempotent: true,
         },
         async (args) => {
             // editProjectCustomFieldDefaultValue (PATCH project custom field) accepts ONLY
@@ -394,8 +387,9 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
         },
     );
 
-    defineTool(
+    defineGuardedTool(
         server,
+        ctx,
         "clockify_project_custom_fields_remove",
         {
             title: "Remove a custom field from a project",
@@ -404,45 +398,37 @@ export function registerCustomFieldsTools(server: McpServer, ctx: Context): void
             inputSchema: {
                 projectId: z.string().min(1),
                 customFieldId: z.string().min(1),
-                dry_run: z.boolean().optional(),
-                confirm_token: z.string().optional(),
             },
-            annotations: { destructiveHint: true },
         },
-        async (args) => {
-            const preview = {
+        {
+            preview: (args) => ({
                 action: "remove",
                 entity: "project_custom_field",
                 projectId: args.projectId,
                 customFieldId: args.customFieldId,
-            };
-            const confirmation = requireConfirmation(
-                ctx,
-                "clockify_project_custom_fields_remove",
-                "project_custom_field_remove",
-                args,
-                preview,
-            );
-            if (confirmation) return confirmation;
-            await ctx.client.customFields.removeFromProject({
-                workspaceId: ctx.workspaceId,
-                projectId: args.projectId,
-                customFieldId: args.customFieldId,
-            });
-            return successResult(
-                "clockify_project_custom_fields_remove",
-                {
-                    removed: true,
-                    projectId: args.projectId,
-                    customFieldId: args.customFieldId,
-                },
-                {
+                request: {
                     workspaceId: ctx.workspaceId,
                     projectId: args.projectId,
                     customFieldId: args.customFieldId,
                 },
-                writeReceipt("deleted", "project_custom_field", args.customFieldId),
-            );
+            }),
+            execute: async (preview) => {
+                await ctx.client.customFields.removeFromProject(preview.request);
+                return successResult(
+                    "clockify_project_custom_fields_remove",
+                    {
+                        removed: true,
+                        projectId: preview.projectId,
+                        customFieldId: preview.customFieldId,
+                    },
+                    {
+                        workspaceId: preview.request.workspaceId,
+                        projectId: preview.projectId,
+                        customFieldId: preview.customFieldId,
+                    },
+                    writeReceipt("deleted", "project_custom_field", preview.customFieldId),
+                );
+            },
         },
     );
 }
