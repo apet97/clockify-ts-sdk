@@ -5,6 +5,94 @@ import { BadRequestError } from "../src/api/errors/index.js";
 import { ClockifyApiClient } from "../src/index.js";
 
 describe("createClockifyClient", () => {
+    it("validates a typed request destination before resolving authentication", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const apiKey = vi.fn(() => "secret");
+        const client = new ClockifyApiClient({
+            apiKey,
+            baseUrl: Promise.resolve("https://attacker.example/api/v1"),
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await expect(client.tags.list({ workspaceId: "workspace" })).rejects.toThrow(
+            /not an allowlisted Clockify host/i,
+        );
+        expect(apiKey).not.toHaveBeenCalled();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("falls through an undefined typed baseUrl supplier to environment", async () => {
+        const dispatch = vi.fn<typeof fetch>().mockResolvedValue(
+            new Response("[]", {
+                status: 200,
+                headers: { "content-type": "application/json" },
+            }),
+        );
+        const runtimeInvalidBaseUrl = (async () => undefined) as unknown as NonNullable<
+            ClockifyApiClient.Options["baseUrl"]
+        >;
+        const client = new ClockifyApiClient({
+            apiKey: "secret",
+            baseUrl: runtimeInvalidBaseUrl,
+            environment: "https://api.clockify.me/environment/v1",
+            fetch: dispatch,
+            maxRetries: 0,
+        });
+
+        await client.tags.list({ workspaceId: "workspace" });
+
+        const [input, init] = dispatch.mock.calls[0] as Parameters<typeof fetch>;
+        expect(new Request(input, init).url).toBe(
+            "https://api.clockify.me/environment/v1/workspaces/workspace/tags",
+        );
+    });
+
+    it("replays a typed PUT body with a fresh Request for every retry", async () => {
+        vi.useFakeTimers();
+        try {
+            const requests: Request[] = [];
+            const bodies: string[] = [];
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
+                const request = new Request(input, init);
+                requests.push(request);
+                bodies.push(await request.text());
+                return new Response(
+                    requests.length === 1 ? null : JSON.stringify({ id: "tag" }),
+                    {
+                        status: requests.length === 1 ? 503 : 200,
+                        headers: { "content-type": "application/json" },
+                    },
+                );
+            });
+            const client = new ClockifyApiClient({
+                apiKey: "secret",
+                fetch: dispatch,
+                maxRetries: 1,
+            });
+
+            const outcome = client.tags.update({
+                workspaceId: "workspace",
+                tagId: "tag",
+                name: "same body",
+                archived: false,
+            });
+            await vi.runAllTimersAsync();
+            await expect(outcome).resolves.toMatchObject({ id: "tag" });
+
+            expect(requests).toHaveLength(2);
+            expect(new Set(requests).size).toBe(2);
+            expect(bodies).toEqual([
+                JSON.stringify({ archived: false, name: "same body" }),
+                JSON.stringify({ archived: false, name: "same body" }),
+            ]);
+            expect(dispatch.mock.calls.every(([, init]) => init === undefined)).toBe(true);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     it("blocks a dynamic off-host typed request before the custom fetch sees credentials", async () => {
         const dispatch = vi.fn<typeof fetch>();
         const client = createClockifyClient({
