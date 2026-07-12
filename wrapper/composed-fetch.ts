@@ -640,6 +640,9 @@ function applyJitter(delay: number, jitter: number, positiveOnly: boolean): numb
 
 function sleep(ms: number, signal: AbortSignal | null | undefined): Promise<void> {
     if (signal == null) return new Promise((resolve) => setTimeout(resolve, ms));
+    // AbortSignal.reason is intentionally `unknown`: the public contract preserves
+    // primitive reasons instead of wrapping them in an Error.
+    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
     if (signal.aborted) return Promise.reject(abortReason(signal));
     return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
@@ -649,6 +652,7 @@ function sleep(ms: number, signal: AbortSignal | null | undefined): Promise<void
         const onAbort = () => {
             clearTimeout(timer);
             signal.removeEventListener("abort", onAbort);
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             reject(abortReason(signal));
         };
         signal.addEventListener("abort", onAbort, { once: true });
