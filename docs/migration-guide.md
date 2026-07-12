@@ -66,6 +66,45 @@ limit helpers, OTel hooks, and the documented subpaths remain the supported
 entry points. Code that imported from `wrapper/src/**`, `output/ts-sdk/**`, or
 Fern-generated internals should migrate to `clockify-sdk-ts-115` package exports.
 
+## Typed request bodies
+
+Build requests against the generated operation type. For replace-style writes,
+construct the body-envelope arm explicitly so required fields stay visible to
+TypeScript and untouched values can be carried forward safely:
+
+```typescript
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+
+const current = await client.clients.get({ workspaceId, clientId });
+const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> = {
+    name: current.name,
+    ...(current.address != null ? { address: current.address } : {}),
+    ...(current.currencyCode !== undefined ? { currencyCode: current.currencyCode } : {}),
+    ...(current.email != null ? { email: current.email } : {}),
+    ...(current.note != null ? { note: current.note } : {}),
+    archived: true,
+};
+const request: ClockifyApi.UpdateClientsRequest = { workspaceId, clientId, body };
+await client.clients.update(request);
+```
+
+For operations whose flattened form already matches the wire contract, bind it
+directly instead:
+
+```typescript
+const request: ClockifyApi.TaskCreateRequest = {
+    workspaceId,
+    projectId,
+    name: "Review",
+    billable: false,
+};
+await client.tasks.create(request);
+```
+
+Validate open JSON input with an operation-specific strict schema before
+building either form. Assign protected workspace, entity, date, pagination, and
+filter fields after validated extras so callers cannot override scope.
+
 ## CLI behavior
 
 CLI exit codes: 0 means success; 1 means runtime/config/API failure; 2 means command-line usage error.

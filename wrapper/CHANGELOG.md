@@ -19,6 +19,13 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Breaking
+
+- Removed the legacy request-body escape from the package root and `./requests`.
+  Use generated operation request types and `ClockifyRequestBody<T>` body envelopes;
+  `./requests` continues to export `ClockifyApi`, `ClockifyRequestBody`,
+  `AUDIT_LOG_ACTIONS`, and `AuditLogAction`.
+
 ### Security
 
 - Raw authenticated fetches reject cross-origin destinations before dispatch, validate dynamic

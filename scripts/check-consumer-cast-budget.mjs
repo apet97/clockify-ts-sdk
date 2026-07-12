@@ -9,6 +9,14 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
 const ROOTS = ["cli/src", "mcp/src"];
+const FORBIDDEN_IDENTIFIER_ROOTS = [
+    "wrapper/tests",
+    "wrapper/examples",
+    "cli/src",
+    "cli/tests",
+    "mcp/src",
+    "mcp/tests",
+];
 
 const contract = JSON.parse(
     await readFile(path.join(root, "docs/consumer-cast-budget-contract.json"), "utf8"),
@@ -52,6 +60,9 @@ async function listTs(dir) {
 
 let unannotated = 0;
 const offenders = [];
+const forbiddenIdentifier = "wireBody";
+const forbiddenIdentifierPattern = new RegExp(`\\b${forbiddenIdentifier}\\b`);
+const forbiddenIdentifierOffenders = [];
 for (const r of ROOTS) {
     for (const rel of await listTs(r)) {
         if (pathExemptions.some((s) => rel.endsWith(s))) continue;
@@ -64,6 +75,33 @@ for (const r of ROOTS) {
                 offenders.push(`${rel}:${i + 1}`);
             }
         }
+    }
+}
+
+const forbiddenFiles = new Set();
+for (const scanRoot of FORBIDDEN_IDENTIFIER_ROOTS) {
+    for (const rel of await listTs(scanRoot)) forbiddenFiles.add(rel);
+}
+for (const entry of await readdir(path.join(root, "wrapper"), { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith(".ts")) {
+        forbiddenFiles.add(path.join("wrapper", entry.name));
+    }
+}
+for (const rel of [...forbiddenFiles].sort()) {
+    const lines = (await readFile(path.join(root, rel), "utf8")).split("\n");
+    for (let i = 0; i < lines.length; i++) {
+        if (forbiddenIdentifierPattern.test(lines[i])) {
+            forbiddenIdentifierOffenders.push(`${rel}:${i + 1}`);
+        }
+    }
+}
+
+if (forbiddenIdentifierOffenders.length > 0) {
+    failures.push(
+        `forbidden request escape \`${forbiddenIdentifier}\` found in governed TypeScript`,
+    );
+    for (const offender of forbiddenIdentifierOffenders) {
+        failures.push(`  forbidden: ${offender}`);
     }
 }
 
