@@ -40,6 +40,7 @@ spec/evidence/probes/*.hdr
 
 # Recon / scratch output from agent sessions.
 /.recon/
+/.superpowers/
 /.worktrees/
 
 # Local env files — never commit secrets (CLOCKIFY_API_KEY etc.). The
