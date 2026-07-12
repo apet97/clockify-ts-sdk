@@ -63,6 +63,54 @@ function idFilter(ids: string[]): { ids: string[]; contains: "CONTAINS" } {
     return { ids, contains: "CONTAINS" };
 }
 
+type SummaryGroup = Parameters<typeof summaryFilter>[0][number];
+const SUMMARY_GROUPS = [
+    "CLIENT",
+    "PROJECT",
+    "USER",
+    "WEEK",
+    "DATE",
+    "MONTH",
+    "TIMEENTRY",
+    "TASK",
+] as const satisfies readonly SummaryGroup[];
+
+function parseSummaryGroups(raw: unknown): SummaryGroup[] {
+    const groups = String(raw)
+        .split(",")
+        .map((group) => group.trim().toUpperCase())
+        .filter(Boolean);
+    if (groups.length === 0 || groups.length > 3) {
+        throw new Error("--groups must contain between one and three summary groups.");
+    }
+    const unknown = groups.find(
+        (group) => !SUMMARY_GROUPS.includes(group as (typeof SUMMARY_GROUPS)[number]),
+    );
+    if (unknown) {
+        throw new Error(`Unknown summary group: ${unknown}. Use one of: ${SUMMARY_GROUPS.join(", ")}.`);
+    }
+    return groups as SummaryGroup[];
+}
+
+type WeeklyGroup = Parameters<typeof weeklyFilter>[0];
+type WeeklySubgroup = Parameters<typeof weeklyFilter>[1];
+
+function parseWeeklyGroup(raw: unknown): WeeklyGroup {
+    const group = String(raw).toUpperCase();
+    if (group !== "USER" && group !== "PROJECT") {
+        throw new Error("Weekly group must be USER or PROJECT.");
+    }
+    return group;
+}
+
+function parseWeeklySubgroup(raw: unknown): WeeklySubgroup {
+    const subgroup = String(raw).toUpperCase();
+    if (subgroup !== "TIME") {
+        throw new Error("Weekly subgroup must be TIME.");
+    }
+    return subgroup;
+}
+
 const PERIOD_HELP = `Named period: ${REPORT_PERIODS.join(", ")} (default this_month).`;
 
 export const registerReportsCommand: Registrar = (program, services) => {
@@ -85,21 +133,14 @@ export const registerReportsCommand: Registrar = (program, services) => {
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const { dateRangeStart, dateRangeEnd } = resolveRange(opts);
-            const groups = String(opts.groups)
-                .split(",")
-                .map((g) => g.trim().toUpperCase())
-                .filter(Boolean);
-            // Bind the generated union request directly. The object matches the
-            // flattened arm (via the `summaryFilter` key), so TS narrows `req`
-            // and the later billable/projects/clients assignments type-check —
-            // the prior `wireBody` cast is no longer needed. (The `*Flattened`
-            // arm itself is not surfaced through the generated barrel, so bind
-            // the union.)
+            const groups = parseSummaryGroups(opts.groups);
+            // Bind the generated union directly through its flattened arm so
+            // later billable/projects/clients assignments stay strictly typed.
             const req: ClockifyApi.SummaryReportsRequest = {
                 workspaceId,
                 dateRangeStart,
                 dateRangeEnd,
-                summaryFilter: summaryFilter(groups as Parameters<typeof summaryFilter>[0]),
+                summaryFilter: summaryFilter(groups),
             };
             if (opts.billable) req.billable = true;
             if (Array.isArray(opts.project) && opts.project.length > 0) {
@@ -163,8 +204,8 @@ export const registerReportsCommand: Registrar = (program, services) => {
                 dateRangeStart,
                 dateRangeEnd,
                 weeklyFilter: weeklyFilter(
-                    String(opts.group).toUpperCase() as Parameters<typeof weeklyFilter>[0],
-                    String(opts.subgroup).toUpperCase() as Parameters<typeof weeklyFilter>[1],
+                    parseWeeklyGroup(opts.group),
+                    parseWeeklySubgroup(opts.subgroup),
                 ),
             };
             const data = await client.reports.weekly(req);

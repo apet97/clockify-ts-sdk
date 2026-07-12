@@ -8,7 +8,7 @@
  * not resolve category names — same as `expenses update`).
  */
 import { entityId } from "clockify-sdk-ts-115/operation-receipt";
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -64,20 +64,14 @@ export const registerExpensesCommand: Registrar = (program, services) => {
         .option("--end <date>", "End of the date range (YYYY-MM-DD).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // Generated `ListExpensesRequest` carries only page/page-size, so the live
-            // wire DROPS --start/--end. We still forward them via the sanctioned
-            // wireBody escape (harmless; ignored upstream) and apply the date range as
-            // a client-side filter on the fetched page below.
-            const req: ClockifyApi.ListExpensesRequest & { start?: string; end?: string } = {
+            // Generated `ListExpensesRequest` carries only paging. Keep --start/--end
+            // entirely client-side and send only the typed request fields upstream.
+            const req: ClockifyApi.ListExpensesRequest = {
                 workspaceId,
                 page: opts.page,
                 "page-size": clampPageSize(opts.limit, 200),
             };
-            if (opts.start) req.start = opts.start;
-            if (opts.end) req.end = opts.end;
-            const response = (await client.expenses.list(
-                wireBody<ClockifyApi.ListExpensesRequest>(req),
-            )) as {
+            const response = (await client.expenses.list(req)) as {
                 expenses?: { expenses?: unknown[] } | unknown[];
             };
             // Upstream returns a doubly-nested envelope

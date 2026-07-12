@@ -143,7 +143,7 @@ describe("tasks get/update coverage", () => {
             tasks: {
                 get: async (req: Record<string, unknown>) => {
                     calls.gets.push(req);
-                    return { id: "tk-1", name: "QA", status: "ACTIVE" };
+                    return { id: "tk-1", name: "QA", status: "ACTIVE", billable: true };
                 },
                 update: async (req: Record<string, unknown>) => {
                     calls.updates.push(req);
@@ -212,6 +212,10 @@ describe("clients update --no-archived coverage", () => {
         const calls: Calls = { updates: [], creates: [], gets: [] };
         const client = {
             clients: {
+                get: async (req: Record<string, unknown>) => {
+                    calls.gets.push(req);
+                    return { id: "c-1", name: "Client", archived: true };
+                },
                 update: async (req: Record<string, unknown>) => {
                     calls.updates.push(req);
                     return { id: "c-1", name: "Globex" };

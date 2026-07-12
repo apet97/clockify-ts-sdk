@@ -8,6 +8,12 @@ import { registerUsersCommand } from "../src/commands/users.js";
 
 import { lastJson, makeProgram } from "./read-commands.helpers.js";
 
+const VALID_SHARED_REPORT_FILTER = JSON.stringify({
+    dateRangeStart: "2026-06-01",
+    dateRangeEnd: "2026-06-30",
+    exportType: "JSON",
+});
+
 describe("users, tags, and shared report read branches", () => {
     it("users list applies name and limit filters", async () => {
         const calls: Record<string, unknown>[] = [];
@@ -168,7 +174,7 @@ describe("users, tags, and shared report read branches", () => {
             "--type",
             "summary",
             "--filter",
-            "{\"dateRangeStart\":\"2026-06-01\"}",
+            VALID_SHARED_REPORT_FILTER,
             "--public",
         ]);
         expect(calls[1]!.body).toMatchObject({
@@ -256,7 +262,7 @@ describe("users, tags, and shared report read branches", () => {
             "--type",
             "weekly",
             "--filter",
-            "{\"dateRangeStart\":\"2026-06-01\"}",
+            VALID_SHARED_REPORT_FILTER,
         ]);
         expect(calls[0]!.body).toMatchObject({ name: "Visible", type: "WEEKLY" });
         expect(calls[0]!.body).not.toHaveProperty("public");
@@ -298,7 +304,7 @@ describe("users, tags, and shared report read branches", () => {
             "--type",
             "kiosk_pin_list",
             "--filter",
-            "{\"dateRangeStart\":\"2026-06-01\"}",
+            VALID_SHARED_REPORT_FILTER,
         ]);
         expect(calls[0]!.body).toMatchObject({ name: "Kiosk", type: "KIOSK_PIN_LIST" });
     });

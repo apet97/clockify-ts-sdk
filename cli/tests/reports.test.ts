@@ -139,6 +139,21 @@ describe("reports command", () => {
         });
     });
 
+    it("rejects an unknown summary group before the SDK call", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "summary",
+                "--groups",
+                "PROJECT,NOT_REAL",
+            ]),
+        ).rejects.toThrow(/unknown summary group/i);
+        expect(captured.summary).toHaveLength(0);
+    });
+
     it("rejects an unknown period before any SDK call", async () => {
         const { client, captured } = makeClient();
         await expect(
@@ -196,6 +211,21 @@ describe("reports command", () => {
         ]);
         expect(captured.weekly).toHaveLength(1);
         expect(JSON.stringify(captured.weekly[0]!.weeklyFilter)).toContain("PROJECT");
+    });
+
+    it("rejects unknown weekly grouping before the SDK call", async () => {
+        const { client, captured } = makeClient();
+        await expect(
+            makeProgram(client).parseAsync([
+                "node",
+                "clk115",
+                "reports",
+                "weekly",
+                "--group",
+                "CLIENT",
+            ]),
+        ).rejects.toThrow(/weekly group/i);
+        expect(captured.weekly).toHaveLength(0);
     });
 
     it("attendance sends workspaceId, range, and the required (empty) attendanceFilter", async () => {
