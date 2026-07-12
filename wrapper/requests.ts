@@ -35,5 +35,5 @@ export function wireBody<T extends object>(value: T): T {
     if (value === null || typeof value !== "object") {
         throw new TypeError("wireBody expects a non-null object");
     }
-    return value as T;
+    return value;
 }

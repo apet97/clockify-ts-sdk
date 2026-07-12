@@ -28,9 +28,8 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
  * Exact type-equality (NOT assignability — the all-optional invoice/payment DTOs are
  * mutually assignable, so only an exact-equality check distinguishes them).
  */
-type Equals<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-    ? true
-    : false;
+type Equals<A, B> =
+    (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 
 /**
  * Every COMPENSATED / PARTIALLY COMPENSATED finding in the ported ledger section,
@@ -43,15 +42,35 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
         "wrapper/tests/wire-shape.test.ts",
         "wrapper/tests/wire-shape-http.test.ts",
     ],
-    "invoices.create.note-subject-dropped": ["mcp/tests/invoices.test.ts", "wrapper/tests/wire-shape-http.test.ts"],
-    "money.amount-units.expenses-major-invoices-minor": ["wrapper/tests/money.test.ts", "wrapper/tests/wire-shape.test.ts"],
-    "invoices.items-unit-price-scale": ["wrapper/tests/wire-shape.test.ts", "spec/evidence/fixtures/invoice-item.unitprice.json"],
-    "holidays.update.replace-and-scope-filter": ["mcp/tests/holidays.test.ts", "mcp/tests/wire-shape.test.ts"],
-    "time-off.policies.update.replace-and-scope-filter": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/wire-shape.test.ts"],
-    "time-off.policies.scope.status-active-not-all": ["mcp/tests/time-off-policies.test.ts", "mcp/tests/holidays.test.ts"],
+    "invoices.create.note-subject-dropped": [
+        "mcp/tests/invoices.test.ts",
+        "wrapper/tests/wire-shape-http.test.ts",
+    ],
+    "money.amount-units.expenses-major-invoices-minor": [
+        "wrapper/tests/money.test.ts",
+        "wrapper/tests/wire-shape.test.ts",
+    ],
+    "invoices.items-unit-price-scale": [
+        "wrapper/tests/wire-shape.test.ts",
+        "spec/evidence/fixtures/invoice-item.unitprice.json",
+    ],
+    "holidays.update.replace-and-scope-filter": [
+        "mcp/tests/holidays.test.ts",
+        "mcp/tests/wire-shape.test.ts",
+    ],
+    "time-off.policies.update.replace-and-scope-filter": [
+        "mcp/tests/time-off-policies.test.ts",
+        "mcp/tests/wire-shape.test.ts",
+    ],
+    "time-off.policies.scope.status-active-not-all": [
+        "mcp/tests/time-off-policies.test.ts",
+        "mcp/tests/holidays.test.ts",
+    ],
     "rates.put-minor-units-no-get": ["mcp/tests/rates.test.ts"],
     "scheduling.project-totals.get-vs-post": ["mcp/tests/scheduling-totals.test.ts"],
-    "scheduling.list-per-project.start-end-required-camel-pagesize": ["mcp/tests/scheduling-totals.test.ts"],
+    "scheduling.list-per-project.start-end-required-camel-pagesize": [
+        "mcp/tests/scheduling-totals.test.ts",
+    ],
     "time-off.requests.update-status.wrong-method-and-field": ["mcp/tests/sweep-fixes.test.ts"],
     "time-off.requests.delete.policy-scoped-only-pending": ["mcp/tests/timeoff-delete.test.ts"],
     "time-off.change-status.union-and-note": ["mcp/tests/sweep-fixes.test.ts"],
@@ -62,7 +81,10 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
     "deletes.archive-first": ["mcp/tests/sweep-fixes.test.ts"],
     "user-groups.get.returns-void": ["mcp/tests/groups-get.test.ts"],
     "time-off.requests.get.dead-route": ["mcp/tests/time-off-get.test.ts"],
-    "single-gets.404-405-read-from-list": ["mcp/tests/groups-get.test.ts", "mcp/tests/time-off-get.test.ts"],
+    "single-gets.404-405-read-from-list": [
+        "mcp/tests/groups-get.test.ts",
+        "mcp/tests/time-off-get.test.ts",
+    ],
     "deletes.archive-first.projects-tasks": ["mcp/tests/archive-then-delete.test.ts"],
     "deletes.archive-first.clients-blocked": ["mcp/tests/archive-then-delete.test.ts"],
     "consumer.cast-budget": [
@@ -106,6 +128,11 @@ describe("wire-shape ledger (wrapper helpers)", () => {
         const existing = {
             clientId: "c1",
             currency: "USD",
+            number: "INV-1",
+            issuedDate: "2026-06-01T00:00:00Z",
+            discount: 0,
+            tax: 0,
+            tax2: 0,
             note: "Net 30 terms",
             subject: "Website work",
             // read-only/computed fields the GET returns must NOT be carried back:
@@ -125,7 +152,15 @@ describe("wire-shape ledger (wrapper helpers)", () => {
     });
 
     it("invoice update: maps GET tax/discount (×100 ints) to PUT *Percent (÷100), never verbatim", () => {
-        const existing = { tax: 1000, discount: 500, tax2: 0 }; // 10% / 5% / 0% on the wire
+        const existing = {
+            currency: "USD",
+            number: "INV-1",
+            issuedDate: "2026-06-01T00:00:00Z",
+            dueDate: "2026-07-01T00:00:00Z",
+            tax: 1000,
+            discount: 500,
+            tax2: 0,
+        }; // 10% / 5% / 0% on the wire
         const body = invoiceUpdateBodyFromExisting(existing);
         expect(body.taxPercent).toBe(10);
         expect(body.discountPercent).toBe(5);
@@ -180,16 +215,25 @@ describe("wire-shape ledger (wrapper helpers)", () => {
         for (const { slug, compensated } of findings) {
             if (!compensated) continue;
             const covers = LEDGER_COVERAGE[slug];
-            expect(covers, `COMPENSATED finding \`${slug}\` has no test coverage in LEDGER_COVERAGE`).toBeTruthy();
+            expect(
+                covers,
+                `COMPENSATED finding \`${slug}\` has no test coverage in LEDGER_COVERAGE`,
+            ).toBeTruthy();
             for (const rel of covers ?? []) {
-                expect(fs.existsSync(path.join(repoRoot, rel)), `coverage file ${rel} for \`${slug}\` is missing`).toBe(true);
+                expect(
+                    fs.existsSync(path.join(repoRoot, rel)),
+                    `coverage file ${rel} for \`${slug}\` is missing`,
+                ).toBe(true);
             }
         }
 
         // 2. no stale coverage entry: every mapped slug is a real COMPENSATED finding
         const compensatedSlugs = new Set(findings.filter((f) => f.compensated).map((f) => f.slug));
         for (const slug of Object.keys(LEDGER_COVERAGE)) {
-            expect(compensatedSlugs.has(slug), `LEDGER_COVERAGE has \`${slug}\` but the ledger no longer marks it COMPENSATED`).toBe(true);
+            expect(
+                compensatedSlugs.has(slug),
+                `LEDGER_COVERAGE has \`${slug}\` but the ledger no longer marks it COMPENSATED`,
+            ).toBe(true);
         }
     });
 });

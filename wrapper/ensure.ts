@@ -13,6 +13,7 @@
  * is reused here.
  */
 import { warnOnce } from "./deprecation.js";
+import type { ClockifyApi, ClockifyRequestBody } from "./requests.js";
 import { matchByName } from "./resolve.js";
 
 /** The minimal shape a find-or-create entity must expose. */
@@ -182,17 +183,8 @@ interface ArchiveThenDeleteOptions {
     id: string;
     /** The resource (`client.projects` / `client.clients`) whose get/update/delete to drive. */
     resource: ArchiveThenDeleteResource;
-    /**
-     * Build the archive (PUT `archived: true`) request body, given the GET-ed name.
-     * This is the ONLY per-entity quirk: a project uses the flattened shape
-     * `{workspaceId, projectId, name, archived:true}` (the project update whitelist
-     * HAS `archived`); a client MUST use the body-envelope shape
-     * `{workspaceId, clientId, body:{name, archived:true}}` because the flattened
-     * `clients.update` drops `archived` (whitelist `[address, currencyCode, email,
-     * name, note]`) and `clients.archive` 404s — the envelope bypasses the field
-     * whitelist via `core.bodyFromRequest`, landing `archived:true` on the wire.
-     */
-    archiveRequest: (id: string, name: string) => unknown;
+    /** Build the archive request from the complete GET response. */
+    archiveRequest: (id: string, current: Record<string, unknown> & { name: string }) => unknown;
     /** Skip the GET + archive steps when the entity is already known to be archived. */
     alreadyArchived?: boolean;
 }
@@ -221,14 +213,14 @@ async function archiveThenDelete(opts: ArchiveThenDeleteOptions): Promise<Archiv
         const current = (await opts.resource.get({
             workspaceId: opts.workspaceId,
             [idKey]: opts.id,
-        })) as { name?: string };
-        const name = String(current.name ?? "");
+        })) as Record<string, unknown>;
+        const name = typeof current.name === "string" ? current.name : "";
         if (!name) {
             throw new Error(
                 `Cannot archive ${opts.noun} before delete: the ${opts.noun} has no name to carry through the replace-PUT.`,
             );
         }
-        await opts.resource.update(opts.archiveRequest(opts.id, name));
+        await opts.resource.update(opts.archiveRequest(opts.id, { ...current, name }));
         archived = true;
     }
     await opts.resource.delete({ workspaceId: opts.workspaceId, [idKey]: opts.id });
@@ -267,21 +259,20 @@ export function archiveThenDeleteProject(
         resource: opts.resource,
         ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
         // Flattened: the project update whitelist accepts `archived` directly.
-        archiveRequest: (projectId, name) => ({
+        archiveRequest: (projectId, current) => ({
             workspaceId: opts.workspaceId,
             projectId,
-            name,
+            name: current.name,
             archived: true,
         }),
     });
 }
 
 /**
- * Delete a client the live-allowed way: GET the name → archive → DELETE. Owns the
- * empty-name guard AND the body-envelope quirk: the archive request is the
- * envelope shape `clients.update({...,body:{name, archived:true}})`, because the
- * flattened `clients.update` drops `archived` and `clients.archive` 404s — only
- * the envelope lands `archived:true` on the wire (via `core.bodyFromRequest`).
+ * Delete a client the live-allowed way: GET the complete editable state → archive
+ * with a typed replacement body → DELETE. The generated update type now exposes
+ * `archived`, but the endpoint still replaces the document, so every untouched
+ * editable value must survive the archive write.
  * Pass `client.clients` as the `resource`. See
  * `spec/evidence/discrepancies.md` `deletes.archive-first.clients-blocked`.
  *
@@ -299,12 +290,16 @@ export function archiveThenDeleteClient(
         id: opts.id,
         resource: opts.resource,
         ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
-        // Body-envelope: bypasses the clients.update field whitelist so `archived`
-        // reaches the wire. Mirrors the wireBody() envelope the SDK exposes.
-        archiveRequest: (clientId, name) => ({
-            workspaceId: opts.workspaceId,
-            clientId,
-            body: { name, archived: true },
-        }),
+        archiveRequest: (clientId, current) => {
+            const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> = {
+                name: current.name,
+                archived: true,
+            };
+            for (const key of ["address", "currencyCode", "email", "note"] as const) {
+                const value = current[key];
+                if (typeof value === "string") body[key] = value;
+            }
+            return { workspaceId: opts.workspaceId, clientId, body };
+        },
     });
 }

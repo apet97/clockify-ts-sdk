@@ -30,6 +30,8 @@ export function createMockClockifyServer(options = {}) {
                 number: "INV-1",
                 clientId: "000000000000000000000201",
                 currency: "USD",
+                issuedDate: "2026-06-01T00:00:00Z",
+                dueDate: "2026-07-01T00:00:00Z",
                 note: "Net 30 terms",
                 subject: "Website redesign",
                 discount: 500,
