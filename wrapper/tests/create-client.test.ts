@@ -107,15 +107,16 @@ describe("createClockifyClient", () => {
                               return pending.promise;
                           }
                         : "https://api.clockify.me/api/v1",
-                headers:
-                    stage === "header"
-                        ? {
+                ...(stage === "header"
+                    ? {
+                          headers: {
                               "X-Deferred": () => {
                                   entered();
                                   return pending.promise;
                               },
-                          }
-                        : undefined,
+                          },
+                      }
+                    : {}),
                 fetch: dispatch,
                 maxRetries: 0,
             });
