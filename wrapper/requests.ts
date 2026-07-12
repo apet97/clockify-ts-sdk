@@ -31,7 +31,7 @@ export type ClockifyRequestBody<T extends object> = T extends { body: infer Body
  * and documents intent at the call site. Use only where a `KEEP` reason
  * applies; prefer the union-envelope binding everywhere else.
  */
-export function wireBody<T extends object>(value: object): T {
+export function wireBody<T extends object>(value: T): T {
     if (value === null || typeof value !== "object") {
         throw new TypeError("wireBody expects a non-null object");
     }
