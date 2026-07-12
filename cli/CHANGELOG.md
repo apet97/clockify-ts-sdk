@@ -4,9 +4,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-12
+
 ### Breaking
 
 - Require Node.js 22.13 or newer.
+- Require `clockify-sdk-ts-115 >=0.12.0 <1`.
 - Removed `--api-key` and rc-file `apiKey`; credentials are accepted only from
   `CLOCKIFY_API_KEY`, and legacy rc secrets fail with migration guidance.
 

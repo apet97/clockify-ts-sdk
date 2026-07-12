@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { PACKAGE_VERSION } from "../src/generated/version.js";
 import { main } from "../src/index.js";
 
 let logged: string[];
@@ -98,7 +99,7 @@ describe("CLI exit and JSON error contract", () => {
             const code = await main(["node", "clk115", "--version"]);
             expect(code).toBe(0);
             const written = writeSpy.mock.calls.map((args) => String(args[0])).join("");
-            expect(written).toContain("0.2.0");
+            expect(written).toContain(PACKAGE_VERSION);
         } finally {
             writeSpy.mockRestore();
         }

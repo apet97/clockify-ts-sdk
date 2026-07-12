@@ -404,6 +404,7 @@ tag-hygiene:
 	node scripts/check-tag-hygiene.mjs
 
 version-consistency:
+	node scripts/generate-package-versions.mjs
 	node scripts/check-version-consistency.mjs
 
 secret-hygiene:

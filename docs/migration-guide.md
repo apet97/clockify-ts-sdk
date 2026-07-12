@@ -10,6 +10,13 @@ This project intentionally uses package names with `115` suffixes for trademark 
 | `clockify` CLI | `@apet97/clockify-cli-115`, binaries `clockify115` and `clk115` |
 | Clockify MCP server | `@apet97/clockify-mcp-115`, binary `clockify115-mcp` |
 
+## Version alignment
+
+The coordinated package set is SDK `0.12.0`, CLI `0.3.0`, and TypeScript MCP
+`0.6.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`clockify-sdk-ts-115 >=0.12.0 <1` as their SDK peer range. Upgrade the SDK before
+or alongside either consumer package so npm does not resolve an older SDK surface.
+
 ## Import paths
 
 Use the package root for common SDK work:

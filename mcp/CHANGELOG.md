@@ -4,9 +4,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-12
+
 ### Changed
 
-- Require Node.js 22.13 or newer and `clockify-sdk-ts-115 >=0.11.0 <1`.
+- Require Node.js 22.13 or newer and `clockify-sdk-ts-115 >=0.12.0 <1`.
 - Runtime initialize metadata is generated from the package manifest.
 - Full type checking includes MCP tests; builds use a source-only build config.
 - Tool output schemas are injected by `defineTool`; the global `registerTool` monkeypatch is gone.

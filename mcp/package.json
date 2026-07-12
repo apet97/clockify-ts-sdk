@@ -1,6 +1,6 @@
 {
   "name": "@apet97/clockify-mcp-115",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Unofficial, community-built — not affiliated with CAKE.com or Clockify. Model Context Protocol server for Clockify. TypeScript sibling to go-clockify (the Go MCP).",
   "license": "MIT",
   "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
@@ -50,11 +50,11 @@
   "scripts": {
     "build": "node ../scripts/generate-package-versions.mjs && npm run clean && tsc -p tsconfig.build.json",
     "clean": "rm -rf dist",
-    "dev": "tsx src/index.ts",
+    "dev": "node ../scripts/generate-package-versions.mjs && tsx src/index.ts",
     "test": "node ../scripts/generate-package-versions.mjs && vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "node ../scripts/generate-package-versions.mjs && vitest run --coverage",
     "mutation": "cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run mcp/stryker.conf.json",
-    "test:watch": "vitest",
+    "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -66,7 +66,7 @@
     "zod": "^3.25.0"
   },
   "peerDependencies": {
-    "clockify-sdk-ts-115": ">=0.11.0 <1"
+    "clockify-sdk-ts-115": ">=0.12.0 <1"
   },
   "devDependencies": {
     "@types/node": "^22",

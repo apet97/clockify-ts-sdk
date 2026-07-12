@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PACKAGE_VERSION } from "../src/generated/version.js";
 import { buildProgram } from "../src/index.js";
 
 describe("buildProgram", () => {
@@ -10,7 +11,7 @@ describe("buildProgram", () => {
         expect(program.name()).toBe("clockify115");
         expect(program.description()).toContain("@apet97/clockify-cli-115");
         expect(program.description()).toContain("clockify-sdk-ts-115");
-        expect(program.version()).toBe("0.2.0");
+        expect(program.version()).toBe(PACKAGE_VERSION);
         expect(commandNames).toEqual([
             "api",
             "audit-log",
