@@ -12,7 +12,7 @@
     "sdk": {
       "folder": "wrapper",
       "package": "clockify-sdk-ts-115",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "node": ">=22.13.0",
       "files": [
         "dist",
@@ -60,8 +60,9 @@
     "cli": {
       "folder": "cli",
       "package": "@apet97/clockify-cli-115",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "node": ">=22.13.0",
+      "sdkPeer": ">=0.12.0 <1",
       "bins": [
         "clk115",
         "clockify115"
@@ -82,8 +83,9 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "node": ">=22.13.0",
+      "sdkPeer": ">=0.12.0 <1",
       "bins": [
         "clockify115-mcp"
       ],
@@ -375,7 +377,8 @@
         "clockify_demo_cleanup"
       ],
       "proof": [
-        "mcp/scripts/assert-clean-prefixes.mjs",
+        "scripts/live/orchestrator.mjs",
+        "scripts/live/cleanup.mjs",
         "../GOCLMCP/docs/live-tests.md"
       ],
       "surfaceAvailability": {
@@ -384,7 +387,7 @@
         "tsMcp": "supported through dedicated demo seed and cleanup tools",
         "goMcp": "supported through matching demo seed and cleanup tools"
       },
-      "proofMode": "cleanup script plus live-test documentation for sandbox-only proof",
+      "proofMode": "aggregate live orchestrator plus dependency-ordered cleanup and zero-leftover receipt",
       "recovery": [
         "Use identifiable prefixes and cleanup receipts; never run demo cleanup against a customer workspace."
       ],

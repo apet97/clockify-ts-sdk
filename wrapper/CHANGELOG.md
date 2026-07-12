@@ -5,19 +5,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
-## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.9.0...wrapper-v0.10.0) (2026-06-29)
-
-
-### Features
-
-* **mcp:** ship the low-risk read-tool tranche (135 -&gt; 140) + follow-up findings ([7c9b69a](https://github.com/apet97/clockify-ts-sdk/commit/7c9b69af9914c6b191139218f5d3927e2c386ba6))
-
-
-### Bug Fixes
-
-* implement 47 adversarial-review findings (plan 011) ([443b1a2](https://github.com/apet97/clockify-ts-sdk/commit/443b1a24509338d28482695df64b9a68194a44c0))
-
 ## [Unreleased]
+
+## [0.12.0] - 2026-07-12
 
 ### Breaking
 
@@ -33,6 +23,8 @@ once v1.0.0 ships.
   redirect following, and replay retryable bodies from fresh preflighted `Request` clones.
 - Non-loopback cleartext origins always reject; `allowNonClockifyHttpsHost` replaces the deprecated
   `allowInsecureBaseUrl` alias.
+- Replaced a real sandbox workspace identifier in the scoped-client JSDoc example with a neutral
+  placeholder so compiled declarations and MCPB artifacts carry no governed workspace identity.
 
 ### Changed
 
@@ -45,12 +37,9 @@ once v1.0.0 ships.
 - Ensure helpers accept `scopeKey` for in-process single-flight coordination.
 - Audit actions are a canonical runtime constant/type generated from the corrected OpenAPI snapshot.
 - Webhook literal-IP validation rejects deprecated IPv6 site-local `fec0::/10` destinations.
-
-### Changed
-
-- Published to npm as an unofficial, community-built package under the unscoped
-  `clockify-sdk-ts-115` name (not affiliated with CAKE.com or Clockify). Release
-  is tag-triggered CI on a pushed `wrapper-v*` tag (was a bare `v*` tag).
+- The package remains configured as the unofficial, community-built
+  `clockify-sdk-ts-115` package (not affiliated with CAKE.com or Clockify); any future
+  publication remains tag-triggered CI on a pushed `wrapper-v*` tag.
 - docs: the README headline now distinguishes the 169 total operations from the
   135 live-verified ones (links to `docs/spec-confidence.md`) instead of
   describing all 169 as "live".
@@ -573,6 +562,16 @@ once v1.0.0 ships.
 - Raised the `.size-limit.json` ceiling for the CJS root entry from 2.5 kB to 3 kB. The `money`/`invoice-body`/`resolve`/`dates` root re-exports grew the bundled CJS barrel to 2.74 kB brotlied; the raw-size budget in `docs/performance-budgets.json` was already recalibrated for these helpers (CJS → 18500 B, ~9% headroom) but the brotli `size-limit` gate was missed in lockstep. The ESM root stays tree-shaken at 1.48 kB.
 - Pinned the generated retry-delay template's sub-cap branch in `generated-retry-delay.test.ts`: a fake-timers `X-RateLimit-Reset` ~5s ahead now asserts the time-relative `5000ms` result (previously only the over-cap path was covered).
 
+## [0.10.0](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.9.0...wrapper-v0.10.0) (2026-06-29)
+
+### Features
+
+* **mcp:** ship the low-risk read-tool tranche (135 -&gt; 140) + follow-up findings ([7c9b69a](https://github.com/apet97/clockify-ts-sdk/commit/7c9b69af9914c6b191139218f5d3927e2c386ba6))
+
+### Bug Fixes
+
+* implement 47 adversarial-review findings (plan 011) ([443b1a2](https://github.com/apet97/clockify-ts-sdk/commit/443b1a24509338d28482695df64b9a68194a44c0))
+
 ## [0.9.0] — 2026-05-25
 
 Closes the Tier-1 and Tier-3 gaps from the "Stainless/Speakeasy
@@ -805,7 +804,7 @@ backward-compatible with v0.5.0 catch sites.
 ### Removed
 
 - **Three more phantom routes quarantined (G.1 edge-case follow-up).**
-  Probe re-pass against sandbox 65b382b606de527a7ee2b60e on
+  Probe re-pass against sandbox <REDACTED_WORKSPACE_ID> on
   2026-05-25 confirmed all three "needs investigation" routes from
   the post-v0.5.0 follow-up are dead on the live API:
   - `POST /workspaces/{wsId}/time-off/requests/users/{userId}`

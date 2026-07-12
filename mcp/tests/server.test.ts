@@ -1,13 +1,12 @@
 // Server tests exercise the canonical envelope: every tool returns content[0].text
 // plus structuredContent matching the advertised output schema.
-import { readFileSync } from "node:fs";
-
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
 import { MissingCredentialsError } from "../src/client.js";
+import { PACKAGE_VERSION } from "../src/generated/version.js";
 import { buildServer } from "../src/server.js";
 
 const fakeUser = { id: "user-1", email: "alice@example.com", name: "Alice" };
@@ -265,18 +264,12 @@ describe("@apet97/clockify-mcp-115", () => {
         expect(names).toHaveLength(140);
     });
 
-    it("advertises the version from package.json (server.ts literal must not drift)", () => {
-        // The initialize version is generated from package.json before checks/builds.
-        const pkg = JSON.parse(
-            readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-        ) as {
-            version: string;
-        };
-        const generated = readFileSync(
-            new URL("../src/generated/version.ts", import.meta.url),
-            "utf8",
-        ).match(/PACKAGE_VERSION = "([^"]+)"/);
-        expect(generated?.[1]).toBe(pkg.version);
+    it("advertises the generated package version", async () => {
+        const client = await connect(fakeContext());
+        expect(client.getServerVersion()).toEqual({
+            name: "@apet97/clockify-mcp-115",
+            version: PACKAGE_VERSION,
+        });
     });
 
     it("clockify_timer_start creates a running entry and emits a created receipt", async () => {

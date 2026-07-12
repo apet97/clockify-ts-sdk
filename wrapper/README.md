@@ -13,6 +13,8 @@ modules, 169 operations (135 live-verified — see
 [spec-confidence](../docs/spec-confidence.md)), idiomatic `client.<resource>.<verb>()`
 naming on 156 of 169 operations (92.3%), and dual ESM + CJS.
 
+Current release: `0.12.0`. Requires Node.js `>=22.13.0`.
+
 - `createClockifyClient()` — single-import factory, env-var
   fallback (`CLOCKIFY_API_KEY` / `CLOCKIFY_ADDON_TOKEN`), no
   user-visible workaround casts

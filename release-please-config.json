@@ -5,7 +5,7 @@
     "draft-pull-request": false,
     "packages": {
         "wrapper": {
-            "package-name": "clockify-sdk-ts",
+            "package-name": "clockify-sdk-ts-115",
             "component": "wrapper",
             "changelog-path": "CHANGELOG.md"
         },

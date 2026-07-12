@@ -222,6 +222,7 @@ const surface = {
             package: cliPkg.name,
             version: cliPkg.version,
             node: cliPkg.engines?.node,
+            sdkPeer: cliPkg.peerDependencies?.[wrapperPkg.name] ?? null,
             bins: Object.keys(cliPkg.bin ?? {}).sort((a, b) => a.localeCompare(b)),
             files: packageFiles(cliPkg),
             prepublishOnly: prepublishGate(cliPkg),
@@ -232,6 +233,7 @@ const surface = {
             package: mcpPkg.name,
             version: mcpPkg.version,
             node: mcpPkg.engines?.node,
+            sdkPeer: mcpPkg.peerDependencies?.[wrapperPkg.name] ?? null,
             bins: Object.keys(mcpPkg.bin ?? {}).sort((a, b) => a.localeCompare(b)),
             files: packageFiles(mcpPkg),
             declaredToolCount: tsMcpToolCounts.total,
@@ -303,11 +305,11 @@ function markdownFor(surfaceValue) {
     lines.push("");
     lines.push("## Packages");
     lines.push("");
-    lines.push("| Surface | Folder | Package | Version | Runtime | Ship files | Last-resort publish gate | Main gates |");
-    lines.push("|---|---|---|---|---|---|---|---|");
+    lines.push("| Surface | Folder | Package | Version | Runtime | SDK peer | Ship files | Last-resort publish gate | Main gates |");
+    lines.push("|---|---|---|---|---|---|---|---|---|");
     const packages = surfaceValue.packages;
     for (const [key, pkg] of Object.entries(packages)) {
-        lines.push(`| ${key} | \`${pkg.folder}\` | ${pkg.package ?? "-"} | ${pkg.version ?? "-"} | ${pkg.node ?? "-"} | ${tableCell(pkg.files)} | ${pkg.prepublishOnly ? `\`${pkg.prepublishOnly}\`` : "-"} | ${tableCell(pkg.gates)} |`);
+        lines.push(`| ${key} | \`${pkg.folder}\` | ${pkg.package ?? "-"} | ${pkg.version ?? "-"} | ${pkg.node ?? "-"} | ${pkg.sdkPeer ?? "-"} | ${tableCell(pkg.files)} | ${pkg.prepublishOnly ? `\`${pkg.prepublishOnly}\`` : "-"} | ${tableCell(pkg.gates)} |`);
     }
     lines.push("");
     lines.push("## Workflow parity");

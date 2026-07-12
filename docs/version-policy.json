@@ -44,21 +44,36 @@
     }
   ],
   "versionConsistency": {
-    "purpose": "Each package package.json version must be clean semver, and .release-please-manifest.json must track the wrapper version exactly. cli/mcp are reconciled by hand until release-please tracks them.",
+    "purpose": "Each package identity and package.json version must agree with release-please, generated runtime metadata, declared peer ranges, and any secondary package manifest.",
     "releasePleaseManifest": ".release-please-manifest.json",
-    "manifestKeyForReleasePlease": "wrapper",
+    "releasePleaseConfig": "release-please-config.json",
     "packages": [
       {
         "id": "wrapper",
-        "manifest": "wrapper/package.json"
+        "manifest": "wrapper/package.json",
+        "packageName": "clockify-sdk-ts-115",
+        "runtimeVersionFile": "wrapper/generated/version.ts"
       },
       {
         "id": "cli",
-        "manifest": "cli/package.json"
+        "manifest": "cli/package.json",
+        "packageName": "@apet97/clockify-cli-115",
+        "runtimeVersionFile": "cli/src/generated/version.ts",
+        "peerDependencies": {
+          "clockify-sdk-ts-115": ">=0.12.0 <1"
+        }
       },
       {
         "id": "mcp",
-        "manifest": "mcp/package.json"
+        "manifest": "mcp/package.json",
+        "packageName": "@apet97/clockify-mcp-115",
+        "runtimeVersionFile": "mcp/src/generated/version.ts",
+        "peerDependencies": {
+          "clockify-sdk-ts-115": ">=0.12.0 <1"
+        },
+        "additionalVersionManifests": [
+          "mcp/manifest.json"
+        ]
       }
     ]
   }
