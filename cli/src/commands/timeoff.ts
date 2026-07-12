@@ -12,6 +12,7 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 interface TimeOffListRequest {
@@ -27,8 +28,7 @@ interface TimeOffListRequest {
 export const registerTimeOffCommand: Registrar = (program, services) => {
     const timeoff = program.command("timeoff").description("Time-off requests.");
 
-    timeoff
-        .command("list")
+    leafCommand(timeoff, "list", "read")
         .description("List time-off requests in the workspace.")
         .option("--page <n>", "Page number.", parseIntArg, 1)
         .option(
@@ -90,8 +90,7 @@ export const registerTimeOffCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    timeoff
-        .command("submit")
+    leafCommand(timeoff, "submit", "write")
         .description("Submit a time-off request against a policy.")
         .requiredOption("--policy <id>", "Time-off policy ID.")
         .requiredOption(

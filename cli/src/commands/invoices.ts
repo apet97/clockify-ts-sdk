@@ -8,13 +8,13 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerInvoicesCommand: Registrar = (program, services) => {
     const invoices = program.command("invoices").description("Manage invoices.");
 
-    invoices
-        .command("list")
+    leafCommand(invoices, "list", "read")
         .description("List invoices in the workspace.")
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
@@ -48,8 +48,7 @@ export const registerInvoicesCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    invoices
-        .command("create")
+    leafCommand(invoices, "create", "write")
         .description("Create an invoice draft.")
         .requiredOption("--client <id>", "Client ID.")
         .requiredOption("--number <text>", "Invoice number.")

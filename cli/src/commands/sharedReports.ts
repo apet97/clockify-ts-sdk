@@ -14,6 +14,7 @@ import { printObject, type OutputRecord } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 /**
@@ -299,8 +300,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
         .command("shared-reports")
         .description("Manage shared (public-link) reports.");
 
-    shared
-        .command("list")
+    leafCommand(shared, "list", "read")
         .description("List the workspace's shared (public-link) reports.")
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);
@@ -308,8 +308,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             printObject(result, output);
         });
 
-    shared
-        .command("view")
+    leafCommand(shared, "view", "read")
         .argument("<id>", "Shared-report ID.")
         .option(
             "--export-type <type>",
@@ -331,8 +330,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             printObject(await readReportBody(response), output);
         });
 
-    shared
-        .command("create")
+    leafCommand(shared, "create", "write")
         .requiredOption("--name <text>", "Shared-report name.")
         .requiredOption("--type <type>", `Report type: ${SHARED_REPORT_TYPES.join(", ")}.`)
         .requiredOption("--filter <json>", "Report filter object as a JSON string.")
@@ -367,8 +365,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             );
         });
 
-    shared
-        .command("update")
+    leafCommand(shared, "update", "write")
         .argument("<id>", "Shared-report ID.")
         .requiredOption("--name <text>", "Shared-report name.")
         .requiredOption("--type <type>", `Report type: ${SHARED_REPORT_TYPES.join(", ")}.`)
@@ -408,8 +405,7 @@ export const registerSharedReportsCommand: Registrar = (program, services) => {
             );
         });
 
-    shared
-        .command("delete")
+    leafCommand(shared, "delete", "destructive")
         .argument("<id>", "Shared-report ID.")
         .description("Delete a shared report by ID.")
         .action(async function (this: Command, id: string) {

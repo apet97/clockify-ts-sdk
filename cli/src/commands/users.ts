@@ -13,13 +13,13 @@ import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveBaseContext, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerUsersCommand: Registrar = (program, services) => {
     const users = program.command("users").description("Inspect workspace users.");
 
-    users
-        .command("me")
+    leafCommand(users, "me", "read")
         .description("Show the current authenticated user (the API-key owner).")
         .action(async function (this: Command) {
             // GET /user is workspace-independent — use the base context so
@@ -29,8 +29,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             printObject(me, output);
         });
 
-    users
-        .command("list")
+    leafCommand(users, "list", "read")
         .description("List members of the workspace.")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
@@ -57,8 +56,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    users
-        .command("invite")
+    leafCommand(users, "invite", "write")
         .argument("<email>", "Email address of the user to invite.")
         .option("--no-send-email", "Do not send the invitation email.")
         .description("Invite (add) a user to the workspace by email.")
@@ -93,8 +91,7 @@ export const registerUsersCommand: Registrar = (program, services) => {
             );
         });
 
-    users
-        .command("update-profile")
+    leafCommand(users, "update-profile", "write")
         .argument("<userId>", "User ID whose member profile to update.")
         .option("--name <text>", "Display name.")
         .option("--image-url <url>", "Profile image URL.")

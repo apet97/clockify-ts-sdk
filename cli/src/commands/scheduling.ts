@@ -19,6 +19,7 @@ import {
     promoteDateBoundary,
     resolveContext,
 } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerSchedulingCommand: Registrar = (program, services) => {
@@ -26,8 +27,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
         .command("scheduling")
         .description("Capacity scheduling assignments.");
 
-    scheduling
-        .command("list")
+    leafCommand(scheduling, "list", "read")
         .description(
             "List scheduling assignments over a date range. --from/--to are required (the endpoint 400s without them).",
         )
@@ -78,8 +78,7 @@ export const registerSchedulingCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    scheduling
-        .command("create")
+    leafCommand(scheduling, "create", "write")
         .description(
             "Create a scheduling assignment (defaults to draft; pass --publish to publish).",
         )

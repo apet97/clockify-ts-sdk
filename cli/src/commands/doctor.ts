@@ -11,13 +11,13 @@ import { globalFlags, resolveFlags } from "../index.js";
 import { printObject } from "../output.js";
 
 import { rootProgram } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 const DEFAULT_CLOCKIFY_BASE_URL = "https://api.clockify.me/api/v1";
 
 export const registerDoctorCommand: Registrar = (program, services) => {
-    program
-        .command("doctor")
+    leafCommand(program, "doctor", "read")
         .description("Check local CLI configuration without contacting Clockify.")
         .action(function (this: Command) {
             const root = rootProgram(this);

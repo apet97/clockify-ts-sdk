@@ -11,11 +11,11 @@ import { formatIsoDuration } from "../duration.js";
 import { printObject } from "../output.js";
 
 import { resolveBaseContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerStatusCommand: Registrar = (program, services) => {
-    program
-        .command("status")
+    leafCommand(program, "status", "read")
         .description("Show the configured workspace, current user, and running timer.")
         .action(async function (this: Command) {
             const { client, config, output } = await resolveBaseContext(this, services);

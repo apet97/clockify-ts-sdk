@@ -10,6 +10,7 @@ import type { Command } from "commander";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import { resolveProjectId, resolveTaskId, resolveTagIds } from "./resolve-refs.js";
 import type { Registrar } from "./types.js";
 
@@ -21,8 +22,7 @@ interface StartOpts {
 }
 
 export const registerStartCommand: Registrar = (program, services) => {
-    program
-        .command("start")
+    leafCommand(program, "start", "write")
         .description(
             "Start a running time entry. Resolves project/task/tag names to IDs automatically.",
         )

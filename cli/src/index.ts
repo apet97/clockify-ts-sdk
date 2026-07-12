@@ -16,6 +16,7 @@ import { registerDoctorCommand } from "./commands/doctor.js";
 import { registerEntriesCommand } from "./commands/entries.js";
 import { registerExpensesCommand } from "./commands/expenses.js";
 import { registerInvoicesCommand } from "./commands/invoices.js";
+import { leafCommand } from "./commands/leaf-command.js";
 import { registerLogCommand } from "./commands/log.js";
 import { registerProjectsCommand } from "./commands/projects.js";
 import { registerReportsCommand } from "./commands/reports.js";
@@ -27,6 +28,7 @@ import { registerStopCommand } from "./commands/stop.js";
 import { registerTagsCommand } from "./commands/tags.js";
 import { registerTasksCommand } from "./commands/tasks.js";
 import { registerTimeOffCommand } from "./commands/timeoff.js";
+import type { Services } from "./commands/types.js";
 import { registerUsersCommand } from "./commands/users.js";
 import { registerWebhooksCommand } from "./commands/webhooks.js";
 import { parseCompletionShell, renderCompletion } from "./completions.js";
@@ -38,11 +40,16 @@ import { printError, type OutputMode, type OutputOptions } from "./output.js";
 
 export type ResolvedFlags = OutputOptions;
 
+export const defaultServices: Services = {
+    loadConfig,
+    buildClient,
+};
+
 /**
  * Build the commander program. Exposed for tests; the real binary
  * just calls `main(process.argv)`.
  */
-export function buildProgram(): Command {
+export function buildProgram(services: Services = defaultServices): Command {
     const program = new Command();
     program
         .name("clockify115")
@@ -59,11 +66,6 @@ export function buildProgram(): Command {
         .option("--select <path>", "Select a dot-path before printing JSON or NDJSON.")
         .option("--no-color", "Disable ANSI color output.")
         .showHelpAfterError(true);
-
-    const services = {
-        loadConfig,
-        buildClient,
-    };
 
     registerApiCommand(program, services);
     registerStatusCommand(program, services);
@@ -86,8 +88,7 @@ export function buildProgram(): Command {
     registerSharedReportsCommand(program, services);
     registerUsersCommand(program, services);
 
-    program
-        .command("completion")
+    leafCommand(program, "completion", "read")
         .argument("[shell]", "Shell to generate completion for: zsh, bash, or fish.", "zsh")
         .description("Print shell completion script for zsh, bash, or fish.")
         .action((shell: string) => {
@@ -155,8 +156,11 @@ export function globalFlags(program: Command): GlobalFlags {
     return out;
 }
 
-export async function main(argv: string[]): Promise<number> {
-    const program = buildProgram();
+export async function main(
+    argv: string[],
+    services: Services = defaultServices,
+): Promise<number> {
+    const program = buildProgram(services);
     // exitOverride() must reach every subcommand (commander copies _exitCallback into
     // children at .command() time) or a usage error in a child calls process.exit() raw.
     const applyExitOverride = (cmd: Command): void => {

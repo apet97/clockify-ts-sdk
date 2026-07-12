@@ -9,6 +9,7 @@ import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 type TaskUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateTasksRequest>;
@@ -94,8 +95,7 @@ function reconstructTaskBody(
 export const registerTasksCommand: Registrar = (program, services) => {
     const tasks = program.command("tasks").description("Manage tasks.");
 
-    tasks
-        .command("list")
+    leafCommand(tasks, "list", "read")
         .argument("<projectId>", "Project ID.")
         .description("List tasks for a project.")
         .option(
@@ -133,8 +133,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    tasks
-        .command("create")
+    leafCommand(tasks, "create", "write")
         .argument("<projectId>", "Project ID.")
         .argument("<name>", "Task name.")
         .option("--billable", "Mark as billable.")
@@ -176,8 +175,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             );
         });
 
-    tasks
-        .command("get")
+    leafCommand(tasks, "get", "read")
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
         .description("Get one task by project ID and task ID.")
@@ -187,8 +185,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             printObject(task, output);
         });
 
-    tasks
-        .command("update")
+    leafCommand(tasks, "update", "write")
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
         .option("--name <text>", "Task name.")
@@ -263,8 +260,7 @@ export const registerTasksCommand: Registrar = (program, services) => {
             );
         });
 
-    tasks
-        .command("delete")
+    leafCommand(tasks, "delete", "destructive")
         .argument("<projectId>", "Project ID.")
         .argument("<id>", "Task ID.")
         .description(

@@ -9,11 +9,11 @@ import { printSuccess } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerStopCommand: Registrar = (program, services) => {
-    program
-        .command("stop")
+    leafCommand(program, "stop", "write")
         .description("Stop the running timer for the current user.")
         .action(async function (this: Command) {
             const { client, workspaceId, output } = await resolveContext(this, services);

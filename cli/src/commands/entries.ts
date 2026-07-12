@@ -9,13 +9,13 @@ import { printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, promoteDateBoundary, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerEntriesCommand: Registrar = (program, services) => {
     const entries = program.command("entries").description("Manage time entries.");
 
-    entries
-        .command("list")
+    leafCommand(entries, "list", "read")
         .description("List the current user's time entries.")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number (default 1).", parseIntArg, 1)
@@ -67,8 +67,7 @@ export const registerEntriesCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    entries
-        .command("delete")
+    leafCommand(entries, "delete", "destructive")
         .argument("<id>", "Time-entry ID.")
         .description("Delete a time entry by ID.")
         .action(async function (this: Command, id: string) {

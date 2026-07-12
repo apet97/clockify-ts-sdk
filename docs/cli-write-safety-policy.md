@@ -14,11 +14,13 @@ codes, and receipts that can be logged by automation.
    command needs a confirmation guard, it should be an explicit flag or
    dry-run option, not a blocking prompt.
 
-2. Destructive commands must be ID-scoped.
+2. Destructive resource commands must be explicitly scoped.
 
    Delete/remove commands must require an explicit `<id>` argument and
    print a success receipt naming the deleted resource. No destructive
-   command may infer a target from a name search alone.
+   command may infer a target from a name search alone. The raw `api`
+   command is conservatively classified as destructive because its single
+   leaf permits `DELETE`; its explicit API path is the target boundary.
 
 3. Create commands must return identifiers.
 
@@ -45,6 +47,8 @@ codes, and receipts that can be logged by automation.
 ## Required proof
 
 - `make cli-write-safety` checks the contract in this file.
+- The gate walks the real Commander tree and runs success/failure proofs
+  for every mutating leaf; it does not infer safety from source markers.
 - `make cli-contract` checks command metadata, globals, completion
   shells, binaries, and exit codes.
 - `make perfect-fast` and `make perfect-full` include both gates.

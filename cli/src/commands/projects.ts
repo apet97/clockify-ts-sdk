@@ -9,13 +9,13 @@ import { printObject, printRecords } from "../output.js";
 import { printReceipt } from "../receipt.js";
 
 import { clampPageSize, parseIntArg, resolveContext } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerProjectsCommand: Registrar = (program, services) => {
     const projects = program.command("projects").description("Manage projects.");
 
-    projects
-        .command("list")
+    leafCommand(projects, "list", "read")
         .description("List projects in the workspace.")
         .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
         .option("--page <n>", "Page number.", parseIntArg, 1)
@@ -54,8 +54,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             printRecords(rows, output);
         });
 
-    projects
-        .command("create")
+    leafCommand(projects, "create", "write")
         .argument("<name>", "Project name.")
         .option("--client <id>", "Client ID.")
         .option("--color <hex>", "Hex color (e.g. #4caf50).")
@@ -103,8 +102,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             );
         });
 
-    projects
-        .command("get")
+    leafCommand(projects, "get", "read")
         .argument("<id>", "Project ID.")
         .description("Get one project by ID.")
         .action(async function (this: Command, id: string) {
@@ -113,8 +111,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             printObject(project, output);
         });
 
-    projects
-        .command("update")
+    leafCommand(projects, "update", "write")
         .argument("<id>", "Project ID.")
         .option("--name <text>", "New project name.")
         .option("--client <id>", "Client ID.")
@@ -156,8 +153,7 @@ export const registerProjectsCommand: Registrar = (program, services) => {
             );
         });
 
-    projects
-        .command("delete")
+    leafCommand(projects, "delete", "destructive")
         .argument("<id>", "Project ID.")
         .description(
             "Delete a project by ID (archives first; an active project cannot be deleted).",

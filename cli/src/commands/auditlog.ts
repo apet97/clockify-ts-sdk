@@ -15,13 +15,13 @@ import type { Command } from "commander";
 import { printRecords } from "../output.js";
 
 import { clampPageSize, parseIntArg, resolveContext, splitList } from "./helpers.js";
+import { leafCommand } from "./leaf-command.js";
 import type { Registrar } from "./types.js";
 
 export const registerAuditLogCommand: Registrar = (program, services) => {
     const audit = program.command("audit-log").description("Workspace audit log.");
 
-    audit
-        .command("search")
+    leafCommand(audit, "search", "read")
         .description("Search the workspace audit log.")
         .requiredOption("--start <date>", "Window start (RFC3339, e.g. 2026-05-01T00:00:00Z).")
         .requiredOption("--end <date>", "Window end (RFC3339).")
