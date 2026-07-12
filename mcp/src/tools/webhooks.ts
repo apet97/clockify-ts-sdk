@@ -4,7 +4,7 @@
  * to know the wire shape.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import type { Context } from "../client.js";
@@ -90,6 +90,66 @@ const WEBHOOK_EVENT_TYPES = [
     "COST_RATE_UPDATED",
     "BILLABLE_RATE_UPDATED",
 ] as const satisfies readonly ClockifyApi.WebhookEventType[];
+const WEBHOOK_TRIGGER_SOURCE_TYPES = [
+    "PROJECT_ID",
+    "USER_ID",
+    "TAG_ID",
+    "TASK_ID",
+    "WORKSPACE_ID",
+    "ASSIGNMENT_ID",
+    "EXPENSE_ID",
+] as const satisfies readonly ClockifyApi.WebhookEventTriggerSourceType[];
+type WebhookUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateWebhooksRequest>;
+
+function webhookEvent(value: unknown): ClockifyApi.WebhookEventType {
+    const match = WEBHOOK_EVENT_TYPES.find((candidate) => candidate === value);
+    if (match === undefined) {
+        throw new TypeError("Cannot update webhook: current event is missing or invalid.");
+    }
+    return match;
+}
+
+function webhookTriggerSourceType(value: unknown): ClockifyApi.WebhookEventTriggerSourceType {
+    const match = WEBHOOK_TRIGGER_SOURCE_TYPES.find((candidate) => candidate === value);
+    if (match === undefined) {
+        throw new TypeError(
+            "Cannot update webhook: current trigger source type is missing or invalid.",
+        );
+    }
+    return match;
+}
+
+function webhookUpdateBody(current: unknown): WebhookUpdateBody {
+    if (current == null || typeof current !== "object") {
+        throw new TypeError("Cannot update webhook: current webhook state is unavailable.");
+    }
+    const value = current as Record<string, unknown>;
+    if (typeof value.name !== "string" || value.name.length < 2 || value.name.length > 30) {
+        throw new TypeError("Cannot update webhook: current name must contain 2 to 30 characters.");
+    }
+    if (typeof value.url !== "string") {
+        throw new TypeError("Cannot update webhook: current URL is missing.");
+    }
+    const event = webhookEvent(value.webhookEvent);
+    const triggerSourceType = webhookTriggerSourceType(value.triggerSourceType);
+    if (
+        !Array.isArray(value.triggerSource) ||
+        value.triggerSource.some((item) => typeof item !== "string")
+    ) {
+        throw new TypeError("Cannot update webhook: current trigger source is missing or invalid.");
+    }
+    return {
+        name: value.name,
+        url: value.url,
+        webhookEvent: event,
+        triggerSourceType,
+        triggerSource: [...value.triggerSource],
+    };
+}
+
+function sameWebhookField(left: unknown, right: unknown): boolean {
+    return JSON.stringify(left) === JSON.stringify(right);
+}
 
 export function registerWebhooksTools(server: McpServer, ctx: Context): void {
     defineTool(
@@ -155,10 +215,9 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
                     .describe("Webhook name, 2-30 chars (required by Clockify)."),
                 url: z.string().url(),
                 webhookEvent: z
-                    .string()
-                    .min(1)
+                    .enum(WEBHOOK_EVENT_TYPES)
                     .describe("Event name, e.g. NEW_TIME_ENTRY, NEW_PROJECT."),
-                triggerSourceType: z.string().optional(),
+                triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: false },
@@ -173,24 +232,28 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             // primary clockify_setup_webhook workflow requires it, and the 2026-06-21
             // live API-key probe supplied one. The schema makes it required, so it is
             // always present + sent.
-            const body: Partial<ClockifyRequestBody<ClockifyApi.WebhookRequest>> &
-                Pick<ClockifyRequestBody<ClockifyApi.WebhookRequest>, "url" | "name"> & {
-                    webhookEvent: ClockifyApi.WebhookEventType;
-                } = {
+            const triggerSourceType = args.triggerSourceType ?? "WORKSPACE_ID";
+            const triggerSource =
+                args.triggerSource ??
+                (triggerSourceType === "WORKSPACE_ID"
+                    ? [ctx.workspaceId]
+                    : (() => {
+                          throw new TypeError(
+                              "triggerSource is required when triggerSourceType is not WORKSPACE_ID.",
+                          );
+                      })());
+            const body: ClockifyRequestBody<ClockifyApi.WebhookRequest> = {
                 name: args.name,
                 url: args.url,
-                webhookEvent: args.webhookEvent as ClockifyApi.WebhookEventType,
+                webhookEvent: args.webhookEvent,
+                triggerSourceType,
+                triggerSource,
             };
-            if (args.triggerSourceType)
-                body.triggerSourceType =
-                    args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;
-            if (args.triggerSource) body.triggerSource = args.triggerSource;
-            const created = await ctx.client.webhooks.create(
-                wireBody<ClockifyApi.WebhookRequest>({
-                    workspaceId: ctx.workspaceId,
-                    body,
-                }),
-            );
+            const request: ClockifyApi.WebhookRequest = {
+                body,
+                workspaceId: ctx.workspaceId,
+            };
+            const created = await ctx.client.webhooks.create(request);
             return successResult(
                 "clockify_webhooks_create",
                 redactWebhook(created),
@@ -210,36 +273,54 @@ export function registerWebhooksTools(server: McpServer, ctx: Context): void {
             description: "Update a webhook subscription's name, URL, event, or trigger source.",
             inputSchema: {
                 webhookId: z.string().min(1),
-                name: z.string().optional(),
+                name: z.string().min(2).max(30).optional(),
                 url: z.string().url().optional(),
-                webhookEvent: z.string().optional(),
-                triggerSourceType: z.string().optional(),
+                webhookEvent: z.enum(WEBHOOK_EVENT_TYPES).optional(),
+                triggerSourceType: z.enum(WEBHOOK_TRIGGER_SOURCE_TYPES).optional(),
                 triggerSource: z.array(z.string()).optional(),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
-            const body: Partial<ClockifyRequestBody<ClockifyApi.UpdateWebhooksRequest>> & {
-                webhookEvent?: ClockifyApi.WebhookEventType;
-            } = {};
-            if (args.name) body.name = args.name;
-            if (args.url) {
-                assertSafeWebhookUrl(args.url);
+            if (args.url !== undefined) assertSafeWebhookUrl(args.url);
+            const current = await ctx.client.webhooks.get({
+                workspaceId: ctx.workspaceId,
+                webhookId: args.webhookId,
+            });
+            const body = webhookUpdateBody(current);
+            let changed = false;
+            if (args.name !== undefined) {
+                changed ||= !sameWebhookField(body.name, args.name);
+                body.name = args.name;
+            }
+            if (args.url !== undefined) {
+                changed ||= !sameWebhookField(body.url, args.url);
                 body.url = args.url;
             }
-            if (args.webhookEvent)
-                body.webhookEvent = args.webhookEvent as ClockifyApi.WebhookEventType;
-            if (args.triggerSourceType)
-                body.triggerSourceType =
-                    args.triggerSourceType as ClockifyApi.WebhookEventTriggerSourceType;
-            if (args.triggerSource) body.triggerSource = args.triggerSource;
-            const updated = await ctx.client.webhooks.update(
-                wireBody<ClockifyApi.UpdateWebhooksRequest>({
-                    workspaceId: ctx.workspaceId,
-                    webhookId: args.webhookId,
-                    body,
-                }),
-            );
+            if (args.webhookEvent !== undefined) {
+                changed ||= !sameWebhookField(body.webhookEvent, args.webhookEvent);
+                body.webhookEvent = args.webhookEvent;
+            }
+            if (args.triggerSourceType !== undefined) {
+                changed ||= !sameWebhookField(body.triggerSourceType, args.triggerSourceType);
+                body.triggerSourceType = args.triggerSourceType;
+            }
+            if (args.triggerSource !== undefined) {
+                changed ||= !sameWebhookField(body.triggerSource, args.triggerSource);
+                body.triggerSource = args.triggerSource;
+            }
+            assertSafeWebhookUrl(body.url);
+            if (!changed) {
+                throw new TypeError(
+                    "Webhook update is a no-op; supply at least one changed field.",
+                );
+            }
+            const request: ClockifyApi.UpdateWebhooksRequest = {
+                body,
+                workspaceId: ctx.workspaceId,
+                webhookId: args.webhookId,
+            };
+            const updated = await ctx.client.webhooks.update(request);
             return successResult(
                 "clockify_webhooks_update",
                 redactWebhook(updated),

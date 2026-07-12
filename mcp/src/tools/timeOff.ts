@@ -6,7 +6,6 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
-import { wireBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -14,7 +13,6 @@ import { zNumberLike, zStringList } from "../arg-shapes.js";
 import type { Context } from "../client.js";
 import { requireConfirmation } from "../orchestration/confirm-guard.js";
 import { defineTool, entityId, errorResult, successResult, writeReceipt } from "../result.js";
-import { scopeFilter } from "../scope-filter.js";
 
 import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
@@ -26,24 +24,226 @@ import { resolvePolicyId } from "./workflows/resolve.js";
 // per-request response status, not a valid search filter.
 const REQUEST_SEARCH_STATUSES = ["ALL", "PENDING", "APPROVED", "REJECTED"] as const;
 
-// Policy fields the generated PUT accepts and we carry forward from the GET on a
-// replace-style update (everything except the users/userGroups scope, which is
-// reconstructed from the flat GET via scopeFilter).
-const POLICY_CARRY_FIELDS = [
-    "allowHalfDay",
-    "allowNegativeBalance",
-    "approve",
-    "archived",
-    "automaticAccrual",
-    "automaticTimeEntryCreation",
-    "color",
-    "everyoneIncludingNew",
-    "hasExpiration",
-    "icon",
-    "name",
-    "negativeBalance",
-] as const;
-type TimeOffPolicyObject = Record<string, unknown>;
+type PolicyUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateTimeOffPoliciesRequest>;
+
+function policyIcon(value: unknown): NonNullable<PolicyUpdateBody["icon"]> {
+    switch (value) {
+        case "UMBRELLA":
+        case "SNOWFLAKE":
+        case "FAMILY":
+        case "PLANE":
+        case "STETHOSCOPE":
+        case "HEALTH_METRICS":
+        case "CHILDCARE":
+        case "LUGGAGE":
+        case "MONETIZATION":
+        case "CALENDAR":
+            return value;
+        default:
+            throw new Error("cannot replace time-off policy: current icon is invalid");
+    }
+}
+
+function record(value: unknown, field: string): Record<string, unknown> {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        throw new Error(`cannot replace time-off policy: current ${field} is missing or invalid`);
+    }
+    return value as Record<string, unknown>;
+}
+
+function requiredPolicyBoolean(
+    current: Record<string, unknown>,
+    field:
+        | "allowHalfDay"
+        | "allowNegativeBalance"
+        | "archived"
+        | "everyoneIncludingNew"
+        | "hasExpiration",
+): boolean {
+    const value = current[field];
+    if (typeof value !== "boolean") {
+        throw new Error(`cannot replace time-off policy: current ${field} is missing or invalid`);
+    }
+    return value;
+}
+
+function requiredPolicyStrings(
+    current: Record<string, unknown>,
+    field: "userIds" | "userGroupIds",
+): string[] {
+    const value = current[field];
+    if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
+        throw new Error(`cannot replace time-off policy: current ${field} is missing or invalid`);
+    }
+    return [...value];
+}
+
+function policyScope(ids: string[]): ClockifyApi.PoliciesUserIdsSchema {
+    return { contains: "CONTAINS", ids: [...ids], status: "ACTIVE" };
+}
+
+function policyApproval(value: unknown): ClockifyApi.PolicyApprovalDto {
+    const source = record(value, "approve");
+    const approval: ClockifyApi.PolicyApprovalDto = {};
+    for (const field of ["requiresApproval", "specificMembers", "teamManagers"] as const) {
+        if (source[field] !== undefined) {
+            if (typeof source[field] !== "boolean") {
+                throw new Error(
+                    `cannot replace time-off policy: current approve.${field} is invalid`,
+                );
+            }
+            approval[field] = source[field];
+        }
+    }
+    if (source.userIds !== undefined) {
+        if (
+            !Array.isArray(source.userIds) ||
+            source.userIds.some((item) => typeof item !== "string")
+        ) {
+            throw new Error("cannot replace time-off policy: current approve.userIds is invalid");
+        }
+        approval.userIds = [...source.userIds];
+    }
+    return approval;
+}
+
+function policyAutomaticAccrual(value: unknown): ClockifyApi.AutomaticAccrualRequest {
+    const source = record(value, "automaticAccrual");
+    if (typeof source.amount !== "number" || !Number.isFinite(source.amount)) {
+        throw new Error(
+            "cannot replace time-off policy: current automaticAccrual.amount is missing or invalid",
+        );
+    }
+    const accrual: ClockifyApi.AutomaticAccrualRequest = { amount: source.amount };
+    if (source.period !== undefined) {
+        if (source.period !== "MONTH" && source.period !== "YEAR") {
+            throw new Error(
+                "cannot replace time-off policy: current automaticAccrual.period is invalid",
+            );
+        }
+        accrual.period = source.period;
+    }
+    if (source.timeUnit !== undefined) {
+        if (source.timeUnit !== "DAYS" && source.timeUnit !== "HOURS") {
+            throw new Error(
+                "cannot replace time-off policy: current automaticAccrual.timeUnit is invalid",
+            );
+        }
+        accrual.timeUnit = source.timeUnit;
+    }
+    return accrual;
+}
+
+function policyAutomaticTimeEntry(value: unknown): ClockifyApi.AutomaticTimeEntryCreationRequest {
+    const source = record(value, "automaticTimeEntryCreation");
+    const defaults = record(source.defaultEntities, "automaticTimeEntryCreation.defaultEntities");
+    const defaultEntities: ClockifyApi.PoliciesDefaultEntitiesRequest = {};
+    for (const field of ["projectId", "taskId"] as const) {
+        if (defaults[field] !== undefined) {
+            if (typeof defaults[field] !== "string") {
+                throw new Error(
+                    `cannot replace time-off policy: current automaticTimeEntryCreation.defaultEntities.${field} is invalid`,
+                );
+            }
+            defaultEntities[field] = defaults[field];
+        }
+    }
+    const result: ClockifyApi.AutomaticTimeEntryCreationRequest = { defaultEntities };
+    if (source.enabled !== undefined) {
+        if (typeof source.enabled !== "boolean") {
+            throw new Error(
+                "cannot replace time-off policy: current automaticTimeEntryCreation.enabled is invalid",
+            );
+        }
+        result.enabled = source.enabled;
+    }
+    return result;
+}
+
+function policyNegativeBalance(value: unknown): ClockifyApi.NegativeBalanceRequest {
+    const source = record(value, "negativeBalance");
+    const result: ClockifyApi.NegativeBalanceRequest = {};
+    if (source.amount !== undefined) {
+        if (typeof source.amount !== "number" || !Number.isFinite(source.amount)) {
+            throw new Error(
+                "cannot replace time-off policy: current negativeBalance.amount is invalid",
+            );
+        }
+        result.amount = source.amount;
+    }
+    if (source.amountValidForTimeUnit !== undefined) {
+        if (typeof source.amountValidForTimeUnit !== "boolean") {
+            throw new Error(
+                "cannot replace time-off policy: current negativeBalance.amountValidForTimeUnit is invalid",
+            );
+        }
+        result.amountValidForTimeUnit = source.amountValidForTimeUnit;
+    }
+    if (source.period !== undefined) {
+        if (source.period !== "MONTH" && source.period !== "YEAR") {
+            throw new Error(
+                "cannot replace time-off policy: current negativeBalance.period is invalid",
+            );
+        }
+        result.period = source.period;
+    }
+    if (source.shouldReset !== undefined) {
+        if (typeof source.shouldReset !== "boolean") {
+            throw new Error(
+                "cannot replace time-off policy: current negativeBalance.shouldReset is invalid",
+            );
+        }
+        result.shouldReset = source.shouldReset;
+    }
+    if (source.timeUnit !== undefined) {
+        if (source.timeUnit !== "DAYS" && source.timeUnit !== "HOURS") {
+            throw new Error(
+                "cannot replace time-off policy: current negativeBalance.timeUnit is invalid",
+            );
+        }
+        result.timeUnit = source.timeUnit;
+    }
+    return result;
+}
+
+function policyUpdateBody(value: unknown): PolicyUpdateBody {
+    const current = record(value, "policy");
+    if (typeof current.name !== "string" || current.name.length === 0) {
+        throw new Error("cannot replace time-off policy: current name is missing or invalid");
+    }
+    const body: PolicyUpdateBody = {
+        allowHalfDay: requiredPolicyBoolean(current, "allowHalfDay"),
+        allowNegativeBalance: requiredPolicyBoolean(current, "allowNegativeBalance"),
+        approve: policyApproval(current.approve),
+        archived: requiredPolicyBoolean(current, "archived"),
+        everyoneIncludingNew: requiredPolicyBoolean(current, "everyoneIncludingNew"),
+        hasExpiration: requiredPolicyBoolean(current, "hasExpiration"),
+        name: current.name,
+        userGroups: policyScope(requiredPolicyStrings(current, "userGroupIds")),
+        users: policyScope(requiredPolicyStrings(current, "userIds")),
+    };
+    if (current.automaticAccrual !== undefined) {
+        body.automaticAccrual = policyAutomaticAccrual(current.automaticAccrual);
+    }
+    if (current.automaticTimeEntryCreation !== undefined) {
+        body.automaticTimeEntryCreation = policyAutomaticTimeEntry(
+            current.automaticTimeEntryCreation,
+        );
+    }
+    if (current.color !== undefined) {
+        if (typeof current.color !== "string") {
+            throw new Error("cannot replace time-off policy: current color is invalid");
+        }
+        body.color = current.color;
+    }
+    if (current.icon !== undefined) {
+        body.icon = policyIcon(current.icon);
+    }
+    if (current.negativeBalance !== undefined) {
+        body.negativeBalance = policyNegativeBalance(current.negativeBalance);
+    }
+    return body;
+}
 
 export function registerTimeOffTools(server: McpServer, ctx: Context): void {
     const { listUsers, meUserId } = userRefHelpers(ctx);
@@ -267,9 +467,10 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // request now marks `note` optional (GOCLMCP apply_live_overrides!), so
             // build the typed body-envelope form — a clean bind, no cast.
             // See discrepancies.md (time-off.change-status.union-and-note).
-            const body: ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest> = {
-                status: args.statusType,
-            };
+            const body: ClockifyRequestBody<ClockifyApi.ChangeTimeOffRequestStatusTimeOffRequest> =
+                {
+                    status: args.statusType,
+                };
             if (args.note) body.note = args.note;
             const updated = await ctx.client.timeOff.changeTimeOffRequestStatus({
                 workspaceId: ctx.workspaceId,
@@ -401,7 +602,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 "Create a new time-off policy with optional approval and balance settings.",
             inputSchema: {
                 name: z.string().min(1),
-                timeUnit: z.string().optional().describe("DAYS | HOURS."),
+                timeUnit: z.enum(["DAYS", "HOURS"]).optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
                 userIds: zStringList(z.array(z.string()))
                     .optional()
@@ -445,26 +646,16 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                     );
                 resolvedGroupIds = r.groupIds;
             }
-            // The generated create reads the policy fields FLAT off the request
-            // (not a nested `body`), so spread them; a nested body is silently
-            // dropped.
-            const body: Partial<ClockifyRequestBody<ClockifyApi.CreateTimeOffPolicyRequest>> &
-                Pick<ClockifyRequestBody<ClockifyApi.CreateTimeOffPolicyRequest>, "name"> = {
+            const request: ClockifyApi.CreateTimeOffPolicyRequest = {
                 name: args.name,
+                workspaceId: ctx.workspaceId,
             };
-            if (args.timeUnit) body.timeUnit = args.timeUnit as "DAYS" | "HOURS";
+            if (args.timeUnit !== undefined) request.timeUnit = args.timeUnit;
             if (args.negativeBalanceAllowed !== undefined)
-                body.allowNegativeBalance = args.negativeBalanceAllowed;
-            if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
-            if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
-            const created = await ctx.client.timeOffPolicies.create(
-                // wireBody: live create reads these fields flat and does not require the
-                // generated-required `approve`; the scope filters are built as untyped records.
-                wireBody<ClockifyApi.CreateTimeOffPolicyRequest>({
-                    workspaceId: ctx.workspaceId,
-                    ...body,
-                }),
-            );
+                request.allowNegativeBalance = args.negativeBalanceAllowed;
+            if (resolvedUserIds !== undefined) request.users = policyScope(resolvedUserIds);
+            if (resolvedGroupIds !== undefined) request.userGroups = policyScope(resolvedGroupIds);
+            const created = await ctx.client.timeOffPolicies.create(request);
             return successResult(
                 "clockify_time_off_policies_create",
                 created,
@@ -488,7 +679,7 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
                 "Update one time-off policy by ID. Reads the policy then replaces it (PUT semantics), preserving untouched fields and the user/group scope.",
             inputSchema: {
                 policyId: z.string().min(1),
-                name: z.string().optional(),
+                name: z.string().min(1).optional(),
                 negativeBalanceAllowed: z.boolean().optional(),
                 userIds: zStringList(z.array(z.string()))
                     .optional()
@@ -539,38 +730,26 @@ export function registerTimeOffTools(server: McpServer, ctx: Context): void {
             // GET echoes the scope FLAT as userIds/userGroupIds. So read the
             // policy, carry forward its editable fields, overlay the patch, and
             // reconstruct the scope into the {contains,ids,status} filter form.
-            const existing = (await ctx.client.timeOffPolicies.get({
+            const existing = await ctx.client.timeOffPolicies.get({
                 workspaceId: ctx.workspaceId,
                 policyId: args.policyId,
-            })) as TimeOffPolicyObject;
-            const body: TimeOffPolicyObject = {};
-            for (const k of POLICY_CARRY_FIELDS) {
-                if (existing[k] !== undefined) body[k] = existing[k];
-            }
-            if (args.name) body.name = args.name;
+            });
+            const currentBody = policyUpdateBody(existing);
+            const body = policyUpdateBody(existing);
+            if (args.name !== undefined) body.name = args.name;
             if (args.negativeBalanceAllowed !== undefined)
                 body.allowNegativeBalance = args.negativeBalanceAllowed;
-            const existingUserIds = Array.isArray(existing.userIds)
-                ? (existing.userIds as string[])
-                : [];
-            const existingGroupIds = Array.isArray(existing.userGroupIds)
-                ? (existing.userGroupIds as string[])
-                : [];
-            if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds, "ACTIVE");
-            else if (existingUserIds.length) body.users = scopeFilter(existingUserIds, "ACTIVE");
-            if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds, "ACTIVE");
-            else if (existingGroupIds.length)
-                body.userGroups = scopeFilter(existingGroupIds, "ACTIVE");
-            const updated = await ctx.client.timeOffPolicies.update(
-                // wireBody: replace body is carried forward from the live GET (POLICY_CARRY_FIELDS)
-                // plus reconstructed scope filters, so the generated-required fields and the
-                // untyped scopeFilter records cannot be proven statically here.
-                wireBody<ClockifyApi.UpdateTimeOffPoliciesRequest>({
-                    workspaceId: ctx.workspaceId,
-                    policyId: args.policyId,
-                    ...body,
-                }),
-            );
+            if (resolvedUserIds !== undefined) body.users = policyScope(resolvedUserIds);
+            if (resolvedGroupIds !== undefined) body.userGroups = policyScope(resolvedGroupIds);
+            if (JSON.stringify(body) === JSON.stringify(currentBody)) {
+                throw new Error("time-off policy update has no changes");
+            }
+            const request: ClockifyApi.UpdateTimeOffPoliciesRequest = {
+                ...body,
+                workspaceId: ctx.workspaceId,
+                policyId: args.policyId,
+            };
+            const updated = await ctx.client.timeOffPolicies.update(request);
             return successResult(
                 "clockify_time_off_policies_update",
                 updated,

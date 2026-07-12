@@ -5,7 +5,7 @@
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { toMinor } from "clockify-sdk-ts-115/money";
-import { wireBody, type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveUserRef } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -17,6 +17,18 @@ import { clarifyResult } from "./resolve-clarify.js";
 import { userRefHelpers } from "./user-refs.js";
 
 const WORKSPACE_ROLES = ["WORKSPACE_ADMIN", "TEAM_MANAGER", "PROJECT_MANAGER"] as const;
+const USER_DAYS = [
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY",
+] as const satisfies readonly ClockifyApi.UsersDayOfWeek[];
+type MissingUserDay = Exclude<ClockifyApi.UsersDayOfWeek, (typeof USER_DAYS)[number]>;
+const userDaysExhaustive: MissingUserDay extends never ? true : false = true;
+void userDaysExhaustive;
 
 const roleInput = {
     userId: z.string().min(1),
@@ -172,27 +184,33 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 rateKind: z
                     .enum(["HOURLY", "COST"])
                     .describe("HOURLY = billable rate; COST = internal cost rate."),
-                amount: zNumberLike(z.number()).describe("Rate in major units, e.g. 75 for $75/hr."),
+                amount: zNumberLike(z.number()).describe(
+                    "Rate in major units, e.g. 75 for $75/hr.",
+                ),
                 since: z.string().optional().describe("Effective-from date (ISO)."),
             },
             annotations: { readOnlyHint: false, idempotentHint: true },
         },
         async (args) => {
             const amountMinor = toMinor(args.amount, "major");
-            const req: Record<string, unknown> = {
-                workspaceId: ctx.workspaceId,
-                userId: args.userId,
-                amount: amountMinor,
-            };
-            if (args.since) req.since = args.since;
-            const updated =
-                args.rateKind === "COST"
-                    ? await ctx.client.workspaces.updateUserCostRate(
-                          wireBody<ClockifyApi.UpdateUserCostRateWorkspacesRequest>(req),
-                      )
-                    : await ctx.client.workspaces.updateUserHourlyRate(
-                          wireBody<ClockifyApi.UpdateUserHourlyRateWorkspacesRequest>(req),
-                      );
+            let updated: unknown;
+            if (args.rateKind === "COST") {
+                const request: ClockifyApi.UpdateUserCostRateWorkspacesRequest = {
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                    ...(args.since ? { since: args.since } : {}),
+                };
+                updated = await ctx.client.workspaces.updateUserCostRate(request);
+            } else {
+                const request: ClockifyApi.UpdateUserHourlyRateWorkspacesRequest = {
+                    workspaceId: ctx.workspaceId,
+                    userId: args.userId,
+                    amount: amountMinor,
+                    ...(args.since ? { since: args.since } : {}),
+                };
+                updated = await ctx.client.workspaces.updateUserHourlyRate(request);
+            }
             return successResult(
                 "clockify_users_set_member_rate",
                 updated,
@@ -252,10 +270,10 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
                 name: z.string().optional(),
                 imageUrl: z.string().optional(),
                 removeProfileImage: z.boolean().optional(),
-                weekStart: z.string().optional().describe("Week start day, e.g. MONDAY."),
+                weekStart: z.enum(USER_DAYS).optional().describe("Week start day, e.g. MONDAY."),
                 workCapacity: z.string().optional().describe("ISO-8601 duration, e.g. PT8H."),
                 workingDays: z
-                    .array(z.string())
+                    .array(z.enum(USER_DAYS))
                     .optional()
                     .describe("Day enum strings, e.g. [MONDAY, TUESDAY]."),
             },
@@ -267,12 +285,9 @@ export function registerUsersTools(server: McpServer, ctx: Context): void {
             if (args.imageUrl !== undefined) body.imageUrl = args.imageUrl;
             if (args.removeProfileImage !== undefined)
                 body.removeProfileImage = args.removeProfileImage;
-            if (args.weekStart !== undefined)
-                body.weekStart = args.weekStart as ClockifyApi.UsersDayOfWeek;
+            if (args.weekStart !== undefined) body.weekStart = args.weekStart;
             if (args.workCapacity !== undefined) body.workCapacity = args.workCapacity;
-            if (args.workingDays !== undefined)
-                // generated workingDays type mis-parenthesizes the enum array; cast to the field type.
-                body.workingDays = args.workingDays as NonNullable<typeof body.workingDays>;
+            if (args.workingDays !== undefined) body.workingDays = args.workingDays;
             const updated = await ctx.client.memberProfiles.update({
                 workspaceId: ctx.workspaceId,
                 userId: args.userId,

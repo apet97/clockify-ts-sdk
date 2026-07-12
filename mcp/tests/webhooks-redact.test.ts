@@ -20,6 +20,8 @@ function webhookWithSecret(id: string): Record<string, unknown> {
         name: "Audit",
         url: "https://example.com/hook",
         webhookEvent: "NEW_PROJECT",
+        triggerSourceType: "WORKSPACE_ID",
+        triggerSource: ["ws-1"],
         enabled: true,
         authToken: SECRET,
     };
@@ -70,11 +72,15 @@ describe("webhook tools redact the HMAC authToken", () => {
     const cases: Array<{ name: string; arguments: Record<string, unknown> }> = [
         {
             name: "clockify_webhooks_create",
-            arguments: { name: "Audit", url: "https://example.com/hook", webhookEvent: "NEW_PROJECT" },
+            arguments: {
+                name: "Audit",
+                url: "https://example.com/hook",
+                webhookEvent: "NEW_PROJECT",
+            },
         },
         {
             name: "clockify_webhooks_update",
-            arguments: { webhookId: "wh-1", name: "Audit" },
+            arguments: { webhookId: "wh-1", name: "Audit updated" },
         },
         { name: "clockify_webhooks_get", arguments: { webhookId: "wh-1" } },
         { name: "clockify_webhooks_list", arguments: {} },
@@ -107,7 +113,8 @@ describe("webhook tools redact the HMAC authToken", () => {
             name: "clockify_setup_webhook",
             arguments: { ...args, dry_run: true },
         });
-        const token = (JSON.parse(rawText(preview)).data as { confirm_token?: string }).confirm_token;
+        const token = (JSON.parse(rawText(preview)).data as { confirm_token?: string })
+            .confirm_token;
         expect(token).toBeTruthy();
         const res = await client.callTool({
             name: "clockify_setup_webhook",

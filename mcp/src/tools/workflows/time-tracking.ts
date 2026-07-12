@@ -1,4 +1,4 @@
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { successResult } from "../../result.js";
@@ -19,6 +19,11 @@ import {
 } from "./resolve.js";
 import type { AnyRecord, ChangeSet, Warning } from "./types.js";
 import type { WorkflowContext as Context } from "./types.js";
+
+type CreateTimeEntryRequest = Extract<
+    ClockifyApi.CreateTimeEntryRequest,
+    { workspaceId: string; start: string }
+>;
 
 export function timeEntryInputSchema({ finished }: { finished: boolean }) {
     const schema: Record<string, z.ZodTypeAny> = {
@@ -42,11 +47,9 @@ export function timeEntryInputSchema({ finished }: { finished: boolean }) {
 
 export async function logWork(ctx: Context, args: AnyRecord) {
     const body = await prepareEntryBody(ctx, args, true);
-    const entry = await ctx.client.timeEntries.create(
-        wireBody<ClockifyApi.CreateTimeEntryRequest>(body),
-    );
-    const ids = entryIds(ctx, entry, body);
-    const reviewArgs = reviewArgsFromEntry(entry, body);
+    const entry = await ctx.client.timeEntries.create(body);
+    const ids = entryIds(ctx, entry, { ...body });
+    const reviewArgs = reviewArgsFromEntry(entry, { ...body });
     return successResult(
         "clockify_log_work",
         entry,
@@ -78,10 +81,8 @@ export async function startWork(ctx: Context, args: AnyRecord) {
         { ...args, start: str(args.start) || new Date().toISOString() },
         false,
     );
-    const entry = await ctx.client.timeEntries.create(
-        wireBody<ClockifyApi.CreateTimeEntryRequest>(body),
-    );
-    const ids = entryIds(ctx, entry, body);
+    const entry = await ctx.client.timeEntries.create(body);
+    const ids = entryIds(ctx, entry, { ...body });
     return successResult(
         "clockify_start_work",
         entry,
@@ -187,6 +188,7 @@ export async function switchWork(ctx: Context, args: AnyRecord) {
 }
 
 export async function fixEntry(ctx: Context, args: AnyRecord) {
+    const requestedBillable = optionalBoolean(args.billable, "billable");
     const entry = await findEntryForFix(ctx, args);
     const entryId = idOf(entry);
     const projectId =
@@ -202,36 +204,37 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
     const ivl = (entry.timeInterval ?? {}) as AnyRecord;
-    const body: AnyRecord = {
-        workspaceId: ctx.workspaceId,
-        timeEntryId: entryId,
-        start: str(args.start) || str(entry.start) || str(ivl.start),
-    };
+    const start = str(args.start) || str(entry.start) || str(ivl.start);
     const nextDescription = str(args.new_description) || str(args.description);
     // timeEntries.update is a PUT-replace: every omitted field is wiped on the
     // live wire. Preserve each existing field from the already-fetched entry,
     // overriding only when args supply a value (mirrors how `start` is handled).
-    body.description = nextDescription || str(entry.description);
+    const description = nextDescription || str(entry.description);
     const nextEnd = str(args.end) || str(entry.end) || str(ivl.end);
-    if (nextEnd) body.end = nextEnd; // omit only for a genuine running timer (no existing end)
     const nextProjectId = projectId || str(entry.projectId);
-    if (nextProjectId) body.projectId = nextProjectId;
     const nextTaskId = taskId || str(entry.taskId);
-    if (nextTaskId) body.taskId = nextTaskId;
     const nextTagIds = tagIds.length ? tagIds : arrayOfStrings(entry.tagIds);
-    if (nextTagIds.length) body.tagIds = nextTagIds;
-    body.billable = args.billable !== undefined ? args.billable : entry.billable === true;
-    if (!body.start) throw new Error("entry start is required to update this time entry");
-    const { workspaceId, timeEntryId, ...updateBody } = body;
-    const updated = await ctx.client.timeEntries.update(
-        wireBody<ClockifyApi.UpdateTimeEntriesRequest>({
-            workspaceId,
-            timeEntryId,
-            body: updateBody,
-        }),
-    );
-    const ids = entryIds(ctx, updated, body);
-    const reviewArgs = reviewArgsFromEntry(updated, body);
+    if (!start) throw new Error("entry start is required to update this time entry");
+    const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
+        start,
+        description,
+        billable: requestedBillable ?? entry.billable === true,
+        ...(nextEnd ? { end: nextEnd } : {}),
+        ...(nextProjectId ? { projectId: nextProjectId } : {}),
+        ...(nextTaskId ? { taskId: nextTaskId } : {}),
+        ...(nextTagIds.length ? { tagIds: nextTagIds } : {}),
+        ...(isRecordArray(entry.customFields) ? { customFields: entry.customFields } : {}),
+        ...(entry.type === "REGULAR" || entry.type === "BREAK" ? { type: entry.type } : {}),
+    };
+    const request: ClockifyApi.UpdateTimeEntriesRequest = {
+        workspaceId: ctx.workspaceId,
+        timeEntryId: entryId,
+        body,
+    };
+    const updated = await ctx.client.timeEntries.update(request);
+    const fallback = { workspaceId: ctx.workspaceId, timeEntryId: entryId, ...body };
+    const ids = entryIds(ctx, updated, fallback);
+    const reviewArgs = reviewArgsFromEntry(updated, fallback);
     return successResult(
         "clockify_fix_entry",
         updated,
@@ -255,7 +258,8 @@ export async function prepareEntryBody(
     ctx: Context,
     args: AnyRecord,
     requireEnd: boolean,
-): Promise<AnyRecord> {
+): Promise<CreateTimeEntryRequest> {
+    const billable = optionalBoolean(args.billable, "billable");
     let start = str(args.start);
     const end = str(args.end) || (requireEnd ? "" : undefined);
     const durationSeconds =
@@ -287,7 +291,7 @@ export async function prepareEntryBody(
         (str(args.task) ? await resolveTaskId(ctx, projectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
-    return {
+    const request: CreateTimeEntryRequest = {
         workspaceId: ctx.workspaceId,
         start,
         ...(end ? { end } : {}),
@@ -295,8 +299,22 @@ export async function prepareEntryBody(
         ...(projectId ? { projectId } : {}),
         ...(taskId ? { taskId } : {}),
         ...(tagIds.length ? { tagIds } : {}),
-        ...(args.billable !== undefined ? { billable: args.billable } : {}),
+        ...(billable !== undefined ? { billable } : {}),
     };
+    return request;
+}
+
+function optionalBoolean(value: unknown, field: string): boolean | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "boolean") throw new TypeError(`${field} must be a boolean`);
+    return value;
+}
+
+function isRecordArray(value: unknown): value is Record<string, unknown>[] {
+    return (
+        Array.isArray(value) &&
+        value.every((item) => item !== null && typeof item === "object" && !Array.isArray(item))
+    );
 }
 
 // maybeConfirm delegates to the shared requireConfirmation guard so the

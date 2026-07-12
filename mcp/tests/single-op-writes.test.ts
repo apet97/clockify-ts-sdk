@@ -92,17 +92,23 @@ describe("single-operation write tools", () => {
         const client = await connect(captureContext(captured));
         const res = await client.callTool({
             name: "clockify_invoices_import_time",
-            arguments: { invoiceId: "inv-1", from: "2026-05-01T00:00:00Z", to: "2026-05-31T00:00:00Z" },
+            arguments: {
+                invoiceId: "inv-1",
+                from: "2026-05-01T00:00:00Z",
+                to: "2026-05-31T00:00:00Z",
+            },
         });
         expect(res.isError).toBeFalsy();
         expect(captured.import).toEqual({
             workspaceId: "ws-1",
             invoiceId: "inv-1",
-            from: "2026-05-01T00:00:00Z",
-            to: "2026-05-31T00:00:00Z",
-            importExpenses: false,
-            timeEntryGroupType: "GROUPED",
-            projectFilter: { status: "ACTIVE" },
+            body: {
+                from: "2026-05-01T00:00:00Z",
+                to: "2026-05-31T00:00:00Z",
+                importExpenses: false,
+                timeEntryGroupType: "GROUPED",
+                projectFilter: { status: "ACTIVE" },
+            },
         });
     });
 });

@@ -11,6 +11,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 - Full type checking includes MCP tests; builds use a source-only build config.
 - Tool output schemas are injected by `defineTool`; the global `registerTool` monkeypatch is gone.
 - Audit actions use the SDK runtime enum and reject invalid values before network access.
+- Full-replacement writes reconstruct and validate current state before mutation;
+  report, import, time-entry, expense, scheduling, project, rate, and webhook
+  payloads now use generated request types and operation-specific schemas.
 
 ## [0.4.1] - 2026-06-29
 

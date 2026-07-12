@@ -1,11 +1,10 @@
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 
 import { assertSafeWebhookUrl } from "../../orchestration/webhook-url.js";
 import { errorResult, successResult } from "../../result.js";
 import { redactWebhook } from "../webhooks.js";
 
 import {
-    arrayOfStrings,
     idOf,
     maybeConfirm,
     normalizeDate,
@@ -90,6 +89,28 @@ type _MissingWebhookEvent = Exclude<ClockifyApi.WebhookEventType, (typeof WEBHOO
 const _webhookEventsExhaustive: _MissingWebhookEvent extends never ? true : false = true;
 void _webhookEventsExhaustive;
 
+const WEBHOOK_EVENT_SET: ReadonlySet<string> = new Set(WEBHOOK_EVENTS);
+
+function requiredFiniteNumber(value: unknown, name: string): number {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new TypeError(`${name} must be a finite number`);
+    }
+    return value;
+}
+
+function optionalBoolean(value: unknown, name: string): boolean | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "boolean") throw new TypeError(`${name} must be a boolean`);
+    return value;
+}
+
+function webhookEvent(value: string): ClockifyApi.WebhookEventType {
+    if (!WEBHOOK_EVENT_SET.has(value)) throw new TypeError("webhook_event is invalid");
+    const matched = WEBHOOK_EVENTS.find((candidate) => candidate === value);
+    if (matched === undefined) throw new TypeError("webhook_event is invalid");
+    return matched;
+}
+
 export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
     const clientId =
         str(args.client_id) ||
@@ -110,8 +131,7 @@ export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
         currency: str(args.currency),
         issuedDate: normalizeDate(str(args.issued_date) || todayDate),
         dueDate: normalizeDate(str(args.due_date) || dueDate),
-        ...(str(args.note) ? { note: str(args.note) } : {}),
-    };
+    } satisfies ClockifyApi.InvoiceCreateRequest;
     const confirmation = maybeConfirm(
         ctx,
         "clockify_invoice_client_work",
@@ -148,6 +168,8 @@ export async function invoiceClientWork(ctx: Context, args: AnyRecord) {
 }
 
 export async function recordExpense(ctx: Context, args: AnyRecord) {
+    const amount = requiredFiniteNumber(args.amount, "amount");
+    const billable = optionalBoolean(args.billable, "billable");
     const categoryId =
         str(args.category_id) ||
         (str(args.category) ? await resolveExpenseCategoryId(ctx, str(args.category)) : "");
@@ -163,15 +185,15 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
             : idOf(await ctx.client.users.getCurrentUser()));
     const preview = {
         workspaceId: ctx.workspaceId,
-        amount: args.amount,
+        amount,
         categoryId,
         date: normalizeDate(str(args.date) || new Date().toISOString().slice(0, 10)),
-        projectId,
         userId,
+        ...(projectId ? { projectId } : {}),
         ...(str(args.task_id) ? { taskId: str(args.task_id) } : {}),
         ...(str(args.notes) ? { notes: str(args.notes) } : {}),
-        ...(args.billable !== undefined ? { billable: args.billable } : {}),
-    };
+        ...(billable !== undefined ? { billable } : {}),
+    } satisfies ClockifyApi.ExpenseCreateRequest;
     const confirmation = maybeConfirm(
         ctx,
         "clockify_record_expense",
@@ -180,9 +202,7 @@ export async function recordExpense(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const expense = await ctx.client.expenses.create(
-        wireBody<ClockifyApi.ExpenseCreateRequest>(preview),
-    );
+    const expense = await ctx.client.expenses.create(preview);
     return successResult(
         "clockify_record_expense",
         expense,
@@ -216,6 +236,12 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
     // `time-off.submit.period-shape-is-policy-type-dependent`.
     const end = str(args.end);
     const days = typeof args.days === "number" ? args.days : undefined;
+    if (end && days !== undefined) {
+        return errorResult(
+            "clockify_request_time_off",
+            new Error("provide exactly one of `end` or `days`, not both"),
+        );
+    }
     if (!end && days === undefined) {
         return errorResult(
             "clockify_request_time_off",
@@ -228,23 +254,29 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
         str(args.policy_id) ||
         (str(args.policy) ? await resolvePolicyId(ctx, str(args.policy)) : "");
     if (!policyId) throw new Error("missing required alternative: provide policy or policy_id");
-    const period: AnyRecord = { start: str(args.start) };
-    if (end) period.end = end;
-    if (days !== undefined) period.days = days;
+    const period: ClockifyApi.PeriodV1Request = {
+        start: str(args.start),
+        ...(end ? { end } : {}),
+        ...(days !== undefined ? { days } : {}),
+    };
+    const halfDayPeriod: ClockifyApi.HalfDayPeriod = args.half_day
+        ? str(args.half_day_period) === "SECOND_HALF"
+            ? "SECOND_HALF"
+            : "FIRST_HALF"
+        : "NOT_DEFINED";
+    const body: ClockifyRequestBody<ClockifyApi.SubmitTimeOffRequest> = {
+        note: str(args.note),
+        timeOffPeriod: {
+            isHalfDay: args.half_day === true,
+            halfDayPeriod,
+            period,
+        },
+    };
     const preview = {
         workspaceId: ctx.workspaceId,
         policyId,
-        body: {
-            ...(str(args.note) ? { note: str(args.note) } : {}),
-            timeOffPeriod: {
-                isHalfDay: args.half_day === true,
-                // Honor an explicit morning/afternoon choice; FIRST_HALF (morning)
-                // stays the default so a bare half_day:true is unchanged.
-                halfDayPeriod: args.half_day ? str(args.half_day_period) || "FIRST_HALF" : "NOT_DEFINED",
-                period,
-            },
-        },
-    };
+        body,
+    } satisfies ClockifyApi.SubmitTimeOffRequest;
     const confirmation = maybeConfirm(
         ctx,
         "clockify_request_time_off",
@@ -253,9 +285,7 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const request = await ctx.client.timeOff.submit(
-        wireBody<ClockifyApi.SubmitTimeOffRequest>(preview),
-    );
+    const request = await ctx.client.timeOff.submit(preview);
     return successResult(
         "clockify_request_time_off",
         request,
@@ -275,6 +305,13 @@ export async function requestTimeOff(ctx: Context, args: AnyRecord) {
 }
 
 export async function scheduleWork(ctx: Context, args: AnyRecord) {
+    const hoursPerDay = requiredFiniteNumber(args.hours_per_day, "hours_per_day");
+    if (hoursPerDay <= 0) throw new RangeError("hours_per_day must be greater than zero");
+    const billable = optionalBoolean(args.billable, "billable");
+    const includeNonWorkingDays = optionalBoolean(
+        args.include_non_working_days,
+        "include_non_working_days",
+    );
     const userId =
         str(args.user_id) || (str(args.user) ? await resolveUserId(ctx, str(args.user)) : "");
     const projectId =
@@ -291,14 +328,12 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         projectId,
         start: str(args.start),
         end: str(args.end),
-        hoursPerDay: args.hours_per_day,
+        hoursPerDay,
         ...(taskId ? { taskId } : {}),
         ...(str(args.note) ? { note: str(args.note) } : {}),
-        ...(args.billable !== undefined ? { billable: args.billable } : {}),
-        ...(args.include_non_working_days !== undefined
-            ? { includeNonWorkingDays: args.include_non_working_days }
-            : {}),
-    };
+        ...(billable !== undefined ? { billable } : {}),
+        ...(includeNonWorkingDays !== undefined ? { includeNonWorkingDays } : {}),
+    } satisfies ClockifyApi.CreateRecurringSchedulingRequest;
     const confirmation = maybeConfirm(
         ctx,
         "clockify_schedule_work",
@@ -307,9 +342,7 @@ export async function scheduleWork(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const created = await ctx.client.scheduling.createRecurring(
-        wireBody<ClockifyApi.CreateRecurringSchedulingRequest>(preview),
-    );
+    const created = await ctx.client.scheduling.createRecurring(preview);
     // createRecurring returns an ARRAY (one entry per occurrence); use the first for the receipt.
     const assignment = Array.isArray(created) ? created[0] : created;
     return successResult(
@@ -343,19 +376,15 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
     // dry_run refuses a bad host. DNS-rebinding is out of scope (offline
     // guard); see orchestration/webhook-url.ts.
     const url = assertSafeWebhookUrl(str(args.url));
-    const webhookEvent = str(args.webhook_event) || str(args.event);
-    if (!webhookEvent) throw new Error("webhook_event is required");
-    const triggerSourceType = str(args.trigger_source_type) || "WORKSPACE_ID";
-    const triggerSource = arrayOfStrings(args.trigger_source);
-    if (triggerSourceType === "WORKSPACE_ID" && triggerSource.length === 0)
-        triggerSource.push(ctx.workspaceId);
+    const eventValue = str(args.webhook_event) || str(args.event);
+    if (!eventValue) throw new Error("webhook_event is required");
     const preview = {
         name: str(args.name),
         url: url.toString(),
-        webhookEvent,
-        triggerSourceType,
-        triggerSource,
-    };
+        webhookEvent: webhookEvent(eventValue),
+        triggerSourceType: "WORKSPACE_ID",
+        triggerSource: [ctx.workspaceId],
+    } satisfies ClockifyRequestBody<ClockifyApi.WebhookRequest>;
     const confirmation = maybeConfirm(
         ctx,
         "clockify_setup_webhook",
@@ -364,9 +393,8 @@ export async function setupWebhook(ctx: Context, args: AnyRecord) {
         preview,
     );
     if (confirmation) return confirmation;
-    const webhook = await ctx.client.webhooks.create(
-        wireBody<ClockifyApi.WebhookRequest>({ workspaceId: ctx.workspaceId, body: preview }),
-    );
+    const request: ClockifyApi.WebhookRequest = { workspaceId: ctx.workspaceId, body: preview };
+    const webhook = await ctx.client.webhooks.create(request);
     return successResult(
         "clockify_setup_webhook",
         // Redact the authToken HMAC secret before it enters the result envelope —

@@ -1,7 +1,7 @@
 import { leftBehindNote, runComposition, type CompositionStep } from "clockify-sdk-ts-115/compose";
 import { resolveRelativeDay } from "clockify-sdk-ts-115/dates";
 import { iterAll } from "clockify-sdk-ts-115/iter";
-import { wireBody, type ClockifyApi } from "clockify-sdk-ts-115/requests";
+import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { looksLikeClockifyId, matchByName } from "clockify-sdk-ts-115/resolve";
 
 import { requireConfirmation, stripConfirmationArgs } from "../../orchestration/confirm-guard.js";
@@ -12,6 +12,9 @@ import type { AnyRecord, Bucket, ChangeSet, EntityRef, NextAction, RecoveryHint 
 import type { WorkflowContext as Context } from "./types.js";
 
 export async function createWorkPackage(ctx: Context, args: AnyRecord) {
+    const billable = strictOptionalBoolean(args.billable, "billable");
+    const isPublic = strictOptionalBoolean(args.is_public, "is_public");
+    const color = validatedProjectColor(args.color);
     const upsert = args.upsert !== false;
     const changed: ChangeSet = {};
     const ids: Record<string, string | undefined> = { workspaceId: ctx.workspaceId };
@@ -66,13 +69,37 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active client delete 400s — archive (body envelope) then delete
-                        await ctx.client.clients.update(
-                            wireBody<ClockifyApi.UpdateClientsRequest>({
-                                workspaceId: ctx.workspaceId,
-                                clientId: cid,
-                                body: { name: clientName, archived: true },
-                            }),
-                        );
+                        const current = await ctx.client.clients.get({
+                            workspaceId: ctx.workspaceId,
+                            clientId: cid,
+                        });
+                        if (typeof current.name !== "string" || current.name.length === 0) {
+                            throw new Error("client rollback requires the current client name");
+                        }
+                        if (
+                            current.currencyCode !== undefined &&
+                            typeof current.currencyCode !== "string"
+                        ) {
+                            throw new Error("client rollback requires currencyCode to be a string");
+                        }
+                        const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> = {
+                            name: current.name,
+                            archived: true,
+                            ...(typeof current.address === "string"
+                                ? { address: current.address }
+                                : {}),
+                            ...(current.currencyCode !== undefined
+                                ? { currencyCode: current.currencyCode }
+                                : {}),
+                            ...(typeof current.email === "string" ? { email: current.email } : {}),
+                            ...(typeof current.note === "string" ? { note: current.note } : {}),
+                        };
+                        const request: ClockifyApi.UpdateClientsRequest = {
+                            workspaceId: ctx.workspaceId,
+                            clientId: cid,
+                            body,
+                        };
+                        await ctx.client.clients.update(request);
                         await ctx.client.clients.delete({
                             workspaceId: ctx.workspaceId,
                             clientId: cid,
@@ -106,18 +133,15 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                 pushChanged(changed, "reused", ref("project", found));
                 return { kind: "done", reused: [ref("project", found)] };
             }
-            const created = await ctx.client.projects.create(
-                // wireBody: the optional fields are conditionally spread, which widens the inferred
-                // type beyond the generated request shape under exactOptionalPropertyTypes.
-                wireBody<ClockifyApi.CreateProjectRequest>({
-                    workspaceId: ctx.workspaceId,
-                    name: projectName,
-                    ...(clientId ? { clientId } : {}),
-                    ...(args.color ? { color: args.color } : {}),
-                    ...(args.billable !== undefined ? { billable: args.billable } : {}),
-                    ...(args.is_public !== undefined ? { isPublic: args.is_public } : {}),
-                }),
-            );
+            const request: ClockifyApi.CreateProjectRequest = {
+                workspaceId: ctx.workspaceId,
+                name: projectName,
+                ...(clientId ? { clientId } : {}),
+                ...(color !== undefined ? { color } : {}),
+                ...(billable !== undefined ? { billable } : {}),
+                ...(isPublic !== undefined ? { isPublic } : {}),
+            };
+            const created = await ctx.client.projects.create(request);
             projectId = idOf(created);
             data.project = created;
             const r = ref("project", created, projectName);
@@ -183,14 +207,70 @@ export async function createWorkPackage(ctx: Context, args: AnyRecord) {
                     created: [r],
                     undo: async () => {
                         // active task delete 400s — mark DONE then delete
-                        await ctx.client.tasks.update(
-                            wireBody<ClockifyApi.UpdateTasksRequest>({
-                                workspaceId: ctx.workspaceId,
-                                projectId: pid,
-                                taskId: tid,
-                                status: "DONE",
-                            }),
-                        );
+                        const current = await ctx.client.tasks.get({
+                            workspaceId: ctx.workspaceId,
+                            projectId: pid,
+                            taskId: tid,
+                        });
+                        const currentName =
+                            typeof current.name === "string" && current.name.length > 0
+                                ? current.name
+                                : taskName;
+                        if (!currentName) {
+                            throw new Error("task rollback requires the current task name");
+                        }
+                        if (
+                            current.assigneeIds !== undefined &&
+                            !isStringArray(current.assigneeIds)
+                        ) {
+                            throw new Error(
+                                "task rollback requires assigneeIds to contain only strings",
+                            );
+                        }
+                        if (
+                            current.userGroupIds !== undefined &&
+                            !isStringArray(current.userGroupIds)
+                        ) {
+                            throw new Error(
+                                "task rollback requires userGroupIds to contain only strings",
+                            );
+                        }
+                        if (
+                            current.budgetEstimate !== undefined &&
+                            (!Number.isFinite(current.budgetEstimate) ||
+                                typeof current.budgetEstimate !== "number")
+                        ) {
+                            throw new Error("task rollback requires budgetEstimate to be finite");
+                        }
+                        const body: ClockifyRequestBody<ClockifyApi.UpdateTasksRequest> = {
+                            name: currentName,
+                            status: "DONE",
+                            ...(typeof current.assigneeId === "string"
+                                ? { assigneeId: current.assigneeId }
+                                : {}),
+                            ...(isStringArray(current.assigneeIds)
+                                ? { assigneeIds: current.assigneeIds }
+                                : {}),
+                            ...(typeof current.billable === "boolean"
+                                ? { billable: current.billable }
+                                : {}),
+                            ...(typeof current.budgetEstimate === "number"
+                                ? { budgetEstimate: current.budgetEstimate }
+                                : {}),
+                            ...(typeof current.estimate === "string"
+                                ? { estimate: current.estimate }
+                                : {}),
+                            ...(isStringArray(current.userGroupIds)
+                                ? { userGroupIds: current.userGroupIds }
+                                : {}),
+                        };
+                        const request: ClockifyApi.UpdateTasksRequest = {
+                            workspaceId: ctx.workspaceId,
+                            projectId: pid,
+                            taskId: tid,
+                            body,
+                        };
+                        await ctx.client.tasks.update(request);
                         await ctx.client.tasks.delete({
                             workspaceId: ctx.workspaceId,
                             projectId: pid,
@@ -748,6 +828,24 @@ export function idOf(value: unknown): string {
 
 export function str(value: unknown): string {
     return typeof value === "string" ? value.trim() : "";
+}
+
+function strictOptionalBoolean(value: unknown, field: string): boolean | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "boolean") throw new TypeError(`${field} must be a boolean`);
+    return value;
+}
+
+function validatedProjectColor(value: unknown): string | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+        throw new TypeError("color must be a six-digit RGB hex value such as #4caf50");
+    }
+    return value;
+}
+
+function isStringArray(value: unknown): value is string[] {
+    return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
 
 export function arrayOfStrings(value: unknown): string[] {

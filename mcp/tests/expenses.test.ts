@@ -28,7 +28,19 @@ function expensesContext(captured: Record<string, unknown>): Context {
                 },
             },
             expenseCategories: {
-                list: async () => [{ id: CATEGORY_ID, name: "Travel" }],
+                list: async () => [
+                    {
+                        id: CATEGORY_ID,
+                        name: "Travel",
+                        unit: "",
+                        priceInCents: 0,
+                        hasUnitPrice: false,
+                    },
+                ],
+                update: async (req: unknown) => {
+                    captured.categoryUpdate = req;
+                    return { id: CATEGORY_ID };
+                },
             },
         } as never,
     };
@@ -103,7 +115,13 @@ describe("expense create/update tools", () => {
         const client = await connect(expensesContext(captured));
         await client.callTool({
             name: "clockify_expenses_create",
-            arguments: { amount: 5, categoryId: CATEGORY_ID, projectId: "proj-1", date: "d", userId: "user-9" },
+            arguments: {
+                amount: 5,
+                categoryId: CATEGORY_ID,
+                projectId: "proj-1",
+                date: "d",
+                userId: "user-9",
+            },
         });
         expect((captured.create as { userId?: string }).userId).toBe("user-9");
     });
@@ -151,20 +169,25 @@ describe("expense create/update tools", () => {
                 categoryId: CATEGORY_ID,
                 date: "2026-06-01T00:00:00Z",
                 billable: true,
+                file: "receipt-ref",
             },
         });
         expect(res.isError).toBeFalsy();
-        const update = captured.update as Record<string, unknown> & { changeFields: string[] };
-        expect(update).toMatchObject({
-            workspaceId: "ws-1",
-            expenseId: "exp-1",
+        const update = captured.update as {
+            body: Record<string, unknown> & { changeFields: string[] };
+        };
+        expect(update).toMatchObject({ workspaceId: "ws-1", expenseId: "exp-1" });
+        expect(update.body).toMatchObject({
+            file: "receipt-ref",
             userId: "user-1",
             amount: 10,
             categoryId: CATEGORY_ID,
             date: "2026-06-01T00:00:00Z",
             billable: true,
         });
-        expect(new Set(update.changeFields)).toEqual(new Set(["AMOUNT", "DATE", "CATEGORY", "BILLABLE"]));
+        expect(new Set(update.body.changeFields)).toEqual(
+            new Set(["AMOUNT", "DATE", "CATEGORY", "BILLABLE", "FILE"]),
+        );
         const json = envelope(res);
         expect(json.ok).toBe(true);
         expect((json.meta as { expenseId?: string }).expenseId).toBe("exp-1");
@@ -180,12 +203,70 @@ describe("expense create/update tools", () => {
                 amount: 10,
                 categoryId: "Travel",
                 date: "2026-06-01T00:00:00Z",
+                file: "receipt-ref",
             },
         });
         expect(res.isError).toBeFalsy();
-        const update = captured.update as Record<string, unknown> & { changeFields: string[] };
-        expect(update.categoryId).toBe(CATEGORY_ID);
-        expect(update.changeFields).toContain("CATEGORY");
+        const update = captured.update as {
+            body: Record<string, unknown> & { changeFields: string[] };
+        };
+        expect(update.body.categoryId).toBe(CATEGORY_ID);
+        expect(update.body.changeFields).toContain("CATEGORY");
+    });
+
+    it("dispatches a validated no-file update despite the stale generated requiredness", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_update",
+            arguments: {
+                expenseId: "exp-1",
+                amount: 10,
+                categoryId: CATEGORY_ID,
+                date: "2026-06-01T00:00:00Z",
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            expenseId: "exp-1",
+            body: {
+                amount: 10,
+                categoryId: CATEGORY_ID,
+                changeFields: ["AMOUNT", "DATE", "CATEGORY"],
+                date: "2026-06-01T00:00:00Z",
+                userId: "user-1",
+            },
+        });
+    });
+
+    it("uses only strict operation fields and cannot inject arbitrary request properties", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_update",
+            arguments: {
+                expenseId: "exp-1",
+                amount: 10,
+                categoryId: CATEGORY_ID,
+                date: "2026-06-01T00:00:00Z",
+                file: "receipt-ref",
+                extra: { injected: true, workspaceId: "evil", amount: 999, file: "evil-file" },
+            },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.update).toEqual({
+            workspaceId: "ws-1",
+            expenseId: "exp-1",
+            body: {
+                amount: 10,
+                categoryId: CATEGORY_ID,
+                changeFields: ["AMOUNT", "DATE", "CATEGORY", "FILE"],
+                date: "2026-06-01T00:00:00Z",
+                file: "receipt-ref",
+                userId: "user-1",
+            },
+        });
     });
 
     it("clockify_expenses_categories_list unwraps the {categories,count} envelope", async () => {
@@ -214,6 +295,64 @@ describe("expense create/update tools", () => {
         expect((json.meta as { count?: number }).count).toBe(2);
         expect(Array.isArray(json.data)).toBe(true);
         expect((json.data as unknown[]).length).toBe(2);
+    });
+});
+
+describe("expense category full-replacement update", () => {
+    it("list-scans current state and preserves empty, zero, and false fields", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_update",
+            arguments: { categoryId: CATEGORY_ID, name: "Travel costs" },
+        });
+        expect(res.isError).toBeFalsy();
+        expect(captured.categoryUpdate).toEqual({
+            workspaceId: "ws-1",
+            categoryId: CATEGORY_ID,
+            body: { name: "Travel costs", unit: "", priceInCents: 0, hasUnitPrice: false },
+        });
+    });
+
+    it("rejects a no-op before mutation", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(expensesContext(captured));
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_update",
+            arguments: { categoryId: CATEGORY_ID, name: "Travel" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.categoryUpdate).toBeUndefined();
+    });
+
+    it("stops when a full category page repeats", async () => {
+        let calls = 0;
+        const repeated = Array.from({ length: 200 }, (_, index) => ({
+            id: `other-${index}`,
+            name: `Other ${index}`,
+        }));
+        const ctx: Context = {
+            workspaceId: "ws-1",
+            client: {
+                expenseCategories: {
+                    list: async () => {
+                        calls += 1;
+                        if (calls > 2) throw new Error("repeated scan did not terminate");
+                        return repeated;
+                    },
+                    update: async () => {
+                        throw new Error("update must not run");
+                    },
+                },
+            } as never,
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_expenses_categories_update",
+            arguments: { categoryId: CATEGORY_ID, name: "Renamed" },
+        });
+        expect(res.isError).toBe(true);
+        expect(calls).toBe(2);
     });
 });
 

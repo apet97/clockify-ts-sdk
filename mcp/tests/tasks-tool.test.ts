@@ -33,9 +33,23 @@ interface TasksStub {
 }
 
 function tasksContext(tasks: TasksStub): Context {
+    const resource: TasksStub = {
+        get: async () => ({
+            id: "t-1",
+            name: "Existing task",
+            assigneeId: "legacy-user",
+            billable: true,
+            estimate: "",
+            status: "ACTIVE",
+            assigneeIds: [],
+            userGroupIds: [],
+            budgetEstimate: 0,
+        }),
+        ...tasks,
+    };
     return {
         workspaceId: "ws-1",
-        client: { tasks } as never,
+        client: { tasks: resource } as never,
     };
 }
 
@@ -66,7 +80,10 @@ function responseAware<T>(data: T, headers: Record<string, string>) {
     const promise = Promise.resolve(data) as Promise<T> & {
         withRawResponse(): Promise<{ data: T; rawResponse: { headers: Headers } }>;
     };
-    promise.withRawResponse = async () => ({ data, rawResponse: { headers: new Headers(headers) } });
+    promise.withRawResponse = async () => ({
+        data,
+        rawResponse: { headers: new Headers(headers) },
+    });
     return promise;
 }
 
@@ -133,7 +150,12 @@ describe("clockify_tasks_list", () => {
             "page-size": 25,
             name: "Design",
         });
-        const meta = envelope(res).meta as { page?: number; pageSize?: number; hasMore?: boolean; count?: number };
+        const meta = envelope(res).meta as {
+            page?: number;
+            pageSize?: number;
+            hasMore?: boolean;
+            count?: number;
+        };
         expect(meta.page).toBe(3);
         expect(meta.pageSize).toBe(25);
         expect(meta.count).toBe(2);
@@ -178,7 +200,9 @@ describe("clockify_tasks_list", () => {
         expect(err.code).toBe("not_found");
         expect(err.message).toBe("project not found");
         // The tool registered a custom recovery string; errorResult surfaces it verbatim.
-        expect((json.recovery as { hint?: string }).hint).toBe("Verify the projectId exists in this workspace.");
+        expect((json.recovery as { hint?: string }).hint).toBe(
+            "Verify the projectId exists in this workspace.",
+        );
     });
 });
 
@@ -206,10 +230,15 @@ describe("clockify_tasks_create", () => {
         });
         const json = envelope(res);
         expect(json.entity).toBe("task");
-        const created = (json.changed as { created?: Array<{ type: string; id: string; name?: string }> }).created;
+        const created = (
+            json.changed as { created?: Array<{ type: string; id: string; name?: string }> }
+        ).created;
         expect(created).toEqual([{ type: "task", id: "task-9", name: "Build" }]);
         // Chain-to-next hint: log work against the new task, carrying project + task ids.
-        const next = json.next as Array<{ tool?: string; args?: { project_id?: string; task_id?: string } }>;
+        const next = json.next as Array<{
+            tool?: string;
+            args?: { project_id?: string; task_id?: string };
+        }>;
         expect(next[0]?.tool).toBe("clockify_log_work");
         expect(next[0]?.args).toEqual({ project_id: "proj-1", task_id: "task-9" });
     });
@@ -305,7 +334,7 @@ describe("clockify_tasks_get", () => {
 });
 
 describe("clockify_tasks_update", () => {
-    it("includes every supplied field — keeping billable:false — and casts status onto the wired body", async () => {
+    it("preserves current replacement fields and overlays every supplied field, including false", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             tasksContext({
@@ -328,19 +357,19 @@ describe("clockify_tasks_update", () => {
             },
         });
         expect(res.isError).toBeFalsy();
-        // The mutable fields are collected into `body` (wireBody returns the
-        // {workspaceId,...,body} envelope verbatim); billable:false must survive
-        // because the guard is `!== undefined`, not truthiness.
         expect(captured.update).toEqual({
             workspaceId: "ws-1",
             projectId: "proj-1",
             taskId: "t-1",
             body: {
                 name: "Renamed",
+                assigneeId: "legacy-user",
                 billable: false,
                 estimate: "PT2H",
                 status: "DONE",
                 assigneeIds: ["u-1"],
+                userGroupIds: [],
+                budgetEstimate: 0,
             },
         });
         const json = envelope(res);
@@ -350,10 +379,14 @@ describe("clockify_tasks_update", () => {
         expect((json.meta as { taskId?: string }).taskId).toBe("t-1");
     });
 
-    it("wires an empty body when no mutable fields are supplied", async () => {
+    it("rejects a no-op after reading current state and never mutates", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             tasksContext({
+                get: async (req) => {
+                    captured.get = req;
+                    return { id: "t-1", name: "Existing task" };
+                },
                 update: async (req) => {
                     captured.update = req;
                     return { id: "t-1" };
@@ -364,19 +397,38 @@ describe("clockify_tasks_update", () => {
             name: "clockify_tasks_update",
             arguments: { projectId: "proj-1", taskId: "t-1" },
         });
-        expect(res.isError).toBeFalsy();
-        // Every `if` branch is false => body stays {}.
-        expect(captured.update).toEqual({
+        expect(res.isError).toBe(true);
+        expect(captured.get).toEqual({
             workspaceId: "ws-1",
             projectId: "proj-1",
             taskId: "t-1",
-            body: {},
         });
+        expect(captured.update).toBeUndefined();
+    });
+
+    it("rejects an invalid deprecated assigneeId before mutation", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            tasksContext({
+                get: async () => ({ id: "t-1", name: "Existing task", assigneeId: 42 }),
+                update: async (request) => {
+                    captured.update = request;
+                    return {};
+                },
+            }),
+        );
+        const res = await client.callTool({
+            name: "clockify_tasks_update",
+            arguments: { projectId: "proj-1", taskId: "t-1", name: "Renamed" },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.update).toBeUndefined();
     });
 
     it("surfaces a thrown 400 invalid_request from the update call", async () => {
         const client = await connect(
             tasksContext({
+                get: async () => ({ id: "t-1", name: "Existing task", status: "ACTIVE" }),
                 update: async () => {
                     throw httpError("Bad status value", 400);
                 },
@@ -384,7 +436,7 @@ describe("clockify_tasks_update", () => {
         );
         const res = await client.callTool({
             name: "clockify_tasks_update",
-            arguments: { projectId: "proj-1", taskId: "t-1", status: "NOPE" },
+            arguments: { projectId: "proj-1", taskId: "t-1", status: "DONE" },
         });
         expect(res.isError).toBe(true);
         expect((envelope(res).error as { code?: string }).code).toBe("invalid_request");
@@ -522,7 +574,12 @@ describe("clockify_tasks_delete confirm-guard handshake", () => {
             confirm_token?: string;
             risk_class?: string;
         };
-        expect(data.preview).toEqual({ action: "delete", entity: "task", id: "t-1", projectId: "p-1" });
+        expect(data.preview).toEqual({
+            action: "delete",
+            entity: "task",
+            id: "t-1",
+            projectId: "p-1",
+        });
         expect(data.risk_class).toBe("task_delete");
         expect(typeof data.confirm_token).toBe("string");
         expect(data.confirm_token).toBeTruthy();
@@ -560,7 +617,9 @@ describe("clockify_tasks_delete confirm-guard handshake", () => {
         const json = envelope(res);
         // "...was not issued..." matches the invalid_request message regex.
         expect((json.error as { code?: string }).code).toBe("invalid_request");
-        expect((json.error as { message?: string }).message).toMatch(/was not issued|expired|already used/);
+        expect((json.error as { message?: string }).message).toMatch(
+            /was not issued|expired|already used/,
+        );
     });
 
     it("a confirm_token minted for a different taskId does not satisfy this call", async () => {
@@ -615,7 +674,11 @@ describe("clockify_tasks_delete confirm-guard handshake", () => {
         expect(res.isError).toBe(true);
         expect(calls).toEqual([]);
         const json = envelope(res);
-        const recovery = json.recovery as { tool?: string; retryable?: boolean; args?: Record<string, unknown> };
+        const recovery = json.recovery as {
+            tool?: string;
+            retryable?: boolean;
+            args?: Record<string, unknown>;
+        };
         expect(recovery.tool).toBe("clockify_tasks_delete");
         expect(recovery.retryable).toBe(true);
         expect(recovery.args?.dry_run).toBe(true);
@@ -630,7 +693,7 @@ describe("clockify_tasks_delete confirm-guard handshake", () => {
                     return { id: "t-1", name: "Important task" };
                 },
                 update: async (req) => {
-                    const body = req as { status?: string; name?: string };
+                    const body = (req as { body?: { status?: string; name?: string } }).body ?? {};
                     calls.push(`update:${body.status}:${body.name}`);
                     return {};
                 },

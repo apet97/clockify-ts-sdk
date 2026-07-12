@@ -27,6 +27,9 @@ function reportsContext(captured: Record<string, unknown>): Context {
                 weekly: capture("weekly"),
                 attendance: capture("attendance"),
             },
+            expenseReport: {
+                generateDetailedReportV1: capture("expense"),
+            },
         } as never,
     };
 }
@@ -52,7 +55,9 @@ function envelope(res: unknown): Record<string, unknown> {
 describe("reports tools", () => {
     it("registers the five report tools as read-only", async () => {
         const client = await connect(reportsContext({}));
-        const tools = (await client.listTools()).tools.filter((tool) => tool.name.startsWith("clockify_reports_"));
+        const tools = (await client.listTools()).tools.filter((tool) =>
+            tool.name.startsWith("clockify_reports_"),
+        );
         expect(tools.map((tool) => tool.name).sort()).toEqual([
             "clockify_reports_attendance",
             "clockify_reports_detailed",
@@ -116,13 +121,93 @@ describe("reports tools", () => {
         const client = await connect(reportsContext(captured));
         await client.callTool({
             name: "clockify_reports_weekly",
-            arguments: { dateRangeStart: "s", dateRangeEnd: "e", weeklyFilter: { group: "USER" } },
+            arguments: {
+                dateRangeStart: "s",
+                dateRangeEnd: "e",
+                weeklyFilter: { group: "USER", subgroup: "TIME" },
+            },
         });
         await client.callTool({
             name: "clockify_reports_attendance",
-            arguments: { dateRangeStart: "s", dateRangeEnd: "e", attendanceFilter: { users: { ids: ["u-1"] } } },
+            arguments: {
+                dateRangeStart: "s",
+                dateRangeEnd: "e",
+                attendanceFilter: { page: 1 },
+                extra: { users: { ids: ["u-1"] } },
+            },
         });
-        expect(captured.weekly).toMatchObject({ workspaceId: "ws-1", weeklyFilter: { group: "USER" } });
-        expect(captured.attendance).toMatchObject({ workspaceId: "ws-1", attendanceFilter: { users: { ids: ["u-1"] } } });
+        expect(captured.weekly).toMatchObject({
+            workspaceId: "ws-1",
+            weeklyFilter: { group: "USER", subgroup: "TIME" },
+        });
+        expect(captured.attendance).toMatchObject({
+            workspaceId: "ws-1",
+            attendanceFilter: { page: 1 },
+            users: { ids: ["u-1"] },
+        });
+    });
+
+    it("rejects protected date/filter/workspace overrides before the SDK call", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_detailed",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                detailedFilter: { page: 1, pageSize: 50 },
+                extra: {
+                    workspaceId: "attacker-workspace",
+                    dateRangeStart: "attacker-start",
+                    detailedFilter: { page: 999 },
+                },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.detailed).toBeUndefined();
+    });
+
+    it("rejects invalid operation-specific extra field types locally", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_summary",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                summaryFilter: { groups: ["PROJECT"] },
+                extra: { rounding: "yes" },
+            },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(captured.summary).toBeUndefined();
+    });
+
+    it("uses explicit protected pagination for expense reports", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(reportsContext(captured));
+        const res = await client.callTool({
+            name: "clockify_reports_expense",
+            arguments: {
+                dateRangeStart: "2026-06-01T00:00:00Z",
+                dateRangeEnd: "2026-06-30T23:59:59Z",
+                page: 2,
+                pageSize: 25,
+                extra: { billable: false, note: "taxi" },
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(captured.expense).toEqual({
+            workspaceId: "ws-1",
+            dateRangeStart: "2026-06-01T00:00:00Z",
+            dateRangeEnd: "2026-06-30T23:59:59Z",
+            page: 2,
+            pageSize: 25,
+            billable: false,
+            note: "taxi",
+        });
     });
 });
