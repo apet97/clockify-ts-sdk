@@ -1479,6 +1479,39 @@ describe("ClockifyApiClient.fetch", () => {
         });
     });
 
+    it("keeps an SDK timeout when the transport synchronously triggers a later caller abort", async () => {
+        await withFakeTimers(async () => {
+            const controller = new AbortController();
+            const laterCallerReason = new Error("transport triggered caller abort after timeout");
+            const dispatch = vi.fn<typeof fetch>().mockImplementation(
+                (input, init) =>
+                    new Promise<Response>(() => {
+                        requestFromFetchArgs(input, init).signal.addEventListener(
+                            "abort",
+                            () => controller.abort(laterCallerReason),
+                            { once: true },
+                        );
+                    }),
+            );
+            const outcome = observePromise(
+                client(dispatch).fetch("users", undefined, {
+                    timeoutInSeconds: 0.01,
+                    maxRetries: 0,
+                    abortSignal: controller.signal,
+                }),
+            );
+
+            await vi.advanceTimersByTimeAsync(10);
+            const settled = await outcome;
+
+            expect(settled.status).toBe("rejected");
+            expect(settled.status === "rejected" && settled.reason).toBeInstanceOf(
+                ClockifyApiTimeoutError,
+            );
+            expect(settled).not.toEqual({ status: "rejected", reason: laterCallerReason });
+        });
+    });
+
     it("keeps the exact caller reason when caller abort wins before SDK timeout", async () => {
         await withFakeTimers(async () => {
             const dispatch = vi.fn<typeof fetch>().mockImplementation(
