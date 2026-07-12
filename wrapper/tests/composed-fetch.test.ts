@@ -175,33 +175,36 @@ describe("composedFetch — lifecycle hooks (no retry)", () => {
 });
 
 describe("composedFetch — retry policy", () => {
-    it("dispatches a fresh replayable Request with identical body bytes per attempt", async () => {
-        const requests: Request[] = [];
-        const bodies: string[] = [];
-        const f = composedFetch({
-            fetch: vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
-                expect(init).toBeUndefined();
-                expect(input).toBeInstanceOf(Request);
-                const request = input as Request;
-                requests.push(request);
-                bodies.push(await request.text());
-                return new Response(null, { status: requests.length === 1 ? 503 : 204 });
-            }),
-            retryPolicy: {
-                maxRetries: 1,
-                initialDelayMs: 0,
-                jitter: 0,
-                retryableMethods: ["POST"],
-            },
-        });
+    it.each(["POST", "PATCH"] as const)(
+        "dispatches a fresh replayable %s Request with identical body bytes per attempt",
+        async (method) => {
+            const requests: Request[] = [];
+            const bodies: string[] = [];
+            const f = composedFetch({
+                fetch: vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
+                    expect(init).toBeUndefined();
+                    expect(input).toBeInstanceOf(Request);
+                    const request = input as Request;
+                    requests.push(request);
+                    bodies.push(await request.text());
+                    return new Response(null, { status: requests.length === 1 ? 503 : 204 });
+                }),
+                retryPolicy: {
+                    maxRetries: 1,
+                    initialDelayMs: 0,
+                    jitter: 0,
+                    retryableMethods: [method],
+                },
+            });
 
-        await expect(
-            f("https://example.test/x", { method: "POST", body: "replay me" }),
-        ).resolves.toHaveProperty("status", 204);
-        expect(requests).toHaveLength(2);
-        expect(new Set(requests).size).toBe(2);
-        expect(bodies).toEqual(["replay me", "replay me"]);
-    });
+            await expect(
+                f("https://example.test/x", { method, body: "replay me" }),
+            ).resolves.toHaveProperty("status", 204);
+            expect(requests).toHaveLength(2);
+            expect(new Set(requests).size).toBe(2);
+            expect(bodies).toEqual(["replay me", "replay me"]);
+        },
+    );
 
     it("rejects a used retryable Request body before the first dispatch", async () => {
         const dispatch = vi.fn<typeof fetch>();
@@ -221,6 +224,57 @@ describe("composedFetch — retry policy", () => {
         await input.text();
 
         await expect(f(input)).rejects.toBeDefined();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("rejects a locked retryable Request body before the first dispatch", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries: 1 } });
+        const input = new Request("https://example.test/x", {
+            method: "PUT",
+            body: "locked",
+        });
+        const reader = input.body?.getReader();
+        try {
+            await expect(f(input)).rejects.toBeDefined();
+            expect(dispatch).not.toHaveBeenCalled();
+        } finally {
+            reader?.releaseLock();
+        }
+    });
+
+    it("rejects a non-cloneable retryable body before the first dispatch", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries: 1 } });
+        const input = new Request("https://example.test/x", {
+            method: "PUT",
+            body: new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(new TextEncoder().encode("stream"));
+                    controller.close();
+                },
+            }),
+            duplex: "half",
+        } as RequestInit);
+        Object.defineProperty(input.body, "tee", {
+            value: () => {
+                throw new TypeError("cannot clone body");
+            },
+        });
+
+        await expect(f(input)).rejects.toThrow(/cannot clone body/i);
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("preserves an already-aborted primitive reason with zero dispatches", async () => {
+        const controller = new AbortController();
+        controller.abort("composed-stop");
+        const dispatch = vi.fn<typeof fetch>();
+        const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries: 1 } });
+
+        await expect(
+            f("https://example.test/x", { signal: controller.signal }),
+        ).rejects.toBe("composed-stop");
         expect(dispatch).not.toHaveBeenCalled();
     });
 
