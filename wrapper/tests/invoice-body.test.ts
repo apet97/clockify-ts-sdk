@@ -82,4 +82,37 @@ describe("invoiceUpdateBodyFromExisting", () => {
         expect(body.taxPercent).toBeUndefined();
         expect(body.discountPercent).toBeUndefined();
     });
+
+    it.each([
+        ["currency", { ...existingInvoice(), currency: "" }],
+        ["number", { ...existingInvoice(), number: "" }],
+        ["issuedDate", { ...existingInvoice(), issuedDate: "not-a-date" }],
+        ["dueDate", { ...existingInvoice(), dueDate: "not-a-date" }],
+        ["discountPercent", { ...existingInvoice(), discount: Number.NaN }],
+        ["taxPercent", { ...existingInvoice(), tax: Number.POSITIVE_INFINITY }],
+        ["tax2Percent", { ...existingInvoice(), tax2: "missing" }],
+    ])("rejects before mutation when required replacement field %s cannot be reconstructed", (field, existing) => {
+        expect(() => invoiceUpdateBodyFromExisting(existing)).toThrow(
+            new RegExp(String(field), "i"),
+        );
+    });
+
+    it("preserves required zero percentages and optional empty strings", () => {
+        const body = invoiceUpdateBodyFromExisting({
+            ...existingInvoice(),
+            billFrom: "",
+            clientAddress: "",
+            discount: 0,
+            tax: 0,
+            tax2: 0,
+        });
+
+        expect(body).toMatchObject({
+            billFrom: "",
+            clientAddress: "",
+            discountPercent: 0,
+            taxPercent: 0,
+            tax2Percent: 0,
+        });
+    });
 });
