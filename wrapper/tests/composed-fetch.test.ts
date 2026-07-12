@@ -175,6 +175,106 @@ describe("composedFetch — lifecycle hooks (no retry)", () => {
 });
 
 describe("composedFetch — retry policy", () => {
+    it("dispatches a fresh replayable Request with identical body bytes per attempt", async () => {
+        const requests: Request[] = [];
+        const bodies: string[] = [];
+        const f = composedFetch({
+            fetch: vi.fn<typeof fetch>().mockImplementation(async (input, init) => {
+                expect(init).toBeUndefined();
+                expect(input).toBeInstanceOf(Request);
+                const request = input as Request;
+                requests.push(request);
+                bodies.push(await request.text());
+                return new Response(null, { status: requests.length === 1 ? 503 : 204 });
+            }),
+            retryPolicy: {
+                maxRetries: 1,
+                initialDelayMs: 0,
+                jitter: 0,
+                retryableMethods: ["POST"],
+            },
+        });
+
+        await expect(
+            f("https://example.test/x", { method: "POST", body: "replay me" }),
+        ).resolves.toHaveProperty("status", 204);
+        expect(requests).toHaveLength(2);
+        expect(new Set(requests).size).toBe(2);
+        expect(bodies).toEqual(["replay me", "replay me"]);
+    });
+
+    it("rejects a used retryable Request body before the first dispatch", async () => {
+        const dispatch = vi.fn<typeof fetch>();
+        const f = composedFetch({
+            fetch: dispatch,
+            retryPolicy: {
+                maxRetries: 1,
+                initialDelayMs: 0,
+                jitter: 0,
+                retryableMethods: ["POST"],
+            },
+        });
+        const input = new Request("https://example.test/x", {
+            method: "POST",
+            body: "already used",
+        });
+        await input.text();
+
+        await expect(f(input)).rejects.toBeDefined();
+        expect(dispatch).not.toHaveBeenCalled();
+    });
+
+    it("cancels a retryable response body before starting backoff", async () => {
+        vi.useFakeTimers();
+        try {
+            let finishCancellation!: () => void;
+            const cancellationFinished = new Promise<void>((resolve) => {
+                finishCancellation = resolve;
+            });
+            const cancel = vi.fn(() => cancellationFinished);
+            const dispatch = vi
+                .fn<typeof fetch>()
+                .mockResolvedValueOnce(
+                    new Response(new ReadableStream<Uint8Array>({ cancel }), {
+                        status: 503,
+                        headers: { "Retry-After": "5" },
+                    }),
+                )
+                .mockResolvedValueOnce(new Response(null, { status: 204 }));
+            const f = composedFetch({
+                fetch: dispatch,
+                retryPolicy: { maxRetries: 1, initialDelayMs: 0, jitter: 0 },
+            });
+
+            const outcome = f("https://example.test/x");
+            await vi.advanceTimersByTimeAsync(0);
+            expect(cancel).toHaveBeenCalledOnce();
+            await vi.advanceTimersByTimeAsync(5_000);
+            expect(dispatch).toHaveBeenCalledOnce();
+
+            finishCancellation();
+            await vi.advanceTimersByTimeAsync(4_999);
+            expect(dispatch).toHaveBeenCalledOnce();
+            await vi.advanceTimersByTimeAsync(1);
+            await expect(outcome).resolves.toHaveProperty("status", 204);
+            expect(dispatch).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
+    it.each([-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY])(
+        "rejects invalid maxRetries %s before dispatch",
+        async (maxRetries) => {
+            const dispatch = vi.fn<typeof fetch>();
+            const f = composedFetch({ fetch: dispatch, retryPolicy: { maxRetries } });
+
+            await expect(f("https://example.test/x")).rejects.toThrow(/maxRetries/i);
+            expect(dispatch).not.toHaveBeenCalled();
+        },
+    );
+
     it("does not retry by default (no retryPolicy)", async () => {
         const { fn, calls } = mockFetch(() => new Response("server err", { status: 500 }));
         const f = composedFetch({ fetch: fn });
