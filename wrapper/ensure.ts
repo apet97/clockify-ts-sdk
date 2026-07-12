@@ -194,15 +194,16 @@ const ID_KEY = { project: "projectId", client: "clientId" } as const;
 
 /**
  * The full archive-then-delete sequence, the way the live Clockify API actually
- * allows it: GET the name → archive (replace-PUT `archived: true`) → DELETE.
+ * allows it: GET the current replacement state → archive (replace-PUT
+ * `archived: true`) → DELETE.
  *
  * Deleting an ACTIVE project/client returns HTTP 400 ("Cannot delete an active
  * …", live-verified 2026-06-15/17) and the dedicated `/archive` routes 404, so a
  * direct SDK caller must archive first. The archive is a *replace*-PUT, so the
- * sequence GETs the current name and carries it through — erroring clearly when
- * the entity has no name (otherwise the PUT would blank it). The only per-entity
- * difference is the archive request body, supplied by `archiveRequest`; this core
- * owns the GET-name step, the empty-name guard, the ordering, and the DELETE.
+ * sequence GETs the current state and carries editable fields through — erroring
+ * clearly when the entity has no name (otherwise the PUT would blank it). The
+ * only per-entity difference is the archive request body, supplied by
+ * `archiveRequest`; this core owns the GET step, name guard, ordering, and DELETE.
  *
  * @throws if the entity has no name to carry through the replace-PUT archive step.
  */

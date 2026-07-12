@@ -25,6 +25,13 @@ import type { ClockifyApi, ClockifyRequestBody } from "./requests.js";
 
 type InvoiceUpdateBody = ClockifyRequestBody<ClockifyApi.UpdateInvoicesRequest>;
 
+const INVOICE_TAX_TYPES = new Set<ClockifyApi.TaxType>(["COMPOUND", "SIMPLE", "NONE"]);
+const INVOICE_ZERO_FIELDS = new Set<ClockifyApi.VisibleZeroFieldsInvoice>([
+    "TAX",
+    "TAX_2",
+    "DISCOUNT",
+]);
+
 /**
  * Invoice fields that are safe to send back on a PUT. Mirrors the editable
  * surface Clockify accepts; everything else the GET returns is read-only or
@@ -63,12 +70,13 @@ export function invoiceUpdateBodyFromExisting(
     existing: Record<string, unknown>,
     patch: Partial<InvoiceUpdateBody> = {},
 ): InvoiceUpdateBody {
-    const taxTypes = new Set<ClockifyApi.TaxType>(["COMPOUND", "SIMPLE", "NONE"]);
-    const zeroFields = new Set<ClockifyApi.VisibleZeroFieldsInvoice>(["TAX", "TAX_2", "DISCOUNT"]);
-    const taxType = taxTypes.has(existing.taxType as ClockifyApi.TaxType)
+    const taxType = INVOICE_TAX_TYPES.has(existing.taxType as ClockifyApi.TaxType)
         ? (existing.taxType as ClockifyApi.TaxType)
         : undefined;
-    const visibleZeroFields = validVisibleZeroFields(existing.visibleZeroFields, zeroFields);
+    const visibleZeroFields = validVisibleZeroFields(
+        existing.visibleZeroFields,
+        INVOICE_ZERO_FIELDS,
+    );
     const candidate: Partial<InvoiceUpdateBody> = {
         ...(typeof existing.billFrom === "string" ? { billFrom: existing.billFrom } : {}),
         ...(typeof existing.clientAddress === "string"
