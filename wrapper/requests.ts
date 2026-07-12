@@ -23,17 +23,3 @@ export type { AuditLogAction } from "./src/api/types/AuditLogAction.js";
  * `{ workspaceId, ..., body }`.
  */
 export type ClockifyRequestBody<T extends object> = T extends { body: infer Body } ? Body : never;
-
-/**
- * Last-resort typed escape for a body whose validated runtime keys the
- * generated type genuinely cannot express (report/audit passthrough). Unlike
- * `as never`, this asserts the value is a non-null object at the type level
- * and documents intent at the call site. Use only where a `KEEP` reason
- * applies; prefer the union-envelope binding everywhere else.
- */
-export function wireBody<T extends object>(value: T): T {
-    if (value === null || typeof value !== "object") {
-        throw new TypeError("wireBody expects a non-null object");
-    }
-    return value;
-}

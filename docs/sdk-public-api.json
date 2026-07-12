@@ -98,8 +98,7 @@
     "reportTotals",
     "mapBounded",
     "runComposition",
-    "leftBehindNote",
-    "wireBody"
+    "leftBehindNote"
   ],
   "subpaths": {
     ".": [
@@ -209,7 +208,10 @@
       "archiveThenDeleteClient"
     ],
     "./requests": [
-      "wireBody"
+      "ClockifyApi",
+      "ClockifyRequestBody",
+      "AUDIT_LOG_ACTIONS",
+      "AuditLogAction"
     ],
     "./reports": [
       "summaryFilter",
