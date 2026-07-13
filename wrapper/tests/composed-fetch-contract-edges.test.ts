@@ -6,7 +6,7 @@ import {
     REQUEST_ID_HEADER,
     USER_AGENT_HEADER,
     type RequestContext,
-} from "../composed-fetch.ts";
+} from "../composed-fetch.js";
 
 type RedirectFailure = Error & {
     readonly status: number;

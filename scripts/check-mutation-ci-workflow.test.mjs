@@ -14,6 +14,10 @@ const wrapperStryker = readFileSync(
     "utf8",
 );
 const mcpStryker = readFileSync(new URL("../mcp/stryker.conf.json", import.meta.url), "utf8");
+const wrapperPackage = JSON.parse(
+    readFileSync(new URL("../wrapper/package.json", import.meta.url), "utf8"),
+);
+const mcpPackage = JSON.parse(readFileSync(new URL("../mcp/package.json", import.meta.url), "utf8"));
 const ciContract = JSON.parse(
     readFileSync(new URL("../docs/ci-contract.json", import.meta.url), "utf8"),
 );
@@ -69,8 +73,8 @@ test("the checker rejects a floating action reference", () => {
 
 test("the checker rejects a floating Node runtime", () => {
     expectFailure(
-        { workflow: workflow.replace('node-version: "24.18.0"', 'node-version: "24"') },
-        /24\.18\.0/,
+        { workflow: workflow.replace('node-version: "22.13.0"', 'node-version: "22"') },
+        /22\.13\.0/,
     );
 });
 
@@ -134,15 +138,17 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     );
 });
 
-test("the checker retains aggregate coverage with related-test selection", () => {
-    expectFailure(
-        { wrapperStryker: wrapperStryker.replace('"coverageAnalysis": "all"', '"coverageAnalysis": "perTest"') },
-        /wrapper.*coverageAnalysis/i,
-    );
-    expectFailure(
-        { mcpStryker: mcpStryker.replace('"related": true', '"related": false') },
-        /MCP.*related-test/i,
-    );
+test("mutation entrypoints generate ignored runtime versions before Stryker", () => {
+    const generator = "node ../scripts/generate-package-versions.mjs && ";
+    for (const [label, manifest] of [
+        ["wrapper", wrapperPackage],
+        ["MCP", mcpPackage],
+    ]) {
+        assert.ok(
+            manifest.scripts?.mutation?.startsWith(generator),
+            `${label} mutation must generate manifest-derived runtime versions first`,
+        );
+    }
 });
 
 test("CI contracts document the hardened GitHub-only mutation proof", () => {
@@ -151,7 +157,7 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
     );
     assert.ok(entry);
     for (const marker of [
-        'node-version: "24.18.0"',
+        'node-version: "22.13.0"',
         "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
         "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
         "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
@@ -161,11 +167,11 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
         assert.ok(entry.mustContain.includes(marker), `CI contract is missing: ${marker}`);
     }
 
-    assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*Node 24\.18\.0/i);
+    assert.match(ciPolicy, /mutation\.yml[^\n]*dispatch-only[^\n]*Node 22\.13\.0/i);
     assert.match(ciPolicy, /ci\.yml[^\n]*workspace[^\n]*Node 22\.13[^\n]*24/i);
     assert.doesNotMatch(ciPolicy, /\.github\/workflows\/ci-(?:cli|mcp)\.yml/);
     for (const document of [qualityGates, docsReadme]) {
-        assert.match(document, /Mutation workflow[^\n]*exact Node 24\.18\.0/i);
+        assert.match(document, /Mutation workflow[^\n]*exact Node 22\.13\.0/i);
         assert.match(document, /SHA-pinned[^\n]*14-day/i);
     }
 });
