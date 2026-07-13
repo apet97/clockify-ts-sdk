@@ -98,10 +98,10 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         failures.push("Checkout persist-credentials must be false");
     }
 
-    const setup = namedStep(steps, "Setup Node.js 22.13.0", failures);
+    const setup = namedStep(steps, "Setup Node.js 24.18.0", failures);
     requireStep(setup, { uses: ACTIONS.setupNode }, "Setup Node.js", failures);
-    if (setup?.with?.["node-version"] !== "22.13.0") {
-        failures.push("Mutation must use exact Node 22.13.0");
+    if (setup?.with?.["node-version"] !== "24.18.0") {
+        failures.push("Mutation must use exact Node 24.18.0");
     }
 
     requireStep(
@@ -211,11 +211,6 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         const config = parseJson(text, `${label} Stryker config`, failures);
         if (config != null && config.concurrency !== 2) {
             failures.push(`${label} Stryker concurrency must remain 2`);
-        }
-        if (config != null && config.inPlace !== true) {
-            failures.push(
-                `${label} Stryker must run in place so Vitest resolves the instrumented module on Node 22`,
-            );
         }
     }
 
