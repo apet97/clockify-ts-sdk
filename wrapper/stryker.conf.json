@@ -5,9 +5,9 @@
     "vitest": {
         "configFile": "wrapper/vitest.config.ts",
         "dir": "wrapper",
-        "related": false
+        "related": true
     },
-    "coverageAnalysis": "perTest",
+    "coverageAnalysis": "all",
     "mutate": [
         "wrapper/money.ts",
         "wrapper/dates.ts",

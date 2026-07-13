@@ -134,6 +134,17 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     );
 });
 
+test("the checker retains aggregate coverage with related-test selection", () => {
+    expectFailure(
+        { wrapperStryker: wrapperStryker.replace('"coverageAnalysis": "all"', '"coverageAnalysis": "perTest"') },
+        /wrapper.*coverageAnalysis/i,
+    );
+    expectFailure(
+        { mcpStryker: mcpStryker.replace('"related": true', '"related": false') },
+        /MCP.*related-test/i,
+    );
+});
+
 test("CI contracts document the hardened GitHub-only mutation proof", () => {
     const entry = ciContract.workflows.find(
         (candidate) => candidate.path === ".github/workflows/mutation.yml",

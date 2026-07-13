@@ -212,6 +212,12 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         if (config != null && config.concurrency !== 2) {
             failures.push(`${label} Stryker concurrency must remain 2`);
         }
+        if (config != null && config.coverageAnalysis !== "all") {
+            failures.push(`${label} Stryker coverageAnalysis must remain all`);
+        }
+        if (config != null && config.vitest?.related !== true) {
+            failures.push(`${label} Stryker must use Vitest related-test selection`);
+        }
     }
 
     return failures;
