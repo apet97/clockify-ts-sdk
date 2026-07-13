@@ -9,7 +9,10 @@
     },
     "coverageAnalysis": "perTest",
     "testFiles": [
-        "mcp/tests/mutation-governed.test.ts"
+        "mcp/tests/confirmation-store.test.ts",
+        "mcp/tests/result.test.ts",
+        "mcp/tests/tool-registration.test.ts",
+        "mcp/tests/tool-risk.test.ts"
     ],
     "mutate": [
         "mcp/src/orchestration/confirmation.ts",
