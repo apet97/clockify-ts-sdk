@@ -70,6 +70,7 @@ test("standalone version and package entrypoints generate ignored runtime consta
     const requiredScripts = {
         wrapper: [
             "docs",
+            "mutation",
             "test",
             "test:coverage",
             "test:watch",
@@ -78,7 +79,7 @@ test("standalone version and package entrypoints generate ignored runtime consta
             "build",
         ],
         cli: ["dev", "test", "test:coverage", "test:watch", "type-check", "build"],
-        mcp: ["dev", "test", "test:coverage", "test:watch", "type-check", "build"],
+        mcp: ["dev", "mutation", "test", "test:coverage", "test:watch", "type-check", "build"],
     };
     for (const [pkg, scriptNames] of Object.entries(requiredScripts)) {
         const manifest = JSON.parse(await readFile(path.join(root, pkg, "package.json"), "utf8"));

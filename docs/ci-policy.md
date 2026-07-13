@@ -8,7 +8,7 @@ local package gates without becoming the source of product truth.
 | Workflow | Role |
 |---|---|
 | `.github/workflows/ci.yml` | Consolidated SDK/CLI/MCP workspace CI on exact Node 22.13.0 and Node 24: local SDK generation, package lint/type-check/test/build, wrapper dual-build smoke, pack snapshots, cross-package contracts, coverage, and production audit. |
-| `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP Stryker proof on exact Node 24.18.0. Actions are SHA-pinned, credentials are blank, reports are retained for 14 days, and `target=all` enforces the existing monotonic score floors without publishing. The package matrix separately proves the Node 22.13 minimum. |
+| `.github/workflows/mutation.yml` | Dispatch-only wrapper/MCP Stryker proof on exact Node 22.13.0. Actions are SHA-pinned, credentials are blank, reports are retained for 14 days, and `target=all` enforces the existing monotonic score floors without publishing. |
 | `.github/workflows/codeql.yml` | Security analysis for hand-written TypeScript and workflow files. |
 | `.github/workflows/docs.yml` | TypeDoc Pages deployment for SDK API docs. |
 | `.github/workflows/release-please.yml` | Release PR automation only. |
@@ -35,7 +35,7 @@ local package gates without becoming the source of product truth.
   needs write access.
 - Keep package workflow matrices on Node 22.13 and 24 until runtime policy
   changes intentionally.
-- Keep the dispatch-only Mutation workflow on exact Node 24.18.0 with immutable
+- Keep the dispatch-only Mutation workflow on exact Node 22.13.0 with immutable
   action SHAs. Routine mutation proof runs there; local `make mutation` remains
   an opt-in maintainer gate and is not part of `perfect-full`.
 - Keep live Clockify credentials out of package CI. The only GitHub-hosted

@@ -324,7 +324,7 @@
     "clean": "rm -rf dist",
     "test": "node ../scripts/generate-package-versions.mjs && vitest run",
     "test:coverage": "node ../scripts/generate-package-versions.mjs && vitest run --coverage",
-    "mutation": "cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run wrapper/stryker.conf.json",
+    "mutation": "node ../scripts/generate-package-versions.mjs && cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run wrapper/stryker.conf.json",
     "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",
     "test:types": "node ../scripts/generate-package-versions.mjs && vitest --typecheck.only --run",
     "size": "size-limit",

@@ -53,7 +53,7 @@
     "dev": "node ../scripts/generate-package-versions.mjs && tsx src/index.ts",
     "test": "node ../scripts/generate-package-versions.mjs && vitest run",
     "test:coverage": "node ../scripts/generate-package-versions.mjs && vitest run --coverage",
-    "mutation": "cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run mcp/stryker.conf.json",
+    "mutation": "node ../scripts/generate-package-versions.mjs && cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run mcp/stryker.conf.json",
     "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
