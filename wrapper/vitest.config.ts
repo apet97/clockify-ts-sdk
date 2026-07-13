@@ -5,7 +5,6 @@ export default defineConfig({
         environment: "node",
         globals: false,
         include: ["tests/**/*.test.ts"],
-        setupFiles: ["./tests/setup-fast-check.ts"],
         testTimeout: 30_000,
         hookTimeout: 30_000,
         // Type tests live in tests/types/*.test-d.ts and run on demand
