@@ -14,7 +14,6 @@ const wrapperStryker = readFileSync(
     "utf8",
 );
 const mcpStryker = readFileSync(new URL("../mcp/stryker.conf.json", import.meta.url), "utf8");
-const mcpVitest = readFileSync(new URL("../mcp/vitest.config.ts", import.meta.url), "utf8");
 const wrapperPackage = JSON.parse(
     readFileSync(new URL("../wrapper/package.json", import.meta.url), "utf8"),
 );
@@ -139,24 +138,16 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     );
 });
 
-test("the checker pins the governed MCP mutation-suite entrypoint", () => {
-    assert.deepEqual(JSON.parse(mcpStryker).testFiles, [
-        "mcp/tests/mutation-governed.test.ts",
-    ]);
+test("the checker pins every dedicated MCP mutation test file", () => {
     expectFailure(
         {
             mcpStryker: mcpStryker.replace(
-                "mcp/tests/mutation-governed.test.ts",
-                "mcp/tests/confirmation-store.test.ts",
+                '"concurrency": 2',
+                '"testFiles": ["mcp/tests/confirmation-store.test.ts"],\n    "concurrency": 2',
             ),
         },
         /MCP.*testFiles/i,
     );
-});
-
-test("ordinary MCP tests exclude the mutation-only aggregator", () => {
-    assert.match(mcpVitest, /STRYKER_MUTATOR_WORKER/);
-    assert.match(mcpVitest, /mutation-governed\.test\.ts/);
 });
 
 test("mutation entrypoints generate ignored runtime versions before Stryker", () => {
@@ -170,6 +161,11 @@ test("mutation entrypoints generate ignored runtime versions before Stryker", ()
             `${label} mutation must generate manifest-derived runtime versions first`,
         );
     }
+    assert.match(
+        mcpPackage.scripts.mutation,
+        /generate-package-versions\.mjs && npm run build -w clockify-sdk-ts-115 &&/,
+        "MCP mutation must build its SDK workspace dependency before Vitest discovery",
+    );
 });
 
 test("CI contracts document the hardened GitHub-only mutation proof", () => {

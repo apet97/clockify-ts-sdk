@@ -1,11 +1,8 @@
 import { defineConfig } from "vitest/config";
 
-const isMutationWorker = process.env.STRYKER_MUTATOR_WORKER !== undefined;
-
 export default defineConfig({
     test: {
         include: ["tests/**/*.test.ts"],
-        exclude: isMutationWorker ? [] : ["tests/mutation-governed.test.ts"],
         testTimeout: 30_000,
         environment: "node",
         coverage: {
