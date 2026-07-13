@@ -217,6 +217,11 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
                 `${label} Stryker must explicitly enumerate ${expectedTestFiles[0]} for reliable per-test coverage`,
             );
         }
+        if (config != null && config.inPlace !== true) {
+            failures.push(
+                `${label} Stryker must run in place so Vitest resolves the instrumented module on Node 22`,
+            );
+        }
     }
 
     return failures;

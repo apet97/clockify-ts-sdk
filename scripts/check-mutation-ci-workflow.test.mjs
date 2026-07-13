@@ -44,8 +44,12 @@ test("the committed Mutation workflow satisfies the complete structural contract
 });
 
 test("Stryker enumerates every package test file before collecting per-test coverage", () => {
-    assert.deepEqual(JSON.parse(wrapperStryker).testFiles, ["wrapper/tests/**/*.test.ts"]);
-    assert.deepEqual(JSON.parse(mcpStryker).testFiles, ["mcp/tests/**/*.test.ts"]);
+    const wrapperConfig = JSON.parse(wrapperStryker);
+    const mcpConfig = JSON.parse(mcpStryker);
+    assert.deepEqual(wrapperConfig.testFiles, ["wrapper/tests/**/*.test.ts"]);
+    assert.deepEqual(mcpConfig.testFiles, ["mcp/tests/**/*.test.ts"]);
+    assert.equal(wrapperConfig.inPlace, true);
+    assert.equal(mcpConfig.inPlace, true);
 });
 
 test("the checker rejects triggers other than manual dispatch", () => {
@@ -157,6 +161,17 @@ test("the checker rejects implicit Stryker test discovery", () => {
             ),
         },
         /explicitly enumerate.*mcp\/tests/i,
+    );
+});
+
+test("the checker rejects sandboxed mutation when Vitest would resolve an uninstrumented copy", () => {
+    expectFailure(
+        { wrapperStryker: wrapperStryker.replace('"inPlace": true', '"inPlace": false') },
+        /wrapper.*run in place|run in place.*wrapper/i,
+    );
+    expectFailure(
+        { mcpStryker: mcpStryker.replace('"inPlace": true', '"inPlace": false') },
+        /MCP.*run in place|run in place.*MCP/i,
     );
 });
 
