@@ -7,10 +7,10 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { coveredMutationScore } from "./lib/mutation-score.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
-const PASSING_STATUSES = new Set(["Killed", "Timeout"]);
-const EXCLUDED_STATUSES = new Set(["Ignored", "NoCoverage"]);
 const requestedPackageIds = new Set();
 
 for (let index = 2; index < process.argv.length; index += 1) {
@@ -89,11 +89,13 @@ function floorValue(value, label) {
     return value;
 }
 
-function score(mutants) {
-    const included = mutants.filter((mutant) => !EXCLUDED_STATUSES.has(mutant?.status));
-    if (included.length === 0) return 100;
-    const killed = included.filter((mutant) => PASSING_STATUSES.has(mutant?.status)).length;
-    return (100 * killed) / included.length;
+function score(label, mutants) {
+    try {
+        return coveredMutationScore(mutants);
+    } catch (error) {
+        fail(label, error instanceof Error ? error.message : String(error));
+        return null;
+    }
 }
 
 function headPackage(headContract, id) {
@@ -111,6 +113,7 @@ function assertMonotonic(label, current, prior) {
 }
 
 function assertMeasured(label, measured, floor) {
+    if (measured == null) return;
     if (measured + 1e-9 < floor) {
         fail(
             label,
@@ -178,7 +181,7 @@ for (const pkg of packagesToCheck) {
     const globalFloor = floorValue(pkg?.globalFloor, `${id}.globalFloor`);
     if (globalFloor != null) {
         assertMonotonic(`${id}.globalFloor`, globalFloor, prior?.globalFloor);
-        assertMeasured(`${id}.globalFloor`, score(allMutants), globalFloor);
+        assertMeasured(`${id}.globalFloor`, score(`${id}.globalFloor`, allMutants), globalFloor);
     }
 
     if (pkg?.moduleFloors == null || typeof pkg.moduleFloors !== "object") {
@@ -200,7 +203,8 @@ for (const pkg of packagesToCheck) {
             floor,
             prior?.moduleFloors?.[filePath],
         );
-        assertMeasured(`${id}.moduleFloors.${filePath}`, score(file.mutants), floor);
+        const label = `${id}.moduleFloors.${filePath}`;
+        assertMeasured(label, score(label, file.mutants), floor);
     }
 }
 

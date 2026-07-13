@@ -617,7 +617,7 @@ mutation: sdk-codegen
 	node scripts/check-mutation-score.mjs
 
 mutation-ci:
-	node --test scripts/check-mutation-ci-workflow.test.mjs
+	node --test scripts/check-mutation-ci-workflow.test.mjs scripts/lib/mutation-score.test.mjs
 	node scripts/check-mutation-ci-workflow.mjs
 
 # Bundle-size ceiling gate (size-limit against the built wrapper/dist export

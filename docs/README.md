@@ -275,7 +275,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Mutation score | `make mutation` | Opt-in local wrapper + MCP Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |
-| Mutation CI wiring | `make mutation-ci` | Check the manual GitHub Mutation workflow stays dispatch-only on exact Node 22.13.0, uses SHA-pinned actions with 14-day report retention, fails on missing reports, and keeps local concurrency capped. |
+| Mutation CI wiring | `make mutation-ci` | Check the manual GitHub Mutation workflow stays dispatch-only on exact Node 22.13.0, uses SHA-pinned actions with 14-day report retention, fails on missing reports, enumerates package tests explicitly, and keeps local concurrency capped. |
 | Replay fixtures | `make replay-fixtures` | Replay committed redacted fixtures and check live-fidelity wire-shape tripwires offline. |
 | Typed cassettes | `make cassettes` | Replay redacted response cassettes through the typed SDK client and local mock server. |
 | Maintenance playbook | `make maintenance-playbook` | Check maintainer cadence, generated maintenance-plan shape, dependency updates, generator bumps, API drift response, release rehearsal, rollback, and receipts stay explicit. |
