@@ -8,7 +8,6 @@
         "related": false
     },
     "coverageAnalysis": "perTest",
-    "inPlace": true,
     "mutate": [
         "mcp/src/orchestration/confirmation.ts",
         "mcp/src/result.ts",
