@@ -8,6 +8,7 @@ const anyNow = fc
     .map((ms) => new Date(ms));
 
 const QUARTER_START_MONTHS = new Set([0, 3, 6, 9]);
+const PROPERTY_OPTIONS = { seed: 20_260_713, numRuns: 100 } as const;
 
 describe("dates property: well-formed ordered UTC ranges", () => {
     it("start <= end and both are parseable Z instants for every period", () => {
@@ -20,6 +21,7 @@ describe("dates property: well-formed ordered UTC ranges", () => {
                 expect(Number.isNaN(Date.parse(range.dateRangeStart))).toBe(false);
                 expect(Number.isNaN(Date.parse(range.dateRangeEnd))).toBe(false);
             }),
+            PROPERTY_OPTIONS,
         );
     });
 });
@@ -38,6 +40,7 @@ describe("dates property: quarter boundaries", () => {
                 );
                 expect(start.getUTCFullYear()).toBe(now.getUTCFullYear());
             }),
+            PROPERTY_OPTIONS,
         );
     });
 
@@ -53,6 +56,7 @@ describe("dates property: quarter boundaries", () => {
                 expect(QUARTER_START_MONTHS.has(lastStart.getUTCMonth())).toBe(true);
                 expect(lastStart.getUTCDate()).toBe(1);
             }),
+            PROPERTY_OPTIONS,
         );
     });
 });
@@ -70,6 +74,7 @@ describe("dates property: adjacent calendar ranges", () => {
                 expect(last.dateRangeEnd < current.dateRangeStart).toBe(true);
                 expect(next.dateRangeStart > current.dateRangeStart).toBe(true);
             }),
+            PROPERTY_OPTIONS,
         );
     });
 
@@ -84,6 +89,7 @@ describe("dates property: adjacent calendar ranges", () => {
                 expect(last.dateRangeEnd < current.dateRangeStart).toBe(true);
                 expect(next.dateRangeStart > current.dateRangeStart).toBe(true);
             }),
+            PROPERTY_OPTIONS,
         );
     });
 
@@ -104,6 +110,7 @@ describe("dates property: adjacent calendar ranges", () => {
                     `${year + 1}-12-31T23:59:59.999Z`,
                 );
             }),
+            PROPERTY_OPTIONS,
         );
     });
 });
@@ -116,6 +123,7 @@ describe("dates property: resolveInstant period edges", () => {
                 expect(resolveInstant(now, period, "start")).toBe(range.dateRangeStart);
                 expect(resolveInstant(now, period, "end")).toBe(range.dateRangeEnd);
             }),
+            PROPERTY_OPTIONS,
         );
     });
 });
