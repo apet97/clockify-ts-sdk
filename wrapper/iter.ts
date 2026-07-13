@@ -201,10 +201,7 @@ interface RawResponseAware<T> extends PromiseLike<T> {
 }
 
 function hasWithRawResponse<T>(value: PromiseLike<T>): value is RawResponseAware<T> {
-    return (
-        value != null &&
-        typeof (value as { withRawResponse?: unknown }).withRawResponse === "function"
-    );
+    return typeof (value as { withRawResponse?: unknown }).withRawResponse === "function";
 }
 
 /** Parse the `Last-Page` response header (case-insensitive lookup
