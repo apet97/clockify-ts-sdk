@@ -9,10 +9,7 @@ const ACTIONS = Object.freeze({
 });
 
 const MCP_MUTATION_TEST_FILES = Object.freeze([
-    "mcp/tests/confirmation-store.test.ts",
-    "mcp/tests/result.test.ts",
-    "mcp/tests/tool-registration.test.ts",
-    "mcp/tests/tool-risk.test.ts",
+    "mcp/tests/mutation-governed.test.ts",
 ]);
 
 function parseJson(text, label, failures) {
