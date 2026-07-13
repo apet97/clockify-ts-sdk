@@ -43,13 +43,13 @@ test("the committed Mutation workflow satisfies the complete structural contract
     assert.deepEqual(validate(), []);
 });
 
-test("Stryker enumerates every package test file before collecting per-test coverage", () => {
+test("Stryker instruments the paths Vitest imports on Node 22", () => {
     const wrapperConfig = JSON.parse(wrapperStryker);
     const mcpConfig = JSON.parse(mcpStryker);
-    assert.deepEqual(wrapperConfig.testFiles, ["wrapper/tests/**/*.test.ts"]);
-    assert.deepEqual(mcpConfig.testFiles, ["mcp/tests/**/*.test.ts"]);
     assert.equal(wrapperConfig.inPlace, true);
     assert.equal(mcpConfig.inPlace, true);
+    assert.equal(wrapperConfig.testFiles, undefined);
+    assert.equal(mcpConfig.testFiles, undefined);
 });
 
 test("the checker rejects triggers other than manual dispatch", () => {
@@ -140,27 +140,6 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     expectFailure(
         { mcpStryker: mcpStryker.replace('"concurrency": 2', '"concurrency": 8') },
         /MCP.*concurrency|concurrency.*MCP/i,
-    );
-});
-
-test("the checker rejects implicit Stryker test discovery", () => {
-    expectFailure(
-        {
-            wrapperStryker: wrapperStryker.replace(
-                '    "testFiles": ["wrapper/tests/**/*.test.ts"],\n',
-                "",
-            ),
-        },
-        /explicitly enumerate.*wrapper\/tests/i,
-    );
-    expectFailure(
-        {
-            mcpStryker: mcpStryker.replace(
-                '    "testFiles": ["mcp/tests/**/*.test.ts"],\n',
-                "",
-            ),
-        },
-        /explicitly enumerate.*mcp\/tests/i,
     );
 });
 
