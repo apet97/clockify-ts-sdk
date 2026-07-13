@@ -175,12 +175,17 @@
         "workflow_dispatch:",
         "target:",
         "type: choice",
+        "node-version: \"22.13.0\"",
+        "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+        "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
         "make mutation",
         "npm run mutation -w clockify-sdk-ts-115",
         "npm run mutation -w @apet97/clockify-mcp-115",
         "node scripts/check-mutation-score.mjs --package wrapper",
         "node scripts/check-mutation-score.mjs --package mcp",
-        "actions/upload-artifact@v4",
+        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "if-no-files-found: error",
+        "retention-days: 14",
         "persist-credentials: false"
       ]
     }
