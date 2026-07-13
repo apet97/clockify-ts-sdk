@@ -5,9 +5,9 @@
     "vitest": {
         "configFile": "mcp/vitest.config.ts",
         "dir": "mcp",
-        "related": false
+        "related": true
     },
-    "coverageAnalysis": "perTest",
+    "coverageAnalysis": "all",
     "mutate": [
         "mcp/src/orchestration/confirmation.ts",
         "mcp/src/result.ts",
