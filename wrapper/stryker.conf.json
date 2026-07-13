@@ -8,6 +8,7 @@
         "related": false
     },
     "coverageAnalysis": "perTest",
+    "inPlace": true,
     "testFiles": ["wrapper/tests/**/*.test.ts"],
     "mutate": [
         "wrapper/money.ts",

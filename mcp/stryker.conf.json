@@ -8,6 +8,7 @@
         "related": false
     },
     "coverageAnalysis": "perTest",
+    "inPlace": true,
     "testFiles": ["mcp/tests/**/*.test.ts"],
     "mutate": [
         "mcp/src/orchestration/confirmation.ts",
