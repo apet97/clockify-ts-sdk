@@ -8,6 +8,13 @@ const ACTIONS = Object.freeze({
     uploadArtifact: "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
 });
 
+const MCP_MUTATION_TEST_FILES = Object.freeze([
+    "mcp/tests/confirmation-store.test.ts",
+    "mcp/tests/result.test.ts",
+    "mcp/tests/tool-registration.test.ts",
+    "mcp/tests/tool-risk.test.ts",
+]);
+
 function parseJson(text, label, failures) {
     try {
         return JSON.parse(text);
@@ -211,6 +218,13 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         const config = parseJson(text, `${label} Stryker config`, failures);
         if (config != null && config.concurrency !== 2) {
             failures.push(`${label} Stryker concurrency must remain 2`);
+        }
+        if (
+            label === "MCP" &&
+            config != null &&
+            !sameValues(config.testFiles, MCP_MUTATION_TEST_FILES)
+        ) {
+            failures.push("MCP Stryker testFiles must pin every dedicated governed-module test");
         }
     }
 

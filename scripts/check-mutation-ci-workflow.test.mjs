@@ -138,6 +138,18 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     );
 });
 
+test("the checker pins every dedicated MCP mutation test file", () => {
+    expectFailure(
+        {
+            mcpStryker: mcpStryker.replace(
+                '"concurrency": 2',
+                '"testFiles": ["mcp/tests/confirmation-store.test.ts"],\n    "concurrency": 2',
+            ),
+        },
+        /MCP.*testFiles/i,
+    );
+});
+
 test("mutation entrypoints generate ignored runtime versions before Stryker", () => {
     const generator = "node ../scripts/generate-package-versions.mjs && ";
     for (const [label, manifest] of [
