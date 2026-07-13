@@ -25,6 +25,33 @@ function response<T>(data: T, lastPage: string | null) {
 }
 
 describe("iterPages properties", () => {
+    it("falls back to page length when Last-Page is absent", async () => {
+        const fetcher = (req: PaginatedRequest) =>
+            response(req.page === 1 ? [1, 2] : [], null);
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+
+        expect(pages.map((page) => page.hasNextPage)).toEqual([true, false]);
+    });
+
+    it("falls back to page length when Last-Page is unparseable", async () => {
+        const fetcher = (req: PaginatedRequest) =>
+            response(req.page === 1 ? [1, 2] : [], req.page === 1 ? "maybe" : "true");
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+
+        expect(pages.map((page) => page.hasNextPage)).toEqual([true, false]);
+    });
+
+    it("stops on an empty page even when Last-Page is false", async () => {
+        const fetcher = (req: PaginatedRequest) =>
+            response(req.page === 1 ? [] : [1], req.page === 1 ? "false" : "true");
+
+        const pages = await collect(iterPages(fetcher, {}, { pageSize: 2 }));
+
+        expect(pages).toEqual([{ items: [], page: 1, pageSize: 2, hasNextPage: false }]);
+    });
+
     it("flattens pages as concat and emits strictly increasing page envelopes", async () => {
         await fc.assert(
             fc.asyncProperty(
