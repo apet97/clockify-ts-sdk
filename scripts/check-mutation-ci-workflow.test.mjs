@@ -43,6 +43,11 @@ test("the committed Mutation workflow satisfies the complete structural contract
     assert.deepEqual(validate(), []);
 });
 
+test("Stryker enumerates every package test file before collecting per-test coverage", () => {
+    assert.deepEqual(JSON.parse(wrapperStryker).testFiles, ["wrapper/tests/**/*.test.ts"]);
+    assert.deepEqual(JSON.parse(mcpStryker).testFiles, ["mcp/tests/**/*.test.ts"]);
+});
+
 test("the checker rejects triggers other than manual dispatch", () => {
     expectFailure(
         {
@@ -131,6 +136,27 @@ test("the checker retains the laptop-safe Stryker concurrency cap", () => {
     expectFailure(
         { mcpStryker: mcpStryker.replace('"concurrency": 2', '"concurrency": 8') },
         /MCP.*concurrency|concurrency.*MCP/i,
+    );
+});
+
+test("the checker rejects implicit Stryker test discovery", () => {
+    expectFailure(
+        {
+            wrapperStryker: wrapperStryker.replace(
+                '    "testFiles": ["wrapper/tests/**/*.test.ts"],\n',
+                "",
+            ),
+        },
+        /explicitly enumerate.*wrapper\/tests/i,
+    );
+    expectFailure(
+        {
+            mcpStryker: mcpStryker.replace(
+                '    "testFiles": ["mcp/tests/**/*.test.ts"],\n',
+                "",
+            ),
+        },
+        /explicitly enumerate.*mcp\/tests/i,
     );
 });
 

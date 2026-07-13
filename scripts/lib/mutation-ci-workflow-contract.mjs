@@ -204,13 +204,18 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         if (!makefile.includes(marker)) failures.push(`Makefile missing ${JSON.stringify(marker)}`);
     }
 
-    for (const [label, text] of [
-        ["wrapper", wrapperStryker],
-        ["MCP", mcpStryker],
+    for (const [label, text, expectedTestFiles] of [
+        ["wrapper", wrapperStryker, ["wrapper/tests/**/*.test.ts"]],
+        ["MCP", mcpStryker, ["mcp/tests/**/*.test.ts"]],
     ]) {
         const config = parseJson(text, `${label} Stryker config`, failures);
         if (config != null && config.concurrency !== 2) {
             failures.push(`${label} Stryker concurrency must remain 2`);
+        }
+        if (config != null && !sameValues(config.testFiles, expectedTestFiles)) {
+            failures.push(
+                `${label} Stryker must explicitly enumerate ${expectedTestFiles[0]} for reliable per-test coverage`,
+            );
         }
     }
 
