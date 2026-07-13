@@ -9,7 +9,7 @@ import {
     USER_AGENT_HEADER,
     type RequestContext,
     type ResponseContext,
-} from "../composed-fetch.js";
+} from "../composed-fetch.ts";
 
 /** Build a mock fetch that responds with the given status + body and
  *  records every call. */
