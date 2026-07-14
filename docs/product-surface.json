@@ -60,7 +60,7 @@
     "cli": {
       "folder": "cli",
       "package": "@apet97/clockify-cli-115",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.12.0 <1",
       "bins": [
@@ -83,7 +83,7 @@
     "tsMcp": {
       "folder": "mcp",
       "package": "@apet97/clockify-mcp-115",
-      "version": "0.6.1",
+      "version": "0.6.2",
       "node": ">=22.13.0",
       "sdkPeer": ">=0.12.0 <1",
       "bins": [

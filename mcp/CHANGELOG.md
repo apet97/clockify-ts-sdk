@@ -4,6 +4,14 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+## [0.6.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.1...mcp-v0.6.2) - 2026-07-14
+
+### Fixed
+
+- Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
+  resolves the matching provider
+  ([fa4eabf](https://github.com/apet97/clockify-ts-sdk/commit/fa4eabfe61d3b2b0a153865dc1261fa62ffa7948)).
+
 ### Changed
 
 - Refreshed compatible test and lint tooling (`@vitest/coverage-v8` and Vitest 4.1.10,

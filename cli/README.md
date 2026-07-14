@@ -3,7 +3,7 @@
 Command-line interface for [Clockify](https://clockify.me/), built on
 top of `clockify-sdk-ts-115`.
 
-Current release: `0.3.0`. Requires Node.js `>=22.13.0` and
+Current release: `0.3.1`. Requires Node.js `>=22.13.0` and
 `clockify-sdk-ts-115 >=0.12.0 <1`.
 
 Two binaries, identical behavior:
