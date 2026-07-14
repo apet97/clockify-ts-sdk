@@ -25,6 +25,52 @@ function validateTagOnlyGuards(workflow, label) {
     return failures;
 }
 
+export function validateCliReleaseWorkflow(workflow) {
+    const label = ".github/workflows/ci-cli-release.yml";
+    const failures = validateTagOnlyGuards(workflow, label);
+    let steps = [];
+
+    try {
+        const parsed = YAML.parse(workflow);
+        const job = parsed?.jobs?.publish;
+        if (!job || !Array.isArray(job.steps)) {
+            failures.push("CLI release must define the publish job with steps");
+        } else {
+            steps = job.steps;
+        }
+    } catch (error) {
+        failures.push(`CLI release workflow is invalid YAML: ${error.message}`);
+    }
+
+    const stepNamed = (name) => steps.find((step) => step?.name === name);
+    const setupStep = stepNamed("Setup Node.js 22.13.0");
+    if (setupStep?.with?.["node-version"] !== "22.13.0") {
+        failures.push("CLI release setup-node step must use exact Node 22.13.0");
+    }
+
+    for (const step of steps.filter((candidate) => typeof candidate?.uses === "string")) {
+        const reference = step.uses.match(/@([^\s#]+)/)?.[1];
+        if (!reference || !/^[0-9a-f]{40}$/.test(reference)) {
+            failures.push(`CLI release action must use an immutable 40-character SHA: ${step.uses}`);
+        }
+    }
+
+    const sdkStep = stepNamed("Generate + sync TS SDK (local generator)");
+    const sdkCommands = typeof sdkStep?.run === "string" ? sdkStep.run : "";
+    for (const command of ["make sdk-codegen", "npm run build -w clockify-sdk-ts-115"]) {
+        if (!sdkCommands.includes(command)) {
+            failures.push(`CLI release SDK dependency proof is missing: ${command}`);
+        }
+    }
+
+    const publishStep = stepNamed("Publish to npm (with provenance from publishConfig)");
+    if (publishStep?.if !== "github.event_name == 'push' && github.ref_type == 'tag'") {
+        failures.push("CLI npm publish step must use a step-level pushed tag-only guard");
+    }
+
+    return failures;
+}
+
 export function validateMcpReleaseWorkflow(workflow) {
     const failures = validateTagOnlyGuards(workflow, ".github/workflows/ci-mcp-release.yml");
     const requireText = (text, message) => {
@@ -264,7 +310,7 @@ function main() {
     const cliWorkflow = readFileSync(join(repoRoot, cliPath), "utf8");
     const mcpWorkflow = readFileSync(join(repoRoot, mcpPath), "utf8");
 
-    failures.push(...validateTagOnlyGuards(cliWorkflow, cliPath));
+    failures.push(...validateCliReleaseWorkflow(cliWorkflow));
     failures.push(...validateMcpReleaseWorkflow(mcpWorkflow));
 
     if (failures.length > 0) {

@@ -454,6 +454,7 @@ release-decision-plan:
 
 ci-contract:
 	node scripts/check-ci-contract.mjs
+	node --test scripts/check-cli-release-workflow.test.mjs
 	node --test scripts/check-mcp-release-workflow.test.mjs
 	node scripts/check-release-dispatch-guard.mjs
 	node scripts/test-release-workflow-sha-pins.mjs

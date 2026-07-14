@@ -20,6 +20,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
   `assigneeId` field as absent while continuing to reject malformed non-string values.
 - Audit actions validate locally against the SDK enum and page size is capped at 50.
 - Full type checking now includes CLI tests; builds use a source-only build config.
+- The tag release workflow builds the SDK workspace dependency before checking the CLI
+  in its clean checkout and pins the release runtime to Node.js 22.13.0.
 - Replace-style client and task writes reconstruct current state before mutation;
   reports, shared reports, expenses, and webhooks now use typed operation requests
   with local validation instead of request-body type escapes.
