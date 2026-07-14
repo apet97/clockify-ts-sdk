@@ -200,6 +200,8 @@ if (tools && Object.keys(tools).length > 0) {
 const makefile = read("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) errors.push(`Makefile: missing ${wiring.makeTarget} target`);
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) errors.push(`Makefile: contract-gates missing ${wiring.makeTarget}`);
 for (const target of ["perfect-fast", "perfect-full"]) {
   const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
   if (!line.includes(wiring.makeTarget)) errors.push(`Makefile: ${target} missing ${wiring.makeTarget}`);

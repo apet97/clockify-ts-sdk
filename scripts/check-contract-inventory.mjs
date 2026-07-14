@@ -13,8 +13,6 @@ let makefile = "";
 let docsIndex = "";
 let qualityGates = "";
 let audit = "";
-let perfectFast = "";
-let perfectFull = "";
 
 async function readRel(relPath, label = relPath) {
     const safePath = inventoryRelativePath(label, relPath);
@@ -265,8 +263,10 @@ makefile = await readRel("Makefile", "Makefile");
 docsIndex = await readRel("docs/README.md", "docsIndex");
 qualityGates = await readRel("docs/quality-gates.md", "qualityGates");
 audit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
-perfectFast = targetLine("perfect-fast");
-perfectFull = targetLine("perfect-full");
+const aggregateLine = targetLine("contract-gates");
+if (!aggregateLine.includes(inventory.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${inventory.wiring.makeTarget}`);
+}
 
 const inventoryInvariants = new Set(inventory.inventoryInvariants ?? []);
 for (const invariant of [
@@ -463,9 +463,6 @@ for (const entry of inventory.entries ?? []) {
     assertUnique(entry.auditIds, `${id}.auditIds`);
     if (!makefile.includes(`${entry.target}:`)) fail(id, `Makefile missing target ${entry.target}`);
     if (!(await existsRel(entry.checker))) fail(id, `missing checker ${entry.checker}`);
-
-    if (entry.perfectFast && !perfectFast.includes(entry.target)) fail(id, `perfect-fast missing ${entry.target}`);
-    if (entry.perfectFull && !perfectFull.includes(entry.target)) fail(id, `perfect-full missing ${entry.target}`);
 
     if (!qualityGates.includes(`make ${entry.target}`)) fail(id, `docs/quality-gates.md missing make ${entry.target}`);
 

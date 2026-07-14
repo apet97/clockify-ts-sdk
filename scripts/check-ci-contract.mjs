@@ -34,6 +34,8 @@ for (const removed of [".github/workflows/ci-cli.yml", ".github/workflows/ci-mcp
 }
 
 const makefile = readFileSync("Makefile", "utf8");
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes("ci-contract")) failures.push("contract-gates must include ci-contract");
 for (const aggregate of ["perfect-fast", "perfect-full"]) {
     const line = makefile.split("\n").find((entry) => entry.startsWith(`${aggregate}:`)) ?? "";
     if (!line.includes("ci-contract")) failures.push(`${aggregate} must include ci-contract`);

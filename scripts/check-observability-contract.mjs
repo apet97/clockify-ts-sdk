@@ -152,10 +152,8 @@ if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wir
 for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
-for (const target of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) fail("Makefile", `${target} missing ${wiring.makeTarget}`);
-}
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {

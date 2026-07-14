@@ -157,6 +157,10 @@ const enterpriseAudit = fs.readFileSync(path.join(root, "docs", "enterprise-hard
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) {
     failures.push(`Makefile missing target: ${contract.wiring.makeTarget}`);
 }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    failures.push(`Makefile contract-gates wiring missing ${contract.wiring.makeTarget}`);
+}
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
     const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
     if (!targetLine.split(/\s+/).includes("docs-index-drift")) {

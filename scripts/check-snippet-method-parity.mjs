@@ -93,10 +93,8 @@ const wiring = contract.wiring ?? {};
 const makefile = readRelative("Makefile");
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile missing ${wiring.makeTarget}`);
 if (!makefile.includes(`node ${wiring.checker}`)) fail(`Makefile missing ${wiring.checker} invocation`);
-for (const target of ["perfect-fast", "contract-gates", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) fail(`Makefile ${target} missing ${wiring.makeTarget}`);
-}
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile contract-gates missing ${wiring.makeTarget}`);
 
 const docsIndex = readRelative("docs/README.md");
 for (const doc of wiring.docsIndex ?? []) {

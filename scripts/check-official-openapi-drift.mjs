@@ -105,6 +105,8 @@ for (const target of requiredMakeTargets) {
 }
 if (!makefile.includes(`node ${wiring.checker}`)) fail(`Makefile: missing ${wiring.checker} invocation`);
 if (!makefile.includes(`node ${contract.driver}`)) fail(`Makefile: missing ${contract.driver} invocation`);
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile: contract-gates missing ${wiring.makeTarget}`);
 for (const aggregate of ["perfect-fast", "perfect-full"]) {
     const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${aggregate}:`)) ?? "";
     if (!line.includes(wiring.makeTarget)) fail(`Makefile: ${aggregate} missing ${wiring.makeTarget}`);

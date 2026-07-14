@@ -342,10 +342,8 @@ if (contract.stabilityTags != null && assertObject("stabilityTags", contract.sta
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail("Makefile", `missing ${wiring.makeTarget} target`);
-for (const target of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(wiring.makeTarget)) fail("Makefile", `${target} missing ${wiring.makeTarget}`);
-}
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
 if (!makefile.includes(`node ${wiring.checker}`)) fail("Makefile", `${wiring.makeTarget} target does not run checker`);
 
 const docsIndex = readRelative("docs/README.md");

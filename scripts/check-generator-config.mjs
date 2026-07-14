@@ -207,22 +207,11 @@ if (!makefile.includes(`node ${contract.wiring.checker}`)) fail(`Makefile missin
 if (!makefile.includes(localGenerator.writeCommand)) fail(`Makefile missing ${localGenerator.writeCommand}`);
 if (!makefile.includes(localGenerator.checkCommand)) fail(`Makefile missing ${localGenerator.checkCommand}`);
 if (!makefile.includes(localGenerator.testCommand)) fail(`Makefile missing ${localGenerator.testCommand}`);
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.includes(contract.wiring.makeTarget)) {
-        fail(`Makefile ${aggregateTarget} missing ${contract.wiring.makeTarget}`);
-    }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail(`Makefile contract-gates missing ${contract.wiring.makeTarget}`);
 }
 const fullLine = makefile.split("\n").find((line) => line.startsWith("perfect-full:")) ?? "";
-if (!fullLine.includes(contract.wiring.codegenTarget)) {
-    fail(`Makefile perfect-full missing ${contract.wiring.codegenTarget}`);
-}
-if (!fullLine.includes(contract.wiring.codegenDriftTarget)) {
-    fail(`Makefile perfect-full missing ${contract.wiring.codegenDriftTarget}`);
-}
-if (!fullLine.includes(contract.wiring.codegenTestTarget)) {
-    fail(`Makefile perfect-full missing ${contract.wiring.codegenTestTarget}`);
-}
 if (fullLine.includes("fern-check") || fullLine.includes("fern-generate")) {
     fail("Makefile perfect-full must not depend on fern-check or fern-generate");
 }

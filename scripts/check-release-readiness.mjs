@@ -303,6 +303,10 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates wiring missing ${contract.wiring.makeTarget}`);
+}
 for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
     const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
     if (!targetLine.includes(contract.wiring.makeTarget)) {
