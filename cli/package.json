@@ -1,6 +1,6 @@
 {
   "name": "@apet97/clockify-cli-115",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Unofficial, community-built — not affiliated with CAKE.com or Clockify. Command-line interface for Clockify, built on clockify-sdk-ts-115.",
   "license": "MIT",
   "author": "Aleksandar Petković <petkovic.aleksandar037@gmail.com>",
