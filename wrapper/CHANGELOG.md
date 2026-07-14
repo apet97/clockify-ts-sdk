@@ -7,6 +7,14 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+## [0.12.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.0...wrapper-v0.12.1) - 2026-07-14
+
+### Fixed
+
+- Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
+  resolves the matching provider
+  ([273ff4a](https://github.com/apet97/clockify-ts-sdk/commit/273ff4a60f08b06cfd3a62f7e121c61024133876)).
+
 ### Changed
 
 - Corrected the README's dual-build proof count to the governed 91 root names and 27
