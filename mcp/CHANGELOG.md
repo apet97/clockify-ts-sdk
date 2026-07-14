@@ -2,6 +2,13 @@
 
 All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
+## [0.6.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.0...mcp-v0.6.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* **gates:** repair content drift behind the contract-gate suite ([092dfaa](https://github.com/apet97/clockify-ts-sdk/commit/092dfaabd25f598e0d0b7406706de4b639ffce79))
+
 ## [Unreleased]
 
 ### Changed
