@@ -203,9 +203,9 @@ for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker} invocation`);
-for (const target of ["perfect-fast", "perfect-full"]) {
-    const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
-    if (!line.includes(contract.wiring.makeTarget)) fail("Makefile", `${target} missing ${contract.wiring.makeTarget}`);
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = readRelative("docs/README.md");

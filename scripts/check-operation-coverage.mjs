@@ -243,11 +243,9 @@ for (const target of contract.requiredTargets ?? []) {
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
     fail("Makefile", `missing ${contract.wiring.checker} invocation`);
 }
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.split(/\s+/).includes("operation-coverage")) {
-        fail("Makefile", `${aggregateTarget} wiring missing operation-coverage`);
-    }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes(contract.wiring.qualityGate)) {
     fail("docs/quality-gates.md", `missing ${contract.wiring.qualityGate}`);

@@ -354,11 +354,9 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.split(/\s+/).includes("examples-matrix")) {
-        fail("Makefile", `${aggregateTarget} wiring missing examples-matrix`);
-    }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make examples-matrix")) {
     fail("docs/quality-gates.md", "missing make examples-matrix");

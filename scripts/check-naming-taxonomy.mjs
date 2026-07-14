@@ -263,11 +263,9 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.split(/\s+/).includes("naming-taxonomy")) {
-        fail("Makefile", `${aggregateTarget} wiring missing naming-taxonomy`);
-    }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 if (!qualityGates.includes("make naming-taxonomy")) {
     fail("docs/quality-gates.md", "missing make naming-taxonomy");

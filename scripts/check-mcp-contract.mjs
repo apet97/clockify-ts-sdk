@@ -194,6 +194,8 @@ if (!readmeText.includes("output schema")) {
 const makefile = readRelative("Makefile");
 const wiring = contract.wiring ?? {};
 if (!makefile.includes(`${wiring.makeTarget}:`)) fail(`Makefile missing ${wiring.makeTarget} target`);
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(wiring.makeTarget)) fail(`Makefile contract-gates missing ${wiring.makeTarget}`);
 for (const target of ["perfect-fast", "perfect-full"]) {
     const line = makefile.split("\n").find((candidate) => candidate.startsWith(`${target}:`)) ?? "";
     if (!line.includes(wiring.makeTarget)) fail(`Makefile ${target} missing ${wiring.makeTarget}`);

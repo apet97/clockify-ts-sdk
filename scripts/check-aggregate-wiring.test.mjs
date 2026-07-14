@@ -22,26 +22,26 @@ try {
     // 1. With the gate wired (current repo state) the self-check passes.
     assert.equal(runScript(), 0, "check-support-bundle.mjs must pass on the unmodified Makefile");
 
-    // 2. Remove `support-bundle` ONLY from the perfect-fast aggregate prerequisite line.
+    // 2. Remove `support-bundle` ONLY from the contract-gates aggregate prerequisite line.
     const mutated = original
         .split("\n")
         .map((line) =>
-            line.startsWith("perfect-fast:")
+            line.startsWith("contract-gates:")
                 ? line.replace(/\s+support-bundle(?=\s|$)/, "")
                 : line,
         )
         .join("\n");
-    assert.notEqual(mutated, original, "test setup: perfect-fast line must contain support-bundle");
+    assert.notEqual(mutated, original, "test setup: contract-gates line must contain support-bundle");
     writeFileSync(makefilePath, mutated);
 
     // 3. The scoped self-check now catches the missing wiring (non-zero exit).
     assert.notEqual(
         runScript(),
         0,
-        "check-support-bundle.mjs must fail when perfect-fast drops support-bundle",
+        "checker must fail when support-bundle is removed from contract-gates",
     );
 } finally {
     writeFileSync(makefilePath, original);
 }
 
-console.log("ok - aggregate wiring self-check is scoped to the recipe lines");
+console.log("ok - aggregate wiring self-check is scoped to contract-gates");

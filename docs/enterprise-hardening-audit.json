@@ -42,8 +42,7 @@
             "Axioms contract shape failed",
             "Axioms contract passed",
             "supportingEvidence",
-            "perfect-fast",
-            "perfect-full"
+            "contract-gates"
           ]
         },
         {
@@ -1729,7 +1728,7 @@
             "duplicateCommands",
             "generatedReport.minimumCounts",
             "generatedReport.entries",
-            "perfect-fast missing",
+            "contract-gates missing",
             "enterprise audit missing id",
             "required contract/policy document not listed",
             "validateInventoryShape",
@@ -2308,8 +2307,7 @@
           "path": "scripts/check-observability-contract.mjs",
           "contains": [
             "Observability contract passed",
-            "perfect-fast",
-            "perfect-full",
+            "contract-gates",
             "validateContractShape",
             "safeRelativePath",
             "validateMarkerEntry",

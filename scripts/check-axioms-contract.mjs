@@ -189,11 +189,9 @@ for (const evidence of contract.supportingEvidence ?? []) {
 const makefile = await readRel("Makefile");
 if (!makefile.includes(`${contract.wiring.makeTarget}:`)) fail("Makefile", `missing ${contract.wiring.makeTarget}`);
 if (!makefile.includes(`node ${contract.wiring.checker}`)) fail("Makefile", `missing ${contract.wiring.checker}`);
-for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {
-    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${aggregateTarget}:`)) ?? "";
-    if (!targetLine.includes(contract.wiring.makeTarget)) {
-        fail("Makefile", `${aggregateTarget} missing ${contract.wiring.makeTarget}`);
-    }
+const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
+if (!aggregateLine.includes(contract.wiring.makeTarget)) {
+    fail("Makefile", `contract-gates missing ${contract.wiring.makeTarget}`);
 }
 
 const docsIndex = await readRel("docs/README.md");

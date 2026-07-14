@@ -7,14 +7,14 @@ import path from "node:path";
 const scriptPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "check-data-handling.mjs");
 const source = readFileSync(scriptPath, "utf8");
 
-test("perfect-fast/perfect-full wiring is checked per aggregate target line", () => {
+test("contract-gates wiring is checked on the aggregate target line", () => {
     assert.ok(
-        source.includes('for (const aggregateTarget of ["perfect-fast", "perfect-full"]) {'),
-        "expected per-aggregate-target wiring loop over perfect-fast and perfect-full",
+        source.includes('const aggregateLine = makefile.split("\\n").find((line) => line.startsWith("contract-gates:")) ?? "";'),
+        "expected contract-gates target-line lookup",
     );
     assert.ok(
-        source.includes("if (!targetLine.includes(contract.wiring.makeTarget)) {"),
-        "expected per-line targetLine.includes(contract.wiring.makeTarget) check",
+        source.includes("if (!aggregateLine.includes(contract.wiring.makeTarget)) {"),
+        "expected aggregateLine.includes(contract.wiring.makeTarget) check",
     );
 });
 
