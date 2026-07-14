@@ -7,6 +7,11 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected the README's dual-build proof count to the governed 91 root names and 27
+  subpaths; no package behavior changed.
+
 ## [0.12.0] - 2026-07-12
 
 ### Breaking
