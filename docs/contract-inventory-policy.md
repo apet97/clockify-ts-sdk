@@ -21,11 +21,12 @@ becoming a pile of disconnected files.
    Every `docs/*-contract.json` and `docs/*-policy.md` file must appear in
    the inventory so broad proof surfaces cannot hide outside the map.
 
-3. Perfect gates must include required contracts.
+3. Contract gates must include required contracts.
 
-   A contract that guards product readiness must be wired into both
-   `make perfect-fast` and `make perfect-full`, unless it is explicitly
-   a live-only, generation-only, or release-only target.
+   A contract that guards product readiness must be an exact prerequisite
+   of `make contract-gates`, unless it is explicitly a runtime, heavy,
+   live-only, generation-only, or release-only target. `make perfect-fast`
+   owns runtime/package proof; `make perfect-full` adds heavy proof.
 
 4. Inventory is not proof by itself.
 
@@ -56,7 +57,7 @@ becoming a pile of disconnected files.
   report shape; the report script runs in-process without spawning commands.
 - `node scripts/plan.mjs contract-inventory` prints a static operator
   report of contract entries, Make targets, checker ownership,
-  generated report/helper ownership, perfect-gate coverage, and
+  generated report/helper ownership, contract-gates coverage, and
   missing-file signals, including every no-network toolbox helper's
   inventory owner status and documented command status, plus any extra or
   duplicate helper command mappings. It also prints inventory invariant

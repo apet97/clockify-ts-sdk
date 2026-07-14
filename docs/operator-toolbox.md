@@ -35,7 +35,7 @@ Every helper in this toolbox has an owner in `docs/contract-inventory.json`.
 |---|---|---|
 | Map a changed path to required gates | `node scripts/plan.mjs change-impact --path docs/workflow-cookbook.md` | Shape-checked change scopes with required targets, docs, and changelog posture. |
 | Choose a maintenance path | `node scripts/plan.mjs maintenance --cadence all` | Shape-checked weekly, monthly, dependency, generator, drift, release, and rollback plans with proof targets and stop conditions. |
-| Inspect contract ownership | `node scripts/plan.mjs contract-inventory` | Contract entries, checker ownership, generated report/helper ownership, toolbox helper ownership, structural invariants, Inventory shape status for safe repo-relative paths and typed lists, perfect-gate coverage, audit IDs, and missing-file signals. |
+| Inspect contract ownership | `node scripts/plan.mjs contract-inventory` | Contract entries, checker ownership, generated report/helper ownership, toolbox helper ownership, structural invariants, Inventory shape status for safe repo-relative paths and typed lists, contract-gates coverage, audit IDs, and missing-file signals. |
 | Inspect risk status | `node scripts/plan.mjs risk-status --status all` | Open/provisional risks, closure gates, generated risk-status report shape, and file-state signals. |
 | Choose a release workflow decision | `node scripts/plan.mjs release-decision --decision all` | Local tarball, tag-only, npm-via-CI, and legacy-workflow retirement options with generated approval-boundary checks. |
 | Plan performance calibration | `node scripts/plan.mjs performance-calibration` | Budget-policy-backed calibration path with generated no-network plan shape, tightening rules, proof markers, and stop conditions. |

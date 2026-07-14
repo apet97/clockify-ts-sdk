@@ -273,7 +273,7 @@ openapi-operations-drift:
 operation-parity:
 	node scripts/generate-operation-parity.mjs --write
 
-operation-parity-drift: mcp-tool-manifest
+operation-parity-drift: mcp-tool-manifest-drift
 	node scripts/generate-operation-parity.mjs --check
 
 mcp-tool-manifest: sdk-wrapper-build

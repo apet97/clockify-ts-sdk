@@ -96,6 +96,21 @@ function assertStringArray(label, values, { min = 0 } = {}) {
     return values.filter((value) => typeof value === "string" && value.trim() !== "");
 }
 
+function parseFastMakeStepGroups(runnerText) {
+    const startMarker = "const fast = [";
+    const start = runnerText.indexOf(startMarker);
+    const end = start < 0 ? -1 : runnerText.indexOf("\n];", start + startMarker.length);
+    if (start < 0 || end < 0) {
+        fail("fastRunner.path: must declare const fast = [...]");
+        return [];
+    }
+
+    const fastBlock = runnerText.slice(start + startMarker.length, end);
+    return [...fastBlock.matchAll(/^\s*\["make",\s*\[([^\]]*)\]/gm)].map((match) =>
+        [...match[1].matchAll(/"([^"]+)"/g)].map((targetMatch) => targetMatch[1]),
+    );
+}
+
 function validateRequiredDoc(index, doc) {
     const label = `requiredDocs[${index}]`;
     if (!assertObject(label, doc)) return;
@@ -123,6 +138,27 @@ function validateContractShape() {
         assertStringArray("offlineReproducibility.forbiddenCommandMarkers", contract.offlineReproducibility.forbiddenCommandMarkers, {
             min: 1,
         });
+    }
+
+    if (assertObject("fastRunner", contract.fastRunner)) {
+        safeRelativePath("fastRunner.path", contract.fastRunner.path);
+        if (contract.fastRunner.path !== "scripts/verify.mjs") {
+            fail("fastRunner.path: must be scripts/verify.mjs");
+        }
+        if (!Array.isArray(contract.fastRunner.requiredMakeStepGroups)) {
+            fail("fastRunner.requiredMakeStepGroups: must be an array");
+        } else {
+            for (const [index, group] of contract.fastRunner.requiredMakeStepGroups.entries()) {
+                assertStringArray(`fastRunner.requiredMakeStepGroups[${index}]`, group, { min: 1 });
+            }
+            const requiredGroups = [
+                ["sdk-codegen"],
+                ["sdk-codegen-drift", "sdk-codegen-test", "generated-edit-check"],
+            ];
+            if (JSON.stringify(contract.fastRunner.requiredMakeStepGroups) !== JSON.stringify(requiredGroups)) {
+                fail(`fastRunner.requiredMakeStepGroups: must equal ${JSON.stringify(requiredGroups)}`);
+            }
+        }
     }
 
     if (!Array.isArray(contract.requiredDocs) || contract.requiredDocs.length === 0) {
@@ -156,6 +192,7 @@ const scriptText = readRelative(localGenerator.script, "localGenerator.script");
 const constantsText = readRelative("scripts/sdk-codegen/constants.mjs", "localGenerator.constantsModule");
 readRelative(localGenerator.inputOpenApi, "localGenerator.inputOpenApi");
 readRelative(localGenerator.syncScript, "localGenerator.syncScript");
+const fastRunnerText = readRelative(contract.fastRunner.path, "fastRunner.path");
 
 for (const marker of [localGenerator.inputOpenApi, localGenerator.outputPath]) {
     if (!`${scriptText}\n${constantsText}`.includes(marker)) {
@@ -190,6 +227,16 @@ if (contract.offlineReproducibility.requiresHostedLogin !== false) {
 }
 if (contract.offlineReproducibility.requiresApiToken !== false) {
     fail("offlineReproducibility.requiresApiToken must be false");
+}
+
+const actualMakeStepGroups = parseFastMakeStepGroups(fastRunnerText);
+for (const [index, expectedGroup] of contract.fastRunner.requiredMakeStepGroups.entries()) {
+    const actualGroup = actualMakeStepGroups[index] ?? [];
+    if (JSON.stringify(actualGroup) !== JSON.stringify(expectedGroup)) {
+        fail(
+            `fastRunner.requiredMakeStepGroups[${index}] expected ${JSON.stringify(expectedGroup)} but got ${JSON.stringify(actualGroup)}`,
+        );
+    }
 }
 
 for (const doc of contract.requiredDocs ?? []) {

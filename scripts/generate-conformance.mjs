@@ -173,8 +173,8 @@ function render() {
     out.push("## Gate coverage (every contract gate)");
     out.push("");
     out.push(
-        "Each capability below is proven by the listed make gate. `make perfect-fast` runs the",
-        "offline set; `make perfect-full` adds codegen and packed-consumer proof.",
+        "Each capability below is proven by the listed make gate. `make contract-gates` runs the",
+        "readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime and heavy proof.",
     );
     out.push("");
     const entries = [...inventory.entries]
@@ -182,8 +182,8 @@ function render() {
         .sort((a, b) => a.id.localeCompare(b.id));
     out.push(
         table(
-            ["Capability", "Proof gate", "perfect-fast"],
-            entries.map((e) => [titleFromId(e.id), `\`make ${e.target}\``, e.perfectFast ? "yes" : "no"]),
+            ["Capability", "Proof gate", "contract-gates"],
+            entries.map((e) => [titleFromId(e.id), `\`make ${e.target}\``, e.contractGates ? "yes" : "no"]),
         ),
     );
     out.push("");

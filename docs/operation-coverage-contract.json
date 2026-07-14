@@ -22,6 +22,15 @@
     "openapiOperations": "docs/openapi-operations.json",
     "operationParity": "docs/operation-parity.json"
   },
+  "driftWiring": {
+    "target": "operation-parity-drift",
+    "requiredPrerequisites": [
+      "mcp-tool-manifest-drift"
+    ],
+    "forbiddenPrerequisites": [
+      "mcp-tool-manifest"
+    ]
+  },
   "thresholds": {
     "operations": 169,
     "sdkNamed": 156,

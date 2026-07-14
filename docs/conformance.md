@@ -27,10 +27,10 @@ make gates and evidence files, and the gate-coverage table is derived from
 
 ## Gate coverage (every contract gate)
 
-Each capability below is proven by the listed make gate. `make perfect-fast` runs the
-offline set; `make perfect-full` adds codegen and packed-consumer proof.
+Each capability below is proven by the listed make gate. `make contract-gates` runs the
+readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime and heavy proof.
 
-| Capability | Proof gate | perfect-fast |
+| Capability | Proof gate | contract-gates |
 | --- | --- | --- |
 | Acceptance Scenarios | `make acceptance-scenarios` | yes |
 | Agent Handoff | `make agent-handoff` | yes |
@@ -93,7 +93,7 @@ offline set; `make perfect-full` adds codegen and packed-consumer proof.
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
-| Replay Fixtures | `make replay-fixtures` | yes |
+| Replay Fixtures | `make replay-fixtures` | no |
 | Risk Register | `make risk-register` | yes |
 | Runtime Support | `make runtime-support` | yes |
 | Sandbox Key Health | `make sandbox-key-health` | no |
