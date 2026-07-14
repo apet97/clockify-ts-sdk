@@ -4,6 +4,10 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- docs: annotate the expenses update request cast with the KEEP convention (no behavior change).
+
 ## [0.6.0] - 2026-07-12
 
 ### Changed

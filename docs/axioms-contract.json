@@ -347,7 +347,7 @@
       "path": "docs/cli-write-safety-policy.md",
       "contains": [
         "CLI writes stay non-interactive",
-        "Destructive commands must be ID-scoped"
+        "Destructive resource commands must be explicitly scoped."
       ]
     },
     {

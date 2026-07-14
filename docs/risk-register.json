@@ -145,7 +145,7 @@
         },
         {
           "path": "Makefile",
-          "contains": "CLOCKIFY_API_KEY and CLOCKIFY_WORKSPACE_ID are required"
+          "contains": "make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars."
         }
       ]
     },

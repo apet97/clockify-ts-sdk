@@ -239,7 +239,17 @@ for (const [label, url] of Object.entries(contract.typedoc.mustContainNavigation
 
 const wrapperPackage = readJson(contract.wrapperPackage.path, "wrapperPackage.path");
 for (const [script, expected] of Object.entries(contract.wrapperPackage.requiredScripts ?? {})) {
-    if (wrapperPackage.scripts?.[script] !== expected) fail(contract.wrapperPackage.path, `script ${script} must be ${expected}`);
+    const actual = wrapperPackage.scripts?.[script];
+    if (script === "docs") {
+        if (typeof actual !== "string" || !actual.endsWith("typedoc")) {
+            fail(contract.wrapperPackage.path, "script docs must end with typedoc");
+        }
+        if (typeof actual !== "string" || !actual.includes("generate-package-versions.mjs")) {
+            fail(contract.wrapperPackage.path, "script docs must generate package versions before typedoc");
+        }
+        continue;
+    }
+    if (actual !== expected) fail(contract.wrapperPackage.path, `script ${script} must be ${expected}`);
 }
 for (const dep of contract.wrapperPackage.requiredDevDependencies ?? []) {
     if (typeof wrapperPackage.devDependencies?.[dep] !== "string") fail(contract.wrapperPackage.path, `missing devDependency ${dep}`);

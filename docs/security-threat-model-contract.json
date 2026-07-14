@@ -85,7 +85,7 @@
       "contains": [
         "dry_run",
         "confirm_token",
-        "destructiveHint: true",
+        "Only `destructive` sets `destructiveHint:true`",
         "changed"
       ]
     },
@@ -94,7 +94,7 @@
       "path": "docs/cli-write-safety-policy.md",
       "contains": [
         "CLI writes stay non-interactive",
-        "Destructive commands must be ID-scoped",
+        "Destructive resource commands must be explicitly scoped.",
         "Errors must stay machine-readable"
       ]
     },
@@ -103,7 +103,7 @@
       "path": "docs/live-tests.md",
       "contains": [
         "Never run live gates against a customer workspace",
-        "verify:live-cleanup",
+        "cleanup to pass, and zero leftovers",
         "DEFER_LIVE_REASON"
       ]
     },

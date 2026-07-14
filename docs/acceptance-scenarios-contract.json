@@ -180,7 +180,7 @@
       "mustContain": [
         "make perfect-live",
         "sacrificial sandbox",
-        "cleanup receipt",
+        "final sanitized JSON receipt",
         "Mock/replay proof never replaces live sandbox proof"
       ]
     },
