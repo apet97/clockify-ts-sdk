@@ -416,6 +416,7 @@ supply-chain:
 
 dependency-boundary:
 	node scripts/check-dependency-boundary.mjs
+	node --test scripts/root-vitest-coverage.test.mjs
 
 dependency-license:
 	node scripts/check-dependency-license.mjs
