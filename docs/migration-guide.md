@@ -13,7 +13,7 @@ This project intentionally uses package names with `115` suffixes for trademark 
 ## Version alignment
 
 The coordinated package set is SDK `0.12.0`, CLI `0.3.0`, and TypeScript MCP
-`0.6.0`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
+`0.6.1`. All three require Node.js `>=22.13.0`; the CLI and TypeScript MCP declare
 `clockify-sdk-ts-115 >=0.12.0 <1` as their SDK peer range. Upgrade the SDK before
 or alongside either consumer package so npm does not resolve an older SDK surface.
 
