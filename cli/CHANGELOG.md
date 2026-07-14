@@ -2,14 +2,15 @@
 
 All notable changes to `@apet97/clockify-cli-115` are documented here.
 
-## [0.3.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.0...cli-v0.3.1) (2026-07-14)
-
-
-### Bug Fixes
-
-* **cli:** align clean coverage installs ([52ed3bb](https://github.com/apet97/clockify-ts-sdk/commit/52ed3bb7dd3bca0f032f00f6641a30e2e2f01793))
-
 ## [Unreleased]
+
+## [0.3.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.0...cli-v0.3.1) - 2026-07-14
+
+### Fixed
+
+- Aligned the root coverage provider with Vitest 4.1.10 so clean-workspace coverage proof
+  resolves the matching provider
+  ([52ed3bb](https://github.com/apet97/clockify-ts-sdk/commit/52ed3bb7dd3bca0f032f00f6641a30e2e2f01793)).
 
 ### Changed
 
