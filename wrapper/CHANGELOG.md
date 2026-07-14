@@ -12,8 +12,9 @@ once v1.0.0 ships.
 - Corrected the README's dual-build proof count to the governed 91 root names and 27
   subpaths; no package behavior changed.
 - Refreshed compatible test and lint tooling (`@vitest/coverage-v8` and Vitest 4.1.10,
-  `eslint-plugin-import-x` 4.17.1, `fast-check` 4.9.0, and `typescript-eslint` 8.64)
-  without changing runtime APIs.
+  `eslint-plugin-import-x` 4.17.1, `fast-check` 4.9.0, and `typescript-eslint` 8.64),
+  including a root-aligned coverage provider for reproducible clean-workspace proof, without
+  changing runtime APIs.
 
 ## [0.12.0] - 2026-07-12
 
