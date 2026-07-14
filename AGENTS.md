@@ -249,7 +249,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 92 names + 27 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 91 names + 27 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -441,7 +441,7 @@ wrapper/
 │                                excludes src/, dist/, docs/, package-lock.json. `npm run format` /
 │                                `npm run format:check`.
 ├── .packsnapshot             ← baseline of `npm pack --dry-run` paths; mirrored by cli/mcp package snapshots
-├── tests/                    (43 test files; representative subset listed below — run `npm test -w wrapper` for the live count)
+├── tests/                    (one file per behavior area; representative subset listed below — run `npm test -w wrapper` for the live count)
 │   ├── pagination.test.ts        ← page/page-size validation + RangeError matrix
 │   ├── create-client.test.ts     ← env-var fallback matrix + debug:true console.debug
 │   ├── iter.test.ts              ← iterAll/iterPages + Last-Page header + 14-entry KNOWN_PAGINATED_METHODS drift assertions

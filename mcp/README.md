@@ -29,9 +29,12 @@ build-from-source flow follow for other setups.
 
 ### One-click (recommended)
 
-The `.mcpb` bundle has no GitHub Release asset attached yet, so build it from a
-clone (or `npm i -g @apet97/clockify-mcp-115` for just the `clockify115-mcp`
-binary — unofficial, under the `@apet97` scope):
+Download
+[`clockify115-mcp-0.6.0.mcpb`](https://github.com/apet97/clockify-ts-sdk/releases/download/mcp-v0.6.0/clockify115-mcp-0.6.0.mcpb)
+from the [`mcp-v0.6.0` release](https://github.com/apet97/clockify-ts-sdk/releases/tag/mcp-v0.6.0)
+and open it with Claude Desktop. For just the `clockify115-mcp` binary, run
+`npm i -g @apet97/clockify-mcp-115` (unofficial, under the `@apet97` scope). To
+build the same bundle from a clone instead:
 
 ```sh
 make mcpb
@@ -428,7 +431,7 @@ const server = buildServer(ctx);
 |---|---|---|
 | Language | TypeScript / Node 22.13+ | Go |
 | Transport | stdio | stdio |
-| Tools | 135 | 156 |
+| Tools | 140 | 156 |
 | Strength | Node install, SDK-vendor style workflows, full domain CRUD | Drift gates, reports, raw API fallback, broader live evidence |
 | Use when | You want a pure-JS Clockify MCP with workflow-complete daily use | You need the canonical, drift-gated reference server |
 
