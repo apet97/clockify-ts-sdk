@@ -31,6 +31,22 @@
       "mcp-tool-manifest"
     ]
   },
+  "manifestProofWiring": {
+    "driftTarget": "mcp-tool-manifest-drift",
+    "driftPrerequisites": [
+      "sdk-wrapper-build"
+    ],
+    "driftRecipes": [
+      "cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"
+    ],
+    "writerTarget": "mcp-tool-manifest",
+    "writerPrerequisites": [
+      "sdk-wrapper-build"
+    ],
+    "writerRecipes": [
+      "cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --write"
+    ]
+  },
   "thresholds": {
     "operations": 169,
     "sdkNamed": 156,

@@ -3309,7 +3309,8 @@
         {
           "path": "Makefile",
           "contains": [
-            "mcp-write-safety:"
+            "mcp-write-safety:",
+            "node scripts/check-mcp-write-safety.mjs"
           ]
         }
       ]
@@ -3922,6 +3923,9 @@
           "path": "docs/operation-coverage-contract.json",
           "markers": [
             "wiring",
+            "manifestProofWiring",
+            "mcp-tool-manifest-drift",
+            "mcp-tool-manifest",
             "operation-coverage",
             "scripts/check-operation-coverage.mjs"
           ]
@@ -3931,6 +3935,8 @@
           "markers": [
             "validateContractShape",
             "safeRelativePath",
+            "makeTargetRule",
+            "manifestProofWiring",
             "Operation coverage contract shape failed",
             "reportInputs.operationParity",
             "wiring.makeTarget",
