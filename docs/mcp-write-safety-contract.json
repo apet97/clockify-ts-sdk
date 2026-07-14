@@ -27,6 +27,8 @@
         "registrationModule": "mcp/src/result.ts",
         "toolRiskRegistry": "mcp/src/tool-risk.ts",
         "toolManifest": "docs/mcp-tool-manifest.json",
+        "toolManifestDriftTarget": "mcp-tool-manifest-drift",
+        "toolManifestWriterTarget": "mcp-tool-manifest",
         "qualityGate": "make mcp-write-safety",
         "inventoryId": "mcp-write-safety",
         "auditId": "mcp-write-safety"

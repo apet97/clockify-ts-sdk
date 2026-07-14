@@ -73,6 +73,15 @@ function sameRecord(left, right) {
     return [...keys].every((key) => left?.[key] === right?.[key]);
 }
 
+function makeTargetPrerequisites(makefile, target) {
+    const targetLine = makefile.split("\n").find((line) => line.startsWith(`${target}:`)) ?? "";
+    return targetLine
+        .slice(targetLine.indexOf(":") + 1)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+}
+
 function validateContract() {
     if (contract.schemaVersion !== 2) fail("schemaVersion", "must be 2");
     if (typeof contract.purpose !== "string" || contract.purpose.trim().length === 0) {
@@ -105,9 +114,45 @@ function validateContract() {
             fail(`metadata.${key}`, `must be ${JSON.stringify(value)}`);
         }
     }
+    for (const [key, value] of Object.entries({
+        makeTarget: "mcp-write-safety",
+        checker: "scripts/check-mcp-write-safety.mjs",
+        toolManifestDriftTarget: "mcp-tool-manifest-drift",
+        toolManifestWriterTarget: "mcp-tool-manifest",
+    })) {
+        if (contract.wiring?.[key] !== value) {
+            fail(`wiring.${key}`, `must be ${JSON.stringify(value)}`);
+        }
+    }
     safeRelativePath("wiring.toolManifest", contract.wiring?.toolManifest);
     safeRelativePath("wiring.toolsDirectory", contract.wiring?.toolsDirectory);
     safeRelativePath("wiring.registrationModule", contract.wiring?.registrationModule);
+}
+
+async function validateMakeWiring() {
+    const makefile = await readRel("Makefile");
+    const dependencies = makeTargetPrerequisites(makefile, contract.wiring?.makeTarget);
+    const requiredDependencies = [contract.wiring?.toolManifestDriftTarget];
+    if (JSON.stringify(dependencies) !== JSON.stringify(requiredDependencies)) {
+        fail(
+            "Makefile",
+            `${contract.wiring?.makeTarget} must depend only on exact target ${contract.wiring?.toolManifestDriftTarget}; found ${JSON.stringify(dependencies)}`,
+        );
+    }
+    if (dependencies.includes(contract.wiring?.toolManifestWriterTarget)) {
+        fail(
+            "Makefile",
+            `${contract.wiring?.makeTarget} must not depend on writer ${contract.wiring?.toolManifestWriterTarget}`,
+        );
+    }
+
+    const aggregateDependencies = makeTargetPrerequisites(makefile, "contract-gates");
+    if (!aggregateDependencies.includes(contract.wiring?.makeTarget)) {
+        fail("Makefile", `contract-gates missing exact prerequisite ${contract.wiring?.makeTarget}`);
+    }
+    if (!makefile.includes(`node ${contract.wiring?.checker}`)) {
+        fail("Makefile", `missing ${contract.wiring?.checker} invocation`);
+    }
 }
 
 function validateManifest() {
@@ -240,6 +285,7 @@ async function listTypeScriptFiles(directory) {
 
 validateContract();
 validateManifest();
+await validateMakeWiring();
 await validateRegistrationBoundary();
 
 if (failures.length > 0) {
