@@ -28,6 +28,10 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make perfect-fast`
   for deterministic local proof. Do not start local mutation, coverage,
   or `perfect-full` while the machine is under load.
+- Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
+  readiness/docs-drift suite, `make perfect-fast` is runtime/package proof,
+  and `make perfect-full` adds heavy proof. `make perfect-live` remains
+  separate credentialed sandbox proof.
 - Mutation score proof is GitHub-hosted for routine use. The manual
   **Mutation** workflow runs on `workflow_dispatch` with `target=all`,
   `wrapper`, or `mcp`; `make mutation-ci` verifies that wiring and is
@@ -271,7 +275,8 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Goal | Run |
 |---|---|
 | See available gates | `make help` |
-| Fast deterministic local proof | `make perfect-fast` |
+| Doc/contract drift suite (CI-enforced) | `make contract-gates` |
+| Deterministic runtime/package proof | `make perfect-fast` |
 | Full GOCLMCP + local SDK codegen + package + packed-consumer proof | `make perfect-full` |
 | Explicit sandbox/live cleanup proof | `make perfect-live` |
 | Refresh SDK/CLI/MCP product metadata | `make product-surface` |

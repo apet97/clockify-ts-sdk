@@ -111,18 +111,20 @@ cd clockify-ts-sdk
 node scripts/repo-doctor.mjs   # run this first: no-network repo-shape check, fails fast and clearly
 npm ci                         # install all three workspaces
 make sdk-codegen               # generate output/ts-sdk/** and sync wrapper/src/**
-make perfect-fast              # the local gate: type-check, build, dual-build smoke, tests, contracts
+make perfect-fast              # local runtime/package proof: type-check, build, smoke, tests
 ```
 
 `node scripts/repo-doctor.mjs` runs no network, git, or build steps — it just confirms the repo
 shape (Node 22.13+, the three workspaces, the local-generator wiring) so a fresh clone fails fast
-before `npm ci`. The three gate tiers:
+before `npm ci`. The first three rows are the pre-push gate tiers; `perfect-live` is separate
+credentialed sandbox proof:
 
 | Gate | What it proves |
 |---|---|
-| `make perfect-fast` | Deterministic local SDK/CLI/MCP package proof (no network, no live Clockify) |
-| `make perfect-full` | Adds GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
-| `make perfect-live` | Explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
+| `make contract-gates` | CI-enforced readiness and doc/contract drift suite; run locally before push |
+| `make perfect-fast` | Deterministic local SDK/CLI/MCP runtime/package proof (no network, no live Clockify) |
+| `make perfect-full` | Heavy proof: GOCLMCP spec drift, codegen determinism, packed-consumer smoke, coverage, and manual mutation-workflow wiring |
+| `make perfect-live` | Separate explicit sandbox cleanup proof (needs a sacrificial `CLOCKIFY_API_KEY`) |
 
 `make help` lists every focused gate. The contribution workflow, contract system, and
 spec/generator relationship are in [`CONTRIBUTING.md`](./CONTRIBUTING.md); the full

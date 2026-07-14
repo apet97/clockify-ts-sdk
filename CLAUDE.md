@@ -88,10 +88,16 @@ that snapshot by hand.
 Preferred root gates:
 
 ```bash
+make contract-gates # CI-enforced readiness and doc/contract drift suite
 make perfect-fast   # local deterministic SDK/CLI/MCP package proof
 make perfect-full   # GOCLMCP drift + local codegen/build determinism + package/coverage/pack smoke + mutation-ci
 make perfect-live   # explicit sandbox/live cleanup proof
 ```
+
+Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
+readiness/docs-drift suite, `make perfect-fast` is runtime/package proof, and
+`make perfect-full` adds heavy proof. `make perfect-live` remains separate
+credentialed sandbox proof.
 
 Running `perfect-fast` cleanly (read before your first run):
 
