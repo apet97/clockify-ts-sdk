@@ -2,14 +2,20 @@
 
 This file maps the enterprise-SDK polish target to concrete commands. It is written for a non-coder operator and for future agents that have lost conversation context.
 
+Pre-push proof has three tiers: `make contract-gates` is the CI-enforced
+readiness/docs-drift suite, `make perfect-fast` is runtime/package proof, and
+`make perfect-full` adds heavy proof. `make perfect-live` remains separate
+credentialed sandbox proof.
+
 ## Root commands
 
 | Goal | Command | What it proves |
 |---|---|---|
 | See available gates | `make help` | The repo exposes a one-screen command menu. |
-| Fast deterministic proof | `make perfect-fast` | Guarded generated paths are clean, product surface metadata is current, allowlisted docs drift is checked, and SDK/CLI/MCP package gates pass. |
-| Full generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
-| Live sandbox proof | `make perfect-live` | One confirmed, locked run executes SDK/CLI/MCP/GOCLMCP independently, always cleans exact and legacy prefixes, and requires a sanitized zero-leftover receipt. |
+| Doc/contract drift suite (CI-enforced) | `make contract-gates` | Readiness, generated-surface, policy, and contract checks pass after SDK generation and build; allowlisted docs drift is checked. |
+| Deterministic runtime/package proof | `make perfect-fast` | SDK/CLI/MCP lint, type-check, build, smoke, tests, and package budgets pass without live Clockify. |
+| Heavy generation proof | `make perfect-full` | GOCLMCP drift gates, local SDK generation, all package gates, packed-consumer smoke, coverage, and manual mutation-workflow wiring pass. |
+| Separate live sandbox proof | `make perfect-live` | One confirmed, locked run executes SDK/CLI/MCP/GOCLMCP independently, always cleans exact and legacy prefixes, and requires a sanitized zero-leftover receipt. |
 | Refresh surface metadata | `make product-surface` | `docs/product-surface.json` and `docs/product-surface.md` match package manifests and workflow metadata. |
 | Refresh error docs | `make error-docs` | `docs/error-codes.md` matches the shared SDK/CLI/MCP recovery registry. |
 | Check error registry integrity | `make error-registry` | The shared error-code registry keeps its code id set, required fields, mirrored package copies, and grounded reachable-code claims. |

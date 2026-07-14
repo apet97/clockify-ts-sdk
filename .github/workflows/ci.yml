@@ -65,6 +65,13 @@ jobs:
       - run: npm ci
       - run: make sdk-codegen
       - run: npm run build
+      - name: Doc and contract drift suite
+        run: make contract-gates
+        env:
+          CLOCKIFY_API_KEY: ""
+          CLOCKIFY_WORKSPACE_ID: ""
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
       - name: Executable contract and coverage proof
         run: >-
           make sdk-codegen-drift sdk-codegen-test codegen-determinism
