@@ -132,6 +132,28 @@ function validateSupportingEvidence() {
     );
 }
 
+function makeTargetRule(makefile, target) {
+    const lines = makefile.split("\n");
+    const targetIndex = lines.findIndex((line) => line.startsWith(`${target}:`));
+    if (targetIndex < 0) return { prerequisites: [], recipes: [] };
+
+    const targetLine = lines[targetIndex];
+    const prerequisites = targetLine
+        .slice(targetLine.indexOf(":") + 1)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+    const recipes = [];
+    for (
+        let index = targetIndex + 1;
+        index < lines.length && lines[index].startsWith("\t");
+        index += 1
+    ) {
+        recipes.push(lines[index].slice(1));
+    }
+    return { prerequisites, recipes };
+}
+
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
@@ -156,6 +178,39 @@ function validateContractShape() {
         }
         if (JSON.stringify(contract.driftWiring.forbiddenPrerequisites) !== JSON.stringify(["mcp-tool-manifest"])) {
             fail("driftWiring.forbiddenPrerequisites", "must forbid writer mcp-tool-manifest");
+        }
+    }
+
+    if (assertObject("manifestProofWiring", contract.manifestProofWiring)) {
+        for (const key of ["driftTarget", "writerTarget"]) {
+            assertNonEmptyString(`manifestProofWiring.${key}`, contract.manifestProofWiring[key]);
+        }
+        for (const key of [
+            "driftPrerequisites",
+            "driftRecipes",
+            "writerPrerequisites",
+            "writerRecipes",
+        ]) {
+            assertStringArray(`manifestProofWiring.${key}`, contract.manifestProofWiring[key], {
+                min: 1,
+            });
+        }
+        const exactManifestProofWiring = {
+            driftTarget: "mcp-tool-manifest-drift",
+            driftPrerequisites: ["sdk-wrapper-build"],
+            driftRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check"],
+            writerTarget: "mcp-tool-manifest",
+            writerPrerequisites: ["sdk-wrapper-build"],
+            writerRecipes: ["cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --write"],
+        };
+        if (
+            JSON.stringify(contract.manifestProofWiring) !==
+            JSON.stringify(exactManifestProofWiring)
+        ) {
+            fail("manifestProofWiring", `must equal ${JSON.stringify(exactManifestProofWiring)}`);
+        }
+        if (contract.manifestProofWiring.driftTarget === contract.manifestProofWiring.writerTarget) {
+            fail("manifestProofWiring", "driftTarget and writerTarget must be distinct");
         }
     }
 
@@ -255,14 +310,7 @@ for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 
-const driftTargetLine = makefile
-    .split("\n")
-    .find((line) => line.startsWith(`${contract.driftWiring.target}:`)) ?? "";
-const driftPrerequisites = driftTargetLine
-    .slice(driftTargetLine.indexOf(":") + 1)
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+const driftPrerequisites = makeTargetRule(makefile, contract.driftWiring.target).prerequisites;
 for (const prerequisite of contract.driftWiring.requiredPrerequisites) {
     if (!driftPrerequisites.includes(prerequisite)) {
         fail("Makefile", `${contract.driftWiring.target} missing exact prerequisite ${prerequisite}`);
@@ -272,6 +320,57 @@ for (const prerequisite of contract.driftWiring.forbiddenPrerequisites) {
     if (driftPrerequisites.includes(prerequisite)) {
         fail("Makefile", `${contract.driftWiring.target} must not depend on writer ${prerequisite}`);
     }
+}
+
+const manifestDriftRule = makeTargetRule(makefile, contract.manifestProofWiring.driftTarget);
+const manifestWriterRule = makeTargetRule(makefile, contract.manifestProofWiring.writerTarget);
+for (const [target, label, actual, expected] of [
+    [
+        contract.manifestProofWiring.driftTarget,
+        "prerequisites",
+        manifestDriftRule.prerequisites,
+        contract.manifestProofWiring.driftPrerequisites,
+    ],
+    [
+        contract.manifestProofWiring.driftTarget,
+        "recipes",
+        manifestDriftRule.recipes,
+        contract.manifestProofWiring.driftRecipes,
+    ],
+    [
+        contract.manifestProofWiring.writerTarget,
+        "prerequisites",
+        manifestWriterRule.prerequisites,
+        contract.manifestProofWiring.writerPrerequisites,
+    ],
+    [
+        contract.manifestProofWiring.writerTarget,
+        "recipes",
+        manifestWriterRule.recipes,
+        contract.manifestProofWiring.writerRecipes,
+    ],
+]) {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        fail(
+            "Makefile",
+            `${target} ${label} expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
+        );
+    }
+}
+if (manifestDriftRule.prerequisites.includes(contract.manifestProofWiring.writerTarget)) {
+    fail(
+        "Makefile",
+        `${contract.manifestProofWiring.driftTarget} must not depend on writer ${contract.manifestProofWiring.writerTarget}`,
+    );
+}
+if (manifestDriftRule.recipes.some((recipe) => recipe.includes("--write"))) {
+    fail("Makefile", `${contract.manifestProofWiring.driftTarget} must not run a manifest writer`);
+}
+if (manifestWriterRule.recipes.some((recipe) => recipe.includes("--check"))) {
+    fail(
+        "Makefile",
+        `${contract.manifestProofWiring.writerTarget} must remain the explicit manifest writer`,
+    );
 }
 
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
