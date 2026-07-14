@@ -4,6 +4,11 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshed compatible test and lint tooling (`@vitest/coverage-v8` and Vitest 4.1.10,
+  `eslint-plugin-import-x` 4.17.1, and `fast-check` 4.9.0) without changing runtime behavior.
+
 ## [0.6.1](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.0...mcp-v0.6.1) - 2026-07-14
 
 ### Fixed

@@ -94,8 +94,8 @@ test("checker rejects a floating Node runtime", () => {
 test("checker rejects a floating action reference", () => {
     expectContractFailure(
         workflow.replace(
-            "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
-            "actions/checkout@v5",
+            "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "actions/checkout@v7",
         ),
         /SHA|immutable/i,
     );

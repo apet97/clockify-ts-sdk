@@ -4,6 +4,11 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshed compatible test and lint tooling (`@vitest/coverage-v8` and Vitest 4.1.10,
+  plus `eslint-plugin-import-x` 4.17.1) without changing runtime behavior.
+
 ## [0.3.0] - 2026-07-12
 
 ### Breaking

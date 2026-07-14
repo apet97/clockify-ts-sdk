@@ -63,8 +63,8 @@ test("the checker rejects a floating action reference", () => {
     expectFailure(
         {
             workflow: workflow.replace(
-                "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
-                "actions/checkout@v5",
+                "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+                "actions/checkout@v7",
             ),
         },
         /immutable|SHA/i,
@@ -175,9 +175,9 @@ test("CI contracts document the hardened GitHub-only mutation proof", () => {
     assert.ok(entry);
     for (const marker of [
         'node-version: "22.13.0"',
-        "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+        "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
         "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
-        "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
         "if-no-files-found: error",
         "retention-days: 14",
     ]) {
