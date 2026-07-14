@@ -3,9 +3,9 @@ import YAML from "yaml";
 import { perfectFullRunsLocalMutation } from "./perfect-full-prereqs.mjs";
 
 const ACTIONS = Object.freeze({
-    checkout: "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd",
+    checkout: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
     setupNode: "actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444",
-    uploadArtifact: "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+    uploadArtifact: "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
 });
 
 const MCP_MUTATION_TEST_FILES = Object.freeze([

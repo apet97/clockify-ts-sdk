@@ -57,14 +57,14 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "clockify-sdk-ts-115": "*",
     "eslint": "^10.5.0",
-    "eslint-plugin-import-x": "^4.16.2",
+    "eslint-plugin-import-x": "^4.17.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.59.4",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public",
