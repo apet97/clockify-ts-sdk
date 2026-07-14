@@ -46,7 +46,7 @@
             "without contacting Clockify",
             "not.toContain",
             "configuration_conflict",
-            "Node.js 20",
+            "Node.js 22.13",
             "tracks explicit workspace and base URL sources",
             "source: \"explicit\"",
             "source: \"env\"",

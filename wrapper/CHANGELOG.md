@@ -52,6 +52,9 @@ once v1.0.0 ships.
 
 ### Fixed
 
+- Corrected the supported-runtime and CI documentation to Node.js 22.13 and 24,
+  and wired diagnostics, documentation quality, release support, and release
+  readiness into both aggregate verification gates.
 - Adversarial-review pass (plan 011):
   - `parseRateLimitResetAt` no longer turns `Retry-After: 0` (or a finite negative
     delay) into a year-2000 reset `Date`; it now floors at "now".
