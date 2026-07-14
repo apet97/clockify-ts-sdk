@@ -70,9 +70,9 @@ function assertStringArray(values, label, { allowEmpty = true } = {}) {
     return values.filter((value) => typeof value === "string" && value.trim().length > 0);
 }
 
-function assertOptionalBoolean(value, label) {
-    if (value != null && typeof value !== "boolean") {
-        fail(label, "must be a boolean when present");
+function assertBoolean(value, label) {
+    if (typeof value !== "boolean") {
+        fail(label, "must be a boolean");
     }
 }
 
@@ -240,8 +240,7 @@ function validateInventoryShape() {
         assertNonEmptyString(entry.id, `${label}.id`);
         assertNonEmptyString(entry.target, `${label}.target`);
         inventoryRelativePath(`${entry.id ?? label}.checker`, entry.checker);
-        assertOptionalBoolean(entry.perfectFast, `${entry.id ?? label}.perfectFast`);
-        assertOptionalBoolean(entry.perfectFull, `${entry.id ?? label}.perfectFull`);
+        if (!entry.retired) assertBoolean(entry.contractGates, `${entry.id ?? label}.contractGates`);
         for (const field of ["reports", "policies", "contracts", "auditIds"]) {
             const values = assertStringArray(entry[field] ?? [], `${entry.id ?? label}.${field}`);
             assertUnique(values, `${entry.id ?? label}.${field}`);
@@ -264,7 +263,14 @@ docsIndex = await readRel("docs/README.md", "docsIndex");
 qualityGates = await readRel("docs/quality-gates.md", "qualityGates");
 audit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
 const aggregateLine = targetLine("contract-gates");
-if (!aggregateLine.includes(inventory.wiring.makeTarget)) {
+const aggregatePrerequisites = new Set(
+    aggregateLine
+        .slice(aggregateLine.indexOf(":") + 1)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean),
+);
+if (!aggregatePrerequisites.has(inventory.wiring.makeTarget)) {
     fail("Makefile", `contract-gates missing ${inventory.wiring.makeTarget}`);
 }
 
@@ -457,6 +463,12 @@ for (const entry of inventory.entries ?? []) {
     }
     if (!entry.target) fail(id, "missing target");
     if (!entry.checker) fail(id, "missing checker");
+    if (entry.contractGates && !aggregatePrerequisites.has(entry.target)) {
+        fail(id, `contractGates is true but contract-gates is missing exact prerequisite ${entry.target}`);
+    }
+    if (!entry.contractGates && aggregatePrerequisites.has(entry.target)) {
+        fail(id, `contractGates is false but contract-gates includes exact prerequisite ${entry.target}`);
+    }
     assertUnique(entry.reports, `${id}.reports`);
     assertUnique(entry.policies, `${id}.policies`);
     assertUnique(entry.contracts, `${id}.contracts`);

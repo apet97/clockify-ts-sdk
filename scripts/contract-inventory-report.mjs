@@ -130,8 +130,8 @@ function collectInventoryShapeStatus(inventory) {
                 for (const relPath of entry[field] ?? []) checkPath(`${label}.${field}`, relPath);
             }
         }
-        for (const field of ["perfectFast", "perfectFull"]) {
-            if (entry[field] != null && typeof entry[field] !== "boolean") booleanIssues.push(`${label}.${field}`);
+        if (!entry.retired && typeof entry.contractGates !== "boolean") {
+            booleanIssues.push(`${label}.contractGates`);
         }
     }
 
@@ -186,8 +186,7 @@ export async function buildReport() {
         }
     }
 
-    const perfectFast = entries.filter((entry) => entry.perfectFast).map((entry) => entry.id);
-    const perfectFull = entries.filter((entry) => entry.perfectFull).map((entry) => entry.id);
+    const contractGates = entries.filter((entry) => entry.contractGates).map((entry) => entry.id);
     const withoutPolicies = entries
         .filter((entry) => (entry.policies ?? []).length === 0)
         .map((entry) => entry.id);
@@ -278,8 +277,7 @@ export async function buildReport() {
         warning: "This report is not proof. Run make contract-inventory and target-specific gates before claiming readiness.",
         counts: {
             entries: entries.length,
-            perfectFast: perfectFast.length,
-            perfectFull: perfectFull.length,
+            contractGates: contractGates.length,
             withPolicyDocs: entries.length - withoutPolicies.length,
             withAuditIds: entries.length - withoutAuditIds.length,
             withReports: withReports.length,
@@ -399,8 +397,7 @@ export async function buildReport() {
             contracts: entry.contracts ?? [],
             reports: entry.reports ?? [],
             auditIds: entry.auditIds ?? [],
-            perfectFast: Boolean(entry.perfectFast),
-            perfectFull: Boolean(entry.perfectFull),
+            contractGates: entry.contractGates,
         })),
         next:
             missingFiles.length > 0
@@ -541,7 +538,7 @@ export function renderMarkdown(report) {
     lines.push("");
     for (const entry of report.entries) {
         lines.push(
-            `- ${entry.id}: \`make ${entry.target}\`, checker \`${entry.checker}\`, perfect-fast ${entry.perfectFast ? "yes" : "no"}, perfect-full ${entry.perfectFull ? "yes" : "no"}`,
+            `- ${entry.id}: \`make ${entry.target}\`, checker \`${entry.checker}\`, contract-gates ${entry.contractGates ? "yes" : "no"}`,
         );
         if (entry.reports.length > 0) {
             lines.push(`  helpers: ${entry.reports.map((report) => `\`${report}\``).join(", ")}`);
@@ -553,4 +550,3 @@ export function renderMarkdown(report) {
     for (const item of report.next) lines.push(`- ${item}`);
     return `${lines.join("\n")}\n`;
 }
-

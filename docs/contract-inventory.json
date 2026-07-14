@@ -16,8 +16,7 @@
       "This report is not proof",
       "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
       "docs/contract-inventory.json",
-      "perfectFast",
-      "perfectFull",
+      "contractGates",
       "reports",
       "helpers:",
       "withReports",
@@ -81,6 +80,7 @@
       },
       "minimumCounts": {
         "entries": 1,
+        "contractGates": 76,
         "withReports": 10,
         "toolboxHelpers": 12,
         "toolboxHelpersOwned": 12,
@@ -193,8 +193,7 @@
       "auditIds": [
         "generated-edit-guard"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "error-registry",
@@ -206,8 +205,7 @@
       "auditIds": [
         "error-registry"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "openapi-evidence",
@@ -222,8 +220,7 @@
       "auditIds": [
         "openapi-evidence-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "schema-quality",
@@ -238,8 +235,7 @@
       "auditIds": [
         "schema-quality"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "upstream-drift",
@@ -254,8 +250,7 @@
       "auditIds": [
         "upstream-drift"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "official-openapi-drift",
@@ -270,8 +265,7 @@
       "auditIds": [
         "official-openapi-drift"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "generator-config",
@@ -283,8 +277,7 @@
       "auditIds": [
         "generator-config"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "generator-independence",
@@ -296,8 +289,7 @@
       "auditIds": [
         "generator-independence"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "generator-comparison",
@@ -309,8 +301,7 @@
       "auditIds": [
         "generator-comparison"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "doc-correctness-anchor",
@@ -322,8 +313,7 @@
       "auditIds": [
         "doc-correctness-anchor"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "generator-portability",
@@ -338,8 +328,7 @@
       "auditIds": [
         "generator-portability"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "package-contract",
@@ -351,8 +340,7 @@
       "auditIds": [
         "package-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "pack-smoke",
@@ -364,8 +352,7 @@
       "auditIds": [
         "packed-consumer-proof"
       ],
-      "perfectFast": false,
-      "perfectFull": true
+      "contractGates": false
     },
     {
       "id": "sandbox-key-health",
@@ -374,8 +361,7 @@
       "auditIds": [
         "sandbox-key-health"
       ],
-      "perfectFast": false,
-      "perfectFull": false
+      "contractGates": false
     },
     {
       "id": "examples-contract",
@@ -387,8 +373,7 @@
       "auditIds": [
         "examples-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "snippet-safety",
@@ -403,8 +388,7 @@
       "auditIds": [
         "snippet-safety"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "snippet-method-parity",
@@ -419,8 +403,7 @@
       "auditIds": [
         "snippet-method-parity"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "snippet-compile",
@@ -435,8 +418,7 @@
       "auditIds": [
         "snippet-compile"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "runtime-support",
@@ -448,8 +430,7 @@
       "auditIds": [
         "runtime-support"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "env-contract",
@@ -461,8 +442,7 @@
       "auditIds": [
         "env-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "sdk-public-api",
@@ -474,8 +454,7 @@
       "auditIds": [
         "sdk-public-api"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "sdk-runtime-contract",
@@ -490,8 +469,7 @@
       "auditIds": [
         "sdk-runtime-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "decision-records",
@@ -506,8 +484,7 @@
       "auditIds": [
         "decision-records"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "workflow-cookbook",
@@ -522,8 +499,7 @@
       "auditIds": [
         "workflow-cookbook"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "acceptance-scenarios",
@@ -541,8 +517,7 @@
       "auditIds": [
         "acceptance-scenarios"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "change-impact",
@@ -560,8 +535,7 @@
       "auditIds": [
         "change-impact"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "tag-hygiene",
@@ -569,8 +543,7 @@
       "checker": "scripts/check-tag-hygiene.mjs",
       "contracts": [],
       "auditIds": [],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "version-consistency",
@@ -580,8 +553,7 @@
         "docs/version-policy.json"
       ],
       "auditIds": [],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "security-threat-model",
@@ -596,8 +568,7 @@
       "auditIds": [
         "security-threat-model"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "contract-inventory",
@@ -615,8 +586,7 @@
       "auditIds": [
         "contract-inventory"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "version-policy",
@@ -628,8 +598,7 @@
       "auditIds": [
         "version-policy"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "secret-hygiene",
@@ -641,8 +610,7 @@
       "auditIds": [
         "secret-hygiene"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "replay-fixtures",
@@ -655,8 +623,7 @@
       "auditIds": [
         "replay-fixtures"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": false
     },
     {
       "id": "cassettes",
@@ -669,8 +636,7 @@
       "auditIds": [
         "cassettes"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "data-handling",
@@ -685,8 +651,7 @@
       "auditIds": [
         "data-handling"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "supply-chain",
@@ -701,8 +666,7 @@
       "auditIds": [
         "supply-chain"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "dependency-boundary",
@@ -717,8 +681,7 @@
       "auditIds": [
         "dependency-boundary"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "dependency-license",
@@ -733,8 +696,7 @@
       "auditIds": [
         "dependency-license"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "compatibility-contract",
@@ -749,8 +711,7 @@
       "auditIds": [
         "compatibility-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "breaking-change-review",
@@ -765,8 +726,7 @@
       "auditIds": [
         "breaking-change-review"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "receipts-contract",
@@ -782,8 +742,7 @@
       "auditIds": [
         "receipts-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "observability",
@@ -799,8 +758,7 @@
       "auditIds": [
         "observability-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "diagnostics-contract",
@@ -812,8 +770,7 @@
       "contracts": [
         "docs/diagnostics-contract.json"
       ],
-      "perfectFast": true,
-      "perfectFull": true,
+      "contractGates": true,
       "auditIds": [
         "diagnostics-contract"
       ]
@@ -829,8 +786,7 @@
       "contracts": [
         "docs/quickstart-receipt-contract.json"
       ],
-      "perfectFast": true,
-      "perfectFull": true,
+      "contractGates": true,
       "auditIds": [
         "quickstart-receipt"
       ]
@@ -849,8 +805,7 @@
       "auditIds": [
         "receipt-examples"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "support-bundle",
@@ -868,8 +823,7 @@
       "auditIds": [
         "support-bundle"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "issue-intake",
@@ -884,8 +838,7 @@
       "auditIds": [
         "issue-intake"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "release-support-contract",
@@ -900,8 +853,7 @@
       "auditIds": [
         "release-support-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "release-readiness",
@@ -919,8 +871,7 @@
       "auditIds": [
         "release-readiness"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "ci-contract",
@@ -935,8 +886,7 @@
       "auditIds": [
         "ci-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "live-safety",
@@ -948,8 +898,7 @@
       "auditIds": [
         "live-safety"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "test-data-lifecycle",
@@ -964,8 +913,7 @@
       "auditIds": [
         "test-data-lifecycle"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "risk-register",
@@ -980,8 +928,7 @@
       "auditIds": [
         "risk-register"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "performance-calibration-plan",
@@ -996,8 +943,7 @@
       "auditIds": [
         "performance-budgets"
       ],
-      "perfectFast": false,
-      "perfectFull": false
+      "contractGates": false
     },
     {
       "id": "user-docs",
@@ -1012,8 +958,7 @@
       "auditIds": [
         "user-docs"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "docs-quality",
@@ -1028,8 +973,7 @@
       "auditIds": [
         "docs-quality"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "axioms-contract",
@@ -1044,8 +988,7 @@
       "auditIds": [
         "axioms"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "docs-drift",
@@ -1057,8 +1000,7 @@
       "auditIds": [
         "docs-drift-checker"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "docs-index-drift",
@@ -1070,8 +1012,7 @@
       "auditIds": [
         "generated-doc-drift"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "changelog-coverage",
@@ -1083,8 +1024,7 @@
       "auditIds": [
         "changelog-coverage"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "agent-handoff",
@@ -1099,8 +1039,7 @@
       "auditIds": [
         "agent-handoff"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "agent-tasks",
@@ -1112,8 +1051,7 @@
       "auditIds": [
         "agent-tasks"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "docs-counts",
@@ -1125,8 +1063,7 @@
       "auditIds": [
         "docs-counts"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "developer-environment",
@@ -1144,8 +1081,7 @@
       "auditIds": [
         "developer-environment"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "operator-onboarding",
@@ -1163,8 +1099,7 @@
       "auditIds": [
         "operator-onboarding"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "operator-toolbox",
@@ -1179,8 +1114,7 @@
       "auditIds": [
         "operator-toolbox"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "api-docs",
@@ -1195,8 +1129,7 @@
       "auditIds": [
         "api-docs"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "mcp-contract",
@@ -1208,8 +1141,7 @@
       "auditIds": [
         "mcp-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "mcp-agent-ux",
@@ -1224,8 +1156,7 @@
       "auditIds": [
         "mcp-agent-ux"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "mcp-write-safety",
@@ -1240,8 +1171,7 @@
       "auditIds": [
         "mcp-write-safety"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "mcp-tool-manifest",
@@ -1256,8 +1186,7 @@
       "auditIds": [
         "contract-inventory"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "cli-contract",
@@ -1269,8 +1198,7 @@
       "auditIds": [
         "cli-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "cli-write-safety",
@@ -1285,8 +1213,7 @@
       "auditIds": [
         "cli-write-safety"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "consumer-cast-budget",
@@ -1298,8 +1225,7 @@
       "auditIds": [
         "consumer-cast-budget"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "test-matrix",
@@ -1311,8 +1237,7 @@
       "auditIds": [
         "test-matrix"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "build-determinism",
@@ -1324,8 +1249,7 @@
       "auditIds": [
         "build-determinism"
       ],
-      "perfectFast": false,
-      "perfectFull": true
+      "contractGates": false
     },
     {
       "id": "coverage",
@@ -1337,8 +1261,7 @@
       "auditIds": [
         "coverage"
       ],
-      "perfectFast": false,
-      "perfectFull": true
+      "contractGates": false
     },
     {
       "id": "mutation",
@@ -1350,8 +1273,7 @@
       "auditIds": [
         "mutation"
       ],
-      "perfectFast": false,
-      "perfectFull": true
+      "contractGates": false
     },
     {
       "id": "mock-contract",
@@ -1363,8 +1285,7 @@
       "auditIds": [
         "mock-contract"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "maintenance-playbook",
@@ -1382,8 +1303,7 @@
       "auditIds": [
         "maintenance-playbook"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "mutation-safety",
@@ -1398,8 +1318,7 @@
       "auditIds": [
         "mutation-safety"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "examples-matrix",
@@ -1417,8 +1336,7 @@
       "auditIds": [
         "examples-matrix"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "config-precedence",
@@ -1433,8 +1351,7 @@
       "auditIds": [
         "config-precedence"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "naming-taxonomy",
@@ -1449,8 +1366,7 @@
       "auditIds": [
         "naming-taxonomy"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "operation-coverage",
@@ -1465,8 +1381,7 @@
       "auditIds": [
         "operation-coverage"
       ],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     },
     {
       "id": "fixture-mock-parity",
@@ -1476,8 +1391,7 @@
         "docs/fixture-mock-parity-map.json"
       ],
       "auditIds": [],
-      "perfectFast": true,
-      "perfectFull": true
+      "contractGates": true
     }
   ],
   "wiring": {

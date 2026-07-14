@@ -22,6 +22,19 @@
       "speakeasy"
     ]
   },
+  "fastRunner": {
+    "path": "scripts/verify.mjs",
+    "requiredMakeStepGroups": [
+      [
+        "sdk-codegen"
+      ],
+      [
+        "sdk-codegen-drift",
+        "sdk-codegen-test",
+        "generated-edit-check"
+      ]
+    ]
+  },
   "requiredDocs": [
     {
       "path": "docs/dependency-policy.md",

@@ -144,6 +144,21 @@ function validateContractShape() {
         safeRelativePath("reportInputs.operationParity", contract.reportInputs.operationParity);
     }
 
+    if (assertObject("driftWiring", contract.driftWiring)) {
+        assertNonEmptyString("driftWiring.target", contract.driftWiring.target);
+        assertStringArray("driftWiring.requiredPrerequisites", contract.driftWiring.requiredPrerequisites, { min: 1 });
+        assertStringArray("driftWiring.forbiddenPrerequisites", contract.driftWiring.forbiddenPrerequisites, { min: 1 });
+        if (contract.driftWiring.target !== "operation-parity-drift") {
+            fail("driftWiring.target", "must be operation-parity-drift");
+        }
+        if (JSON.stringify(contract.driftWiring.requiredPrerequisites) !== JSON.stringify(["mcp-tool-manifest-drift"])) {
+            fail("driftWiring.requiredPrerequisites", "must require only mcp-tool-manifest-drift");
+        }
+        if (JSON.stringify(contract.driftWiring.forbiddenPrerequisites) !== JSON.stringify(["mcp-tool-manifest"])) {
+            fail("driftWiring.forbiddenPrerequisites", "must forbid writer mcp-tool-manifest");
+        }
+    }
+
     if (assertObject("thresholds", contract.thresholds)) {
         for (const key of ["operations", "sdkNamed", "tsMcpExact", "goMcpExact", "curated"]) {
             assertNonNegativeInteger(`thresholds.${key}`, contract.thresholds[key]);
@@ -238,6 +253,25 @@ for (const evidence of contract.supportingEvidence ?? []) {
 
 for (const target of contract.requiredTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
+}
+
+const driftTargetLine = makefile
+    .split("\n")
+    .find((line) => line.startsWith(`${contract.driftWiring.target}:`)) ?? "";
+const driftPrerequisites = driftTargetLine
+    .slice(driftTargetLine.indexOf(":") + 1)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+for (const prerequisite of contract.driftWiring.requiredPrerequisites) {
+    if (!driftPrerequisites.includes(prerequisite)) {
+        fail("Makefile", `${contract.driftWiring.target} missing exact prerequisite ${prerequisite}`);
+    }
+}
+for (const prerequisite of contract.driftWiring.forbiddenPrerequisites) {
+    if (driftPrerequisites.includes(prerequisite)) {
+        fail("Makefile", `${contract.driftWiring.target} must not depend on writer ${prerequisite}`);
+    }
 }
 
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {
