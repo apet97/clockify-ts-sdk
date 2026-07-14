@@ -93,7 +93,7 @@ readiness-contract set; `make perfect-fast` and `make perfect-full` own runtime 
 | Performance Calibration Plan | `make performance-calibration-plan` | no |
 | Release Readiness | `make release-readiness` | yes |
 | Release Support Contract | `make release-support-contract` | yes |
-| Replay Fixtures | `make replay-fixtures` | no |
+| Replay Fixtures | `make replay-fixtures` | yes |
 | Risk Register | `make risk-register` | yes |
 | Runtime Support | `make runtime-support` | yes |
 | Sandbox Key Health | `make sandbox-key-health` | no |

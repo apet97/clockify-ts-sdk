@@ -80,7 +80,7 @@
       },
       "minimumCounts": {
         "entries": 1,
-        "contractGates": 76,
+        "contractGates": 77,
         "withReports": 10,
         "toolboxHelpers": 12,
         "toolboxHelpersOwned": 12,
@@ -623,7 +623,7 @@
       "auditIds": [
         "replay-fixtures"
       ],
-      "contractGates": false
+      "contractGates": true
     },
     {
       "id": "cassettes",

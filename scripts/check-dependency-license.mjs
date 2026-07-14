@@ -129,6 +129,19 @@ function dependencyPolicyRows(text, header) {
     return { rows, duplicates, headerCount: headerIndexes.length };
 }
 
+function dependencyPolicyRowKeyDifference(rows, expectedPackageNames) {
+    const actual = sorted([...rows.keys()]);
+    const expected = sorted(expectedPackageNames);
+    const actualSet = new Set(actual);
+    const expectedSet = new Set(expected);
+    return {
+        actual,
+        expected,
+        missing: expected.filter((packageName) => !actualSet.has(packageName)),
+        unexpected: actual.filter((packageName) => !expectedSet.has(packageName)),
+    };
+}
+
 const policyTableHeader = "| Package | Runtime dependencies | SDK relationship |";
 const policyRowProbe = dependencyPolicyRows(
     `${policyTableHeader}\n|---|---|---|\n| \`cli\` | \`commander\` | CLI |\n| \`mcp\` | \`commander\`, \`zod\` | MCP |`,
@@ -155,6 +168,22 @@ const duplicateRowProbe = dependencyPolicyRows(
 );
 if (!duplicateRowProbe.duplicates?.has("cli")) {
     failures.push("dependency policy table self-test regressed: duplicate package rows must be rejected");
+}
+
+const surplusRowProbe = dependencyPolicyRows(
+    `${policyTableHeader}\n|---|---|---|\n| \`sdk\` | None | SDK |\n| \`cli\` | \`commander\` | CLI |\n| \`mcp\` | \`zod\` | MCP |\n| \`fictitious\` | None | surplus |`,
+    policyTableHeader,
+);
+const surplusRowDifference = dependencyPolicyRowKeyDifference(surplusRowProbe.rows, [
+    "sdk",
+    "cli",
+    "mcp",
+]);
+if (
+    surplusRowDifference.missing.length !== 0 ||
+    JSON.stringify(surplusRowDifference.unexpected) !== JSON.stringify(["fictitious"])
+) {
+    failures.push("dependency policy table self-test regressed: surplus package rows must be rejected");
 }
 
 function validateEvidenceEntry(label, entry) {
@@ -190,6 +219,12 @@ function validateContractShape() {
     assertUnique(
         "packages.manifest",
         (contract.packages ?? []).map((pkg) => pkg?.manifest).filter((manifest) => typeof manifest === "string"),
+    );
+    assertUnique(
+        "packages.packageName",
+        (contract.packages ?? [])
+            .map((pkg) => pkg?.packageName)
+            .filter((packageName) => typeof packageName === "string"),
     );
     for (const [index, pkg] of (contract.packages ?? []).entries()) {
         const label = pkg?.id ?? `packages[${index}]`;
@@ -309,15 +344,23 @@ for (const packageName of sorted([...policyTable.duplicates])) {
     fail(dependencyPolicyPath, `duplicate runtime dependency Markdown ledger row for ${packageName}`);
 }
 const policyRows = policyTable.rows;
+const policyRowKeyDifference = dependencyPolicyRowKeyDifference(
+    policyRows,
+    (contract.packages ?? []).map((pkg) => pkg?.packageName),
+);
+for (const packageName of policyRowKeyDifference.missing) {
+    fail(dependencyPolicyPath, `missing runtime dependency Markdown ledger row for ${packageName}`);
+}
+for (const packageName of policyRowKeyDifference.unexpected) {
+    fail(dependencyPolicyPath, `unexpected runtime dependency Markdown ledger row for ${packageName}`);
+}
 for (const pkg of contract.packages ?? []) {
     if (pkg == null || typeof pkg !== "object" || Array.isArray(pkg)) continue;
 
     if (!policyText.includes(pkg.packageName)) fail(policyPath, `missing package ${pkg.packageName}`);
     const expectedDeps = sorted((pkg.runtimeDependencies ?? []).map((dependency) => dependency.name));
     const documentedDeps = policyRows.get(pkg.packageName);
-    if (documentedDeps == null) {
-        fail(dependencyPolicyPath, `missing runtime dependency Markdown ledger row for ${pkg.packageName}`);
-    } else if (JSON.stringify(documentedDeps) !== JSON.stringify(expectedDeps)) {
+    if (documentedDeps != null && JSON.stringify(documentedDeps) !== JSON.stringify(expectedDeps)) {
         fail(
             dependencyPolicyPath,
             `${pkg.packageName} runtime dependency Markdown ledger drift: expected ${expectedDeps.join(",") || "(none)"}, got ${documentedDeps.join(",") || "(none)"}`,
