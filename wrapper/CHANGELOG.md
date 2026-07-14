@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/);
 this project will adhere to [Semantic Versioning](https://semver.org/)
 once v1.0.0 ships.
 
+## [0.12.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.0...wrapper-v0.12.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* **wrapper:** align clean coverage installs ([273ff4a](https://github.com/apet97/clockify-ts-sdk/commit/273ff4a60f08b06cfd3a62f7e121c61024133876))
+
 ## [Unreleased]
 
 ### Changed
