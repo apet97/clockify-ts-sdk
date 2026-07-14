@@ -100,6 +100,17 @@ for (const risk of ["read", "write", "destructive"]) {
 
 const behavioralTests = stringArray("behavioralTests", contract.behavioralTests);
 for (const testPath of behavioralTests) await readRel(testPath);
+const cliPrefix = `cli${path.sep}`;
+const cliBehavioralTests = behavioralTests
+    .map((testPath) => {
+        const normalized = path.normalize(testPath);
+        if (!normalized.startsWith(cliPrefix)) {
+            fail("behavioralTests", `${testPath} must stay under cli/`);
+            return null;
+        }
+        return normalized.slice(cliPrefix.length);
+    })
+    .filter((testPath) => testPath != null);
 const requiredDocs = stringArray("requiredDocs", contract.requiredDocs);
 for (const docPath of requiredDocs) await readRel(docPath);
 
@@ -169,7 +180,7 @@ if (failures.length === 0) {
 if (failures.length === 0) {
     const behavioral = spawnSync(
         process.execPath,
-        ["node_modules/vitest/vitest.mjs", "run", ...behavioralTests],
+        ["node_modules/vitest/vitest.mjs", "run", "--root", "cli", ...cliBehavioralTests],
         {
             cwd: root,
             encoding: "utf8",
