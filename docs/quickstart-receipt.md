@@ -106,6 +106,6 @@ Stop and do not run live probes when:
 - The diagnostic receipt prints a raw token or full workspace ID.
 - The workspace is a customer or production workspace.
 - `CLOCKIFY_BASE_URL` points somewhere unexpected.
-- Node.js is below version 20.
+- Node.js is below version 22.13.
 - Auth diagnostics show both API-key and addon-token conflict.
 - The operator cannot explain whether the next command is mock or live.
