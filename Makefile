@@ -525,6 +525,7 @@ cli-contract:
 
 cli-write-safety:
 	node scripts/check-cli-write-safety.mjs
+	node --test scripts/check-cli-write-safety.test.mjs
 
 consumer-cast-budget:
 	node scripts/check-consumer-cast-budget.mjs
