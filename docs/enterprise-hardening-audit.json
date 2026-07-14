@@ -2594,7 +2594,7 @@
           "path": "docs/live-tests.md",
           "contains": [
             "Never run live gates against a customer workspace",
-            "verify:live-cleanup",
+            "sanitized JSON receipt",
             "DEFER_LIVE_REASON"
           ]
         },
@@ -2602,7 +2602,7 @@
           "path": "docs/live-safety-contract.json",
           "contains": [
             "CLOCKIFY_API_KEY",
-            "assert-clean-prefixes.mjs",
+            "cleanupLivePrefixes",
             "make mock-clockify"
           ]
         },
@@ -2610,7 +2610,7 @@
           "path": "scripts/check-live-safety.mjs",
           "contains": [
             "live safety contract passed",
-            "requiredScript",
+            "cleanupLibrary",
             "validateContractShape",
             "safeRelativePath",
             "live safety contract shape failed"
@@ -2641,7 +2641,7 @@
           "contains": [
             "sdk-test-",
             "mcp-sandbox-",
-            "assert-clean-prefixes.mjs"
+            "cleanupLivePrefixes"
           ]
         },
         {
@@ -3374,7 +3374,7 @@
           "path": "scripts/check-mutation-score.mjs",
           "markers": [
             "mutation score check failed",
-            "NoCoverage",
+            "coveredMutationScore",
             "covered-mutant floors"
           ]
         },

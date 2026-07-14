@@ -179,7 +179,7 @@
     {
       "path": "docs/mcp-write-safety-policy.md",
       "contains": [
-        "High-risk workflow writes require preview confirmation"
+        "Every guarded write requires preview confirmation."
       ]
     },
     {

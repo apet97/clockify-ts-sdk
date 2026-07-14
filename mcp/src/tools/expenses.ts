@@ -297,9 +297,9 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 };
             },
             execute: async (preview) => {
-                // Live expense PUT accepts an omitted receipt file, while the generated
-                // multipart request still marks it required. The complete stored preview
-                // remains the only request dispatched here.
+                // KEEP as never: live expense PUT accepts an omitted receipt file, while the
+                // generated multipart request still marks it required. The complete stored
+                // preview remains the only request dispatched here.
                 const updated = await ctx.client.expenses.update(preview.request as never);
                 return successResult(
                     "clockify_expenses_update",

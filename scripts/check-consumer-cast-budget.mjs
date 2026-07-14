@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Every `as never` in cli/src + mcp/src must be either eliminated or
-// annotated with a `KEEP as never` comment on the same line or immediately
-// above it. result.ts/output-schema.ts are forwarding seams and are exempt.
+// annotated with a `KEEP as never` comment on the same line or in the contiguous
+// comment block immediately above it. result.ts/output-schema.ts are forwarding
+// seams and are exempt.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,8 +33,18 @@ if (!Array.isArray(exemptSuffixes) || !exemptSuffixes.every((value) => typeof va
 }
 const pathExemptions = Array.isArray(exemptSuffixes) ? exemptSuffixes : [];
 
-const isAnnotated = (here, above) => /KEEP as never/.test(here) || /KEEP as never/.test(above);
-if (!isAnnotated("foo as never; // KEEP as never: x", "") || isAnnotated("foo as never;", "const x = 1;")) {
+function isAnnotated(lines, index) {
+    if (/KEEP as never/.test(lines[index])) return true;
+    for (let cursor = index - 1; cursor >= 0 && /^\s*\/\//.test(lines[cursor]); cursor -= 1) {
+        if (/KEEP as never/.test(lines[cursor])) return true;
+    }
+    return false;
+}
+
+if (
+    !isAnnotated(["// KEEP as never: x", "// rationale", "foo as never;"], 2) ||
+    isAnnotated(["const x = 1;", "foo as never;"], 1)
+) {
     failures.push("annotation self-test regressed: must accept `KEEP as never` and reject a bare `as never`");
 }
 
@@ -69,8 +80,7 @@ for (const r of ROOTS) {
         const lines = (await readFile(path.join(root, rel), "utf8")).split("\n");
         for (let i = 0; i < lines.length; i++) {
             if (!/\bas never\b/.test(lines[i])) continue;
-            const above = i > 0 ? lines[i - 1] : "";
-            if (!isAnnotated(lines[i], above)) {
+            if (!isAnnotated(lines, i)) {
                 unannotated++;
                 offenders.push(`${rel}:${i + 1}`);
             }

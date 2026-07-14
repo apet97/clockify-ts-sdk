@@ -57,7 +57,7 @@ dependency change.
 | Package | Runtime dependencies | SDK relationship |
 |---|---|---|
 | `clockify-sdk-ts-115` | None | Owns the generated SDK wrapper seam. |
-| `@apet97/clockify-cli-115` | `cli-table3`, `commander`, `picocolors` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
+| `@apet97/clockify-cli-115` | `cli-table3`, `commander`, `picocolors`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. `zod` validates command payloads before dispatch (added when unsafe request bodies were replaced). |
 | `@apet97/clockify-mcp-115` | `@modelcontextprotocol/sdk`, `zod` | Uses `clockify-sdk-ts-115` as a peer dependency; local dev is resolved through the root npm workspace link. |
 
 The three packages are wired as npm workspaces from the repo-root
