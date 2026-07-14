@@ -3286,7 +3286,9 @@
             "guardedTools",
             "riskDistribution",
             "io.github.apet97.clockify115/risk",
-            "io.github.apet97.clockify115/confirmation"
+            "io.github.apet97.clockify115/confirmation",
+            "mcp-tool-manifest-drift",
+            "mcp-tool-manifest"
           ]
         },
         {
@@ -3297,6 +3299,8 @@
             "destructiveHint",
             "validateContract",
             "validateManifest",
+            "validateMakeWiring",
+            "makeTargetPrerequisites",
             "validateRegistrationBoundary",
             "safeRelativePath",
             "MCP write-safety contract failed"

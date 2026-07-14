@@ -516,7 +516,7 @@ mcp-contract:
 mcp-agent-ux:
 	node scripts/check-mcp-agent-ux.mjs
 
-mcp-write-safety: mcp-tool-manifest
+mcp-write-safety: mcp-tool-manifest-drift
 	node scripts/check-mcp-write-safety.mjs
 
 cli-contract:
