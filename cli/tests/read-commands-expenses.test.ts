@@ -142,6 +142,30 @@ describe("expenses list branch coverage", () => {
         expect(listed).toBe(false);
     });
 
+    it("rejects an explicitly empty date bound before any wire call", async () => {
+        let listed = false;
+        const client = {
+            expenses: {
+                list: async () => {
+                    listed = true;
+                    return { expenses: { expenses: [] } };
+                },
+            },
+        };
+
+        await expect(
+            makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
+                "node",
+                "clk115",
+                "expenses",
+                "list",
+                "--start",
+                "",
+            ]),
+        ).rejects.toThrow(/start/i);
+        expect(listed).toBe(false);
+    });
+
     it("rejects a zero/negative --page before any wire call", async () => {
         let listed = false;
         const client = {

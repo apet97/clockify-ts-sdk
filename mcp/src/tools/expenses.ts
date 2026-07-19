@@ -100,8 +100,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 offset: zNumberLike(z.number().int().min(0).max(199).default(0)).optional(),
                 limit: zNumberLike(z.number().int().min(1).max(10_000).default(50)).optional(),
                 maxPages: zNumberLike(z.number().int().min(1).max(1_000).default(100)).optional(),
-                start: z.string().optional(),
-                end: z.string().optional(),
+                start: z.string().trim().min(1).optional(),
+                end: z.string().trim().min(1).optional(),
             },
         },
         async (args) => {
@@ -114,8 +114,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                     offset: args.offset ?? 0,
                     limit: args.limit ?? 50,
                     maxPages: args.maxPages ?? 100,
-                    ...(args.start ? { start: args.start } : {}),
-                    ...(args.end ? { end: args.end } : {}),
+                    ...(args.start !== undefined ? { start: args.start } : {}),
+                    ...(args.end !== undefined ? { end: args.end } : {}),
                 },
             );
             return successResult(
@@ -145,8 +145,10 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                                           pageSize: result.meta.pageSize,
                                           limit: result.meta.limit,
                                           maxPages: result.meta.maxPages,
-                                          ...(args.start ? { start: args.start } : {}),
-                                          ...(args.end ? { end: args.end } : {}),
+                                          ...(args.start !== undefined
+                                              ? { start: args.start }
+                                              : {}),
+                                          ...(args.end !== undefined ? { end: args.end } : {}),
                                       },
                                       reason: "Continue the bounded client-side expense scan.",
                                   },
