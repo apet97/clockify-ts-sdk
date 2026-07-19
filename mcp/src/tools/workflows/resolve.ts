@@ -440,14 +440,15 @@ function packageNext(projectId: string, taskId: string, tagIds: string[]): NextA
     ];
 }
 
-export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<AnyRecord> {
+export async function findEntryForFix(
+    ctx: Context,
+    args: AnyRecord,
+): Promise<ClockifyApi.TimeEntry> {
     if (str(args.entry_id)) {
-        return {
-            ...(await ctx.client.timeEntries.get({
-                workspaceId: ctx.workspaceId,
-                timeEntryId: str(args.entry_id),
-            })),
-        };
+        return ctx.client.timeEntries.get({
+            workspaceId: ctx.workspaceId,
+            timeEntryId: str(args.entry_id),
+        });
     }
     // Use the per-server single-flight memo (fetched at most once) when present;
     // fall back to a direct call for hand-built contexts.
@@ -456,8 +457,8 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
         : idOf(await ctx.client.users.getCurrentUser());
     const exact = str(args.exact_description);
     const contains = str(args.description_contains);
-    const matchesEntry = (entry: AnyRecord): boolean => {
-        const description = str(entry.description);
+    const matchesEntry = (entry: ClockifyApi.TimeEntry): boolean => {
+        const description = entry.description.trim();
         if (exact && description !== exact) return false;
         if (contains && !description.includes(contains)) return false;
         return true;
@@ -467,19 +468,27 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
     // scan so a huge history can't drain unbounded into memory. A real entry past
     // row 200 is still findable; iterAll honors the Last-Page header.
     const MAX_FIX_ENTRIES = 10_000;
-    const matches: AnyRecord[] = [];
+    const request: Omit<ClockifyApi.ListForUserTimeEntriesRequest, "page" | "page-size"> = {
+        workspaceId: ctx.workspaceId,
+        userId,
+        start: str(args.start_after) || "1970-01-01T00:00:00.000Z",
+        end: str(args.start_before) || new Date().toISOString(),
+    };
+    const matches: ClockifyApi.TimeEntry[] = [];
     let scanned = 0;
-    for await (const entry of iterAll<AnyRecord, AnyRecord>(
-        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        (req) => ctx.client.timeEntries.listForUser(req as never) as never,
-        {
-            workspaceId: ctx.workspaceId,
-            userId,
-            start: str(args.start_after) || "1970-01-01T00:00:00.000Z",
-            end: str(args.start_before) || new Date().toISOString(),
-        },
+    for await (const entry of iterAll<
+        ClockifyApi.ListForUserTimeEntriesRequest,
+        ClockifyApi.TimeEntry
+    >(
+        (pageRequest) => ctx.client.timeEntries.listForUser(pageRequest),
+        request,
         { pageSize: 200 },
     )) {
+        if (scanned >= MAX_FIX_ENTRIES) {
+            throw new Error(
+                `scanned the maximum of ${MAX_FIX_ENTRIES} time entries without a unique match; narrow the window with start_after/start_before, or pass entry_id`,
+            );
+        }
         scanned++;
         if (matchesEntry(entry)) {
             matches.push(entry);
@@ -489,11 +498,6 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
                 );
             }
         }
-        if (scanned > MAX_FIX_ENTRIES) {
-            throw new Error(
-                `scanned more than ${MAX_FIX_ENTRIES} time entries without a unique match; narrow the window with start_after/start_before, or pass entry_id`,
-            );
-        }
     }
     if (matches.length !== 1)
         throw new Error(
@@ -502,15 +506,16 @@ export async function findEntryForFix(ctx: Context, args: AnyRecord): Promise<An
     return matches[0]!;
 }
 
-export function summarizeEntries(entries: AnyRecord[], args: AnyRecord) {
+export function summarizeEntries(entries: ClockifyApi.TimeEntry[], args: AnyRecord) {
     const sorted = [...entries].sort(
-        (a, b) => Date.parse(entryStart(a)) - Date.parse(entryStart(b)),
+        (a, b) =>
+            Date.parse(a.timeInterval.start ?? "") - Date.parse(b.timeInterval.start ?? ""),
     );
     const issues: Array<{ code: string; entry_id?: string }> = [];
     let totalSeconds = 0;
     for (const entry of sorted) {
-        const startMs = Date.parse(entryStart(entry));
-        const endValue = entryEnd(entry);
+        const startMs = Date.parse(entry.timeInterval.start ?? "");
+        const endValue = entry.timeInterval.end ?? "";
         const endMs = endValue ? Date.parse(endValue) : Date.now();
         if (!Number.isNaN(startMs) && !Number.isNaN(endMs) && endMs > startMs)
             totalSeconds += Math.round((endMs - startMs) / 1000);
@@ -784,10 +789,6 @@ export function reviewArgsFromEntry(entry: unknown, fallback: AnyRecord): AnyRec
 
 function entryStart(entry: AnyRecord): string {
     return str(entry.start) || str((entry.timeInterval as AnyRecord | undefined)?.start);
-}
-
-function entryEnd(entry: AnyRecord): string {
-    return str(entry.end) || str((entry.timeInterval as AnyRecord | undefined)?.end);
 }
 
 export function normalizeDate(value: string): string {

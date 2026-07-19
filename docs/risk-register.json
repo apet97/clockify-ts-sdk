@@ -308,8 +308,8 @@
           "contains": "allowedRequestCastBudget"
         },
         {
-          "path": "mcp/src/tools/workflows/review.ts",
-          "contains": "KEEP as never"
+          "path": "docs/roadmap-1.0.md",
+          "contains": "7. Zero request-cast ratchet"
         }
       ]
     },

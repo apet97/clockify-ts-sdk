@@ -8,6 +8,7 @@
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
@@ -40,10 +41,19 @@ async function connect(ctx: Context): Promise<Client> {
 // the `Last-Page`-absent length heuristic reports "more pages" on every call —
 // i.e. it never signals an end on its own. Counts how many times it is called.
 function alwaysFullPage(counter: { calls: number }) {
-    return async (req: { "page-size"?: number } = {}) => {
+    return async (req: ClockifyApi.ListForUserTimeEntriesRequest) => {
         counter.calls += 1;
         const size = req["page-size"] ?? PAGE_SIZE;
-        return Array.from({ length: size }, (_, i) => ({ id: `g-${counter.calls}-${i}` }));
+        return Array.from({ length: size }, (_, i) => ({
+            id: `g-${counter.calls}-${i}`,
+            billable: false,
+            description: "",
+            isLocked: false,
+            timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+            type: "REGULAR" as const,
+            userId: "user-1",
+            workspaceId: "ws-1",
+        })) satisfies ClockifyApi.TimeEntry[];
     };
 }
 

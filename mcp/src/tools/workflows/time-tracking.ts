@@ -203,14 +203,13 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
         (str(args.task) ? await resolveTaskId(ctx, taskScopeProjectId, str(args.task)) : "");
     const tagIds = [...arrayOfStrings(args.tag_ids)];
     if (str(args.tag)) tagIds.push(await resolveTagId(ctx, str(args.tag)));
-    const ivl = (entry.timeInterval ?? {}) as AnyRecord;
-    const start = str(args.start) || str(entry.start) || str(ivl.start);
+    const start = str(args.start) || str(entry.timeInterval.start);
     const nextDescription = str(args.new_description) || str(args.description);
     // timeEntries.update is a PUT-replace: every omitted field is wiped on the
     // live wire. Preserve each existing field from the already-fetched entry,
     // overriding only when args supply a value (mirrors how `start` is handled).
     const description = nextDescription || str(entry.description);
-    const nextEnd = str(args.end) || str(entry.end) || str(ivl.end);
+    const nextEnd = str(args.end) || str(entry.timeInterval.end);
     const nextProjectId = projectId || str(entry.projectId);
     const nextTaskId = taskId || str(entry.taskId);
     const nextTagIds = tagIds.length ? tagIds : arrayOfStrings(entry.tagIds);
@@ -223,7 +222,9 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
         ...(nextProjectId ? { projectId: nextProjectId } : {}),
         ...(nextTaskId ? { taskId: nextTaskId } : {}),
         ...(nextTagIds.length ? { tagIds: nextTagIds } : {}),
-        ...(isRecordArray(entry.customFields) ? { customFields: entry.customFields } : {}),
+        ...(entry.customFieldValues !== undefined
+            ? { customFields: entry.customFieldValues }
+            : {}),
         ...(entry.type === "REGULAR" || entry.type === "BREAK" ? { type: entry.type } : {}),
     };
     const request: ClockifyApi.UpdateTimeEntriesRequest = {
@@ -308,11 +309,4 @@ function optionalBoolean(value: unknown, field: string): boolean | undefined {
     if (value === undefined) return undefined;
     if (typeof value !== "boolean") throw new TypeError(`${field} must be a boolean`);
     return value;
-}
-
-function isRecordArray(value: unknown): value is Record<string, unknown>[] {
-    return (
-        Array.isArray(value) &&
-        value.every((item) => item !== null && typeof item === "object" && !Array.isArray(item))
-    );
 }

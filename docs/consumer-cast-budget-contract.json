@@ -6,9 +6,7 @@
     "lastReduced": "2026-07-19",
     "annotatedKeepAsNever": {
       "cli": [],
-      "mcp": [
-        "mcp/src/tools/workflows/review.ts + mcp/src/tools/workflows/resolve.ts (timeEntries.listForUser list/search/view request+response envelope does not match the wire shape)"
-      ]
+      "mcp": []
     },
     "removedRequestEscape": "All former request-side escapes were replaced with generated flattened requests, typed body envelopes, operation-specific strict schemas, or explicit request-option query parameters. Full-replacement writes now reconstruct and validate current state before mutation."
   },
