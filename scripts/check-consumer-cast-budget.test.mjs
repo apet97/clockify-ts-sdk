@@ -2413,6 +2413,61 @@ test("keeps an unsafe binder write when the later returned write is conditional"
     );
 });
 
+for (const [label, invocation] of [
+    ["direct custom binder", "assign.bind(Object, holder, body)();"],
+    ["custom binder through call", "assign.bind.call(assign, Object, holder, body)();"],
+    ["custom binder through apply", "assign.bind.apply(assign, [Object, holder, body])();"],
+]) {
+    test("allows an immediate safe returned write after " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder, input: unknown) { Object.assign(target, { request: input as any }); return () => Object.assign(target, { request: { workspaceId: "safe" } }); }) as typeof assign.bind; ' +
+                invocation +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+for (const [label, invocation] of [
+    ["direct custom binder", "assign.bind(Object, holder)(body);"],
+    ["custom binder through call", "assign.bind.call(assign, Object, holder)(body);"],
+    ["custom binder through apply", "assign.bind.apply(assign, [Object, holder])(body);"],
+]) {
+    test("keeps an immediate unsafe returned write after " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder) { Object.assign(target, { request: { workspaceId: "safe" } }); return (input: unknown) => Object.assign(target, { request: input as any }); }) as typeof assign.bind; ' +
+                invocation +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("keeps an immediate unsafe binder write when the returned safe write is conditional", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder, input: unknown) { Object.assign(target, { request: input as any }); return () => { if (choose) Object.assign(target, { request: { workspaceId: "safe" } }); }; }) as typeof assign.bind; assign.bind(Object, holder, body)(); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +
