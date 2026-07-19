@@ -215,14 +215,17 @@ make docs-drift
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
 - **CLI/MCP request assertions are a zero baseline.** Run `make
   consumer-cast-budget`; it uses TypeScript symbol provenance and bounded
-  alias/helper dataflow for direct, chained, angle-bracket, `as never`,
-  imported/transitive helper-generic, and `any`-backed request casts. Build
-  generated requests directly and use
+  request-bound dataflow for direct, chained, structural, angle-bracket,
+  `as never`, annotated/assigned `any`, bindings/expressions/spreads,
+  declaration-only/imported/transitive generic helpers, and Function
+  `call`/`apply`/`bind` request escapes. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,
   generated type, discrepancy, open risk, evidence, and closure record. The
   existing Task 6 public-package fixture owns the no-`any` adapter proof, and
-  this Make target executes its compiler gate after SDK codegen/build.
+  this Make target executes its compiler gate after SDK codegen/build, pinning
+  exact `IsAny` semantics and all six callback operands. Comment-only Make
+  prerequisites/recipes do not satisfy the wiring check.
 - `spec/corrected/clockify.corrected.openapi.yaml` is generated upstream by
   GOCLMCP. The only accepted diff here is a straight copy from
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator

@@ -299,6 +299,164 @@ test("rejects helper results assigned before the request call", async () => {
     );
 });
 
+test("rejects an annotated-any request variable", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const request: any = body; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects a request escape introduced by a later assignment", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { let request; request = body as never; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects request escapes flowing through object binding elements", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const { request } = { request: body as any }; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, expression] of [
+    ["logical", "(body as any) || { workspaceId: 'ws' }"],
+    ["nullish", "(body as any) ?? { workspaceId: 'ws' }"],
+    ["sequence", "(0, body as any)"],
+]) {
+    test(`rejects request escapes in ${label} expressions`, async () => {
+        await withFixture(requestFixture(expression), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+test("rejects spread request arguments", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { return client.projects.create(...([body as any] as [any])); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects a direct structural assertion at a Clockify request boundary", async () => {
+    await withFixture(requestFixture("body as { workspaceId: string }"), async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /workspaceId.*CreateProjectsRequest/i);
+    });
+});
+
+test("rejects generic request casts inside object spreads", async () => {
+    await withFixture(
+        requestFixture(
+            "{ ...cast<ClockifyApi.CreateProjectsRequest>(body) }",
+            "function cast<T>(value: unknown): T { return value as T; }\n",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /generic request helper.*CreateProjectsRequest/i,
+            );
+        },
+    );
+});
+
+test("rejects declaration-only generic request casters", async () => {
+    await withFixture(
+        requestFixture(
+            "cast<ClockifyApi.CreateProjectsRequest>(body)",
+            "declare function cast<T>(value: unknown): T;\n",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /declaration-only request helper.*CreateProjectsRequest/i,
+            );
+        },
+    );
+});
+
+test("rejects interface-declared generic request casters", async () => {
+    await withFixture(
+        requestFixture(
+            "caster.cast<ClockifyApi.CreateProjectsRequest>(body)",
+            "interface Caster { cast<T>(value: unknown): T; }\ndeclare const caster: Caster;\n",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /declaration-only request helper.*CreateProjectsRequest/i,
+            );
+        },
+    );
+});
+
+test("rejects imported declaration-only generic request casters", async () => {
+    await withFixture(
+        `${generatedImports}import { cast } from "../../shared/caster.js";\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(cast<ClockifyApi.CreateProjectsRequest>(body)); }\n`,
+        async (root) => {
+            await mkdir(path.join(root, "shared"), { recursive: true });
+            await writeFile(
+                path.join(root, "shared/caster.d.ts"),
+                "export declare function cast<T>(value: unknown): T;\n",
+            );
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /declaration-only request helper.*shared\/caster\.d\.ts/i,
+            );
+        },
+    );
+});
+
+for (const [label, invocation] of [
+    ["call", "client.projects.create.call(client.projects, body as any)"],
+    ["apply", "client.projects.create.apply(client.projects, [body as any])"],
+    ["bind", "client.projects.create.bind(client.projects, body as any)()"],
+]) {
+    test(`rejects request escapes through Function.${label}`, async () => {
+        await withFixture(
+            `${generatedImports}export async function run(client: FixtureClient, body: unknown) { return ${invocation}; }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("does not flag an unrelated any logger parameter that cannot flow into the request", async () => {
+    await withFixture(
+        requestFixture(
+            "build(logger)",
+            "function build(logger: any): ClockifyApi.CreateProjectsRequest { logger.info('building'); return { workspaceId: 'ws' }; }\nconst logger: any = { info() {} };\n",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("rejects an imported wireBody helper outside configured source roots", async () => {
     await withFixture(
         `${generatedImports}import { wireBody } from "../../shared/helper.js";\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(wireBody(body)); }\n`,
@@ -401,14 +559,55 @@ test("rejects proof markers that exist only in comments", () => {
         .join("\n");
     assert.equal(
         validatePublicNoAnyProofSource(comments).length,
-        CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.contains.length,
+        CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.contains.length + 2,
     );
 });
+
+for (const [label, mutate] of [
+    [
+        "string operand",
+        (source) => source.replace('Parameters<Adapter["getCurrent"]>[0]', "string"),
+    ],
+    [
+        "unknown operand",
+        (source) => source.replace('Parameters<RootAdapter["archive"]>[0]', "unknown"),
+    ],
+    ["hollow IsAny", (source) => source.replace("0 extends 1 & T ? true : false", "false")],
+]) {
+    test(`rejects a hollow public no-any proof: ${label}`, async () => {
+        const source = await readFile(
+            path.join(repoRoot, CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.path),
+            "utf8",
+        );
+        assert.notDeepEqual(validatePublicNoAnyProofSource(mutate(source)), []);
+    });
+}
 
 test("pins the compiler-owned public no-any proof into the consumer cast Make target", async () => {
     const makefile = await readFile(path.join(repoRoot, "Makefile"), "utf8");
     assert.deepEqual(validateConsumerCastMakeWiring(makefile), []);
 });
+
+test("rejects sdk-wrapper-build mentioned only in a Make comment", async () => {
+    const makefile = await readFile(path.join(repoRoot, "Makefile"), "utf8");
+    const tampered = makefile.replace(
+        "consumer-cast-budget: sdk-wrapper-build",
+        "consumer-cast-budget: # sdk-wrapper-build",
+    );
+    assert.match(validateConsumerCastMakeWiring(tampered).join("\n"), /sdk-wrapper-build/);
+});
+
+for (const command of [
+    "node --test scripts/check-consumer-cast-budget.test.mjs",
+    "node scripts/check-consumer-cast-budget.mjs",
+    "npm run type-check:breaking -w clockify-sdk-ts-115",
+]) {
+    test(`rejects a required Make recipe mentioned only in a comment: ${command}`, async () => {
+        const makefile = await readFile(path.join(repoRoot, "Makefile"), "utf8");
+        const tampered = makefile.replaceAll(`\t${command}`, `\t# ${command}`);
+        assert.match(validateConsumerCastMakeWiring(tampered).join("\n"), /must execute/);
+    });
+}
 
 test("rejects a chained unknown assertion to a generated request", async () => {
     await withFixture(
