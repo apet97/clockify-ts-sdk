@@ -705,13 +705,14 @@
     },
     {
       "id": "consumer-cast-budget",
-      "requirement": "Bound the consumer->SDK escape-hatch casts: every `as never` in cli/src + mcp/src is eliminated or KEEP-annotated, and per-package strictness (EOPT + noImplicitOverride now ON in wrapper, cli, and mcp) is recorded.",
+      "requirement": "Keep the consumer->SDK request boundary at zero source-aware casts and zero canonical exceptions, validate any future exception governance fail-closed, reuse the public no-any adapter type proof, and record per-package strictness.",
       "evidence": [
         {
           "path": "docs/consumer-cast-budget-contract.json",
           "contains": [
-            "allowedRequestCastBudget",
-            "KEEP as never",
+            "canonicalZeroBaseline",
+            "requiredExceptionFields",
+            "publicNoAnyProof",
             "exactOptionalPropertyTypes"
           ]
         },
@@ -719,8 +720,16 @@
           "path": "scripts/check-consumer-cast-budget.mjs",
           "contains": [
             "Consumer cast budget passed",
-            "KEEP as never",
-            "annotation self-test regressed"
+            "validateConsumerCastGovernance",
+            "public any-adapter proof governed"
+          ]
+        },
+        {
+          "path": "scripts/check-consumer-cast-budget.test.mjs",
+          "contains": [
+            "helper-hidden blanket request cast",
+            "canonical zero baseline",
+            "orphaned exception"
           ]
         },
         {

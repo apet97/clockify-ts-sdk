@@ -94,7 +94,6 @@
         "remote-mutation-proof-pending"
       ],
       "requiredReadinessBlockingRiskIds": [
-        "consumer-request-casts",
         "cross-package-release-proof-asymmetry",
         "remote-mutation-proof-pending"
       ],
@@ -327,21 +326,29 @@
     },
     {
       "id": "consumer-request-casts",
-      "status": "open",
-      "finalReadinessBlocking": true,
+      "status": "accepted",
+      "finalReadinessBlocking": false,
       "surface": "CLI and MCP request typing",
-      "summary": "Consumer request casts remain a temporary escape hatch instead of a zero-cast public request boundary.",
-      "impact": "A generated schema mismatch can be hidden at the CLI or MCP boundary and reach a live request without type-level protection.",
-      "mitigation": "Keep the cast budget at the existing ratchet and close this blocker only after Task 7 removes or proves every remaining request cast.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make consumer-cast-budget contract-gates`, `npm test -w @apet97/clockify-cli-115`, `npm test -w @apet97/clockify-mcp-115`, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
+      "summary": "CLI and MCP request construction has zero escape-hatch request casts under a source-aware, canonical-zero ratchet.",
+      "impact": "A future generated-schema mismatch cannot be hidden by a direct, chained, angle-bracket, never, helper-generic, or any-backed request assertion without failing the owning contract gate.",
+      "mitigation": "Keep both canonical exception arrays empty. If a future generated mismatch requires a temporary exception, require the complete location/type/discrepancy/open-risk/evidence/exact-closure schema and deliberately retire the canonical-zero baseline first.",
+      "closureGate": "Closed 2026-07-19 by `make consumer-cast-budget risk-register contract-gates`, full wrapper public type proof, full CLI/MCP lint/type/test/build proof, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
       "evidence": [
         {
-          "path": "scripts/check-consumer-cast-budget.mjs",
-          "contains": "allowedRequestCastBudget"
+          "path": "docs/consumer-cast-budget-contract.json",
+          "contains": "canonicalZeroBaseline"
         },
         {
-          "path": "docs/roadmap-1.0.md",
-          "contains": "7. Zero request-cast ratchet"
+          "path": "scripts/check-consumer-cast-budget.test.mjs",
+          "contains": "rejects an orphaned exception"
+        },
+        {
+          "path": "wrapper/tests/types/breaking-changes.test-d.ts",
+          "contains": "_RootArchiveInputIsNotAny"
+        },
+        {
+          "path": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
+          "contains": "CLI 0, MCP 0"
         }
       ]
     },

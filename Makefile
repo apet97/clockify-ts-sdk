@@ -97,7 +97,7 @@ help:
 	@printf '%s\n' '  make mcp-write-safety    Check MCP destructive tools have confirmations, hints, and receipts.'
 	@printf '%s\n' '  make cli-contract        Check CLI commands, globals, completion, and exit-code contract.'
 	@printf '%s\n' '  make cli-write-safety    Check CLI write commands stay explicit, non-interactive, and receipt-oriented.'
-	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP consumer as-never escape hatches stay annotated and budgeted.'
+	@printf '%s\n' '  make consumer-cast-budget Check CLI/MCP request casts and canonical exceptions stay at zero.'
 	@printf '%s\n' '  make coverage            Measure SDK/CLI/MCP coverage and enforce pinned floors.'
 	@printf '%s\n' '  make mutation            Opt-in local Stryker mutation test; prefer the manual GitHub Mutation workflow.'
 	@printf '%s\n' '  make mutation-ci         Check the manual GitHub Mutation workflow is wired.'
@@ -533,6 +533,7 @@ cli-write-safety:
 	node --test scripts/check-cli-write-safety.test.mjs
 
 consumer-cast-budget:
+	node --test scripts/check-consumer-cast-budget.test.mjs
 	node scripts/check-consumer-cast-budget.mjs
 
 test-matrix:

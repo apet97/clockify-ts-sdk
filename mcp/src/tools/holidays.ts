@@ -6,7 +6,7 @@
  * hatch by design — see `clockify_operation_guide`).
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
+import type { ClockifyApi, ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { resolveGroupRefs, resolveUserFilter, resolveUserRefs } from "clockify-sdk-ts-115/resolve";
 import { z } from "zod";
 
@@ -166,7 +166,7 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                         );
                     resolvedGroupIds = r.groupIds;
                 }
-                const body: Record<string, unknown> = {
+                const body: ClockifyRequestBody<ClockifyApi.CreateHolidayRequest> = {
                     name: args.name,
                     datePeriod: { startDate: args.startDate, endDate: args.endDate },
                 };
@@ -176,10 +176,10 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                 if (resolvedUserIds?.length) body.users = scopeFilter(resolvedUserIds);
                 if (resolvedGroupIds?.length) body.userGroups = scopeFilter(resolvedGroupIds);
                 if (args.color) body.color = args.color;
-                const request = {
+                const request: ClockifyApi.CreateHolidayRequest = {
                     workspaceId: ctx.workspaceId,
                     ...body,
-                } as ClockifyApi.CreateHolidayRequest;
+                };
                 return { action: "create", entity: "holiday", name: args.name, request };
             },
             execute: async (preview) => {
@@ -306,17 +306,15 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                         endDate: existingPeriod.endDate,
                     },
                 };
-                const body: Record<string, unknown> = {
+                const existingOccursAnnually = existing.occursAnnually ?? false;
+                if (typeof existingOccursAnnually !== "boolean") {
+                    throw new TypeError(`Holiday ${args.holidayId} occursAnnually is invalid.`);
+                }
+                const body: ClockifyRequestBody<ClockifyApi.UpdateHolidaysRequest> = {
                     name,
                     datePeriod: { startDate, endDate },
+                    occursAnnually: args.occursAnnually ?? existingOccursAnnually,
                 };
-                const occursAnnually = args.occursAnnually ?? existing.occursAnnually;
-                if (occursAnnually !== undefined) {
-                    if (typeof occursAnnually !== "boolean") {
-                        throw new TypeError(`Holiday ${args.holidayId} occursAnnually is invalid.`);
-                    }
-                    body.occursAnnually = occursAnnually;
-                }
                 if (existing.occursAnnually !== undefined) {
                     currentBody.occursAnnually = existing.occursAnnually;
                 }
@@ -365,11 +363,11 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                         "Holiday update is a no-op; supplied fields match current state.",
                     );
                 }
-                const request = {
+                const request: ClockifyApi.UpdateHolidaysRequest = {
                     workspaceId: ctx.workspaceId,
                     holidayId: args.holidayId,
                     ...body,
-                } as ClockifyApi.UpdateHolidaysRequest;
+                };
                 return { action: "update", entity: "holiday", id: args.holidayId, request };
             },
             execute: async (preview) => {

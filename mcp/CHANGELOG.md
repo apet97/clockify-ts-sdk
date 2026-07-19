@@ -12,6 +12,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- Holiday create/update previews now assemble the generated request unions from
+  typed bodies directly, eliminating the final two request-object assertions;
+  assignment filters keep the same `CONTAINS`/`ALL` wire shape.
 - MCP review/fix workflows now call `timeEntries.listForUser` with its generated
   request and `TimeEntry` types, preserve custom-field values on replace-style
   fixes through a validated read-to-write projection that strips hydrated

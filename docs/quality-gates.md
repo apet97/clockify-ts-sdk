@@ -97,7 +97,7 @@ credentialed sandbox proof.
 | Refresh MCP tool manifest | `make mcp-tool-manifest` | `docs/mcp-tool-manifest.json` lists every registered MCP tool from `buildServer`; `make mcp-tool-manifest-drift` fails if it is stale. |
 | Check CLI contract | `make cli-contract` | CLI command metadata, README table, global flags, completion shells, binaries, and exit-code tests stay aligned. |
 | Check CLI write safety | `make cli-write-safety` | CLI write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
-| Check consumer cast budget | `make consumer-cast-budget` | Every `as never` in cli/src + mcp/src is eliminated or `KEEP as never`-annotated; residual unannotated count stays within the ratcheting budget. |
+| Check consumer cast budget | `make consumer-cast-budget` | Source-aware CLI/MCP request scanning stays at zero across direct, chained, angle-bracket, never, helper-hidden, and any-backed assertions; both canonical exception arrays stay empty; exception references and the reused public no-`any` type proof remain governed. |
 | Check test matrix contract | `make test-matrix` | SDK/CLI/MCP required test files, package test/build scripts, exact `prepublishOnly` command shape, and root gate targets remain present. |
 | Check coverage floors | `make coverage` | Measured SDK/CLI/MCP hand-written-surface coverage stays at or above the pinned floors in `docs/coverage-contract.json`. |
 | Check mutation score floors | `make mutation` | Opt-in local wrapper + MCP Stryker mutation testing stays at or above pinned covered-mutant score floors and fails closed if a governed module has zero covered mutants. Prefer the manual GitHub Mutation workflow for routine proof. |

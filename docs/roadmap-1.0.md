@@ -34,7 +34,7 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | 4. Typed listForUser workflows | 3 | implemented | generated request/response types, all-page review/fix coverage, cross-page ambiguity proof, and an exact 10,000-entry bound in `docs/roadmap-1.0-receipts/task-04-list-for-user.md` | `npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage | Yes |
 | 5. Truthful operation parity | 4 | implemented | 169 receipt-derived dispositions = 155 explicit + 14 governed operationId-derived; all 62 current ledger anchors reviewed, semantic sets independently source/schema-pinned, and a complete 169-row operation-evidence audit; canonical fail-closed coverage validator | `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift operation-coverage && make risk-register contract-gates`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md` | Yes |
 | 6. 1.0 breaking-change closure | 5 | implemented | exact three-name migration mapping, compile-negative removal fixtures, typed archive/delete adapter, SDK/CLI/MCP migration, and closure receipt | `make compatibility-contract breaking-change-review sdk-public-api contract-gates`; `docs/roadmap-1.0-receipts/task-06-breaking-change.md` | Yes |
-| 7. Zero request-cast ratchet | 6 | pending | none recorded | `make consumer-cast-budget && npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-07-zero-cast.md` | Yes |
+| 7. Zero request-cast ratchet | 6 | implemented | source-aware request-boundary validator; CLI 0/MCP 0 casts; empty canonical exceptions; complete exception-governance fixtures; reused public no-`any` type proof | `make consumer-cast-budget && npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-07-zero-cast.md` | Yes |
 | 8. Authenticated-host equality | 7 | pending | none recorded | `npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md` | Yes |
 | 9. Shared exact-artifact engine | 8 | pending | none recorded | `make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands | Yes |
 | 10. Wrapper release-proof adoption | 9 | pending | none recorded | `npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output | Yes |
@@ -56,9 +56,9 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | 26. Project membership administration | 25 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
 | 27. Experimental entity-change feed | 26 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
-The three open readiness blockers in `docs/risk-register.json` are the current
-release-blocking baseline: `consumer-request-casts`,
-`cross-package-release-proof-asymmetry`, and `remote-mutation-proof-pending`.
+The two open readiness blockers in `docs/risk-register.json` are the current
+release-blocking baseline: `cross-package-release-proof-asymmetry` and
+`remote-mutation-proof-pending`.
 Use `make risk-status-report` to inspect the
 current blocked status and blocker count; `make release-readiness` validates the
 release-readiness contract, not a release-ready conclusion.

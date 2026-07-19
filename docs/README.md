@@ -193,7 +193,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`mcp-tool-manifest.json`](./mcp-tool-manifest.json) | generated | Structural MCP tool manifest generated from `buildServer`; consumed by write-safety and operation-parity gates. |
 | [`cli-contract.json`](./cli-contract.json) | edit intentionally | CLI command/global/completion/exit-code contract. |
 | [`cli-write-safety-contract.json`](./cli-write-safety-contract.json) | edit intentionally | CLI write/delete determinism, explicit target, and receipt contract. |
-| [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Consumer `as never` cast budget, KEEP-as-never allow-list policy, and per-package strictness state. |
+| [`consumer-cast-budget-contract.json`](./consumer-cast-budget-contract.json) | edit intentionally | Source-aware zero request-cast ratchet, complete exception-governance schema, reused public no-`any` proof, and per-package strictness state. |
 | [`test-matrix-contract.json`](./test-matrix-contract.json) | edit intentionally | SDK/CLI/MCP package script and required test-file contract. |
 | [`coverage-contract.json`](./coverage-contract.json) | edit intentionally | Measured SDK/CLI/MCP coverage floor contract (hand-written surface; ratchets up). |
 | [`mutation-score-contract.json`](./mutation-score-contract.json) | edit intentionally | Wrapper + MCP Stryker mutation-score floor contract for hand-written helper and safety-critical modules. |
@@ -278,7 +278,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | MCP tool manifest | `make mcp-tool-manifest` | Regenerate the structural MCP tool manifest and use `make mcp-tool-manifest-drift` to check freshness. |
 | CLI contract | `make cli-contract` | Check CLI command metadata, README, globals, completion shells, binaries, and exit-code tests agree. |
 | CLI write safety | `make cli-write-safety` | Check write/delete commands stay explicit, non-interactive, ID-scoped where destructive, and receipt-oriented. |
-| Consumer cast budget | `make consumer-cast-budget` | Check CLI/MCP `as never` escape hatches stay eliminated or `KEEP as never` annotated under a ratcheting budget. |
+| Consumer cast budget | `make consumer-cast-budget` | Keep CLI/MCP request assertions and canonical exceptions exactly at zero while validating future exception references and the existing public no-`any` type proof. |
 | Test matrix | `make test-matrix` | Check package scripts and required SDK/CLI/MCP test files are present. |
 | Mock Clockify | `make mock-contract` | Check local mock Clockify routes and SDK/CLI/MCP mock-backed tests stay aligned. |
 | Mutation score | `make mutation` | Opt-in local wrapper + MCP Stryker mutation testing; prefer the manual GitHub Mutation workflow for routine proof. |

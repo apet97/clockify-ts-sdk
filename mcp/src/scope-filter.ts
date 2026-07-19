@@ -12,6 +12,9 @@
  * ai-assistant addon, 2026-06-12). The caller passes the right one; holidays rely
  * on the default `"ALL"`.
  */
-export function scopeFilter(ids: string[], status: "ALL" | "ACTIVE" = "ALL"): Record<string, unknown> {
+export function scopeFilter(
+    ids: string[],
+    status: "ALL" | "ACTIVE" = "ALL",
+): { contains: "CONTAINS"; ids: string[]; status: "ALL" | "ACTIVE" } {
     return { contains: "CONTAINS", ids, status };
 }

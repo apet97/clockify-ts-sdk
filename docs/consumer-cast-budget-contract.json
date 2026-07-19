@@ -1,19 +1,60 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Every `as never` in cli/src + mcp/src must be eliminated or annotated `KEEP as never` for a documented generated-type mismatch. The residual unannotated budget ratchets to 0; the two forwarding seams (result.ts, output-schema.ts) are exempt by path. Request construction uses generated request unions, typed body envelopes, and operation-specific validation. The retired request-body escape is forbidden in consumer source.",
-  "allowedRequestCastBudget": 0,
-  "residueNotes": {
-    "lastReduced": "2026-07-19",
-    "annotatedKeepAsNever": {
+  "schemaVersion": 2,
+  "purpose": "CLI and MCP request construction must contain zero escape-hatch assertions. The source-aware ratchet rejects direct, chained, angle-bracket, helper-hidden, never, and any-backed request casts while ignoring response narrows, ordinary non-request assertions, and test-only fixtures. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
+  "requestCastGovernance": {
+    "canonicalZeroBaseline": true,
+    "sourceRoots": {
+      "cli": "cli/src",
+      "mcp": "mcp/src"
+    },
+    "exceptions": {
       "cli": [],
       "mcp": []
     },
-    "removedRequestEscape": "All former request-side escapes were replaced with generated flattened requests, typed body envelopes, operation-specific strict schemas, or explicit request-option query parameters. Full-replacement writes now reconstruct and validate current state before mutation."
+    "requiredExceptionFields": [
+      "id",
+      "file",
+      "exactly one of range or codeMarker",
+      "generatedRequestType",
+      "discrepancyId",
+      "openRiskId",
+      "evidence.path",
+      "evidence.anchor",
+      "exactClosureGate"
+    ]
   },
-  "exemptPathSuffixes": [
-    "result.ts",
-    "output-schema.ts"
-  ],
+  "publicNoAnyProof": {
+    "path": "wrapper/tests/types/breaking-changes.test-d.ts",
+    "compilerGate": "make breaking-change-review",
+    "contains": [
+      "_GetInputIsNotAny",
+      "_ArchiveInputIsNotAny",
+      "_DeleteInputIsNotAny",
+      "_RootGetInputIsNotAny",
+      "_RootArchiveInputIsNotAny",
+      "_RootDeleteInputIsNotAny"
+    ]
+  },
+  "forbiddenRequestEscape": {
+    "identifier": "wireBody",
+    "roots": [
+      "wrapper/tests",
+      "wrapper/examples",
+      "cli/src",
+      "cli/tests",
+      "mcp/src",
+      "mcp/tests"
+    ],
+    "wrapperRootTypeScript": true
+  },
+  "residueNotes": {
+    "lastReduced": "2026-07-19",
+    "requestCastExceptions": {
+      "cli": [],
+      "mcp": []
+    },
+    "removedRequestEscape": "All former request-side escapes were replaced with generated flattened requests, typed body envelopes, operation-specific strict schemas, or explicit request-option query parameters. Full-replacement writes now reconstruct and validate current state before mutation. Current governed request-cast findings: CLI 0, MCP 0."
+  },
   "strictness": {
     "wrapper": {
       "strict": true,

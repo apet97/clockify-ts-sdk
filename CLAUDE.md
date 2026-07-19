@@ -213,6 +213,14 @@ make docs-drift
   Validators (schema-quality, generator-comparison) skip gracefully
   with a clear warning when `wrapper/src/` isn't populated yet.
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
+- **CLI/MCP request assertions are a zero baseline.** Run `make
+  consumer-cast-budget`; it uses a source-aware validator for direct,
+  chained, angle-bracket, `as never`, helper-hidden generic, and
+  `any`-backed request casts. Build generated requests directly and use
+  `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
+  arrays must remain empty; any future exception needs the full location,
+  generated type, discrepancy, open risk, evidence, and closure record. The
+  existing Task 6 public-package fixture owns the no-`any` adapter proof.
 - `spec/corrected/clockify.corrected.openapi.yaml` is generated upstream by
   GOCLMCP. The only accepted diff here is a straight copy from
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator

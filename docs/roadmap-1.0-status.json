@@ -45,7 +45,7 @@
     "generatedTruth": "timeEntries.listForUser accepts ClockifyApi.ListForUserTimeEntriesRequest and returns ClockifyApi.TimeEntry[]; both MCP review/fix paths use those types directly.",
     "scanContract": "Review retains its all-page maxPages guard; fix retains cross-page ambiguity detection and stops before inspecting entry 10,001.",
     "customFieldProjection": "Replace-style fixes rebuild each read customFieldValues item as a validated writable customFields object, strip read-only fields, and fail before update on malformed or duplicate values.",
-    "task7RequestCastRiskStatus": "open"
+    "task7RequestCastRiskStatus": "accepted"
   },
   "operationReachability": {
     "status": "implemented",
@@ -73,7 +73,24 @@
       "ArchiveThenDeleteResource": "ArchiveThenDeleteAdapter<TCurrent>"
     },
     "compileProof": "make breaking-change-review owns codegen -> sync -> build -> mapping/wiring tests -> Bundler and built public-package compile-negative fixtures -> prose contract checks; root and ensure-subpath removals plus project/client adapter migrations are compiled.",
-    "task7RequestCastRiskStatus": "open"
+    "task7RequestCastRiskStatus": "accepted"
+  },
+  "task7": {
+    "status": "implemented",
+    "receipt": "docs/roadmap-1.0-receipts/task-07-zero-cast.md",
+    "taskBase": "5485a65b33831c742f2d9dfe7eebcc4c164b6346",
+    "requestCastCounts": {
+      "cli": 0,
+      "mcp": 0
+    },
+    "requestCastExceptionCounts": {
+      "cli": 0,
+      "mcp": 0
+    },
+    "canonicalZeroBaseline": true,
+    "publicNoAnyProof": "wrapper/tests/types/breaking-changes.test-d.ts",
+    "riskStatus": "accepted",
+    "openApiChanged": false
   },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",
