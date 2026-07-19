@@ -319,14 +319,21 @@ const result = await listExpensesFiltered(
     },
 );
 
-console.log(result.items, result.warnings, result.meta.nextPage, result.meta.nextOffset);
+console.log(
+    result.items,
+    result.warnings,
+    result.meta.nextPage,
+    result.meta.nextOffset,
+    result.meta.nextMaxPages,
+);
 ```
 
 `limit` is the total returned-record cap; `pageSize` controls each wire
 request. `Last-Page` is authoritative when present. Without it, the helper
 uses page length plus the required bounded `maxPages` fallback. To resume,
-pass both `meta.nextPage` and `meta.nextOffset`; the offset preserves records
-when the total limit stops inside a filtered page.
+pass `meta.nextPage`, `meta.nextOffset`, and `meta.nextMaxPages`; the offset
+preserves records when the total limit stops inside a filtered page, while the
+continuation-specific page bound stays runnable near the supported ceiling.
 
 ### `iterPages` — for per-page envelopes
 

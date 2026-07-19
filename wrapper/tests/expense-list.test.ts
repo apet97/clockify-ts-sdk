@@ -333,6 +333,39 @@ describe("listExpensesFiltered", () => {
         expect(atCeiling.meta.nextPage).toBeUndefined();
     });
 
+    it("makes a limit-hit continuation runnable when its original scan bound reaches the ceiling", async () => {
+        const fetcher: ExpenseListFetcher<Expense> = (request) =>
+            page(
+                [{ id: request.page === 999_999 ? "first" : "second", date: "2026-06-01" }],
+                request.page === 1_000_000,
+            );
+
+        const first = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            { page: 999_999, pageSize: 1, limit: 1, maxPages: 2 },
+        );
+        if (first.meta.nextPage === undefined || first.meta.nextMaxPages === undefined) {
+            throw new Error("expected a runnable ceiling continuation");
+        }
+        const second = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            {
+                page: first.meta.nextPage,
+                pageSize: 1,
+                limit: 1,
+                maxPages: first.meta.nextMaxPages,
+            },
+        );
+
+        expect(first.meta).toMatchObject({ nextPage: 1_000_000, nextMaxPages: 1 });
+        expect([...first.items, ...second.items].map((item) => item.id)).toEqual([
+            "first",
+            "second",
+        ]);
+    });
+
     it("rejects a stale continuation offset that exceeds the filtered page", async () => {
         const fetcher: ExpenseListFetcher<Expense> = () =>
             page([{ id: "only", date: "2026-06-01" }], true);

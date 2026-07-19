@@ -54,6 +54,7 @@ export interface ExpenseListResult<TExpense> {
         hasMore: boolean;
         nextPage?: number;
         nextOffset?: number;
+        nextMaxPages?: number;
     };
 }
 
@@ -156,7 +157,10 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         lastPage,
         hasMore,
     };
-    if (hasMore && nextPage !== undefined) meta.nextPage = nextPage;
+    if (hasMore && nextPage !== undefined) {
+        meta.nextPage = nextPage;
+        meta.nextMaxPages = Math.min(maxPages, MAX_START_PAGE - nextPage + 1);
+    }
     if (hasMore && nextOffset !== undefined) meta.nextOffset = nextOffset;
 
     return {

@@ -144,7 +144,8 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                                               : { offset: result.meta.nextOffset }),
                                           pageSize: result.meta.pageSize,
                                           limit: result.meta.limit,
-                                          maxPages: result.meta.maxPages,
+                                          maxPages:
+                                              result.meta.nextMaxPages ?? result.meta.maxPages,
                                           ...(args.start !== undefined
                                               ? { start: args.start }
                                               : {}),

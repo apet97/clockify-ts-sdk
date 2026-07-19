@@ -507,20 +507,25 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(
             listContext(async (request) => {
-                const items = request.page === 999_999 ? [{ id: "row", date: "2026-06-01" }] : [];
+                const items = [
+                    {
+                        id: request.page === 999_999 ? "first" : "second",
+                        date: "2026-06-01",
+                    },
+                ];
                 return { expenses: { expenses: items } };
             }, captured),
         );
         const first = envelope(
             await client.callTool({
                 name: "clockify_expenses_list",
-                arguments: { page: 999_999, pageSize: 1, limit: 2, maxPages: 1 },
+                arguments: { page: 999_999, pageSize: 1, limit: 1, maxPages: 2 },
             }),
         );
         const continuation = (
             first.next as Array<{ tool: string; args: Record<string, unknown> }> | undefined
         )?.[0];
-        expect(continuation?.args).toMatchObject({ page: 1_000_000 });
+        expect(continuation?.args).toMatchObject({ page: 1_000_000, maxPages: 1 });
         if (continuation === undefined) throw new Error("expected a ceiling-safe continuation");
 
         const resumed = await client.callTool({
@@ -528,6 +533,9 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
             arguments: continuation.args,
         });
         expect(resumed.isError).toBeFalsy();
-        expect(envelope(resumed).meta).toMatchObject({ hasMore: false });
+        expect([
+            ...(first.data as Array<{ id: string }>),
+            ...(envelope(resumed).data as Array<{ id: string }>),
+        ]).toEqual([{ id: "first", date: "2026-06-01" }, { id: "second", date: "2026-06-01" }]);
     });
 });
