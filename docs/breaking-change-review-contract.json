@@ -45,10 +45,21 @@
       "id": "sdk-breaking-type-contract",
       "path": "wrapper/tests/types/breaking-changes.test-d.ts",
       "mustContain": [
+        "removed from the 1.0 root package; use ensureClient",
+        "removed from the 1.0 root package; use ArchiveThenDeleteAdapter<TCurrent>",
         "@ts-expect-error: removed in 1.0; use ensureClient",
         "@ts-expect-error: removed in 1.0; use ArchiveThenDeleteAdapter<TCurrent>",
         "allowNonClockifyHttpsHost",
         "IsAny<Parameters<Adapter"
+      ]
+    },
+    {
+      "id": "sdk-client-adapter-migration",
+      "path": "wrapper/examples/archive-then-delete-client-adapter.ts",
+      "mustContain": [
+        "ArchiveThenDeleteAdapter<ClockifyApi.Client>",
+        "body: clientArchiveReplacementBody(current)",
+        "address\", \"currencyCode\", \"email\", \"note"
       ]
     },
     {
@@ -120,7 +131,8 @@
         "Breaking change review",
         "Replacement first",
         "Changelog and migration notes",
-        "ArchiveThenDeleteAdapter<TCurrent>"
+        "ArchiveThenDeleteAdapter<TCurrent>",
+        "archive-then-delete-client-adapter.ts"
       ]
     },
     {

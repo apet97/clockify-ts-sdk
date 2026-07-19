@@ -72,7 +72,7 @@
       "findOrCreateClient": "ensureClient",
       "ArchiveThenDeleteResource": "ArchiveThenDeleteAdapter<TCurrent>"
     },
-    "compileProof": "NodeNext source, Bundler source, and built public-package self-reference configurations compile the replacement surface and compile-negative removal fixtures.",
+    "compileProof": "make breaking-change-review owns codegen -> sync -> build -> mapping/wiring tests -> Bundler and built public-package compile-negative fixtures -> prose contract checks; root and ensure-subpath removals plus project/client adapter migrations are compiled.",
     "task7RequestCastRiskStatus": "open"
   },
   "crossPackageReleaseProof": {

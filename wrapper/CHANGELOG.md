@@ -16,6 +16,8 @@ once v1.0.0 ships.
 - Removed the blanket-`any` `ArchiveThenDeleteResource` seam. Archive/delete
   helpers now take `ArchiveThenDeleteAdapter<TCurrent>` under `adapter`, with
   typed current state and explicit `getCurrent` → `archive` → `delete` callbacks.
+  The compile-checked client migration preserves every editable current field
+  in the replacement-body archive request before deletion.
 
 ### Changed
 

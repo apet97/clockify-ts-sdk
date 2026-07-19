@@ -1,6 +1,14 @@
 import { expectTypeOf, test } from "vitest";
 
-import { createClockifyClient } from "clockify-sdk-ts-115";
+import {
+    createClockifyClient,
+    ensureClient as rootEnsureClient,
+    type ArchiveThenDeleteAdapter as RootArchiveThenDeleteAdapter,
+} from "clockify-sdk-ts-115";
+// @ts-expect-error: removed from the 1.0 root package; use ensureClient
+import { findOrCreateClient as _rootFindOrCreateClient } from "clockify-sdk-ts-115";
+// @ts-expect-error: removed from the 1.0 root package; use ArchiveThenDeleteAdapter<TCurrent>
+import type { ArchiveThenDeleteResource as _RootArchiveThenDeleteResource } from "clockify-sdk-ts-115";
 import {
     ensureClient,
     type ArchiveThenDeleteAdapter,
@@ -21,6 +29,7 @@ interface CurrentClient {
 }
 
 type Adapter = ArchiveThenDeleteAdapter<CurrentClient>;
+type RootAdapter = RootArchiveThenDeleteAdapter<CurrentClient>;
 type _GetInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["getCurrent"]>[0]>>;
 type _ArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["archive"]>[0]>>;
 type _DeleteInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["delete"]>[0]>>;
@@ -46,6 +55,8 @@ test("ensureClient retains the find-or-create result contract", async () => {
     });
 
     expectTypeOf(result).toExtend<Promise<EnsureResult<NamedRecord>>>();
+    expectTypeOf(rootEnsureClient).toEqualTypeOf(ensureClient);
+    expectTypeOf<RootAdapter>().toEqualTypeOf<Adapter>();
 });
 
 test("archive-then-delete adapters carry typed current state into archive", () => {
