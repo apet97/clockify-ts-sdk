@@ -2900,5 +2900,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   envelope remains canonical. One exported helper now scans pages, applies
   inclusive date-only/ISO bounds client-side, honors `Last-Page`, falls back to
   bounded page-length termination, distinguishes total limit from page size,
-  and returns an explicit warning plus continuation metadata. CLI and MCP both
-  use it and no longer cast the expense-list response.
+  and returns an explicit warning plus lossless page/filtered-offset
+  continuation metadata. User bounds accept only valid date-only or RFC3339
+  values with an explicit `Z`/offset. CLI and MCP both use the helper and no
+  longer cast the expense-list response.

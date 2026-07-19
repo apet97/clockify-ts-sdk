@@ -97,6 +97,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             inputSchema: {
                 page: zNumberLike(z.number().int().min(1).max(1_000_000).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
+                offset: zNumberLike(z.number().int().min(0).max(199).default(0)).optional(),
                 limit: zNumberLike(z.number().int().min(1).max(10_000).default(50)).optional(),
                 maxPages: zNumberLike(z.number().int().min(1).max(1_000).default(100)).optional(),
                 start: z.string().optional(),
@@ -110,6 +111,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 {
                     page: args.page ?? 1,
                     pageSize: args.pageSize ?? 50,
+                    offset: args.offset ?? 0,
                     limit: args.limit ?? 50,
                     maxPages: args.maxPages ?? 100,
                     ...(args.start ? { start: args.start } : {}),
@@ -137,6 +139,9 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                                       tool: "clockify_expenses_list",
                                       args: {
                                           page: result.meta.nextPage,
+                                          ...(result.meta.nextOffset === undefined
+                                              ? {}
+                                              : { offset: result.meta.nextOffset }),
                                           pageSize: result.meta.pageSize,
                                           limit: result.meta.limit,
                                           maxPages: result.meta.maxPages,

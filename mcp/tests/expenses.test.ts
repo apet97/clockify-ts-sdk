@@ -431,7 +431,8 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
             pageSize: 2,
             limit: 3,
             pagesFetched: 3,
-            nextPage: 5,
+            nextPage: 4,
+            nextOffset: 1,
             hasMore: true,
         });
         expect(json.warnings).toEqual([
@@ -443,9 +444,22 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
         expect(json.next).toEqual([
             expect.objectContaining({
                 tool: "clockify_expenses_list",
-                args: expect.objectContaining({ page: 5, pageSize: 2, limit: 3 }),
+                args: expect.objectContaining({ page: 4, offset: 1, pageSize: 2, limit: 3 }),
             }),
         ]);
+
+        const continuation = (
+            json.next as Array<{ tool: string; args: Record<string, unknown> }> | undefined
+        )?.[0];
+        if (continuation === undefined) throw new Error("expected a runnable continuation");
+        const resumed = envelope(
+            await client.callTool({
+                name: continuation.tool,
+                arguments: continuation.args,
+            }),
+        );
+        expect((resumed.data as Array<{ id: string }>).map((item) => item.id)).toEqual(["later"]);
+        expect(resumed.meta).toMatchObject({ hasMore: false });
     });
 
     it("rejects unsafe page bounds before listing", async () => {
@@ -456,6 +470,19 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
         const res = await client.callTool({
             name: "clockify_expenses_list",
             arguments: { page: 1_000_001 },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.calls).toBeUndefined();
+    });
+
+    it("rejects a tampered continuation offset before listing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            listContext(async () => ({ expenses: { expenses: [] } }), captured),
+        );
+        const res = await client.callTool({
+            name: "clockify_expenses_list",
+            arguments: { pageSize: 2, offset: 2 },
         });
         expect(res.isError).toBe(true);
         expect(captured.calls).toBeUndefined();

@@ -22,6 +22,8 @@ export interface ExpenseListOptions {
     start?: string;
     end?: string;
     page?: number;
+    /** Number of already-returned filtered records to skip on the first page. */
+    offset?: number;
     pageSize?: number;
     limit?: number;
     maxPages?: number;
@@ -43,6 +45,7 @@ export interface ExpenseListResult<TExpense> {
     warnings: string[];
     meta: {
         page: number;
+        offset: number;
         pageSize: number;
         limit: number;
         maxPages: number;
@@ -50,6 +53,7 @@ export interface ExpenseListResult<TExpense> {
         lastPage: number;
         hasMore: boolean;
         nextPage?: number;
+        nextOffset?: number;
     };
 }
 
@@ -65,6 +69,7 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         1,
         MAX_PAGE_SIZE,
     );
+    const offset = boundedInteger("offset", options.offset ?? 0, 0, pageSize - 1);
     const limit = boundedInteger("limit", options.limit ?? DEFAULT_LIMIT, 1, MAX_LIMIT);
     const maxPages = boundedInteger(
         "maxPages",
@@ -86,9 +91,11 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
     let pagesFetched = 0;
     let lastPage = page;
     let hasMore = false;
+    let nextPage: number | undefined;
+    let nextOffset: number | undefined;
 
-    for (let offset = 0; offset < maxPages; offset += 1) {
-        const currentPage = page + offset;
+    for (let pageOffset = 0; pageOffset < maxPages; pageOffset += 1) {
+        const currentPage = page + pageOffset;
         const pending = fetcher({ ...request, page: currentPage, "page-size": pageSize });
         let envelope: ExpenseListEnvelope<TExpense>;
         let lastPageHeader: boolean | undefined;
@@ -101,9 +108,17 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         }
 
         const pageItems = envelope.expenses?.expenses ?? [];
-        const matching = pageItems.filter((item) => withinBounds(item.date, start, end));
+        const allMatching = pageItems.filter((item) => withinBounds(item.date, start, end));
+        const currentOffset = pageOffset === 0 ? offset : 0;
+        if (currentOffset > 0 && currentOffset >= allMatching.length) {
+            throw new RangeError(
+                "offset does not identify an unreturned filtered record on the requested page",
+            );
+        }
+        const matching = allMatching.slice(currentOffset);
         const remaining = limit - items.length;
-        items.push(...matching.slice(0, remaining));
+        const selected = matching.slice(0, remaining);
+        items.push(...selected);
         pagesFetched += 1;
         lastPage = currentPage;
 
@@ -113,13 +128,27 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
                 : lastPageHeader === false
                   ? true
                   : pageItems.length === pageSize;
-        hasMore = matching.length > remaining || upstreamHasMore;
+        const pageHasUnreturnedMatches = matching.length > selected.length;
+        if (pageHasUnreturnedMatches) {
+            hasMore = true;
+            nextPage = currentPage;
+            nextOffset = currentOffset + selected.length;
+            break;
+        }
 
-        if (items.length >= limit || !upstreamHasMore) break;
+        if (items.length >= limit || !upstreamHasMore) {
+            hasMore = items.length >= limit && upstreamHasMore;
+            if (hasMore) nextPage = currentPage + 1;
+            break;
+        }
+
+        hasMore = true;
+        nextPage = currentPage + 1;
     }
 
     const meta: ExpenseListResult<TExpense>["meta"] = {
         page,
+        offset,
         pageSize,
         limit,
         maxPages,
@@ -127,7 +156,8 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         lastPage,
         hasMore,
     };
-    if (hasMore) meta.nextPage = lastPage + 1;
+    if (hasMore && nextPage !== undefined) meta.nextPage = nextPage;
+    if (hasMore && nextOffset !== undefined) meta.nextOffset = nextOffset;
 
     return {
         items,
@@ -145,16 +175,11 @@ function boundedInteger(name: string, value: number, min: number, max: number): 
 
 function parseBoundary(value: string | undefined, edge: "start" | "end"): number | undefined {
     if (value === undefined) return undefined;
-    const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
-    const normalized = dateOnly
-        ? `${value}T${edge === "start" ? "00:00:00.000" : "23:59:59.999"}Z`
-        : value;
-    const timestamp = Date.parse(normalized);
-    if (!Number.isFinite(timestamp)) {
-        throw new RangeError(`${edge} must be a valid YYYY-MM-DD or ISO-8601 timestamp`);
-    }
-    if (dateOnly && new Date(timestamp).toISOString().slice(0, 10) !== value) {
-        throw new RangeError(`${edge} must be a valid calendar date`);
+    const timestamp = parseContractDate(value, edge);
+    if (timestamp === undefined) {
+        throw new RangeError(
+            `${edge} must be a valid YYYY-MM-DD or RFC3339 timestamp with Z or an offset`,
+        );
     }
     return timestamp;
 }
@@ -166,9 +191,92 @@ function withinBounds(
 ): boolean {
     if (start === undefined && end === undefined) return true;
     if (date === undefined) return false;
-    const timestamp = Date.parse(date);
-    if (!Number.isFinite(timestamp)) return false;
+    const timestamp = parseContractDate(date, "start");
+    if (timestamp === undefined) return false;
     return (start === undefined || timestamp >= start) && (end === undefined || timestamp <= end);
+}
+
+function parseContractDate(value: string, edge: "start" | "end"): number | undefined {
+    const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (dateOnly) {
+        const [, yearText, monthText, dayText] = dateOnly;
+        const year = Number(yearText);
+        const month = Number(monthText);
+        const day = Number(dayText);
+        if (!validCalendarDate(year, month, day)) return undefined;
+        return utcTimestamp(
+            year,
+            month,
+            day,
+            edge === "start" ? 0 : 23,
+            edge === "start" ? 0 : 59,
+            edge === "start" ? 0 : 59,
+            edge === "start" ? 0 : 999,
+        );
+    }
+
+    const timestamp =
+        /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|([+-])(\d{2}):(\d{2}))$/.exec(
+            value,
+        );
+    if (!timestamp) return undefined;
+    const [
+        ,
+        yearText,
+        monthText,
+        dayText,
+        hourText,
+        minuteText,
+        secondText,
+        fractionText = "",
+        zone,
+        sign,
+        offsetHourText,
+        offsetMinuteText,
+    ] = timestamp;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+    const second = Number(secondText);
+    const offsetHour = zone === "Z" ? 0 : Number(offsetHourText);
+    const offsetMinute = zone === "Z" ? 0 : Number(offsetMinuteText);
+    if (
+        !validCalendarDate(year, month, day) ||
+        hour > 23 ||
+        minute > 59 ||
+        second > 59 ||
+        offsetHour > 23 ||
+        offsetMinute > 59
+    ) {
+        return undefined;
+    }
+    const millisecond = Number(fractionText.slice(0, 3).padEnd(3, "0"));
+    const offset = (offsetHour * 60 + offsetMinute) * 60_000 * (sign === "-" ? -1 : 1);
+    return utcTimestamp(year, month, day, hour, minute, second, millisecond) - offset;
+}
+
+function validCalendarDate(year: number, month: number, day: number): boolean {
+    if (month < 1 || month > 12 || day < 1) return false;
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day <= (days[month - 1] ?? 0);
+}
+
+function utcTimestamp(
+    year: number,
+    month: number,
+    day: number,
+    hour: number,
+    minute: number,
+    second: number,
+    millisecond: number,
+): number {
+    const date = new Date(0);
+    date.setUTCFullYear(year, month - 1, day);
+    date.setUTCHours(hour, minute, second, millisecond);
+    return date.getTime();
 }
 
 function parseLastPage(value: string | null): boolean | undefined {
