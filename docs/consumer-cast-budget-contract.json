@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "purpose": "CLI and MCP request construction must contain zero escape-hatch assertions. The source-aware ratchet rejects direct, chained, angle-bracket, helper-hidden, never, and any-backed request casts while ignoring response narrows, ordinary non-request assertions, and test-only fixtures. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
+  "purpose": "CLI and MCP request construction must contain zero escape-hatch assertions. The compiler-aware ratchet uses generated-type provenance and request-bound dataflow across aliases, assignments, bindings, expressions, spreads, helpers, and Function invocation adapters while ignoring response narrows, unrelated any values, ordinary non-request assertions, and test-only fixtures. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
   "requestCastGovernance": {
     "canonicalZeroBaseline": true,
     "sourceRoots": {
@@ -34,7 +34,17 @@
       "_RootGetInputIsNotAny",
       "_RootArchiveInputIsNotAny",
       "_RootDeleteInputIsNotAny"
-    ]
+    ],
+    "isAnyDefinition": "0extends1&T?true:false",
+    "assertFalseDefinition": "Textendsfalse=T",
+    "operands": {
+      "_GetInputIsNotAny": "Parameters<Adapter[\"getCurrent\"]>[0]",
+      "_ArchiveInputIsNotAny": "Parameters<Adapter[\"archive\"]>[0]",
+      "_DeleteInputIsNotAny": "Parameters<Adapter[\"delete\"]>[0]",
+      "_RootGetInputIsNotAny": "Parameters<RootAdapter[\"getCurrent\"]>[0]",
+      "_RootArchiveInputIsNotAny": "Parameters<RootAdapter[\"archive\"]>[0]",
+      "_RootDeleteInputIsNotAny": "Parameters<RootAdapter[\"delete\"]>[0]"
+    }
   },
   "forbiddenRequestEscape": {
     "identifier": "wireBody",

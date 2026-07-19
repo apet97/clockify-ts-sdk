@@ -29,6 +29,16 @@ export const CANONICAL_CONSUMER_CAST_CONTRACT = Object.freeze({
             "_RootArchiveInputIsNotAny",
             "_RootDeleteInputIsNotAny",
         ]),
+        isAnyDefinition: "0extends1&T?true:false",
+        assertFalseDefinition: "Textendsfalse=T",
+        operands: Object.freeze({
+            _GetInputIsNotAny: 'Parameters<Adapter["getCurrent"]>[0]',
+            _ArchiveInputIsNotAny: 'Parameters<Adapter["archive"]>[0]',
+            _DeleteInputIsNotAny: 'Parameters<Adapter["delete"]>[0]',
+            _RootGetInputIsNotAny: 'Parameters<RootAdapter["getCurrent"]>[0]',
+            _RootArchiveInputIsNotAny: 'Parameters<RootAdapter["archive"]>[0]',
+            _RootDeleteInputIsNotAny: 'Parameters<RootAdapter["delete"]>[0]',
+        }),
     }),
 });
 
@@ -78,8 +88,38 @@ export function validatePublicNoAnyProofSource(
         ts.ScriptKind.TS,
     );
     const assertions = new Map();
+    let isAnyDefinition = null;
+    let assertFalseDefinition = null;
+    const compact = (value) => value.replace(/\s+/g, "");
     for (const statement of sourceFile.statements) {
         if (!ts.isTypeAliasDeclaration(statement)) continue;
+        if (statement.name.text === "IsAny") {
+            const parameter = statement.typeParameters?.[0];
+            if (
+                statement.typeParameters?.length === 1 &&
+                parameter?.name.text === "T" &&
+                !parameter.constraint &&
+                !parameter.default
+            ) {
+                isAnyDefinition = compact(statement.type.getText(sourceFile));
+            }
+            continue;
+        }
+        if (statement.name.text === "AssertFalse") {
+            const parameter = statement.typeParameters?.[0];
+            if (
+                statement.typeParameters?.length === 1 &&
+                parameter?.name.text === "T" &&
+                parameter.constraint &&
+                !parameter.default &&
+                statement.type.getText(sourceFile) === "T"
+            ) {
+                assertFalseDefinition = `${parameter.name.text}extends${compact(
+                    parameter.constraint.getText(sourceFile),
+                )}=${statement.type.getText(sourceFile)}`;
+            }
+            continue;
+        }
         const outer = statement.type;
         const inner = ts.isTypeReferenceNode(outer) ? outer.typeArguments?.[0] : null;
         const validShape =
@@ -89,27 +129,53 @@ export function validatePublicNoAnyProofSource(
             ts.isTypeReferenceNode(inner) &&
             inner.typeName.getText(sourceFile) === "IsAny" &&
             inner.typeArguments?.length === 1;
-        assertions.set(statement.name.text, Boolean(validShape));
+        assertions.set(
+            statement.name.text,
+            validShape ? compact(inner.typeArguments[0].getText(sourceFile)) : null,
+        );
+    }
+    if (isAnyDefinition !== proof.isAnyDefinition) {
+        failures.push("publicNoAnyProof IsAny definition is not canonical");
+    }
+    if (assertFalseDefinition !== proof.assertFalseDefinition) {
+        failures.push("publicNoAnyProof AssertFalse definition is not canonical");
     }
     for (const marker of proof.contains) {
-        if (assertions.get(marker) !== true) {
+        const expectedOperand = compact(proof.operands?.[marker] ?? "");
+        if (assertions.get(marker) !== expectedOperand) {
             failures.push(`publicNoAnyProof is missing compiler assertion type ${marker}`);
         }
     }
     return failures;
 }
 
-function makeTargetBlock(makefile, target) {
+function makeTarget(makefile, target) {
     const lines = makefile.split("\n");
     const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const start = lines.findIndex((line) => new RegExp(`^${escaped}\\s*:`).test(line));
     if (start < 0) return null;
-    const block = [lines[start]];
+    const header = lines[start].replace(/\s+#.*$/, "");
+    const separator = header.indexOf(":");
+    const prerequisites = new Set(
+        header
+            .slice(separator + 1)
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean),
+    );
+    const recipes = new Set();
     for (let index = start + 1; index < lines.length; index += 1) {
         if (/^[A-Za-z0-9_.-]+\s*:/.test(lines[index])) break;
-        block.push(lines[index]);
+        if (!lines[index].startsWith("\t")) continue;
+        const executable = lines[index]
+            .slice(1)
+            .trimStart()
+            .replace(/^[@+-]+/, "")
+            .trimStart();
+        if (!executable || executable.startsWith("#")) continue;
+        recipes.add(executable.replace(/\s+#.*$/, "").trimEnd());
     }
-    return block.join("\n");
+    return { prerequisites, recipes };
 }
 
 export function validateConsumerCastMakeWiring(
@@ -117,12 +183,10 @@ export function validateConsumerCastMakeWiring(
     proof = CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof,
 ) {
     const failures = [];
-    const block = makeTargetBlock(makefile, proof.compilerGate);
-    if (block == null)
+    const target = makeTarget(makefile, proof.compilerGate);
+    if (target == null)
         return [`publicNoAnyProof.compilerGate target ${proof.compilerGate} does not exist`];
-    if (
-        !new RegExp(`^${proof.compilerGate}\\s*:\\s*[^\n]*\\bsdk-wrapper-build\\b`, "m").test(block)
-    ) {
+    if (!target.prerequisites.has("sdk-wrapper-build")) {
         failures.push(`${proof.compilerGate} must depend on sdk-wrapper-build`);
     }
     for (const command of [
@@ -130,7 +194,7 @@ export function validateConsumerCastMakeWiring(
         "node scripts/check-consumer-cast-budget.mjs",
         proof.compilerCommand,
     ]) {
-        if (!block.includes(command))
+        if (!target.recipes.has(command))
             failures.push(`${proof.compilerGate} must execute ${command}`);
     }
     return failures;

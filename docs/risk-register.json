@@ -332,7 +332,7 @@
       "surface": "CLI and MCP request typing",
       "summary": "CLI and MCP request construction currently measures zero escape-hatch request casts, but the corrected symbol-aware ratchet is pending independent reviewer approval.",
       "impact": "A future generated-schema mismatch cannot be hidden by a direct, chained, angle-bracket, never, helper-generic, or any-backed request assertion without failing the owning contract gate.",
-      "mitigation": "Keep both canonical exception arrays empty, keep the TypeScript symbol/provenance and bounded dataflow fixture suite green, and obtain independent review of the corrected gate before acceptance.",
+      "mitigation": "Keep both canonical exception arrays empty, keep the TypeScript symbol/provenance and request-bound dataflow fixture suite green, pin the exact compiler proof and executable Make wiring, and obtain independent review of the corrected gate before acceptance.",
       "closureGate": "Pending independent reviewer approval after `make consumer-cast-budget risk-register contract-gates`, full wrapper/CLI/MCP lint/type/test/build proof, package proof, and the corrected `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
       "evidence": [
         {
