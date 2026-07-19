@@ -215,19 +215,22 @@ make docs-drift
 - `wrapper/src/**` and `output/ts-sdk/**` are generated. Do not edit.
 - **CLI/MCP request assertions are a zero baseline.** Run `make
   consumer-cast-budget`; it uses TypeScript symbol provenance and bounded
-  request-bound dataflow for all potentially reaching variable/property writes,
-  bindings, accessors, contributing expressions/spreads, direct/chained/
+  request-bound dataflow for all potentially reaching receiver-qualified
+  variable/property writes (including computed keys), nested/defaulted bindings,
+  accessors, contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
-  Function `call`/`apply`/`bind`, and symbol-provenance calls erased to `any`.
+  Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
+  receivers, methods, helper parameters/results, or holder properties to `any`.
   Discarded comma operands are not request contributors. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,
   generated type, discrepancy, open risk, evidence, and closure record. The
   existing Task 6 public-package fixture owns the no-`any` adapter proof, and
   this Make target executes its compiler gate after SDK codegen/build, pinning
-  exact `IsAny` semantics, both public adapter import/type-argument aliases, and
-  all six callback operands. Local structural counterfeits and comment-only Make
-  prerequisites/recipes do not satisfy the check.
+  exact `IsAny` semantics, the unshadowed `Parameters` built-in, both public
+  adapter import/type-argument aliases, and all six callback operands. Local
+  structural/built-in counterfeits and comment-only Make prerequisites/recipes
+  do not satisfy the check.
 - `spec/corrected/clockify.corrected.openapi.yaml` is generated upstream by
   GOCLMCP. The only accepted diff here is a straight copy from
   `../GOCLMCP/docs/openapi/clockify-openapi.yaml` after GOCLMCP's generator

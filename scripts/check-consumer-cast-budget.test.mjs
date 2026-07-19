@@ -381,6 +381,56 @@ test("does not conflate property writes on distinct receiver symbols", async () 
     );
 });
 
+test("does not let a different receiver write cut off an unsafe reaching property write", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const unsafe: Holder = { request: { workspaceId: "initial" } }; const safe: Holder = { request: { workspaceId: "safe" } }; unsafe.request = body as any; safe.request = { workspaceId: "later-safe" }; return client.projects.create(unsafe.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects request escapes through a const-literal computed property write", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const holder: { request: ClockifyApi.CreateProjectsRequest } = { request: { workspaceId: "safe" } }; const key: "request" = "request"; holder[key] = body as any; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects an unresolved computed write that may target the request property", async () => {
+    await withFixture(
+        `${generatedImports}type Holder = Record<string, unknown> & { request: ClockifyApi.CreateProjectsRequest };\nexport async function run(client: FixtureClient, body: unknown, key: string) { const holder: Holder = { request: { workspaceId: "safe" } }; holder[key] = body as any; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("does not spread an unresolved computed write across distinct receivers", async () => {
+    await withFixture(
+        `${generatedImports}type Holder = Record<string, unknown> & { request: ClockifyApi.CreateProjectsRequest };\nexport async function run(client: FixtureClient, body: unknown, key: string) { const holder: Holder = { request: { workspaceId: "safe" } }; const other: Holder = { request: { workspaceId: "other" } }; other[key] = body as any; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not conflate a known different computed property with request", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest; other: unknown }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" }, other: null }; const key: "other" = "other"; holder[key] = body as any; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("rejects request escapes from relevant property declarations", async () => {
     await withFixture(
         `${generatedImports}class Holder { request: any; constructor(body: unknown) { this.request = body; } }\nexport async function run(client: FixtureClient, body: unknown) { const holder = new Holder(body); return client.projects.create(holder.request); }\n`,
@@ -410,6 +460,78 @@ test("rejects request escapes flowing through array binding elements", async () 
         },
     );
 });
+
+test("rejects a request escape in an array binding default", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const [request = body as any]: [ClockifyApi.CreateProjectsRequest?] = []; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects a request escape in an object binding default", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const { request = body as any }: { request?: ClockifyApi.CreateProjectsRequest } = {}; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, binding] of [
+    ["array", "const [request = body as any] = [undefined];"],
+    ["object", "const { request = body as any } = { request: undefined };"],
+]) {
+    test(`rejects a ${label} binding default reached through explicit undefined`, async () => {
+        await withFixture(
+            `${generatedImports}export async function run(client: FixtureClient, body: unknown) { ${binding} return client.projects.create(request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("rejects request escapes flowing through nested binding patterns", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const { inner: { request } } = { inner: { request: body as any } }; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, binding] of [
+    [
+        "array",
+        'const [request = body as any] = [{ workspaceId: "safe" }];',
+    ],
+    [
+        "object",
+        'const { request = body as any } = { request: { workspaceId: "safe" } };',
+    ],
+]) {
+    test(`does not flag an unreachable ${label} binding default`, async () => {
+        await withFixture(
+            `${generatedImports}export async function run(client: FixtureClient, body: unknown) { ${binding} return client.projects.create(request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
 
 test("rejects request escapes flowing through object binding elements", async () => {
     await withFixture(
@@ -535,6 +657,56 @@ for (const [label, invocation] of [
         );
     });
 }
+
+test("recovers a generated request boundary through an any helper parameter", async () => {
+    await withFixture(
+        `${generatedImports}function invoke(create: any, body: unknown) { return create(body as never); }\nexport async function run(client: FixtureClient, body: unknown) { return invoke(client.projects.create, body); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("recovers a generated request boundary from an any helper call result", async () => {
+    await withFixture(
+        `${generatedImports}function requestMethod(client: FixtureClient): any { return client.projects.create; }\nexport async function run(client: FixtureClient, body: unknown) { const create = requestMethod(client); return create(body as never); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("recovers a generated request boundary from an any-valued object holder", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const holder: { create: any } = { create: client.projects.create }; return holder.create(body as never); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("recovers a generated request boundary through an any-erased Function.call", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { return (client.projects.create as any).call(client.projects, body as never); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("does not infer a generated boundary through an unrelated any helper parameter", async () => {
+    await withFixture(
+        `${generatedImports}function invoke(send: any, body: unknown) { return send(body as never); }\nexport function run(body: unknown) { return invoke((value: string) => value, body); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
 
 for (const [label, invocation] of [
     ["erased client receiver", "(client as any).projects.create(body as never)"],
@@ -713,6 +885,51 @@ test("rejects a compiler-green counterfeit no-any fixture without public import 
         });
         assert.deepEqual(ts.getPreEmitDiagnostics(program), []);
         assert.notDeepEqual(validatePublicNoAnyProofSource(source), []);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
+
+test("rejects local shadowing of the Parameters built-in used by the public proof", async () => {
+    const source = await readFile(
+        path.join(repoRoot, CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.path),
+        "utf8",
+    );
+    const shadowed = source.replace(
+        "type IsAny<T> = 0 extends 1 & T ? true : false;",
+        "type Parameters<T> = [unknown];\ntype IsAny<T> = 0 extends 1 & T ? true : false;",
+    );
+    assert.notDeepEqual(validatePublicNoAnyProofSource(shadowed), []);
+});
+
+test("rejects a compiler-green public fixture with a shadowed Parameters built-in", async () => {
+    const source = await readFile(
+        path.join(repoRoot, CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.path),
+        "utf8",
+    );
+    const shadowed = source.replace(
+        "type IsAny<T> = 0 extends 1 & T ? true : false;",
+        "type Parameters<T> = [unknown];\ntype IsAny<T> = 0 extends 1 & T ? true : false;",
+    );
+    const root = await mkdtemp(
+        path.join(repoRoot, "wrapper/tests/types/.cast-proof-parameters-"),
+    );
+    try {
+        const fixture = path.join(root, "shadowed.test-d.ts");
+        await writeFile(fixture, shadowed);
+        const program = ts.createProgram({
+            rootNames: [fixture],
+            options: {
+                module: ts.ModuleKind.ESNext,
+                moduleResolution: ts.ModuleResolutionKind.Bundler,
+                noEmit: true,
+                skipLibCheck: true,
+                strict: true,
+                target: ts.ScriptTarget.ES2022,
+            },
+        });
+        assert.deepEqual(ts.getPreEmitDiagnostics(program), []);
+        assert.notDeepEqual(validatePublicNoAnyProofSource(shadowed), []);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
