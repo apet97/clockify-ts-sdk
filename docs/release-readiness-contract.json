@@ -45,6 +45,18 @@
     "docs/supply-chain-policy.md",
     "docs/risk-register.md"
   ],
+  "riskRegister": {
+    "path": "docs/risk-register.json",
+    "requiredOpenFinalReadinessBlockingIds": [
+      "expense-date-filter-contract",
+      "expense-update-file-schema",
+      "operation-parity-generated-reachability",
+      "consumer-request-casts",
+      "cross-package-release-proof-asymmetry",
+      "remote-mutation-proof-pending"
+    ],
+    "expectedFinalReadinessRiskStatus": "blocked"
+  },
   "decisionPlanner": {
     "path": "scripts/release-decision-plan.mjs",
     "contains": [

@@ -4,6 +4,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildReport as buildReleaseDecisionPlan } from "./release-decision-plan.mjs";
+import { buildReport as buildRiskStatusReport } from "./risk-status-report.mjs";
 
 const root = process.cwd();
 let failures = [];
@@ -166,6 +167,24 @@ function validateGeneratedReportContract(label, generatedReport) {
     }
 }
 
+function validateRiskRegisterContract() {
+    const riskRegister = contract.riskRegister;
+    if (riskRegister == null || typeof riskRegister !== "object" || Array.isArray(riskRegister)) {
+        fail("riskRegister", "must be an object");
+        return;
+    }
+    releaseRelativePath("riskRegister.path", riskRegister.path);
+    const blockerIds = assertStringArray(
+        "riskRegister.requiredOpenFinalReadinessBlockingIds",
+        riskRegister.requiredOpenFinalReadinessBlockingIds,
+        { allowEmpty: false },
+    );
+    assertUnique(blockerIds, "riskRegister.requiredOpenFinalReadinessBlockingIds");
+    if (riskRegister.expectedFinalReadinessRiskStatus !== "blocked") {
+        fail("riskRegister.expectedFinalReadinessRiskStatus", "must be blocked while required blockers remain open");
+    }
+}
+
 function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
@@ -189,6 +208,7 @@ function validateContractShape() {
     assertStringArray("requiredTargets", contract.requiredTargets, { allowEmpty: false });
     assertStringArray("requiredDocs", contract.requiredDocs, { allowEmpty: false });
     assertStringArray("evidenceAreas", contract.evidenceAreas, { allowEmpty: false });
+    validateRiskRegisterContract();
     for (const [index, docPath] of (contract.requiredDocs ?? []).entries()) {
         releaseRelativePath(`requiredDocs[${index}]`, docPath);
     }
@@ -241,6 +261,34 @@ const docsIndex = await readRel("docs/README.md", "docsIndex");
 const qualityGates = await readRel("docs/quality-gates.md", "qualityGates");
 const contractInventory = await readRel("docs/contract-inventory.json", "contractInventory");
 const enterpriseAudit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
+
+if (contract.riskRegister) {
+    const riskRegister = JSON.parse(await readRel(contract.riskRegister.path, "riskRegister.path"));
+    const requiredBlockerIds = contract.riskRegister.requiredOpenFinalReadinessBlockingIds ?? [];
+    const risksById = new Map((riskRegister.risks ?? []).map((risk) => [risk.id, risk]));
+    for (const id of requiredBlockerIds) {
+        const risk = risksById.get(id);
+        if (!risk) {
+            fail("riskRegister", `missing ${id}`);
+            continue;
+        }
+        if (risk.status !== "open") fail("riskRegister", `${id} must remain open until its closure gate passes`);
+        if (risk.finalReadinessBlocking !== true) {
+            fail("riskRegister", `${id} must set finalReadinessBlocking: true`);
+        }
+    }
+    const riskStatus = await buildRiskStatusReport({ status: "all" });
+    assertExactFields(
+        riskStatus.riskRoutingSummary,
+        { finalReadinessRiskStatus: contract.riskRegister.expectedFinalReadinessRiskStatus },
+        "riskRegister.riskRoutingSummary",
+    );
+    assertArrayContains(
+        riskStatus.readinessBlockingRiskIds,
+        requiredBlockerIds,
+        "riskRegister.readinessBlockingRiskIds",
+    );
+}
 
 const checklist = await readRel(contract.checklist.path, "checklist.path");
 includesAll(checklist, contract.checklist.contains, contract.checklist.path);

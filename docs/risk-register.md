@@ -60,6 +60,11 @@ includes `riskRoutingSummary.finalReadinessRiskStatus`, plus `Blocking risk coun
 the final-readiness risk layer is blocked without mentally counting individual
 risk rows.
 
+The active 1.0 sequence is [`roadmap-1.0.md`](./roadmap-1.0.md). Its six
+required open blockers are release-blocking by contract. Neither a source or
+documentation marker nor a static report can close one: only the listed closure
+gate and its recorded command receipt can do that.
+
 | ID | Status | Surface | Summary | Closure gate |
 |---|---|---|---|---|
 | `fern-bare-array-pagination` | `accepted` | SDK generation | Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface. | No closure planned; keep as historical evidence unless the pagination helper surface is intentionally redesigned. |
@@ -70,6 +75,12 @@ risk rows.
 | `legacy-release-workflow-needs-maintainer-decision` | `accepted` | CI/CD release automation | Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; each workflow publishes on a tag whose version matches its package.json). | Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing. |
 | `generated-core-is-not-product` | `accepted` | OpenAPI/local generation | Generated code is a replaceable lower layer, not the product surface users should depend on directly. | No closure planned; this is a permanent architecture constraint. |
 | `webhook-url-guard-no-dns-rebinding` | `accepted` | MCP webhook safety | The offline `clockify_setup_webhook` URL guard rejects non-HTTPS callbacks, embedded credentials, and private/loopback/link-local/CGNAT/metadata IPs, but it resolves nothing, so it cannot defend against DNS rebinding (a hostname that passes the check, then resolves to a private IP at request time). | No closure planned; this is an accepted limitation of an offline guard. Re-evaluate only if the MCP gains a request-time host-resolution check. |
+| `expense-date-filter-contract` | `open` | Expense query contract | Expense date filtering is not yet wire-proven as one typed cross-surface contract. | Task 2 focused proof plus `make operation-parity-drift` and `make contract-gates`. |
+| `expense-update-file-schema` | `open` | Expense update request schema | The generated multipart file field and the supported scalar expense update are not yet reconciled. | Task 3 focused proof plus `make sdk-codegen-test`, `make consumer-cast-budget`, and `make contract-gates`. |
+| `operation-parity-generated-reachability` | `open` | Generated operation parity | Parity inventory does not yet prove each claimed generated operation is publicly reachable. | Task 5 focused reachability proof plus `make sdk-codegen-drift`, `make operation-parity-drift`, and `make contract-gates`. |
+| `consumer-request-casts` | `open` | CLI and MCP request typing | Request casts remain a temporary escape hatch rather than a zero-cast public boundary. | Task 7 focused proof plus `make consumer-cast-budget` and `make contract-gates` with the approved zero-cast budget. |
+| `cross-package-release-proof-asymmetry` | `open` | SDK/CLI/MCP release proof | Equivalent exact-artifact consumer proof has not yet been demonstrated for all three packages. | Tasks 9-13 complete, then `make perfect-full`, `make pack-smoke`, and `make release-readiness` with recorded receipts. |
+| `remote-mutation-proof-pending` | `open` | Mutation score proof | The 1.0 mutation proof has not yet run and been retained through GitHub Actions. | Tasks 14-18 complete, a successful GitHub Actions `Mutation` receipt covers approved targets, and `make mutation-ci` passes. |
 
 ## Operator rule
 

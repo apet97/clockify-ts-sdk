@@ -85,9 +85,22 @@
         "acceptedRiskCount"
       ],
       "requiredRiskIds": [
-        "legacy-release-workflow-needs-maintainer-decision"
+        "legacy-release-workflow-needs-maintainer-decision",
+        "expense-date-filter-contract",
+        "expense-update-file-schema",
+        "operation-parity-generated-reachability",
+        "consumer-request-casts",
+        "cross-package-release-proof-asymmetry",
+        "remote-mutation-proof-pending"
       ],
-      "requiredReadinessBlockingRiskIds": [],
+      "requiredReadinessBlockingRiskIds": [
+        "expense-date-filter-contract",
+        "expense-update-file-schema",
+        "operation-parity-generated-reachability",
+        "consumer-request-casts",
+        "cross-package-release-proof-asymmetry",
+        "remote-mutation-proof-pending"
+      ],
       "requiredNonBlockingOpenOrProvisionalRiskIds": []
     }
   },
@@ -216,6 +229,126 @@
         {
           "path": "scripts/check-generator-independence.mjs",
           "contains": "output/ts-sdk"
+        }
+      ]
+    },
+    {
+      "id": "expense-date-filter-contract",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "Expense query contract",
+      "summary": "Expense date filtering has not yet been locked to a typed, wire-proven contract across the supported SDK, CLI, and MCP surfaces.",
+      "impact": "A consumer can receive a plausible but incorrectly bounded expense list when date filters are translated inconsistently or forwarded without contract proof.",
+      "mitigation": "Keep the issue visible until Task 2 adds the smallest typed filter contract and focused cross-surface proof.",
+      "closureGate": "Task 2 focused proof plus `make operation-parity-drift` and `make contract-gates`.",
+      "evidence": [
+        {
+          "path": "cli/src/commands/expenses.ts",
+          "contains": "Clockify expense `date` is ISO-8601"
+        },
+        {
+          "path": "docs/roadmap-1.0.md",
+          "contains": "expense-date-filter-contract"
+        }
+      ]
+    },
+    {
+      "id": "expense-update-file-schema",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "Expense update request schema",
+      "summary": "The generated expense-update request shape still exposes a multipart file field that the supported scalar update workflow does not model truthfully.",
+      "impact": "Callers may need an unsafe request cast or may assume a file-upload update shape that the supported workflow cannot prove.",
+      "mitigation": "Keep the explicit scalar-versus-multipart mismatch visible until Task 3 corrects the contract and removes the unsupported path.",
+      "closureGate": "Task 3 focused proof plus `make sdk-codegen-test`, `make consumer-cast-budget`, and `make contract-gates`.",
+      "evidence": [
+        {
+          "path": "cli/src/commands/expenses.ts",
+          "contains": "expense update scalar shape omits the generated multipart file"
+        },
+        {
+          "path": "docs/roadmap-1.0.md",
+          "contains": "expense-update-file-schema"
+        }
+      ]
+    },
+    {
+      "id": "operation-parity-generated-reachability",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "Generated operation parity",
+      "summary": "The parity inventory does not yet prove that every claimed generated operation is reachable through the intended public SDK surface.",
+      "impact": "A parity row can look covered while the generated method is missing, inaccessible, or only present behind an unsupported path.",
+      "mitigation": "Treat generated inventory markers as orientation only until Task 5 adds reachability proof and regenerates the parity surface.",
+      "closureGate": "Task 5 focused reachability proof plus `make sdk-codegen-drift`, `make operation-parity-drift`, and `make contract-gates`.",
+      "evidence": [
+        {
+          "path": "docs/operation-parity.json",
+          "contains": "operationId"
+        },
+        {
+          "path": "scripts/generate-operation-parity.mjs",
+          "contains": "operation parity"
+        }
+      ]
+    },
+    {
+      "id": "consumer-request-casts",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "CLI and MCP request typing",
+      "summary": "Consumer request casts remain a temporary escape hatch instead of a zero-cast public request boundary.",
+      "impact": "A generated schema mismatch can be hidden at the CLI or MCP boundary and reach a live request without type-level protection.",
+      "mitigation": "Keep the cast budget at the existing ratchet and close this blocker only after Task 7 removes or proves every remaining request cast.",
+      "closureGate": "Task 7 focused proof plus `make consumer-cast-budget` and `make contract-gates` with the approved zero-cast budget.",
+      "evidence": [
+        {
+          "path": "scripts/check-consumer-cast-budget.mjs",
+          "contains": "allowedRequestCastBudget"
+        },
+        {
+          "path": "cli/src/commands/expenses.ts",
+          "contains": "KEEP as never"
+        }
+      ]
+    },
+    {
+      "id": "cross-package-release-proof-asymmetry",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "SDK/CLI/MCP release proof",
+      "summary": "The three npm packages do not yet share one exact-artifact release proof that demonstrates equivalent consumer-install evidence.",
+      "impact": "One package can look ready while another lacks the packed-consumer or release-proof evidence needed for a coordinated 1.0 claim.",
+      "mitigation": "Keep release readiness blocked until Tasks 9 through 13 establish the shared artifact engine, all three adoptions, and the manual governance receipt.",
+      "closureGate": "Tasks 9-13 complete, then `make perfect-full`, `make pack-smoke`, and `make release-readiness` with recorded receipts.",
+      "evidence": [
+        {
+          "path": "docs/release-readiness-checklist.md",
+          "contains": "Packed consumer"
+        },
+        {
+          "path": "docs/roadmap-1.0.md",
+          "contains": "cross-package-release-proof-asymmetry"
+        }
+      ]
+    },
+    {
+      "id": "remote-mutation-proof-pending",
+      "status": "open",
+      "finalReadinessBlocking": true,
+      "surface": "Mutation score proof",
+      "summary": "Required mutation proof has not yet been executed and retained through the GitHub-only workflow for the planned 1.0 scope.",
+      "impact": "Local configuration or static wiring can be green while the governed mutation targets have no remote execution receipt.",
+      "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
+      "closureGate": "Tasks 14-18 complete, a successful GitHub Actions `Mutation` receipt covers approved targets, and `make mutation-ci` passes.",
+      "evidence": [
+        {
+          "path": ".github/workflows/mutation.yml",
+          "contains": "name: Mutation"
+        },
+        {
+          "path": "scripts/lib/mutation-ci-workflow-contract.mjs",
+          "contains": "perfect-full must not run local mutation"
         }
       ]
     }
