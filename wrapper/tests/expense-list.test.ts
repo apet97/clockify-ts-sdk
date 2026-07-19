@@ -159,6 +159,87 @@ describe("listExpensesFiltered", () => {
         });
     });
 
+    it("resumes inside a page without gaps when limit is smaller than page size", async () => {
+        const rows = ["a", "b", "c", "d"].map((id) => ({ id, date: "2026-06-01" }));
+        const fetcher: ExpenseListFetcher<Expense> = () => page(rows, true);
+
+        const first = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            { pageSize: 4, limit: 2 },
+        );
+        if (first.meta.nextPage === undefined || first.meta.nextOffset === undefined) {
+            throw new Error("expected an intra-page continuation");
+        }
+        const second = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            {
+                page: first.meta.nextPage,
+                offset: first.meta.nextOffset,
+                pageSize: 4,
+                limit: 2,
+            },
+        );
+
+        expect(first.items.map((item) => item.id)).toEqual(["a", "b"]);
+        expect(first.meta).toMatchObject({
+            hasMore: true,
+            nextPage: 1,
+            nextOffset: 2,
+        });
+        expect(second.items.map((item) => item.id)).toEqual(["c", "d"]);
+        expect(second.meta).toMatchObject({ hasMore: false });
+        expect([...first.items, ...second.items].map((item) => item.id)).toEqual([
+            "a",
+            "b",
+            "c",
+            "d",
+        ]);
+    });
+
+    it("resumes a misaligned limit across pages without gaps or duplicates", async () => {
+        const fetcher: ExpenseListFetcher<Expense> = (request) => {
+            const current = request.page ?? 0;
+            const ids = current === 1 ? ["a", "b", "c"] : ["d", "e", "f"];
+            return page(
+                ids.map((id) => ({ id, date: "2026-06-01" })),
+                current === 2,
+            );
+        };
+
+        const first = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            { pageSize: 3, limit: 4 },
+        );
+        if (first.meta.nextPage === undefined || first.meta.nextOffset === undefined) {
+            throw new Error("expected an intra-page continuation");
+        }
+        const second = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            {
+                page: first.meta.nextPage,
+                offset: first.meta.nextOffset,
+                pageSize: 3,
+                limit: 4,
+            },
+        );
+
+        expect(first.items.map((item) => item.id)).toEqual(["a", "b", "c", "d"]);
+        expect(first.meta).toMatchObject({ nextPage: 2, nextOffset: 1, hasMore: true });
+        expect(second.items.map((item) => item.id)).toEqual(["e", "f"]);
+        expect([...first.items, ...second.items].map((item) => item.id)).toEqual([
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+        ]);
+    });
+
     it("treats total limit separately from page size", async () => {
         const requests: Array<{ page?: number; "page-size"?: number }> = [];
         const result = await listExpensesFiltered(
@@ -182,7 +263,13 @@ describe("listExpensesFiltered", () => {
             expect.objectContaining({ page: 2, "page-size": 2 }),
         ]);
         expect(result.items).toHaveLength(3);
-        expect(result.meta).toMatchObject({ hasMore: true, nextPage: 3, pageSize: 2, limit: 3 });
+        expect(result.meta).toMatchObject({
+            hasMore: true,
+            nextPage: 2,
+            nextOffset: 1,
+            pageSize: 2,
+            limit: 3,
+        });
     });
 
     it("rejects invalid or unsafe page bounds before fetching", async () => {
@@ -201,6 +288,12 @@ describe("listExpensesFiltered", () => {
         await expect(listExpensesFiltered(fetcher, base, { maxPages: 0 })).rejects.toThrow(
             RangeError,
         );
+        await expect(listExpensesFiltered(fetcher, base, { offset: -1 })).rejects.toThrow(
+            RangeError,
+        );
+        await expect(
+            listExpensesFiltered(fetcher, base, { pageSize: 2, offset: 2 }),
+        ).rejects.toThrow(RangeError);
         await expect(
             listExpensesFiltered(fetcher, base, {
                 page: Number.MAX_SAFE_INTEGER,
@@ -212,6 +305,37 @@ describe("listExpensesFiltered", () => {
         );
         await expect(
             listExpensesFiltered(fetcher, base, { start: "2026-07-01", end: "2026-06-01" }),
+        ).rejects.toThrow(RangeError);
+        expect(calls).toBe(0);
+    });
+
+    it("rejects a stale continuation offset that exceeds the filtered page", async () => {
+        const fetcher: ExpenseListFetcher<Expense> = () =>
+            page([{ id: "only", date: "2026-06-01" }], true);
+
+        await expect(
+            listExpensesFiltered(fetcher, { workspaceId: "ws-1" }, { pageSize: 3, offset: 2 }),
+        ).rejects.toThrow(/offset/i);
+    });
+
+    it.each([
+        "06/01/2026",
+        "2026-06",
+        "2026-06-01T12:00:00",
+        "2026-02-30",
+        "2026-02-30T12:00:00Z",
+        "2026-06-01 12:00:00Z",
+        "2026-06-01T24:00:00Z",
+        "2026-06-01T12:00:00+24:00",
+    ])("rejects non-contract date boundary %s before fetching", async (boundary) => {
+        let calls = 0;
+        const fetcher: ExpenseListFetcher<Expense> = () => {
+            calls += 1;
+            return page([], true);
+        };
+
+        await expect(
+            listExpensesFiltered(fetcher, { workspaceId: "ws-1" }, { start: boundary }),
         ).rejects.toThrow(RangeError);
         expect(calls).toBe(0);
     });

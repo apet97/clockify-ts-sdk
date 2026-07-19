@@ -300,8 +300,8 @@ for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
 Clockify's expense-list route ignores `start` and `end`. Use the exported
 `listExpensesFiltered` helper instead of forwarding those inert query keys. It
 walks the typed `{expenses:{expenses:[...]}}` envelope across bounded pages,
-applies inclusive date-only or ISO-8601 bounds client-side, and returns a
-warning plus continuation metadata:
+applies inclusive date-only or RFC3339 bounds with an explicit `Z`/offset
+client-side, and returns a warning plus lossless continuation metadata:
 
 ```typescript
 import { createClockifyClient, listExpensesFiltered } from "clockify-sdk-ts-115";
@@ -319,12 +319,14 @@ const result = await listExpensesFiltered(
     },
 );
 
-console.log(result.items, result.warnings, result.meta.nextPage);
+console.log(result.items, result.warnings, result.meta.nextPage, result.meta.nextOffset);
 ```
 
 `limit` is the total returned-record cap; `pageSize` controls each wire
 request. `Last-Page` is authoritative when present. Without it, the helper
-uses page length plus the required bounded `maxPages` fallback.
+uses page length plus the required bounded `maxPages` fallback. To resume,
+pass both `meta.nextPage` and `meta.nextOffset`; the offset preserves records
+when the total limit stops inside a filtered page.
 
 ### `iterPages` — for per-page envelopes
 

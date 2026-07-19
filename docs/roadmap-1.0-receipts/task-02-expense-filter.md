@@ -31,12 +31,15 @@ client-side filtering over the typed expense envelope.
 
 - `listExpensesFiltered` is the shared SDK helper over the generated, typed
   `{expenses:{expenses:[...]}}` envelope.
-- Date-only and ISO-8601 bounds are inclusive and are applied client-side.
+- Valid date-only and RFC3339 bounds with an explicit `Z`/offset are inclusive
+  and are applied client-side; ambiguous, timezone-less, and invalid calendar
+  values fail before a request.
 - The helper walks bounded pages, honors `Last-Page` when present, continues
   across an empty intermediate page when `Last-Page:false`, and uses a bounded
   page-length fallback when the header is absent.
-- Total record limit, page size, start page, maximum pages, warning, and
-  continuation metadata are distinct contract fields.
+- Total record limit, page size, start page, filtered-page continuation offset,
+  maximum pages, warning, and continuation metadata are distinct contract
+  fields. Page plus offset continuation never skips a partially consumed page.
 - CLI and MCP both call the helper; neither narrows the list response with an
   ad-hoc response cast or forwards inert date parameters.
 
