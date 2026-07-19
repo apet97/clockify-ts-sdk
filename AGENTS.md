@@ -429,9 +429,11 @@ end-to-end and green before push. Drift gates are non-negotiable.
     custom/overwritten property; sibling callable writes stay isolated. Reaching
     bind-member writes are ordered across assignment, `Object.assign`,
     `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set`;
-    restoring a captured native member restores native normalization, while a
-    custom binder's invoked returned callable retains its captured receiver
-    substitutions and effects.
+    restoring a captured native member or canonical `Function.prototype.bind`
+    restores native normalization without requiring `Function.prototype` itself
+    to be callable. Custom binders contribute their synchronous invocation-time
+    effects before the invoked returned callable, whose captured receiver
+    substitutions and later definite-write dominance remain ordered.
     Global-provenance direct/aliased/computed `Reflect.apply`
     is normalized through the same bounded static/spread argument-list path only
     while its reaching member value is native. The same ordered write forms can

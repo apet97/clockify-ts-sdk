@@ -1709,7 +1709,8 @@ function analyzeProgram({
         const adapter = invocationAdapter(expression, beforePosition);
         if (
             adapter?.name === "bind" &&
-            checker.getTypeAtLocation(adapter.target).getCallSignatures().length > 0 &&
+            (checker.getTypeAtLocation(adapter.target).getCallSignatures().length > 0 ||
+                expressionResolvesToFunctionPrototype(adapter.target, beforePosition)) &&
             libMemberSymbol(expression, "bind")
         ) {
             return true;
@@ -1721,6 +1722,39 @@ function analyzeProgram({
         nextSeen.add(symbol);
         return reachingExpressionValues(expression, beforePosition).some((value) =>
             isNativeBindValue(value.expression, value.expression.pos ?? beforePosition, nextSeen),
+        );
+    }
+
+    function expressionResolvesToFunctionPrototype(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        if (
+            ts.isPropertyAccessExpression(expression) &&
+            expression.name.text === "prototype" &&
+            expressionResolvesToGlobal(expression.expression, "Function", beforePosition)
+        ) {
+            return true;
+        }
+        if (
+            ts.isElementAccessExpression(expression) &&
+            expression.argumentExpression &&
+            reachingPropertyNames(expression.argumentExpression, beforePosition).includes(
+                "prototype",
+            ) &&
+            expressionResolvesToGlobal(expression.expression, "Function", beforePosition)
+        ) {
+            return true;
+        }
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return reachingExpressionValues(expression, beforePosition).some((value) =>
+            expressionResolvesToFunctionPrototype(
+                value.expression,
+                value.expression.pos ?? beforePosition,
+                nextSeen,
+            ),
         );
     }
 
@@ -1771,12 +1805,13 @@ function analyzeProgram({
         );
     }
 
-    function customBinderReturns(expression, args, beforePosition) {
+    function customBinderReturns(expression, args, beforePosition, invocation) {
         const alternatives = [];
         for (const value of reachingExpressionValues(expression, beforePosition)) {
             const declaration = functionDeclarationForExpression(value.expression);
             if (!declaration?.body) continue;
-            const substitutions = new Map();
+            addInvocation(declaration, invocation, args, value.substitutions);
+            const substitutions = new Map(value.substitutions);
             declaration.parameters.forEach((parameter, index) => {
                 const argument = args[index];
                 if (!argument) return;
@@ -1896,6 +1931,7 @@ function analyzeProgram({
                               alternative.expression,
                               [...expression.arguments],
                               expression.pos,
+                              expression,
                           ),
                 ),
                 "direct bind returns",
@@ -1930,7 +1966,7 @@ function analyzeProgram({
                               arguments: [...list.slice(1)],
                           },
                       ]
-                    : customBinderReturns(alternative.expression, list, expression.pos),
+                    : customBinderReturns(alternative.expression, list, expression.pos, expression),
             ),
         );
         return alternatives.length > 0
@@ -2467,6 +2503,66 @@ function analyzeProgram({
         return ts.isExpressionStatement(current);
     }
 
+    function expressionDefinitelyExecutesOnInvocation(node, declaration) {
+        let current = node;
+        while (current !== declaration.body) {
+            const parent = current.parent;
+            if (!parent || (ts.isFunctionLike(parent) && parent !== declaration)) return false;
+            if (ts.isIfStatement(parent) && current !== parent.expression) {
+                const state = staticScalar(parent.expression, new Map());
+                if (
+                    !state.known ||
+                    (current === parent.thenStatement && !state.value) ||
+                    (current === parent.elseStatement && Boolean(state.value))
+                ) {
+                    return false;
+                }
+            }
+            if (ts.isConditionalExpression(parent) && current !== parent.condition) {
+                const state = staticScalar(parent.condition, new Map());
+                if (
+                    !state.known ||
+                    (current === parent.whenTrue && !state.value) ||
+                    (current === parent.whenFalse && Boolean(state.value))
+                ) {
+                    return false;
+                }
+            }
+            if (ts.isBinaryExpression(parent) && current === parent.right) {
+                const state = staticScalar(parent.left, new Map());
+                if (
+                    (parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+                        (!state.known || !state.value)) ||
+                    (parent.operatorToken.kind === ts.SyntaxKind.BarBarToken &&
+                        (!state.known || Boolean(state.value))) ||
+                    (parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+                        (!state.known || state.value != null))
+                ) {
+                    return false;
+                }
+            }
+            if (
+                (ts.isCallExpression(parent) ||
+                    ts.isPropertyAccessExpression(parent) ||
+                    ts.isElementAccessExpression(parent)) &&
+                parent.questionDotToken
+            ) {
+                return false;
+            }
+            if (
+                ts.isIterationStatement(parent, false) ||
+                ts.isCaseClause(parent) ||
+                ts.isDefaultClause(parent) ||
+                ts.isCatchClause(parent) ||
+                ts.isTryStatement(parent)
+            ) {
+                return false;
+            }
+            current = parent;
+        }
+        return true;
+    }
+
     function statementDefinitelyWritesSymbol(statement, symbol, use) {
         if (ts.isBlock(statement)) {
             return statement.statements.some((child) =>
@@ -2602,8 +2698,15 @@ function analyzeProgram({
                 ...effect,
                 position: call.pos,
                 sourceFile: call.getSourceFile(),
+                executionNode: call,
                 receiverOverride: receiver,
                 substitutions: new Map([...(effect.substitutions ?? []), ...substitutions]),
+                definiteEffectNames: expressionDefinitelyExecutesOnInvocation(
+                    write.node,
+                    declaration,
+                )
+                    ? effect.definiteEffectNames
+                    : [],
             };
             const caller = enclosingFunction(call);
             if (!caller || caller === useFunction) return [lifted];
@@ -2761,12 +2864,13 @@ function analyzeProgram({
         let cutoff = null;
         for (const write of writes) {
             if (!write.definiteEffectNames?.includes(useName)) continue;
-            const location = directStatementInLinearContainer(write.node);
+            const executionNode = write.executionNode ?? write.node;
+            const location = directStatementInLinearContainer(executionNode);
             if (
                 !location ||
                 location.container !== useLocation.container ||
                 !ts.isExpressionStatement(location.statement) ||
-                !expressionDefinitelyExecutesInStatement(write.node)
+                !expressionDefinitelyExecutesInStatement(executionNode)
             ) {
                 continue;
             }

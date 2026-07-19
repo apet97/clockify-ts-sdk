@@ -248,8 +248,11 @@ make docs-drift
   identity rather than an exact-callable custom/overwritten property; sibling
   callable writes stay isolated. Assignment, `Object.assign`,
   `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set` bind-member
-  writes are ordered; captured-native restoration resumes native normalization,
-  while invoked custom-binder return values retain captured receiver effects.
+  writes are ordered; captured-native or canonical `Function.prototype.bind`
+  restoration resumes native normalization even though `Function.prototype`
+  itself is not callable. Invoked custom binders contribute synchronous body
+  effects before their returned callable; captured receiver effects and later
+  definite-write dominance retain runtime order.
   Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
   the same bounded static/spread argument-list path only while its ordered
   reaching member is native; restoration and captured-native aliases remain
