@@ -25,20 +25,30 @@ export function resolveReadinessTestFixtures({
     argv = process.argv.slice(2),
     canonicalRiskRegisterPath,
     canonicalReleaseContractPath,
+    canonicalRoadmapStatusPath,
 }) {
     if (argv.length === 0) {
         return {
             riskRegisterPath: canonicalRiskRegisterPath,
             releaseContractPath: canonicalReleaseContractPath,
+            roadmapStatusPath: canonicalRoadmapStatusPath,
         };
     }
-    if (process.env.NODE_ENV !== "test" || argv.length !== 3 || argv[0] !== TEST_FIXTURE_FLAG) {
+    if (
+        process.env.NODE_ENV !== "test" ||
+        ![3, 4].includes(argv.length) ||
+        argv[0] !== TEST_FIXTURE_FLAG
+    ) {
         throw new Error(
-            `readiness validators accept only ${TEST_FIXTURE_FLAG} <risk-register> <release-contract> under NODE_ENV=test`,
+            `readiness validators accept only ${TEST_FIXTURE_FLAG} <risk-register> <release-contract> [roadmap-status] under NODE_ENV=test`,
         );
     }
     return {
         riskRegisterPath: temporaryFixturePath(argv[1], "risk-register"),
         releaseContractPath: temporaryFixturePath(argv[2], "release-contract"),
+        roadmapStatusPath:
+            argv.length === 4
+                ? temporaryFixturePath(argv[3], "roadmap-status")
+                : canonicalRoadmapStatusPath,
     };
 }
