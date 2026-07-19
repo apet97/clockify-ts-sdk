@@ -177,6 +177,17 @@ effects without crossing receivers. The configurable total-work cap now stops
 expansion at the exact limit and returns stable `{ work, exhausted }` analysis
 statistics. The final governance suite passes **273/273** fixtures.
 
+The eleventh corrective review separates conditional/reaching
+`defineProperty` descriptor and `defineProperties` map alternatives into
+mutually exclusive effect paths, so a safe branch cannot erase an unsafe peer.
+Descriptor provenance now follows shorthand/aliased getter callables, object
+spreads, aliases, and factory returns. Unresolved direct maps and map spreads
+emit ordered wildcard effects: a later exact descriptor may dominate them, but
+an unknown last write remains governed. Recursive conditional/logical reducer
+return origins are charged and width-bounded before concatenation, with the
+largest callback expansion included in observable analysis statistics. The
+final governance suite passes **289/289** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -201,7 +212,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final tenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final eleventh-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

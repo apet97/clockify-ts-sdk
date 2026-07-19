@@ -9,10 +9,11 @@ const MAX_SYNTHETIC_INVOCATIONS = 256;
 const MAX_ANALYSIS_WORK = 10000;
 
 class AnalysisWorkLimitError extends Error {
-    constructor(maxWork) {
+    constructor(maxWork, largestCallbackExpansion = 0) {
         super(`consumer cast analysis limit exceeded (work; max ${maxWork})`);
         this.name = "AnalysisWorkLimitError";
         this.work = maxWork;
+        this.largestCallbackExpansion = largestCallbackExpansion;
     }
 }
 
@@ -264,6 +265,7 @@ function analyzeProgram({
     const maxWork = analysisLimits.maxWork ?? MAX_ANALYSIS_WORK;
     let analysisWork = 0;
     let analysisExhausted = false;
+    let largestCallbackExpansion = 0;
     let syntheticInvocations = 0;
 
     function bounded(values, kind = "alternatives") {
@@ -271,7 +273,7 @@ function analyzeProgram({
         if (analysisWork + values.length > maxWork) {
             analysisWork = maxWork;
             analysisExhausted = true;
-            throw new AnalysisWorkLimitError(maxWork);
+            throw new AnalysisWorkLimitError(maxWork, largestCallbackExpansion);
         }
         analysisWork += values.length;
         if (values.length > maxAlternatives) {
@@ -281,6 +283,27 @@ function analyzeProgram({
             return values.slice(0, maxAlternatives);
         }
         return values;
+    }
+
+    function boundedCallbackConcat(left, right) {
+        const combinedLength = left.length + right.length;
+        if (analysisWork + combinedLength > maxWork) {
+            analysisWork = maxWork;
+            analysisExhausted = true;
+            largestCallbackExpansion = maxWork;
+            throw new AnalysisWorkLimitError(maxWork, largestCallbackExpansion);
+        }
+        analysisWork += combinedLength;
+        largestCallbackExpansion = Math.max(largestCallbackExpansion, combinedLength);
+        if (combinedLength > maxAlternatives) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (callback return alternatives; max ${maxAlternatives})`,
+            );
+        }
+        const combined = left.slice(0, maxAlternatives);
+        const remaining = maxAlternatives - combined.length;
+        if (remaining > 0) combined.push(...right.slice(0, remaining));
+        return combined;
     }
 
     function addSyntheticInvocation(declaration, node, args) {
@@ -1007,7 +1030,15 @@ function analyzeProgram({
                               names,
                               substitutions: value.substitutions,
                           }))
-                        : [];
+                        : ts.isMethodDeclaration(property)
+                          ? [
+                                {
+                                    value: property,
+                                    names,
+                                    substitutions: value.substitutions,
+                                },
+                            ]
+                          : [];
                 if (entries.length > 0) {
                     sequences = bounded(
                         sequences.flatMap((sequence) =>
@@ -1021,40 +1052,111 @@ function analyzeProgram({
         return bounded(alternatives);
     }
 
-    function descriptorEffectValues(descriptor, beforePosition) {
-        const alternatives = [];
-        for (const value of reachingExpressionValues(descriptor, beforePosition)) {
-            const expression = unwrapExpression(value.expression);
-            if (!ts.isObjectLiteralExpression(expression)) continue;
-            const values = [];
-            for (const property of expression.properties) {
-                const name = property.name
-                    ?.getText(expression.getSourceFile())
-                    .replace(/^['"]|['"]$/g, "");
-                if (name === "value" && ts.isPropertyAssignment(property)) {
-                    values.push({
-                        value: property.initializer,
-                        substitutions: value.substitutions,
-                    });
-                } else if (name === "value" && ts.isShorthandPropertyAssignment(property)) {
-                    values.push({ value: property.name, substitutions: value.substitutions });
-                } else if (name === "get" && ts.isMethodDeclaration(property)) {
-                    for (const returned of functionReturnExpressions(property)) {
-                        values.push({ value: returned, substitutions: value.substitutions });
-                    }
-                } else if (
-                    name === "get" &&
-                    ts.isPropertyAssignment(property) &&
-                    ts.isFunctionLike(property.initializer)
-                ) {
-                    for (const returned of functionReturnExpressions(property.initializer)) {
-                        values.push({ value: returned, substitutions: value.substitutions });
+    function getterEffectValues(entry, beforePosition) {
+        const effects = [];
+        for (const candidate of reachingExpressionValues(
+            entry.value,
+            beforePosition,
+            new Set(),
+            entry.substitutions,
+        )) {
+            const expression = unwrapExpression(candidate.expression);
+            const declaration = ts.isFunctionLike(expression)
+                ? expression
+                : functionDeclarationForExpression(expression);
+            if (!declaration?.body) {
+                effects.push({
+                    value: candidate.expression,
+                    names: entry.names,
+                    substitutions: candidate.substitutions,
+                });
+                continue;
+            }
+            for (const returned of functionReturnExpressions(declaration)) {
+                effects.push({
+                    value: returned,
+                    names: entry.names,
+                    substitutions: candidate.substitutions,
+                });
+            }
+        }
+        return bounded(effects, "getter return alternatives");
+    }
+
+    function descriptorEffectSequences(descriptor, beforePosition) {
+        let sequences = objectPropertySequences(descriptor, beforePosition);
+        if (sequences.length === 0) {
+            sequences = [
+                [
+                    {
+                        value: descriptor,
+                        names: null,
+                        substitutions: new Map(),
+                    },
+                ],
+            ];
+        }
+        return bounded(
+            sequences.map((sequence) => {
+                const effects = [];
+                for (const entry of sequence) {
+                    if (entry.names == null) {
+                        effects.push(entry);
+                    } else if (entry.names.includes("value")) {
+                        effects.push(entry);
+                    } else if (entry.names.includes("get")) {
+                        effects.push(...getterEffectValues(entry, beforePosition));
                     }
                 }
-            }
-            alternatives.push(...values);
+                return effects;
+            }),
+            "descriptor path alternatives",
+        );
+    }
+
+    function definePropertiesEffectPaths(descriptors, beforePosition) {
+        let mapPaths = objectPropertySequences(descriptors, beforePosition);
+        if (mapPaths.length === 0) {
+            mapPaths = [
+                [
+                    {
+                        value: descriptors,
+                        names: null,
+                        substitutions: new Map(),
+                    },
+                ],
+            ];
         }
-        return bounded(alternatives, "descriptor alternatives");
+        const finalPaths = [];
+        for (const mapPath of mapPaths) {
+            let paths = [[]];
+            for (const descriptor of mapPath) {
+                if (descriptor.names == null) {
+                    paths = bounded(
+                        paths.map((path) => [...path, descriptor]),
+                        "defineProperties wildcard paths",
+                    );
+                    continue;
+                }
+                const descriptorPaths = descriptorEffectSequences(
+                    descriptor.value,
+                    beforePosition,
+                ).map((path) =>
+                    path.map((effect) => ({
+                        ...effect,
+                        names: descriptor.names,
+                    })),
+                );
+                paths = bounded(
+                    paths.flatMap((path) =>
+                        descriptorPaths.map((descriptorPath) => [...path, ...descriptorPath]),
+                    ),
+                    "defineProperties descriptor paths",
+                );
+            }
+            finalPaths.push(...paths);
+        }
+        return bounded(finalPaths, "defineProperties map paths");
     }
 
     function expressionResolvesToGlobal(expression, name, beforePosition, seen = new Set()) {
@@ -1201,11 +1303,34 @@ function analyzeProgram({
         function expand(expression) {
             expression = substituteStaticExpression(expression, substitutions);
             if (ts.isConditionalExpression(expression)) {
-                return [...expand(expression.whenTrue), ...expand(expression.whenFalse)];
+                return boundedCallbackConcat(
+                    expand(expression.whenTrue),
+                    expand(expression.whenFalse),
+                );
+            }
+            if (
+                ts.isBinaryExpression(expression) &&
+                [
+                    ts.SyntaxKind.BarBarToken,
+                    ts.SyntaxKind.AmpersandAmpersandToken,
+                    ts.SyntaxKind.QuestionQuestionToken,
+                ].includes(expression.operatorToken.kind)
+            ) {
+                return boundedCallbackConcat(expand(expression.left), expand(expression.right));
+            }
+            if (
+                ts.isBinaryExpression(expression) &&
+                expression.operatorToken.kind === ts.SyntaxKind.CommaToken
+            ) {
+                return expand(expression.right);
             }
             return [expression];
         }
-        return functionReturnExpressions(declaration).flatMap(expand);
+        let origins = [];
+        for (const returned of functionReturnExpressions(declaration)) {
+            origins = boundedCallbackConcat(origins, expand(returned));
+        }
+        return origins;
     }
 
     function staticScalar(expression, substitutions) {
@@ -1464,19 +1589,22 @@ function analyzeProgram({
                         ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
                             ? [key.text]
                             : literalPropertyNames(checker.getTypeAtLocation(key));
-                    const values = descriptorEffectValues(node.arguments[2], node.pos);
-                    values.forEach((value, effectOrder) =>
-                        addEffectWrite(
-                            node.arguments[0],
-                            value.value,
-                            names,
-                            node,
-                            value.substitutions,
-                            `${node.getSourceFile().fileName}:${node.pos}:define-property`,
-                            effectOrder,
-                            names?.length === 1 && values.length > 0 ? names : [],
-                        ),
-                    );
+                    const paths = descriptorEffectSequences(node.arguments[2], node.pos);
+                    paths.forEach((path, pathIndex) => {
+                        const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-property:${pathIndex}`;
+                        path.forEach((value, effectOrder) =>
+                            addEffectWrite(
+                                node.arguments[0],
+                                value.value,
+                                names,
+                                node,
+                                value.substitutions,
+                                effectGroup,
+                                effectOrder,
+                                names?.length === 1 && path.length > 0 ? names : [],
+                            ),
+                        );
+                    });
                 }
 
                 if (
@@ -1489,21 +1617,23 @@ function analyzeProgram({
                         node.pos,
                     )
                 ) {
-                    const descriptors = objectPropertyEntries(node.arguments[1], node.pos);
-                    descriptors.forEach((descriptor, descriptorOrder) => {
-                        const values = descriptorEffectValues(descriptor.value, node.pos);
-                        values.forEach((value, valueOrder) =>
+                    const paths = definePropertiesEffectPaths(node.arguments[1], node.pos);
+                    const finalNameSets = paths.map(definitelyFinalNames);
+                    const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
+                        (name) => finalNameSets.every((names) => names.has(name)),
+                    );
+                    paths.forEach((path, pathIndex) => {
+                        const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-properties:${pathIndex}`;
+                        path.forEach((value, effectOrder) =>
                             addEffectWrite(
                                 node.arguments[0],
                                 value.value,
-                                descriptor.names,
+                                value.names,
                                 node,
                                 value.substitutions,
-                                `${node.getSourceFile().fileName}:${node.pos}:define-properties`,
-                                descriptorOrder * Math.max(values.length, 1) + valueOrder,
-                                descriptor.names?.length === 1 && values.length > 0
-                                    ? descriptor.names
-                                    : [],
+                                effectGroup,
+                                effectOrder,
+                                definiteEffectNames,
                             ),
                         );
                     });
@@ -2920,10 +3050,14 @@ function analyzeProgram({
             visit(sourceFile);
         }
     }
+    const analysisStats = { work: analysisWork, exhausted: analysisExhausted };
+    if (largestCallbackExpansion > 0) {
+        analysisStats.largestCallbackExpansion = largestCallbackExpansion;
+    }
     return {
         findings,
         escapeFailures: [...escapeFailures, ...analysisFailures],
-        analysisStats: { work: analysisWork, exhausted: analysisExhausted },
+        analysisStats,
     };
 }
 
@@ -3105,10 +3239,14 @@ export async function validateConsumerCastGovernance({ root, contract, analysisL
         });
     } catch (error) {
         if (!(error instanceof AnalysisWorkLimitError)) throw error;
+        const analysisStats = { work: error.work, exhausted: true };
+        if (error.largestCallbackExpansion > 0) {
+            analysisStats.largestCallbackExpansion = error.largestCallbackExpansion;
+        }
         analysis = {
             findings: [],
             escapeFailures: [error.message],
-            analysisStats: { work: error.work, exhausted: true },
+            analysisStats,
         };
     }
     findings.push(...analysis.findings);
