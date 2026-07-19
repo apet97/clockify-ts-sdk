@@ -1,7 +1,7 @@
 /**
- * Expense + expense-category tools. Create/update POST multipart
+ * Expense + expense-category tools. Create POST/update PUT multipart
  * form-data upstream. Receipt files are optional on the live create/update
- * contract; updates without one use one documented generated-type boundary.
+ * contract, and the generated update type models that optionality directly.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { listExpensesFiltered } from "clockify-sdk-ts-115/expense-list";
@@ -297,9 +297,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 if (args.notes !== undefined) fields.notes = args.notes;
                 if (args.billable !== undefined) fields.billable = args.billable;
                 if (args.userId !== undefined) fields.userId = args.userId;
-                const body: Omit<ExpenseUpdateBody, "file"> & {
-                    file?: ExpenseUpdateBody["file"];
-                } = {
+                const body: ExpenseUpdateBody = {
                     amount: fields.amount,
                     categoryId: fields.categoryId,
                     changeFields: expenseChangeFields(fields),
@@ -319,10 +317,7 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
                 };
             },
             execute: async (preview) => {
-                // KEEP as never: live expense PUT accepts an omitted receipt file, while the
-                // generated multipart request still marks it required. The complete stored
-                // preview remains the only request dispatched here.
-                const updated = await ctx.client.expenses.update(preview.request as never);
+                const updated = await ctx.client.expenses.update(preview.request);
                 return successResult(
                     "clockify_expenses_update",
                     updated,

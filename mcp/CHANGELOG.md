@@ -6,6 +6,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ### Fixed
 
+- `clockify_expenses_update` now dispatches its stored typed preview directly;
+  regenerated API truth makes the multipart `file` field optional without a
+  request cast.
 - `clockify_expenses_list` now uses the shared bounded SDK date filter, exposes
   distinct `limit`/`pageSize`/`page`/`offset`/`maxPages` controls, and returns
   the client-side-filter warning plus lossless page/offset continuation metadata.

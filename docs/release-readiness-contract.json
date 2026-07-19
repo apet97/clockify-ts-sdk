@@ -48,7 +48,6 @@
   "riskRegister": {
     "path": "docs/risk-register.json",
     "requiredOpenFinalReadinessBlockingIds": [
-      "expense-update-file-schema",
       "operation-parity-generated-reachability",
       "consumer-request-casts",
       "cross-package-release-proof-asymmetry",

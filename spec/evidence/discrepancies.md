@@ -2693,13 +2693,22 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     body + untyped scopeFilter), `workflows/resolve.ts` `projects.create`
     (conditional-spread widening under EOPT), `expenseCategories.list` (no page/page-size
     slot), and `timeOffPolicies.list` (`page` typed as string).
-  - *Still `KEEP as never`* and why: the multipart-file omission on expense
-    create/update scalar bodies (`expenses.ts` cli+mcp), the too-narrow invoice
+  - *Still `KEEP as never` as of this 2026-06-20 snapshot* and why: the
+    multipart-file omission on expense create/update scalar bodies (`expenses.ts`
+    cli+mcp), the too-narrow invoice
     status PATCH body (`invoices.ts`), the `changeTimeOffRequestStatus` status/note
     mismatch (`timeOff.ts`), and the `timeEntries.listForUser` list/search/view
     request+response envelope mismatch (`workflows/review.ts` + `workflows/resolve.ts`).
     These are the documented Bucket-C generated-type residue (response-narrows,
     multipart-file, status-naming).
+  - *Resolved for expenses 2026-07-19:* create had already become clean after its
+    live-optional override. Task 3 corrected the owning GOCLMCP curated source so
+    `ExpenseUpdateRequest.file` is optional too, regenerated the SDK, and removed
+    the final expense-update request casts from both CLI and MCP. Exact wrapper
+    multipart tests cover scalar updates with no `file` part and binary updates
+    with one `file` part. The remaining current `KEEP as never` residue is the
+    `timeEntries.listForUser` request/response envelope mismatch tracked for
+    Task 4; the 2026-06-20 counts above remain historical evidence.
 
 ---
 

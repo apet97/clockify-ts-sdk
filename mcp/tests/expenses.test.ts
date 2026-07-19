@@ -216,7 +216,7 @@ describe("expense create/update tools", () => {
         expect(update.body.changeFields).toContain("CATEGORY");
     });
 
-    it("dispatches a validated no-file update despite the stale generated requiredness", async () => {
+    it("dispatches a validated no-file update through the corrected optional file type", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(expensesContext(captured));
         const res = await callGuarded(client, {

@@ -6,6 +6,8 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ### Fixed
 
+- Expense updates now use the corrected generated request type directly instead
+  of casting scalar requests around a stale required `file` field.
 - `expenses list --limit` now caps total returned records instead of wire page
   size; `--page-size` and `--max-pages` control the shared bounded client-side
   date-filter scan and the command emits the live-contract warning. Explicitly

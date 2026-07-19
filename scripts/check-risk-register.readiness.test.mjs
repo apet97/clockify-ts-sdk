@@ -37,7 +37,7 @@ test("removing any blocker from either readiness contract fails both validators 
     const blockers = requiredBlockers(register);
 
     assert.deepEqual(blockers, releaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds);
-    assert.equal(blockers.length, 5);
+    assert.equal(blockers.length, 4);
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-"));
     try {

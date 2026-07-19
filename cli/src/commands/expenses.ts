@@ -27,7 +27,7 @@ import type { Registrar } from "./types.js";
 // Clockify's expense PUT needs an explicit list of which fields to apply;
 // derive it from the scalar fields the caller actually supplied (mirrors
 // the MCP `clockify_expenses_update` tool).
-const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
+const EXPENSE_CHANGE_FIELDS = {
     amount: "AMOUNT",
     date: "DATE",
     projectId: "PROJECT",
@@ -35,7 +35,9 @@ const EXPENSE_CHANGE_FIELDS: Record<string, string> = {
     categoryId: "CATEGORY",
     notes: "NOTES",
     billable: "BILLABLE",
-};
+} as const;
+
+type ExpenseChangeField = (typeof EXPENSE_CHANGE_FIELDS)[keyof typeof EXPENSE_CHANGE_FIELDS];
 
 interface ExpenseUpdateFields {
     amount: number;
@@ -47,7 +49,7 @@ interface ExpenseUpdateFields {
     billable?: boolean;
 }
 
-function expenseChangeFields(fields: ExpenseUpdateFields): string[] {
+function expenseChangeFields(fields: ExpenseUpdateFields): ExpenseChangeField[] {
     return Object.entries(EXPENSE_CHANGE_FIELDS)
         .filter(([key]) => fields[key as keyof ExpenseUpdateFields] !== undefined)
         .map(([, value]) => value);
@@ -230,8 +232,7 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                 userId: opts.user,
                 expenseId: id,
                 workspaceId,
-                // KEEP as never: expense update scalar shape omits the generated multipart file.
-            } as never)) as { id?: string };
+            })) as { id?: string };
             const data = { id: updated.id ?? id };
             printReceipt(
                 {

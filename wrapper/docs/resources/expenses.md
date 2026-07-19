@@ -59,7 +59,7 @@
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
 - `changeFields` (`("USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE")[]`, required) — Represents a list of expense change fields.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
-- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, optional)
 - `notes` (`string`, optional) — Represents notes for an expense.
 - `projectId` (`string`, optional) — Represents a project identifier across the system.
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
@@ -72,7 +72,7 @@
 - `categoryId` (`string`, required) — Represents a category identifier across the system.
 - `changeFields` (`("USER" \| "DATE" \| "PROJECT" \| "TASK" \| "CATEGORY" \| "NOTES" \| "AMOUNT" \| "BILLABLE" \| "FILE")[]`, required) — Represents a list of expense change fields.
 - `date` (`string`, required) — Provides a valid yyyy-MM-ddThh:mm:ssZ format date.
-- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, required)
+- `file` (`Blob \| File \| Buffer \| Uint8Array \| string`, optional)
 - `notes` (`string`, optional) — Represents notes for an expense.
 - `projectId` (`string`, optional) — Represents a project identifier across the system.
 - `taskId` (`string`, optional) — Represents a task identifier across the system.
