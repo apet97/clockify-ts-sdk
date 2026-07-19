@@ -2232,6 +2232,171 @@ test("does not treat an unrelated local literal element member as a built-in", a
     );
 });
 
+for (const [label, setup, invocation] of [
+    [
+        "direct Object.assign.call",
+        "",
+        "Object.assign.call(Object, holder, { request: body as any });",
+    ],
+    [
+        "direct Object.assign.apply array",
+        "",
+        "Object.assign.apply(Object, [holder, { request: body as any }]);",
+    ],
+    [
+        "aliased Object.assign.call",
+        "const assign = Object.assign;",
+        "assign.call(Object, holder, { request: body as any });",
+    ],
+    [
+        "computed Object.assign.apply",
+        "",
+        'Object["assign"].apply(Object, [holder, { request: body as any }]);',
+    ],
+    [
+        "tuple-aliased Object.assign.apply",
+        "const args = [holder, { request: body as any }] as const;",
+        "Object.assign.apply(Object, args);",
+    ],
+    [
+        "invoked bound computed Object.assign",
+        'const assign = Object["assign"].bind(Object, holder);',
+        "assign({ request: body as any });",
+    ],
+    ["direct Reflect.set.call", "", 'Reflect.set.call(Reflect, holder, "request", body as any);'],
+    [
+        "aliased Reflect.set.apply",
+        "const set = Reflect.set;",
+        'set.apply(Reflect, [holder, "request", body as any]);',
+    ],
+    [
+        "invoked bound Reflect.set",
+        'const set = Reflect.set.bind(Reflect, holder, "request");',
+        "set(body as any);",
+    ],
+    [
+        "Object.defineProperty.call getter descriptor",
+        "",
+        'Object.defineProperty.call(Object, holder, "request", { get() { return body as any; } });',
+    ],
+    [
+        "computed Reflect.defineProperty.apply",
+        "",
+        'Reflect["defineProperty"].apply(Reflect, [holder, "request", { value: body as any }]);',
+    ],
+    [
+        "invoked bound Object.defineProperties",
+        "const define = Object.defineProperties.bind(Object, holder);",
+        "define({ request: { value: body as any } });",
+    ],
+]) {
+    test("models " + label + " effects", async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ' +
+                setup +
+                " " +
+                invocation +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; Object.defineProperty.call(Object, holder, "request", choose ? { value: body as any } : { value: { workspaceId: "safe" } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("lets a later normalized safe effect dominate an unsafe normalized effect", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; Object.assign.call(Object, holder, { request: body as any }); Reflect.set.call(Reflect, holder, "request", { workspaceId: "safe" }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("keeps an unsafe-last normalized apply effect", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; Reflect.set.call(Reflect, holder, "request", { workspaceId: "safe" }); Object.assign.apply(Object, [holder, { request: body as any }]); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("does not spread a normalized call effect across receivers", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const other: Holder = { request: { workspaceId: "other" } }; Object.assign.call(Object, other, { request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, source] of [
+    [
+        "shadow Object.call",
+        "const Object = { assign(target: Holder, _patch: unknown) { return target; } }; Object.assign.call(Object, holder, { request: body as any });",
+    ],
+    [
+        "unrelated local function.call",
+        "function assign(_target: Holder, _patch: unknown) {} assign.call(undefined, holder, { request: body as any });",
+    ],
+    [
+        "overwritten builtin alias.call",
+        "let assign: (target: Holder, patch: unknown) => Holder = Object.assign; assign = (target) => target; assign.call(Object, holder, { request: body as any });",
+    ],
+    [
+        "overwritten computed key.call",
+        'let member: keyof typeof Object = "assign"; member = "keys"; Object[member].call(Object, holder, { request: body as any });',
+    ],
+    ["unknown Object.assign.apply arguments", "Object.assign.apply(Object, body as any);"],
+    [
+        "non-array Object.assign.apply arguments",
+        'Object.assign.apply(Object, "not-an-array" as any);',
+    ],
+    [
+        "uninvoked Object.assign.bind",
+        "Object.assign.bind(Object, holder, { request: body as any });",
+    ],
+]) {
+    test("does not model " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ' +
+                source +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
 test("keeps an unsafe-last effect across sequential Object.assign calls", async () => {
     await withFixture(
         `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.assign(holder, { request: { workspaceId: "safe" } }); Object.assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,

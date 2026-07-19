@@ -198,6 +198,17 @@ key overwrites while retaining exact global symbol identity, so shadow
 `Object`/`Reflect` values and unrelated local members remain non-effects. The
 final governance suite passes **316/316** fixtures.
 
+The thirteenth corrective review normalizes effective callees and arguments
+before governed built-in effect classification. Direct, aliased, and computed
+`Object.assign`, `Reflect.set`, `Object.defineProperty`,
+`Reflect.defineProperty`, and `Object.defineProperties` now retain their
+receiver-qualified descriptor/order semantics through Function `call`, static
+tuple/array `apply`, and later-invoked `bind` captures. Normalization preserves
+destructured aliases and reaching overwrite identity, stays bounded, and leaves
+shadow globals, unrelated functions, overwritten aliases/keys, unknown or
+invalid apply lists, and uninvoked binds as non-effects. The final governance
+suite passes **339/339** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -222,7 +233,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twelfth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final thirteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

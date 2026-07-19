@@ -239,6 +239,10 @@ make docs-drift
   Literal and reaching const-literal element access to governed `Object` and
   `Reflect` members preserves built-in symbol identity; overwritten keys and
   shadow/local lookalikes remain non-effects.
+  Governed built-ins are normalized through direct/aliased/computed Function
+  `call`, static tuple/array `apply`, and later-invoked `bind` captures before
+  effect classification; unknown/invalid apply lists and uninvoked binds remain
+  non-effects.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely
