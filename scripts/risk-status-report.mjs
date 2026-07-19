@@ -20,7 +20,8 @@ async function exists(relPath) {
 }
 
 async function readJson(relPath) {
-    return JSON.parse(await readFile(path.join(root, relPath), "utf8"));
+    const absolutePath = path.isAbsolute(relPath) ? relPath : path.join(root, relPath);
+    return JSON.parse(await readFile(absolutePath, "utf8"));
 }
 
 async function readJsonOptional(relPath, fallback) {
@@ -132,7 +133,7 @@ export async function buildReport(options = { status: "all" }) {
     if (!VALID_STATUSES.has(status)) {
         throw new Error(`Unknown status: ${status}`);
     }
-    const register = await readJson("docs/risk-register.json");
+    const register = await readJson(options.registerPath ?? process.env.CLOCKIFY_RISK_REGISTER_PATH ?? "docs/risk-register.json");
     const risks = status === "all" ? register.risks : register.risks.filter((risk) => risk.status === status);
 
     const performanceBudgets = await readJsonOptional("docs/performance-budgets.json", {});
@@ -271,4 +272,3 @@ export function renderMarkdown(report) {
     for (const item of report.next) lines.push(`- ${item}`);
     return `${lines.join("\n")}\n`;
 }
-
