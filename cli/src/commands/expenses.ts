@@ -72,8 +72,14 @@ export const registerExpensesCommand: Registrar = (program, services) => {
             100,
         )
         .option("--page <n>", "Page number.", parseIntArg, 1)
-        .option("--start <date>", "Inclusive start bound (YYYY-MM-DD or ISO-8601).")
-        .option("--end <date>", "Inclusive end bound (YYYY-MM-DD or ISO-8601).")
+        .option(
+            "--start <date>",
+            "Inclusive start bound (YYYY-MM-DD or RFC3339 with explicit Z/offset).",
+        )
+        .option(
+            "--end <date>",
+            "Inclusive end bound (YYYY-MM-DD or RFC3339 with explicit Z/offset).",
+        )
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
             const result = await listExpensesFiltered(
@@ -84,8 +90,8 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     pageSize: clampPageSize(opts.pageSize as number, 200),
                     limit: opts.limit as number,
                     maxPages: opts.maxPages as number,
-                    ...(opts.start ? { start: opts.start as string } : {}),
-                    ...(opts.end ? { end: opts.end as string } : {}),
+                    ...(opts.start !== undefined ? { start: opts.start as string } : {}),
+                    ...(opts.end !== undefined ? { end: opts.end as string } : {}),
                 },
             );
             const rows = result.items.map((raw) => {

@@ -487,4 +487,47 @@ describe("clockify_expenses_list — shared bounded client-side filter", () => {
         expect(res.isError).toBe(true);
         expect(captured.calls).toBeUndefined();
     });
+
+    it("rejects empty date bounds before listing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            listContext(async () => ({ expenses: { expenses: [] } }), captured),
+        );
+        for (const arguments_ of [{ start: "" }, { end: "   " }]) {
+            const res = await client.callTool({
+                name: "clockify_expenses_list",
+                arguments: arguments_,
+            });
+            expect(res.isError).toBe(true);
+        }
+        expect(captured.calls).toBeUndefined();
+    });
+
+    it("emits only schema-valid continuation pages near the ceiling", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            listContext(async (request) => {
+                const items = request.page === 999_999 ? [{ id: "row", date: "2026-06-01" }] : [];
+                return { expenses: { expenses: items } };
+            }, captured),
+        );
+        const first = envelope(
+            await client.callTool({
+                name: "clockify_expenses_list",
+                arguments: { page: 999_999, pageSize: 1, limit: 2, maxPages: 1 },
+            }),
+        );
+        const continuation = (
+            first.next as Array<{ tool: string; args: Record<string, unknown> }> | undefined
+        )?.[0];
+        expect(continuation?.args).toMatchObject({ page: 1_000_000 });
+        if (continuation === undefined) throw new Error("expected a ceiling-safe continuation");
+
+        const resumed = await client.callTool({
+            name: continuation.tool,
+            arguments: continuation.args,
+        });
+        expect(resumed.isError).toBeFalsy();
+        expect(envelope(resumed).meta).toMatchObject({ hasMore: false });
+    });
 });

@@ -296,7 +296,7 @@ describe("listExpensesFiltered", () => {
         ).rejects.toThrow(RangeError);
         await expect(
             listExpensesFiltered(fetcher, base, {
-                page: Number.MAX_SAFE_INTEGER,
+                page: 1_000_000,
                 maxPages: 2,
             }),
         ).rejects.toThrow(RangeError);
@@ -307,6 +307,30 @@ describe("listExpensesFiltered", () => {
             listExpensesFiltered(fetcher, base, { start: "2026-07-01", end: "2026-06-01" }),
         ).rejects.toThrow(RangeError);
         expect(calls).toBe(0);
+    });
+
+    it("keeps near-ceiling continuation inside the supported page range", async () => {
+        const calls: number[] = [];
+        const fetcher: ExpenseListFetcher<Expense> = (request) => {
+            calls.push(request.page ?? 0);
+            return page([{ id: "row", date: "2026-06-01" }], false);
+        };
+
+        const resumable = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            { page: 999_999, pageSize: 1, maxPages: 1, limit: 2 },
+        );
+        const atCeiling = await listExpensesFiltered(
+            fetcher,
+            { workspaceId: "ws-1" },
+            { page: 1_000_000, pageSize: 1, maxPages: 1, limit: 2 },
+        );
+
+        expect(calls).toEqual([999_999, 1_000_000]);
+        expect(resumable.meta).toMatchObject({ hasMore: true, nextPage: 1_000_000 });
+        expect(atCeiling.meta).toMatchObject({ hasMore: true });
+        expect(atCeiling.meta.nextPage).toBeUndefined();
     });
 
     it("rejects a stale continuation offset that exceeds the filtered page", async () => {

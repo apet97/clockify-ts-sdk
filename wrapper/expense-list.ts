@@ -77,8 +77,8 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         1,
         MAX_PAGES,
     );
-    if (!Number.isSafeInteger(page + maxPages - 1)) {
-        throw new RangeError("page + maxPages exceeds the safe integer range");
+    if (page + maxPages - 1 > MAX_START_PAGE) {
+        throw new RangeError(`page + maxPages must not scan beyond page ${MAX_START_PAGE}`);
     }
 
     const start = parseBoundary(options.start, "start");
@@ -138,12 +138,12 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
 
         if (items.length >= limit || !upstreamHasMore) {
             hasMore = items.length >= limit && upstreamHasMore;
-            if (hasMore) nextPage = currentPage + 1;
+            if (hasMore) nextPage = nextSupportedPage(currentPage);
             break;
         }
 
         hasMore = true;
-        nextPage = currentPage + 1;
+        nextPage = nextSupportedPage(currentPage);
     }
 
     const meta: ExpenseListResult<TExpense>["meta"] = {
@@ -164,6 +164,11 @@ export async function listExpensesFiltered<TExpense extends { date?: string }>(
         warnings: start !== undefined || end !== undefined ? [EXPENSE_CLIENT_FILTER_WARNING] : [],
         meta,
     };
+}
+
+function nextSupportedPage(currentPage: number): number | undefined {
+    const candidate = currentPage + 1;
+    return candidate <= MAX_START_PAGE ? candidate : undefined;
 }
 
 function boundedInteger(name: string, value: number, min: number, max: number): number {
