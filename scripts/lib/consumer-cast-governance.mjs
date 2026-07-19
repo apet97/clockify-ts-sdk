@@ -1452,6 +1452,110 @@ function analyzeProgram({
             : null;
     }
 
+    function invocationAdapter(expression, beforePosition) {
+        expression = unwrapExpression(expression);
+        if (ts.isPropertyAccessExpression(expression)) {
+            return ["call", "apply", "bind"].includes(expression.name.text)
+                ? { name: expression.name.text, target: expression.expression }
+                : null;
+        }
+        if (ts.isElementAccessExpression(expression) && expression.argumentExpression) {
+            const names = reachingPropertyNames(expression.argumentExpression, beforePosition);
+            const name = names.length === 1 ? names[0] : null;
+            return name && ["call", "apply", "bind"].includes(name)
+                ? { name, target: expression.expression }
+                : null;
+        }
+        return null;
+    }
+
+    function staticApplyArgumentLists(expression, beforePosition) {
+        if (!expression) return [];
+        const lists = [];
+        for (const value of reachingExpressionValues(expression, beforePosition)) {
+            const candidate = unwrapExpression(value.expression);
+            if (
+                !ts.isArrayLiteralExpression(candidate) ||
+                candidate.elements.some(
+                    (element) => ts.isSpreadElement(element) || !ts.isExpression(element),
+                )
+            ) {
+                continue;
+            }
+            lists.push(candidate.elements.filter(ts.isExpression));
+        }
+        return bounded(lists, "apply argument-list alternatives");
+    }
+
+    function normalizeEffectiveCalls(expression, args, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:${args.length}`;
+        if (seen.has(key)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
+
+        let candidates = [{ expression, substitutions: new Map() }];
+        if (ts.isIdentifier(expression)) {
+            const boundCandidates = reachingExpressionValues(expression, beforePosition).filter(
+                (value) => {
+                    const candidate = unwrapExpression(value.expression);
+                    return (
+                        ts.isCallExpression(candidate) &&
+                        invocationAdapter(candidate.expression, candidate.pos)?.name === "bind"
+                    );
+                },
+            );
+            if (boundCandidates.length > 0) candidates = bounded(boundCandidates);
+        }
+        const normalized = [];
+        for (const candidate of candidates) {
+            const callee = unwrapExpression(candidate.expression);
+            if (ts.isCallExpression(callee)) {
+                const bound = invocationAdapter(callee.expression, callee.pos);
+                if (bound?.name === "bind") {
+                    normalized.push(
+                        ...normalizeEffectiveCalls(
+                            bound.target,
+                            [...callee.arguments.slice(1), ...args],
+                            callee.pos,
+                            nextSeen,
+                        ),
+                    );
+                    continue;
+                }
+            }
+
+            const adapter = invocationAdapter(callee, beforePosition);
+            if (adapter?.name === "bind") continue;
+            if (adapter?.name === "call") {
+                normalized.push(
+                    ...normalizeEffectiveCalls(
+                        adapter.target,
+                        args.slice(1),
+                        beforePosition,
+                        nextSeen,
+                    ),
+                );
+                continue;
+            }
+            if (adapter?.name === "apply") {
+                for (const applied of staticApplyArgumentLists(args[1], beforePosition)) {
+                    normalized.push(
+                        ...normalizeEffectiveCalls(
+                            adapter.target,
+                            applied,
+                            beforePosition,
+                            nextSeen,
+                        ),
+                    );
+                }
+                continue;
+            }
+            normalized.push({ expression: callee, arguments: [...args] });
+        }
+        return bounded(normalized, "effective call alternatives");
+    }
+
     for (const sourceFile of program.getSourceFiles()) {
         if (analysisExhausted) break;
         if (sourceFile.isDeclarationFile) continue;
@@ -1532,143 +1636,162 @@ function analyzeProgram({
                     }
                 }
 
-                if (
-                    !skipped &&
-                    node.arguments[0] &&
-                    expressionResolvesToBuiltinMember(node.expression, "Object", "assign", node.pos)
-                ) {
-                    let sequences = [[]];
-                    for (const source of node.arguments.slice(1)) {
-                        const alternatives = objectPropertySequences(source, node.pos);
-                        if (alternatives.length > 0) {
-                            sequences = bounded(
-                                sequences.flatMap((sequence) =>
-                                    alternatives.map((alternative) => [
-                                        ...sequence,
-                                        ...alternative,
-                                    ]),
-                                ),
-                            );
-                        } else {
-                            sequences = sequences.map((sequence) => [
-                                ...sequence,
-                                { value: source, names: null, substitutions: new Map() },
-                            ]);
-                        }
-                    }
-                    const finalNameSets = sequences.map(definitelyFinalNames);
-                    const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
-                        (name) => finalNameSets.every((names) => names.has(name)),
-                    );
-                    sequences.forEach((sequence, pathIndex) => {
-                        const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:assign:${pathIndex}`;
-                        sequence.forEach((property, effectOrder) => {
-                            addEffectWrite(
-                                node.arguments[0],
-                                property.value,
-                                property.names,
-                                node,
-                                property.substitutions,
-                                effectGroup,
-                                effectOrder,
-                                definiteEffectNames,
-                            );
-                        });
-                    });
-                }
+                const effectiveCalls = skipped
+                    ? []
+                    : normalizeEffectiveCalls(node.expression, node.arguments, node.pos);
+                effectiveCalls.forEach((effectiveCall, normalizedPathIndex) => {
+                    const effectiveExpression = effectiveCall.expression;
+                    const effectiveArguments = effectiveCall.arguments;
+                    const normalizedCallIsDefinite = effectiveCalls.length === 1;
 
-                if (
-                    !skipped &&
-                    node.arguments.length >= 3 &&
-                    expressionResolvesToBuiltinMember(node.expression, "Reflect", "set", node.pos)
-                ) {
-                    const key = node.arguments[1];
-                    const names =
-                        ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
-                            ? [key.text]
-                            : literalPropertyNames(checker.getTypeAtLocation(key));
-                    addEffectWrite(
-                        node.arguments[0],
-                        node.arguments[2],
-                        names,
-                        node,
-                        new Map(),
-                        `${node.getSourceFile().fileName}:${node.pos}:reflect-set`,
-                        0,
-                        names?.length === 1 ? names : [],
-                    );
-                }
-
-                if (
-                    !skipped &&
-                    node.arguments.length >= 3 &&
-                    (expressionResolvesToBuiltinMember(
-                        node.expression,
-                        "Object",
-                        "defineProperty",
-                        node.pos,
-                    ) ||
+                    if (
+                        effectiveArguments[0] &&
                         expressionResolvesToBuiltinMember(
-                            node.expression,
+                            effectiveExpression,
+                            "Object",
+                            "assign",
+                            node.pos,
+                        )
+                    ) {
+                        let sequences = [[]];
+                        for (const source of effectiveArguments.slice(1)) {
+                            const alternatives = objectPropertySequences(source, node.pos);
+                            if (alternatives.length > 0) {
+                                sequences = bounded(
+                                    sequences.flatMap((sequence) =>
+                                        alternatives.map((alternative) => [
+                                            ...sequence,
+                                            ...alternative,
+                                        ]),
+                                    ),
+                                );
+                            } else {
+                                sequences = sequences.map((sequence) => [
+                                    ...sequence,
+                                    { value: source, names: null, substitutions: new Map() },
+                                ]);
+                            }
+                        }
+                        const finalNameSets = sequences.map(definitelyFinalNames);
+                        const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
+                            (name) => finalNameSets.every((names) => names.has(name)),
+                        );
+                        sequences.forEach((sequence, pathIndex) => {
+                            const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:assign:${normalizedPathIndex}:${pathIndex}`;
+                            sequence.forEach((property, effectOrder) => {
+                                addEffectWrite(
+                                    effectiveArguments[0],
+                                    property.value,
+                                    property.names,
+                                    node,
+                                    property.substitutions,
+                                    effectGroup,
+                                    effectOrder,
+                                    normalizedCallIsDefinite ? definiteEffectNames : [],
+                                );
+                            });
+                        });
+                    }
+
+                    if (
+                        effectiveArguments.length >= 3 &&
+                        expressionResolvesToBuiltinMember(
+                            effectiveExpression,
                             "Reflect",
+                            "set",
+                            node.pos,
+                        )
+                    ) {
+                        const key = effectiveArguments[1];
+                        const names =
+                            ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
+                                ? [key.text]
+                                : literalPropertyNames(checker.getTypeAtLocation(key));
+                        addEffectWrite(
+                            effectiveArguments[0],
+                            effectiveArguments[2],
+                            names,
+                            node,
+                            new Map(),
+                            `${node.getSourceFile().fileName}:${node.pos}:reflect-set:${normalizedPathIndex}`,
+                            0,
+                            normalizedCallIsDefinite && names?.length === 1 ? names : [],
+                        );
+                    }
+
+                    if (
+                        effectiveArguments.length >= 3 &&
+                        (expressionResolvesToBuiltinMember(
+                            effectiveExpression,
+                            "Object",
                             "defineProperty",
                             node.pos,
-                        ))
-                ) {
-                    const key = node.arguments[1];
-                    const names =
-                        ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
-                            ? [key.text]
-                            : literalPropertyNames(checker.getTypeAtLocation(key));
-                    const paths = descriptorEffectSequences(node.arguments[2], node.pos);
-                    paths.forEach((path, pathIndex) => {
-                        const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-property:${pathIndex}`;
-                        path.forEach((value, effectOrder) =>
-                            addEffectWrite(
-                                node.arguments[0],
-                                value.value,
-                                names,
-                                node,
-                                value.substitutions,
-                                effectGroup,
-                                effectOrder,
-                                names?.length === 1 && path.length > 0 ? names : [],
-                            ),
-                        );
-                    });
-                }
+                        ) ||
+                            expressionResolvesToBuiltinMember(
+                                effectiveExpression,
+                                "Reflect",
+                                "defineProperty",
+                                node.pos,
+                            ))
+                    ) {
+                        const key = effectiveArguments[1];
+                        const names =
+                            ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
+                                ? [key.text]
+                                : literalPropertyNames(checker.getTypeAtLocation(key));
+                        const paths = descriptorEffectSequences(effectiveArguments[2], node.pos);
+                        paths.forEach((path, pathIndex) => {
+                            const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-property:${normalizedPathIndex}:${pathIndex}`;
+                            path.forEach((value, effectOrder) =>
+                                addEffectWrite(
+                                    effectiveArguments[0],
+                                    value.value,
+                                    names,
+                                    node,
+                                    value.substitutions,
+                                    effectGroup,
+                                    effectOrder,
+                                    normalizedCallIsDefinite &&
+                                        names?.length === 1 &&
+                                        path.length > 0
+                                        ? names
+                                        : [],
+                                ),
+                            );
+                        });
+                    }
 
-                if (
-                    !skipped &&
-                    node.arguments.length >= 2 &&
-                    expressionResolvesToBuiltinMember(
-                        node.expression,
-                        "Object",
-                        "defineProperties",
-                        node.pos,
-                    )
-                ) {
-                    const paths = definePropertiesEffectPaths(node.arguments[1], node.pos);
-                    const finalNameSets = paths.map(definitelyFinalNames);
-                    const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
-                        (name) => finalNameSets.every((names) => names.has(name)),
-                    );
-                    paths.forEach((path, pathIndex) => {
-                        const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-properties:${pathIndex}`;
-                        path.forEach((value, effectOrder) =>
-                            addEffectWrite(
-                                node.arguments[0],
-                                value.value,
-                                value.names,
-                                node,
-                                value.substitutions,
-                                effectGroup,
-                                effectOrder,
-                                definiteEffectNames,
-                            ),
+                    if (
+                        effectiveArguments.length >= 2 &&
+                        expressionResolvesToBuiltinMember(
+                            effectiveExpression,
+                            "Object",
+                            "defineProperties",
+                            node.pos,
+                        )
+                    ) {
+                        const paths = definePropertiesEffectPaths(effectiveArguments[1], node.pos);
+                        const finalNameSets = paths.map(definitelyFinalNames);
+                        const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
+                            (name) => finalNameSets.every((names) => names.has(name)),
                         );
-                    });
-                }
+                        paths.forEach((path, pathIndex) => {
+                            const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-properties:${normalizedPathIndex}:${pathIndex}`;
+                            path.forEach((value, effectOrder) =>
+                                addEffectWrite(
+                                    effectiveArguments[0],
+                                    value.value,
+                                    value.names,
+                                    node,
+                                    value.substitutions,
+                                    effectGroup,
+                                    effectOrder,
+                                    normalizedCallIsDefinite ? definiteEffectNames : [],
+                                ),
+                            );
+                        });
+                    }
+                });
 
                 const bound = boundInvocation(node.expression, node);
                 if (!skipped && bound) addInvocation(bound.declaration, node, bound.arguments);
