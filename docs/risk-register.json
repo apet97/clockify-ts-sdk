@@ -93,7 +93,6 @@
         "remote-mutation-proof-pending"
       ],
       "requiredReadinessBlockingRiskIds": [
-        "operation-parity-generated-reachability",
         "consumer-request-casts",
         "cross-package-release-proof-asymmetry",
         "remote-mutation-proof-pending"
@@ -271,25 +270,25 @@
     },
     {
       "id": "operation-parity-generated-reachability",
-      "status": "open",
-      "finalReadinessBlocking": true,
+      "status": "accepted",
+      "finalReadinessBlocking": false,
       "surface": "Generated operation parity",
-      "summary": "The parity inventory does not yet prove that every claimed generated operation is reachable through the intended public SDK surface.",
-      "impact": "A parity row can look covered while the generated method is missing, inaccessible, or only present behind an unsupported path.",
-      "mitigation": "Treat generated inventory markers as orientation only until Task 5 adds reachability proof and regenerates the parity surface.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen sdk-codegen-drift operation-parity-drift contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
+      "summary": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
+      "impact": "Generated method additions, removals, renames, duplicates, count drift, or naming reclassification now fail the existing parity gate until disposition governance is updated deliberately.",
+      "mitigation": "Keep the codegen receipt, 14-row naming registry, 169-row disposition artifact, fixture validator, and operation-parity drift gate in lockstep.",
+      "closureGate": "Closed 2026-07-19 by receipt-derived 169/155/14 parity, all-operation dispositions, fail-closed fixture tests, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
       "evidence": [
         {
-          "path": "docs/operation-parity.json",
-          "contains": "\"sdkNamed\": 156"
+          "path": "docs/operation-dispositions.json",
+          "contains": "\"sdkGenerated\": 169"
         },
         {
-          "path": "scripts/generate-operation-parity.mjs",
-          "contains": "const inferredSdk = op.sdkGroup && op.sdkMethod"
+          "path": "docs/sdk-operation-naming-classifications.json",
+          "contains": "\"sdkNaming\": \"operationId-derived\""
         },
         {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-generated-reachability-receipt-recorded"
+          "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
+          "contains": "169 generated SDK operations = 155 explicitly named + 14 operationId-derived"
         }
       ]
     },

@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Changed
+
+- Corrected operation coverage documentation to distinguish all 169 generated
+  SDK methods from the exact 155 explicitly named / 14 operationId-derived
+  naming split, backed by the local codegen receipt and governed dispositions.
+
 ### Fixed
 
 - Expense update requests now type `file` as optional, matching the multipart

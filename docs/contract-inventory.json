@@ -1372,6 +1372,9 @@
       "id": "operation-coverage",
       "target": "operation-coverage",
       "checker": "scripts/check-operation-coverage.mjs",
+      "reports": [
+        "scripts/generate-operation-parity.mjs"
+      ],
       "policies": [
         "docs/operation-coverage-policy.md"
       ],

@@ -441,7 +441,9 @@
       "mustContain": [
         "Coverage baseline",
         "OpenAPI operations",
-        "SDK-named operations",
+        "Generated SDK operations",
+        "Explicitly named SDK operations",
+        "OperationId-derived SDK operations",
         "Required escalation",
         "Proof gates"
       ]

@@ -434,7 +434,7 @@
         {
           "path": "scripts/lint-openapi-contract.mjs",
           "contains": [
-            "SDK-named",
+            "explicitly named SDK",
             "Last-Page"
           ]
         },
@@ -3917,7 +3917,7 @@
     },
     {
       "id": "operation-coverage",
-      "requirement": "Guard no-regression operation coverage thresholds across corrected OpenAPI, SDK method stamps, TS MCP exact matches, GOCLMCP exact matches, and curated parity overrides.",
+      "requirement": "Guard exact receipt-derived SDK reachability and naming disposition counts alongside TS MCP, GOCLMCP, and curated parity coverage.",
       "evidence": [
         {
           "path": "docs/operation-coverage-contract.json",
@@ -3927,6 +3927,8 @@
             "mcp-tool-manifest-drift",
             "mcp-tool-manifest",
             "operation-coverage",
+            "operationDispositions",
+            "sdkCodegenReceipt",
             "scripts/check-operation-coverage.mjs"
           ]
         },
@@ -3939,6 +3941,8 @@
             "manifestProofWiring",
             "Operation coverage contract shape failed",
             "reportInputs.operationParity",
+            "reportInputs.operationDispositions",
+            "reportInputs.sdkCodegenReceipt",
             "wiring.makeTarget",
             "wiring.checker",
             "wiring.qualityGate",

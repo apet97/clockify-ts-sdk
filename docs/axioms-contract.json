@@ -248,7 +248,9 @@
       "id": "operation-coverage",
       "path": "docs/operation-coverage-contract.json",
       "contains": [
-        "sdkNamed",
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
         "tsMcpExact",
         "goMcpExact"
       ]

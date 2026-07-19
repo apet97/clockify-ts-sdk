@@ -1,0 +1,2248 @@
+{
+  "schemaVersion": 1,
+  "purpose": "All corrected OpenAPI operations mapped to codegen-receipt reachability and governed SDK naming classification.",
+  "sources": {
+    "openapi": "docs/openapi-operations.json",
+    "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json",
+    "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
+    "discrepancyLedger": "spec/evidence/discrepancies.md"
+  },
+  "summary": {
+    "sdkGenerated": 169,
+    "sdkExplicitlyNamed": 155,
+    "sdkOperationIdDerived": 14
+  },
+  "operations": [
+    {
+      "operationId": "uploadImage",
+      "httpMethod": "POST",
+      "path": "/file/image",
+      "generated": {
+        "group": "files",
+        "method": "uploadImage",
+        "clientPath": "client.files.uploadImage",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "getSharedReportsSharedReportId",
+      "httpMethod": "GET",
+      "path": "/shared-reports/{sharedReportId}",
+      "generated": {
+        "group": "sharedReports",
+        "method": "view",
+        "clientPath": "client.sharedReports.view",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getCurrentUser",
+      "httpMethod": "GET",
+      "path": "/user",
+      "generated": {
+        "group": "users",
+        "method": "getCurrentUser",
+        "clientPath": "client.users.getCurrentUser",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "getAllMyWorkspaces",
+      "httpMethod": "GET",
+      "path": "/workspaces",
+      "generated": {
+        "group": "workspaces",
+        "method": "list",
+        "clientPath": "client.workspaces.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addWorkspace",
+      "httpMethod": "POST",
+      "path": "/workspaces",
+      "generated": {
+        "group": "workspaces",
+        "method": "create",
+        "clientPath": "client.workspaces.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceInfo",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}",
+      "generated": {
+        "group": "workspaces",
+        "method": "get",
+        "clientPath": "client.workspaces.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/addons/{addonId}/webhooks",
+      "generated": {
+        "group": "webhooks",
+        "method": "listForAddon",
+        "clientPath": "client.webhooks.listForAddon",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getApprovalRequests",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "generated": {
+        "group": "approvals",
+        "method": "list",
+        "clientPath": "client.approvals.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "submitApprovalRequest",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests",
+      "generated": {
+        "group": "approvals",
+        "method": "submit",
+        "clientPath": "client.approvals.submit",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateApprovalRequest",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/approval-requests/{approvalRequestId}",
+      "generated": {
+        "group": "approvals",
+        "method": "updateStatus",
+        "clientPath": "client.approvals.updateStatus",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "resubmitEntriesForApproval",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/resubmit-entries-for-approval",
+      "generated": {
+        "group": "approvals",
+        "method": "resubmit",
+        "clientPath": "client.approvals.resubmit",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "submitApprovalRequestForUser",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}",
+      "generated": {
+        "group": "approvals",
+        "method": "submitForUser",
+        "clientPath": "client.approvals.submitForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "resubmitEntriesForApprovalForUser",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/approval-requests/users/{userId}/resubmit-entries-for-approval",
+      "generated": {
+        "group": "approvals",
+        "method": "resubmitForUser",
+        "clientPath": "client.approvals.resubmitForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "searchAuditLogs",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/audit-log",
+      "generated": {
+        "group": "auditLogReport",
+        "method": "search",
+        "clientPath": "client.auditLogReport.search",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdClients",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/clients",
+      "generated": {
+        "group": "clients",
+        "method": "list",
+        "clientPath": "client.clients.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdClients",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/clients",
+      "generated": {
+        "group": "clients",
+        "method": "create",
+        "clientPath": "client.clients.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdClientsClientId",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "generated": {
+        "group": "clients",
+        "method": "get",
+        "clientPath": "client.clients.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdClientsClientId",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "generated": {
+        "group": "clients",
+        "method": "update",
+        "clientPath": "client.clients.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdClientsClientId",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}",
+      "generated": {
+        "group": "clients",
+        "method": "delete",
+        "clientPath": "client.clients.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/clients/{clientId}/archive",
+      "generated": {
+        "group": "clients",
+        "method": "archive",
+        "clientPath": "client.clients.archive",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateWorkspaceCostRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/cost-rate",
+      "generated": {
+        "group": "workspaces",
+        "method": "updateCostRate",
+        "clientPath": "client.workspaces.updateCostRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "listWorkspaceCustomFields",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "generated": {
+        "group": "customFields",
+        "method": "listForWorkspace",
+        "clientPath": "client.customFields.listForWorkspace",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createWorkspaceCustomField",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/custom-fields",
+      "generated": {
+        "group": "customFields",
+        "method": "createForWorkspace",
+        "clientPath": "client.customFields.createForWorkspace",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateWorkspaceCustomField",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "generated": {
+        "group": "customFields",
+        "method": "updateForWorkspace",
+        "clientPath": "client.customFields.updateForWorkspace",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspaceCustomField",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/custom-fields/{customFieldId}",
+      "generated": {
+        "group": "customFields",
+        "method": "deleteForWorkspace",
+        "clientPath": "client.customFields.deleteForWorkspace",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getCreatedEntityInfo",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/entities/created",
+      "generated": {
+        "group": "entityChangesExperimental",
+        "method": "listCreated",
+        "clientPath": "client.entityChangesExperimental.listCreated",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getDeletedEntityInfo",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/entities/deleted",
+      "generated": {
+        "group": "entityChangesExperimental",
+        "method": "listDeleted",
+        "clientPath": "client.entityChangesExperimental.listDeleted",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getUpdatedEntityInfo",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/entities/updated",
+      "generated": {
+        "group": "entityChangesExperimental",
+        "method": "listUpdated",
+        "clientPath": "client.entityChangesExperimental.listUpdated",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceExpenses",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "generated": {
+        "group": "expenses",
+        "method": "list",
+        "clientPath": "client.expenses.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createExpense",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/expenses",
+      "generated": {
+        "group": "expenses",
+        "method": "create",
+        "clientPath": "client.expenses.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getExpenseById",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "generated": {
+        "group": "expenses",
+        "method": "get",
+        "clientPath": "client.expenses.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateExpense",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "generated": {
+        "group": "expenses",
+        "method": "update",
+        "clientPath": "client.expenses.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteExpense",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}",
+      "generated": {
+        "group": "expenses",
+        "method": "delete",
+        "clientPath": "client.expenses.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "downloadExpenseReceipt",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/{expenseId}/files/{fileId}",
+      "generated": {
+        "group": "expenses",
+        "method": "downloadReceipt",
+        "clientPath": "client.expenses.downloadReceipt",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getExpenseCategories",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "generated": {
+        "group": "expenseCategories",
+        "method": "list",
+        "clientPath": "client.expenseCategories.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addExpenseCategory",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/expenses/categories",
+      "generated": {
+        "group": "expenseCategories",
+        "method": "create",
+        "clientPath": "client.expenseCategories.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateExpenseCategory",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "generated": {
+        "group": "expenseCategories",
+        "method": "update",
+        "clientPath": "client.expenseCategories.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteExpenseCategory",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}",
+      "generated": {
+        "group": "expenseCategories",
+        "method": "delete",
+        "clientPath": "client.expenseCategories.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "archiveExpenseCategory",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/expenses/categories/{categoryId}/status",
+      "generated": {
+        "group": "expenseCategories",
+        "method": "archive",
+        "clientPath": "client.expenseCategories.archive",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceHolidays",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "generated": {
+        "group": "holidays",
+        "method": "list",
+        "clientPath": "client.holidays.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createHoliday",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/holidays",
+      "generated": {
+        "group": "holidays",
+        "method": "create",
+        "clientPath": "client.holidays.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateHoliday",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "generated": {
+        "group": "holidays",
+        "method": "update",
+        "clientPath": "client.holidays.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteHoliday",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/holidays/{holidayId}",
+      "generated": {
+        "group": "holidays",
+        "method": "delete",
+        "clientPath": "client.holidays.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceHolidaysInPeriod",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/holidays/in-period",
+      "generated": {
+        "group": "holidays",
+        "method": "listInPeriod",
+        "clientPath": "client.holidays.listInPeriod",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateWorkspaceBillableRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/hourly-rate",
+      "generated": {
+        "group": "workspaces",
+        "method": "updateBillableRate",
+        "clientPath": "client.workspaces.updateBillableRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceInvoices",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "generated": {
+        "group": "invoices",
+        "method": "list",
+        "clientPath": "client.invoices.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addInvoice",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices",
+      "generated": {
+        "group": "invoices",
+        "method": "create",
+        "clientPath": "client.invoices.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getInvoiceById",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "generated": {
+        "group": "invoices",
+        "method": "get",
+        "clientPath": "client.invoices.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateInvoice",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "generated": {
+        "group": "invoices",
+        "method": "update",
+        "clientPath": "client.invoices.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteInvoice",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}",
+      "generated": {
+        "group": "invoices",
+        "method": "delete",
+        "clientPath": "client.invoices.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "duplicateInvoice",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/duplicate",
+      "generated": {
+        "group": "invoices",
+        "method": "duplicate",
+        "clientPath": "client.invoices.duplicate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "exportInvoice",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/export",
+      "generated": {
+        "group": "invoices",
+        "method": "export",
+        "clientPath": "client.invoices.export",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addInvoiceItem",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items",
+      "generated": {
+        "group": "invoiceItems",
+        "method": "create",
+        "clientPath": "client.invoiceItems.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteInvoiceItem",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/{order}",
+      "generated": {
+        "group": "invoiceItems",
+        "method": "delete",
+        "clientPath": "client.invoiceItems.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "importInvoiceItems",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/items/import",
+      "generated": {
+        "group": "invoiceItems",
+        "method": "import",
+        "clientPath": "client.invoiceItems.import",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getInvoicePayments",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "generated": {
+        "group": "invoicePayments",
+        "method": "list",
+        "clientPath": "client.invoicePayments.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addInvoicePayment",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments",
+      "generated": {
+        "group": "invoicePayments",
+        "method": "create",
+        "clientPath": "client.invoicePayments.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteInvoicePayment",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/payments/{paymentId}",
+      "generated": {
+        "group": "invoicePayments",
+        "method": "delete",
+        "clientPath": "client.invoicePayments.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "changeInvoiceStatus",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/invoices/{invoiceId}/status",
+      "generated": {
+        "group": "invoices",
+        "method": "updateStatus",
+        "clientPath": "client.invoices.updateStatus",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "filterInvoices",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/invoices/info",
+      "generated": {
+        "group": "invoices",
+        "method": "filter",
+        "clientPath": "client.invoices.filter",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getInvoiceSettings",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "generated": {
+        "group": "invoiceSettings",
+        "method": "get",
+        "clientPath": "client.invoiceSettings.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateInvoiceSettings",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/invoices/settings",
+      "generated": {
+        "group": "invoiceSettings",
+        "method": "update",
+        "clientPath": "client.invoiceSettings.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addLimitedUsersWithInfo",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/limited-users",
+      "generated": {
+        "group": "workspaces",
+        "method": "addLimitedUsersWithInfo",
+        "clientPath": "client.workspaces.addLimitedUsersWithInfo",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getMemberProfile",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "generated": {
+        "group": "memberProfiles",
+        "method": "get",
+        "clientPath": "client.memberProfiles.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateMemberProfile",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/member-profile/{userId}",
+      "generated": {
+        "group": "memberProfiles",
+        "method": "update",
+        "clientPath": "client.memberProfiles.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspaceProjects",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/projects",
+      "generated": {
+        "group": "projects",
+        "method": "list",
+        "clientPath": "client.projects.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createProject",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/projects",
+      "generated": {
+        "group": "projects",
+        "method": "create",
+        "clientPath": "client.projects.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getProjectById",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "generated": {
+        "group": "projects",
+        "method": "get",
+        "clientPath": "client.projects.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProject",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "generated": {
+        "group": "projects",
+        "method": "update",
+        "clientPath": "client.projects.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteProject",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}",
+      "generated": {
+        "group": "projects",
+        "method": "delete",
+        "clientPath": "client.projects.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/archive",
+      "generated": {
+        "group": "projects",
+        "method": "archive",
+        "clientPath": "client.projects.archive",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "listProjectCustomFields",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields",
+      "generated": {
+        "group": "customFields",
+        "method": "listForProject",
+        "clientPath": "client.customFields.listForProject",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectCustomField",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "generated": {
+        "group": "customFields",
+        "method": "updateForProject",
+        "clientPath": "client.customFields.updateForProject",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "removeProjectCustomField",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/custom-fields/{customFieldId}",
+      "generated": {
+        "group": "customFields",
+        "method": "removeFromProject",
+        "clientPath": "client.customFields.removeFromProject",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectEstimate",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/estimate",
+      "generated": {
+        "group": "projects",
+        "method": "updateEstimate",
+        "clientPath": "client.projects.updateEstimate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "assignOrRemoveProjectUsers",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "generated": {
+        "group": "projects",
+        "method": "setMembers",
+        "clientPath": "client.projects.setMembers",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectMemberships",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/memberships",
+      "generated": {
+        "group": "projects",
+        "method": "updateMemberships",
+        "clientPath": "client.projects.updateMemberships",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "findTasksOnProject",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "generated": {
+        "group": "tasks",
+        "method": "list",
+        "clientPath": "client.tasks.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addTaskOnProject",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks",
+      "generated": {
+        "group": "tasks",
+        "method": "create",
+        "clientPath": "client.tasks.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getTaskById",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "generated": {
+        "group": "tasks",
+        "method": "get",
+        "clientPath": "client.tasks.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateTaskOnProject",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "generated": {
+        "group": "tasks",
+        "method": "update",
+        "clientPath": "client.tasks.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteTaskFromProject",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}",
+      "generated": {
+        "group": "tasks",
+        "method": "delete",
+        "clientPath": "client.tasks.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateTaskCostRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/cost-rate",
+      "generated": {
+        "group": "tasks",
+        "method": "updateCostRate",
+        "clientPath": "client.tasks.updateCostRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateTaskBillableRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/tasks/{taskId}/hourly-rate",
+      "generated": {
+        "group": "tasks",
+        "method": "updateBillableRate",
+        "clientPath": "client.tasks.updateBillableRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectTemplate",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/template",
+      "generated": {
+        "group": "projects",
+        "method": "updateTemplate",
+        "clientPath": "client.projects.updateTemplate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectUserCostRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/cost-rate",
+      "generated": {
+        "group": "projects",
+        "method": "updateUserCostRate",
+        "clientPath": "client.projects.updateUserCostRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateProjectUserHourlyRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/projects/{projectId}/users/{userId}/hourly-rate",
+      "generated": {
+        "group": "projects",
+        "method": "updateUserHourlyRate",
+        "clientPath": "client.projects.updateUserHourlyRate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createProjectFromTemplate",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/projects/from-template",
+      "generated": {
+        "group": "projects",
+        "method": "createFromTemplate",
+        "clientPath": "client.projects.createFromTemplate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "generateAttendanceReport",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/reports/attendance",
+      "generated": {
+        "group": "reports",
+        "method": "attendance",
+        "clientPath": "client.reports.attendance",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "generateDetailedReport",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/reports/detailed",
+      "generated": {
+        "group": "reports",
+        "method": "detailed",
+        "clientPath": "client.reports.detailed",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "generateDetailedReportV1",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/reports/expenses/detailed",
+      "generated": {
+        "group": "expenseReport",
+        "method": "generateDetailedReportV1",
+        "clientPath": "client.expenseReport.generateDetailedReportV1",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "generateSummaryReport",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/reports/summary",
+      "generated": {
+        "group": "reports",
+        "method": "summary",
+        "clientPath": "client.reports.summary",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "generateWeeklyReport",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/reports/weekly",
+      "generated": {
+        "group": "reports",
+        "method": "weekly",
+        "clientPath": "client.reports.weekly",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "copyScheduledAssignment",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/{assignmentId}/copy",
+      "generated": {
+        "group": "scheduling",
+        "method": "copy",
+        "clientPath": "client.scheduling.copy",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getAllSchedulingAssignments",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/all",
+      "generated": {
+        "group": "scheduling",
+        "method": "list",
+        "clientPath": "client.scheduling.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getScheduledAssignmentsPerProject",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals",
+      "generated": {
+        "group": "scheduling",
+        "method": "listPerProject",
+        "clientPath": "client.scheduling.listPerProject",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getScheduledAssignmentsOnProject",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/projects/totals/{projectId}",
+      "generated": {
+        "group": "scheduling",
+        "method": "listOnProject",
+        "clientPath": "client.scheduling.listOnProject",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "publishAssignments",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/publish",
+      "generated": {
+        "group": "scheduling",
+        "method": "publish",
+        "clientPath": "client.scheduling.publish",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createRecurringAssignment",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring",
+      "generated": {
+        "group": "scheduling",
+        "method": "createRecurring",
+        "clientPath": "client.scheduling.createRecurring",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateRecurringAssignment",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "generated": {
+        "group": "scheduling",
+        "method": "updateRecurring",
+        "clientPath": "client.scheduling.updateRecurring",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteRecurringAssignment",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/recurring/{assignmentId}",
+      "generated": {
+        "group": "scheduling",
+        "method": "deleteRecurring",
+        "clientPath": "client.scheduling.deleteRecurring",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "changeRecurringPeriod",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/series/{assignmentId}",
+      "generated": {
+        "group": "scheduling",
+        "method": "changeRecurringPeriod",
+        "clientPath": "client.scheduling.changeRecurringPeriod",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+      ]
+    },
+    {
+      "operationId": "getUsersCapacityTotals",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/user-filter/totals",
+      "generated": {
+        "group": "scheduling",
+        "method": "getUsersCapacityFiltered",
+        "clientPath": "client.scheduling.getUsersCapacityFiltered",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getUserCapacityTotal",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/scheduling/assignments/users/{userId}/totals",
+      "generated": {
+        "group": "scheduling",
+        "method": "getUserCapacity",
+        "clientPath": "client.scheduling.getUserCapacity",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdSharedReports",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "generated": {
+        "group": "sharedReports",
+        "method": "list",
+        "clientPath": "client.sharedReports.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdSharedReports",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/shared-reports",
+      "generated": {
+        "group": "sharedReports",
+        "method": "create",
+        "clientPath": "client.sharedReports.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "generated": {
+        "group": "sharedReports",
+        "method": "update",
+        "clientPath": "client.sharedReports.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/shared-reports/{sharedReportId}",
+      "generated": {
+        "group": "sharedReports",
+        "method": "delete",
+        "clientPath": "client.sharedReports.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTags",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/tags",
+      "generated": {
+        "group": "tags",
+        "method": "list",
+        "clientPath": "client.tags.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdTags",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/tags",
+      "generated": {
+        "group": "tags",
+        "method": "create",
+        "clientPath": "client.tags.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTagsTagId",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "generated": {
+        "group": "tags",
+        "method": "get",
+        "clientPath": "client.tags.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdTagsTagId",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "generated": {
+        "group": "tags",
+        "method": "update",
+        "clientPath": "client.tags.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/tags/{tagId}",
+      "generated": {
+        "group": "tags",
+        "method": "delete",
+        "clientPath": "client.tags.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdTimeEntries",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "create",
+        "clientPath": "client.timeEntries.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "generated": {
+        "group": "timeEntries",
+        "method": "get",
+        "clientPath": "client.timeEntries.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "generated": {
+        "group": "timeEntries",
+        "method": "update",
+        "clientPath": "client.timeEntries.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-entries/{timeEntryId}",
+      "generated": {
+        "group": "timeEntries",
+        "method": "delete",
+        "clientPath": "client.timeEntries.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced",
+      "generated": {
+        "group": "timeEntries",
+        "method": "markInvoiced",
+        "clientPath": "client.timeEntries.markInvoiced",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-entries/invoiced/bulk",
+      "generated": {
+        "group": "timeEntries",
+        "method": "markInvoicedBulk",
+        "clientPath": "client.timeEntries.markInvoicedBulk",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-entries/status/in-progress",
+      "generated": {
+        "group": "timeEntries",
+        "method": "listInProgress",
+        "clientPath": "client.timeEntries.listInProgress",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getBalancesForPolicy",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "generated": {
+        "group": "balances",
+        "method": "listForPolicy",
+        "clientPath": "client.balances.listForPolicy",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateBalance",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}",
+      "generated": {
+        "group": "balances",
+        "method": "update",
+        "clientPath": "client.balances.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getBalanceForUser",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/balance/user/{userId}",
+      "generated": {
+        "group": "balances",
+        "method": "getForUser",
+        "clientPath": "client.balances.getForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getTimeOffPolicies",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "list",
+        "clientPath": "client.timeOffPolicies.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createTimeOffPolicy",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "create",
+        "clientPath": "client.timeOffPolicies.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getTimeOffPolicy",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "get",
+        "clientPath": "client.timeOffPolicies.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateTimeOffPolicy",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "update",
+        "clientPath": "client.timeOffPolicies.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "changeTimeOffPolicyStatus",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "updateStatus",
+        "clientPath": "client.timeOffPolicies.updateStatus",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteTimeOffPolicy",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}",
+      "generated": {
+        "group": "timeOffPolicies",
+        "method": "delete",
+        "clientPath": "client.timeOffPolicies.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createTimeOffRequest",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests",
+      "generated": {
+        "group": "timeOff",
+        "method": "submit",
+        "clientPath": "client.timeOff.submit",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "changeTimeOffRequestStatus",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "generated": {
+        "group": "timeOff",
+        "method": "changeTimeOffRequestStatus",
+        "clientPath": "client.timeOff.changeTimeOffRequestStatus",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off.change-status.union-and-note"
+      ]
+    },
+    {
+      "operationId": "deleteTimeOffRequest",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/requests/{requestId}",
+      "generated": {
+        "group": "timeOff",
+        "method": "withdraw",
+        "clientPath": "client.timeOff.withdraw",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createTimeOffRequestForUser",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/policies/{policyId}/users/{userId}/requests",
+      "generated": {
+        "group": "timeOff",
+        "method": "submitForUser",
+        "clientPath": "client.timeOff.submitForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/time-off/requests",
+      "generated": {
+        "group": "timeOff",
+        "method": "list",
+        "clientPath": "client.timeOff.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "generated": {
+        "group": "timeOff",
+        "method": "get",
+        "clientPath": "client.timeOff.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}",
+      "generated": {
+        "group": "timeOff",
+        "method": "delete",
+        "clientPath": "client.timeOff.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/time-off/requests/{requestId}/status",
+      "generated": {
+        "group": "timeOff",
+        "method": "updateStatus",
+        "clientPath": "client.timeOff.updateStatus",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "findAllGroupsOnWorkspace",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "generated": {
+        "group": "userGroups",
+        "method": "list",
+        "clientPath": "client.userGroups.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addNewGroup",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups",
+      "generated": {
+        "group": "userGroups",
+        "method": "create",
+        "clientPath": "client.userGroups.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateGroup",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "generated": {
+        "group": "userGroups",
+        "method": "update",
+        "clientPath": "client.userGroups.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteGroup",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}",
+      "generated": {
+        "group": "userGroups",
+        "method": "delete",
+        "clientPath": "client.userGroups.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addUsersToGroup",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users",
+      "generated": {
+        "group": "userGroups",
+        "method": "addMembers",
+        "clientPath": "client.userGroups.addMembers",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "removeUserFromGroup",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/user-groups/{groupId}/users/{userId}",
+      "generated": {
+        "group": "userGroups",
+        "method": "removeMember",
+        "clientPath": "client.userGroups.removeMember",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "listForUser",
+        "clientPath": "client.timeEntries.listForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "createForUser",
+        "clientPath": "client.timeEntries.createForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "startTimer",
+        "clientPath": "client.timeEntries.startTimer",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "updateForUser",
+        "clientPath": "client.timeEntries.updateForUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteMany",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries",
+      "generated": {
+        "group": "timeEntries",
+        "method": "deleteMany",
+        "clientPath": "client.timeEntries.deleteMany",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/user/{userId}/time-entries/{timeEntryId}/duplicate",
+      "generated": {
+        "group": "timeEntries",
+        "method": "duplicate",
+        "clientPath": "client.timeEntries.duplicate",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "findWorkspaceUsers",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/users",
+      "generated": {
+        "group": "users",
+        "method": "list",
+        "clientPath": "client.users.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "addUserToWorkspace",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/users",
+      "generated": {
+        "group": "workspaces",
+        "method": "addUser",
+        "clientPath": "client.workspaces.addUser",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateUserStatus",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}",
+      "generated": {
+        "group": "workspaces",
+        "method": "updateUserStatus",
+        "clientPath": "client.workspaces.updateUserStatus",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "updateUserCostRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/cost-rate",
+      "generated": {
+        "group": "workspaces",
+        "method": "updateUserCostRate",
+        "clientPath": "client.workspaces.updateUserCostRate",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "updateUserCustomFieldValue",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/custom-field/{customFieldId}/value",
+      "generated": {
+        "group": "users",
+        "method": "updateUserCustomFieldValue",
+        "clientPath": "client.users.updateUserCustomFieldValue",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "updateUserHourlyRate",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/users/{userId}/hourly-rate",
+      "generated": {
+        "group": "workspaces",
+        "method": "updateUserHourlyRate",
+        "clientPath": "client.workspaces.updateUserHourlyRate",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/users/{userId}/managers",
+      "generated": {
+        "group": "users",
+        "method": "findUserTeamManagers",
+        "clientPath": "client.users.findUserTeamManagers",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "giveUserManagerRole",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "generated": {
+        "group": "users",
+        "method": "giveRole",
+        "clientPath": "client.users.giveRole",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "removeUserManagerRole",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/users/{userId}/roles",
+      "generated": {
+        "group": "users",
+        "method": "removeRole",
+        "clientPath": "client.users.removeRole",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/users/info",
+      "generated": {
+        "group": "users",
+        "method": "filterWorkspaceUsers",
+        "clientPath": "client.users.filterWorkspaceUsers",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "getWebhooksOnWorkspace",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "generated": {
+        "group": "webhooks",
+        "method": "list",
+        "clientPath": "client.webhooks.list",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "createWebhook",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks",
+      "generated": {
+        "group": "webhooks",
+        "method": "create",
+        "clientPath": "client.webhooks.create",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWebhookById",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "generated": {
+        "group": "webhooks",
+        "method": "get",
+        "clientPath": "client.webhooks.get",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "updateWebhook",
+      "httpMethod": "PUT",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "generated": {
+        "group": "webhooks",
+        "method": "update",
+        "clientPath": "client.webhooks.update",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "deleteWebhook",
+      "httpMethod": "DELETE",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}",
+      "generated": {
+        "group": "webhooks",
+        "method": "delete",
+        "clientPath": "client.webhooks.delete",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/generateNewToken",
+      "generated": {
+        "group": "webhooks",
+        "method": "rotateToken",
+        "clientPath": "client.webhooks.rotateToken",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "generated": {
+        "group": "webhooks",
+        "method": "listLogs",
+        "clientPath": "client.webhooks.listLogs",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWebhookLogs",
+      "httpMethod": "POST",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/logs",
+      "generated": {
+        "group": "webhooks",
+        "method": "searchLogs",
+        "clientPath": "client.webhooks.searchLogs",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    },
+    {
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "httpMethod": "GET",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/statuses",
+      "generated": {
+        "group": "webhooks",
+        "method": "getWebhookEventStatusesWithLatestLog",
+        "clientPath": "client.webhooks.getWebhookEventStatusesWithLatestLog",
+        "reachable": true
+      },
+      "sdkNaming": "operationId-derived",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+      "httpMethod": "PATCH",
+      "path": "/workspaces/{workspaceId}/webhooks/{webhookId}/token",
+      "generated": {
+        "group": "webhooks",
+        "method": "updateToken",
+        "clientPath": "client.webhooks.updateToken",
+        "reachable": true
+      },
+      "sdkNaming": "explicit",
+      "evidenceIds": []
+    }
+  ]
+}

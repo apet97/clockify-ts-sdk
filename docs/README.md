@@ -115,8 +115,10 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`openapi-evidence-contract.json`](./openapi-evidence-contract.json) | edit intentionally | Discrepancy ledger and OpenAPI evidence contract. |
 | [`schema-quality-contract.json`](./schema-quality-contract.json) | edit intentionally | Schema/model quality contract for corrected OpenAPI and generated TypeScript surfaces. |
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |
-| [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage no-regression threshold contract. |
-| [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Best-effort OpenAPI, SDK, TS MCP, and GOCLMCP parity join. |
+| [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage and exact generated-SDK split contract. |
+| [`operation-dispositions.json`](./operation-dispositions.json) | `make operation-parity` | All 169 operations mapped to codegen-receipt reachability, naming class, and evidence identifiers. |
+| [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 14 operationId-derived generated methods. |
+| [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Receipt-derived generated SDK, TS MCP, and GOCLMCP parity join. |
 | [`official-openapi-drift-contract.json`](./official-openapi-drift-contract.json) | edit intentionally | Official-vs-custom OpenAPI drift pipeline contract. |
 | [`official-openapi-drift-policy.md`](./official-openapi-drift-policy.md) | edit intentionally | Official-vs-custom drift lifecycle, commands, and response policy. |
 | [`spec-diff-official.md`](./spec-diff-official.md) | `make official-openapi-report` | Official-vs-custom OpenAPI diff (NEW_OFFICIAL_ENDPOINT / CUSTOM_BETTER / CONFLICT / PHANTOM_RISK). |

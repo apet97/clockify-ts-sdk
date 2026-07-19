@@ -9,10 +9,11 @@ Accepted.
 The TypeScript MCP (`@apet97/clockify-mcp-115`) advertises 140 tools (135 at the
 2026-06-22 triage below; +5 read tools shipped 2026-06-28); the sibling
 Go MCP reference (`../GOCLMCP`) loads 156. The operation-parity matrix
-(`docs/operation-parity.md`) also shows 13 of the 169 OpenAPI operations with no
-SDK method name (the SDK column is `-`). Quality work requires each gap to be
-either closed or recorded as a deliberate, justified decision — no silent
-ceilings. A cross-repo triage (2026-06-22) reconciled both surfaces fully:
+(`docs/operation-parity.md`) separately records 169 generated SDK methods, 155
+explicit OpenAPI group/method names, and 14 governed operationId-derived names.
+Quality work requires each scope difference to be either closed or recorded as
+a deliberate, justified decision — no silent ceilings. A cross-repo triage
+(2026-06-22) reconciled both MCP surfaces fully:
 Go's 156 = 98 names shared with TS + 58 Go-only names, while TS additionally
 carries 36 names Go lacks (TS splits several Go tools). At the operation level TS
 exact-name parity (94) exceeds Go (84).
@@ -53,23 +54,18 @@ As of the triage, the 58 Go-only names decompose as:
   shipped, to keep the surface workflow-first and thin. The literal execution
   roadmap lives in [`../mcp-backlog.md`](../mcp-backlog.md).
 
-For the 12 operations with no SDK method name: all 12 already have reachable,
-operationId-derived generated methods (e.g. `client.users.getCurrentUser`,
-`client.scheduling.changeRecurringPeriod`) — none is a MISSING method. They are
-unstamped by GOCLMCP's deliberate convention: the `SDK_METHOD_NAMES` table reserves
-clean group/method stamps for workspace-scoped CRUDL operations and leaves action
-verbs, non-CRUDL, and non-workspace ops on their operationId-derived names
-(documented in `../GOCLMCP/scripts/gen-clockify-openapi`: "rate/template/membership/
-archive verbs left on operationId-derived names; they're action verbs, not CRUDL").
-Five fit that action-verb / non-workspace shape (`getCurrentUser` is the
-non-workspace `GET /user`; `filterWorkspaceUsers`, `changeRecurringPeriod`,
-`updateUserCustomFieldValue`, `findUserTeamManagers` are filter/find/change/
-set-value action verbs); the other seven are the same kind (`uploadImage`; the dead
-PUT `member-profile` alias; `changeTimeOffRequestStatus` covered by the
-policy-scoped status method; `deleteMany`; the `updateUser*` status/rate PUTs
-surfaced through workspace methods). Adding clean stamps is OPTIONAL parity-matrix
-completeness, not a functional gap, and would contradict the maintainer's
-convention — so it stays as-is.
+For the 14 operations without explicit SDK stamps, the local codegen receipt
+proves reachable operationId-derived methods. The governed set is `uploadImage`,
+`getCurrentUser`, `addLimitedUsersWithInfo`, `generateDetailedReportV1`,
+`changeRecurringPeriod`, `changeTimeOffRequestStatus`, `deleteMany`,
+`filterWorkspaceUsers`, `updateUserStatus`, `updateUserCostRate`,
+`updateUserCustomFieldValue`, `updateUserHourlyRate`, `findUserTeamManagers`, and
+`getWebhookEventStatusesWithLatestLog`. Their expected generated group/method
+pairs and applicable discrepancy identifiers live in
+`docs/sdk-operation-naming-classifications.json`. Adding explicit stamps is
+optional API naming work, not a missing-method fix; any addition, removal,
+rename, duplicate, or reclassification now fails the parity gate until that
+governance is deliberately updated.
 
 ## Consequences
 
@@ -78,16 +74,18 @@ from the backlog: `clockify_invoices_info`, `clockify_invoices_items_list`,
 `clockify_invoices_payments_list`, `clockify_reports_expense`,
 `clockify_webhooks_events`); the 2026-06-22 Go-only parity gap was accounted for
 (8 + 28 + 22) with no silent ceiling, leaving 17 backlog candidates. The 22 backlog
-candidates are an explicit, prioritized to-do in `docs/mcp-backlog.md`; the 12
-unstamped ops are reachable via their operationId-derived methods and
-intentionally unstamped per convention. Changing the tool count or shipping a backlog tool is a
+candidates are an explicit, prioritized to-do in `docs/mcp-backlog.md`; the 14
+unstamped ops are receipt-proven reachable via their governed
+operationId-derived methods. Changing the tool count or shipping a backlog tool is a
 deliberate follow-up reviewed against the workflow-first posture; none is
 implied to be missing by accident.
 
 ## Proof
 
-`make operation-parity` regenerates `docs/operation-parity.{json,md}` by joining
-the OpenAPI operations, SDK method stamps, TS MCP tool names, and the GOCLMCP
-tool catalog; `docs/operation-parity-overrides.json` carries the curated rename
-map. `make mcp-contract` pins the 140-tool count and split (22 workflow + 118
-domain). `make decision-records` verifies this record.
+`make operation-parity` regenerates `docs/operation-dispositions.json` and
+`docs/operation-parity.{json,md}` by joining the OpenAPI inventory, local codegen
+receipt, governed derived-name registry, TS MCP tool names, and GOCLMCP tool
+catalog. Its fixture suite fails closed on stale counts and disposition or
+classification drift; `docs/operation-parity-overrides.json` carries curated MCP
+renames. `make mcp-contract` pins the 140-tool count and split (22 workflow +
+118 domain). `make decision-records` verifies this record.

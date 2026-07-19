@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Governed classifications for generated SDK methods whose names are derived from operationId because the corrected OpenAPI operation has no explicit SDK group/method stamp.",
+  "classifications": [
+    {
+      "operationId": "uploadImage",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "files",
+      "generatedMethod": "uploadImage",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "getCurrentUser",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "users",
+      "generatedMethod": "getCurrentUser",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "addLimitedUsersWithInfo",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "workspaces",
+      "generatedMethod": "addLimitedUsersWithInfo",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "generateDetailedReportV1",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "expenseReport",
+      "generatedMethod": "generateDetailedReportV1",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "changeRecurringPeriod",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "scheduling",
+      "generatedMethod": "changeRecurringPeriod",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+      ]
+    },
+    {
+      "operationId": "changeTimeOffRequestStatus",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "timeOff",
+      "generatedMethod": "changeTimeOffRequestStatus",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off.change-status.union-and-note"
+      ]
+    },
+    {
+      "operationId": "deleteMany",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "timeEntries",
+      "generatedMethod": "deleteMany",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserStatus",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "workspaces",
+      "generatedMethod": "updateUserStatus",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserCostRate",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "workspaces",
+      "generatedMethod": "updateUserCostRate",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "updateUserCustomFieldValue",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "users",
+      "generatedMethod": "updateUserCustomFieldValue",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserHourlyRate",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "workspaces",
+      "generatedMethod": "updateUserHourlyRate",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "users",
+      "generatedMethod": "findUserTeamManagers",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "users",
+      "generatedMethod": "filterWorkspaceUsers",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "sdkNaming": "operationId-derived",
+      "generatedGroup": "webhooks",
+      "generatedMethod": "getWebhookEventStatusesWithLatestLog",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    }
+  ]
+}
