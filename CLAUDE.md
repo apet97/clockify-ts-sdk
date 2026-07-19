@@ -220,10 +220,12 @@ make docs-drift
   parameter defaults, compound/destructuring assignments, nested/defaulted/rest
   bindings, called same-file/imported helper side effects (including nested
   receivers and synchronous `call`/`apply`/`bind`), named/aliased synchronous
-  array callback effects on statically known non-empty receivers (`forEach`,
+  array callback effects on statically recoverable non-empty receivers (`forEach`,
   `map`, `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`,
-  and `reduceRight`), aliased `Object.assign`/`Reflect.set` effects with bounded
-  patch/spread/factory provenance, accessors,
+  and `reduceRight`) with reducer-return propagation and bounded return-aware
+  short-circuiting, aliased `Object.assign`/`Reflect.set` effects with bounded
+  left-to-right patch/spread/factory provenance and definite same-key overwrite
+  semantics, accessors,
   contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through

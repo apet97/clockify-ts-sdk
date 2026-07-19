@@ -397,10 +397,12 @@ end-to-end and green before push. Drift gates are non-negotiable.
     compound/destructuring assignments, nested/defaulted/rest bindings,
     called same-file/imported helper side effects (including nested receivers
     and synchronous `call`/`apply`/`bind`), named/aliased synchronous array
-    callbacks on statically known non-empty receivers (`forEach`, `map`,
+    callbacks on statically recoverable non-empty receivers (`forEach`, `map`,
     `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`, and
-    `reduceRight`), aliased `Object.assign`/`Reflect.set` effects with bounded
-    patch/spread/factory provenance, accessors,
+    `reduceRight`) with reducer-return propagation and bounded return-aware
+    short-circuiting, aliased `Object.assign`/`Reflect.set` effects with bounded
+    left-to-right patch/spread/factory provenance and definite same-key
+    overwrite semantics, accessors,
     expressions, and spreads. Receiver-producing calls follow bounded return
     provenance rather than treating every argument as an origin. Exported,
     default-exported, or escaped callables keep parameter defaults reachable;

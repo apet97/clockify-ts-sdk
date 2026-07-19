@@ -34,11 +34,11 @@ aliases, parameter defaults, compound/destructuring assignments, property
 declarations/accessors, recursively nested/defaulted/rest object and array
 bindings, called same-file/imported helper side effects (including nested
 receivers and synchronous `call`/`apply`/`bind`), documented synchronous
-named/aliased synchronous array callback effects on statically known non-empty
+named/aliased synchronous array callback effects on statically recoverable non-empty
 receivers (`forEach`, `map`, `filter`, `every`, `some`, `find`, `findIndex`,
 `flatMap`, `reduce`, and `reduceRight`), aliased `Object.assign`/`Reflect.set`
-effects with bounded patch-variable, spread-source, and factory-return
-provenance, contributing
+effects with bounded left-to-right patch-variable, spread-source, factory-return,
+and definite same-key overwrite provenance, contributing
 binary/logical/sequence expressions, spread arguments and object spreads,
 declaration-only casters, Function `call`/`apply`/`bind`, any-erased
 receiver/method/helper/holder provenance including later holder writes and exact
@@ -145,6 +145,16 @@ callbacks, distinct mutation receivers, and unrelated local `assign` functions
 remain unflagged. Overwritten mutation aliases and patch values are also cut
 off by bounded reaching-write provenance. The final governance suite passes
 **217/217** fixtures.
+
+The eighth corrective review added RED/GREEN coverage for array receiver aliases
+and reaching overwrites, multi-iteration `reduce`/`reduceRight` return-to-next-
+accumulator propagation, and return/branch-aware termination for `some`,
+`every`, `find`, and `findIndex`. Unknown returns remain conservative. Ordered
+`Object.assign` sources and object spreads now honor JavaScript left-to-right,
+last-definite-same-key semantics across direct, aliased, and factory-returned
+patches. Unresolved computed and spread keys stay conservative when last, while
+a later explicit same-key write safely dominates them. The final governance
+suite passes **237/237** fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
