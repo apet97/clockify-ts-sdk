@@ -436,7 +436,11 @@ end-to-end and green before push. Drift gates are non-negotiable.
     substitutions and later definite-write dominance remain ordered. Immediate
     nested invocation preserves an explicit intra-expression phase: binder-body
     effects precede returned-callable effects even when both calls share the
-    same source position. A later phase dominates only when every registered
+    same source position. Immediately invoked returned callables are followed
+    recursively with incremented execution phases and refined alternative-path
+    leaves; the bounded depth/work/alternative limits and unresolved invoked
+    returns fail closed, while a returned callable that is not invoked remains
+    a non-effect. A later phase dominates only when every registered
     mutually exclusive path performs an equivalent receiver/name-qualified
     definite write. Lifted direct property assignments retain original
     within-phase sequence and become definite only on unconditional paths with

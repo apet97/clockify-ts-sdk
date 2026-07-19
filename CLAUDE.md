@@ -254,7 +254,11 @@ make docs-drift
   effects before their returned callable; captured receiver effects and later
   definite-write dominance retain runtime order. Immediate nested calls carry
   explicit binder-body then returned-callable phases even at one source
-  position. Phase cutoff requires equivalent receiver/name-qualified definite
+  position. Immediately invoked returned callables are followed recursively
+  with incremented phases and refined alternative-path leaves; bounded
+  depth/work/alternative exhaustion and unresolved invoked returns fail closed,
+  while merely returning a callable remains a non-effect. Phase cutoff requires
+  equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths
   without a preceding function exit.
