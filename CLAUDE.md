@@ -240,9 +240,12 @@ make docs-drift
   `Reflect` members preserves built-in symbol identity; overwritten keys and
   shadow/local lookalikes remain non-effects.
   Governed built-ins are normalized through direct/aliased/computed Function
-  `call`, static tuple/array `apply`, and later-invoked `bind` captures before
-  effect classification; unknown/invalid apply lists and uninvoked binds remain
-  non-effects.
+  `call`, bounded static tuple/array `apply` (including statically resolvable
+  spreads), and later-invoked `bind` captures before effect classification.
+  Mixed local/bound alternatives remain distinct; recursive
+  `bind.call`/`bind.apply` adapters are modeled only when the returned function
+  is invoked; unresolved/invalid governed apply lists fail closed; and
+  uninvoked binds remain non-effects.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely

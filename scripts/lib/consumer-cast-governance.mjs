@@ -1469,22 +1469,157 @@ function analyzeProgram({
         return null;
     }
 
-    function staticApplyArgumentLists(expression, beforePosition) {
-        if (!expression) return [];
+    function staticApplyArgumentLists(expression, beforePosition, seen = new Set()) {
+        if (!expression) return { lists: [], complete: false };
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:apply-list`;
+        if (seen.has(key)) return { lists: [], complete: false };
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
         const lists = [];
-        for (const value of reachingExpressionValues(expression, beforePosition)) {
+        let complete = true;
+        const values = reachingExpressionValues(expression, beforePosition);
+        if (values.length === 0) complete = false;
+        for (const value of values) {
             const candidate = unwrapExpression(value.expression);
-            if (
-                !ts.isArrayLiteralExpression(candidate) ||
-                candidate.elements.some(
-                    (element) => ts.isSpreadElement(element) || !ts.isExpression(element),
-                )
-            ) {
+            if (!ts.isArrayLiteralExpression(candidate)) {
+                complete = false;
                 continue;
             }
-            lists.push(candidate.elements.filter(ts.isExpression));
+            let sequences = [[]];
+            for (const element of candidate.elements) {
+                if (ts.isSpreadElement(element)) {
+                    const spread = staticApplyArgumentLists(
+                        element.expression,
+                        beforePosition,
+                        nextSeen,
+                    );
+                    if (!spread.complete || spread.lists.length === 0) complete = false;
+                    if (spread.lists.length === 0) {
+                        sequences = [];
+                        break;
+                    }
+                    sequences = bounded(
+                        sequences.flatMap((sequence) =>
+                            spread.lists.map((list) => [...sequence, ...list]),
+                        ),
+                        "apply argument-list alternatives",
+                    );
+                    continue;
+                }
+                if (!ts.isExpression(element)) {
+                    complete = false;
+                    sequences = [];
+                    break;
+                }
+                sequences = sequences.map((sequence) => [...sequence, element]);
+            }
+            lists.push(...sequences);
         }
-        return bounded(lists, "apply argument-list alternatives");
+        return {
+            lists: bounded(lists, "apply argument-list alternatives"),
+            complete,
+        };
+    }
+
+    function governedBuiltinMember(expression, beforePosition) {
+        for (const [globalName, memberName] of [
+            ["Object", "assign"],
+            ["Reflect", "set"],
+            ["Object", "defineProperty"],
+            ["Object", "defineProperties"],
+            ["Reflect", "defineProperty"],
+        ]) {
+            if (
+                expressionResolvesToBuiltinMember(
+                    expression,
+                    globalName,
+                    memberName,
+                    beforePosition,
+                )
+            ) {
+                return `${globalName}.${memberName}`;
+            }
+        }
+        return null;
+    }
+
+    function bindMemberTargets(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        const direct = invocationAdapter(expression, beforePosition);
+        if (
+            direct?.name === "bind" &&
+            checker.getTypeAtLocation(direct.target).getCallSignatures().length > 0
+        ) {
+            return [{ target: direct.target }];
+        }
+        if (!ts.isIdentifier(expression)) return [];
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return bounded(
+            reachingExpressionValues(expression, beforePosition).flatMap((value) =>
+                bindMemberTargets(value.expression, value.pos ?? beforePosition, nextSeen),
+            ),
+            "bind member alternatives",
+        );
+    }
+
+    function boundFunctionAlternatives(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:bound-function`;
+        if (seen.has(key)) return [{ kind: "plain", expression }];
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
+
+        if (ts.isIdentifier(expression)) {
+            const values = reachingExpressionValues(expression, beforePosition);
+            const alternatives = values.flatMap((value) =>
+                boundFunctionAlternatives(value.expression, value.pos ?? beforePosition, nextSeen),
+            );
+            return alternatives.some((alternative) => alternative.kind === "bound")
+                ? bounded(alternatives, "bound function alternatives")
+                : [{ kind: "plain", expression }];
+        }
+        if (!ts.isCallExpression(expression)) return [{ kind: "plain", expression }];
+
+        const direct = invocationAdapter(expression.expression, expression.pos);
+        if (direct?.name === "bind") {
+            return [
+                {
+                    kind: "bound",
+                    target: direct.target,
+                    arguments: [...expression.arguments.slice(1)],
+                },
+            ];
+        }
+        if (!direct || !["call", "apply"].includes(direct.name)) {
+            return [{ kind: "plain", expression }];
+        }
+        const bindTargets = bindMemberTargets(direct.target, expression.pos);
+        if (bindTargets.length === 0 || !expression.arguments[0]) {
+            return [{ kind: "plain", expression }];
+        }
+        const bindArgumentLists =
+            direct.name === "call"
+                ? { lists: [[...expression.arguments.slice(1)]], complete: true }
+                : staticApplyArgumentLists(expression.arguments[1], expression.pos);
+        if (!bindArgumentLists.complete) {
+            const governed = governedBuiltinMember(expression.arguments[0], expression.pos);
+            if (governed) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve ${governed} bind.apply argument list`,
+                );
+            }
+        }
+        const alternatives = bindArgumentLists.lists.map((list) => ({
+            kind: "bound",
+            target: expression.arguments[0],
+            arguments: [...list.slice(1)],
+        }));
+        return alternatives.length > 0
+            ? bounded(alternatives, "recursive bind alternatives")
+            : [{ kind: "plain", expression }];
     }
 
     function normalizeEffectiveCalls(expression, args, beforePosition, seen = new Set()) {
@@ -1494,36 +1629,31 @@ function analyzeProgram({
         const nextSeen = new Set(seen);
         nextSeen.add(key);
 
-        let candidates = [{ expression, substitutions: new Map() }];
-        if (ts.isIdentifier(expression)) {
-            const boundCandidates = reachingExpressionValues(expression, beforePosition).filter(
-                (value) => {
-                    const candidate = unwrapExpression(value.expression);
-                    return (
-                        ts.isCallExpression(candidate) &&
-                        invocationAdapter(candidate.expression, candidate.pos)?.name === "bind"
-                    );
-                },
-            );
-            if (boundCandidates.length > 0) candidates = bounded(boundCandidates);
-        }
+        const boundCandidates = boundFunctionAlternatives(expression, beforePosition, nextSeen);
+        const candidates = boundCandidates.some((candidate) => candidate.kind === "bound")
+            ? boundCandidates.map((candidate) =>
+                  candidate.kind === "bound"
+                      ? {
+                            expression: candidate.target,
+                            boundArguments: candidate.arguments,
+                        }
+                      : { expression: candidate.expression },
+              )
+            : [{ expression }];
         const normalized = [];
         for (const candidate of candidates) {
-            const callee = unwrapExpression(candidate.expression);
-            if (ts.isCallExpression(callee)) {
-                const bound = invocationAdapter(callee.expression, callee.pos);
-                if (bound?.name === "bind") {
-                    normalized.push(
-                        ...normalizeEffectiveCalls(
-                            bound.target,
-                            [...callee.arguments.slice(1), ...args],
-                            callee.pos,
-                            nextSeen,
-                        ),
-                    );
-                    continue;
-                }
+            if (candidate.boundArguments) {
+                normalized.push(
+                    ...normalizeEffectiveCalls(
+                        candidate.expression,
+                        [...candidate.boundArguments, ...args],
+                        beforePosition,
+                        nextSeen,
+                    ),
+                );
+                continue;
             }
+            const callee = unwrapExpression(candidate.expression);
 
             const adapter = invocationAdapter(callee, beforePosition);
             if (adapter?.name === "bind") continue;
@@ -1539,7 +1669,16 @@ function analyzeProgram({
                 continue;
             }
             if (adapter?.name === "apply") {
-                for (const applied of staticApplyArgumentLists(args[1], beforePosition)) {
+                const appliedLists = staticApplyArgumentLists(args[1], beforePosition);
+                if (!appliedLists.complete) {
+                    const governed = governedBuiltinMember(adapter.target, beforePosition);
+                    if (governed) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve ${governed} apply argument list`,
+                        );
+                    }
+                }
+                for (const applied of appliedLists.lists) {
                     normalized.push(
                         ...normalizeEffectiveCalls(
                             adapter.target,
@@ -1554,6 +1693,25 @@ function analyzeProgram({
             normalized.push({ expression: callee, arguments: [...args] });
         }
         return bounded(normalized, "effective call alternatives");
+    }
+
+    function sameReceiverAlternatives(left, right, beforePosition) {
+        const leftOrigins = receiverOrigins(left, beforePosition);
+        const rightOrigins = receiverOrigins(right, beforePosition);
+        return (
+            leftOrigins.size > 0 &&
+            leftOrigins.size === rightOrigins.size &&
+            [...leftOrigins].every((origin) => rightOrigins.has(origin))
+        );
+    }
+
+    function singleEffectPropertyName(expression, beforePosition) {
+        const value = unwrapExpression(expression);
+        const names =
+            ts.isStringLiteralLike(value) || ts.isNumericLiteral(value)
+                ? [value.text]
+                : literalPropertyNames(checker.getTypeAtLocation(value));
+        return names?.length === 1 ? names[0] : null;
     }
 
     for (const sourceFile of program.getSourceFiles()) {
@@ -1642,7 +1800,6 @@ function analyzeProgram({
                 effectiveCalls.forEach((effectiveCall, normalizedPathIndex) => {
                     const effectiveExpression = effectiveCall.expression;
                     const effectiveArguments = effectiveCall.arguments;
-                    const normalizedCallIsDefinite = effectiveCalls.length === 1;
 
                     if (
                         effectiveArguments[0] &&
@@ -1653,6 +1810,21 @@ function analyzeProgram({
                             node.pos,
                         )
                     ) {
+                        const normalizedCallIsDefinite = effectiveCalls.every(
+                            (candidate) =>
+                                candidate.arguments[0] &&
+                                expressionResolvesToBuiltinMember(
+                                    candidate.expression,
+                                    "Object",
+                                    "assign",
+                                    node.pos,
+                                ) &&
+                                sameReceiverAlternatives(
+                                    candidate.arguments[0],
+                                    effectiveArguments[0],
+                                    node.pos,
+                                ),
+                        );
                         let sequences = [[]];
                         for (const source of effectiveArguments.slice(1)) {
                             const alternatives = objectPropertySequences(source, node.pos);
@@ -1707,6 +1879,25 @@ function analyzeProgram({
                             ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
                                 ? [key.text]
                                 : literalPropertyNames(checker.getTypeAtLocation(key));
+                        const normalizedCallIsDefinite =
+                            names?.length === 1 &&
+                            effectiveCalls.every(
+                                (candidate) =>
+                                    candidate.arguments.length >= 3 &&
+                                    expressionResolvesToBuiltinMember(
+                                        candidate.expression,
+                                        "Reflect",
+                                        "set",
+                                        node.pos,
+                                    ) &&
+                                    sameReceiverAlternatives(
+                                        candidate.arguments[0],
+                                        effectiveArguments[0],
+                                        node.pos,
+                                    ) &&
+                                    singleEffectPropertyName(candidate.arguments[1], node.pos) ===
+                                        names[0],
+                            );
                         addEffectWrite(
                             effectiveArguments[0],
                             effectiveArguments[2],
@@ -1739,6 +1930,31 @@ function analyzeProgram({
                             ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
                                 ? [key.text]
                                 : literalPropertyNames(checker.getTypeAtLocation(key));
+                        const normalizedCallIsDefinite =
+                            names?.length === 1 &&
+                            effectiveCalls.every(
+                                (candidate) =>
+                                    candidate.arguments.length >= 3 &&
+                                    (expressionResolvesToBuiltinMember(
+                                        candidate.expression,
+                                        "Object",
+                                        "defineProperty",
+                                        node.pos,
+                                    ) ||
+                                        expressionResolvesToBuiltinMember(
+                                            candidate.expression,
+                                            "Reflect",
+                                            "defineProperty",
+                                            node.pos,
+                                        )) &&
+                                    sameReceiverAlternatives(
+                                        candidate.arguments[0],
+                                        effectiveArguments[0],
+                                        node.pos,
+                                    ) &&
+                                    singleEffectPropertyName(candidate.arguments[1], node.pos) ===
+                                        names[0],
+                            );
                         const paths = descriptorEffectSequences(effectiveArguments[2], node.pos);
                         paths.forEach((path, pathIndex) => {
                             const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:define-property:${normalizedPathIndex}:${pathIndex}`;
@@ -1770,6 +1986,21 @@ function analyzeProgram({
                             node.pos,
                         )
                     ) {
+                        const normalizedCallIsDefinite = effectiveCalls.every(
+                            (candidate) =>
+                                candidate.arguments.length >= 2 &&
+                                expressionResolvesToBuiltinMember(
+                                    candidate.expression,
+                                    "Object",
+                                    "defineProperties",
+                                    node.pos,
+                                ) &&
+                                sameReceiverAlternatives(
+                                    candidate.arguments[0],
+                                    effectiveArguments[0],
+                                    node.pos,
+                                ),
+                        );
                         const paths = definePropertiesEffectPaths(effectiveArguments[1], node.pos);
                         const finalNameSets = paths.map(definitelyFinalNames);
                         const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
