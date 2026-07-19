@@ -6,5 +6,9 @@
         "paths": {},
         "noEmit": true
     },
-    "include": ["tests/types/breaking-changes.test-d.ts"]
+    "include": [
+        "tests/types/breaking-changes.test-d.ts",
+        "examples/archive-then-delete-adapter.ts",
+        "examples/archive-then-delete-client-adapter.ts"
+    ]
 }

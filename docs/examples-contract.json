@@ -6,6 +6,7 @@
   "readme": "wrapper/examples/README.md",
   "examples": [
     "archive-then-delete-adapter.ts",
+    "archive-then-delete-client-adapter.ts",
     "auth.ts",
     "bulk-archive.ts",
     "create-project.ts",
@@ -48,6 +49,14 @@
     "CLOCKIFY_API_KEY=[A-Za-z0-9_-]{16,}"
   ],
   "supportingContracts": [
+    {
+      "path": "wrapper/examples/archive-then-delete-client-adapter.ts",
+      "mustContain": [
+        "clientArchiveReplacementBody",
+        "body: clientArchiveReplacementBody(current)",
+        "client.clients.delete"
+      ]
+    },
     {
       "path": "docs/snippet-safety-contract.json",
       "mustContain": [

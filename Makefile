@@ -426,8 +426,9 @@ dependency-license:
 compatibility-contract:
 	node scripts/check-compatibility-contract.mjs
 
-breaking-change-review:
+breaking-change-review: sdk-wrapper-build
 	node --test scripts/check-breaking-change-review.test.mjs
+	npm run type-check:breaking -w clockify-sdk-ts-115
 	node scripts/check-breaking-change-review.mjs
 
 observability:

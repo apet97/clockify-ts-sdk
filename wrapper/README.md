@@ -935,7 +935,9 @@ requestId, status }` shape.
 Archive/delete helpers take an `ArchiveThenDeleteAdapter<TCurrent>` with typed
 `getCurrent`, `archive`, and `delete` callbacks; see the compile-checked
 [`SDK Helper Cookbook`](../docs/cookbook.md#archive-then-delete). The old loose
-`ArchiveThenDeleteResource` seam is not exported.
+`ArchiveThenDeleteResource` seam is not exported. Clients must preserve editable
+state in the replacement-body archive request; see the compile-checked
+[`client adapter example`](./examples/archive-then-delete-client-adapter.ts).
 
 The `ensure` helpers are pure (you inject `list`/`create`/`archive`/`delete`),
 so they reuse instead of duplicating on a re-run — Clockify does not enforce

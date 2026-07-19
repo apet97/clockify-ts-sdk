@@ -308,7 +308,7 @@
       "surface": "SDK and MCP public TypeScript contracts",
       "summary": "The three approved pre-1.0 aliases are removed with exact replacement mappings and compile-negative public-package proof.",
       "impact": "Consumers using the old option, helper name, or blanket resource type must migrate before adopting the 1.0 surface; retaining aliases would keep ambiguous security wording and an untyped callback boundary public.",
-      "mitigation": "Keep the executable breaking-change mapping, migration examples, NodeNext/Bundler/public-package type fixtures, exact dual-build surface, and adapter ordering tests active.",
+      "mitigation": "Keep the executable breaking-change mapping, named-gate codegen/build/compiler wiring, root/subpath compile-negative fixtures, project/client migration examples, exact dual-build surface, and adapter ordering/replacement-body tests active.",
       "closureGate": "Closed 2026-07-19 by `make compatibility-contract breaking-change-review sdk-public-api contract-gates`, wrapper/CLI/MCP type and test gates, dual-build/package proof, and `docs/roadmap-1.0-receipts/task-06-breaking-change.md`.",
       "evidence": [
         {

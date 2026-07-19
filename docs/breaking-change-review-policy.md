@@ -53,7 +53,10 @@ For the 1.0 SDK closure, the governed mappings are exact:
 
 The old names are removed rather than retained as aliases. The narrow gate runs
 negative fixtures that fail if any removed symbol or replacement is omitted;
-the SDK compiler fixtures fail if an old import or option resolves again.
+the named `make breaking-change-review` target regenerates and syncs the SDK,
+builds the package, then compiles its Bundler and built-package fixtures before
+the prose contract check. It therefore fails if an old root/subpath import or
+option resolves again, instead of trusting marker strings alone.
 
 ## Forbidden shortcuts
 

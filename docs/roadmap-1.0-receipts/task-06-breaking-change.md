@@ -30,7 +30,10 @@ The generic workflow owns `getCurrent` → `archive` → `delete` ordering, the
 missing-name failure, already-archived behavior, and the result receipt. The
 adapter owns resource-specific generated request shapes. CLI project deletion
 uses the flattened project update; client deletion reconstructs the replacement
-body and preserves editable current state.
+body and preserves editable current state. The dedicated client migration
+example uses that same body envelope, preserves `address`, `currencyCode`,
+`email`, and `note` (including empty strings), and is exercised by a runtime
+ordering/body test.
 
 ## Fail-closed tests
 
@@ -39,6 +42,14 @@ helper, removed resource type, and removed option. It compiles the replacement
 under the regular NodeNext source configuration, a Bundler configuration, and
 the built package's own `exports` map with source path aliases disabled. Type
 utilities reject `any` callback inputs and prove `TCurrent` reaches `archive`.
+Both removed exports are compile-negative through the root package and the
+`./ensure` subpath; both replacement imports compile through the root package.
+
+The named `make breaking-change-review` gate owns this proof: it regenerates and
+syncs the SDK, builds the public package, runs the mapping/wiring regressions,
+then compiles the Bundler and built-package fixtures before checking prose
+markers. Its regression test pins that order and pins both adapter examples into
+both compiler configurations.
 
 The breaking-change validator tests remove each governed symbol and each
 replacement field in turn. Every mutation must fail; the canonical three-row
@@ -65,8 +76,8 @@ npm pack --dry-run -w clockify-sdk-ts-115
 git diff --check
 ```
 
-Observed offline results: the mapping validator passed 7/7; wrapper passed 50
-test files with one sandbox file skipped (762 passed, 7 skipped); CLI passed 38
+Observed offline results: the mapping/wiring validator passed 9/9; wrapper passed 51
+test files with one sandbox file skipped (763 passed, 7 skipped); CLI passed 38
 files with one sandbox file skipped (388 passed, 12 skipped); and MCP passed 63
 files with one sandbox file skipped (707 passed, 12 skipped). The dual-build
 smoke exposed exactly 126 root names (92 curated plus 34 generated-core) in ESM
