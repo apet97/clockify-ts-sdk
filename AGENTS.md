@@ -402,7 +402,8 @@ end-to-end and green before push. Drift gates are non-negotiable.
     `reduceRight`) with reducer-return propagation and bounded return-aware
     short-circuiting across conditional/logical/sequence receiver alternatives,
     aliased/destructured `Object.assign`/`Reflect.set` plus
-    `Object.defineProperty`/`Object.defineProperties` effects with bounded
+    `Object.defineProperty`/`Object.defineProperties`/`Reflect.defineProperty`
+    effects with bounded
     left-to-right patch/spread/factory/descriptor provenance, getter returns,
     mutually exclusive descriptor paths, unresolved-map wildcard ordering, and
     definite same-key overwrite semantics across sequential unconditional calls,
@@ -415,7 +416,10 @@ end-to-end and green before push. Drift gates are non-negotiable.
     alternative/invocation/work overflow becomes a stable governance failure;
     callback-return expansion is charged before Cartesian materialization, and
     the work cap hard-stops further expansion with deterministic analysis
-    statistics rather than continuing without bound. It rejects
+    statistics rather than continuing without bound. Literal and reaching
+    const-literal element access to governed `Object`/`Reflect` members preserves
+    built-in symbol identity; overwritten keys and shadow/local lookalikes do not
+    become effects. It rejects
     direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance

@@ -2005,6 +2005,233 @@ test("reports a below-cap nested conditional reducer expansion", async () => {
     );
 });
 
+for (const [label, setup, effect] of [
+    [
+        "Reflect.defineProperty value",
+        "",
+        'Reflect.defineProperty(holder, "request", { value: body as any });',
+    ],
+    [
+        "Reflect.defineProperty getter",
+        "",
+        'Reflect.defineProperty(holder, "request", { get() { return body as any; } });',
+    ],
+    [
+        "aliased Reflect.defineProperty",
+        "const define = Reflect.defineProperty;",
+        'define(holder, "request", { value: body as any });',
+    ],
+    [
+        "unsafe-then-safe conditional Reflect.defineProperty descriptor",
+        "",
+        'Reflect.defineProperty(holder, "request", choose ? { value: body as any } : { value: { workspaceId: "safe" } });',
+    ],
+    [
+        "safe-then-unsafe conditional Reflect.defineProperty descriptor",
+        "",
+        'Reflect.defineProperty(holder, "request", choose ? { value: { workspaceId: "safe" } } : { value: body as any });',
+    ],
+]) {
+    test("models " + label + " effects", async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; ' +
+                setup +
+                " " +
+                effect +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("allows all-safe conditional Reflect.defineProperty descriptor paths", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, choose: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; Reflect.defineProperty(holder, "request", choose ? { value: { workspaceId: "one" } } : { value: { workspaceId: "two" } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not spread Reflect.defineProperty effects across receivers", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const other: Holder = { request: { workspaceId: "other" } }; Reflect.defineProperty(other, "request", { value: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("lets a later definite Reflect.defineProperty dominate an unsafe effect", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; Object.assign(holder, { request: body as any }); Reflect.defineProperty(holder, "request", { value: { workspaceId: "safe" } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("keeps an unsafe effect when a safe Reflect.defineProperty is conditional", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; Object.assign(holder, { request: body as any }); choose && Reflect.defineProperty(holder, "request", { value: { workspaceId: "safe" } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+const computedBuiltinEffects = [
+    {
+        label: "Object assign",
+        globalName: "Object",
+        member: "assign",
+        overwritten: "keys",
+        args: "holder, { request: body as any }",
+    },
+    {
+        label: "Object defineProperty",
+        globalName: "Object",
+        member: "defineProperty",
+        overwritten: "keys",
+        args: 'holder, "request", { value: body as any }',
+    },
+    {
+        label: "Object defineProperties",
+        globalName: "Object",
+        member: "defineProperties",
+        overwritten: "keys",
+        args: "holder, body as any",
+    },
+    {
+        label: "Reflect set",
+        globalName: "Reflect",
+        member: "set",
+        overwritten: "get",
+        args: 'holder, "request", body as any',
+    },
+    {
+        label: "Reflect defineProperty",
+        globalName: "Reflect",
+        member: "defineProperty",
+        overwritten: "get",
+        args: 'holder, "request", { value: body as any }',
+    },
+];
+
+for (const effect of computedBuiltinEffects) {
+    test("models literal element access for " + effect.label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ' +
+                effect.globalName +
+                '["' +
+                effect.member +
+                '"](' +
+                effect.args +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+
+    test("models const-key element access for " + effect.label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const member = "' +
+                effect.member +
+                '" as const; ' +
+                effect.globalName +
+                "[member](" +
+                effect.args +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+
+    test("does not retain an overwritten element-access key for " + effect.label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; let member: keyof typeof ' +
+                effect.globalName +
+                ' = "' +
+                effect.member +
+                '"; member = "' +
+                effect.overwritten +
+                '"; ' +
+                effect.globalName +
+                "[member](" +
+                effect.args +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+test("does not treat a shadow Object literal element member as Object.assign", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const Object = { assign(target: Holder, _patch: unknown) { return target; } }; Object["assign"](holder, { request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not treat a shadow Reflect literal element member as Reflect.set", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const Reflect = { set(_target: Holder, _key: string, _value: unknown) { return true; } }; Reflect["set"](holder, "request", body as any); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not treat an unrelated local literal element member as a built-in", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const helpers = { assign(target: Holder, _patch: unknown) { return target; } }; helpers["assign"](holder, { request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("keeps an unsafe-last effect across sequential Object.assign calls", async () => {
     await withFixture(
         `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.assign(holder, { request: { workspaceId: "safe" } }); Object.assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,

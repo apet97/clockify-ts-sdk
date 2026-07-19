@@ -225,7 +225,8 @@ make docs-drift
   and `reduceRight`) with reducer-return propagation and bounded return-aware
   short-circuiting across conditional/logical/sequence receiver alternatives,
   aliased/destructured `Object.assign`/`Reflect.set` plus
-  `Object.defineProperty`/`Object.defineProperties` effects with bounded
+  `Object.defineProperty`/`Object.defineProperties`/`Reflect.defineProperty`
+  effects with bounded
   left-to-right patch/spread/factory/descriptor provenance, getter returns,
   mutually exclusive descriptor paths, unresolved-map wildcard ordering, and
   definite same-key overwrite semantics across sequential unconditional calls,
@@ -235,6 +236,9 @@ make docs-drift
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
   receivers, methods, helper parameters/results, or holder properties to `any`,
   including later holder writes and exact `Function.call` trampolines.
+  Literal and reaching const-literal element access to governed `Object` and
+  `Reflect` members preserves built-in symbol identity; overwritten keys and
+  shadow/local lookalikes remain non-effects.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely

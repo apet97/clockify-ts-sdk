@@ -1178,6 +1178,16 @@ function analyzeProgram({
             );
     }
 
+    function reachingPropertyNames(expression, beforePosition) {
+        return reachingExpressionValues(expression, beforePosition).flatMap((value) => {
+            const argument = unwrapExpression(value.expression);
+            if (ts.isStringLiteralLike(argument) || ts.isNumericLiteral(argument)) {
+                return [argument.text];
+            }
+            return literalPropertyNames(checker.getTypeAtLocation(argument)) ?? [];
+        });
+    }
+
     function expressionResolvesToBuiltinMember(
         expression,
         globalName,
@@ -1189,6 +1199,16 @@ function analyzeProgram({
         if (
             ts.isPropertyAccessExpression(expression) &&
             expression.name.text === memberName &&
+            expressionResolvesToGlobal(expression.expression, globalName, beforePosition)
+        ) {
+            return true;
+        }
+        if (
+            ts.isElementAccessExpression(expression) &&
+            expression.argumentExpression &&
+            reachingPropertyNames(expression.argumentExpression, beforePosition).includes(
+                memberName,
+            ) &&
             expressionResolvesToGlobal(expression.expression, globalName, beforePosition)
         ) {
             return true;
@@ -1228,10 +1248,15 @@ function analyzeProgram({
                     );
                 });
         }
-        if (ts.isPropertyAccessExpression(expression)) {
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const memberNames = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : expression.argumentExpression
+                  ? reachingPropertyNames(expression.argumentExpression, beforePosition)
+                  : [];
             return objectPropertyEntries(expression.expression, beforePosition).some(
                 (entry) =>
-                    entry.names?.includes(expression.name.text) &&
+                    entry.names?.some((name) => memberNames.includes(name)) &&
                     expressionResolvesToBuiltinMember(
                         entry.value,
                         globalName,
@@ -1577,12 +1602,18 @@ function analyzeProgram({
                 if (
                     !skipped &&
                     node.arguments.length >= 3 &&
-                    expressionResolvesToBuiltinMember(
+                    (expressionResolvesToBuiltinMember(
                         node.expression,
                         "Object",
                         "defineProperty",
                         node.pos,
-                    )
+                    ) ||
+                        expressionResolvesToBuiltinMember(
+                            node.expression,
+                            "Reflect",
+                            "defineProperty",
+                            node.pos,
+                        ))
                 ) {
                     const key = node.arguments[1];
                     const names =
