@@ -8,6 +8,14 @@ const MAX_STATIC_ALTERNATIVES = 64;
 const MAX_SYNTHETIC_INVOCATIONS = 256;
 const MAX_ANALYSIS_WORK = 10000;
 
+class AnalysisWorkLimitError extends Error {
+    constructor(maxWork) {
+        super(`consumer cast analysis limit exceeded (work; max ${maxWork})`);
+        this.name = "AnalysisWorkLimitError";
+        this.work = maxWork;
+    }
+}
+
 async function listTypeScript(root, relativeRoot) {
     const files = [];
     const stack = [relativeRoot];
@@ -234,7 +242,13 @@ function createProgram(rootNames) {
     });
 }
 
-function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) {
+function analyzeProgram({
+    root,
+    rootNames,
+    packageRoots,
+    forbiddenIdentifier,
+    analysisLimits = {},
+}) {
     const program = createProgram(rootNames);
     const checker = program.getTypeChecker();
     const findings = [];
@@ -245,30 +259,36 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
     const callArgumentsByParameter = new Map();
     const callsByDeclaration = new Map();
     const analysisFailures = new Set();
+    const maxAlternatives = analysisLimits.maxAlternatives ?? MAX_STATIC_ALTERNATIVES;
+    const maxInvocations = analysisLimits.maxInvocations ?? MAX_SYNTHETIC_INVOCATIONS;
+    const maxWork = analysisLimits.maxWork ?? MAX_ANALYSIS_WORK;
     let analysisWork = 0;
+    let analysisExhausted = false;
     let syntheticInvocations = 0;
 
     function bounded(values, kind = "alternatives") {
-        analysisWork += values.length;
-        if (analysisWork > MAX_ANALYSIS_WORK) {
-            analysisFailures.add(
-                `consumer cast analysis limit exceeded (work; max ${MAX_ANALYSIS_WORK})`,
-            );
+        if (analysisExhausted) return [];
+        if (analysisWork + values.length > maxWork) {
+            analysisWork = maxWork;
+            analysisExhausted = true;
+            throw new AnalysisWorkLimitError(maxWork);
         }
-        if (values.length > MAX_STATIC_ALTERNATIVES) {
+        analysisWork += values.length;
+        if (values.length > maxAlternatives) {
             analysisFailures.add(
-                `consumer cast analysis limit exceeded (${kind}; max ${MAX_STATIC_ALTERNATIVES})`,
+                `consumer cast analysis limit exceeded (${kind}; max ${maxAlternatives})`,
             );
-            return values.slice(0, MAX_STATIC_ALTERNATIVES);
+            return values.slice(0, maxAlternatives);
         }
         return values;
     }
 
     function addSyntheticInvocation(declaration, node, args) {
+        if (analysisExhausted) return;
         syntheticInvocations += 1;
-        if (syntheticInvocations > MAX_SYNTHETIC_INVOCATIONS) {
+        if (syntheticInvocations > maxInvocations) {
             analysisFailures.add(
-                `consumer cast analysis limit exceeded (invocations; max ${MAX_SYNTHETIC_INVOCATIONS})`,
+                `consumer cast analysis limit exceeded (invocations; max ${maxInvocations})`,
             );
             return;
         }
@@ -908,6 +928,14 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         names,
                         substitutions: value.substitutions,
                     });
+                } else if (ts.isGetAccessorDeclaration(property)) {
+                    for (const returned of functionReturnExpressions(property)) {
+                        entries.push({
+                            value: returned,
+                            names,
+                            substitutions: value.substitutions,
+                        });
+                    }
                 }
             }
         }
@@ -957,24 +985,76 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                               .getText(expression.getSourceFile())
                               .replace(/^['"]|['"]$/g, ""),
                       ];
-                const entry = ts.isPropertyAssignment(property)
-                    ? {
-                          value: property.initializer,
-                          names,
-                          substitutions: value.substitutions,
-                      }
+                const entries = ts.isPropertyAssignment(property)
+                    ? [
+                          {
+                              value: property.initializer,
+                              names,
+                              substitutions: value.substitutions,
+                          },
+                      ]
                     : ts.isShorthandPropertyAssignment(property)
-                      ? {
-                            value: property.name,
-                            names,
-                            substitutions: value.substitutions,
-                        }
-                      : null;
-                if (entry) sequences = sequences.map((sequence) => [...sequence, entry]);
+                      ? [
+                            {
+                                value: property.name,
+                                names,
+                                substitutions: value.substitutions,
+                            },
+                        ]
+                      : ts.isGetAccessorDeclaration(property)
+                        ? functionReturnExpressions(property).map((returned) => ({
+                              value: returned,
+                              names,
+                              substitutions: value.substitutions,
+                          }))
+                        : [];
+                if (entries.length > 0) {
+                    sequences = bounded(
+                        sequences.flatMap((sequence) =>
+                            entries.map((entry) => [...sequence, entry]),
+                        ),
+                    );
+                }
             }
             alternatives.push(...sequences);
         }
         return bounded(alternatives);
+    }
+
+    function descriptorEffectValues(descriptor, beforePosition) {
+        const alternatives = [];
+        for (const value of reachingExpressionValues(descriptor, beforePosition)) {
+            const expression = unwrapExpression(value.expression);
+            if (!ts.isObjectLiteralExpression(expression)) continue;
+            const values = [];
+            for (const property of expression.properties) {
+                const name = property.name
+                    ?.getText(expression.getSourceFile())
+                    .replace(/^['"]|['"]$/g, "");
+                if (name === "value" && ts.isPropertyAssignment(property)) {
+                    values.push({
+                        value: property.initializer,
+                        substitutions: value.substitutions,
+                    });
+                } else if (name === "value" && ts.isShorthandPropertyAssignment(property)) {
+                    values.push({ value: property.name, substitutions: value.substitutions });
+                } else if (name === "get" && ts.isMethodDeclaration(property)) {
+                    for (const returned of functionReturnExpressions(property)) {
+                        values.push({ value: returned, substitutions: value.substitutions });
+                    }
+                } else if (
+                    name === "get" &&
+                    ts.isPropertyAssignment(property) &&
+                    ts.isFunctionLike(property.initializer)
+                ) {
+                    for (const returned of functionReturnExpressions(property.initializer)) {
+                        values.push({ value: returned, substitutions: value.substitutions });
+                    }
+                }
+            }
+            alternatives.push(...values);
+        }
+        return bounded(alternatives, "descriptor alternatives");
     }
 
     function expressionResolvesToGlobal(expression, name, beforePosition, seen = new Set()) {
@@ -1223,8 +1303,10 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
     }
 
     for (const sourceFile of program.getSourceFiles()) {
+        if (analysisExhausted) break;
         if (sourceFile.isDeclarationFile) continue;
         function indexCallArguments(node) {
+            if (analysisExhausted) return;
             if (ts.isCallExpression(node)) {
                 const declaration = checker.getResolvedSignature(node)?.declaration;
                 const skipped = expressionDefinitelySkipped(node);
@@ -1367,6 +1449,66 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                     );
                 }
 
+                if (
+                    !skipped &&
+                    node.arguments.length >= 3 &&
+                    expressionResolvesToBuiltinMember(
+                        node.expression,
+                        "Object",
+                        "defineProperty",
+                        node.pos,
+                    )
+                ) {
+                    const key = node.arguments[1];
+                    const names =
+                        ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
+                            ? [key.text]
+                            : literalPropertyNames(checker.getTypeAtLocation(key));
+                    const values = descriptorEffectValues(node.arguments[2], node.pos);
+                    values.forEach((value, effectOrder) =>
+                        addEffectWrite(
+                            node.arguments[0],
+                            value.value,
+                            names,
+                            node,
+                            value.substitutions,
+                            `${node.getSourceFile().fileName}:${node.pos}:define-property`,
+                            effectOrder,
+                            names?.length === 1 && values.length > 0 ? names : [],
+                        ),
+                    );
+                }
+
+                if (
+                    !skipped &&
+                    node.arguments.length >= 2 &&
+                    expressionResolvesToBuiltinMember(
+                        node.expression,
+                        "Object",
+                        "defineProperties",
+                        node.pos,
+                    )
+                ) {
+                    const descriptors = objectPropertyEntries(node.arguments[1], node.pos);
+                    descriptors.forEach((descriptor, descriptorOrder) => {
+                        const values = descriptorEffectValues(descriptor.value, node.pos);
+                        values.forEach((value, valueOrder) =>
+                            addEffectWrite(
+                                node.arguments[0],
+                                value.value,
+                                descriptor.names,
+                                node,
+                                value.substitutions,
+                                `${node.getSourceFile().fileName}:${node.pos}:define-properties`,
+                                descriptorOrder * Math.max(values.length, 1) + valueOrder,
+                                descriptor.names?.length === 1 && values.length > 0
+                                    ? descriptor.names
+                                    : [],
+                            ),
+                        );
+                    });
+                }
+
                 const bound = boundInvocation(node.expression, node);
                 if (!skipped && bound) addInvocation(bound.declaration, node, bound.arguments);
             }
@@ -1412,6 +1554,38 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             current = current.parent;
         }
         return null;
+    }
+
+    function expressionDefinitelyExecutesInStatement(node) {
+        let current = node;
+        while (current.parent && !ts.isExpressionStatement(current)) {
+            const parent = current.parent;
+            if (ts.isBinaryExpression(parent) && current === parent.right) {
+                const state = staticScalar(parent.left, new Map());
+                if (
+                    (parent.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+                        (!state.known || !state.value)) ||
+                    (parent.operatorToken.kind === ts.SyntaxKind.BarBarToken &&
+                        (!state.known || Boolean(state.value))) ||
+                    (parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+                        (!state.known || state.value != null))
+                ) {
+                    return false;
+                }
+            }
+            if (ts.isConditionalExpression(parent)) {
+                const state = staticScalar(parent.condition, new Map());
+                if (
+                    !state.known ||
+                    (current === parent.whenTrue && !state.value) ||
+                    (current === parent.whenFalse && Boolean(state.value))
+                ) {
+                    return false;
+                }
+            }
+            current = parent;
+        }
+        return ts.isExpressionStatement(current);
     }
 
     function statementDefinitelyWritesSymbol(statement, symbol, use) {
@@ -1712,7 +1886,8 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             if (
                 !location ||
                 location.container !== useLocation.container ||
-                !ts.isExpressionStatement(location.statement)
+                !ts.isExpressionStatement(location.statement) ||
+                !expressionDefinitelyExecutesInStatement(write.node)
             ) {
                 continue;
             }
@@ -2341,6 +2516,15 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         depth + 1,
                         nextSeen,
                     );
+                } else if (ts.isGetAccessorDeclaration(child)) {
+                    for (const returned of functionReturnExpressions(child)) {
+                        trace(
+                            returned,
+                            { ...context, atBoundaryValue: false },
+                            depth + 1,
+                            nextSeen,
+                        );
+                    }
                 } else if (ts.isSpreadAssignment(child) || ts.isSpreadElement(child)) {
                     const childType = checker.getTypeAtLocation(child.expression);
                     trace(
@@ -2420,6 +2604,9 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                 if (name !== propertyName) continue;
                 if (ts.isPropertyAssignment(property)) values.push(property.initializer);
                 if (ts.isShorthandPropertyAssignment(property)) values.push(property.name);
+                if (ts.isGetAccessorDeclaration(property)) {
+                    values.push(...functionReturnExpressions(property));
+                }
             }
             return values;
         }
@@ -2733,7 +2920,11 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             visit(sourceFile);
         }
     }
-    return { findings, escapeFailures: [...escapeFailures, ...analysisFailures] };
+    return {
+        findings,
+        escapeFailures: [...escapeFailures, ...analysisFailures],
+        analysisStats: { work: analysisWork, exhausted: analysisExhausted },
+    };
 }
 
 function exceptionLocationMatches(exception, finding, source) {
@@ -2872,7 +3063,7 @@ async function validateException({
     return { failures, matches };
 }
 
-export async function validateConsumerCastGovernance({ root, contract }) {
+export async function validateConsumerCastGovernance({ root, contract, analysisLimits }) {
     const failures = [];
     const findings = [];
     const sources = new Map();
@@ -2900,15 +3091,26 @@ export async function validateConsumerCastGovernance({ root, contract }) {
             sources.set(relativePath, await readFile(path.join(root, relativePath), "utf8"));
         }
     }
-    const analysis = analyzeProgram({
-        root,
-        rootNames,
-        packageRoots: governance.sourceRoots ?? {},
-        forbiddenIdentifier:
-            contract?.forbiddenRequestEscape?.importClosure === true
-                ? contract.forbiddenRequestEscape.identifier
-                : null,
-    });
+    let analysis;
+    try {
+        analysis = analyzeProgram({
+            root,
+            rootNames,
+            packageRoots: governance.sourceRoots ?? {},
+            forbiddenIdentifier:
+                contract?.forbiddenRequestEscape?.importClosure === true
+                    ? contract.forbiddenRequestEscape.identifier
+                    : null,
+            analysisLimits,
+        });
+    } catch (error) {
+        if (!(error instanceof AnalysisWorkLimitError)) throw error;
+        analysis = {
+            findings: [],
+            escapeFailures: [error.message],
+            analysisStats: { work: error.work, exhausted: true },
+        };
+    }
     findings.push(...analysis.findings);
     failures.push(...analysis.escapeFailures);
 
@@ -2967,5 +3169,5 @@ export async function validateConsumerCastGovernance({ root, contract }) {
                 `${item.kind} \`as ${item.assertedType}\` for ${item.expectedRequestType} at ${item.file}:${item.line}`,
             );
     }
-    return { failures, findings };
+    return { failures, findings, analysisStats: analysis.analysisStats };
 }

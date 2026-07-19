@@ -167,6 +167,16 @@ invocations at 256, and total expansion work at 10,000; overflow produces a
 stable fail-closed governance error. The final governance suite passes
 **254/254** fixtures.
 
+The tenth corrective review made cross-statement dominance conditional on the
+later effect being definitely executed: unknown `&&`, `||`, `??`, and ternary
+branches retain prior unsafe writes, while statically forced branches can still
+dominate. Direct request literals and `Object.assign` projections now trace
+getter return values. Built-in-provenance-aware `Object.defineProperty` and
+`Object.defineProperties` aliases contribute ordered descriptor `value`/`get`
+effects without crossing receivers. The configurable total-work cap now stops
+expansion at the exact limit and returns stable `{ work, exhausted }` analysis
+statistics. The final governance suite passes **273/273** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -191,8 +201,8 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final round-four results: wrapper **763 passed / 7 skipped**, CLI **388 passed / 12
-skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
+Final tenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all
 three dry packs passed and MCP remained **109 files / 111.3 kB**. The risk gate
