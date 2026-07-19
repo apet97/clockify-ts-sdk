@@ -259,6 +259,7 @@ function analyzeProgram({
     const wildcardPropertyWrites = [];
     const callArgumentsByParameter = new Map();
     const callsByDeclaration = new Map();
+    const alternativePathsByGroup = new Map();
     const analysisFailures = new Set();
     const maxAlternatives = analysisLimits.maxAlternatives ?? MAX_STATIC_ALTERNATIVES;
     const maxInvocations = analysisLimits.maxInvocations ?? MAX_SYNTHETIC_INVOCATIONS;
@@ -324,6 +325,8 @@ function analyzeProgram({
         args,
         capturedSubstitutions = new Map(),
         executionPhase = 0,
+        alternativeGroup = null,
+        alternativePath = null,
     ) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
         const invocation = {
@@ -331,7 +334,14 @@ function analyzeProgram({
             arguments: [...args],
             capturedSubstitutions: new Map(capturedSubstitutions),
             executionPhase,
+            alternativeGroup,
+            alternativePath,
         };
+        if (alternativeGroup != null && alternativePath != null) {
+            const paths = alternativePathsByGroup.get(alternativeGroup) ?? new Set();
+            paths.add(alternativePath);
+            alternativePathsByGroup.set(alternativeGroup, paths);
+        }
         const calls = callsByDeclaration.get(declaration) ?? [];
         if (
             !calls.some(
@@ -345,7 +355,9 @@ function analyzeProgram({
                     [...existing.capturedSubstitutions].every(
                         ([symbol, value]) => invocation.capturedSubstitutions.get(symbol) === value,
                     ) &&
-                    existing.executionPhase === invocation.executionPhase,
+                    existing.executionPhase === invocation.executionPhase &&
+                    existing.alternativeGroup === invocation.alternativeGroup &&
+                    existing.alternativePath === invocation.alternativePath,
             )
         ) {
             calls.push(invocation);
@@ -771,6 +783,10 @@ function analyzeProgram({
                 ) {
                     addWrite(node.left, node.right, node.pos, null, {
                         conditional: node.operatorToken.kind !== ts.SyntaxKind.EqualsToken,
+                        directPropertyWrite:
+                            node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+                            (ts.isPropertyAccessExpression(node.left) ||
+                                ts.isElementAccessExpression(node.left)),
                     });
                 }
             }
@@ -1813,12 +1829,21 @@ function analyzeProgram({
         );
     }
 
-    function customBinderReturns(expression, args, beforePosition, invocation) {
+    function customBinderReturns(
+        expression,
+        args,
+        beforePosition,
+        invocation,
+        alternativeGroup,
+        pathPrefix,
+    ) {
         const alternatives = [];
-        for (const value of reachingExpressionValues(expression, beforePosition)) {
+        for (const [valueIndex, value] of reachingExpressionValues(
+            expression,
+            beforePosition,
+        ).entries()) {
             const declaration = functionDeclarationForExpression(value.expression);
             if (!declaration?.body) continue;
-            addInvocation(declaration, invocation, args, value.substitutions, 0);
             const substitutions = new Map(value.substitutions);
             declaration.parameters.forEach((parameter, index) => {
                 const argument = args[index];
@@ -1826,20 +1851,33 @@ function analyzeProgram({
                 const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                 if (symbol) substitutions.set(symbol, argument);
             });
-            for (const returned of functionReturnExpressions(declaration)) {
-                alternatives.push(
-                    ...reachingExpressionValues(
-                        returned,
-                        beforePosition,
-                        new Set(),
-                        substitutions,
-                    ).map((returnedValue) => ({
-                        kind: "returned",
-                        expression: returnedValue.expression,
-                        substitutions: returnedValue.substitutions,
-                    })),
-                );
+            const returnedAlternatives = functionReturnExpressions(declaration).flatMap(
+                (returned) =>
+                    reachingExpressionValues(returned, beforePosition, new Set(), substitutions),
+            );
+            if (returnedAlternatives.length === 0) {
+                addInvocation(declaration, invocation, args, value.substitutions, 0);
+                continue;
             }
+            returnedAlternatives.forEach((returnedValue, returnedIndex) => {
+                const alternativePath = `${pathPrefix}:${valueIndex}:${returnedIndex}`;
+                addInvocation(
+                    declaration,
+                    invocation,
+                    args,
+                    value.substitutions,
+                    0,
+                    alternativeGroup,
+                    alternativePath,
+                );
+                alternatives.push({
+                    kind: "returned",
+                    expression: returnedValue.expression,
+                    substitutions: returnedValue.substitutions,
+                    alternativeGroup,
+                    alternativePath,
+                });
+            });
         }
         return bounded(alternatives, "custom binder returns");
     }
@@ -1925,8 +1963,9 @@ function analyzeProgram({
             expression.pos,
         );
         if (directBindAlternatives.length > 0) {
+            const alternativeGroup = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:custom-bind-return`;
             return bounded(
-                directBindAlternatives.flatMap((alternative) =>
+                directBindAlternatives.flatMap((alternative, alternativeIndex) =>
                     alternative.kind === "native"
                         ? [
                               {
@@ -1940,6 +1979,8 @@ function analyzeProgram({
                               [...expression.arguments],
                               expression.pos,
                               expression,
+                              alternativeGroup,
+                              `direct:${alternativeIndex}`,
                           ),
                 ),
                 "direct bind returns",
@@ -1964,8 +2005,9 @@ function analyzeProgram({
                 );
             }
         }
-        const alternatives = bindArgumentLists.lists.flatMap((list) =>
-            bindAlternatives.flatMap((alternative) =>
+        const alternativeGroup = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:custom-bind-return`;
+        const alternatives = bindArgumentLists.lists.flatMap((list, listIndex) =>
+            bindAlternatives.flatMap((alternative, alternativeIndex) =>
                 alternative.kind === "native"
                     ? [
                           {
@@ -1974,7 +2016,14 @@ function analyzeProgram({
                               arguments: [...list.slice(1)],
                           },
                       ]
-                    : customBinderReturns(alternative.expression, list, expression.pos, expression),
+                    : customBinderReturns(
+                          alternative.expression,
+                          list,
+                          expression.pos,
+                          expression,
+                          alternativeGroup,
+                          `${direct.name}:${listIndex}:${alternativeIndex}`,
+                      ),
             ),
         );
         return alternatives.length > 0
@@ -2001,6 +2050,8 @@ function analyzeProgram({
                             expression: candidate.expression,
                             invokeReturned: candidate.kind === "returned",
                             substitutions: candidate.substitutions,
+                            alternativeGroup: candidate.alternativeGroup,
+                            alternativePath: candidate.alternativePath,
                         },
               )
             : [{ expression }];
@@ -2020,7 +2071,15 @@ function analyzeProgram({
             if (candidate.invokeReturned) {
                 const declaration = functionDeclarationForExpression(candidate.expression);
                 if (declaration?.body) {
-                    addInvocation(declaration, expression, args, candidate.substitutions, 1);
+                    addInvocation(
+                        declaration,
+                        expression,
+                        args,
+                        candidate.substitutions,
+                        1,
+                        candidate.alternativeGroup,
+                        candidate.alternativePath,
+                    );
                 }
                 normalized.push(
                     ...normalizeEffectiveCalls(
@@ -2511,11 +2570,37 @@ function analyzeProgram({
         return ts.isExpressionStatement(current);
     }
 
+    function statementMayExitFunction(statement) {
+        let mayExit = false;
+        function visit(node) {
+            if (mayExit) return;
+            if (node !== statement && ts.isFunctionLike(node)) return;
+            if (ts.isReturnStatement(node) || ts.isThrowStatement(node)) {
+                mayExit = true;
+                return;
+            }
+            ts.forEachChild(node, visit);
+        }
+        visit(statement);
+        return mayExit;
+    }
+
     function expressionDefinitelyExecutesOnInvocation(node, declaration) {
         let current = node;
         while (current !== declaration.body) {
             const parent = current.parent;
             if (!parent || (ts.isFunctionLike(parent) && parent !== declaration)) return false;
+            if (ts.isBlock(parent) && ts.isStatement(current)) {
+                const statementIndex = parent.statements.indexOf(current);
+                if (
+                    statementIndex > 0 &&
+                    parent.statements
+                        .slice(0, statementIndex)
+                        .some((statement) => statementMayExitFunction(statement))
+                ) {
+                    return false;
+                }
+            }
             if (ts.isIfStatement(parent) && current !== parent.expression) {
                 const state = staticScalar(parent.expression, new Map());
                 if (
@@ -2708,13 +2793,21 @@ function analyzeProgram({
                 sourceFile: call.getSourceFile(),
                 executionNode: call,
                 executionPhase: (effect.executionPhase ?? 0) + (invocation.executionPhase ?? 0),
+                executionSequence: effect.executionSequence ?? write.position,
+                alternativeGroup: effect.alternativeGroup ?? invocation.alternativeGroup,
+                alternativePath: effect.alternativePath ?? invocation.alternativePath,
                 receiverOverride: receiver,
                 substitutions: new Map([...(effect.substitutions ?? []), ...substitutions]),
                 definiteEffectNames: expressionDefinitelyExecutesOnInvocation(
                     write.node,
                     declaration,
                 )
-                    ? effect.definiteEffectNames
+                    ? [
+                          ...(effect.definiteEffectNames ?? []),
+                          ...(effect.directPropertyWrite && effect.propertyNames?.length === 1
+                              ? effect.propertyNames
+                              : []),
+                      ]
                     : [],
             };
             const caller = enclosingFunction(call);
@@ -2868,7 +2961,8 @@ function analyzeProgram({
     function compareExecutionOrder(left, right) {
         return (
             left.position - right.position ||
-            (left.executionPhase ?? 0) - (right.executionPhase ?? 0)
+            (left.executionPhase ?? 0) - (right.executionPhase ?? 0) ||
+            (left.executionSequence ?? 0) - (right.executionSequence ?? 0)
         );
     }
 
@@ -2877,20 +2971,47 @@ function analyzeProgram({
         const useLocation = directStatementInLinearContainer(expression);
         if (!useLocation) return writes;
         const useName = usePropertyNames[0];
-        let cutoff = null;
-        for (const write of writes) {
-            if (!write.definiteEffectNames?.includes(useName)) continue;
+        const definiteWrites = writes.filter((write) => {
+            if (!write.definiteEffectNames?.includes(useName)) return false;
             const executionNode = write.executionNode ?? write.node;
             const location = directStatementInLinearContainer(executionNode);
-            if (
-                !location ||
-                location.container !== useLocation.container ||
-                !ts.isExpressionStatement(location.statement) ||
-                !expressionDefinitelyExecutesInStatement(executionNode)
-            ) {
-                continue;
+            return (
+                location != null &&
+                location.container === useLocation.container &&
+                ts.isExpressionStatement(location.statement) &&
+                expressionDefinitelyExecutesInStatement(executionNode)
+            );
+        });
+        let cutoff = definiteWrites
+            .filter((write) => write.alternativeGroup == null)
+            .sort(compareExecutionOrder)
+            .at(-1);
+        const groups = new Set(
+            definiteWrites.map((write) => write.alternativeGroup).filter(Boolean),
+        );
+        for (const group of groups) {
+            const paths = alternativePathsByGroup.get(group);
+            if (!paths || paths.size === 0) continue;
+            const latestByPath = [];
+            for (const path of paths) {
+                const latest = definiteWrites
+                    .filter(
+                        (write) =>
+                            write.alternativeGroup === group && write.alternativePath === path,
+                    )
+                    .sort(compareExecutionOrder)
+                    .at(-1);
+                if (!latest) {
+                    latestByPath.length = 0;
+                    break;
+                }
+                latestByPath.push(latest);
             }
-            if (cutoff == null || compareExecutionOrder(write, cutoff) > 0) cutoff = write;
+            if (latestByPath.length !== paths.size) continue;
+            const completePathCutoff = latestByPath.sort(compareExecutionOrder)[0];
+            if (cutoff == null || compareExecutionOrder(completePathCutoff, cutoff) > 0) {
+                cutoff = completePathCutoff;
+            }
         }
         return cutoff == null
             ? writes

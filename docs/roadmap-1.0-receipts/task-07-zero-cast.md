@@ -266,6 +266,18 @@ remain findings. Three of the initial seven focused cases failed against
 focused set passes **7/7**, and the complete controller suite passes **406/406**
 fixtures while retaining the prior 399 cases.
 
+The nineteenth corrective review makes intra-expression dominance path-complete:
+a later returned-callable phase cuts off earlier binder effects only when every
+registered mutually exclusive binder/return path performs an equivalent
+receiver/name-qualified definite write. A safe write from one conditional path
+cannot erase an unsafe write from another. Lifted direct property assignments
+now retain their original within-phase source sequence and contribute definite
+write metadata only when their path is unconditional and has no preceding
+function exit. Eleven of the initial 19 focused cases failed against `9c32686`;
+the eight all-safe, unsafe-last, conditional, early-return, and receiver controls
+stayed green. The finished focused set passes **19/19**, and the complete
+controller suite passes **425/425** fixtures while retaining the prior 406 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -290,7 +302,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final eighteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final nineteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

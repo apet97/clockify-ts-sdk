@@ -254,7 +254,10 @@ make docs-drift
   effects before their returned callable; captured receiver effects and later
   definite-write dominance retain runtime order. Immediate nested calls carry
   explicit binder-body then returned-callable phases even at one source
-  position; conditional later writes remain non-dominating.
+  position. Phase cutoff requires equivalent receiver/name-qualified definite
+  writes on every registered alternative path. Lifted direct assignments retain
+  original within-phase sequence and are definite only on unconditional paths
+  without a preceding function exit.
   Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
   the same bounded static/spread argument-list path only while its ordered
   reaching member is native; restoration and captured-native aliases remain
