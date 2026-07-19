@@ -29,10 +29,14 @@ generated request property and is not a blanket request-object assertion.
 provenance from the Clockify request modules, and traces request values through
 bounded variable aliases, client aliases, helper calls, imports, namespaces,
 properties, all potentially reaching receiver-qualified variable/property
-writes (including computed keys), property declarations/accessors, recursively
-nested/defaulted object and array bindings, contributing binary/logical/
-sequence expressions, spread arguments and object spreads, declaration-only
-casters, Function `call`/`apply`/`bind`, any-erased receiver/method/helper/holder provenance,
+writes (including computed keys), ordered conditional/logical/unknown receiver
+aliases, parameter defaults, compound/destructuring assignments, property
+declarations/accessors, recursively nested/defaulted/rest object and array
+bindings, called same-file/imported helper side effects, contributing
+binary/logical/sequence expressions, spread arguments and object spreads,
+declaration-only casters, Function `call`/`apply`/`bind`, any-erased
+receiver/method/helper/holder provenance including later holder writes and exact
+`Function.call` trampolines,
 and transitive/generic wrapper chains. It rejects request-boundary structural,
 `any`/`never`, direct or chained generated-request assertions, angle-bracket
 assertions, and request-producing generic adapters. It deliberately ignores
@@ -102,6 +106,17 @@ Function `.call`. It preserves negative controls for different receivers,
 definitely overwritten values, known different keys, unreachable defaults, and
 unrelated any helpers. Compiler-green `type Parameters<T> = [unknown]` proof
 counterfeits now fail. The final governance suite passes **123/123** fixtures.
+
+The fifth corrective review added RED/GREEN cases for request-contributing
+parameter defaults, reachable and unreachable `??=`/`||=`/`&&=` branches,
+destructuring assignment targets, reaching-write-aware conditional/logical/
+sequence/unknown receiver aliases, called versus uncalled same-file/imported
+helper mutations, bounded recursive effects, computed binding keys, nested
+object rest and array rest, later writes to any-valued function holders, and an
+any-erased `Function.call` trampoline. Default and namespace type-import
+counterfeits of `Parameters` now fail while the unrelated receiver, binding,
+helper, property, and function controls remain green. The final governance
+suite passes **154/154** fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of

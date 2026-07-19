@@ -216,18 +216,22 @@ make docs-drift
 - **CLI/MCP request assertions are a zero baseline.** Run `make
   consumer-cast-budget`; it uses TypeScript symbol provenance and bounded
   request-bound dataflow for all potentially reaching receiver-qualified
-  variable/property writes (including computed keys), nested/defaulted bindings,
-  accessors, contributing expressions/spreads, direct/chained/
+  variable/property writes (including computed keys), ordered receiver aliases,
+  parameter defaults, compound/destructuring assignments, nested/defaulted/rest
+  bindings, called same-file/imported helper side effects, accessors,
+  contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
-  receivers, methods, helper parameters/results, or holder properties to `any`.
+  receivers, methods, helper parameters/results, or holder properties to `any`,
+  including later holder writes and exact `Function.call` trampolines.
   Discarded comma operands are not request contributors. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,
   generated type, discrepancy, open risk, evidence, and closure record. The
   existing Task 6 public-package fixture owns the no-`any` adapter proof, and
   this Make target executes its compiler gate after SDK codegen/build, pinning
-  exact `IsAny` semantics, the unshadowed `Parameters` built-in, both public
+  exact `IsAny` semantics, the unshadowed `Parameters` built-in across local and
+  all import-clause binding forms, both public
   adapter import/type-argument aliases, and all six callback operands. Local
   structural/built-in counterfeits and comment-only Make prerequisites/recipes
   do not satisfy the check.
