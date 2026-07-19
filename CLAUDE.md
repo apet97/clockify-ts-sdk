@@ -226,7 +226,8 @@ make docs-drift
   short-circuiting across conditional/logical/sequence receiver alternatives,
   aliased/destructured `Object.assign`/`Reflect.set` plus
   `Object.defineProperty`/`Object.defineProperties` effects with bounded
-  left-to-right patch/spread/factory/descriptor provenance, getter returns, and
+  left-to-right patch/spread/factory/descriptor provenance, getter returns,
+  mutually exclusive descriptor paths, unresolved-map wildcard ordering, and
   definite same-key overwrite semantics across sequential unconditional calls,
   accessors,
   contributing expressions/spreads, direct/chained/

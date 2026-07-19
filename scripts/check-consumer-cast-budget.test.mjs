@@ -1813,6 +1813,198 @@ test("reports normal bounded work below a configured cap", async () => {
     );
 });
 
+for (const [label, descriptor] of [
+    [
+        "unsafe-then-safe conditional descriptor",
+        'chooseUnsafe ? { value: body as any } : { value: { workspaceId: "safe" } }',
+    ],
+    [
+        "safe-then-unsafe conditional descriptor",
+        'chooseUnsafe ? { value: { workspaceId: "safe" } } : { value: body as any }',
+    ],
+]) {
+    test("keeps mutually exclusive " + label + " paths", async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, chooseUnsafe: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.defineProperty(holder, "request", ' +
+                descriptor +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("allows all-safe conditional defineProperty descriptor paths", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, choose: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.defineProperty(holder, "request", choose ? { value: { workspaceId: "one" } } : { value: { workspaceId: "two" } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, descriptors] of [
+    [
+        "unsafe-getter-then-safe defineProperties map",
+        'chooseUnsafe ? { request: { get() { return body as any; } } } : { request: { value: { workspaceId: "safe" } } }',
+    ],
+    [
+        "safe-then-unsafe-getter defineProperties map",
+        'chooseUnsafe ? { request: { value: { workspaceId: "safe" } } } : { request: { get() { return body as any; } } }',
+    ],
+]) {
+    test("keeps mutually exclusive " + label + " paths", async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, chooseUnsafe: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.defineProperties(holder, ' +
+                descriptors +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("allows all-safe conditional defineProperties map paths", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, choose: boolean) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.defineProperties(holder, choose ? { request: { get() { return { workspaceId: "one" }; } } } : { request: { value: { workspaceId: "two" } } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, setup, descriptor] of [
+    ["shorthand getter", "const get = () => body as any;", "{ get }"],
+    [
+        "aliased shorthand getter",
+        "const getter = () => body as any; const get = getter;",
+        "{ get }",
+    ],
+    ["spread descriptor", "const descriptor = { value: body as any };", "{ ...descriptor }"],
+    [
+        "factory descriptor",
+        "function descriptor() { return { value: body as any }; }",
+        "descriptor()",
+    ],
+]) {
+    test("traces an unsafe " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; ' +
+                setup +
+                ' Object.defineProperty(holder, "request", ' +
+                descriptor +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+for (const [label, setup, descriptors] of [
+    ["direct unresolved defineProperties map", "", "body as any"],
+    ["aliased unresolved defineProperties map", "const map = body as any;", "map"],
+    [
+        "unsafe-last unresolved defineProperties map spread",
+        "",
+        '{ request: { value: { workspaceId: "safe" } }, ...(body as any) }',
+    ],
+]) {
+    test("traces an " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; ' +
+                setup +
+                " Object.defineProperties(holder, " +
+                descriptors +
+                "); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("lets a later exact defineProperties descriptor dominate an unresolved map spread", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.defineProperties(holder, { ...(body as any), request: { value: { workspaceId: "safe" } } }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("bounds nested conditional reducer returns before materializing every origin", async () => {
+    const nested = ["a", "b", "c", "d", "e", "f", "g"].reduceRight(
+        (inner, flag) => flag + " ? (" + inner + ") : (" + inner + ")",
+        "acc",
+    );
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, a: boolean, b: boolean, c: boolean, d: boolean, e: boolean, f: boolean, g: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; [1].reduce((acc) => ' +
+            nested +
+            ", holder); return client.projects.create(holder.request); }\n",
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 60 },
+            });
+            assert.match(result.failures.join("\n"), /analysis limit exceeded.*work.*60/i);
+            assert.deepEqual(result.analysisStats, {
+                work: 60,
+                exhausted: true,
+                largestCallbackExpansion: 60,
+            });
+        },
+    );
+});
+
+test("reports a below-cap nested conditional reducer expansion", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, a: boolean, b: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; [1].reduce((acc) => a ? (b ? acc : acc) : (b ? acc : acc), holder); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 1000 },
+            });
+            assert.deepEqual(result.failures, []);
+            assert.equal(result.analysisStats.exhausted, false);
+            assert.ok(result.analysisStats.largestCallbackExpansion > 0);
+            assert.ok(result.analysisStats.largestCallbackExpansion < 1000);
+        },
+    );
+});
+
 test("keeps an unsafe-last effect across sequential Object.assign calls", async () => {
     await withFixture(
         `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "initial" } }; Object.assign(holder, { request: { workspaceId: "safe" } }); Object.assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,
