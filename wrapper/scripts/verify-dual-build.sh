@@ -14,11 +14,11 @@ if [[ ! -d "dist/esm" || ! -d "dist/cjs" ]]; then
   exit 1
 fi
 
-SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote"
-EXPECTED_ROOT_SURFACE_COUNT=91
+SURFACE="ClockifyApiClient,createClockifyClient,composedFetch,iterAll,iterPages,listExpensesFiltered,paginate,paginatedList,PaginatedList,verifyClockifyWebhook,constructEvent,WebhookSignatureMismatchError,CLOCKIFY_WEBHOOK_EVENT_NAMES,ClockifyApiError,ClockifyApiTimeoutError,getRequestIdFromError,BadRequestError,UnauthorizedError,ForbiddenError,NotFoundError,MethodNotAllowedError,withResponse,RateLimitError,ConflictError,InternalServerError,ServiceUnavailableError,AddonTokenRestrictionError,promoteApiError,classifyClockifyError,getStableErrorCode,isClockifyApiError,isRateLimitError,isConflictError,isInternalServerError,isServiceUnavailableError,mapAddonTokenRestriction,CLOCKIFY_ERROR_CODES,errorCodeEntry,errorCodeForMessage,errorCodeForStatus,recoveryForCode,retryableForCode,warnOnce,Workspace,wrapResource,otelHooks,clockifyHealth,clockifyDiagnostics,getRateLimit,getRateLimitFromError,requestOptions,withHeaders,withIdempotencyKey,withRequestTimeout,toOperationReceipt,toOperationErrorReceipt,toMinor,toMajor,invoiceItemUnitPriceToWire,invoiceItemUnitPriceFromWire,CLOCKIFY_AMOUNT_UNITS,invoiceUpdateBodyFromExisting,INVOICE_EDITABLE_FIELDS,INVOICE_PERCENT_FIELD_MAP,resolveRelativeDay,resolveInstant,resolvePeriod,REPORT_PERIODS,looksLikeClockifyId,matchByName,suggestOptions,resolveEntityRef,resolveProjectTaskRefs,resolveUserRef,resolveUserRefs,resolveGroupRefs,resolveTagRefs,resolveUserFilter,ensureTag,ensureProject,ensureClient,archiveThenDeleteProject,archiveThenDeleteClient,summaryFilter,detailedFilter,weeklyFilter,detailedEntries,summaryGroups,reportTotals,mapBounded,runComposition,leftBehindNote"
+EXPECTED_ROOT_SURFACE_COUNT=92
 
 # Generated-core names the root barrel ALSO re-exports transitively through
-# `export * from "./src/index.js"` (index.ts), on top of the 91 curated names above.
+# `export * from "./src/index.js"` (index.ts), on top of the 92 curated names above.
 # They are NOT part of the curated public API (docs/sdk-public-api.json rootSymbols):
 # mostly SDK plumbing (RUNTIME, Supplier, request, bodyFromRequest, mergeHeaders, ...)
 # plus a few generated types consumers do use (ClockifyApi, ClockifyApiEnvironment,
@@ -81,6 +81,7 @@ node -e "
 const cf = require('./dist/cjs/composed-fetch.js');
 const cc = require('./dist/cjs/create-client.js');
 const it = require('./dist/cjs/iter.js');
+const ex = require('./dist/cjs/expense-list.js');
 const wh = require('./dist/cjs/webhooks.js');
 const pg = require('./dist/cjs/pagination.js');
 const wr = require('./dist/cjs/with-response.js');
@@ -89,6 +90,7 @@ const dp = require('./dist/cjs/deprecation.js');
 if (typeof cf.composedFetch !== 'function') { console.error('CJS subpath composed-fetch broken'); process.exit(1); }
 if (typeof cc.createClockifyClient !== 'function') { console.error('CJS subpath create-client broken'); process.exit(1); }
 if (typeof it.iterAll !== 'function') { console.error('CJS subpath iter broken'); process.exit(1); }
+if (typeof ex.listExpensesFiltered !== 'function') { console.error('CJS subpath expense-list broken'); process.exit(1); }
 if (typeof wh.verifyClockifyWebhook !== 'function') { console.error('CJS subpath webhooks broken'); process.exit(1); }
 if (typeof pg.paginate !== 'function') { console.error('CJS subpath pagination broken'); process.exit(1); }
 const pl = require('./dist/cjs/paginated-list.js');

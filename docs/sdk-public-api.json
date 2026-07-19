@@ -1,357 +1,251 @@
 {
-  "schemaVersion": 1,
-  "packageName": "clockify-sdk-ts-115",
-  "purpose": "Intentional SDK public API contract (publicExports). Keep this in sync with wrapper/index.ts, wrapper/package.json exports, wrapper/tsconfig.json package self-reference aliases, and wrapper/scripts/verify-dual-build.sh whenever a public symbol or subpath changes.",
-  "files": {
-    "wrapperPackage": "wrapper/package.json",
-    "wrapperTsconfig": "wrapper/tsconfig.json",
-    "dualBuildSmoke": "wrapper/scripts/verify-dual-build.sh"
-  },
-  "rootSymbols": [
-    "ClockifyApiClient",
-    "createClockifyClient",
-    "composedFetch",
-    "iterAll",
-    "iterPages",
-    "paginate",
-    "paginatedList",
-    "PaginatedList",
-    "verifyClockifyWebhook",
-    "constructEvent",
-    "WebhookSignatureMismatchError",
-    "CLOCKIFY_WEBHOOK_EVENT_NAMES",
-    "ClockifyApiError",
-    "ClockifyApiTimeoutError",
-    "getRequestIdFromError",
-    "BadRequestError",
-    "UnauthorizedError",
-    "ForbiddenError",
-    "NotFoundError",
-    "MethodNotAllowedError",
-    "withResponse",
-    "RateLimitError",
-    "ConflictError",
-    "InternalServerError",
-    "ServiceUnavailableError",
-    "AddonTokenRestrictionError",
-    "promoteApiError",
-    "classifyClockifyError",
-    "getStableErrorCode",
-    "isClockifyApiError",
-    "isRateLimitError",
-    "isConflictError",
-    "isInternalServerError",
-    "isServiceUnavailableError",
-    "mapAddonTokenRestriction",
-    "CLOCKIFY_ERROR_CODES",
-    "errorCodeEntry",
-    "errorCodeForMessage",
-    "errorCodeForStatus",
-    "recoveryForCode",
-    "retryableForCode",
-    "warnOnce",
-    "Workspace",
-    "wrapResource",
-    "otelHooks",
-    "clockifyHealth",
-    "clockifyDiagnostics",
-    "getRateLimit",
-    "getRateLimitFromError",
-    "requestOptions",
-    "withHeaders",
-    "withIdempotencyKey",
-    "withRequestTimeout",
-    "toOperationReceipt",
-    "toOperationErrorReceipt",
-    "toMinor",
-    "toMajor",
-    "invoiceItemUnitPriceToWire",
-    "invoiceItemUnitPriceFromWire",
-    "CLOCKIFY_AMOUNT_UNITS",
-    "invoiceUpdateBodyFromExisting",
-    "INVOICE_EDITABLE_FIELDS",
-    "INVOICE_PERCENT_FIELD_MAP",
-    "resolveRelativeDay",
-    "resolveInstant",
-    "resolvePeriod",
-    "REPORT_PERIODS",
-    "looksLikeClockifyId",
-    "matchByName",
-    "suggestOptions",
-    "resolveEntityRef",
-    "resolveProjectTaskRefs",
-    "resolveUserRef",
-    "resolveUserRefs",
-    "resolveGroupRefs",
-    "resolveTagRefs",
-    "resolveUserFilter",
-    "ensureTag",
-    "ensureProject",
-    "ensureClient",
-    "archiveThenDeleteProject",
-    "archiveThenDeleteClient",
-    "summaryFilter",
-    "detailedFilter",
-    "weeklyFilter",
-    "detailedEntries",
-    "summaryGroups",
-    "reportTotals",
-    "mapBounded",
-    "runComposition",
-    "leftBehindNote"
-  ],
-  "subpaths": {
-    ".": [
-      "ClockifyApiClient",
-      "createClockifyClient"
+    "schemaVersion": 1,
+    "packageName": "clockify-sdk-ts-115",
+    "purpose": "Intentional SDK public API contract (publicExports). Keep this in sync with wrapper/index.ts, wrapper/package.json exports, wrapper/tsconfig.json package self-reference aliases, and wrapper/scripts/verify-dual-build.sh whenever a public symbol or subpath changes.",
+    "files": {
+        "wrapperPackage": "wrapper/package.json",
+        "wrapperTsconfig": "wrapper/tsconfig.json",
+        "dualBuildSmoke": "wrapper/scripts/verify-dual-build.sh"
+    },
+    "rootSymbols": [
+        "ClockifyApiClient",
+        "createClockifyClient",
+        "composedFetch",
+        "iterAll",
+        "iterPages",
+        "listExpensesFiltered",
+        "paginate",
+        "paginatedList",
+        "PaginatedList",
+        "verifyClockifyWebhook",
+        "constructEvent",
+        "WebhookSignatureMismatchError",
+        "CLOCKIFY_WEBHOOK_EVENT_NAMES",
+        "ClockifyApiError",
+        "ClockifyApiTimeoutError",
+        "getRequestIdFromError",
+        "BadRequestError",
+        "UnauthorizedError",
+        "ForbiddenError",
+        "NotFoundError",
+        "MethodNotAllowedError",
+        "withResponse",
+        "RateLimitError",
+        "ConflictError",
+        "InternalServerError",
+        "ServiceUnavailableError",
+        "AddonTokenRestrictionError",
+        "promoteApiError",
+        "classifyClockifyError",
+        "getStableErrorCode",
+        "isClockifyApiError",
+        "isRateLimitError",
+        "isConflictError",
+        "isInternalServerError",
+        "isServiceUnavailableError",
+        "mapAddonTokenRestriction",
+        "CLOCKIFY_ERROR_CODES",
+        "errorCodeEntry",
+        "errorCodeForMessage",
+        "errorCodeForStatus",
+        "recoveryForCode",
+        "retryableForCode",
+        "warnOnce",
+        "Workspace",
+        "wrapResource",
+        "otelHooks",
+        "clockifyHealth",
+        "clockifyDiagnostics",
+        "getRateLimit",
+        "getRateLimitFromError",
+        "requestOptions",
+        "withHeaders",
+        "withIdempotencyKey",
+        "withRequestTimeout",
+        "toOperationReceipt",
+        "toOperationErrorReceipt",
+        "toMinor",
+        "toMajor",
+        "invoiceItemUnitPriceToWire",
+        "invoiceItemUnitPriceFromWire",
+        "CLOCKIFY_AMOUNT_UNITS",
+        "invoiceUpdateBodyFromExisting",
+        "INVOICE_EDITABLE_FIELDS",
+        "INVOICE_PERCENT_FIELD_MAP",
+        "resolveRelativeDay",
+        "resolveInstant",
+        "resolvePeriod",
+        "REPORT_PERIODS",
+        "looksLikeClockifyId",
+        "matchByName",
+        "suggestOptions",
+        "resolveEntityRef",
+        "resolveProjectTaskRefs",
+        "resolveUserRef",
+        "resolveUserRefs",
+        "resolveGroupRefs",
+        "resolveTagRefs",
+        "resolveUserFilter",
+        "ensureTag",
+        "ensureProject",
+        "ensureClient",
+        "archiveThenDeleteProject",
+        "archiveThenDeleteClient",
+        "summaryFilter",
+        "detailedFilter",
+        "weeklyFilter",
+        "detailedEntries",
+        "summaryGroups",
+        "reportTotals",
+        "mapBounded",
+        "runComposition",
+        "leftBehindNote"
     ],
-    "./composed-fetch": [
-      "composedFetch"
-    ],
-    "./create-client": [
-      "createClockifyClient"
-    ],
-    "./deprecation": [
-      "warnOnce"
-    ],
-    "./errors": [
-      "RateLimitError",
-      "promoteApiError",
-      "classifyClockifyError",
-      "getStableErrorCode",
-      "CLOCKIFY_ERROR_CODES",
-      "errorCodeForStatus"
-    ],
-    "./health": [
-      "clockifyHealth"
-    ],
-    "./iter": [
-      "iterAll"
-    ],
-    "./otel-hooks": [
-      "otelHooks"
-    ],
-    "./paginated-list": [
-      "paginatedList",
-      "PaginatedList"
-    ],
-    "./pagination": [
-      "paginate"
-    ],
-    "./rate-limit": [
-      "getRateLimit",
-      "getRateLimitFromError"
-    ],
-    "./scoped-client": [
-      "Workspace",
-      "wrapResource"
-    ],
-    "./webhook-events": [
-      "CLOCKIFY_WEBHOOK_EVENT_NAMES"
-    ],
-    "./webhooks": [
-      "verifyClockifyWebhook"
-    ],
-    "./with-response": [
-      "withResponse"
-    ],
-    "./diagnostics": [
-      "clockifyDiagnostics"
-    ],
-    "./request-options": [
-      "requestOptions",
-      "withHeaders",
-      "withIdempotencyKey",
-      "withRequestTimeout"
-    ],
-    "./operation-receipt": [
-      "toOperationReceipt",
-      "toOperationErrorReceipt",
-      "entityId"
-    ],
-    "./money": [
-      "toMinor",
-      "toMajor",
-      "invoiceItemUnitPriceToWire",
-      "invoiceItemUnitPriceFromWire",
-      "CLOCKIFY_AMOUNT_UNITS"
-    ],
-    "./invoice-body": [
-      "invoiceUpdateBodyFromExisting",
-      "INVOICE_EDITABLE_FIELDS",
-      "INVOICE_PERCENT_FIELD_MAP"
-    ],
-    "./dates": [
-      "resolveRelativeDay",
-      "resolveInstant",
-      "resolvePeriod",
-      "REPORT_PERIODS"
-    ],
-    "./resolve": [
-      "looksLikeClockifyId",
-      "matchByName",
-      "suggestOptions",
-      "resolveEntityRef",
-      "resolveProjectTaskRefs",
-      "resolveUserRef",
-      "resolveUserRefs",
-      "resolveGroupRefs",
-      "resolveTagRefs",
-      "resolveUserFilter"
-    ],
-    "./ensure": [
-      "ensureTag",
-      "ensureProject",
-      "ensureClient",
-      "findOrCreateClient",
-      "archiveThenDeleteProject",
-      "archiveThenDeleteClient"
-    ],
-    "./requests": [
-      "ClockifyApi",
-      "ClockifyRequestBody",
-      "AUDIT_LOG_ACTIONS",
-      "AuditLogAction"
-    ],
-    "./reports": [
-      "summaryFilter",
-      "detailedFilter",
-      "weeklyFilter",
-      "detailedEntries",
-      "summaryGroups",
-      "reportTotals"
-    ],
-    "./bulk": [
-      "mapBounded"
-    ],
-    "./compose": [
-      "runComposition",
-      "leftBehindNote"
-    ]
-  },
-  "tsconfigAliases": {
-    "clockify-sdk-ts-115": [
-      "./index.ts"
-    ],
-    "clockify-sdk-ts-115/create-client": [
-      "./create-client.ts"
-    ],
-    "clockify-sdk-ts-115/composed-fetch": [
-      "./composed-fetch.ts"
-    ],
-    "clockify-sdk-ts-115/iter": [
-      "./iter.ts"
-    ],
-    "clockify-sdk-ts-115/webhooks": [
-      "./webhooks.ts"
-    ],
-    "clockify-sdk-ts-115/webhook-events": [
-      "./webhook-events.ts"
-    ],
-    "clockify-sdk-ts-115/pagination": [
-      "./pagination.ts"
-    ],
-    "clockify-sdk-ts-115/paginated-list": [
-      "./paginated-list.ts"
-    ],
-    "clockify-sdk-ts-115/with-response": [
-      "./with-response.ts"
-    ],
-    "clockify-sdk-ts-115/errors": [
-      "./errors.ts"
-    ],
-    "clockify-sdk-ts-115/deprecation": [
-      "./deprecation.ts"
-    ],
-    "clockify-sdk-ts-115/scoped-client": [
-      "./scoped-client.ts"
-    ],
-    "clockify-sdk-ts-115/otel-hooks": [
-      "./otel-hooks.ts"
-    ],
-    "clockify-sdk-ts-115/health": [
-      "./health.ts"
-    ],
-    "clockify-sdk-ts-115/rate-limit": [
-      "./rate-limit.ts"
-    ],
-    "clockify-sdk-ts-115/diagnostics": [
-      "./diagnostics.ts"
-    ],
-    "clockify-sdk-ts-115/request-options": [
-      "./request-options.ts"
-    ],
-    "clockify-sdk-ts-115/operation-receipt": [
-      "./operation-receipt.ts"
-    ],
-    "clockify-sdk-ts-115/money": [
-      "./money.ts"
-    ],
-    "clockify-sdk-ts-115/invoice-body": [
-      "./invoice-body.ts"
-    ],
-    "clockify-sdk-ts-115/dates": [
-      "./dates.ts"
-    ],
-    "clockify-sdk-ts-115/resolve": [
-      "./resolve.ts"
-    ],
-    "clockify-sdk-ts-115/ensure": [
-      "./ensure.ts"
-    ],
-    "clockify-sdk-ts-115/requests": [
-      "./requests.ts"
-    ],
-    "clockify-sdk-ts-115/reports": [
-      "./reports.ts"
-    ],
-    "clockify-sdk-ts-115/bulk": [
-      "./bulk.ts"
-    ],
-    "clockify-sdk-ts-115/compose": [
-      "./compose.ts"
-    ]
-  },
-  "packageMarkerScan": {
-    "forbiddenRegex": "clockify-sdk-ts(?!-115)",
-    "paths": [
-      "wrapper/index.ts",
-      "wrapper/create-client.ts",
-      "wrapper/composed-fetch.ts",
-      "wrapper/iter.ts",
-      "wrapper/pagination.ts",
-      "wrapper/paginated-list.ts",
-      "wrapper/webhooks.ts",
-      "wrapper/with-response.ts",
-      "wrapper/errors.ts",
-      "wrapper/deprecation.ts",
-      "wrapper/scoped-client.ts",
-      "wrapper/otel-hooks.ts",
-      "wrapper/health.ts",
-      "wrapper/rate-limit.ts",
-      "wrapper/request-options.ts",
-      "wrapper/operation-receipt.ts",
-      "wrapper/tsconfig.json",
-      "wrapper/tests/composed-fetch.test.ts",
-      "wrapper/tests/sandbox.test.ts",
-      "wrapper/diagnostics.ts",
-      "wrapper/tests/diagnostics.test.ts",
-      "wrapper/tests/request-options.test.ts",
-      "wrapper/tests/operation-receipt.test.ts",
-      "wrapper/ensure.ts",
-      "wrapper/requests.ts",
-      "wrapper/tests/ensure.test.ts",
-      "wrapper/tests/requests.test.ts"
-    ]
-  },
-  "wiring": {
-    "makeTarget": "sdk-public-api",
-    "checker": "scripts/check-sdk-public-api.mjs",
-    "docsIndex": [
-      "sdk-public-api.json"
-    ],
-    "qualityGate": "make sdk-public-api",
-    "inventoryId": "sdk-public-api",
-    "auditId": "sdk-public-api"
-  }
+    "subpaths": {
+        ".": ["ClockifyApiClient", "createClockifyClient"],
+        "./composed-fetch": ["composedFetch"],
+        "./create-client": ["createClockifyClient"],
+        "./deprecation": ["warnOnce"],
+        "./errors": [
+            "RateLimitError",
+            "promoteApiError",
+            "classifyClockifyError",
+            "getStableErrorCode",
+            "CLOCKIFY_ERROR_CODES",
+            "errorCodeForStatus"
+        ],
+        "./health": ["clockifyHealth"],
+        "./iter": ["iterAll"],
+        "./expense-list": ["listExpensesFiltered"],
+        "./otel-hooks": ["otelHooks"],
+        "./paginated-list": ["paginatedList", "PaginatedList"],
+        "./pagination": ["paginate"],
+        "./rate-limit": ["getRateLimit", "getRateLimitFromError"],
+        "./scoped-client": ["Workspace", "wrapResource"],
+        "./webhook-events": ["CLOCKIFY_WEBHOOK_EVENT_NAMES"],
+        "./webhooks": ["verifyClockifyWebhook"],
+        "./with-response": ["withResponse"],
+        "./diagnostics": ["clockifyDiagnostics"],
+        "./request-options": [
+            "requestOptions",
+            "withHeaders",
+            "withIdempotencyKey",
+            "withRequestTimeout"
+        ],
+        "./operation-receipt": ["toOperationReceipt", "toOperationErrorReceipt", "entityId"],
+        "./money": [
+            "toMinor",
+            "toMajor",
+            "invoiceItemUnitPriceToWire",
+            "invoiceItemUnitPriceFromWire",
+            "CLOCKIFY_AMOUNT_UNITS"
+        ],
+        "./invoice-body": [
+            "invoiceUpdateBodyFromExisting",
+            "INVOICE_EDITABLE_FIELDS",
+            "INVOICE_PERCENT_FIELD_MAP"
+        ],
+        "./dates": ["resolveRelativeDay", "resolveInstant", "resolvePeriod", "REPORT_PERIODS"],
+        "./resolve": [
+            "looksLikeClockifyId",
+            "matchByName",
+            "suggestOptions",
+            "resolveEntityRef",
+            "resolveProjectTaskRefs",
+            "resolveUserRef",
+            "resolveUserRefs",
+            "resolveGroupRefs",
+            "resolveTagRefs",
+            "resolveUserFilter"
+        ],
+        "./ensure": [
+            "ensureTag",
+            "ensureProject",
+            "ensureClient",
+            "findOrCreateClient",
+            "archiveThenDeleteProject",
+            "archiveThenDeleteClient"
+        ],
+        "./requests": ["ClockifyApi", "ClockifyRequestBody", "AUDIT_LOG_ACTIONS", "AuditLogAction"],
+        "./reports": [
+            "summaryFilter",
+            "detailedFilter",
+            "weeklyFilter",
+            "detailedEntries",
+            "summaryGroups",
+            "reportTotals"
+        ],
+        "./bulk": ["mapBounded"],
+        "./compose": ["runComposition", "leftBehindNote"]
+    },
+    "tsconfigAliases": {
+        "clockify-sdk-ts-115": ["./index.ts"],
+        "clockify-sdk-ts-115/create-client": ["./create-client.ts"],
+        "clockify-sdk-ts-115/composed-fetch": ["./composed-fetch.ts"],
+        "clockify-sdk-ts-115/iter": ["./iter.ts"],
+        "clockify-sdk-ts-115/expense-list": ["./expense-list.ts"],
+        "clockify-sdk-ts-115/webhooks": ["./webhooks.ts"],
+        "clockify-sdk-ts-115/webhook-events": ["./webhook-events.ts"],
+        "clockify-sdk-ts-115/pagination": ["./pagination.ts"],
+        "clockify-sdk-ts-115/paginated-list": ["./paginated-list.ts"],
+        "clockify-sdk-ts-115/with-response": ["./with-response.ts"],
+        "clockify-sdk-ts-115/errors": ["./errors.ts"],
+        "clockify-sdk-ts-115/deprecation": ["./deprecation.ts"],
+        "clockify-sdk-ts-115/scoped-client": ["./scoped-client.ts"],
+        "clockify-sdk-ts-115/otel-hooks": ["./otel-hooks.ts"],
+        "clockify-sdk-ts-115/health": ["./health.ts"],
+        "clockify-sdk-ts-115/rate-limit": ["./rate-limit.ts"],
+        "clockify-sdk-ts-115/diagnostics": ["./diagnostics.ts"],
+        "clockify-sdk-ts-115/request-options": ["./request-options.ts"],
+        "clockify-sdk-ts-115/operation-receipt": ["./operation-receipt.ts"],
+        "clockify-sdk-ts-115/money": ["./money.ts"],
+        "clockify-sdk-ts-115/invoice-body": ["./invoice-body.ts"],
+        "clockify-sdk-ts-115/dates": ["./dates.ts"],
+        "clockify-sdk-ts-115/resolve": ["./resolve.ts"],
+        "clockify-sdk-ts-115/ensure": ["./ensure.ts"],
+        "clockify-sdk-ts-115/requests": ["./requests.ts"],
+        "clockify-sdk-ts-115/reports": ["./reports.ts"],
+        "clockify-sdk-ts-115/bulk": ["./bulk.ts"],
+        "clockify-sdk-ts-115/compose": ["./compose.ts"]
+    },
+    "packageMarkerScan": {
+        "forbiddenRegex": "clockify-sdk-ts(?!-115)",
+        "paths": [
+            "wrapper/index.ts",
+            "wrapper/create-client.ts",
+            "wrapper/composed-fetch.ts",
+            "wrapper/iter.ts",
+            "wrapper/pagination.ts",
+            "wrapper/paginated-list.ts",
+            "wrapper/webhooks.ts",
+            "wrapper/with-response.ts",
+            "wrapper/errors.ts",
+            "wrapper/deprecation.ts",
+            "wrapper/scoped-client.ts",
+            "wrapper/otel-hooks.ts",
+            "wrapper/health.ts",
+            "wrapper/rate-limit.ts",
+            "wrapper/request-options.ts",
+            "wrapper/operation-receipt.ts",
+            "wrapper/tsconfig.json",
+            "wrapper/tests/composed-fetch.test.ts",
+            "wrapper/tests/sandbox.test.ts",
+            "wrapper/diagnostics.ts",
+            "wrapper/tests/diagnostics.test.ts",
+            "wrapper/tests/request-options.test.ts",
+            "wrapper/tests/operation-receipt.test.ts",
+            "wrapper/ensure.ts",
+            "wrapper/requests.ts",
+            "wrapper/tests/ensure.test.ts",
+            "wrapper/tests/requests.test.ts"
+        ]
+    },
+    "wiring": {
+        "makeTarget": "sdk-public-api",
+        "checker": "scripts/check-sdk-public-api.mjs",
+        "docsIndex": ["sdk-public-api.json"],
+        "qualityGate": "make sdk-public-api",
+        "inventoryId": "sdk-public-api",
+        "auditId": "sdk-public-api"
+    }
 }

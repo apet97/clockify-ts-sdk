@@ -37,7 +37,7 @@ test("removing any blocker from either readiness contract fails both validators 
     const blockers = requiredBlockers(register);
 
     assert.deepEqual(blockers, releaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds);
-    assert.equal(blockers.length, 6);
+    assert.equal(blockers.length, 5);
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-"));
     try {
@@ -46,9 +46,8 @@ test("removing any blocker from either readiness contract fails both validators 
                 const fixtureRegister = structuredClone(register);
                 const fixtureReleaseContract = structuredClone(releaseContract);
                 if (contractName === "risk-register") {
-                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds = requiredBlockers(
-                        fixtureRegister,
-                    ).filter((id) => id !== blocker);
+                    fixtureRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds =
+                        requiredBlockers(fixtureRegister).filter((id) => id !== blocker);
                 } else {
                     fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds =
                         fixtureReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.filter(
@@ -56,8 +55,14 @@ test("removing any blocker from either readiness contract fails both validators 
                         );
                 }
 
-                const fixtureRegisterPath = path.join(fixtureDirectory, `${contractName}-${blocker}-risk.json`);
-                const fixtureReleasePath = path.join(fixtureDirectory, `${contractName}-${blocker}-release.json`);
+                const fixtureRegisterPath = path.join(
+                    fixtureDirectory,
+                    `${contractName}-${blocker}-risk.json`,
+                );
+                const fixtureReleasePath = path.join(
+                    fixtureDirectory,
+                    `${contractName}-${blocker}-release.json`,
+                );
                 await Promise.all([
                     writeFixture(fixtureRegisterPath, fixtureRegister),
                     writeFixture(fixtureReleasePath, fixtureReleaseContract),
@@ -68,7 +73,10 @@ test("removing any blocker from either readiness contract fails both validators 
                 };
                 const args = testFixtureArgs(fixtureRegisterPath, fixtureReleasePath);
 
-                for (const checker of ["scripts/check-risk-register.mjs", "scripts/check-release-readiness.mjs"]) {
+                for (const checker of [
+                    "scripts/check-risk-register.mjs",
+                    "scripts/check-release-readiness.mjs",
+                ]) {
                     const result = runCommand(checker, args, env);
                     assert.notEqual(
                         result.status,
@@ -100,8 +108,11 @@ test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness command
     const releaseContract = JSON.parse(originalReleaseContract);
     const redirectedRegister = structuredClone(register);
     const redirectedReleaseContract = structuredClone(releaseContract);
-    redirectedRegister.risks.find((risk) => risk.id === "expense-date-filter-contract").status = "accepted";
-    redirectedReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.push("not-a-real-risk");
+    redirectedRegister.risks.find((risk) => risk.id === "expense-date-filter-contract").status =
+        "accepted";
+    redirectedReleaseContract.riskRegister.requiredOpenFinalReadinessBlockingIds.push(
+        "not-a-real-risk",
+    );
 
     const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-risk-register-ambient-"));
     try {
@@ -117,13 +128,24 @@ test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness command
             CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH: fixtureReleasePath,
         };
 
-        for (const checker of ["scripts/check-risk-register.mjs", "scripts/check-release-readiness.mjs"]) {
+        for (const checker of [
+            "scripts/check-risk-register.mjs",
+            "scripts/check-release-readiness.mjs",
+        ]) {
             const result = runCommand(checker, [], ambientFixtureEnvironment);
-            assert.equal(result.status, 0, `${checker} must ignore ambient fixture paths: ${result.stdout}${result.stderr}`);
+            assert.equal(
+                result.status,
+                0,
+                `${checker} must ignore ambient fixture paths: ${result.stdout}${result.stderr}`,
+            );
         }
 
         const planner = runCommand("scripts/plan.mjs", ["risk-status"], ambientFixtureEnvironment);
-        assert.equal(planner.status, 0, `risk-status planner must ignore ambient fixture paths: ${planner.stderr}`);
+        assert.equal(
+            planner.status,
+            0,
+            `risk-status planner must ignore ambient fixture paths: ${planner.stderr}`,
+        );
         assert.match(planner.stdout, /expense-date-filter-contract/);
     } finally {
         await rm(fixtureDirectory, { recursive: true, force: true });

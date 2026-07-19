@@ -29,6 +29,7 @@
         "./diagnostics",
         "./ensure",
         "./errors",
+        "./expense-list",
         "./health",
         "./invoice-body",
         "./iter",

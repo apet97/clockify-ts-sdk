@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ClockifyClient } from "../src/client.js";
 import { registerExpensesCommand } from "../src/commands/expenses.js";
@@ -49,7 +49,7 @@ describe("expenses list branch coverage", () => {
             "999",
         ]);
         expect(calls[0]).toMatchObject({
-            "page-size": 200,
+            "page-size": 50,
         });
         const rows = lastJson() as Array<Record<string, unknown>>;
         expect(rows[0]).toMatchObject({ category: "Travel", amount: 12, billable: true });
@@ -59,54 +59,61 @@ describe("expenses list branch coverage", () => {
         expect(rows[3]).toMatchObject({ id: "e-4", category: "Supplies", amount: 150 });
     });
 
-    it("list applies --start/--end as a client-side date-range filter on the fetched page", async () => {
+    it("list applies date bounds across pages, honors total --limit, and propagates the warning", async () => {
+        const calls: Record<string, unknown>[] = [];
+        const warn = vi.spyOn(console, "error").mockImplementation(() => undefined);
         const client = {
             expenses: {
-                list: async () => ({
-                    expenses: {
-                        expenses: [
-                            { id: "in-1", date: "2026-06-15T00:00:00Z", category: "A" },
+                list: async (request: Record<string, unknown>) => {
+                    calls.push(request);
+                    const page = request.page as number;
+                    const pages: Record<number, Array<Record<string, unknown>>> = {
+                        1: [
                             { id: "lo-1", date: "2026-05-31T00:00:00Z", category: "B" },
-                            { id: "hi-1", date: "2026-07-01T00:00:00Z", category: "C" },
-                            { id: "no-date", category: "D" },
+                            { id: "in-1", date: "2026-06-01T00:00:00Z", category: "A" },
                         ],
-                    },
-                }),
+                        2: [
+                            { id: "lo-2", date: "2026-05-30T00:00:00Z", category: "B" },
+                            { id: "hi-2", date: "2026-07-02T00:00:00Z", category: "D" },
+                        ],
+                        3: [
+                            { id: "in-2", date: "2026-06-30T23:59:59Z", category: "C" },
+                            { id: "hi-1", date: "2026-07-01T00:00:00Z", category: "D" },
+                        ],
+                    };
+                    return { expenses: { expenses: pages[page] ?? [] } };
+                },
             },
         };
-        await makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
-            "node",
-            "clk115",
-            "--json",
-            "expenses",
-            "list",
-            "--start",
-            "2026-06-01",
-            "--end",
-            "2026-06-30",
-        ]);
-        const rows = lastJson() as Array<Record<string, unknown>>;
-        // Only the in-range dated row survives; out-of-range and undated rows drop.
-        expect(rows.map((r) => r.id)).toEqual(["in-1"]);
-    });
-
-    it("list handles a direct expenses array envelope", async () => {
-        const client = {
-            expenses: {
-                list: async () => ({ expenses: [{ id: "e-3", category: null }] }),
-            },
-        };
-        await makeProgram(registerExpensesCommand, client as unknown as ClockifyClient).parseAsync([
-            "node",
-            "clk115",
-            "--json",
-            "expenses",
-            "list",
-        ]);
-        expect((lastJson() as Array<Record<string, unknown>>)[0]).toMatchObject({
-            id: "e-3",
-            category: "",
-        });
+        try {
+            await makeProgram(
+                registerExpensesCommand,
+                client as unknown as ClockifyClient,
+            ).parseAsync([
+                "node",
+                "clk115",
+                "--json",
+                "expenses",
+                "list",
+                "--start",
+                "2026-06-01",
+                "--end",
+                "2026-06-30",
+                "--limit",
+                "2",
+                "--page-size",
+                "2",
+                "--max-pages",
+                "3",
+            ]);
+            const rows = lastJson() as Array<Record<string, unknown>>;
+            expect(rows.map((r) => r.id)).toEqual(["in-1", "in-2"]);
+            expect(calls.map((call) => call.page)).toEqual([1, 2, 3]);
+            expect(calls.every((call) => call["page-size"] === 2)).toBe(true);
+            expect(warn.mock.calls.flat().join(" ")).toMatch(/applied client-side/i);
+        } finally {
+            warn.mockRestore();
+        }
     });
 
     it("rejects a non-numeric --limit before any wire call", async () => {

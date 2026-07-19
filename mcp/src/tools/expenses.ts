@@ -4,6 +4,7 @@
  * contract; updates without one use one documented generated-type boundary.
  */
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { listExpensesFiltered } from "clockify-sdk-ts-115/expense-list";
 import { type ClockifyApi, type ClockifyRequestBody } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
@@ -94,46 +95,59 @@ export function registerExpensesTools(server: McpServer, ctx: Context): void {
             title: "List expenses",
             description: "List workspace expenses with optional date range and pagination.",
             inputSchema: {
-                page: zNumberLike(z.number().int().min(1).default(1)).optional(),
+                page: zNumberLike(z.number().int().min(1).max(1_000_000).default(1)).optional(),
                 pageSize: zNumberLike(z.number().int().min(1).max(200).default(50)).optional(),
+                limit: zNumberLike(z.number().int().min(1).max(10_000).default(50)).optional(),
+                maxPages: zNumberLike(z.number().int().min(1).max(1_000).default(100)).optional(),
                 start: z.string().optional(),
                 end: z.string().optional(),
             },
         },
         async (args) => {
-            const req: {
-                workspaceId: string;
-                page: number;
-                "page-size": number;
-                start?: string;
-                end?: string;
-            } = {
-                workspaceId: ctx.workspaceId,
-                page: args.page ?? 1,
-                "page-size": args.pageSize ?? 50,
-            };
-            if (args.start) req.start = args.start;
-            if (args.end) req.end = args.end;
-            // The typed request now carries page/page-size, so it is passed directly; only the
-            // response shape is narrowed below (the live list envelope is wider than generated).
-            const response = (await ctx.client.expenses.list(req)) as
-                | { expenses?: { expenses?: unknown[]; count?: number } | unknown[] }
-                | unknown[];
-            // Upstream returns {expenses: {expenses: [...], count}} per
-            // probe evidence; tolerate the bare-array fallback too.
-            const items = (() => {
-                if (Array.isArray(response)) return response;
-                const inner = response.expenses;
-                if (Array.isArray(inner)) return inner;
-                if (inner && Array.isArray(inner.expenses)) return inner.expenses;
-                return [] as unknown[];
-            })();
-            return successResult("clockify_expenses_list", items, {
-                workspaceId: ctx.workspaceId,
-                count: items.length,
-                page: args.page ?? 1,
-                pageSize: args.pageSize ?? 50,
-            });
+            const result = await listExpensesFiltered(
+                ctx.client.expenses.list.bind(ctx.client.expenses),
+                { workspaceId: ctx.workspaceId },
+                {
+                    page: args.page ?? 1,
+                    pageSize: args.pageSize ?? 50,
+                    limit: args.limit ?? 50,
+                    maxPages: args.maxPages ?? 100,
+                    ...(args.start ? { start: args.start } : {}),
+                    ...(args.end ? { end: args.end } : {}),
+                },
+            );
+            return successResult(
+                "clockify_expenses_list",
+                result.items,
+                {
+                    workspaceId: ctx.workspaceId,
+                    count: result.items.length,
+                    ...result.meta,
+                },
+                {
+                    warnings: result.warnings.map((message) => ({
+                        code: "client_side_filter",
+                        message,
+                    })),
+                    next:
+                        result.meta.nextPage === undefined
+                            ? []
+                            : [
+                                  {
+                                      tool: "clockify_expenses_list",
+                                      args: {
+                                          page: result.meta.nextPage,
+                                          pageSize: result.meta.pageSize,
+                                          limit: result.meta.limit,
+                                          maxPages: result.meta.maxPages,
+                                          ...(args.start ? { start: args.start } : {}),
+                                          ...(args.end ? { end: args.end } : {}),
+                                      },
+                                      reason: "Continue the bounded client-side expense scan.",
+                                  },
+                              ],
+                },
+            );
         },
     );
 

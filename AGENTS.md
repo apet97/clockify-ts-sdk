@@ -249,7 +249,7 @@ wrapper/src/**  (gitignored; populated by sync)
         │                         CLOCKIFY_API_KEY + CLOCKIFY_WORKSPACE_ID)
         │  npm run build         (twin tsc passes → dist/{esm,cjs}/**; finalize-cjs.sh
         │                         writes dist/cjs/package.json {type: commonjs})
-        │  npm run build:smoke   (verifies ESM + CJS expose 91 names + 27 subpaths;
+        │  npm run build:smoke   (verifies ESM + CJS expose 92 names + 28 subpaths;
         │                         wired into prepublishOnly)
         ▼
 wrapper/dist/**  (the packable artefact)
@@ -482,12 +482,12 @@ The governed subpaths in `package.json` `exports` (the root `.` plus named entri
 TS resolves ESM vs CJS types correctly). The canonical, governed list lives in
 `docs/sdk-public-api.json` (`subpaths` + `tsconfigAliases`), kept in lockstep with
 `package.json` exports, the tsconfig path aliases, and `verify-dual-build.sh` by
-`make sdk-public-api` — edit there, not by hand-listing here. The 26 named subpaths:
+`make sdk-public-api` — edit there, not by hand-listing here. The 27 named subpaths:
 `create-client`, `composed-fetch`, `errors`, `deprecation`, `iter`, `pagination`,
 `paginated-list`, `webhooks`, `webhook-events`, `with-response`, `scoped-client`,
 `otel-hooks`, `health`, `rate-limit`, `diagnostics`, `request-options`,
 `operation-receipt`, `money`, `invoice-body`, `resolve`, `dates`, `ensure`,
-`requests`, `reports`, `bulk`, and `compose`.
+`requests`, `reports`, `bulk`, `compose`, and `expense-list`.
 
 `package.json` also carries `publishConfig: { access: public,
 provenance: true }` for the legacy release path. Because that would

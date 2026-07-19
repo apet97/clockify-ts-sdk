@@ -295,6 +295,37 @@ for await (const project of iterAll(listProjects, { workspaceId: "..." })) {
 > method's full type signature. Bare references lose `this`; arrow
 > wrappers lose type inference.
 
+### Expense date filtering
+
+Clockify's expense-list route ignores `start` and `end`. Use the exported
+`listExpensesFiltered` helper instead of forwarding those inert query keys. It
+walks the typed `{expenses:{expenses:[...]}}` envelope across bounded pages,
+applies inclusive date-only or ISO-8601 bounds client-side, and returns a
+warning plus continuation metadata:
+
+```typescript
+import { createClockifyClient, listExpensesFiltered } from "clockify-sdk-ts-115";
+
+const client = createClockifyClient();
+const result = await listExpensesFiltered(
+    client.expenses.list.bind(client.expenses),
+    { workspaceId: "..." },
+    {
+        start: "2026-06-01",
+        end: "2026-06-30T23:59:59Z",
+        limit: 100,
+        pageSize: 50,
+        maxPages: 20,
+    },
+);
+
+console.log(result.items, result.warnings, result.meta.nextPage);
+```
+
+`limit` is the total returned-record cap; `pageSize` controls each wire
+request. `Last-Page` is authoritative when present. Without it, the helper
+uses page length plus the required bounded `maxPages` fallback.
+
 ### `iterPages` — for per-page envelopes
 
 ```typescript
@@ -917,7 +948,7 @@ matches what Speakeasy / Stainless SDKs ship:
 | Lint            | ESLint 9 flat config (typescript-eslint recommended-type-checked + import-x order + no-floating-promises + consistent-type-imports) | CI `lint` job                           |
 | Format          | Prettier 3 (4-space, semi, LF, 100-col)                                                                                             | `npm run format:check`                  |
 | Bundle ceiling  | `size-limit` with 9 entrypoint ceilings (file-size, no bundling)                                                                    | CI `size` job                           |
-| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 91 governed root names + 27 subpaths                                             | `build:smoke`                           |
+| Dual build      | `tsc` ESM + `tsc` CJS + per-format smoke verifying 92 governed root names + 28 subpaths                                             | `build:smoke`                           |
 | Tarball gate    | Golden-file snapshot (`.packsnapshot`) of every file that ships in `npm pack`                                                       | Workspace CI (Node 22.13)               |
 | Provenance      | Legacy publish workflow remains gated; default stance is no npm publication without explicit maintainer approval                     | CI `release.yml`                        |
 | Cross-runtime   | Vitest under **Bun**, name-resolution import under **Deno**                                                                         | CI `bun-smoke` + `deno-smoke`           |

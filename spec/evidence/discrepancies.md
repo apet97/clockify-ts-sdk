@@ -2870,3 +2870,35 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `0a1eeb34f6f8e7693b92d3edfb5841e512e6fa1b402b3ea49c82be70fd5565e7`;
   `make sdk-codegen` regenerated the request type and docs. Runtime
   GET-then-PUT preservation remains necessary for replacement semantics.
+
+---
+
+## Expense list date filtering (2026-07-19)
+
+### `expenses.list.start-end-ignored-client-filtered` — COMPENSATED-IN-SDK 2026-07-19
+
+- **Official/current source claim:** the generated `ListExpensesRequest` exposes
+  `page`, `page-size`, and `user-id`, but not `start` or `end`. Earlier CLI and
+  MCP code nevertheless advertised date bounds and applied inconsistent
+  single-page/request-side workarounds.
+- **Observed evidence/provenance:** authenticated read-only preflight returned
+  HTTP 200 for current user and pinned workspace. Baseline, start-only,
+  end-only, date-only both-bounds, ISO-8601 `Z`, and ISO-8601 offset probes all
+  returned HTTP 200 with the exact same 200-record first page and
+  `Last-Page:false`. Page-size 1 pages 1-3 and page-size 2 pages 1-2 returned
+  distinct records, proving pagination works while date bounds are ignored.
+  The sanitized count/header/behavior receipt is
+  `docs/roadmap-1.0-receipts/task-02-expense-filter.md`; raw captures remain in
+  the gitignored `spec/evidence/probes/20260719-expense-date-filter-contract-*` files.
+- **Affected operations/tools:** generated `client.expenses.list`, shared SDK
+  `listExpensesFiltered`, CLI `expenses list`, and MCP
+  `clockify_expenses_list`.
+- **Open questions:** no server-side date-filter spelling is established. Do
+  not add `start`/`end` to canonical OpenAPI unless a future authenticated probe
+  demonstrates honored filtering. The shared scan remains deliberately bounded.
+- **Status/resolution:** `compensated-in-sdk`. The typed double-nested response
+  envelope remains canonical. One exported helper now scans pages, applies
+  inclusive date-only/ISO bounds client-side, honors `Last-Page`, falls back to
+  bounded page-length termination, distinguishes total limit from page size,
+  and returns an explicit warning plus continuation metadata. CLI and MCP both
+  use it and no longer cast the expense-list response.

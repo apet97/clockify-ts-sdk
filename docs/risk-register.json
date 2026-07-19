@@ -1,368 +1,354 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Known risks, limitations, provisional states, and upstream blockers for the SDK/CLI/MCP/OpenAPI platform. Every entry needs evidence, mitigation, and a closure gate.",
-  "wiring": {
-    "makeTarget": "risk-register",
-    "checker": "scripts/check-risk-register.mjs",
-    "enterpriseAuditId": "risk-register"
-  },
-  "allowedStatuses": [
-    "open",
-    "provisional",
-    "blocked-upstream",
-    "accepted"
-  ],
-  "reportGenerator": {
-    "path": "scripts/risk-status-report.mjs",
-    "makeTarget": "risk-status-report",
-    "contains": [
-      "network: \"none\"",
-      "commandsExecuted: []",
-      "envValuesCaptured: false",
-      "This report is not proof",
-      "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
-      "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
-      "docs/performance-baseline-latest.json",
-      "performanceReceiptStatus",
-      "readJsonState",
-      "parseError",
-      "not valid receipt JSON",
-      "failedMeasurements",
-      "measurement?.ok !== true",
-      "expectedPerformanceReceiptCalibrationStatus",
-      "embedded calibrationPolicy.status",
-      "has passing measurements but embedded calibrationPolicy.status",
-      "expectedBudgetSchemaVersion",
-      "budgetsSchemaVersion",
-      "has passing measurements but budgetsSchemaVersion",
-      "expectedBudgetFingerprint",
-      "budgetFingerprint",
-      "has passing measurements but budgetFingerprint",
-      "successful latest receipt",
-      "fileSignalDetails",
-      "finalReadinessBlocking",
-      "Final-readiness blocking",
-      "readinessBlockingRiskIds",
-      "nonBlockingOpenOrProvisionalRiskIds",
-      "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
-      "failed",
-      "Final-readiness risk routing",
-      "riskRoutingSummary",
-      "finalReadinessRiskStatus",
-      "readinessBlockingRiskCount",
-      "nonBlockingOpenOrProvisionalRiskCount",
-      "Blocking risk count",
-      "Visible non-blocking open/provisional risks"
-    ],
-    "generatedReport": {
-      "exactFields": {
-        "schemaVersion": 1,
-        "network": "none",
-        "commandsExecuted": [],
-        "envValuesCaptured": false,
-        "reportScope": "all"
-      },
-      "requiredCountKeys": [
-        "open",
-        "provisional",
-        "blocked-upstream",
-        "accepted"
-      ],
-      "requiredFileSignalKeys": [
-        "temporaryContext",
-        "performanceBaselineLatest",
-        "performanceCalibration"
-      ],
-      "requiredFileSignalDetailKeys": [
-        "performanceBaselineLatest"
-      ],
-      "requiredFileSignalDetailKeysAreNonEmpty": true,
-      "requiredRiskRoutingSummaryKeys": [
-        "finalReadinessRiskStatus",
-        "readinessBlockingRiskCount",
-        "nonBlockingOpenOrProvisionalRiskCount",
-        "blockedUpstreamRiskCount",
-        "acceptedRiskCount"
-      ],
-      "requiredRiskIds": [
-        "legacy-release-workflow-needs-maintainer-decision",
-        "expense-date-filter-contract",
-        "expense-update-file-schema",
-        "operation-parity-generated-reachability",
-        "consumer-request-casts",
-        "cross-package-release-proof-asymmetry",
-        "remote-mutation-proof-pending"
-      ],
-      "requiredReadinessBlockingRiskIds": [
-        "expense-date-filter-contract",
-        "expense-update-file-schema",
-        "operation-parity-generated-reachability",
-        "consumer-request-casts",
-        "cross-package-release-proof-asymmetry",
-        "remote-mutation-proof-pending"
-      ],
-      "requiredNonBlockingOpenOrProvisionalRiskIds": []
-    }
-  },
-  "risks": [
-    {
-      "id": "fern-bare-array-pagination",
-      "status": "accepted",
-      "surface": "SDK generation",
-      "summary": "Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface.",
-      "impact": "No active generator blocker. Generated list methods still need to preserve page/page-size request shapes consumed by iterAll, iterPages, and paginate.",
-      "mitigation": "Keep pagination wrappers tested and keep local generator comparison/drift checks active.",
-      "closureGate": "No closure planned; keep as historical evidence unless the pagination helper surface is intentionally redesigned.",
-      "evidence": [
-        {
-          "path": "spec/evidence/discrepancies.md",
-          "contains": "fern.x-fern-pagination.bare-array-unsupported"
-        },
-        {
-          "path": "wrapper/iter.ts",
-          "contains": "iterAll"
-        }
-      ]
+    "schemaVersion": 1,
+    "purpose": "Known risks, limitations, provisional states, and upstream blockers for the SDK/CLI/MCP/OpenAPI platform. Every entry needs evidence, mitigation, and a closure gate.",
+    "wiring": {
+        "makeTarget": "risk-register",
+        "checker": "scripts/check-risk-register.mjs",
+        "enterpriseAuditId": "risk-register"
     },
-    {
-      "id": "fern-addon-token-type-workaround",
-      "status": "accepted",
-      "surface": "SDK auth",
-      "summary": "The historical Fern addon-token workaround is retired; local generated auth types now model exactly one token mode.",
-      "impact": "A regression could reintroduce workaround casts or allow callers to send both Clockify auth headers.",
-      "mitigation": "Keep generated HeaderAuthProvider auth options mutually exclusive and keep createClockifyClient auth tests active.",
-      "closureGate": "No closure planned; keep discrepancy evidence and SDK auth tests as regression coverage.",
-      "evidence": [
-        {
-          "path": "spec/evidence/discrepancies.md",
-          "contains": "fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive"
-        },
-        {
-          "path": "wrapper/create-client.ts",
-          "contains": "exactly-one auth"
+    "allowedStatuses": ["open", "provisional", "blocked-upstream", "accepted"],
+    "reportGenerator": {
+        "path": "scripts/risk-status-report.mjs",
+        "makeTarget": "risk-status-report",
+        "contains": [
+            "network: \"none\"",
+            "commandsExecuted: []",
+            "envValuesCaptured: false",
+            "This report is not proof",
+            "Does not run Git, npm, Docker, Fern, tests, builds, or Clockify API calls",
+            "docs/TEMP_CONTEXT_REMOVE_AFTER_ENTERPRISE_SDK_GOAL.md",
+            "docs/performance-baseline-latest.json",
+            "performanceReceiptStatus",
+            "readJsonState",
+            "parseError",
+            "not valid receipt JSON",
+            "failedMeasurements",
+            "measurement?.ok !== true",
+            "expectedPerformanceReceiptCalibrationStatus",
+            "embedded calibrationPolicy.status",
+            "has passing measurements but embedded calibrationPolicy.status",
+            "expectedBudgetSchemaVersion",
+            "budgetsSchemaVersion",
+            "has passing measurements but budgetsSchemaVersion",
+            "expectedBudgetFingerprint",
+            "budgetFingerprint",
+            "has passing measurements but budgetFingerprint",
+            "successful latest receipt",
+            "fileSignalDetails",
+            "finalReadinessBlocking",
+            "Final-readiness blocking",
+            "readinessBlockingRiskIds",
+            "nonBlockingOpenOrProvisionalRiskIds",
+            "performanceBudgets.calibrationPolicy?.status === \"calibrated\"",
+            "failed",
+            "Final-readiness risk routing",
+            "riskRoutingSummary",
+            "finalReadinessRiskStatus",
+            "readinessBlockingRiskCount",
+            "nonBlockingOpenOrProvisionalRiskCount",
+            "Blocking risk count",
+            "Visible non-blocking open/provisional risks"
+        ],
+        "generatedReport": {
+            "exactFields": {
+                "schemaVersion": 1,
+                "network": "none",
+                "commandsExecuted": [],
+                "envValuesCaptured": false,
+                "reportScope": "all"
+            },
+            "requiredCountKeys": ["open", "provisional", "blocked-upstream", "accepted"],
+            "requiredFileSignalKeys": [
+                "temporaryContext",
+                "performanceBaselineLatest",
+                "performanceCalibration"
+            ],
+            "requiredFileSignalDetailKeys": ["performanceBaselineLatest"],
+            "requiredFileSignalDetailKeysAreNonEmpty": true,
+            "requiredRiskRoutingSummaryKeys": [
+                "finalReadinessRiskStatus",
+                "readinessBlockingRiskCount",
+                "nonBlockingOpenOrProvisionalRiskCount",
+                "blockedUpstreamRiskCount",
+                "acceptedRiskCount"
+            ],
+            "requiredRiskIds": [
+                "legacy-release-workflow-needs-maintainer-decision",
+                "expense-update-file-schema",
+                "operation-parity-generated-reachability",
+                "consumer-request-casts",
+                "cross-package-release-proof-asymmetry",
+                "remote-mutation-proof-pending"
+            ],
+            "requiredReadinessBlockingRiskIds": [
+                "expense-update-file-schema",
+                "operation-parity-generated-reachability",
+                "consumer-request-casts",
+                "cross-package-release-proof-asymmetry",
+                "remote-mutation-proof-pending"
+            ],
+            "requiredNonBlockingOpenOrProvisionalRiskIds": []
         }
-      ]
     },
-    {
-      "id": "live-tests-sandbox-only",
-      "status": "accepted",
-      "surface": "Live Clockify proof",
-      "summary": "Live tests intentionally mutate Clockify state and must run only against a sacrificial sandbox workspace.",
-      "impact": "Live proof is high value but unsafe against customer workspaces.",
-      "mitigation": "Require explicit env vars and document sandbox-only usage before running live gates.",
-      "closureGate": "Keep live proof receipts showing sandbox cleanup; never generalize live gates to customer workspaces.",
-      "evidence": [
+    "risks": [
         {
-          "path": "docs/quality-gates.md",
-          "contains": "Never run live gates against a customer workspace"
+            "id": "fern-bare-array-pagination",
+            "status": "accepted",
+            "surface": "SDK generation",
+            "summary": "Historical Fern CLI bare-array pagination limitation is no longer an active blocker because the required SDK generator is local; wrapper pagination helpers remain the supported public surface.",
+            "impact": "No active generator blocker. Generated list methods still need to preserve page/page-size request shapes consumed by iterAll, iterPages, and paginate.",
+            "mitigation": "Keep pagination wrappers tested and keep local generator comparison/drift checks active.",
+            "closureGate": "No closure planned; keep as historical evidence unless the pagination helper surface is intentionally redesigned.",
+            "evidence": [
+                {
+                    "path": "spec/evidence/discrepancies.md",
+                    "contains": "fern.x-fern-pagination.bare-array-unsupported"
+                },
+                {
+                    "path": "wrapper/iter.ts",
+                    "contains": "iterAll"
+                }
+            ]
         },
         {
-          "path": "Makefile",
-          "contains": "make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars."
+            "id": "fern-addon-token-type-workaround",
+            "status": "accepted",
+            "surface": "SDK auth",
+            "summary": "The historical Fern addon-token workaround is retired; local generated auth types now model exactly one token mode.",
+            "impact": "A regression could reintroduce workaround casts or allow callers to send both Clockify auth headers.",
+            "mitigation": "Keep generated HeaderAuthProvider auth options mutually exclusive and keep createClockifyClient auth tests active.",
+            "closureGate": "No closure planned; keep discrepancy evidence and SDK auth tests as regression coverage.",
+            "evidence": [
+                {
+                    "path": "spec/evidence/discrepancies.md",
+                    "contains": "fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive"
+                },
+                {
+                    "path": "wrapper/create-client.ts",
+                    "contains": "exactly-one auth"
+                }
+            ]
+        },
+        {
+            "id": "live-tests-sandbox-only",
+            "status": "accepted",
+            "surface": "Live Clockify proof",
+            "summary": "Live tests intentionally mutate Clockify state and must run only against a sacrificial sandbox workspace.",
+            "impact": "Live proof is high value but unsafe against customer workspaces.",
+            "mitigation": "Require explicit env vars and document sandbox-only usage before running live gates.",
+            "closureGate": "Keep live proof receipts showing sandbox cleanup; never generalize live gates to customer workspaces.",
+            "evidence": [
+                {
+                    "path": "docs/quality-gates.md",
+                    "contains": "Never run live gates against a customer workspace"
+                },
+                {
+                    "path": "Makefile",
+                    "contains": "make perfect-live        Explicit sandbox/live cleanup proof. Requires live env vars."
+                }
+            ]
+        },
+        {
+            "id": "no-default-npm-publish",
+            "status": "accepted",
+            "surface": "Release operations",
+            "summary": "Packages are published to npm under the unofficial @apet97 scope; publication stays tag-gated CI, so npm publication is not the default path for routine changes and the publish manifest fields + prepublishOnly gates remain load-bearing.",
+            "impact": "Publishing is a deliberate tag push (wrapper-v*/cli-v*/mcp-v*); the prepublishOnly gates and tag-vs-version guards are the safety rails. Re-publishing on every change is not the workflow.",
+            "mitigation": "Keep release/support policy, package contract, and CI contract aligned with the tag-gated publish stance.",
+            "closureGate": "Only publish after explicit maintainer approval plus perfect-full, pack-smoke, and release/support proof.",
+            "evidence": [
+                {
+                    "path": "docs/release-support-policy.md",
+                    "contains": "npm publication is not the default path"
+                },
+                {
+                    "path": "AGENTS.md",
+                    "contains": "Never run `npm publish`"
+                }
+            ]
+        },
+        {
+            "id": "legacy-release-workflow-needs-maintainer-decision",
+            "status": "accepted",
+            "finalReadinessBlocking": false,
+            "surface": "CI/CD release automation",
+            "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
+            "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
+            "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
+            "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing.",
+            "evidence": [
+                {
+                    "path": ".github/workflows/release.yml",
+                    "contains": "Release to npm"
+                },
+                {
+                    "path": ".github/workflows/release-please.yml",
+                    "contains": "release-please-action"
+                },
+                {
+                    "path": "docs/release-support-policy.md",
+                    "contains": "Do not change CI/CD"
+                },
+                {
+                    "path": "scripts/release-decision-plan.mjs",
+                    "contains": "legacy-release-workflow-needs-maintainer-decision"
+                },
+                {
+                    "path": "docs/release-readiness-checklist.md",
+                    "contains": "node scripts/plan.mjs release-decision --decision all"
+                }
+            ]
+        },
+        {
+            "id": "generated-core-is-not-product",
+            "status": "accepted",
+            "surface": "OpenAPI/local generation",
+            "summary": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
+            "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
+            "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",
+            "closureGate": "No closure planned; this is a permanent architecture constraint.",
+            "evidence": [
+                {
+                    "path": "docs/axioms.md",
+                    "contains": "Generated code is a dependency"
+                },
+                {
+                    "path": "scripts/check-generator-independence.mjs",
+                    "contains": "output/ts-sdk"
+                }
+            ]
+        },
+        {
+            "id": "expense-date-filter-contract",
+            "status": "accepted",
+            "finalReadinessBlocking": false,
+            "surface": "Expense query contract",
+            "summary": "Live read-only proof established that the expense route ignores start/end while honoring pagination; SDK, CLI, and MCP now share one bounded client-side filter contract.",
+            "impact": "Date-filtered reads can require multiple API pages and may stop at the configured bound, so consumers must inspect the warning and continuation metadata.",
+            "mitigation": "Keep listExpensesFiltered shared across CLI/MCP, preserve the typed double-nested envelope, and retain the bounded scan plus client-side warning.",
+            "closureGate": "Closed 2026-07-19 by the sanitized Task 2 live receipt, focused wrapper/CLI/MCP tests, consumer-cast budget, operation-parity drift, and contract gates.",
+            "evidence": [
+                {
+                    "path": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
+                    "contains": "The server ignores `start`/`end`"
+                },
+                {
+                    "path": "wrapper/expense-list.ts",
+                    "contains": "listExpensesFiltered"
+                }
+            ]
+        },
+        {
+            "id": "expense-update-file-schema",
+            "status": "open",
+            "finalReadinessBlocking": true,
+            "surface": "Expense update request schema",
+            "summary": "The generated expense-update request shape still exposes a multipart file field that the supported scalar update workflow does not model truthfully.",
+            "impact": "Callers may need an unsafe request cast or may assume a file-upload update shape that the supported workflow cannot prove.",
+            "mitigation": "Keep the explicit scalar-versus-multipart mismatch visible until Task 3 corrects the contract and removes the unsupported path.",
+            "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen-test consumer-cast-budget`, `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`, and `make contract-gates`.",
+            "evidence": [
+                {
+                    "path": "cli/src/commands/expenses.ts",
+                    "contains": "expense update scalar shape omits the generated multipart file"
+                },
+                {
+                    "path": "docs/roadmap-1.0.md",
+                    "contains": "expense-update-file-schema"
+                }
+            ]
+        },
+        {
+            "id": "operation-parity-generated-reachability",
+            "status": "open",
+            "finalReadinessBlocking": true,
+            "surface": "Generated operation parity",
+            "summary": "The parity inventory does not yet prove that every claimed generated operation is reachable through the intended public SDK surface.",
+            "impact": "A parity row can look covered while the generated method is missing, inaccessible, or only present behind an unsupported path.",
+            "mitigation": "Treat generated inventory markers as orientation only until Task 5 adds reachability proof and regenerates the parity surface.",
+            "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen sdk-codegen-drift operation-parity-drift contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
+            "evidence": [
+                {
+                    "path": "docs/operation-parity.json",
+                    "contains": "\"sdkNamed\": 156"
+                },
+                {
+                    "path": "scripts/generate-operation-parity.mjs",
+                    "contains": "const inferredSdk = op.sdkGroup && op.sdkMethod"
+                },
+                {
+                    "path": "docs/roadmap-1.0-status.json",
+                    "contains": "no-generated-reachability-receipt-recorded"
+                }
+            ]
+        },
+        {
+            "id": "consumer-request-casts",
+            "status": "open",
+            "finalReadinessBlocking": true,
+            "surface": "CLI and MCP request typing",
+            "summary": "Consumer request casts remain a temporary escape hatch instead of a zero-cast public request boundary.",
+            "impact": "A generated schema mismatch can be hidden at the CLI or MCP boundary and reach a live request without type-level protection.",
+            "mitigation": "Keep the cast budget at the existing ratchet and close this blocker only after Task 7 removes or proves every remaining request cast.",
+            "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make consumer-cast-budget contract-gates`, `npm test -w @apet97/clockify-cli-115`, `npm test -w @apet97/clockify-mcp-115`, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
+            "evidence": [
+                {
+                    "path": "scripts/check-consumer-cast-budget.mjs",
+                    "contains": "allowedRequestCastBudget"
+                },
+                {
+                    "path": "cli/src/commands/expenses.ts",
+                    "contains": "KEEP as never"
+                }
+            ]
+        },
+        {
+            "id": "cross-package-release-proof-asymmetry",
+            "status": "open",
+            "finalReadinessBlocking": true,
+            "surface": "SDK/CLI/MCP release proof",
+            "summary": "The three npm packages do not yet share one exact-artifact release proof that demonstrates equivalent consumer-install evidence.",
+            "impact": "One package can look ready while another lacks the packed-consumer or release-proof evidence needed for a coordinated 1.0 claim.",
+            "mitigation": "Keep release readiness blocked until Tasks 9 through 13 establish the shared artifact engine, all three adoptions, and the manual governance receipt.",
+            "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make perfect-full pack-smoke release-readiness`, and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs.",
+            "evidence": [
+                {
+                    "path": "docs/pack-consumer-smoke-contract.json",
+                    "contains": "@apet97/clockify-mcp-115"
+                },
+                {
+                    "path": "scripts/pack-consumer-smoke.mjs",
+                    "contains": "for (const file of packed)"
+                },
+                {
+                    "path": "docs/roadmap-1.0-status.json",
+                    "contains": "no-retained-exact-artifact-receipt-recorded"
+                }
+            ]
+        },
+        {
+            "id": "remote-mutation-proof-pending",
+            "status": "open",
+            "finalReadinessBlocking": true,
+            "surface": "Mutation score proof",
+            "summary": "Required mutation proof has not yet been executed and retained through the GitHub-only workflow for the planned 1.0 scope.",
+            "impact": "Local configuration or static wiring can be green while the governed mutation targets have no remote execution receipt.",
+            "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
+            "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
+            "evidence": [
+                {
+                    "path": ".github/workflows/mutation.yml",
+                    "contains": "retention-days: 14"
+                },
+                {
+                    "path": "docs/mutation-score-contract.json",
+                    "contains": "wrapper/reports/mutation/mutation.json"
+                },
+                {
+                    "path": "docs/roadmap-1.0-status.json",
+                    "contains": "no-retained-github-mutation-run-recorded"
+                }
+            ]
         }
-      ]
-    },
-    {
-      "id": "no-default-npm-publish",
-      "status": "accepted",
-      "surface": "Release operations",
-      "summary": "Packages are published to npm under the unofficial @apet97 scope; publication stays tag-gated CI, so npm publication is not the default path for routine changes and the publish manifest fields + prepublishOnly gates remain load-bearing.",
-      "impact": "Publishing is a deliberate tag push (wrapper-v*/cli-v*/mcp-v*); the prepublishOnly gates and tag-vs-version guards are the safety rails. Re-publishing on every change is not the workflow.",
-      "mitigation": "Keep release/support policy, package contract, and CI contract aligned with the tag-gated publish stance.",
-      "closureGate": "Only publish after explicit maintainer approval plus perfect-full, pack-smoke, and release/support proof.",
-      "evidence": [
-        {
-          "path": "docs/release-support-policy.md",
-          "contains": "npm publication is not the default path"
-        },
-        {
-          "path": "AGENTS.md",
-          "contains": "Never run `npm publish`"
-        }
-      ]
-    },
-    {
-      "id": "legacy-release-workflow-needs-maintainer-decision",
-      "status": "accepted",
-      "finalReadinessBlocking": false,
-      "surface": "CI/CD release automation",
-      "summary": "Tag-triggered npm release workflows publish all three packages on prefixed tags (wrapper-v*/cli-v*/mcp-v*); the maintainer reviewed and enabled them (release-please files the wrapper version-bump PR; release.yml/ci-cli-release.yml/ci-mcp-release.yml each publish on a tag whose version matches its package.json).",
-      "impact": "Release automation still requires explicit maintainer approval per publish; local packable readiness is not the same as permission to publish. The tag-vs-version guard remains load-bearing.",
-      "mitigation": "Keep the no-default-publish policy, package contracts, CI contract, and release-decision planner visible; do not run or modify release automation casually. release-please can file PRs after enabling the repo-level `can_approve_pull_request_reviews` setting.",
-      "closureGate": "Maintainer reviewed release.yml + release-please.yml on 2026-05-28; on 2026-06-28 the maintainer enabled tag-triggered npm publish for all three packages under the unofficial @apet97 scope (CLI/MCP scaffolds flipped from inert to cli-v*/mcp-v* publishers; SDK moved from bare v* to wrapper-v* tags). The tag-vs-version guard remains load-bearing.",
-      "evidence": [
-        {
-          "path": ".github/workflows/release.yml",
-          "contains": "Release to npm"
-        },
-        {
-          "path": ".github/workflows/release-please.yml",
-          "contains": "release-please-action"
-        },
-        {
-          "path": "docs/release-support-policy.md",
-          "contains": "Do not change CI/CD"
-        },
-        {
-          "path": "scripts/release-decision-plan.mjs",
-          "contains": "legacy-release-workflow-needs-maintainer-decision"
-        },
-        {
-          "path": "docs/release-readiness-checklist.md",
-          "contains": "node scripts/plan.mjs release-decision --decision all"
-        }
-      ]
-    },
-    {
-      "id": "generated-core-is-not-product",
-      "status": "accepted",
-      "surface": "OpenAPI/local generation",
-      "summary": "Generated code is a replaceable lower layer, not the product surface users should depend on directly.",
-      "impact": "Direct imports from generated internals make generator replacement and OpenAPI regeneration brittle.",
-      "mitigation": "Keep generated-edit, generator-independence, dependency-boundary, and SDK public API gates active.",
-      "closureGate": "No closure planned; this is a permanent architecture constraint.",
-      "evidence": [
-        {
-          "path": "docs/axioms.md",
-          "contains": "Generated code is a dependency"
-        },
-        {
-          "path": "scripts/check-generator-independence.mjs",
-          "contains": "output/ts-sdk"
-        }
-      ]
-    },
-    {
-      "id": "expense-date-filter-contract",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "Expense query contract",
-      "summary": "Expense date filtering has not yet been locked to a typed, wire-proven contract across the supported SDK, CLI, and MCP surfaces.",
-      "impact": "A consumer can receive a plausible but incorrectly bounded expense list when date filters are translated inconsistently or forwarded without contract proof.",
-      "mitigation": "Keep the issue visible until Task 2 adds the smallest typed filter contract and focused cross-surface proof.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`, `npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts`, `make operation-parity-drift`, and `make contract-gates`.",
-      "evidence": [
-        {
-          "path": "cli/src/commands/expenses.ts",
-          "contains": "Clockify expense `date` is ISO-8601"
-        },
-        {
-          "path": "docs/roadmap-1.0.md",
-          "contains": "expense-date-filter-contract"
-        }
-      ]
-    },
-    {
-      "id": "expense-update-file-schema",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "Expense update request schema",
-      "summary": "The generated expense-update request shape still exposes a multipart file field that the supported scalar update workflow does not model truthfully.",
-      "impact": "Callers may need an unsafe request cast or may assume a file-upload update shape that the supported workflow cannot prove.",
-      "mitigation": "Keep the explicit scalar-versus-multipart mismatch visible until Task 3 corrects the contract and removes the unsupported path.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen-test consumer-cast-budget`, `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`, and `make contract-gates`.",
-      "evidence": [
-        {
-          "path": "cli/src/commands/expenses.ts",
-          "contains": "expense update scalar shape omits the generated multipart file"
-        },
-        {
-          "path": "docs/roadmap-1.0.md",
-          "contains": "expense-update-file-schema"
-        }
-      ]
-    },
-    {
-      "id": "operation-parity-generated-reachability",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "Generated operation parity",
-      "summary": "The parity inventory does not yet prove that every claimed generated operation is reachable through the intended public SDK surface.",
-      "impact": "A parity row can look covered while the generated method is missing, inaccessible, or only present behind an unsupported path.",
-      "mitigation": "Treat generated inventory markers as orientation only until Task 5 adds reachability proof and regenerates the parity surface.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen sdk-codegen-drift operation-parity-drift contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
-      "evidence": [
-        {
-          "path": "docs/operation-parity.json",
-          "contains": "\"sdkNamed\": 156"
-        },
-        {
-          "path": "scripts/generate-operation-parity.mjs",
-          "contains": "const inferredSdk = op.sdkGroup && op.sdkMethod"
-        },
-        {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-generated-reachability-receipt-recorded"
-        }
-      ]
-    },
-    {
-      "id": "consumer-request-casts",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "CLI and MCP request typing",
-      "summary": "Consumer request casts remain a temporary escape hatch instead of a zero-cast public request boundary.",
-      "impact": "A generated schema mismatch can be hidden at the CLI or MCP boundary and reach a live request without type-level protection.",
-      "mitigation": "Keep the cast budget at the existing ratchet and close this blocker only after Task 7 removes or proves every remaining request cast.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make consumer-cast-budget contract-gates`, `npm test -w @apet97/clockify-cli-115`, `npm test -w @apet97/clockify-mcp-115`, and `docs/roadmap-1.0-receipts/task-07-zero-cast.md`.",
-      "evidence": [
-        {
-          "path": "scripts/check-consumer-cast-budget.mjs",
-          "contains": "allowedRequestCastBudget"
-        },
-        {
-          "path": "cli/src/commands/expenses.ts",
-          "contains": "KEEP as never"
-        }
-      ]
-    },
-    {
-      "id": "cross-package-release-proof-asymmetry",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "SDK/CLI/MCP release proof",
-      "summary": "The three npm packages do not yet share one exact-artifact release proof that demonstrates equivalent consumer-install evidence.",
-      "impact": "One package can look ready while another lacks the packed-consumer or release-proof evidence needed for a coordinated 1.0 claim.",
-      "mitigation": "Keep release readiness blocked until Tasks 9 through 13 establish the shared artifact engine, all three adoptions, and the manual governance receipt.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make perfect-full pack-smoke release-readiness`, and `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` naming all three tarball digests and consumer outputs.",
-      "evidence": [
-        {
-          "path": "docs/pack-consumer-smoke-contract.json",
-          "contains": "@apet97/clockify-mcp-115"
-        },
-        {
-          "path": "scripts/pack-consumer-smoke.mjs",
-          "contains": "for (const file of packed)"
-        },
-        {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-retained-exact-artifact-receipt-recorded"
-        }
-      ]
-    },
-    {
-      "id": "remote-mutation-proof-pending",
-      "status": "open",
-      "finalReadinessBlocking": true,
-      "surface": "Mutation score proof",
-      "summary": "Required mutation proof has not yet been executed and retained through the GitHub-only workflow for the planned 1.0 scope.",
-      "impact": "Local configuration or static wiring can be green while the governed mutation targets have no remote execution receipt.",
-      "mitigation": "Use only the manual GitHub Mutation workflow for the 1.0 proof; do not run local Stryker or a mutation package command for this execution.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make mutation-ci`, and `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` with GitHub Actions Mutation run URLs plus retained mutation-report artifact names for every approved target.",
-      "evidence": [
-        {
-          "path": ".github/workflows/mutation.yml",
-          "contains": "retention-days: 14"
-        },
-        {
-          "path": "docs/mutation-score-contract.json",
-          "contains": "wrapper/reports/mutation/mutation.json"
-        },
-        {
-          "path": "docs/roadmap-1.0-status.json",
-          "contains": "no-retained-github-mutation-run-recorded"
-        }
-      ]
-    }
-  ]
+    ]
 }

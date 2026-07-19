@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Added
+
+- Added `listExpensesFiltered`, a bounded typed expense-envelope walker with
+  inclusive client-side date filtering, `Last-Page` support, explicit warning,
+  and continuation metadata for the live route that ignores `start`/`end`.
+
 ## [0.12.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.0...wrapper-v0.12.1) - 2026-07-14
 
 ### Fixed
