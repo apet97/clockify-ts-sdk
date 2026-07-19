@@ -187,6 +187,7 @@ describe("holidays create/update resolve NAME -> id before scopeFilter", () => {
             id: "hol-1",
             name: "Christmas",
             datePeriod: { startDate: "2026-12-25", endDate: "2026-12-25" },
+            occursAnnually: true,
             userIds: [BOB],
         };
         const client = await connect(holidaysContext(captured, existing));

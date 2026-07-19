@@ -5,6 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { validateConsumerCastGovernance } from "./lib/consumer-cast-governance.mjs";
+import {
+    validateCanonicalConsumerCastContract,
+    validateConsumerCastMakeWiring,
+    validatePublicNoAnyProofSource,
+} from "./lib/consumer-cast-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
@@ -35,19 +40,7 @@ async function listTypeScript(relativeRoot) {
 
 const validation = await validateConsumerCastGovernance({ root, contract });
 failures.push(...validation.failures);
-const governance = contract.requestCastGovernance;
-if (governance?.canonicalZeroBaseline !== true) {
-    failures.push("requestCastGovernance.canonicalZeroBaseline must stay true");
-}
-if (JSON.stringify(governance?.sourceRoots) !== JSON.stringify({ cli: "cli/src", mcp: "mcp/src" })) {
-    failures.push("requestCastGovernance.sourceRoots must govern exactly cli/src and mcp/src");
-}
-if (
-    governance?.exceptions == null ||
-    Object.keys(governance.exceptions).sort().join(",") !== "cli,mcp"
-) {
-    failures.push("requestCastGovernance.exceptions must contain exactly cli and mcp arrays");
-}
+failures.push(...validateCanonicalConsumerCastContract(contract));
 
 const escapeContract = contract.forbiddenRequestEscape;
 if (
@@ -59,7 +52,8 @@ if (
 } else {
     const governedFiles = new Set();
     for (const relativeRoot of escapeContract.roots) {
-        for (const relativePath of await listTypeScript(relativeRoot)) governedFiles.add(relativePath);
+        for (const relativePath of await listTypeScript(relativeRoot))
+            governedFiles.add(relativePath);
     }
     if (escapeContract.wrapperRootTypeScript === true) {
         for (const entry of await readdir(path.join(root, "wrapper"), { withFileTypes: true })) {
@@ -86,6 +80,7 @@ if (
     publicProof == null ||
     typeof publicProof.path !== "string" ||
     typeof publicProof.compilerGate !== "string" ||
+    typeof publicProof.compilerCommand !== "string" ||
     !Array.isArray(publicProof.contains)
 ) {
     failures.push("publicNoAnyProof must name its existing compiler proof and markers");
@@ -96,22 +91,21 @@ if (
     } catch {
         failures.push(`publicNoAnyProof.path does not exist: ${publicProof.path}`);
     }
-    for (const marker of publicProof.contains) {
-        if (typeof marker !== "string" || !proofSource.includes(marker)) {
-            failures.push(`publicNoAnyProof is missing marker ${String(marker)}`);
-        }
-    }
-    const [makeCommand, makeTarget, ...tail] = publicProof.compilerGate.split(/\s+/);
     const makefile = await readFile(path.join(root, "Makefile"), "utf8");
-    if (makeCommand !== "make" || !makeTarget || tail.length > 0 || !makefile.includes(`${makeTarget}:`)) {
-        failures.push(`publicNoAnyProof.compilerGate must name one existing make target`);
-    }
+    failures.push(...validatePublicNoAnyProofSource(proofSource, publicProof));
+    failures.push(...validateConsumerCastMakeWiring(makefile, publicProof));
 }
 
 for (const packageName of ["wrapper", "cli", "mcp"]) {
     const strictness = contract.strictness?.[packageName];
-    for (const option of ["strict", "noUncheckedIndexedAccess", "noImplicitOverride", "exactOptionalPropertyTypes"]) {
-        if (strictness?.[option] !== true) failures.push(`strictness.${packageName}.${option} must be true`);
+    for (const option of [
+        "strict",
+        "noUncheckedIndexedAccess",
+        "noImplicitOverride",
+        "exactOptionalPropertyTypes",
+    ]) {
+        if (strictness?.[option] !== true)
+            failures.push(`strictness.${packageName}.${option} must be true`);
     }
 }
 

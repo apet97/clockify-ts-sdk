@@ -390,9 +390,11 @@ end-to-end and green before push. Drift gates are non-negotiable.
     model-visible JSON Schema unchanged. Change the tool, its test,
     and the ledger together.
 11. **CLI/MCP request casts stay at zero.** `make consumer-cast-budget`
-    parses `cli/src` and `mcp/src`; it rejects direct, chained,
-    angle-bracket, `as never`, helper-hidden generic, and `any`-backed
-    request assertions. Construct generated request unions directly,
+    builds a TypeScript Program for `cli/src` and `mcp/src`; symbol provenance
+    plus bounded alias/helper dataflow rejects direct, chained, angle-bracket,
+    `as never`, helper-hidden generic, imported/transitive, and `any`-backed
+    request assertions without treating arbitrary local `*Request` names as
+    generated API types. Construct generated request unions directly,
     using `ClockifyRequestBody<T>` for typed bodies. Both canonical
     exception arrays are empty. A future temporary exception requires
     an exact file/range or stable marker, generated request type,
@@ -400,7 +402,8 @@ end-to-end and green before push. Drift gates are non-negotiable.
     target; changing the canonical-zero baseline is an explicit
     maintainer decision. Keep the Task 6 public no-`any` adapter fixture
     in `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a
-    second public-type gate.
+    second public-type gate. The cast-budget Make target executes that compiler
+    proof itself after SDK codegen/build; marker comments are not proof.
 
 ## 6. The wrapper layout
 
