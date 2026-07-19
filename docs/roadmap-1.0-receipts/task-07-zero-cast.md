@@ -188,6 +188,16 @@ return origins are charged and width-bounded before concatenation, with the
 largest callback expansion included in observable analysis statistics. The
 final governance suite passes **289/289** fixtures.
 
+The twelfth corrective review gives `Reflect.defineProperty` the same
+receiver-qualified descriptor paths, getter/alias provenance, conditional
+semantics, and sequential dominance as `Object.defineProperty`. Built-in
+provenance now recognizes literal and reaching const-literal element access for
+`Object['assign']`, `Object['defineProperty']`, `Object['defineProperties']`,
+`Reflect['set']`, and `Reflect['defineProperty']`. The resolver follows definite
+key overwrites while retaining exact global symbol identity, so shadow
+`Object`/`Reflect` values and unrelated local members remain non-effects. The
+final governance suite passes **316/316** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -212,7 +222,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final eleventh-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twelfth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all
