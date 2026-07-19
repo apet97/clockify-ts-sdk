@@ -224,9 +224,11 @@ make docs-drift
   `map`, `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`,
   and `reduceRight`) with reducer-return propagation and bounded return-aware
   short-circuiting across conditional/logical/sequence receiver alternatives,
-  aliased/destructured `Object.assign`/`Reflect.set` effects with bounded
-  left-to-right patch/spread/factory provenance and definite same-key overwrite
-  semantics across sequential calls, accessors,
+  aliased/destructured `Object.assign`/`Reflect.set` plus
+  `Object.defineProperty`/`Object.defineProperties` effects with bounded
+  left-to-right patch/spread/factory/descriptor provenance, getter returns, and
+  definite same-key overwrite semantics across sequential unconditional calls,
+  accessors,
   contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through

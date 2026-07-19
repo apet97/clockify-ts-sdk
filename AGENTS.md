@@ -401,16 +401,19 @@ end-to-end and green before push. Drift gates are non-negotiable.
     `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`, and
     `reduceRight`) with reducer-return propagation and bounded return-aware
     short-circuiting across conditional/logical/sequence receiver alternatives,
-    aliased/destructured `Object.assign`/`Reflect.set` effects with bounded
-    left-to-right patch/spread/factory provenance and definite same-key
-    overwrite semantics across sequential calls, accessors,
+    aliased/destructured `Object.assign`/`Reflect.set` plus
+    `Object.defineProperty`/`Object.defineProperties` effects with bounded
+    left-to-right patch/spread/factory/descriptor provenance, getter returns,
+    and definite same-key overwrite semantics across sequential unconditional
+    calls, accessors,
     expressions, and spreads. Receiver-producing calls follow bounded return
     provenance rather than treating every argument as an origin. Exported,
     default-exported, or escaped callables keep parameter defaults reachable;
     asynchronous, known-empty, unknown-emptiness, and definitely
     short-circuited callbacks do not become pre-request effects. Deterministic
-    alternative/invocation/work overflow becomes a stable governance failure
-    rather than expanding without bound. It rejects
+    alternative/invocation/work overflow becomes a stable governance failure;
+    the work cap hard-stops further expansion and reports deterministic analysis
+    statistics rather than continuing without bound. It rejects
     direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
