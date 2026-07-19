@@ -88,6 +88,7 @@
         "legacy-release-workflow-needs-maintainer-decision",
         "expense-update-file-schema",
         "operation-parity-generated-reachability",
+        "pre-1.0-public-alias-closure",
         "consumer-request-casts",
         "cross-package-release-proof-asymmetry",
         "remote-mutation-proof-pending"
@@ -297,6 +298,30 @@
         {
           "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
           "contains": "169 generated SDK operations = 155 explicitly named + 14 operationId-derived"
+        }
+      ]
+    },
+    {
+      "id": "pre-1.0-public-alias-closure",
+      "status": "accepted",
+      "finalReadinessBlocking": false,
+      "surface": "SDK and MCP public TypeScript contracts",
+      "summary": "The three approved pre-1.0 aliases are removed with exact replacement mappings and compile-negative public-package proof.",
+      "impact": "Consumers using the old option, helper name, or blanket resource type must migrate before adopting the 1.0 surface; retaining aliases would keep ambiguous security wording and an untyped callback boundary public.",
+      "mitigation": "Keep the executable breaking-change mapping, migration examples, NodeNext/Bundler/public-package type fixtures, exact dual-build surface, and adapter ordering tests active.",
+      "closureGate": "Closed 2026-07-19 by `make compatibility-contract breaking-change-review sdk-public-api contract-gates`, wrapper/CLI/MCP type and test gates, dual-build/package proof, and `docs/roadmap-1.0-receipts/task-06-breaking-change.md`.",
+      "evidence": [
+        {
+          "path": "docs/breaking-change-review-contract.json",
+          "contains": "ArchiveThenDeleteAdapter<TCurrent>"
+        },
+        {
+          "path": "wrapper/tests/types/breaking-changes.test-d.ts",
+          "contains": "IsAny<Parameters<Adapter"
+        },
+        {
+          "path": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
+          "contains": "Task 7 remains open"
         }
       ]
     },

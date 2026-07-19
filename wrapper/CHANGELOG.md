@@ -7,6 +7,16 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Breaking
+
+- Removed `allowInsecureBaseUrl`; use `allowNonClockifyHttpsHost`, whose name
+  matches the enforced HTTPS-only behavior.
+- Removed `findOrCreateClient`; use `ensureClient` with the same input, result,
+  match, ambiguity, and single-flight behavior.
+- Removed the blanket-`any` `ArchiveThenDeleteResource` seam. Archive/delete
+  helpers now take `ArchiveThenDeleteAdapter<TCurrent>` under `adapter`, with
+  typed current state and explicit `getCurrent` → `archive` → `delete` callbacks.
+
 ### Changed
 
 - Corrected operation coverage documentation to distinguish all 169 generated

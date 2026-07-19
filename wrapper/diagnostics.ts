@@ -237,7 +237,7 @@ function baseUrlCheck(
         allowlist,
         recovery: classification.allowed
             ? "Use the default Clockify API base URL for live work; keep overrides for mocks or replay."
-            : `${classification.reason} createClockifyClient will reject this host unless allowInsecureBaseUrl is set.`,
+            : `${classification.reason} createClockifyClient will reject this host unless allowNonClockifyHttpsHost is set.`,
     };
 }
 
@@ -275,7 +275,7 @@ function buildWarnings(input: {
     }
     if (input.base.allowlist === "rejected") {
         warnings.push(
-            "The configured base URL is not an allowlisted Clockify host; createClockifyClient will reject it unless allowInsecureBaseUrl is set.",
+            "The configured base URL is not an allowlisted Clockify host; createClockifyClient will reject it unless allowNonClockifyHttpsHost is set.",
         );
     }
     return warnings;

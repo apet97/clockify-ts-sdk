@@ -673,12 +673,12 @@ describe("createClockifyClient", () => {
             ).toThrow(/https:\/\//);
         });
 
-        it("rejects http:// even with allowInsecureBaseUrl: true (no cleartext credentials)", () => {
+        it("rejects http:// even with allowNonClockifyHttpsHost: true (no cleartext credentials)", () => {
             expect(() =>
                 createClockifyClient({
                     apiKey: "k",
                     environment: "http://evil.example.com/api/v1",
-                    allowInsecureBaseUrl: true,
+                    allowNonClockifyHttpsHost: true,
                 }),
             ).toThrow(/https:\/\//);
         });
@@ -750,19 +750,19 @@ describe("createClockifyClient", () => {
                     apiKey: "k",
                     environment: "https://evil.example.com/api/v1",
                 }),
-            ).toThrow(/allowInsecureBaseUrl: true/);
+            ).toThrow(/allowNonClockifyHttpsHost: true/);
         });
 
-        it("allows an arbitrary HTTPS host when allowInsecureBaseUrl: true is set, with a warning", () => {
+        it("allows an arbitrary HTTPS host when allowNonClockifyHttpsHost: true is set, with a warning", () => {
             const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
             const client = createClockifyClient({
                 apiKey: "k",
                 environment: "https://my-proxy.example.com/api/v1",
-                allowInsecureBaseUrl: true,
+                allowNonClockifyHttpsHost: true,
             });
             expect(client).toBeInstanceOf(ClockifyApiClient);
             const warned = warnSpy.mock.calls.map((c) => String(c[0]));
-            expect(warned.some((m) => m.includes("allowInsecureBaseUrl"))).toBe(true);
+            expect(warned.some((m) => m.includes("allowNonClockifyHttpsHost"))).toBe(true);
             warnSpy.mockRestore();
         });
 

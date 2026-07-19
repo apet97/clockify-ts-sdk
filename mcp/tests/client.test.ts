@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { MissingCredentialsError, createCurrentUserIdMemo, loadContext } from "../src/client.js";
+import {
+    MissingCredentialsError,
+    createCurrentUserIdMemo,
+    loadContext,
+    type LoadContextOptions,
+} from "../src/client.js";
 import { isDirectInvocation } from "../src/index.js";
 
 describe("MCP package contract", () => {
@@ -110,7 +115,15 @@ describe("MCP base URL allowlist (H1)", () => {
         expect(ctx.workspaceId).toBe("ws");
     });
 
-    it("allows an arbitrary host only when allowInsecureBaseUrl is opted in", () => {
+    it("removes the ambiguous insecure-host option name", () => {
+        const options: LoadContextOptions = {
+            // @ts-expect-error: removed in 1.0; use allowNonClockifyHttpsHost
+            allowInsecureBaseUrl: true,
+        };
+        expect(options).toBeDefined();
+    });
+
+    it("allows an arbitrary host only when allowNonClockifyHttpsHost is opted in", () => {
         // Strict by default: the arbitrary host is rejected.
         expect(() =>
             loadContext({ ...goodEnv, CLOCKIFY_BASE_URL: "https://my-proxy.example.com/api/v1" }),
@@ -120,7 +133,7 @@ describe("MCP base URL allowlist (H1)", () => {
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         const ctx = loadContext(
             { ...goodEnv, CLOCKIFY_BASE_URL: "https://my-proxy.example.com/api/v1" },
-            { allowInsecureBaseUrl: true },
+            { allowNonClockifyHttpsHost: true },
         );
         expect(ctx.workspaceId).toBe("ws");
         warnSpy.mockRestore();

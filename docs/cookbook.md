@@ -26,6 +26,36 @@ const billableTag = await ensureTag({
 });
 ```
 
+## Archive Then Delete
+
+Use a typed adapter to translate the generic current-state → archive → delete
+workflow into the exact request shapes of the resource you are calling. The
+adapter keeps current state typed through the archive callback and makes the
+ordering explicit.
+
+```ts sdk-include=sdk-helper-cookbook.ts
+const projectState = { id: PROJECT_ID, name: "Website refresh", archived: false };
+const archiveOrder: string[] = [];
+const deleteResult = await archiveThenDeleteProject({
+    workspaceId: "000000000000000000000001",
+    id: PROJECT_ID,
+    adapter: {
+        getCurrent: async () => {
+            archiveOrder.push("getCurrent");
+            return projectState;
+        },
+        archive: async ({ current }) => {
+            archiveOrder.push("archive");
+            projectState.name = current.name;
+            projectState.archived = true;
+        },
+        delete: async () => {
+            archiveOrder.push("delete");
+        },
+    },
+});
+```
+
 ## Resolve Names
 
 Use `resolveEntityRef` when user input can be either an id or an exact name.

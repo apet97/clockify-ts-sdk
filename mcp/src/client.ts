@@ -99,7 +99,7 @@ export interface LoadContextOptions {
      * traffic — and its `X-Api-Key` header — to an arbitrary host. Set
      * `true` only for a trusted Clockify-compatible proxy.
      */
-    allowInsecureBaseUrl?: boolean;
+    allowNonClockifyHttpsHost?: boolean;
 }
 
 export function loadContext(

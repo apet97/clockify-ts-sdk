@@ -3,8 +3,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { validateRequiredBreakingChanges } from "./lib/breaking-change-mappings.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const contract = JSON.parse(fs.readFileSync(path.join(root, "docs", "breaking-change-review-contract.json"), "utf8"));
+const contract = JSON.parse(
+    fs.readFileSync(path.join(root, "docs", "breaking-change-review-contract.json"), "utf8"),
+);
 const failures = [];
 
 function fail(id, message) {
@@ -17,7 +21,11 @@ function safeRelativePath(label, relativePath) {
         return null;
     }
     const normalized = path.normalize(relativePath);
-    if (path.isAbsolute(relativePath) || normalized === ".." || normalized.startsWith(`..${path.sep}`)) {
+    if (
+        path.isAbsolute(relativePath) ||
+        normalized === ".." ||
+        normalized.startsWith(`..${path.sep}`)
+    ) {
         fail(label, "must be a repo-relative path without parent traversal");
         return null;
     }
@@ -79,10 +87,12 @@ function checkEntry(entry) {
 
     const text = readRelative(entry.path);
     for (const marker of entry.mustContain ?? []) {
-        if (!text.includes(marker)) fail(entry.id ?? entry.path, `${entry.path} missing marker ${JSON.stringify(marker)}`);
+        if (!text.includes(marker))
+            fail(entry.id ?? entry.path, `${entry.path} missing marker ${JSON.stringify(marker)}`);
     }
     for (const marker of entry.forbiddenMarkers ?? []) {
-        if (text.includes(marker)) fail(entry.id ?? entry.path, `${entry.path} contains forbidden marker ${marker}`);
+        if (text.includes(marker))
+            fail(entry.id ?? entry.path, `${entry.path} contains forbidden marker ${marker}`);
     }
 }
 
@@ -94,7 +104,10 @@ function validateMarkerEntry(label, entry, { requireId = false } = {}) {
         allowEmpty: false,
     });
     assertUnique(`${label}.mustContain`, mustContain);
-    const forbiddenMarkers = assertStringArray(`${label}.forbiddenMarkers`, entry.forbiddenMarkers ?? []);
+    const forbiddenMarkers = assertStringArray(
+        `${label}.forbiddenMarkers`,
+        entry.forbiddenMarkers ?? [],
+    );
     assertUnique(`${label}.forbiddenMarkers`, forbiddenMarkers);
 }
 
@@ -102,6 +115,9 @@ function validateContractShape() {
     if (contract.schemaVersion !== 1) fail("schemaVersion", "must be 1");
     assertNonEmptyString("purpose", contract.purpose);
 
+    for (const message of validateRequiredBreakingChanges(contract.breakingChanges)) {
+        fail("breakingChanges", message);
+    }
 
     validateMarkerEntry("policyDocument", contract.policyDocument);
 
@@ -112,7 +128,9 @@ function validateContractShape() {
         }
         assertUnique(
             `${section}.path`,
-            contract[section].map((entry) => entry?.path).filter((entryPath) => typeof entryPath === "string"),
+            contract[section]
+                .map((entry) => entry?.path)
+                .filter((entryPath) => typeof entryPath === "string"),
         );
         if (section === "surfaceContracts") {
             assertUnique(
@@ -121,13 +139,19 @@ function validateContractShape() {
             );
         }
         for (const [index, entry] of contract[section].entries()) {
-            validateMarkerEntry(`${section}[${index}]`, entry, { requireId: section === "surfaceContracts" });
+            validateMarkerEntry(`${section}[${index}]`, entry, {
+                requireId: section === "surfaceContracts",
+            });
         }
     }
 
-    const requiredMakeTargets = assertStringArray("requiredMakeTargets", contract.requiredMakeTargets, {
-        allowEmpty: false,
-    });
+    const requiredMakeTargets = assertStringArray(
+        "requiredMakeTargets",
+        contract.requiredMakeTargets,
+        {
+            allowEmpty: false,
+        },
+    );
     assertUnique("requiredMakeTargets", requiredMakeTargets);
 
     if (assertObject("wiring", contract.wiring)) {
@@ -160,7 +184,8 @@ for (const target of contract.requiredMakeTargets ?? []) {
     if (!makefile.includes(`${target}:`)) fail("Makefile", `missing target ${target}`);
 }
 const aggregateLine = makefile.split("\n").find((line) => line.startsWith("contract-gates:")) ?? "";
-if (!aggregateLine.includes(wiring.makeTarget)) fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
+if (!aggregateLine.includes(wiring.makeTarget))
+    fail("Makefile", `contract-gates missing ${wiring.makeTarget}`);
 
 const docsIndex = readRelative("docs/README.md");
 for (const requiredDoc of wiring.docsIndex ?? []) {

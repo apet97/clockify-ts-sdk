@@ -1,6 +1,20 @@
 {
   "schemaVersion": 1,
   "purpose": "Breaking-change review contract for SDK exports, CLI commands, MCP tools, OpenAPI generation, packages, docs, changelogs, migration notes, and proof gates.",
+  "breakingChanges": [
+    {
+      "removed": "allowInsecureBaseUrl",
+      "replacement": "allowNonClockifyHttpsHost"
+    },
+    {
+      "removed": "findOrCreateClient",
+      "replacement": "ensureClient"
+    },
+    {
+      "removed": "ArchiveThenDeleteResource",
+      "replacement": "ArchiveThenDeleteAdapter<TCurrent>"
+    }
+  ],
   "policyDocument": {
     "path": "docs/breaking-change-review-policy.md",
     "mustContain": [
@@ -23,7 +37,18 @@
         "rootSymbols",
         "subpaths",
         "createClockifyClient",
-        "withResponse"
+        "withResponse",
+        "ArchiveThenDeleteAdapter"
+      ]
+    },
+    {
+      "id": "sdk-breaking-type-contract",
+      "path": "wrapper/tests/types/breaking-changes.test-d.ts",
+      "mustContain": [
+        "@ts-expect-error: removed in 1.0; use ensureClient",
+        "@ts-expect-error: removed in 1.0; use ArchiveThenDeleteAdapter<TCurrent>",
+        "allowNonClockifyHttpsHost",
+        "IsAny<Parameters<Adapter"
       ]
     },
     {
@@ -83,7 +108,10 @@
       "mustContain": [
         "Do not remove or rename",
         "Add aliases before removals",
-        "warnOnce"
+        "warnOnce",
+        "allowInsecureBaseUrl` → `allowNonClockifyHttpsHost",
+        "findOrCreateClient` → `ensureClient",
+        "ArchiveThenDeleteResource` →"
       ]
     },
     {
@@ -91,7 +119,8 @@
       "mustContain": [
         "Breaking change review",
         "Replacement first",
-        "Changelog and migration notes"
+        "Changelog and migration notes",
+        "ArchiveThenDeleteAdapter<TCurrent>"
       ]
     },
     {

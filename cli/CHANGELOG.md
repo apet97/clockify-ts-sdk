@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Project/client delete commands now adapt their exact generated request types
+  to the SDK's generic archive-then-delete callback contract; command behavior
+  and archive-before-delete ordering are unchanged.
+
 ### Fixed
 
 - Expense updates now use the corrected generated request type directly instead

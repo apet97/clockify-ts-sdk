@@ -55,6 +55,15 @@
           ]
         },
         {
+          "path": "wrapper/tests/types/breaking-changes.test-d.ts",
+          "mustContain": [
+            "allowInsecureBaseUrl",
+            "findOrCreateClient",
+            "ArchiveThenDeleteResource",
+            "ArchiveThenDeleteAdapter"
+          ]
+        },
+        {
           "path": "wrapper/CHANGELOG.md",
           "mustContain": [
             "## [Unreleased]"

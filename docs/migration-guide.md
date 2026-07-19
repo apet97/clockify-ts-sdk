@@ -129,6 +129,45 @@ Every MCP tool returns the shared envelope in `content[0].text` and `structuredC
 
 Replacement first: add the new SDK export, CLI command, MCP tool, package path, or OpenAPI-generated method before removing the old one. Changelog and migration notes must land in the same change as public breakage, and `make breaking-change-review` is the narrow gate before broader package and final proof gates.
 
+### 1.0 SDK closure
+
+| Removed pre-1.0 name | Replacement | Migration |
+|---|---|---|
+| `allowInsecureBaseUrl` | `allowNonClockifyHttpsHost` | Rename the SDK factory option or MCP `LoadContextOptions` field. The replacement permits only non-Clockify **HTTPS** hosts; non-loopback cleartext remains rejected. |
+| `findOrCreateClient` | `ensureClient` | Rename the import and call; inputs, result, matching, ambiguity, and single-flight behavior are unchanged. |
+| `ArchiveThenDeleteResource` | `ArchiveThenDeleteAdapter<TCurrent>` | Replace the loose SDK-resource object with typed `getCurrent`, `archive`, and `delete` callbacks. Pass the adapter under `adapter`, not `resource`. |
+
+```typescript
+import {
+    archiveThenDeleteProject,
+    type ArchiveThenDeleteAdapter,
+} from "clockify-sdk-ts-115/ensure";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
+
+const adapter: ArchiveThenDeleteAdapter<ClockifyApi.Project> = {
+    getCurrent: ({ workspaceId, id }) =>
+        client.projects.get({ workspaceId, projectId: id }),
+    archive: async ({ workspaceId, id, current }) => {
+        await client.projects.update({
+            workspaceId,
+            projectId: id,
+            name: current.name,
+            archived: true,
+        });
+    },
+    delete: async ({ workspaceId, id }) => {
+        await client.projects.delete({ workspaceId, projectId: id });
+    },
+};
+
+await archiveThenDeleteProject({ workspaceId, id: projectId, adapter });
+```
+
+The adapter callback results are deliberate: `getCurrent` returns
+`Promise<TCurrent>`, while `archive` and `delete` return `Promise<void>` because
+the workflow consumes only ordering and completion. The archive callback sees
+`TCurrent & { name: string }` after the runtime name guard.
+
 ## Additive in this version (no breakage)
 
 These are new public names, not replacements — existing imports are unchanged, so no code migration is required to keep working:

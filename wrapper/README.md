@@ -932,6 +932,11 @@ requestId, status }` shape.
 | Build typed report filters + narrow report responses | `summaryFilter`, `detailedFilter`, `detailedEntries` | `clockify-sdk-ts-115/reports` |
 | Run a bounded-parallel bulk operation with collected failures | `mapBounded` | `clockify-sdk-ts-115/bulk` |
 
+Archive/delete helpers take an `ArchiveThenDeleteAdapter<TCurrent>` with typed
+`getCurrent`, `archive`, and `delete` callbacks; see the compile-checked
+[`SDK Helper Cookbook`](../docs/cookbook.md#archive-then-delete). The old loose
+`ArchiveThenDeleteResource` seam is not exported.
+
 The `ensure` helpers are pure (you inject `list`/`create`/`archive`/`delete`),
 so they reuse instead of duplicating on a re-run — Clockify does not enforce
 name uniqueness, so a naive create silently makes a second "Acme".

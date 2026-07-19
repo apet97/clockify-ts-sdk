@@ -141,7 +141,7 @@ if (typeof rs.resolveEntityRef !== 'function') { console.error('CJS subpath reso
 if (typeof rs.matchByName !== 'function') { console.error('CJS subpath resolve.matchByName broken'); process.exit(1); }
 const en = require('./dist/cjs/ensure.js');
 if (typeof en.ensureTag !== 'function') { console.error('CJS subpath ensure.ensureTag broken'); process.exit(1); }
-if (typeof en.findOrCreateClient !== 'function') { console.error('CJS subpath ensure.findOrCreateClient broken'); process.exit(1); }
+if ('findOrCreateClient' in en) { console.error('CJS subpath ensure.findOrCreateClient must be removed'); process.exit(1); }
 if (typeof en.archiveThenDeleteProject !== 'function') { console.error('CJS subpath ensure.archiveThenDeleteProject broken'); process.exit(1); }
 if (typeof en.archiveThenDeleteClient !== 'function') { console.error('CJS subpath ensure.archiveThenDeleteClient broken'); process.exit(1); }
 const rq = require('./dist/cjs/requests.js');
@@ -162,6 +162,14 @@ for declarations in dist/esm/requests.d.ts dist/cjs/requests.d.ts; do
   grep -Fq 'export type ClockifyRequestBody<T extends object> =' "$declarations" || { echo "ERROR: $declarations missing ClockifyRequestBody type export" >&2; exit 1; }
   grep -Fqx 'export { AUDIT_LOG_ACTIONS } from "./src/api/types/AuditLogAction.js";' "$declarations" || { echo "ERROR: $declarations missing AUDIT_LOG_ACTIONS export" >&2; exit 1; }
   grep -Fqx 'export type { AuditLogAction } from "./src/api/types/AuditLogAction.js";' "$declarations" || { echo "ERROR: $declarations missing AuditLogAction type export" >&2; exit 1; }
+done
+
+for declarations in dist/esm/ensure.d.ts dist/cjs/ensure.d.ts; do
+  grep -Fq 'export interface ArchiveThenDeleteAdapter<TCurrent extends object>' "$declarations" || { echo "ERROR: $declarations missing ArchiveThenDeleteAdapter" >&2; exit 1; }
+  if grep -Fq 'ArchiveThenDeleteResource' "$declarations"; then
+    echo "ERROR: $declarations still exposes removed ArchiveThenDeleteResource" >&2
+    exit 1
+  fi
 done
 
 echo "==> Dual-build smoke PASSED"

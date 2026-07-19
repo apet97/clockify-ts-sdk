@@ -12,8 +12,6 @@
  * as `resolve.ts`, whose `matchByName` (case-insensitive, exact, archived-aware)
  * is reused here.
  */
-import { warnOnce } from "./deprecation.js";
-import type { ClockifyApi, ClockifyRequestBody } from "./requests.js";
 import { matchByName } from "./resolve.js";
 
 /** The minimal shape a find-or-create entity must expose. */
@@ -119,21 +117,6 @@ export function ensureClient<T extends NamedRecord>(
 }
 
 /**
- * @deprecated Use {@link ensureClient}. Renamed for consistency with
- * `ensureTag` / `ensureProject`; this alias will be removed in the next
- * major. Delegates to `ensureClient`.
- */
-export function findOrCreateClient<T extends NamedRecord>(
-    opts: FindOrCreateOptions<T>,
-): Promise<EnsureResult<T>> {
-    warnOnce(
-        "findOrCreateClient",
-        "`findOrCreateClient` is deprecated; use `ensureClient` instead (since v0.10.0).",
-    );
-    return ensureClient(opts);
-}
-
-/**
  * The outcome of an archive-then-delete: which steps actually ran, plus the id
  * (under both a generic `id` and the entity-specific `projectId`/`clientId` alias
  * the call sites build their receipts from).
@@ -151,46 +134,42 @@ export interface ArchiveThenDeleteResult {
     deleted: boolean;
 }
 
+/** Stable identity passed to every archive-then-delete adapter callback. */
+export interface ArchiveThenDeleteTarget {
+    workspaceId: string;
+    id: string;
+}
+
+/** Typed current state passed to the archive callback after the name guard. */
+export interface ArchiveThenDeleteArchiveInput<
+    TCurrent extends object,
+> extends ArchiveThenDeleteTarget {
+    current: TCurrent & { name: string };
+}
+
 /**
- * The minimal SDK-resource surface the archive-then-delete sequence drives. The
- * project (`client.projects`) and client (`client.clients`) resources both satisfy
- * this shape, so the helper takes the resource directly and owns the GET / archive
- * / DELETE wire calls — the call site no longer re-spells them. `get`/`update`/
- * `delete` are duck-typed loosely (see the `any` note below) so both resources fit
- * without leaking their generated request types into this layer.
+ * Precise boundary between the generic archive-then-delete workflow and an SDK
+ * resource. The adapter owns resource-specific request shapes; the workflow owns
+ * current-state validation and the get-current -> archive -> delete ordering.
  */
-export interface ArchiveThenDeleteResource {
-    // Params are intentionally `any`: the generated `projects`/`clients` clients
-    // type `get`/`update`/`delete` with their own required request shapes
-    // (`GetProjectsRequest` etc.), and a method whose param is *narrower* than the
-    // interface's is not assignable. `any` lets both concrete resources satisfy
-    // this seam without leaking their generated request types into this layer; the
-    // helper builds correctly-keyed request objects at the call sites below.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    get: (req: any) => Promise<unknown>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    update: (req: any) => Promise<unknown>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    delete: (req: any) => Promise<unknown>;
+export interface ArchiveThenDeleteAdapter<TCurrent extends object> {
+    getCurrent: (target: ArchiveThenDeleteTarget) => Promise<TCurrent>;
+    archive: (input: ArchiveThenDeleteArchiveInput<TCurrent>) => Promise<void>;
+    delete: (target: ArchiveThenDeleteTarget) => Promise<void>;
 }
 
 /** What the {@link archiveThenDelete} core needs to run the full sequence. */
-interface ArchiveThenDeleteOptions {
+interface ArchiveThenDeleteOptions<TCurrent extends object> {
     /** Human noun for error messages and the per-entity id key ("project" | "client"). */
     noun: "project" | "client";
     workspaceId: string;
     /** The id of the entity to archive-then-delete. */
     id: string;
-    /** The resource (`client.projects` / `client.clients`) whose get/update/delete to drive. */
-    resource: ArchiveThenDeleteResource;
-    /** Build the archive request from the complete GET response. */
-    archiveRequest: (id: string, current: Record<string, unknown> & { name: string }) => unknown;
+    /** Typed callbacks that adapt the concrete SDK resource to this workflow. */
+    adapter: ArchiveThenDeleteAdapter<TCurrent>;
     /** Skip the GET + archive steps when the entity is already known to be archived. */
     alreadyArchived?: boolean;
 }
-
-/** The id key on the GET / DELETE requests for each entity. */
-const ID_KEY = { project: "projectId", client: "clientId" } as const;
 
 /**
  * The full archive-then-delete sequence, the way the live Clockify API actually
@@ -202,105 +181,88 @@ const ID_KEY = { project: "projectId", client: "clientId" } as const;
  * direct SDK caller must archive first. The archive is a *replace*-PUT, so the
  * sequence GETs the current state and carries editable fields through — erroring
  * clearly when the entity has no name (otherwise the PUT would blank it). The
- * only per-entity difference is the archive request body, supplied by
- * `archiveRequest`; this core owns the GET step, name guard, ordering, and DELETE.
+ * resource-specific request translation lives in the adapter; this core owns the
+ * current-state guard, ordering, and delete receipt.
  *
  * @throws if the entity has no name to carry through the replace-PUT archive step.
  */
-async function archiveThenDelete(opts: ArchiveThenDeleteOptions): Promise<ArchiveThenDeleteResult> {
-    const idKey = ID_KEY[opts.noun];
+async function archiveThenDelete<TCurrent extends object>(
+    opts: ArchiveThenDeleteOptions<TCurrent>,
+): Promise<ArchiveThenDeleteResult> {
+    const target: ArchiveThenDeleteTarget = {
+        workspaceId: opts.workspaceId,
+        id: opts.id,
+    };
     let archived = false;
     if (!opts.alreadyArchived) {
-        const current = (await opts.resource.get({
-            workspaceId: opts.workspaceId,
-            [idKey]: opts.id,
-        })) as Record<string, unknown>;
-        const name = typeof current.name === "string" ? current.name : "";
+        const current = await opts.adapter.getCurrent(target);
+        const name = "name" in current && typeof current.name === "string" ? current.name : "";
         if (!name) {
             throw new Error(
                 `Cannot archive ${opts.noun} before delete: the ${opts.noun} has no name to carry through the replace-PUT.`,
             );
         }
-        await opts.resource.update(opts.archiveRequest(opts.id, { ...current, name }));
+        await opts.adapter.archive({ ...target, current: { ...current, name } });
         archived = true;
     }
-    await opts.resource.delete({ workspaceId: opts.workspaceId, [idKey]: opts.id });
+    await opts.adapter.delete(target);
     return { id: opts.id, projectId: opts.id, clientId: opts.id, archived, deleted: true };
 }
 
 /** Options for {@link archiveThenDeleteProject} / {@link archiveThenDeleteClient}. */
-export interface ArchiveThenDeleteEntityOptions {
+export interface ArchiveThenDeleteEntityOptions<TCurrent extends object> {
     workspaceId: string;
     /** The project/client id to archive-then-delete. */
     id: string;
-    /** The SDK resource to drive — `client.projects` or `client.clients`. */
-    resource: ArchiveThenDeleteResource;
+    /** Resource-specific callbacks for the current state, archive write, and delete. */
+    adapter: ArchiveThenDeleteAdapter<TCurrent>;
     /** Skip the GET + archive steps when the entity is already archived. */
     alreadyArchived?: boolean;
 }
 
 /**
- * Delete a project the live-allowed way: GET the name → archive (flattened
- * `projects.update({name, archived:true})`, since the project update whitelist HAS
- * `archived`) → DELETE. Owns the empty-name guard. Pass `client.projects` as the
- * `resource`. See `spec/evidence/discrepancies.md` `deletes.archive-first.*`.
+ * Delete a project the live-allowed way: get current state → archive → delete.
+ * Owns the empty-name guard and ordering; the adapter translates those steps to
+ * the project's generated request shapes. See `spec/evidence/discrepancies.md`
+ * `deletes.archive-first.*`.
  *
  * @example
  * ```ts
- * await archiveThenDeleteProject({ workspaceId, id: projectId, resource: client.projects });
+ * await archiveThenDeleteProject({ workspaceId, id: projectId, adapter });
  * ```
  */
-export function archiveThenDeleteProject(
-    opts: ArchiveThenDeleteEntityOptions,
+export function archiveThenDeleteProject<TCurrent extends object>(
+    opts: ArchiveThenDeleteEntityOptions<TCurrent>,
 ): Promise<ArchiveThenDeleteResult> {
     return archiveThenDelete({
         noun: "project",
         workspaceId: opts.workspaceId,
         id: opts.id,
-        resource: opts.resource,
+        adapter: opts.adapter,
         ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
-        // Flattened: the project update whitelist accepts `archived` directly.
-        archiveRequest: (projectId, current) => ({
-            workspaceId: opts.workspaceId,
-            projectId,
-            name: current.name,
-            archived: true,
-        }),
     });
 }
 
 /**
- * Delete a client the live-allowed way: GET the complete editable state → archive
- * with a typed replacement body → DELETE. The generated update type now exposes
- * `archived`, but the endpoint still replaces the document, so every untouched
- * editable value must survive the archive write.
- * Pass `client.clients` as the `resource`. See
+ * Delete a client the live-allowed way: get current state → archive → delete.
+ * Owns the empty-name guard and ordering; the adapter is responsible for the
+ * endpoint's replacement semantics and must carry untouched editable values
+ * into its archive write. See
  * `spec/evidence/discrepancies.md` `deletes.archive-first.clients-blocked`.
  *
  * @example
  * ```ts
- * await archiveThenDeleteClient({ workspaceId, id: clientId, resource: client.clients });
+ * await archiveThenDeleteClient({ workspaceId, id: clientId, adapter });
  * ```
  */
-export function archiveThenDeleteClient(
-    opts: ArchiveThenDeleteEntityOptions,
+export function archiveThenDeleteClient<TCurrent extends object>(
+    opts: ArchiveThenDeleteEntityOptions<TCurrent>,
 ): Promise<ArchiveThenDeleteResult> {
     return archiveThenDelete({
         noun: "client",
         workspaceId: opts.workspaceId,
         id: opts.id,
-        resource: opts.resource,
+        adapter: opts.adapter,
         ...(opts.alreadyArchived !== undefined ? { alreadyArchived: opts.alreadyArchived } : {}),
-        archiveRequest: (clientId, current) => {
-            const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> = {
-                name: current.name,
-                archived: true,
-            };
-            for (const key of ["address", "currencyCode", "email", "note"] as const) {
-                const value = current[key];
-                if (typeof value === "string") body[key] = value;
-            }
-            return { workspaceId: opts.workspaceId, clientId, body };
-        },
     });
 }

@@ -89,7 +89,7 @@ export function validateClockifyBaseUrl<T>(value: T, allowAlternateHost = false)
 
     if (allowAlternateHost) {
         console.warn(
-            `[clockify] WARNING: ${result.reason} Proceeding because allowInsecureBaseUrl was set — ` +
+            `[clockify] WARNING: ${result.reason} Proceeding because allowNonClockifyHttpsHost was set — ` +
                 `confirm this endpoint is trusted; auth headers (X-Api-Key / X-Addon-Token) will be sent to it.`,
         );
         return value;
@@ -97,7 +97,7 @@ export function validateClockifyBaseUrl<T>(value: T, allowAlternateHost = false)
 
     throw new TypeError(
         `createClockifyClient: ${result.reason} ` +
-            `Set allowInsecureBaseUrl: true to opt in to a non-Clockify HTTPS endpoint, ` +
+            `Set allowNonClockifyHttpsHost: true to opt in to a non-Clockify HTTPS endpoint, ` +
             `or use an *.clockify.me API host / a loopback host for testing.`,
     );
 }

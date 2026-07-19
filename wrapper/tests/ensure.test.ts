@@ -1,13 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { _resetWarnOnceForTests } from "../deprecation.js";
 import {
     archiveThenDeleteClient,
     archiveThenDeleteProject,
     ensureClient,
     ensureProject,
     ensureTag,
-    findOrCreateClient,
     type NamedRecord,
 } from "../ensure.js";
 
@@ -101,7 +99,7 @@ describe("ensureProject / ensureClient", () => {
         expect(result).toEqual({ entity: { id: "p_1", name: "Acme" }, id: "p_1", created: false });
     });
 
-    it("ensureClient creates when missing", async () => {
+    it("ensureClient preserves the former alias's create-when-missing behavior", async () => {
         const result = await ensureClient({
             name: "New Co",
             list: async () => [],
@@ -109,28 +107,6 @@ describe("ensureProject / ensureClient", () => {
         });
         expect(result.created).toBe(true);
         expect(result.entity.name).toBe("New Co");
-    });
-
-    it("findOrCreateClient is a deprecated alias that warns once and delegates to ensureClient", async () => {
-        _resetWarnOnceForTests();
-        const prevEnv = process.env.NODE_ENV;
-        delete process.env.NODE_ENV; // warnOnce is silent under NODE_ENV=test
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-        try {
-            const result = await findOrCreateClient({
-                name: "Legacy Co",
-                list: async () => [],
-                create: async (name) => ({ id: "c_legacy", name }),
-            });
-            expect(result.created).toBe(true);
-            expect(result.entity.name).toBe("Legacy Co");
-            const warned = warnSpy.mock.calls.map((c) => String(c[0]));
-            expect(warned.some((m) => m.includes("findOrCreateClient") && m.includes("ensureClient"))).toBe(true);
-        } finally {
-            warnSpy.mockRestore();
-            if (prevEnv !== undefined) process.env.NODE_ENV = prevEnv;
-            _resetWarnOnceForTests();
-        }
     });
 });
 
@@ -140,27 +116,25 @@ describe("ensureProject / ensureClient", () => {
  * assert BOTH the call order and the exact archive request body shape (flattened
  * for a project, body-envelope for a client).
  */
-function fakeResource(current: string | undefined | Record<string, unknown>) {
+function fakeAdapter(current: string | undefined | Record<string, unknown>) {
     const order: string[] = [];
-    const updateReqs: unknown[] = [];
+    const archiveInputs: unknown[] = [];
     const currentRecord =
         current !== null && typeof current === "object" ? current : { name: current };
     return {
         order,
-        updateReqs,
-        resource: {
-            get: async (req: { workspaceId: string } & Record<string, unknown>) => {
-                order.push("get");
-                return { ...currentRecord, ...req };
+        archiveInputs,
+        adapter: {
+            getCurrent: async (_target: { workspaceId: string; id: string }) => {
+                order.push("getCurrent");
+                return { ...currentRecord };
             },
-            update: async (req: unknown) => {
-                order.push("update");
-                updateReqs.push(req);
-                return req as object;
+            archive: async (input: unknown) => {
+                order.push("archive");
+                archiveInputs.push(input);
             },
-            delete: async (_req: { workspaceId: string } & Record<string, unknown>) => {
+            delete: async (_target: { workspaceId: string; id: string }) => {
                 order.push("delete");
-                return undefined;
             },
         },
     };
@@ -168,17 +142,15 @@ function fakeResource(current: string | undefined | Record<string, unknown>) {
 
 describe("archiveThenDeleteProject", () => {
     it("GETs the name, archives (flattened archived:true), then deletes — in that order", async () => {
-        const f = fakeResource("Acme");
+        const f = fakeAdapter("Acme");
         const result = await archiveThenDeleteProject({
             workspaceId: "ws",
             id: "p_1",
-            resource: f.resource,
+            adapter: f.adapter,
         });
-        expect(f.order).toEqual(["get", "update", "delete"]);
-        // A project archives via the FLATTENED shape (its whitelist has `archived`),
-        // carrying the GET-ed name through the replace-PUT.
-        expect(f.updateReqs).toEqual([
-            { workspaceId: "ws", projectId: "p_1", name: "Acme", archived: true },
+        expect(f.order).toEqual(["getCurrent", "archive", "delete"]);
+        expect(f.archiveInputs).toEqual([
+            { workspaceId: "ws", id: "p_1", current: { name: "Acme" } },
         ]);
         expect(result).toEqual({
             id: "p_1",
@@ -190,44 +162,41 @@ describe("archiveThenDeleteProject", () => {
     });
 
     it("skips the GET + archive steps when alreadyArchived is set", async () => {
-        const f = fakeResource("Acme");
+        const f = fakeAdapter("Acme");
         const result = await archiveThenDeleteProject({
             workspaceId: "ws",
             id: "p_2",
-            resource: f.resource,
+            adapter: f.adapter,
             alreadyArchived: true,
         });
         expect(f.order).toEqual(["delete"]);
-        expect(f.updateReqs).toEqual([]);
+        expect(f.archiveInputs).toEqual([]);
         expect(result.archived).toBe(false);
         expect(result.deleted).toBe(true);
     });
 
     it("throws BEFORE archiving when the entity has no name to carry through the replace-PUT", async () => {
-        const f = fakeResource(undefined); // no name on the wire
+        const f = fakeAdapter(undefined); // no name on the wire
         await expect(
-            archiveThenDeleteProject({ workspaceId: "ws", id: "p_3", resource: f.resource }),
+            archiveThenDeleteProject({ workspaceId: "ws", id: "p_3", adapter: f.adapter }),
         ).rejects.toThrow(/Cannot archive project before delete.*no name/);
         // The guard short-circuits after the GET: no archive, no delete.
-        expect(f.order).toEqual(["get"]);
-        expect(f.updateReqs).toEqual([]);
+        expect(f.order).toEqual(["getCurrent"]);
+        expect(f.archiveInputs).toEqual([]);
     });
 });
 
 describe("archiveThenDeleteClient", () => {
     it("GETs the name, archives via the BODY-ENVELOPE quirk, then deletes — in that order", async () => {
-        const f = fakeResource("Globex");
+        const f = fakeAdapter("Globex");
         const result = await archiveThenDeleteClient({
             workspaceId: "ws",
             id: "c_1",
-            resource: f.resource,
+            adapter: f.adapter,
         });
-        expect(f.order).toEqual(["get", "update", "delete"]);
-        // A client MUST archive via the BODY-ENVELOPE shape — the flattened
-        // clients.update drops `archived` (field whitelist), so the envelope is the
-        // only path that lands archived:true on the wire. It carries the GET-ed name.
-        expect(f.updateReqs).toEqual([
-            { workspaceId: "ws", clientId: "c_1", body: { name: "Globex", archived: true } },
+        expect(f.order).toEqual(["getCurrent", "archive", "delete"]);
+        expect(f.archiveInputs).toEqual([
+            { workspaceId: "ws", id: "c_1", current: { name: "Globex" } },
         ]);
         expect(result).toEqual({
             id: "c_1",
@@ -239,7 +208,7 @@ describe("archiveThenDeleteClient", () => {
     });
 
     it("preserves every current editable value while archiving, including false and empty strings", async () => {
-        const f = fakeResource({
+        const f = fakeAdapter({
             name: "Globex",
             address: "",
             currencyCode: "USD",
@@ -251,31 +220,31 @@ describe("archiveThenDeleteClient", () => {
         await archiveThenDeleteClient({
             workspaceId: "ws",
             id: "c_preserve",
-            resource: f.resource,
+            adapter: f.adapter,
         });
 
-        expect(f.updateReqs).toEqual([
+        expect(f.archiveInputs).toEqual([
             {
                 workspaceId: "ws",
-                clientId: "c_preserve",
-                body: {
+                id: "c_preserve",
+                current: {
                     name: "Globex",
                     address: "",
                     currencyCode: "USD",
                     email: "",
                     note: "",
-                    archived: true,
+                    archived: false,
                 },
             },
         ]);
     });
 
     it("throws (noun 'client') BEFORE archiving when the client has no name", async () => {
-        const f = fakeResource(""); // empty name
+        const f = fakeAdapter(""); // empty name
         await expect(
-            archiveThenDeleteClient({ workspaceId: "ws", id: "c_2", resource: f.resource }),
+            archiveThenDeleteClient({ workspaceId: "ws", id: "c_2", adapter: f.adapter }),
         ).rejects.toThrow(/Cannot archive client before delete.*no name/);
-        expect(f.order).toEqual(["get"]);
-        expect(f.updateReqs).toEqual([]);
+        expect(f.order).toEqual(["getCurrent"]);
+        expect(f.archiveInputs).toEqual([]);
     });
 });

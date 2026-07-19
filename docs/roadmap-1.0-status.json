@@ -63,6 +63,18 @@
     "operationEvidenceMap": "docs/operation-evidence-map.json",
     "failClosedProof": "make operation-coverage regenerates ignored inputs, runs both operation evidence fixture suites, and reuses the canonical validator to reject stale counts, unsuccessful or duplicate/missing receipts, new/renamed/unclassified derived operations, duplicate/missing dispositions, method/path drift, explicit/derived inversion, unreviewed ledger anchors, omitted/duplicate/orphan evidence-audit rows, false empty markers, semantic anchor-set drift, and disposition/evidence mismatch."
   },
+  "task6": {
+    "status": "implemented",
+    "receipt": "docs/roadmap-1.0-receipts/task-06-breaking-change.md",
+    "taskBase": "fb1c18420ee3d4bc67466c2aeee7d9d4239f0326",
+    "removedSymbols": {
+      "allowInsecureBaseUrl": "allowNonClockifyHttpsHost",
+      "findOrCreateClient": "ensureClient",
+      "ArchiveThenDeleteResource": "ArchiveThenDeleteAdapter<TCurrent>"
+    },
+    "compileProof": "NodeNext source, Bundler source, and built public-package self-reference configurations compile the replacement surface and compile-negative removal fixtures.",
+    "task7RequestCastRiskStatus": "open"
+  },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",
     "packages": [

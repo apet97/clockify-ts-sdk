@@ -1,0 +1,10 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "paths": {},
+        "noEmit": true
+    },
+    "include": ["tests/types/breaking-changes.test-d.ts"]
+}

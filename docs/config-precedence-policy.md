@@ -36,8 +36,8 @@ resolved base URL via `validateClockifyBaseUrl`:
   (always, regardless of opt-in). This blocks an API-key exfiltration path
   where a tampered `CLOCKIFY_BASE_URL`/`environment` would redirect the
   `X-Api-Key` / `X-Addon-Token` header to an attacker-controlled endpoint.
-- Opt-in: the SDK option `allowInsecureBaseUrl: true` (surfaced on the MCP as
-  `LoadContextOptions.allowInsecureBaseUrl`) downgrades a rejected
+- Opt-in: the SDK option `allowNonClockifyHttpsHost: true` (surfaced on the MCP as
+  `LoadContextOptions.allowNonClockifyHttpsHost`) downgrades a rejected
   *non-Clockify HTTPS* host to a `console.warn` instead of throwing. The CLI
   keeps this off. There is no env var for the opt-in; it is a deliberate,
   code-level decision for a trusted Clockify-compatible proxy.

@@ -44,7 +44,8 @@ per-symbol tag on every export site:
 - **Allowed vocabulary.** Stability JSDoc tags in hand-written
   `wrapper/*.ts` files are restricted to `@public`, `@beta`,
   `@experimental`, `@internal`, and `@deprecated` (the lifecycle tag for
-  renamed exports such as `findOrCreateClient`). The `make api-docs` gate
+  aliases during their supported deprecation window; the 1.0 closure removed
+  `findOrCreateClient` rather than retaining a deprecated alias). The `make api-docs` gate
   enforces this vocabulary and asserts the two intentionally-tagged
   surfaces stay tagged, so a typo'd or ad-hoc stability tag fails the
   build.

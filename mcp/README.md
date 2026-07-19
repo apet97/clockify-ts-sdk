@@ -86,6 +86,9 @@ workspace, and any running timer.
 The server reads `CLOCKIFY_API_KEY` and `CLOCKIFY_WORKSPACE_ID` from
 its process environment. `CLOCKIFY_BASE_URL` is optional and should
 only be used for mock/replay gateways or private test environments.
+Code that calls `loadContext()` directly can opt into a trusted non-Clockify
+HTTPS proxy with `allowNonClockifyHttpsHost: true`; cleartext non-loopback
+destinations remain rejected.
 
 ```json
 {

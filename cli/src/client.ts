@@ -21,7 +21,7 @@ export async function buildClient(config: CliConfig): Promise<ClockifyClient> {
     // message rather than silently sending the API key off-host.
     return createClockifyClient({
         apiKey,
-        allowInsecureBaseUrl: false,
+        allowNonClockifyHttpsHost: false,
         ...(config.baseUrl !== undefined ? { environment: config.baseUrl } : {}),
     });
 }

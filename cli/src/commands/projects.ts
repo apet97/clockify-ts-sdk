@@ -160,10 +160,32 @@ export const registerProjectsCommand: Registrar = (program, services) => {
         )
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // archiveThenDeleteProject owns the live-verified sequence (GET name →
-            // archive PUT archived:true → DELETE) and the empty-name guard: bare
-            // DELETE of an ACTIVE project 400s and the /archive route 404s.
-            await archiveThenDeleteProject({ workspaceId, id, resource: client.projects });
+            await archiveThenDeleteProject({
+                workspaceId,
+                id,
+                adapter: {
+                    getCurrent: ({ workspaceId: currentWorkspaceId, id: projectId }) =>
+                        client.projects.get({ workspaceId: currentWorkspaceId, projectId }),
+                    archive: async ({
+                        workspaceId: currentWorkspaceId,
+                        id: projectId,
+                        current,
+                    }) => {
+                        await client.projects.update({
+                            workspaceId: currentWorkspaceId,
+                            projectId,
+                            name: current.name,
+                            archived: true,
+                        });
+                    },
+                    delete: async ({ workspaceId: currentWorkspaceId, id: projectId }) => {
+                        await client.projects.delete({
+                            workspaceId: currentWorkspaceId,
+                            projectId,
+                        });
+                    },
+                },
+            });
             printReceipt(
                 {
                     ok: true,

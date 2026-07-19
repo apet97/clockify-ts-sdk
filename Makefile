@@ -427,6 +427,7 @@ compatibility-contract:
 	node scripts/check-compatibility-contract.mjs
 
 breaking-change-review:
+	node --test scripts/check-breaking-change-review.test.mjs
 	node scripts/check-breaking-change-review.mjs
 
 observability:

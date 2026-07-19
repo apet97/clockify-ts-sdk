@@ -207,7 +207,7 @@
       "ensureTag",
       "ensureProject",
       "ensureClient",
-      "findOrCreateClient",
+      "ArchiveThenDeleteAdapter",
       "archiveThenDeleteProject",
       "archiveThenDeleteClient"
     ],
