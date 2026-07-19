@@ -31,7 +31,11 @@ rationale, risk-register note, and migration/support wording.
   evidence identifiers.
 - `docs/sdk-operation-naming-classifications.json` governs the exact 14
   operationId-derived operations and fails closed on additions, removals,
-  renames, duplicates, or reclassification.
+  renames, duplicates, or reclassification. It governs names only.
+- `docs/operation-evidence-map.json` separately governs discrepancy anchors for
+  applicable explicit or operationId-derived operations. Unknown anchors,
+  orphan operations, duplicate mappings, and disposition drift fail closed;
+  operations without applicable evidence need no fabricated mapping.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
@@ -40,6 +44,10 @@ rationale, risk-register note, and migration/support wording.
   generator/source and classification decision.
 - TS MCP and GOCLMCP exact matches may differ by product scope, but drops from the baseline must be intentional and reviewed.
 - Adding operations should update OpenAPI inventory, operation parity, naming taxonomy, product surface, and README tables when user-visible.
+- `make operation-coverage` regenerates the ignored codegen receipt through its
+  parity-drift prerequisite before running negative fixtures and the canonical
+  all-operation validator, so it is safe in a clean archive as well as an
+  already-generated worktree.
 
 ## Required escalation
 

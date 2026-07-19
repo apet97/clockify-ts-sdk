@@ -17,7 +17,11 @@ The governed split is exact:
   with HTTP method/path, generated group/method/client path, reachability,
   naming class, and applicable existing evidence identifiers.
 - `docs/sdk-operation-naming-classifications.json` governs the expected
-  generated group/method and evidence identifiers for all 14 derived methods.
+  generated group/method for all 14 derived methods; it contains no evidence
+  policy.
+- `docs/operation-evidence-map.json` separately governs existing discrepancy
+  anchors for any applicable explicit or derived operation. Operations without
+  applicable evidence keep an empty list without a fabricated mapping.
 - SDK generated reachability remains distinct from the 92 TS MCP exact matches,
   82 GOCLMCP exact matches, and 32 curated parity overrides.
 
@@ -43,6 +47,12 @@ The governed split is exact:
 The complete 169-row inventory is the generated disposition artifact; this
 receipt does not duplicate those rows as prose.
 
+Operation-level evidence is intentionally independent of naming. In particular,
+`scheduling.createRecurring.returns-array-and-publish-is-range-scoped` belongs
+to explicit `createRecurringAssignment`, not derived `changeRecurringPeriod`;
+explicit `updateInvoice` links both its replacement-semantics and corrected
+request-schema discrepancy entries.
+
 ## Fail-closed proof
 
 `scripts/generate-operation-parity.test.mjs` uses in-memory fixtures and proves
@@ -53,8 +63,12 @@ that the validator rejects:
 - an orphaned derived classification;
 - duplicate or missing disposition rows;
 - receipt/artifact count mismatch;
+- an unsuccessful receipt, duplicate/missing receipt operations, or method/path
+  drift;
 - an explicit operation classified as derived or a derived operation
   classified as explicit; and
+- embedded naming evidence, orphan/unknown/duplicate evidence mappings, or
+  disposition/evidence mismatch; and
 - any departure from all 169 operations appearing exactly once.
 
 The regular `operation-parity` writer and `operation-parity-drift` checker use
@@ -74,6 +88,10 @@ npm run build:smoke -w clockify-sdk-ts-115
 npm pack --dry-run -w clockify-sdk-ts-115
 git diff --check
 ```
+
+`make operation-coverage` owns these negative fixtures and depends on
+`operation-parity-drift`, whose generated-input chain creates the ignored local
+codegen receipt before either parity or coverage reads it.
 
 No GOCLMCP source, corrected OpenAPI snapshot, generator source, generated or
 synced tree was hand-edited. No live Clockify mutation, local Stryker/mutation

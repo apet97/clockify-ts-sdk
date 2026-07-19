@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Governed discrepancy-ledger evidence attached to applicable generated SDK operations independently of SDK naming classification.",
+  "mappings": [
+    {
+      "operationId": "uploadImage",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "getCurrentUser",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "addLimitedUsersWithInfo",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "generateDetailedReportV1",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "changeRecurringPeriod",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "changeTimeOffRequestStatus",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off.requests.update-status.wrong-method-and-field",
+        "time-off.change-status.union-and-note"
+      ]
+    },
+    {
+      "operationId": "deleteMany",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserStatus",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserCostRate",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "updateUserCustomFieldValue",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "updateUserHourlyRate",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+    },
+    {
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "createRecurringAssignment",
+      "evidenceIds": [
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+      ]
+    },
+    {
+      "operationId": "updateInvoice",
+      "evidenceIds": [
+        "invoices.update.replace-and-tax-discount-zeroing",
+        "invoices.update.missing-bill-from-and-client-address"
+      ]
+    },
+    {
+      "operationId": "getWorkspaceExpenses",
+      "evidenceIds": ["expenses.list.start-end-ignored-client-filtered"]
+    }
+  ]
+}

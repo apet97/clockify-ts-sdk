@@ -25,7 +25,23 @@
     "operationParity": "docs/operation-parity.json",
     "operationDispositions": "docs/operation-dispositions.json",
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
+    "operationEvidence": "docs/operation-evidence-map.json",
+    "discrepancyLedger": "spec/evidence/discrepancies.md",
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json"
+  },
+  "generatedInputWiring": {
+    "coveragePrerequisites": ["operation-parity-drift"],
+    "coverageRecipes": [
+      "node --test scripts/generate-operation-parity.test.mjs",
+      "node scripts/check-operation-coverage.mjs"
+    ],
+    "sdkBuildTarget": "sdk-wrapper-build",
+    "sdkBuildPrerequisites": ["sdk-codegen-sync"],
+    "codegenTarget": "sdk-codegen-sync",
+    "codegenRecipes": [
+      "node scripts/generate-sdk-from-openapi.mjs --write",
+      "cd wrapper && npm run sync"
+    ]
   },
   "driftWiring": {
     "target": "operation-parity-drift",
@@ -72,6 +88,7 @@
     "docs/operation-coverage-policy.md",
     "docs/openapi-operations.json",
     "docs/operation-dispositions.json",
+    "docs/operation-evidence-map.json",
     "docs/operation-parity.json",
     "docs/operation-parity-overrides.json",
     "docs/sdk-operation-naming-classifications.json",
@@ -98,6 +115,15 @@
       ]
     },
     {
+      "path": "docs/operation-evidence-map.json",
+      "contains": [
+        "Governed discrepancy-ledger evidence",
+        "createRecurringAssignment",
+        "updateInvoice",
+        "evidenceIds"
+      ]
+    },
+    {
       "path": "docs/operation-parity.json",
       "contains": [
         "sdkGenerated",
@@ -114,8 +140,7 @@
       "contains": [
         "operationId-derived",
         "generatedGroup",
-        "generatedMethod",
-        "evidenceIds"
+        "generatedMethod"
       ]
     },
     {

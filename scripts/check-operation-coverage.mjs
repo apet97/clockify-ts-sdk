@@ -2,6 +2,8 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { validateOperationDisposition } from "./lib/operation-parity-contract.mjs";
+
 const root = process.cwd();
 const failures = [];
 const contract = (await readJsonRel("docs/operation-coverage-contract.json", "contract")) ?? {};
@@ -166,7 +168,35 @@ function validateContractShape() {
         safeRelativePath("reportInputs.operationParity", contract.reportInputs.operationParity);
         safeRelativePath("reportInputs.operationDispositions", contract.reportInputs.operationDispositions);
         safeRelativePath("reportInputs.sdkNamingClassifications", contract.reportInputs.sdkNamingClassifications);
+        safeRelativePath("reportInputs.operationEvidence", contract.reportInputs.operationEvidence);
+        safeRelativePath("reportInputs.discrepancyLedger", contract.reportInputs.discrepancyLedger);
         safeRelativePath("reportInputs.sdkCodegenReceipt", contract.reportInputs.sdkCodegenReceipt);
+    }
+
+    if (assertObject("generatedInputWiring", contract.generatedInputWiring)) {
+        for (const key of ["coveragePrerequisites", "coverageRecipes", "sdkBuildPrerequisites", "codegenRecipes"]) {
+            assertStringArray(`generatedInputWiring.${key}`, contract.generatedInputWiring[key], { min: 1 });
+        }
+        for (const key of ["sdkBuildTarget", "codegenTarget"]) {
+            assertNonEmptyString(`generatedInputWiring.${key}`, contract.generatedInputWiring[key]);
+        }
+        const exactGeneratedInputWiring = {
+            coveragePrerequisites: ["operation-parity-drift"],
+            coverageRecipes: [
+                "node --test scripts/generate-operation-parity.test.mjs",
+                "node scripts/check-operation-coverage.mjs",
+            ],
+            sdkBuildTarget: "sdk-wrapper-build",
+            sdkBuildPrerequisites: ["sdk-codegen-sync"],
+            codegenTarget: "sdk-codegen-sync",
+            codegenRecipes: [
+                "node scripts/generate-sdk-from-openapi.mjs --write",
+                "cd wrapper && npm run sync",
+            ],
+        };
+        if (JSON.stringify(contract.generatedInputWiring) !== JSON.stringify(exactGeneratedInputWiring)) {
+            fail("generatedInputWiring", `must equal ${JSON.stringify(exactGeneratedInputWiring)}`);
+        }
     }
 
     if (assertObject("driftWiring", contract.driftWiring)) {
@@ -281,8 +311,14 @@ const dispositions =
     (await readJsonRel(contract.reportInputs.operationDispositions, "reportInputs.operationDispositions")) ?? {};
 const classifications =
     (await readJsonRel(contract.reportInputs.sdkNamingClassifications, "reportInputs.sdkNamingClassifications")) ?? {};
+const evidence =
+    (await readJsonRel(contract.reportInputs.operationEvidence, "reportInputs.operationEvidence")) ?? {};
 const receipt =
     (await readJsonRel(contract.reportInputs.sdkCodegenReceipt, "reportInputs.sdkCodegenReceipt")) ?? {};
+const discrepancyLedger = await readRel(
+    contract.reportInputs.discrepancyLedger,
+    "reportInputs.discrepancyLedger",
+);
 const makefile = await readRel("Makefile");
 const docsIndex = await readRel("docs/README.md");
 const qualityGates = await readRel("docs/quality-gates.md");
@@ -293,6 +329,34 @@ const policy = await readRel(contract.policyDocument.path);
 includesAll(policy, contract.policyDocument.contains, contract.policyDocument.path);
 for (const marker of contract.policyDocument.forbiddenMarkers ?? []) {
     if (policy.includes(marker)) fail(contract.policyDocument.path, `contains forbidden marker ${marker}`);
+}
+
+if (
+    classifications.schemaVersion !== 1 ||
+    typeof classifications.purpose !== "string" ||
+    !Array.isArray(classifications.classifications)
+) {
+    fail(contract.reportInputs.sdkNamingClassifications, "must have schemaVersion 1, purpose, and classifications");
+}
+if (
+    evidence.schemaVersion !== 1 ||
+    typeof evidence.purpose !== "string" ||
+    !Array.isArray(evidence.mappings)
+) {
+    fail(contract.reportInputs.operationEvidence, "must have schemaVersion 1, purpose, and mappings");
+}
+const knownEvidenceIds = new Set(
+    [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
+);
+for (const failure of validateOperationDisposition({
+    artifact: dispositions,
+    classifications: classifications.classifications ?? [],
+    evidenceMappings: evidence.mappings ?? [],
+    inventory: openapi,
+    knownEvidenceIds,
+    receipt,
+})) {
+    fail("generated operation truth", failure);
 }
 
 const thresholds = contract.thresholds ?? {};
@@ -307,21 +371,6 @@ for (const key of ["sdkGenerated", "sdkExplicitlyNamed", "sdkOperationIdDerived"
     if (summary[key] !== thresholds[key]) {
         fail(contract.reportInputs.operationParity, `${key} expected ${thresholds[key]}, got ${summary[key]}`);
     }
-    if (dispositions?.summary?.[key] !== thresholds[key]) {
-        fail(
-            contract.reportInputs.operationDispositions,
-            `${key} expected ${thresholds[key]}, got ${dispositions?.summary?.[key]}`,
-        );
-    }
-}
-if (receipt.operationCount !== thresholds.sdkGenerated) {
-    fail(contract.reportInputs.sdkCodegenReceipt, `operationCount expected ${thresholds.sdkGenerated}, got ${receipt.operationCount}`);
-}
-if ((classifications.classifications ?? []).length !== thresholds.sdkOperationIdDerived) {
-    fail(
-        contract.reportInputs.sdkNamingClassifications,
-        `classification count expected ${thresholds.sdkOperationIdDerived}, got ${(classifications.classifications ?? []).length}`,
-    );
 }
 for (const key of ["tsMcpExact", "goMcpExact", "curated"]) {
     if (typeof thresholds[key] !== "number") fail("thresholds", `missing numeric threshold ${key}`);
@@ -408,6 +457,43 @@ if (manifestWriterRule.recipes.some((recipe) => recipe.includes("--check"))) {
         "Makefile",
         `${contract.manifestProofWiring.writerTarget} must remain the explicit manifest writer`,
     );
+}
+
+const coverageRule = makeTargetRule(makefile, contract.wiring.makeTarget);
+const sdkBuildRule = makeTargetRule(makefile, contract.generatedInputWiring.sdkBuildTarget);
+const codegenRule = makeTargetRule(makefile, contract.generatedInputWiring.codegenTarget);
+for (const [target, label, actual, expected] of [
+    [
+        contract.wiring.makeTarget,
+        "prerequisites",
+        coverageRule.prerequisites,
+        contract.generatedInputWiring.coveragePrerequisites,
+    ],
+    [
+        contract.wiring.makeTarget,
+        "recipes",
+        coverageRule.recipes,
+        contract.generatedInputWiring.coverageRecipes,
+    ],
+    [
+        contract.generatedInputWiring.sdkBuildTarget,
+        "prerequisites",
+        sdkBuildRule.prerequisites,
+        contract.generatedInputWiring.sdkBuildPrerequisites,
+    ],
+    [
+        contract.generatedInputWiring.codegenTarget,
+        "recipes",
+        codegenRule.recipes,
+        contract.generatedInputWiring.codegenRecipes,
+    ],
+]) {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        fail(
+            "Makefile",
+            `${target} ${label} expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
+        );
+    }
 }
 
 if (!makefile.includes(`node ${contract.wiring.checker}`)) {

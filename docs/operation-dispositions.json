@@ -5,6 +5,7 @@
     "openapi": "docs/openapi-operations.json",
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json",
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
+    "operationEvidence": "docs/operation-evidence-map.json",
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
@@ -392,7 +393,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "expenses.list.start-end-ignored-client-filtered"
+      ]
     },
     {
       "operationId": "createExpense",
@@ -652,7 +655,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.update.replace-and-tax-discount-zeroing",
+        "invoices.update.missing-bill-from-and-client-address"
+      ]
     },
     {
       "operationId": "deleteInvoice",
@@ -1307,7 +1313,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+      ]
     },
     {
       "operationId": "updateRecurringAssignment",
@@ -1347,8 +1355,7 @@
       },
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
       ]
     },
     {
@@ -1728,6 +1735,7 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off.requests.update-status.wrong-method-and-field",
         "time-off.change-status.union-and-note"
       ]
     },

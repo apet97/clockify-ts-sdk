@@ -4,17 +4,20 @@ export const CANONICAL_SDK_OPERATION_COUNTS = Object.freeze({
     sdkOperationIdDerived: 14,
 });
 
-export function buildOperationDisposition({ classifications = [], inventory, receipt }) {
+export function buildOperationDisposition({
+    evidenceMappings = [],
+    inventory,
+    receipt,
+}) {
     const inventoryById = new Map(
         (inventory?.operations ?? []).map((operation) => [operation.operationId, operation]),
     );
-    const classificationById = new Map(
-        classifications.map((classification) => [classification.operationId, classification]),
+    const evidenceById = new Map(
+        evidenceMappings.map((mapping) => [mapping.operationId, mapping.evidenceIds]),
     );
     const operations = (receipt?.operations ?? []).map((generatedOperation) => {
         const inventoryOperation = inventoryById.get(generatedOperation.operationId);
         const explicit = Boolean(inventoryOperation?.sdkGroup && inventoryOperation?.sdkMethod);
-        const classification = classificationById.get(generatedOperation.operationId);
         return {
             operationId: generatedOperation.operationId,
             httpMethod: generatedOperation.httpMethod,
@@ -26,7 +29,7 @@ export function buildOperationDisposition({ classifications = [], inventory, rec
                 reachable: true,
             },
             sdkNaming: explicit ? "explicit" : "operationId-derived",
-            evidenceIds: classification?.evidenceIds ?? [],
+            evidenceIds: evidenceById.get(generatedOperation.operationId) ?? [],
         };
     });
     return {
@@ -45,6 +48,7 @@ export function buildOperationDisposition({ classifications = [], inventory, rec
 export function validateOperationDisposition({
     artifact,
     classifications = [],
+    evidenceMappings = [],
     inventory,
     knownEvidenceIds,
     receipt,
@@ -110,6 +114,7 @@ export function validateOperationDisposition({
     const receiptById = collectById("receipt", receiptOperations);
     const dispositionById = collectById("disposition", dispositionOperations);
     const classificationById = collectById("classification", classifications);
+    const evidenceById = collectById("evidence mapping", evidenceMappings);
 
     for (const operationId of inventoryById.keys()) {
         if (!receiptById.has(operationId)) failures.push(`${operationId}: missing codegen receipt row`);
@@ -134,21 +139,29 @@ export function validateOperationDisposition({
         if (classification.sdkNaming !== "operationId-derived") {
             failures.push(`${classification.operationId}: sdkNaming must be operationId-derived`);
         }
+        if (Object.prototype.hasOwnProperty.call(classification, "evidenceIds")) {
+            failures.push(`${classification.operationId}: SDK naming classification must not govern evidence`);
+        }
         for (const field of ["generatedGroup", "generatedMethod"]) {
             if (typeof classification[field] !== "string" || classification[field].length === 0) {
                 failures.push(`${classification.operationId}: ${field} must be a non-empty string`);
             }
         }
-        if (!Array.isArray(classification.evidenceIds) || classification.evidenceIds.length === 0) {
-            failures.push(`${classification.operationId}: evidenceIds must be non-empty`);
+    }
+    for (const mapping of evidenceMappings) {
+        if (!inventoryById.has(mapping.operationId)) {
+            failures.push(`${mapping.operationId}: evidence mapping is missing from the OpenAPI inventory`);
+        }
+        if (!Array.isArray(mapping.evidenceIds) || mapping.evidenceIds.length === 0) {
+            failures.push(`${mapping.operationId}: evidence mapping evidenceIds must be non-empty`);
         } else {
-            const uniqueEvidence = new Set(classification.evidenceIds);
-            if (uniqueEvidence.size !== classification.evidenceIds.length) {
-                failures.push(`${classification.operationId}: evidenceIds must be unique`);
+            const uniqueEvidence = new Set(mapping.evidenceIds);
+            if (uniqueEvidence.size !== mapping.evidenceIds.length) {
+                failures.push(`${mapping.operationId}: evidence mapping evidenceIds must be unique`);
             }
-            for (const evidenceId of classification.evidenceIds) {
+            for (const evidenceId of mapping.evidenceIds) {
                 if (knownEvidenceIds && !knownEvidenceIds.has(evidenceId)) {
-                    failures.push(`${classification.operationId}: unknown evidenceId ${evidenceId}`);
+                    failures.push(`${mapping.operationId}: unknown evidenceId ${evidenceId}`);
                 }
             }
         }
@@ -207,7 +220,7 @@ export function validateOperationDisposition({
             if (disposition.httpMethod !== generated.httpMethod || disposition.path !== generated.path) {
                 failures.push(`${operation.operationId}: disposition method/path differs from codegen receipt`);
             }
-            const expectedEvidence = classification?.evidenceIds ?? [];
+            const expectedEvidence = evidenceById.get(operation.operationId)?.evidenceIds ?? [];
             if (JSON.stringify(disposition.evidenceIds) !== JSON.stringify(expectedEvidence)) {
                 failures.push(`${operation.operationId}: disposition evidenceIds differ from governance`);
             }
