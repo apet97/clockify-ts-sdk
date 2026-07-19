@@ -32,7 +32,9 @@ properties, all potentially reaching receiver-qualified variable/property
 writes (including computed keys), ordered conditional/logical/unknown receiver
 aliases, parameter defaults, compound/destructuring assignments, property
 declarations/accessors, recursively nested/defaulted/rest object and array
-bindings, called same-file/imported helper side effects, contributing
+bindings, called same-file/imported helper side effects (including nested
+receivers and synchronous `call`/`apply`/`bind`), documented synchronous
+`forEach`/`map` callback effects, `Object.assign`, `Reflect.set`, contributing
 binary/logical/sequence expressions, spread arguments and object spreads,
 declaration-only casters, Function `call`/`apply`/`bind`, any-erased
 receiver/method/helper/holder provenance including later holder writes and exact
@@ -117,6 +119,17 @@ any-erased `Function.call` trampoline. Default and namespace type-import
 counterfeits of `Parameters` now fail while the unrelated receiver, binding,
 helper, property, and function controls remain green. The final governance
 suite passes **154/154** fixtures.
+
+The sixth corrective review added RED/GREEN coverage for destructured and
+request-bearing object parameter defaults, exported/default-exported/escaped
+callables, exact-receiver `??=`/`||=`/`&&=` reachability, typed object/array rest
+assignments and defaulted assignment targets, bounded return-derived receiver
+origins, nested helper receiver paths, synchronous helper `call`/`apply`/`bind`,
+documented synchronous `forEach`/`map` callback effects, `Object.assign`, and
+`Reflect.set`. Safe/unreachable structured defaults, distinct receivers, rest
+exclusions, unused factory arguments, asynchronous callbacks, and unrelated-
+object effects remain unflagged. The final governance suite passes **184/184**
+fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of

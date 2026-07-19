@@ -218,12 +218,17 @@ make docs-drift
   request-bound dataflow for all potentially reaching receiver-qualified
   variable/property writes (including computed keys), ordered receiver aliases,
   parameter defaults, compound/destructuring assignments, nested/defaulted/rest
-  bindings, called same-file/imported helper side effects, accessors,
+  bindings, called same-file/imported helper side effects (including nested
+  receivers and synchronous `call`/`apply`/`bind`), documented synchronous
+  `forEach`/`map` callback effects, `Object.assign`, `Reflect.set`, accessors,
   contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
   receivers, methods, helper parameters/results, or holder properties to `any`,
   including later holder writes and exact `Function.call` trampolines.
+  Receiver-producing calls follow bounded return provenance, not all call
+  arguments. Exported/default-exported/escaped callables keep defaults
+  reachable; asynchronous callbacks are not treated as pre-request effects.
   Discarded comma operands are not request contributors. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,
