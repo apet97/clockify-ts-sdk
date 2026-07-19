@@ -2,11 +2,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import {
     buildOperationEvidenceAudit,
     buildOperationDisposition,
     validateOperationDisposition,
 } from "./lib/operation-parity-contract.mjs";
+import {
+    buildOperationEvidenceSemanticExpectations,
+    extractCanonicalPaginatedRoutes,
+} from "./lib/operation-evidence-semantics.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
@@ -21,6 +26,18 @@ const evidenceAnchorInventoryPath = path.join(
     "docs",
     "operation-evidence-anchor-inventory.json",
 );
+const evidenceSemanticContractPath = path.join(
+    root,
+    "docs",
+    "operation-evidence-semantic-contract.json",
+);
+const correctedOpenapiPath = path.join(
+    root,
+    "spec",
+    "corrected",
+    "clockify.corrected.openapi.yaml",
+);
+const canonicalGeneratorPath = path.join(root, "..", "GOCLMCP", "scripts", "gen-clockify-openapi");
 const discrepancyLedgerPath = path.join(root, "spec", "evidence", "discrepancies.md");
 const dispositionPath = path.join(root, "docs", "operation-dispositions.json");
 const jsonPath = path.join(root, "docs", "operation-parity.json");
@@ -227,6 +244,32 @@ if (
     process.exit(1);
 }
 const evidenceAnchors = evidenceAnchorDocument.anchors;
+const evidenceSemanticContract = readJson(evidenceSemanticContractPath);
+if (
+    evidenceSemanticContract.schemaVersion !== 1 ||
+    typeof evidenceSemanticContract.purpose !== "string" ||
+    !Array.isArray(evidenceSemanticContract.canonicalPaginatedRoutes)
+) {
+    console.error("Operation evidence semantic contract must have schemaVersion 1, purpose, and canonicalPaginatedRoutes");
+    process.exit(1);
+}
+if (fs.existsSync(canonicalGeneratorPath)) {
+    const generatorRoutes = extractCanonicalPaginatedRoutes(
+        fs.readFileSync(canonicalGeneratorPath, "utf8"),
+    );
+    if (
+        JSON.stringify(generatorRoutes) !==
+        JSON.stringify(evidenceSemanticContract.canonicalPaginatedRoutes)
+    ) {
+        console.error("Operation evidence semantic pagination routes differ from GOCLMCP PAGINATED_LIST_OPS");
+        process.exit(1);
+    }
+}
+const semanticEvidenceExpectations = buildOperationEvidenceSemanticExpectations({
+    inventory,
+    openapi: parse(fs.readFileSync(correctedOpenapiPath, "utf8")),
+    semanticContract: evidenceSemanticContract,
+});
 const evidenceAudit = buildOperationEvidenceAudit({ evidenceAnchors, inventory });
 const evidenceDocument = {
     schemaVersion: 1,
@@ -234,6 +277,7 @@ const evidenceDocument = {
     sources: {
         openapi: "docs/openapi-operations.json",
         anchorInventory: "docs/operation-evidence-anchor-inventory.json",
+        semanticContract: "docs/operation-evidence-semantic-contract.json",
         discrepancyLedger: "spec/evidence/discrepancies.md",
     },
     summary: {
@@ -263,6 +307,7 @@ const disposition = {
         sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
         operationEvidence: "docs/operation-evidence-map.json",
         operationEvidenceAnchors: "docs/operation-evidence-anchor-inventory.json",
+        operationEvidenceSemantics: "docs/operation-evidence-semantic-contract.json",
         discrepancyLedger: "spec/evidence/discrepancies.md",
     },
     summary: dispositionCore.summary,
@@ -276,6 +321,7 @@ const dispositionFailures = validateOperationDisposition({
     inventory,
     knownEvidenceIds,
     receipt,
+    semanticEvidenceExpectations,
 });
 if (dispositionFailures.length > 0) {
     console.error("Operation disposition validation failed:");

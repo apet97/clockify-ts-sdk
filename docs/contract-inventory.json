@@ -1379,7 +1379,8 @@
         "docs/operation-coverage-policy.md"
       ],
       "contracts": [
-        "docs/operation-coverage-contract.json"
+        "docs/operation-coverage-contract.json",
+        "docs/operation-evidence-semantic-contract.json"
       ],
       "auditIds": [
         "operation-coverage"

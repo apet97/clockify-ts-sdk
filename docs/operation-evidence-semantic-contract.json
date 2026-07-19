@@ -1,0 +1,28 @@
+{
+    "schemaVersion": 1,
+    "purpose": "Independent semantic expectations used to validate evidence-anchor operation sets instead of trusting the manually reviewed anchor inventory alone.",
+    "canonicalPaginationSource": "../GOCLMCP/scripts/gen-clockify-openapi#PAGINATED_LIST_OPS",
+    "canonicalPaginatedRoutes": [
+        ["GET", "/workspaces/{workspaceId}/approval-requests"],
+        ["GET", "/workspaces/{workspaceId}/clients"],
+        ["GET", "/workspaces/{workspaceId}/custom-fields"],
+        ["GET", "/workspaces/{workspaceId}/expenses"],
+        ["GET", "/workspaces/{workspaceId}/expenses/categories"],
+        ["GET", "/workspaces/{workspaceId}/holidays"],
+        ["GET", "/workspaces/{workspaceId}/invoices"],
+        ["GET", "/workspaces/{workspaceId}/invoices/{invoiceId}/payments"],
+        ["GET", "/workspaces/{workspaceId}/projects"],
+        ["GET", "/workspaces/{workspaceId}/projects/{projectId}/custom-fields"],
+        ["GET", "/workspaces/{workspaceId}/projects/{projectId}/tasks"],
+        ["GET", "/workspaces/{workspaceId}/scheduling/assignments/all"],
+        ["GET", "/workspaces/{workspaceId}/tags"],
+        ["GET", "/workspaces/{workspaceId}/time-entries/status/in-progress"],
+        ["GET", "/workspaces/{workspaceId}/time-off/balance/policy/{policyId}"],
+        ["GET", "/workspaces/{workspaceId}/time-off/balance/user/{userId}"],
+        ["GET", "/workspaces/{workspaceId}/time-off/policies"],
+        ["GET", "/workspaces/{workspaceId}/user-groups"],
+        ["GET", "/workspaces/{workspaceId}/user/{userId}/time-entries"],
+        ["GET", "/workspaces/{workspaceId}/users"],
+        ["GET", "/workspaces/{workspaceId}/users/{userId}/managers"]
+    ]
+}

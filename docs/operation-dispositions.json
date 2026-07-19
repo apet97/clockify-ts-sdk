@@ -7,6 +7,7 @@
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
     "operationEvidence": "docs/operation-evidence-map.json",
     "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
+    "operationEvidenceSemantics": "docs/operation-evidence-semantic-contract.json",
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
@@ -543,7 +544,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "updateExpenseCategory",
@@ -1559,9 +1563,7 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": [
-        "gen-clockify-openapi.pagination-params-stamped"
-      ]
+      "evidenceIds": []
     },
     {
       "operationId": "getWorkspacesWorkspaceIdSharedReports",
@@ -1853,7 +1855,6 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "fern.x-fern-pagination.bare-array-unsupported",
         "gen-clockify-openapi.pagination-params-stamped",
         "getTimeOffPolicies.sort-order.enum-tightened",
         "pagination.last-page-header.live-audit-2026-05-25",
@@ -1947,6 +1948,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
       ]
     },
@@ -1963,7 +1966,9 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.change-status.union-and-note",
+        "time-off.request.status.schema-collision",
         "time-off.requests.update-status.wrong-method-and-field"
       ]
     },
@@ -1979,6 +1984,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.requests.delete.policy-scoped-only-pending"
       ]
     },
@@ -1994,6 +2001,8 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
       ]
     },

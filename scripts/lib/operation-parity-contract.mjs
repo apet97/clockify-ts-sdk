@@ -77,6 +77,7 @@ export function validateOperationDisposition({
     inventory,
     knownEvidenceIds,
     receipt,
+    semanticEvidenceExpectations = {},
 }) {
     const failures = [];
     const inventoryOperations = inventory?.operations ?? [];
@@ -189,6 +190,17 @@ export function validateOperationDisposition({
             if (!anchorsById.has(evidenceId)) {
                 failures.push(`${evidenceId}: discrepancy-ledger anchor is missing from the anchor inventory`);
             }
+        }
+    }
+    for (const [evidenceId, expectation] of Object.entries(semanticEvidenceExpectations)) {
+        const anchor = anchorsById.get(evidenceId);
+        const expectedOperationIds = [...(expectation?.operationIds ?? [])].sort();
+        const actualOperationIds = [...(anchor?.operationIds ?? [])].sort();
+        if (
+            anchor?.applicability !== expectation?.applicability ||
+            JSON.stringify(actualOperationIds) !== JSON.stringify(expectedOperationIds)
+        ) {
+            failures.push(`${evidenceId}: anchor inventory differs from independent semantic expectation`);
         }
     }
 

@@ -4,6 +4,7 @@
   "sources": {
     "openapi": "docs/openapi-operations.json",
     "anchorInventory": "docs/operation-evidence-anchor-inventory.json",
+    "semanticContract": "docs/operation-evidence-semantic-contract.json",
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
@@ -231,9 +232,11 @@
     },
     {
       "operationId": "addExpenseCategory",
-      "status": "audited-no-applicable-evidence",
-      "evidenceIds": [],
-      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "updateExpenseCategory",
@@ -752,10 +755,9 @@
     },
     {
       "operationId": "getUserCapacityTotal",
-      "status": "applicable",
-      "evidenceIds": [
-        "gen-clockify-openapi.pagination-params-stamped"
-      ]
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
     },
     {
       "operationId": "copyScheduledAssignment",
@@ -901,7 +903,6 @@
       "operationId": "getTimeOffPolicies",
       "status": "applicable",
       "evidenceIds": [
-        "fern.x-fern-pagination.bare-array-unsupported",
         "gen-clockify-openapi.pagination-params-stamped",
         "getTimeOffPolicies.sort-order.enum-tightened",
         "pagination.last-page-header.live-audit-2026-05-25",
@@ -949,6 +950,8 @@
       "operationId": "createTimeOffRequest",
       "status": "applicable",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
       ]
     },
@@ -957,7 +960,9 @@
       "status": "applicable",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
         "time-off.change-status.union-and-note",
+        "time-off.request.status.schema-collision",
         "time-off.requests.update-status.wrong-method-and-field"
       ]
     },
@@ -965,6 +970,8 @@
       "operationId": "deleteTimeOffRequest",
       "status": "applicable",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.requests.delete.policy-scoped-only-pending"
       ]
     },
@@ -972,6 +979,8 @@
       "operationId": "createTimeOffRequestForUser",
       "status": "applicable",
       "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.status.schema-collision",
         "time-off.submit.period-shape-is-policy-type-dependent"
       ]
     },

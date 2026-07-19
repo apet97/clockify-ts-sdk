@@ -118,6 +118,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage and exact generated-SDK split contract. |
 | [`operation-dispositions.json`](./operation-dispositions.json) | `make operation-parity` | All 169 operations mapped to codegen-receipt reachability, naming class, and evidence identifiers. |
 | [`operation-evidence-anchor-inventory.json`](./operation-evidence-anchor-inventory.json) | edit intentionally | Complete reviewed classification of every discrepancy-ledger anchor and its current operation applicability. |
+| [`operation-evidence-semantic-contract.json`](./operation-evidence-semantic-contract.json) | edit intentionally | Independent canonical pagination routes plus route/schema-derived evidence-set expectations. |
 | [`operation-evidence-map.json`](./operation-evidence-map.json) | `make operation-parity` | Derived 169-row evidence audit with applicable anchors or an explicit audited-no-applicable-evidence reason. |
 | [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 14 operationId-derived generated methods. |
 | [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Receipt-derived generated SDK, TS MCP, and GOCLMCP parity join. |
