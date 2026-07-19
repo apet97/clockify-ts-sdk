@@ -255,6 +255,17 @@ the shadow/non-native and definite-overwrite controls stayed green. The finished
 focused set passes **10/10**, and the complete controller suite passes
 **399/399** fixtures while retaining the prior 389 cases.
 
+The eighteenth corrective review preserves runtime order when a custom binder's
+returned callable is invoked immediately in the same expression. Lifted effects
+now carry an explicit execution phase after their source position: binder-body
+effects are phase 0 and returned-callable effects are phase 1. A definite safe
+returned write therefore dominates an earlier unsafe binder write for direct,
+`call`, and `apply` forms, while unsafe-last and conditional-later-safe paths
+remain findings. Three of the initial seven focused cases failed against
+`5f61853`; all four unsafe/conditional controls stayed green. The finished
+focused set passes **7/7**, and the complete controller suite passes **406/406**
+fixtures while retaining the prior 399 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -279,7 +290,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final seventeenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final eighteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

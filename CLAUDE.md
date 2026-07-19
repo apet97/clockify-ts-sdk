@@ -252,7 +252,9 @@ make docs-drift
   restoration resumes native normalization even though `Function.prototype`
   itself is not callable. Invoked custom binders contribute synchronous body
   effects before their returned callable; captured receiver effects and later
-  definite-write dominance retain runtime order.
+  definite-write dominance retain runtime order. Immediate nested calls carry
+  explicit binder-body then returned-callable phases even at one source
+  position; conditional later writes remain non-dominating.
   Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
   the same bounded static/spread argument-list path only while its ordered
   reaching member is native; restoration and captured-native aliases remain

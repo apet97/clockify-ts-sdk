@@ -318,12 +318,19 @@ function analyzeProgram({
         addInvocation(declaration, node, args);
     }
 
-    function addInvocation(declaration, node, args, capturedSubstitutions = new Map()) {
+    function addInvocation(
+        declaration,
+        node,
+        args,
+        capturedSubstitutions = new Map(),
+        executionPhase = 0,
+    ) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
         const invocation = {
             node,
             arguments: [...args],
             capturedSubstitutions: new Map(capturedSubstitutions),
+            executionPhase,
         };
         const calls = callsByDeclaration.get(declaration) ?? [];
         if (
@@ -337,7 +344,8 @@ function analyzeProgram({
                     existing.capturedSubstitutions.size === invocation.capturedSubstitutions.size &&
                     [...existing.capturedSubstitutions].every(
                         ([symbol, value]) => invocation.capturedSubstitutions.get(symbol) === value,
-                    ),
+                    ) &&
+                    existing.executionPhase === invocation.executionPhase,
             )
         ) {
             calls.push(invocation);
@@ -1810,7 +1818,7 @@ function analyzeProgram({
         for (const value of reachingExpressionValues(expression, beforePosition)) {
             const declaration = functionDeclarationForExpression(value.expression);
             if (!declaration?.body) continue;
-            addInvocation(declaration, invocation, args, value.substitutions);
+            addInvocation(declaration, invocation, args, value.substitutions, 0);
             const substitutions = new Map(value.substitutions);
             declaration.parameters.forEach((parameter, index) => {
                 const argument = args[index];
@@ -2012,7 +2020,7 @@ function analyzeProgram({
             if (candidate.invokeReturned) {
                 const declaration = functionDeclarationForExpression(candidate.expression);
                 if (declaration?.body) {
-                    addInvocation(declaration, expression, args, candidate.substitutions);
+                    addInvocation(declaration, expression, args, candidate.substitutions, 1);
                 }
                 normalized.push(
                     ...normalizeEffectiveCalls(
@@ -2699,6 +2707,7 @@ function analyzeProgram({
                 position: call.pos,
                 sourceFile: call.getSourceFile(),
                 executionNode: call,
+                executionPhase: (effect.executionPhase ?? 0) + (invocation.executionPhase ?? 0),
                 receiverOverride: receiver,
                 substitutions: new Map([...(effect.substitutions ?? []), ...substitutions]),
                 definiteEffectNames: expressionDefinitelyExecutesOnInvocation(
@@ -2856,6 +2865,13 @@ function analyzeProgram({
         );
     }
 
+    function compareExecutionOrder(left, right) {
+        return (
+            left.position - right.position ||
+            (left.executionPhase ?? 0) - (right.executionPhase ?? 0)
+        );
+    }
+
     function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
         if (usePropertyNames?.length !== 1) return writes;
         const useLocation = directStatementInLinearContainer(expression);
@@ -2874,9 +2890,11 @@ function analyzeProgram({
             ) {
                 continue;
             }
-            cutoff = Math.max(cutoff ?? -1, write.position);
+            if (cutoff == null || compareExecutionOrder(write, cutoff) > 0) cutoff = write;
         }
-        return cutoff == null ? writes : writes.filter((write) => write.position >= cutoff);
+        return cutoff == null
+            ? writes
+            : writes.filter((write) => compareExecutionOrder(write, cutoff) >= 0);
     }
 
     function reachingWrites(symbol, expression) {
@@ -2904,7 +2922,7 @@ function analyzeProgram({
                             write.position < expression.pos &&
                             writeMayReachExpression(write, expression),
                     )
-                    .sort((left, right) => left.position - right.position)
+                    .sort(compareExecutionOrder)
                     .filter((write, index, all) => index === 0 || write !== all[index - 1]),
                 usePropertyNames,
             ),
