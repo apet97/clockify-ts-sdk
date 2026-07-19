@@ -278,6 +278,18 @@ the eight all-safe, unsafe-last, conditional, early-return, and receiver control
 stayed green. The finished focused set passes **19/19**, and the complete
 controller suite passes **425/425** fixtures while retaining the prior 406 cases.
 
+The twentieth corrective review follows immediately invoked returned callables
+recursively instead of stopping after one binder-return layer. Each nested call
+increments its execution phase and refines its parent's mutually exclusive path
+into concrete return leaves, so safe-final and unsafe-final writes are ordered
+correctly across direct, `call`, and `apply` forms without merging exclusive
+alternatives. Depth, work, and alternative caps plus unresolved invoked returns
+fail closed; returning a nested callable without invoking it remains a
+non-effect. Eleven of the initial 18 focused cases failed against `d03ece0`; the
+seven conditional/noop, mutually exclusive, and non-invoked controls stayed
+green. The finished focused set passes **18/18**, and the complete controller
+suite passes **443/443** fixtures while retaining the prior 425 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -302,7 +314,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final nineteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twentieth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

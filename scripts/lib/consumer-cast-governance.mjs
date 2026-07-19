@@ -339,7 +339,9 @@ function analyzeProgram({
         };
         if (alternativeGroup != null && alternativePath != null) {
             const paths = alternativePathsByGroup.get(alternativeGroup) ?? new Set();
-            paths.add(alternativePath);
+            if (![...paths].some((path) => path.startsWith(`${alternativePath}/`))) {
+                paths.add(alternativePath);
+            }
             alternativePathsByGroup.set(alternativeGroup, paths);
         }
         const calls = callsByDeclaration.get(declaration) ?? [];
@@ -1874,12 +1876,101 @@ function analyzeProgram({
                     kind: "returned",
                     expression: returnedValue.expression,
                     substitutions: returnedValue.substitutions,
+                    executionPhase: 1,
                     alternativeGroup,
                     alternativePath,
                 });
             });
         }
         return bounded(alternatives, "custom binder returns");
+    }
+
+    function refineAlternativePath(group, parentPath, childPaths) {
+        if (group == null || parentPath == null) return;
+        const paths = alternativePathsByGroup.get(group) ?? new Set();
+        paths.delete(parentPath);
+        childPaths.forEach((path) => {
+            if (![...paths].some((existing) => existing.startsWith(`${path}/`))) {
+                paths.add(path);
+            }
+        });
+        alternativePathsByGroup.set(group, paths);
+    }
+
+    function nestedReturnedAlternatives(candidates, args, invocation, depth) {
+        if (depth > MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve invoked nested returned callable (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return [];
+        }
+        const alternatives = [];
+        for (const candidate of candidates) {
+            if (candidate.kind !== "returned") continue;
+            const declaration = functionDeclarationForExpression(candidate.expression);
+            if (!declaration?.body) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve invoked nested returned callable",
+                );
+                continue;
+            }
+            addInvocation(
+                declaration,
+                invocation,
+                args,
+                candidate.substitutions,
+                candidate.executionPhase,
+                candidate.alternativeGroup,
+                candidate.alternativePath,
+            );
+            const substitutions = new Map(candidate.substitutions);
+            declaration.parameters.forEach((parameter, index) => {
+                const argument = args[index];
+                if (!argument) return;
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (symbol) substitutions.set(symbol, argument);
+            });
+            const returnedAlternatives = bounded(
+                functionReturnExpressions(declaration).flatMap((returned) =>
+                    reachingExpressionValues(returned, invocation.pos, new Set(), substitutions),
+                ),
+                "nested returned callable alternatives",
+            );
+            if (returnedAlternatives.length === 0) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve invoked nested returned callable",
+                );
+                continue;
+            }
+            const childPaths = returnedAlternatives.map(
+                (_returned, index) => `${candidate.alternativePath}/${index}`,
+            );
+            refineAlternativePath(
+                candidate.alternativeGroup,
+                candidate.alternativePath,
+                childPaths,
+            );
+            returnedAlternatives.forEach((returnedValue, index) => {
+                const returnedDeclaration = functionDeclarationForExpression(
+                    returnedValue.expression,
+                );
+                if (!returnedDeclaration?.body) {
+                    analysisFailures.add(
+                        "consumer cast analysis could not statically resolve invoked nested returned callable",
+                    );
+                    return;
+                }
+                alternatives.push({
+                    kind: "returned",
+                    expression: returnedValue.expression,
+                    substitutions: returnedValue.substitutions,
+                    executionPhase: candidate.executionPhase + 1,
+                    alternativeGroup: candidate.alternativeGroup,
+                    alternativePath: childPaths[index],
+                });
+            });
+        }
+        return bounded(alternatives, "nested returned callable paths");
     }
 
     function reflectApplyAlternatives(expression, beforePosition, seen = new Set()) {
@@ -1939,7 +2030,7 @@ function analyzeProgram({
         );
     }
 
-    function boundFunctionAlternatives(expression, beforePosition, seen = new Set()) {
+    function boundFunctionAlternatives(expression, beforePosition, seen = new Set(), depth = 0) {
         expression = unwrapExpression(expression);
         const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:bound-function`;
         if (seen.has(key)) return [{ kind: "plain", expression }];
@@ -1949,13 +2040,33 @@ function analyzeProgram({
         if (ts.isIdentifier(expression)) {
             const values = reachingExpressionValues(expression, beforePosition);
             const alternatives = values.flatMap((value) =>
-                boundFunctionAlternatives(value.expression, value.pos ?? beforePosition, nextSeen),
+                boundFunctionAlternatives(
+                    value.expression,
+                    value.pos ?? beforePosition,
+                    nextSeen,
+                    depth,
+                ),
             );
             return alternatives.some((alternative) => alternative.kind !== "plain")
                 ? bounded(alternatives, "bound function alternatives")
                 : [{ kind: "plain", expression }];
         }
         if (!ts.isCallExpression(expression)) return [{ kind: "plain", expression }];
+
+        const calleeAlternatives = boundFunctionAlternatives(
+            expression.expression,
+            expression.pos,
+            nextSeen,
+            depth + 1,
+        );
+        if (calleeAlternatives.some((alternative) => alternative.kind === "returned")) {
+            return nestedReturnedAlternatives(
+                calleeAlternatives,
+                [...expression.arguments],
+                expression,
+                depth + 1,
+            );
+        }
 
         const direct = invocationAdapter(expression.expression, expression.pos);
         const directBindAlternatives = bindMemberAlternatives(
@@ -2050,6 +2161,7 @@ function analyzeProgram({
                             expression: candidate.expression,
                             invokeReturned: candidate.kind === "returned",
                             substitutions: candidate.substitutions,
+                            executionPhase: candidate.executionPhase,
                             alternativeGroup: candidate.alternativeGroup,
                             alternativePath: candidate.alternativePath,
                         },
@@ -2076,7 +2188,7 @@ function analyzeProgram({
                         expression,
                         args,
                         candidate.substitutions,
-                        1,
+                        candidate.executionPhase,
                         candidate.alternativeGroup,
                         candidate.alternativePath,
                     );
@@ -2966,6 +3078,10 @@ function analyzeProgram({
         );
     }
 
+    function alternativePathCovers(writePath, leafPath) {
+        return writePath === leafPath || leafPath.startsWith(`${writePath}/`);
+    }
+
     function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
         if (usePropertyNames?.length !== 1) return writes;
         const useLocation = directStatementInLinearContainer(expression);
@@ -2997,7 +3113,8 @@ function analyzeProgram({
                 const latest = definiteWrites
                     .filter(
                         (write) =>
-                            write.alternativeGroup === group && write.alternativePath === path,
+                            write.alternativeGroup === group &&
+                            alternativePathCovers(write.alternativePath, path),
                     )
                     .sort(compareExecutionOrder)
                     .at(-1);
