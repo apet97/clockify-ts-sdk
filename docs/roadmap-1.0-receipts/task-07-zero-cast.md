@@ -219,6 +219,18 @@ and computed bind members, normalize recursively; merely creating the bound
 function remains a non-effect. The final governance suite passes **354/354**
 fixtures.
 
+The fifteenth corrective review adds global-provenance `Reflect.apply`
+normalization for direct, aliased, literal/const-computed calls and governed
+target aliases. Its third argument uses the same bounded static tuple/array and
+spread flattening as Function `apply`; unresolved or overflowing lists for a
+governed target fail closed. Bind recognition now proves that the reaching
+member is the native lib-declared `Function.prototype.bind` and rejects
+exact-callable property overwrites without conflating sibling functions,
+including custom bind functions invoked
+through direct, `call`, or `apply` paths. Shadow `Reflect`, unrelated targets,
+custom bind members, and uninvoked native binds remain non-effects. The final
+governance suite passes **370/370** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -243,7 +255,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final fourteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final fifteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

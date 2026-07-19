@@ -244,8 +244,12 @@ make docs-drift
   spreads), and later-invoked `bind` captures before effect classification.
   Mixed local/bound alternatives remain distinct; recursive
   `bind.call`/`bind.apply` adapters are modeled only when the returned function
-  is invoked; unresolved/invalid governed apply lists fail closed; and
-  uninvoked binds remain non-effects.
+  is invoked and the reaching member retains native `Function.prototype.bind`
+  identity rather than an exact-callable custom/overwritten property; sibling
+  callable writes stay isolated. Global-provenance direct/aliased/computed
+  `Reflect.apply` is normalized through the same bounded
+  static/spread argument-list path. Unresolved/invalid governed apply lists fail
+  closed; uninvoked binds remain non-effects.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely

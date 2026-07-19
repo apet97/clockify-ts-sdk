@@ -424,8 +424,13 @@ end-to-end and green before push. Drift gates are non-negotiable.
     statically resolvable spreads), and later-invoked `bind` captures before
     effect classification. Mixed local/bound alternatives remain distinct;
     recursive `bind.call`/`bind.apply` adapters are modeled only when their
-    returned function is invoked; and unresolved/invalid governed apply lists
-    fail closed while uninvoked binds remain non-effects. It rejects
+    returned function is invoked, and only when the reaching member retains the
+    native `Function.prototype.bind` identity rather than an exact-callable
+    custom/overwritten property; sibling callable writes stay isolated.
+    Global-provenance direct/aliased/computed `Reflect.apply`
+    is normalized through the same bounded static/spread argument-list path.
+    Unresolved/invalid governed apply lists fail closed while uninvoked binds
+    remain non-effects. It rejects
     direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
