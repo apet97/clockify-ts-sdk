@@ -8,6 +8,21 @@
       "pointer": "operationCount"
     },
     {
+      "label": "SDK generated operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkGenerated"
+    },
+    {
+      "label": "SDK explicitly named operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkExplicitlyNamed"
+    },
+    {
+      "label": "SDK operationId-derived operations",
+      "source": "docs/operation-parity.json",
+      "pointer": "summary.sdkOperationIdDerived"
+    },
+    {
       "label": "MCP tools (total)",
       "source": "docs/mcp-tools.json",
       "pointer": "summary.totalTools"
@@ -40,6 +55,9 @@
   ],
   "consistencyChecks": [
     "openapi-operations.operationCount == operation-parity.summary.operations",
+    "operation-parity.summary.sdkGenerated == operation-parity.summary.operations",
+    "operation-parity.summary.sdkGenerated == operation-dispositions.summary.sdkGenerated",
+    "operation-parity.summary.sdkExplicitlyNamed + summary.sdkOperationIdDerived == summary.sdkGenerated",
     "mcp-tools.summary.totalTools == summary.workflowTools + summary.domainTools",
     "mcp-tools.summary.workflowTools == mcp-tools.workflowTools.length",
     "mcp-tools.summary.domainTools == sum(mcp-tools.domainGroups[].count)",
@@ -83,7 +101,10 @@
     "29 commands",
     "35 commands",
     "127 tools",
-    "134 tools"
+    "134 tools",
+    "169/156",
+    "156 of 169 operations",
+    "156 ops mapped"
   ],
   "wiring": {
     "makeTarget": "docs-counts",

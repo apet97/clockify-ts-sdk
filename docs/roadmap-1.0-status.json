@@ -48,13 +48,17 @@
     "task7RequestCastRiskStatus": "open"
   },
   "operationReachability": {
-    "status": "no-generated-reachability-receipt-recorded",
-    "observedParitySummary": {
-      "operations": 169,
-      "sdkNamed": 156
+    "status": "implemented",
+    "receipt": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",
+    "generatedParitySummary": {
+      "sdkGenerated": 169,
+      "sdkExplicitlyNamed": 155,
+      "sdkOperationIdDerived": 14
     },
-    "currentMappingMethod": "scripts/generate-operation-parity.mjs derives inferredSdk from OpenAPI sdkGroup and sdkMethod; it does not import the generated SDK or execute the named method.",
-    "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md maps every claimed SDK path to an importable generated client method."
+    "reachabilitySource": "output/ts-sdk/codegen-receipt.json",
+    "dispositionArtifact": "docs/operation-dispositions.json",
+    "derivedNamingRegistry": "docs/sdk-operation-naming-classifications.json",
+    "failClosedProof": "scripts/generate-operation-parity.test.mjs rejects stale counts, new/renamed/unclassified derived operations, duplicate/missing dispositions, receipt/artifact mismatch, and explicit/derived inversion."
   },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "purpose": "Curated operation parity mappings for cases where SDK names, TS MCP tools, or GOCLMCP tools cannot be inferred mechanically.",
+  "purpose": "Curated TS MCP and GOCLMCP parity mappings that cannot be inferred mechanically; generated SDK paths come only from the codegen receipt.",
   "overrides": [
     { "operationId": "generateAttendanceReport", "goMcp": "clockify_reports_attendance", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
     { "operationId": "generateDetailedReport", "goMcp": "clockify_reports_detailed", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
-    { "operationId": "generateDetailedReportV1", "sdk": "client.expenseReport.generateDetailedReportV1", "goMcp": "clockify_reports_expense", "reason": "Expense reports are generated under an operationId-derived SDK module and a reports-family Go MCP tool." },
+    { "operationId": "generateDetailedReportV1", "goMcp": "clockify_reports_expense", "reason": "Expense reports use a reports-family Go MCP tool; generated SDK reachability and naming come from the receipt/disposition artifacts." },
     { "operationId": "generateSummaryReport", "goMcp": "clockify_reports_summary", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
     { "operationId": "generateWeeklyReport", "goMcp": "clockify_reports_weekly", "reason": "GOCLMCP reports use report-family names instead of generic operation verbs." },
     { "operationId": "searchAuditLogs", "goMcp": "clockify_audit_logs_search", "reason": "GOCLMCP keeps audit logs plural in the tool name." },

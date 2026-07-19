@@ -132,6 +132,8 @@
         "OpenAPI truth and generated core",
         "GOCLMCP drift gates",
         "local codegen drift",
+        "local codegen receipt",
+        "all-operation dispositions",
         "generated-edit guard"
       ]
     },
@@ -227,7 +229,9 @@
     {
       "path": "docs/operation-coverage-contract.json",
       "mustContain": [
-        "sdkNamed",
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
         "tsMcpExact",
         "goMcpExact",
         "curated"

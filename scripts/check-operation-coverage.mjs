@@ -164,6 +164,9 @@ function validateContractShape() {
     if (assertObject("reportInputs", contract.reportInputs)) {
         safeRelativePath("reportInputs.openapiOperations", contract.reportInputs.openapiOperations);
         safeRelativePath("reportInputs.operationParity", contract.reportInputs.operationParity);
+        safeRelativePath("reportInputs.operationDispositions", contract.reportInputs.operationDispositions);
+        safeRelativePath("reportInputs.sdkNamingClassifications", contract.reportInputs.sdkNamingClassifications);
+        safeRelativePath("reportInputs.sdkCodegenReceipt", contract.reportInputs.sdkCodegenReceipt);
     }
 
     if (assertObject("driftWiring", contract.driftWiring)) {
@@ -215,7 +218,15 @@ function validateContractShape() {
     }
 
     if (assertObject("thresholds", contract.thresholds)) {
-        for (const key of ["operations", "sdkNamed", "tsMcpExact", "goMcpExact", "curated"]) {
+        for (const key of [
+            "operations",
+            "sdkGenerated",
+            "sdkExplicitlyNamed",
+            "sdkOperationIdDerived",
+            "tsMcpExact",
+            "goMcpExact",
+            "curated",
+        ]) {
             assertNonNegativeInteger(`thresholds.${key}`, contract.thresholds[key]);
         }
     }
@@ -266,6 +277,12 @@ if (failures.length > 0) {
 
 const parity = (await readJsonRel(contract.reportInputs.operationParity, "reportInputs.operationParity")) ?? {};
 const openapi = (await readJsonRel(contract.reportInputs.openapiOperations, "reportInputs.openapiOperations")) ?? {};
+const dispositions =
+    (await readJsonRel(contract.reportInputs.operationDispositions, "reportInputs.operationDispositions")) ?? {};
+const classifications =
+    (await readJsonRel(contract.reportInputs.sdkNamingClassifications, "reportInputs.sdkNamingClassifications")) ?? {};
+const receipt =
+    (await readJsonRel(contract.reportInputs.sdkCodegenReceipt, "reportInputs.sdkCodegenReceipt")) ?? {};
 const makefile = await readRel("Makefile");
 const docsIndex = await readRel("docs/README.md");
 const qualityGates = await readRel("docs/quality-gates.md");
@@ -286,7 +303,27 @@ if (openapi.operationCount !== thresholds.operations) {
 if (summary.operations !== thresholds.operations) {
     fail(contract.reportInputs.operationParity, `expected summary.operations ${thresholds.operations}, got ${summary.operations}`);
 }
-for (const key of ["sdkNamed", "tsMcpExact", "goMcpExact", "curated"]) {
+for (const key of ["sdkGenerated", "sdkExplicitlyNamed", "sdkOperationIdDerived"]) {
+    if (summary[key] !== thresholds[key]) {
+        fail(contract.reportInputs.operationParity, `${key} expected ${thresholds[key]}, got ${summary[key]}`);
+    }
+    if (dispositions?.summary?.[key] !== thresholds[key]) {
+        fail(
+            contract.reportInputs.operationDispositions,
+            `${key} expected ${thresholds[key]}, got ${dispositions?.summary?.[key]}`,
+        );
+    }
+}
+if (receipt.operationCount !== thresholds.sdkGenerated) {
+    fail(contract.reportInputs.sdkCodegenReceipt, `operationCount expected ${thresholds.sdkGenerated}, got ${receipt.operationCount}`);
+}
+if ((classifications.classifications ?? []).length !== thresholds.sdkOperationIdDerived) {
+    fail(
+        contract.reportInputs.sdkNamingClassifications,
+        `classification count expected ${thresholds.sdkOperationIdDerived}, got ${(classifications.classifications ?? []).length}`,
+    );
+}
+for (const key of ["tsMcpExact", "goMcpExact", "curated"]) {
     if (typeof thresholds[key] !== "number") fail("thresholds", `missing numeric threshold ${key}`);
     if (typeof summary[key] !== "number") fail(contract.reportInputs.operationParity, `missing numeric summary ${key}`);
     if (typeof thresholds[key] === "number" && typeof summary[key] === "number" && summary[key] < thresholds[key]) {
@@ -400,5 +437,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-    `Operation coverage contract passed (${summary.operations} ops, ${summary.sdkNamed} SDK, ${summary.tsMcpExact} TS MCP, ${summary.goMcpExact} Go MCP, ${summary.curated} curated).`,
+    `Operation coverage contract passed (${summary.operations} ops, ${summary.sdkGenerated} generated SDK = ${summary.sdkExplicitlyNamed} explicit + ${summary.sdkOperationIdDerived} operationId-derived, ${summary.tsMcpExact} TS MCP, ${summary.goMcpExact} Go MCP, ${summary.curated} curated).`,
 );

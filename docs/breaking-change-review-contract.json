@@ -68,7 +68,9 @@
       "id": "openapi-truth-surface",
       "path": "docs/operation-coverage-contract.json",
       "mustContain": [
-        "sdkNamed",
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
         "tsMcpExact",
         "goMcpExact",
         "curated"

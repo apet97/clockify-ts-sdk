@@ -15,7 +15,7 @@ if (inventory.operationCount !== 169) fail(`expected 169 operations, got ${inven
 if (!Array.isArray(inventory.operations)) fail("operations must be an array");
 
 const operationIds = new Set();
-let sdkNamed = 0;
+let sdkExplicitlyNamed = 0;
 let lastPage = 0;
 let paginated = 0;
 
@@ -31,7 +31,7 @@ for (const op of inventory.operations ?? []) {
     const hasSdkGroup = typeof op.sdkGroup === "string" && op.sdkGroup.length > 0;
     const hasSdkMethod = typeof op.sdkMethod === "string" && op.sdkMethod.length > 0;
     if (hasSdkGroup !== hasSdkMethod) fail(`${label}: sdk group/method stamp is partial`);
-    if (hasSdkGroup && hasSdkMethod) sdkNamed += 1;
+    if (hasSdkGroup && hasSdkMethod) sdkExplicitlyNamed += 1;
 
     const params = Array.isArray(op.parameters) ? op.parameters : [];
     const paramNames = new Set(params.map((param) => param.name));
@@ -48,7 +48,9 @@ for (const op of inventory.operations ?? []) {
     }
 }
 
-if (sdkNamed < 155) fail(`expected at least 155 SDK-named operations, got ${sdkNamed}`);
+if (sdkExplicitlyNamed !== 155) {
+    fail(`expected exactly 155 explicitly named SDK operations, got ${sdkExplicitlyNamed}`);
+}
 if (paginated < 18) fail(`expected at least 18 paginated operations, got ${paginated}`);
 if (lastPage < 15) fail(`expected at least 15 Last-Page-aware operations, got ${lastPage}`);
 
@@ -57,4 +59,4 @@ if (failures.length > 0) {
     process.exit(1);
 }
 
-console.log(`OpenAPI contract lint passed: ${inventory.operationCount} ops, ${sdkNamed} SDK-named, ${paginated} paginated, ${lastPage} Last-Page-aware.`);
+console.log(`OpenAPI contract lint passed: ${inventory.operationCount} ops, ${sdkExplicitlyNamed} explicitly named SDK operations, ${paginated} paginated, ${lastPage} Last-Page-aware.`);

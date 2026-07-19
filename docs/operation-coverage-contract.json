@@ -6,7 +6,9 @@
     "contains": [
       "Coverage baseline",
       "OpenAPI operations",
-      "SDK-named operations",
+      "Generated SDK operations",
+      "Explicitly named SDK operations",
+      "OperationId-derived SDK operations",
       "TS MCP exact operation/tool matches",
       "GOCLMCP exact operation/tool matches",
       "Curated parity overrides",
@@ -20,7 +22,10 @@
   },
   "reportInputs": {
     "openapiOperations": "docs/openapi-operations.json",
-    "operationParity": "docs/operation-parity.json"
+    "operationParity": "docs/operation-parity.json",
+    "operationDispositions": "docs/operation-dispositions.json",
+    "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
+    "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json"
   },
   "driftWiring": {
     "target": "operation-parity-drift",
@@ -49,7 +54,9 @@
   },
   "thresholds": {
     "operations": 169,
-    "sdkNamed": 156,
+    "sdkGenerated": 169,
+    "sdkExplicitlyNamed": 155,
+    "sdkOperationIdDerived": 14,
     "tsMcpExact": 92,
     "goMcpExact": 82,
     "curated": 32
@@ -64,8 +71,10 @@
   "requiredDocs": [
     "docs/operation-coverage-policy.md",
     "docs/openapi-operations.json",
+    "docs/operation-dispositions.json",
     "docs/operation-parity.json",
     "docs/operation-parity-overrides.json",
+    "docs/sdk-operation-naming-classifications.json",
     "docs/naming-taxonomy-policy.md",
     "docs/risk-register.md"
   ],
@@ -79,9 +88,21 @@
       ]
     },
     {
+      "path": "docs/operation-dispositions.json",
+      "contains": [
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
+        "reachable",
+        "evidenceIds"
+      ]
+    },
+    {
       "path": "docs/operation-parity.json",
       "contains": [
-        "sdkNamed",
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
         "tsMcpExact",
         "goMcpExact",
         "curated",
@@ -89,25 +110,44 @@
       ]
     },
     {
+      "path": "docs/sdk-operation-naming-classifications.json",
+      "contains": [
+        "operationId-derived",
+        "generatedGroup",
+        "generatedMethod",
+        "evidenceIds"
+      ]
+    },
+    {
       "path": "docs/operation-parity-overrides.json",
       "contains": [
-        "Curated operation parity mappings",
+        "Curated TS MCP and GOCLMCP parity mappings",
         "reason"
       ]
     },
     {
       "path": "scripts/generate-operation-parity.mjs",
       "contains": [
-        "sdkNamed",
+        "codegen-receipt.json",
         "tsMcpExact",
         "goMcpExact",
         "curated"
       ]
     },
     {
+      "path": "scripts/lib/operation-parity-contract.mjs",
+      "contains": [
+        "sdkGenerated",
+        "sdkExplicitlyNamed",
+        "sdkOperationIdDerived",
+        "unclassified operationId-derived generated operation",
+        "duplicate ${label} rows"
+      ]
+    },
+    {
       "path": "scripts/lint-openapi-contract.mjs",
       "contains": [
-        "expected at least 155 SDK-named operations",
+        "expected exactly 155 explicitly named SDK operations",
         "expected 169 operations"
       ]
     }

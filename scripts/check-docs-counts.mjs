@@ -69,6 +69,7 @@ if (failures.length > 0) {
 // --- load generated sources ---
 const openapiOps = readJson("docs/openapi-operations.json") ?? {};
 const parity = readJson("docs/operation-parity.json") ?? {};
+const dispositions = readJson("docs/operation-dispositions.json") ?? {};
 const mcpTools = readJson("docs/mcp-tools.json") ?? {};
 const productSurface = readJson("docs/product-surface.json") ?? {};
 const cliCommands = readJson("docs/cli-commands.json") ?? {};
@@ -84,6 +85,13 @@ const domainSum = Array.isArray(mcpTools?.domainGroups)
     : NaN;
 
 eq("operations openapi-operations vs operation-parity", openapiOps.operationCount, parity?.summary?.operations);
+eq("SDK generated vs operations", parity?.summary?.sdkGenerated, parity?.summary?.operations);
+eq("SDK generated parity vs dispositions", parity?.summary?.sdkGenerated, dispositions?.summary?.sdkGenerated);
+eq(
+    "SDK explicit+derived vs generated",
+    (parity?.summary?.sdkExplicitlyNamed ?? NaN) + (parity?.summary?.sdkOperationIdDerived ?? NaN),
+    parity?.summary?.sdkGenerated,
+);
 eq("mcp totalTools vs workflow+domain", mcpTools?.summary?.totalTools, (mcpTools?.summary?.workflowTools ?? NaN) + (mcpTools?.summary?.domainTools ?? NaN));
 eq("mcp workflowTools count vs array", mcpTools?.summary?.workflowTools, Array.isArray(mcpTools?.workflowTools) ? mcpTools.workflowTools.length : NaN);
 eq("mcp domainTools vs domainGroups sum", mcpTools?.summary?.domainTools, domainSum);
@@ -156,6 +164,7 @@ if (failures.length > 0) {
 // --- print authoritative counts ---
 const sources = {
     "docs/openapi-operations.json": openapiOps,
+    "docs/operation-parity.json": parity,
     "docs/mcp-tools.json": mcpTools,
     "docs/cli-commands.json": cliCommands,
     "docs/sdk-public-api.json": sdkApi,

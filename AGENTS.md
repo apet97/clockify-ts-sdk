@@ -567,11 +567,12 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
 3. `fern.x-fern-sdk-method-name.drops-resource-modules` — resolved
    in v0.5.0 by pairing `x-fern-sdk-group-name` +
    `x-fern-sdk-method-name`. Coverage: 155 ops / 27 modules /
-   91.7% of the 169-op live surface. The other ~14 ops are
-   already-clean operationIds or per-module domain edge cases.
-   (This 155 is the fern *pairing* count. The SDK README states 156 —
-   total method-name coverage — which adds the one operationId-derived
-   method, `expenseReport.generateDetailedReportV1`, to these 155.)
+   91.7% of the 169-op live surface. The other 14 ops use governed
+   operationId-derived group/method names. All 169 are generated and
+   reachable according to `output/ts-sdk/codegen-receipt.json`; the
+   exact 155 explicit / 14 derived split is enforced by
+   `docs/sdk-operation-naming-classifications.json` and materialized
+   for every operation in `docs/operation-dispositions.json`.
 
 Re-attempt item 1 only after the upstream gating concern resolves
 (Fern issue acknowledged or workaround discovered).

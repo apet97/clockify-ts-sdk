@@ -2,12 +2,20 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+    buildOperationDisposition,
+    validateOperationDisposition,
+} from "./lib/operation-parity-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = new Set(process.argv.slice(2));
 const openapiPath = path.join(root, "docs", "openapi-operations.json");
+const receiptPath = path.join(root, "output", "ts-sdk", "codegen-receipt.json");
 const goCatalogPath = path.join(root, "..", "GOCLMCP", "docs", "tool-catalog.json");
 const overridesPath = path.join(root, "docs", "operation-parity-overrides.json");
+const classificationsPath = path.join(root, "docs", "sdk-operation-naming-classifications.json");
+const discrepancyLedgerPath = path.join(root, "spec", "evidence", "discrepancies.md");
+const dispositionPath = path.join(root, "docs", "operation-dispositions.json");
 const jsonPath = path.join(root, "docs", "operation-parity.json");
 const mdPath = path.join(root, "docs", "operation-parity.md");
 
@@ -91,21 +99,23 @@ function candidateTools(op) {
     return methodAliases(methodSource).map((method) => `clockify_${group}_${method}`);
 }
 
-function build() {
-    const inventory = readJson(openapiPath);
+function build({ disposition, inventory }) {
     const tsTools = readTsMcpTools();
     const goSurface = readGoMcpSurface();
     const overrides = readOverrides();
+    const dispositionByOperation = new Map(
+        disposition.operations.map((operation) => [operation.operationId, operation]),
+    );
     const operations = inventory.operations.map((op) => {
         const candidates = candidateTools(op);
         const override = overrides.get(op.operationId) ?? {};
-        const inferredSdk = op.sdkGroup && op.sdkMethod ? `client.${op.sdkGroup}.${op.sdkMethod}` : null;
+        const generatedDisposition = dispositionByOperation.get(op.operationId);
         const inferredTsMcp = candidates.find((name) => tsTools.has(name)) ?? null;
         const inferredGoMcp =
             goSurface.byOperation.get(op.operationId) ??
             candidates.find((name) => goSurface.tools.has(name)) ??
             null;
-        const sdk = Object.prototype.hasOwnProperty.call(override, "sdk") ? override.sdk : inferredSdk;
+        const sdk = generatedDisposition?.generated?.clientPath ?? null;
         const tsMcp = Object.prototype.hasOwnProperty.call(override, "tsMcp") ? override.tsMcp : inferredTsMcp;
         const goMcp = Object.prototype.hasOwnProperty.call(override, "goMcp") ? override.goMcp : inferredGoMcp;
         return {
@@ -113,12 +123,13 @@ function build() {
             path: op.path,
             operationId: op.operationId,
             sdk,
+            sdkNaming: generatedDisposition?.sdkNaming ?? null,
             candidateTools: candidates,
             tsMcp,
             goMcp,
             overrideReason: override.reason ?? null,
             parity: {
-                sdkNamed: Boolean(sdk),
+                sdkGenerated: generatedDisposition?.generated?.reachable === true,
                 tsMcpExact: Boolean(tsMcp),
                 goMcpExact: Boolean(goMcp),
                 curated: overrides.has(op.operationId),
@@ -127,16 +138,19 @@ function build() {
     });
     const summary = {
         operations: operations.length,
-        sdkNamed: operations.filter((op) => op.parity.sdkNamed).length,
+        ...disposition.summary,
         tsMcpExact: operations.filter((op) => op.parity.tsMcpExact).length,
         goMcpExact: operations.filter((op) => op.parity.goMcpExact).length,
         curated: operations.filter((op) => op.parity.curated).length,
     };
     return {
         schemaVersion: 1,
-        purpose: "Best-effort operation-level parity map across OpenAPI, SDK method names, TypeScript MCP tools, and GOCLMCP tools.",
+        purpose: "Receipt-derived operation-level parity map across generated SDK methods, TypeScript MCP tools, and GOCLMCP tools.",
         sources: {
             openapi: "docs/openapi-operations.json",
+            sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
+            sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
+            operationDispositions: "docs/operation-dispositions.json",
             tsMcp: "docs/mcp-tool-manifest.json",
             goMcp: "../GOCLMCP/docs/tool-catalog.json",
             overrides: "docs/operation-parity-overrides.json",
@@ -173,30 +187,78 @@ function markdownFor(value) {
     lines.push("");
     lines.push("## Operations");
     lines.push("");
-    lines.push("| Method | Path | Operation ID | SDK | TS MCP exact | Go MCP exact | Curated reason | Candidate tools |");
-    lines.push("|---|---|---|---|---|---|---|---|");
+    lines.push("| Method | Path | Operation ID | Generated SDK | SDK naming | TS MCP exact | Go MCP exact | Curated reason | Candidate tools |");
+    lines.push("|---|---|---|---|---|---|---|---|---|");
     for (const op of value.operations) {
-        lines.push(`| ${op.method} | \`${op.path}\` | ${cell(op.operationId)} | ${cell(op.sdk)} | ${cell(op.tsMcp)} | ${cell(op.goMcp)} | ${op.overrideReason ? op.overrideReason.replaceAll("|", "\\|") : "-"} | ${cell(op.candidateTools)} |`);
+        lines.push(`| ${op.method} | \`${op.path}\` | ${cell(op.operationId)} | ${cell(op.sdk)} | ${cell(op.sdkNaming)} | ${cell(op.tsMcp)} | ${cell(op.goMcp)} | ${op.overrideReason ? op.overrideReason.replaceAll("|", "\\|") : "-"} | ${cell(op.candidateTools)} |`);
     }
     lines.push("");
     return `${lines.join("\n")}\n`;
 }
 
-const parity = build();
+const inventory = readJson(openapiPath);
+const receipt = readJson(receiptPath);
+const classificationDocument = readJson(classificationsPath);
+if (
+    classificationDocument.schemaVersion !== 1 ||
+    typeof classificationDocument.purpose !== "string" ||
+    !Array.isArray(classificationDocument.classifications)
+) {
+    console.error("SDK operation naming classifications must have schemaVersion 1, purpose, and classifications");
+    process.exit(1);
+}
+const classifications = classificationDocument.classifications ?? [];
+const discrepancyLedger = fs.readFileSync(discrepancyLedgerPath, "utf8");
+const knownEvidenceIds = new Set(
+    [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
+);
+const dispositionCore = buildOperationDisposition({ classifications, inventory, receipt });
+const disposition = {
+    schemaVersion: dispositionCore.schemaVersion,
+    purpose: "All corrected OpenAPI operations mapped to codegen-receipt reachability and governed SDK naming classification.",
+    sources: {
+        openapi: "docs/openapi-operations.json",
+        sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
+        sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
+        discrepancyLedger: "spec/evidence/discrepancies.md",
+    },
+    summary: dispositionCore.summary,
+    operations: dispositionCore.operations,
+};
+const dispositionFailures = validateOperationDisposition({
+    artifact: disposition,
+    classifications,
+    inventory,
+    knownEvidenceIds,
+    receipt,
+});
+if (dispositionFailures.length > 0) {
+    console.error("Operation disposition validation failed:");
+    for (const failure of dispositionFailures) console.error(`- ${failure}`);
+    process.exit(1);
+}
+
+const parity = build({ disposition, inventory });
+const expectedDisposition = jsonFor(disposition);
 const expectedJson = jsonFor(parity);
 const expectedMd = markdownFor(parity);
 
 if (args.has("--write")) {
+    fs.writeFileSync(dispositionPath, expectedDisposition);
     fs.writeFileSync(jsonPath, expectedJson);
     fs.writeFileSync(mdPath, expectedMd);
-    console.log("wrote docs/operation-parity.json and docs/operation-parity.md");
+    console.log("wrote docs/operation-dispositions.json and docs/operation-parity.{json,md}");
     process.exit(0);
 }
 
 if (args.has("--check")) {
+    const currentDisposition = fs.existsSync(dispositionPath)
+        ? fs.readFileSync(dispositionPath, "utf8")
+        : "";
     const currentJson = fs.existsSync(jsonPath) ? fs.readFileSync(jsonPath, "utf8") : "";
     const currentMd = fs.existsSync(mdPath) ? fs.readFileSync(mdPath, "utf8") : "";
     const stale = [];
+    if (currentDisposition !== expectedDisposition) stale.push("docs/operation-dispositions.json");
     if (currentJson !== expectedJson) stale.push("docs/operation-parity.json");
     if (currentMd !== expectedMd) stale.push("docs/operation-parity.md");
     if (stale.length > 0) {

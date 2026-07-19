@@ -51,7 +51,7 @@
     {
       "path": "scripts/lint-openapi-contract.mjs",
       "mustContain": [
-        "SDK-named",
+        "explicitly named SDK",
         "Last-Page"
       ]
     },
