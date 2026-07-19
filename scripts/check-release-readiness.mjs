@@ -8,7 +8,10 @@ import { buildReport as buildRiskStatusReport } from "./risk-status-report.mjs";
 
 const root = process.cwd();
 let failures = [];
-const contract = JSON.parse(await readRel("docs/release-readiness-contract.json", "contractPath"));
+const contractPath = process.env.CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH
+    ? path.resolve(process.env.CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH)
+    : path.join(root, "docs", "release-readiness-contract.json");
+const contract = JSON.parse(await readFile(contractPath, "utf8"));
 
 async function readRel(relPath, label = relPath) {
     const safePath = releaseRelativePath(label, relPath);
@@ -25,6 +28,12 @@ async function existsRel(relPath, label = relPath) {
     } catch {
         return false;
     }
+}
+
+async function readRiskRegister(relPath, label = relPath) {
+    const configured = process.env.CLOCKIFY_RISK_REGISTER_PATH;
+    if (configured) return readFile(path.resolve(configured), "utf8");
+    return readRel(relPath, label);
 }
 
 function fail(label, message) {
@@ -109,6 +118,14 @@ function assertArrayContains(actualItems, expectedItems, label) {
     const actual = new Set(actualItems ?? []);
     for (const expected of expectedItems ?? []) {
         if (!actual.has(expected)) fail(label, `missing ${expected}`);
+    }
+}
+
+function assertExactArray(actualItems, expectedItems, label) {
+    const actual = [...(actualItems ?? [])].sort();
+    const expected = [...(expectedItems ?? [])].sort();
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+        fail(label, `expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
     }
 }
 
@@ -263,8 +280,15 @@ const contractInventory = await readRel("docs/contract-inventory.json", "contrac
 const enterpriseAudit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
 
 if (contract.riskRegister) {
-    const riskRegister = JSON.parse(await readRel(contract.riskRegister.path, "riskRegister.path"));
+    const riskRegister = JSON.parse(await readRiskRegister(contract.riskRegister.path, "riskRegister.path"));
     const requiredBlockerIds = contract.riskRegister.requiredOpenFinalReadinessBlockingIds ?? [];
+    const riskRegisterBlockerIds =
+        riskRegister.reportGenerator?.generatedReport?.requiredReadinessBlockingRiskIds ?? [];
+    assertExactArray(
+        riskRegisterBlockerIds,
+        requiredBlockerIds,
+        "riskRegister.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds",
+    );
     const risksById = new Map((riskRegister.risks ?? []).map((risk) => [risk.id, risk]));
     for (const id of requiredBlockerIds) {
         const risk = risksById.get(id);
@@ -277,7 +301,10 @@ if (contract.riskRegister) {
             fail("riskRegister", `${id} must set finalReadinessBlocking: true`);
         }
     }
-    const riskStatus = await buildRiskStatusReport({ status: "all" });
+    const riskStatus = await buildRiskStatusReport({
+        status: "all",
+        registerPath: process.env.CLOCKIFY_RISK_REGISTER_PATH,
+    });
     assertExactFields(
         riskStatus.riskRoutingSummary,
         { finalReadinessRiskStatus: contract.riskRegister.expectedFinalReadinessRiskStatus },

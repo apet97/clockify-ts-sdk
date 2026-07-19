@@ -41,6 +41,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`axioms-contract.json`](./axioms-contract.json) | Machine-checkable contract tying each axiom to concrete evidence. |
 | [`product-north-star.md`](./product-north-star.md) | Final-state quality bar for the repo. |
 | [`roadmap-1.0.md`](./roadmap-1.0.md) | Active 1.0 readiness dependency sequence, release blockers, closure gates, and execution boundaries. |
+| [`roadmap-1.0-status.json`](./roadmap-1.0-status.json) | Tracked 1.0 status snapshot for pending proof artifacts and approval state; not completion proof. |
 | [`naming-taxonomy-policy.md`](./naming-taxonomy-policy.md) | One Clockify vocabulary across SDK, CLI, MCP, docs, examples, and OpenAPI parity. |
 | [`enterprise-hardening-audit.json`](./enterprise-hardening-audit.json) | Machine-readable map from validation gates to artifact evidence. |
 | [`gate-tiers.md`](./gate-tiers.md) | Human map of validation tiers, surface-to-gate routing, and intentional gate overlap. |

@@ -2,55 +2,61 @@
 
 This is the single active roadmap for the 1.0 readiness sequence. It is
 planned against TypeScript commit `ec68c61`; the baseline package versions are
-SDK `0.12.1`, CLI `0.3.1`, and MCP `0.6.2`.
+SDK `0.12.1`, CLI `0.3.1`, and MCP `0.6.2`. The tracked current-state snapshot
+is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 
 ## Truth and execution rules
 
 - A docs marker, source marker, generated inventory row, or passing static
   contract alone never proves completion. A task closes only when its exact
-  closure gate passes and its command receipt is recorded.
+  closure command passes and its required receipt or artifact is tracked.
 - Mutation execution for this roadmap is GitHub-only. Do not run local Stryker,
   `make mutation`, or any package mutation command while executing this plan.
 - This execution creates no tags, publishes no package, creates no release,
   and performs no main-branch integration.
-- Status is intentionally conservative: Tasks 2-27 remain pending until their
-  own focused proof, closure gate, and independent approvals exist.
+- Task 1 is implemented but awaits two independent approvals. Pending tasks
+  have no completion evidence recorded; this roadmap does not treat a local
+  task ledger or an ignored agent report as durable proof.
+- Future receipts live under `docs/roadmap-1.0-receipts/` at the exact path
+  named below. A planned path is not present evidence: its absence keeps the
+  corresponding task pending.
 
 ## Dependency sequence
 
-| Task | Depends on | Status | Evidence now | Exact closure gate | Release-blocking |
+| Task | Depends on | Status | Evidence now | Exact closure command and required artifact | Release-blocking |
 |---|---|---|---|---|---|
-| 1. Truthful readiness baseline | — | complete after this task's recorded gates | `.superpowers/sdd/task-1-report.md`, `docs/risk-register.json` | `make risk-register risk-status-report release-readiness contract-gates` | Yes |
-| 2. Expense filter contract | 1 | pending | `expense-date-filter-contract` | Task 2 focused proof; `make operation-parity-drift contract-gates` | Yes |
-| 3. Expense update schema | 2 | pending | `expense-update-file-schema` | Task 3 focused proof; `make sdk-codegen-test consumer-cast-budget contract-gates` | Yes |
-| 4. Typed listForUser workflows | 3 | pending | `.superpowers/sdd/progress.md` Task 4 | Task 4 focused proof; `npm test -w @apet97/clockify-mcp-115` and `make contract-gates` | Yes |
-| 5. Truthful operation parity | 4 | pending | `operation-parity-generated-reachability` | Task 5 focused proof; `make sdk-codegen-drift operation-parity-drift contract-gates` | Yes |
-| 6. 1.0 breaking-change closure | 5 | pending | `.superpowers/sdd/progress.md` Task 6 | Task 6 focused proof; `make breaking-change-review contract-gates` | Yes |
-| 7. Zero request-cast ratchet | 6 | pending | `consumer-request-casts` | Task 7 focused proof; `make consumer-cast-budget contract-gates` | Yes |
-| 8. Authenticated-host equality | 7 | pending | `.superpowers/sdd/progress.md` Task 8 | Task 8 focused proof; `make contract-gates` | Yes |
-| 9. Shared exact-artifact engine | 8 | pending | `.superpowers/sdd/progress.md` Task 9 | Task 9 focused proof; `make pack-smoke contract-gates` | Yes |
-| 10. Wrapper release-proof adoption | 9 | pending | `cross-package-release-proof-asymmetry` | Task 10 focused proof; `npm run prepublishOnly -w clockify-sdk-ts-115` | Yes |
-| 11. CLI release-proof adoption | 10 | pending | `cross-package-release-proof-asymmetry` | Task 11 focused proof; `npm run prepublishOnly -w @apet97/clockify-cli-115` | Yes |
-| 12. MCP release-proof adoption | 11 | pending | `cross-package-release-proof-asymmetry` | Task 12 focused proof; `npm run prepublishOnly -w @apet97/clockify-mcp-115` | Yes |
-| 13. Manual governance receipt | 12 | pending | `cross-package-release-proof-asymmetry` | Task 13 focused proof; `make perfect-full pack-smoke release-readiness` | Yes |
-| 14. Wrapper authentication mutation configuration | 13 | pending | `remote-mutation-proof-pending` | Task 14 focused proof; GitHub Actions `Mutation` workflow, target `wrapper` | Yes |
-| 15. Wrapper replacement mutation configuration | 14 | pending | `remote-mutation-proof-pending` | Task 15 focused proof; GitHub Actions `Mutation` workflow, target `wrapper` | Yes |
-| 16. MCP safety mutation configuration | 15 | pending | `remote-mutation-proof-pending` | Task 16 focused proof; GitHub Actions `Mutation` workflow, target `mcp` | Yes |
-| 17. CLI mutation target | 16 | pending | `remote-mutation-proof-pending` | Task 17 focused proof; GitHub Actions `Mutation` workflow, approved CLI target | Yes |
-| 18. GitHub-only mutation proof | 17 | pending | `remote-mutation-proof-pending` | Successful GitHub Actions `Mutation` receipt for every approved target; `make mutation-ci` | Yes |
-| 19. Aggregate gate deduplication | 18 | pending | `.superpowers/sdd/progress.md` Task 19 | Task 19 focused proof; `make perfect-fast perfect-full` | Yes |
-| 20. Unique-claim inventory | 19 | pending | `.superpowers/sdd/progress.md` Task 20 | Task 20 focused proof; `make docs-drift docs-quality contract-gates` | Yes |
-| 21. Plan lifecycle | 20 | pending | `.superpowers/sdd/progress.md` Task 21 | Task 21 focused proof; `make agent-tasks agent-handoff contract-gates` | Yes |
-| 22. Webhook delivery diagnosis | 21 | pending | `.superpowers/sdd/progress.md` Task 22 | Task 22 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — post-baseline workflow scope |
-| 23. Workspace-user status administration | 22 | pending | `.superpowers/sdd/progress.md` Task 23 | Task 23 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — post-baseline workflow scope |
-| 24. Time-off balance adjustment | 23 | pending | `.superpowers/sdd/progress.md` Task 24 | Task 24 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — post-baseline workflow scope |
-| 25. Scheduling assignment copy | 24 | pending | `.superpowers/sdd/progress.md` Task 25 | Task 25 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — post-baseline workflow scope |
-| 26. Project membership administration | 25 | pending | `.superpowers/sdd/progress.md` Task 26 | Task 26 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — post-baseline workflow scope |
-| 27. Experimental entity-change feed | 26 | pending | `.superpowers/sdd/progress.md` Task 27 | Task 27 focused proof; `npm test -w @apet97/clockify-mcp-115` | No — experimental scope |
+| 1. Truthful readiness baseline | — | implemented; approvals pending | commit `e0f44a40de3059c9c2618f56440c0b428702361c`; `docs/roadmap-1.0-status.json` | `make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the commit | Yes |
+| 2. Expense filter contract | 1 | pending | none recorded | `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md` | Yes |
+| 3. Expense update schema | 2 | pending | none recorded | `make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md` | Yes |
+| 4. Typed listForUser workflows | 3 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage | Yes |
+| 5. Truthful operation parity | 4 | pending | none recorded | `make sdk-codegen sdk-codegen-drift operation-parity-drift`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md` maps every claimed SDK path to an importable method | Yes |
+| 6. 1.0 breaking-change closure | 5 | pending | none recorded | `make breaking-change-review compatibility-contract`; `docs/roadmap-1.0-receipts/task-06-breaking-change.md` | Yes |
+| 7. Zero request-cast ratchet | 6 | pending | none recorded | `make consumer-cast-budget && npm test -w @apet97/clockify-cli-115 && npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-07-zero-cast.md` | Yes |
+| 8. Authenticated-host equality | 7 | pending | none recorded | `npm test -w clockify-sdk-ts-115 && make config-precedence`; `docs/roadmap-1.0-receipts/task-08-authenticated-host.md` | Yes |
+| 9. Shared exact-artifact engine | 8 | pending | none recorded | `make pack-smoke`; `docs/roadmap-1.0-receipts/task-09-artifact-engine.md` names all package tarballs and consumer commands | Yes |
+| 10. Wrapper release-proof adoption | 9 | pending | none recorded | `npm run prepublishOnly -w clockify-sdk-ts-115`; `docs/roadmap-1.0-receipts/task-10-wrapper-release-proof.md` has the tarball digest and consumer-install output | Yes |
+| 11. CLI release-proof adoption | 10 | pending | none recorded | `npm run prepublishOnly -w @apet97/clockify-cli-115`; `docs/roadmap-1.0-receipts/task-11-cli-release-proof.md` has the tarball digest and bin smoke output | Yes |
+| 12. MCP release-proof adoption | 11 | pending | none recorded | `npm run prepublishOnly -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-12-mcp-release-proof.md` has the tarball digest and stdio smoke output | Yes |
+| 13. Manual governance receipt | 12 | pending | none recorded | `make perfect-full pack-smoke release-readiness`; `docs/roadmap-1.0-receipts/task-13-exact-artifact.md` names SDK, CLI, and MCP digests | Yes |
+| 14. Wrapper authentication mutation configuration | 13 | pending | none recorded | GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-14-wrapper-mutation.md` has the run URL and `mutation-reports-wrapper-<run_attempt>` | Yes |
+| 15. Wrapper replacement mutation configuration | 14 | pending | none recorded | GitHub Actions `Mutation`, target `wrapper`; `docs/roadmap-1.0-receipts/task-15-wrapper-replacement-mutation.md` has the run URL and `mutation-reports-wrapper-<run_attempt>` | Yes |
+| 16. MCP safety mutation configuration | 15 | pending | none recorded | GitHub Actions `Mutation`, target `mcp`; `docs/roadmap-1.0-receipts/task-16-mcp-mutation.md` has the run URL and `mutation-reports-mcp-<run_attempt>` | Yes |
+| 17. CLI mutation target | 16 | pending | none recorded; current workflow has no `cli` target | GitHub Actions `Mutation`, target `cli` after Task 17 adds it; `docs/roadmap-1.0-receipts/task-17-cli-mutation.md` has the run URL and `mutation-reports-cli-<run_attempt>` | Yes |
+| 18. GitHub-only mutation proof | 17 | pending | none recorded | `make mutation-ci`; `docs/roadmap-1.0-receipts/task-18-remote-mutation.md` has run URLs and retained artifacts for every approved target | Yes |
+| 19. Aggregate gate deduplication | 18 | pending | none recorded | `make perfect-fast perfect-full`; `docs/roadmap-1.0-receipts/task-19-aggregate-gates.md` | Yes |
+| 20. Unique-claim inventory | 19 | pending | none recorded | `make docs-drift docs-quality`; `docs/roadmap-1.0-receipts/task-20-unique-claims.md` | Yes |
+| 21. Plan lifecycle | 20 | pending | none recorded | `make agent-tasks agent-handoff`; `docs/roadmap-1.0-receipts/task-21-lifecycle.md` | Yes |
+| 22. Webhook delivery diagnosis | 21 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-22-webhook-diagnosis.md` | No — post-baseline workflow scope |
+| 23. Workspace-user status administration | 22 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-23-workspace-user.md` | No — post-baseline workflow scope |
+| 24. Time-off balance adjustment | 23 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-24-time-off-balance.md` | No — post-baseline workflow scope |
+| 25. Scheduling assignment copy | 24 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-25-scheduling-copy.md` | No — post-baseline workflow scope |
+| 26. Project membership administration | 25 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
+| 27. Experimental entity-change feed | 26 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
 The six open readiness blockers in `docs/risk-register.json` are the current
 release-blocking baseline: `expense-date-filter-contract`,
 `expense-update-file-schema`, `operation-parity-generated-reachability`,
 `consumer-request-casts`, `cross-package-release-proof-asymmetry`, and
-`remote-mutation-proof-pending`. `make release-readiness` must continue to
-report the readiness-risk layer as blocked while any of these remains open.
+`remote-mutation-proof-pending`. Use `make risk-status-report` to inspect the
+current blocked status and blocker count; `make release-readiness` validates the
+release-readiness contract, not a release-ready conclusion.

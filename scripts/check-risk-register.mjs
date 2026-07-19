@@ -8,9 +8,19 @@ import { fileURLToPath } from "node:url";
 import { buildReport } from "./risk-status-report.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const registerPath = path.join(root, "docs", "risk-register.json");
+function configuredInputPath(name, defaultRelativePath) {
+    const configured = process.env[name];
+    return configured ? path.resolve(configured) : path.join(root, defaultRelativePath);
+}
+
+const registerPath = configuredInputPath("CLOCKIFY_RISK_REGISTER_PATH", "docs/risk-register.json");
+const releaseContractPath = configuredInputPath(
+    "CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH",
+    "docs/release-readiness-contract.json",
+);
 const markdownPath = path.join(root, "docs", "risk-register.md");
 const register = JSON.parse(fs.readFileSync(registerPath, "utf8"));
+const releaseContract = JSON.parse(fs.readFileSync(releaseContractPath, "utf8"));
 let failures = [];
 
 function fail(id, message) {
@@ -153,6 +163,16 @@ function validateReportGeneratorShape() {
     if (generatedReport.requiredFileSignalDetailKeysAreNonEmpty !== true) {
         fail("reportGenerator.generatedReport.requiredFileSignalDetailKeysAreNonEmpty", "must be true");
     }
+    const releaseBlockers = releaseContract.riskRegister?.requiredOpenFinalReadinessBlockingIds;
+    const riskBlockers = generatedReport.requiredReadinessBlockingRiskIds;
+    assertStringArray("releaseReadiness.riskRegister.requiredOpenFinalReadinessBlockingIds", releaseBlockers, {
+        allowEmpty: false,
+    });
+    assertExactArray(
+        riskBlockers,
+        releaseBlockers,
+        "reportGenerator.generatedReport.requiredReadinessBlockingRiskIds",
+    );
 }
 
 function validateRegisterShape() {

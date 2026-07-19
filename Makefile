@@ -464,6 +464,7 @@ test-data-lifecycle:
 	node --test scripts/live/cleanup.test.mjs
 
 risk-register:
+	node --test scripts/check-risk-register.readiness.test.mjs
 	node scripts/check-risk-register.mjs
 
 risk-status-report:
