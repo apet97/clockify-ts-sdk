@@ -1543,15 +1543,105 @@ function analyzeProgram({
         return null;
     }
 
+    function callableOrigins(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const symbols = symbolsForWriteTarget(expression);
+            return new Set(symbols.length > 0 ? symbols : [expression]);
+        }
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            if (!symbol || seen.has(symbol)) return new Set(symbol ? [symbol] : [expression]);
+            const nextSeen = new Set(seen);
+            nextSeen.add(symbol);
+            const values = reachingExpressionValues(expression, beforePosition);
+            if (values.length === 1 && unwrapExpression(values[0].expression) === expression) {
+                return new Set([symbol]);
+            }
+            return new Set(
+                values.flatMap((value) => [
+                    ...callableOrigins(value.expression, value.pos ?? beforePosition, nextSeen),
+                ]),
+            );
+        }
+        const values = reachingExpressionValues(expression, beforePosition);
+        if (values.length === 1 && unwrapExpression(values[0].expression) === expression) {
+            return new Set([expression]);
+        }
+        return new Set(
+            values.flatMap((value) => [
+                ...callableOrigins(value.expression, value.pos ?? beforePosition, seen),
+            ]),
+        );
+    }
+
+    function sameCallableAlternatives(left, right, beforePosition) {
+        const leftOrigins = callableOrigins(left, beforePosition);
+        const rightOrigins = callableOrigins(right, beforePosition);
+        return (
+            leftOrigins.size > 0 &&
+            leftOrigins.size === rightOrigins.size &&
+            [...leftOrigins].every((origin) => rightOrigins.has(origin))
+        );
+    }
+
+    function nativeBindMemberTarget(expression, beforePosition) {
+        expression = unwrapExpression(expression);
+        const adapter = invocationAdapter(expression, beforePosition);
+        if (adapter?.name !== "bind") return null;
+        if (checker.getTypeAtLocation(adapter.target).getCallSignatures().length === 0) return null;
+
+        const memberSymbol = ts.isPropertyAccessExpression(expression)
+            ? unalias(checker, checker.getSymbolAtLocation(expression.name))
+            : ts.isElementAccessExpression(expression)
+              ? unalias(
+                    checker,
+                    checker.getPropertyOfType(
+                        checker.getApparentType(checker.getTypeAtLocation(expression.expression)),
+                        "bind",
+                    ),
+                )
+              : null;
+        if (
+            !(memberSymbol?.declarations ?? []).some(
+                (declaration) =>
+                    declaration.getSourceFile().isDeclarationFile &&
+                    /\/lib\.[^/]+\.d\.ts$/.test(normalize(declaration.getSourceFile().fileName)),
+            )
+        ) {
+            return null;
+        }
+
+        const useLocation = directStatementInLinearContainer(expression);
+        const overwritten = [...propertyWrites, ...wildcardPropertyWrites].some((write) => {
+            if (
+                write.position >= beforePosition ||
+                write.sourceFile !== expression.getSourceFile() ||
+                (write.propertyNames != null && !write.propertyNames.includes("bind")) ||
+                !(
+                    ts.isPropertyAccessExpression(write.node) ||
+                    ts.isElementAccessExpression(write.node)
+                ) ||
+                !sameCallableAlternatives(write.node.expression, adapter.target, write.position)
+            ) {
+                return false;
+            }
+            const writeLocation = directStatementInLinearContainer(write.node);
+            return (
+                useLocation != null &&
+                writeLocation != null &&
+                writeLocation.container === useLocation.container &&
+                expressionDefinitelyExecutesInStatement(write.node)
+            );
+        });
+        if (overwritten) return null;
+        return adapter.target;
+    }
+
     function bindMemberTargets(expression, beforePosition, seen = new Set()) {
         expression = unwrapExpression(expression);
-        const direct = invocationAdapter(expression, beforePosition);
-        if (
-            direct?.name === "bind" &&
-            checker.getTypeAtLocation(direct.target).getCallSignatures().length > 0
-        ) {
-            return [{ target: direct.target }];
-        }
+        const directTarget = nativeBindMemberTarget(expression, beforePosition);
+        if (directTarget) return [{ target: directTarget }];
         if (!ts.isIdentifier(expression)) return [];
         const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
         if (!symbol || seen.has(symbol)) return [];
@@ -1584,11 +1674,12 @@ function analyzeProgram({
         if (!ts.isCallExpression(expression)) return [{ kind: "plain", expression }];
 
         const direct = invocationAdapter(expression.expression, expression.pos);
-        if (direct?.name === "bind") {
+        const directBindTarget = nativeBindMemberTarget(expression.expression, expression.pos);
+        if (directBindTarget) {
             return [
                 {
                     kind: "bound",
-                    target: direct.target,
+                    target: directBindTarget,
                     arguments: [...expression.arguments.slice(1)],
                 },
             ];
@@ -1654,6 +1745,27 @@ function analyzeProgram({
                 continue;
             }
             const callee = unwrapExpression(candidate.expression);
+
+            if (
+                expressionResolvesToBuiltinMember(callee, "Reflect", "apply", beforePosition) &&
+                args[0]
+            ) {
+                const appliedLists = staticApplyArgumentLists(args[2], beforePosition);
+                if (!appliedLists.complete) {
+                    const governed = governedBuiltinMember(args[0], beforePosition);
+                    if (governed) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve ${governed} Reflect.apply argument list`,
+                        );
+                    }
+                }
+                for (const applied of appliedLists.lists) {
+                    normalized.push(
+                        ...normalizeEffectiveCalls(args[0], applied, beforePosition, nextSeen),
+                    );
+                }
+                continue;
+            }
 
             const adapter = invocationAdapter(callee, beforePosition);
             if (adapter?.name === "bind") continue;
