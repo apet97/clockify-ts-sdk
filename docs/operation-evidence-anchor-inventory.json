@@ -1,0 +1,512 @@
+{
+    "schemaVersion": 1,
+    "purpose": "Separately reviewed inventory classifying every discrepancy-ledger anchor as operation-specific or not operation-specific for the current 169-operation corrected OpenAPI surface.",
+    "anchors": [
+        {
+            "evidenceId": "audit-log.actions.closed-enum",
+            "applicability": "operation-specific",
+            "operationIds": ["searchAuditLogs"]
+        },
+        {
+            "evidenceId": "clients.update.archived-missing-from-canonical-request",
+            "applicability": "operation-specific",
+            "operationIds": ["putWorkspacesWorkspaceIdClientsClientId"]
+        },
+        {
+            "evidenceId": "clockify.api.idempotency-key.unsupported-noop",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Platform-wide unsupported-header behavior, not an endpoint-specific corrected OpenAPI discrepancy."
+        },
+        {
+            "evidenceId": "compose.work-package.ensure-repoint-wontfix",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Hand-written orchestration behavior outside the generated SDK operation surface."
+        },
+        {
+            "evidenceId": "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getSharedReportsSharedReportId",
+                "searchAuditLogs",
+                "generateAttendanceReport",
+                "generateDetailedReport",
+                "generateDetailedReportV1",
+                "generateSummaryReport",
+                "generateWeeklyReport",
+                "getWorkspacesWorkspaceIdSharedReports",
+                "postWorkspacesWorkspaceIdSharedReports",
+                "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
+                "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId"
+            ]
+        },
+        {
+            "evidenceId": "consumer.cast-budget",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Consumer compile-quality budget spanning generated types rather than endpoint contract evidence."
+        },
+        {
+            "evidenceId": "custom-fields.create.required-missing-from-request",
+            "applicability": "operation-specific",
+            "operationIds": ["createWorkspaceCustomField"]
+        },
+        {
+            "evidenceId": "deferred-list-endpoints.not-paginated-or-not-live",
+            "applicability": "operation-specific",
+            "operationIds": ["getAllMyWorkspaces", "getWorkspaceHolidaysInPeriod"]
+        },
+        {
+            "evidenceId": "deletes.archive-first",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "deleteWorkspacesWorkspaceIdClientsClientId",
+                "deleteExpenseCategory",
+                "deleteProject",
+                "deleteTaskFromProject"
+            ]
+        },
+        {
+            "evidenceId": "deletes.archive-first.clients-blocked",
+            "applicability": "operation-specific",
+            "operationIds": ["deleteWorkspacesWorkspaceIdClientsClientId"]
+        },
+        {
+            "evidenceId": "deletes.archive-first.projects-tasks",
+            "applicability": "operation-specific",
+            "operationIds": ["deleteProject", "deleteTaskFromProject"]
+        },
+        {
+            "evidenceId": "entity.name-reserved-after-delete.cross-repo-2026-06-09",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "postWorkspacesWorkspaceIdClients",
+                "createProject",
+                "postWorkspacesWorkspaceIdTags"
+            ]
+        },
+        {
+            "evidenceId": "entries.stoptimer.route-404-no-static-resource",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+                "patchWorkspacesWorkspaceIdUserUserIdTimeEntries"
+            ]
+        },
+        {
+            "evidenceId": "expenses.list.start-end-ignored-client-filtered",
+            "applicability": "operation-specific",
+            "operationIds": ["getWorkspaceExpenses"]
+        },
+        {
+            "evidenceId": "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getExpenseCategories",
+                "getExpenseById",
+                "updateExpense",
+                "deleteExpense",
+                "getInvoiceSettings",
+                "updateInvoiceSettings",
+                "getInvoiceById",
+                "updateInvoice",
+                "deleteInvoice",
+                "publishAssignments"
+            ]
+        },
+        {
+            "evidenceId": "fern.sdk.auth.addonToken-typed-required-but-mutually-exclusive",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Client-wide authentication typing behavior, not evidence for one OpenAPI operation."
+        },
+        {
+            "evidenceId": "fern.sdk.clients-update-body-vs-projects-update-top-level",
+            "applicability": "operation-specific",
+            "operationIds": ["putWorkspacesWorkspaceIdClientsClientId", "updateProject"]
+        },
+        {
+            "evidenceId": "fern.x-fern-pagination.bare-array-unsupported",
+            "applicability": "operation-specific",
+            "operationIds": ["getTimeOffPolicies"]
+        },
+        {
+            "evidenceId": "fern.x-fern-sdk-method-name.drops-resource-modules",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "uploadImage",
+                "getCurrentUser",
+                "addLimitedUsersWithInfo",
+                "generateDetailedReportV1",
+                "changeRecurringPeriod",
+                "changeTimeOffRequestStatus",
+                "deleteMany",
+                "updateUserStatus",
+                "updateUserCostRate",
+                "updateUserCustomFieldValue",
+                "updateUserHourlyRate",
+                "findUserTeamManagers",
+                "filterWorkspaceUsers",
+                "getWebhookEventStatusesWithLatestLog"
+            ]
+        },
+        {
+            "evidenceId": "gen-clockify-openapi.merge_parameters.destructive-concat",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Historical generator merge defect with repository-wide correction, not a current per-operation discrepancy."
+        },
+        {
+            "evidenceId": "gen-clockify-openapi.pagination-params-stamped",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getApprovalRequests",
+                "getWorkspacesWorkspaceIdClients",
+                "listWorkspaceCustomFields",
+                "getWorkspaceExpenses",
+                "getExpenseCategories",
+                "getWorkspaceHolidays",
+                "getWorkspaceInvoices",
+                "getInvoicePayments",
+                "getWorkspaceProjects",
+                "listProjectCustomFields",
+                "findTasksOnProject",
+                "getAllSchedulingAssignments",
+                "getUserCapacityTotal",
+                "getWorkspacesWorkspaceIdTags",
+                "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+                "getBalancesForPolicy",
+                "getBalanceForUser",
+                "getTimeOffPolicies",
+                "findAllGroupsOnWorkspace",
+                "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+                "findWorkspaceUsers",
+                "findUserTeamManagers"
+            ]
+        },
+        {
+            "evidenceId": "generator.choice.fern-vs-stainless-vs-speakeasy",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Repository-level generator selection record, not endpoint evidence."
+        },
+        {
+            "evidenceId": "getBalanceForUser.page-types.docs-claim-string",
+            "applicability": "operation-specific",
+            "operationIds": ["getBalancesForPolicy", "getBalanceForUser"]
+        },
+        {
+            "evidenceId": "getTimeOffPolicies.sort-order.enum-tightened",
+            "applicability": "operation-specific",
+            "operationIds": ["getTimeOffPolicies"]
+        },
+        {
+            "evidenceId": "holidays.update.replace-and-scope-filter",
+            "applicability": "operation-specific",
+            "operationIds": ["createHoliday", "updateHoliday"]
+        },
+        {
+            "evidenceId": "invoices.create.note-subject-dropped",
+            "applicability": "operation-specific",
+            "operationIds": ["addInvoice"]
+        },
+        {
+            "evidenceId": "invoices.items-unit-price-scale",
+            "applicability": "operation-specific",
+            "operationIds": ["addInvoiceItem", "importInvoiceItems"]
+        },
+        {
+            "evidenceId": "invoices.payments.post-returns-invoice",
+            "applicability": "operation-specific",
+            "operationIds": ["addInvoicePayment"]
+        },
+        {
+            "evidenceId": "invoices.update.missing-bill-from-and-client-address",
+            "applicability": "operation-specific",
+            "operationIds": ["updateInvoice"]
+        },
+        {
+            "evidenceId": "invoices.update.replace-and-tax-discount-zeroing",
+            "applicability": "operation-specific",
+            "operationIds": ["updateInvoice"]
+        },
+        {
+            "evidenceId": "money.amount-units.expenses-major-invoices-minor",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getWorkspaceExpenses",
+                "createExpense",
+                "getExpenseById",
+                "updateExpense",
+                "getWorkspaceInvoices",
+                "addInvoice",
+                "getInvoiceById",
+                "updateInvoice",
+                "duplicateInvoice",
+                "filterInvoices",
+                "addInvoiceItem",
+                "importInvoiceItems",
+                "getInvoicePayments",
+                "addInvoicePayment",
+                "generateDetailedReportV1",
+                "generateDetailedReport",
+                "generateSummaryReport",
+                "generateWeeklyReport",
+                "updateTaskCostRate",
+                "updateTaskBillableRate",
+                "updateProjectUserCostRate",
+                "updateProjectUserHourlyRate",
+                "updateUserCostRate",
+                "updateUserHourlyRate"
+            ]
+        },
+        {
+            "evidenceId": "pagination.iter-known-set.envelope-and-unpaginated",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getBalanceForUser",
+                "getBalancesForPolicy",
+                "listProjectCustomFields",
+                "listWorkspaceCustomFields",
+                "getWorkspaceHolidays"
+            ]
+        },
+        {
+            "evidenceId": "pagination.last-page-header.live-audit-2026-05-25",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getApprovalRequests",
+                "getWorkspacesWorkspaceIdClients",
+                "getInvoicePayments",
+                "getWorkspaceProjects",
+                "findTasksOnProject",
+                "getAllSchedulingAssignments",
+                "getWorkspacesWorkspaceIdTags",
+                "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+                "getBalancesForPolicy",
+                "getBalanceForUser",
+                "getTimeOffPolicies",
+                "findAllGroupsOnWorkspace",
+                "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+                "findWorkspaceUsers",
+                "findUserTeamManagers",
+                "listWorkspaceCustomFields",
+                "getWorkspaceHolidays",
+                "listProjectCustomFields"
+            ]
+        },
+        {
+            "evidenceId": "rates.put-minor-units-no-get",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "updateTaskCostRate",
+                "updateTaskBillableRate",
+                "updateProjectUserCostRate",
+                "updateProjectUserHourlyRate",
+                "updateUserCostRate",
+                "updateUserHourlyRate"
+            ]
+        },
+        {
+            "evidenceId": "routes.literal-vs-parameterized.collisions",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getExpenseCategories",
+                "getExpenseById",
+                "updateExpense",
+                "deleteExpense",
+                "getInvoiceSettings",
+                "updateInvoiceSettings",
+                "getInvoiceById",
+                "updateInvoice",
+                "deleteInvoice",
+                "publishAssignments"
+            ]
+        },
+        {
+            "evidenceId": "scheduling.createRecurring.returns-array-and-publish-is-range-scoped",
+            "applicability": "operation-specific",
+            "operationIds": ["publishAssignments", "createRecurringAssignment"]
+        },
+        {
+            "evidenceId": "scheduling.list-per-project.start-end-required-camel-pagesize",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getScheduledAssignmentsPerProject",
+                "getScheduledAssignmentsOnProject"
+            ]
+        },
+        {
+            "evidenceId": "scheduling.project-totals.get-vs-post",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getScheduledAssignmentsPerProject",
+                "getScheduledAssignmentsOnProject"
+            ]
+        },
+        {
+            "evidenceId": "sdk.resource-duplication",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Generator-wide tag normalization; current operation grouping is governed separately from discrepancy attribution."
+        },
+        {
+            "evidenceId": "single-gets.404-405-read-from-list",
+            "applicability": "operation-specific",
+            "operationIds": ["getWorkspacesWorkspaceIdTimeOffRequestsRequestId"]
+        },
+        {
+            "evidenceId": "single-gets.custom-field-get.dead-route",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "The dead single-get route is quarantined and has no current corrected OpenAPI operation."
+        },
+        {
+            "evidenceId": "strictness.wrapper-eopt-noimplicitoverride-blocked",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Wrapper compiler-policy finding, not endpoint contract evidence."
+        },
+        {
+            "evidenceId": "surface.audit.2026-06-23",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "updateWorkspaceBillableRate",
+                "updateWorkspaceCostRate",
+                "updateUserHourlyRate",
+                "updateUserCostRate",
+                "updateProjectUserHourlyRate",
+                "updateProjectUserCostRate",
+                "updateInvoiceSettings",
+                "changeInvoiceStatus",
+                "giveUserManagerRole",
+                "removeUserManagerRole",
+                "removeUserFromGroup",
+                "updateMemberProfile",
+                "updateBalance",
+                "getCreatedEntityInfo",
+                "getDeletedEntityInfo",
+                "getUpdatedEntityInfo",
+                "getWebhookLogs",
+                "getAddonWebhooksOnWorkspace",
+                "getWebhookEventStatusesWithLatestLog",
+                "addLimitedUsersWithInfo"
+            ]
+        },
+        {
+            "evidenceId": "tag-renames.singular-to-plural",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Generator-wide resource naming normalization; operation naming is governed by the separate naming registry."
+        },
+        {
+            "evidenceId": "tasks.create.billable-missing-from-create-request",
+            "applicability": "operation-specific",
+            "operationIds": ["addTaskOnProject"]
+        },
+        {
+            "evidenceId": "time-entries.mark-invoiced.bulk-route-404-deferred",
+            "applicability": "operation-specific",
+            "operationIds": ["patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk"]
+        },
+        {
+            "evidenceId": "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getAllTimeOffRequestsOnWorkspace",
+                "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+                "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+            ]
+        },
+        {
+            "evidenceId": "time-off-policies.create.approve-is-optional",
+            "applicability": "operation-specific",
+            "operationIds": ["createTimeOffPolicy"]
+        },
+        {
+            "evidenceId": "time-off-policies.response.missing-replacement-fields",
+            "applicability": "operation-specific",
+            "operationIds": ["getTimeOffPolicies", "getTimeOffPolicy", "updateTimeOffPolicy"]
+        },
+        {
+            "evidenceId": "time-off.change-status.union-and-note",
+            "applicability": "operation-specific",
+            "operationIds": ["changeTimeOffRequestStatus"]
+        },
+        {
+            "evidenceId": "time-off.policies.scope.status-active-not-all",
+            "applicability": "operation-specific",
+            "operationIds": ["createTimeOffPolicy", "updateTimeOffPolicy"]
+        },
+        {
+            "evidenceId": "time-off.policies.update.replace-and-scope-filter",
+            "applicability": "operation-specific",
+            "operationIds": ["createTimeOffPolicy", "updateTimeOffPolicy"]
+        },
+        {
+            "evidenceId": "time-off.request.missing-top-level-fields",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getAllTimeOffRequestsOnWorkspace",
+                "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+                "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+            ]
+        },
+        {
+            "evidenceId": "time-off.request.status.schema-collision",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "getAllTimeOffRequestsOnWorkspace",
+                "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+                "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
+            ]
+        },
+        {
+            "evidenceId": "time-off.requests.delete.policy-scoped-only-pending",
+            "applicability": "operation-specific",
+            "operationIds": [
+                "deleteTimeOffRequest",
+                "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId"
+            ]
+        },
+        {
+            "evidenceId": "time-off.requests.get.dead-route",
+            "applicability": "operation-specific",
+            "operationIds": ["getWorkspacesWorkspaceIdTimeOffRequestsRequestId"]
+        },
+        {
+            "evidenceId": "time-off.requests.update-status.wrong-method-and-field",
+            "applicability": "operation-specific",
+            "operationIds": ["changeTimeOffRequestStatus"]
+        },
+        {
+            "evidenceId": "time-off.submit.period-shape-is-policy-type-dependent",
+            "applicability": "operation-specific",
+            "operationIds": ["createTimeOffRequest", "createTimeOffRequestForUser"]
+        },
+        {
+            "evidenceId": "timeoff.legacy-policies-requests.phantom-path-quarantined",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "All legacy paths described by this anchor are quarantined from the current operation inventory."
+        },
+        {
+            "evidenceId": "user-groups.get.returns-void",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "The broken single-group GET is absent from the current corrected OpenAPI surface."
+        },
+        {
+            "evidenceId": "webhook.create.name-required-on-api-key-not-addon",
+            "applicability": "operation-specific",
+            "operationIds": ["createWebhook"]
+        },
+        {
+            "evidenceId": "webhook.signature-scheme.shared-secret-not-hmac-doc-only",
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Webhook delivery verification behavior belongs to the hand-written wrapper, not an API operation."
+        }
+    ]
+}

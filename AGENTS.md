@@ -571,9 +571,11 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    operationId-derived group/method names. All 169 are generated and
    reachable according to `output/ts-sdk/codegen-receipt.json`; the
    exact 155 explicit / 14 derived split is enforced by the names-only
-   `docs/sdk-operation-naming-classifications.json`; applicable discrepancy
-   anchors are governed separately in `docs/operation-evidence-map.json`, and
-   both are materialized for every operation in
+   `docs/sdk-operation-naming-classifications.json`; every discrepancy anchor
+   is reviewed in `docs/operation-evidence-anchor-inventory.json`, and its
+   operation attribution or explicit no-applicable-evidence decision is
+   materialized across all 169 rows in `docs/operation-evidence-map.json`. Naming
+   and evidence are materialized together for every operation in
    `docs/operation-dispositions.json`.
 
 Re-attempt item 1 only after the upstream gating concern resolves

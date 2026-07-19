@@ -62,8 +62,10 @@ proves reachable operationId-derived methods. The governed set is `uploadImage`,
 `updateUserCustomFieldValue`, `updateUserHourlyRate`, `findUserTeamManagers`, and
 `getWebhookEventStatusesWithLatestLog`. Their expected generated group/method
 pairs live in the names-only `docs/sdk-operation-naming-classifications.json`;
-applicable discrepancy identifiers for explicit or derived operations live
-separately in `docs/operation-evidence-map.json`. Adding explicit stamps is
+every discrepancy anchor is reviewed separately in
+`docs/operation-evidence-anchor-inventory.json`, and the resulting attribution
+or explicit no-applicable-evidence decision for each of the 169 operations lives
+in `docs/operation-evidence-map.json`. Adding explicit stamps is
 optional API naming work, not a missing-method fix; any addition, removal,
 rename, duplicate, or reclassification now fails the parity gate until that
 governance is deliberately updated.
@@ -85,9 +87,10 @@ implied to be missing by accident.
 
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
 `docs/operation-parity.{json,md}` by joining the OpenAPI inventory, local codegen
-receipt, governed derived-name registry, TS MCP tool names, and GOCLMCP tool
-catalog. `make operation-coverage` owns the fixture suite and canonical
-validator, failing closed on receipt, disposition, classification, path, and
+receipt, governed derived-name registry, reviewed discrepancy-anchor inventory,
+169-row operation-evidence audit, TS MCP tool names, and GOCLMCP tool catalog.
+`make operation-coverage` owns the fixture suite and canonical validator, failing
+closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP
 renames. `make mcp-contract` pins the 140-tool count and split (22 workflow +
 118 domain). `make decision-records` verifies this record.

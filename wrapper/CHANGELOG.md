@@ -11,8 +11,9 @@ once v1.0.0 ships.
 
 - Corrected operation coverage documentation to distinguish all 169 generated
   SDK methods from the exact 155 explicitly named / 14 operationId-derived
-  naming split, backed by the local codegen receipt, separately governed
-  operation evidence, and fail-closed dispositions.
+  naming split, backed by the local codegen receipt, a reviewed inventory of
+  every discrepancy anchor, an exact 169-row operation-evidence audit, and
+  fail-closed dispositions.
 
 ### Fixed
 

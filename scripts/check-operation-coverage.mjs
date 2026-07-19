@@ -169,6 +169,7 @@ function validateContractShape() {
         safeRelativePath("reportInputs.operationDispositions", contract.reportInputs.operationDispositions);
         safeRelativePath("reportInputs.sdkNamingClassifications", contract.reportInputs.sdkNamingClassifications);
         safeRelativePath("reportInputs.operationEvidence", contract.reportInputs.operationEvidence);
+        safeRelativePath("reportInputs.operationEvidenceAnchors", contract.reportInputs.operationEvidenceAnchors);
         safeRelativePath("reportInputs.discrepancyLedger", contract.reportInputs.discrepancyLedger);
         safeRelativePath("reportInputs.sdkCodegenReceipt", contract.reportInputs.sdkCodegenReceipt);
     }
@@ -313,6 +314,11 @@ const classifications =
     (await readJsonRel(contract.reportInputs.sdkNamingClassifications, "reportInputs.sdkNamingClassifications")) ?? {};
 const evidence =
     (await readJsonRel(contract.reportInputs.operationEvidence, "reportInputs.operationEvidence")) ?? {};
+const evidenceAnchors =
+    (await readJsonRel(
+        contract.reportInputs.operationEvidenceAnchors,
+        "reportInputs.operationEvidenceAnchors",
+    )) ?? {};
 const receipt =
     (await readJsonRel(contract.reportInputs.sdkCodegenReceipt, "reportInputs.sdkCodegenReceipt")) ?? {};
 const discrepancyLedger = await readRel(
@@ -341,9 +347,19 @@ if (
 if (
     evidence.schemaVersion !== 1 ||
     typeof evidence.purpose !== "string" ||
-    !Array.isArray(evidence.mappings)
+    !Array.isArray(evidence.operations)
 ) {
-    fail(contract.reportInputs.operationEvidence, "must have schemaVersion 1, purpose, and mappings");
+    fail(contract.reportInputs.operationEvidence, "must have schemaVersion 1, purpose, and operations");
+}
+if (
+    evidenceAnchors.schemaVersion !== 1 ||
+    typeof evidenceAnchors.purpose !== "string" ||
+    !Array.isArray(evidenceAnchors.anchors)
+) {
+    fail(
+        contract.reportInputs.operationEvidenceAnchors,
+        "must have schemaVersion 1, purpose, and anchors",
+    );
 }
 const knownEvidenceIds = new Set(
     [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
@@ -351,7 +367,8 @@ const knownEvidenceIds = new Set(
 for (const failure of validateOperationDisposition({
     artifact: dispositions,
     classifications: classifications.classifications ?? [],
-    evidenceMappings: evidence.mappings ?? [],
+    evidenceAnchors: evidenceAnchors.anchors ?? [],
+    evidenceAudit: evidence.operations ?? [],
     inventory: openapi,
     knownEvidenceIds,
     receipt,

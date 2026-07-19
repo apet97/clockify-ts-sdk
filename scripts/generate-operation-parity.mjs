@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+    buildOperationEvidenceAudit,
     buildOperationDisposition,
     validateOperationDisposition,
 } from "./lib/operation-parity-contract.mjs";
@@ -15,6 +16,11 @@ const goCatalogPath = path.join(root, "..", "GOCLMCP", "docs", "tool-catalog.jso
 const overridesPath = path.join(root, "docs", "operation-parity-overrides.json");
 const classificationsPath = path.join(root, "docs", "sdk-operation-naming-classifications.json");
 const evidenceMapPath = path.join(root, "docs", "operation-evidence-map.json");
+const evidenceAnchorInventoryPath = path.join(
+    root,
+    "docs",
+    "operation-evidence-anchor-inventory.json",
+);
 const discrepancyLedgerPath = path.join(root, "spec", "evidence", "discrepancies.md");
 const dispositionPath = path.join(root, "docs", "operation-dispositions.json");
 const jsonPath = path.join(root, "docs", "operation-parity.json");
@@ -152,6 +158,7 @@ function build({ disposition, inventory }) {
             sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
             sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
             operationEvidence: "docs/operation-evidence-map.json",
+            operationEvidenceAnchors: "docs/operation-evidence-anchor-inventory.json",
             operationDispositions: "docs/operation-dispositions.json",
             tsMcp: "docs/mcp-tool-manifest.json",
             goMcp: "../GOCLMCP/docs/tool-catalog.json",
@@ -210,22 +217,40 @@ if (
     process.exit(1);
 }
 const classifications = classificationDocument.classifications ?? [];
-const evidenceDocument = readJson(evidenceMapPath);
+const evidenceAnchorDocument = readJson(evidenceAnchorInventoryPath);
 if (
-    evidenceDocument.schemaVersion !== 1 ||
-    typeof evidenceDocument.purpose !== "string" ||
-    !Array.isArray(evidenceDocument.mappings)
+    evidenceAnchorDocument.schemaVersion !== 1 ||
+    typeof evidenceAnchorDocument.purpose !== "string" ||
+    !Array.isArray(evidenceAnchorDocument.anchors)
 ) {
-    console.error("Operation evidence map must have schemaVersion 1, purpose, and mappings");
+    console.error("Operation evidence anchor inventory must have schemaVersion 1, purpose, and anchors");
     process.exit(1);
 }
-const evidenceMappings = evidenceDocument.mappings;
+const evidenceAnchors = evidenceAnchorDocument.anchors;
+const evidenceAudit = buildOperationEvidenceAudit({ evidenceAnchors, inventory });
+const evidenceDocument = {
+    schemaVersion: 1,
+    purpose: "Explicit evidence audit for every corrected OpenAPI operation, derived from the separately reviewed complete discrepancy-anchor inventory.",
+    sources: {
+        openapi: "docs/openapi-operations.json",
+        anchorInventory: "docs/operation-evidence-anchor-inventory.json",
+        discrepancyLedger: "spec/evidence/discrepancies.md",
+    },
+    summary: {
+        operations: evidenceAudit.length,
+        applicable: evidenceAudit.filter((row) => row.status === "applicable").length,
+        auditedNoApplicableEvidence: evidenceAudit.filter(
+            (row) => row.status === "audited-no-applicable-evidence",
+        ).length,
+    },
+    operations: evidenceAudit,
+};
 const discrepancyLedger = fs.readFileSync(discrepancyLedgerPath, "utf8");
 const knownEvidenceIds = new Set(
     [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
 );
 const dispositionCore = buildOperationDisposition({
-    evidenceMappings,
+    evidenceAudit,
     inventory,
     receipt,
 });
@@ -237,6 +262,7 @@ const disposition = {
         sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
         sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
         operationEvidence: "docs/operation-evidence-map.json",
+        operationEvidenceAnchors: "docs/operation-evidence-anchor-inventory.json",
         discrepancyLedger: "spec/evidence/discrepancies.md",
     },
     summary: dispositionCore.summary,
@@ -245,7 +271,8 @@ const disposition = {
 const dispositionFailures = validateOperationDisposition({
     artifact: disposition,
     classifications,
-    evidenceMappings,
+    evidenceAnchors,
+    evidenceAudit,
     inventory,
     knownEvidenceIds,
     receipt,
@@ -258,24 +285,30 @@ if (dispositionFailures.length > 0) {
 
 const parity = build({ disposition, inventory });
 const expectedDisposition = jsonFor(disposition);
+const expectedEvidence = jsonFor(evidenceDocument);
 const expectedJson = jsonFor(parity);
 const expectedMd = markdownFor(parity);
 
 if (args.has("--write")) {
+    fs.writeFileSync(evidenceMapPath, expectedEvidence);
     fs.writeFileSync(dispositionPath, expectedDisposition);
     fs.writeFileSync(jsonPath, expectedJson);
     fs.writeFileSync(mdPath, expectedMd);
-    console.log("wrote docs/operation-dispositions.json and docs/operation-parity.{json,md}");
+    console.log("wrote docs/operation-evidence-map.json, docs/operation-dispositions.json, and docs/operation-parity.{json,md}");
     process.exit(0);
 }
 
 if (args.has("--check")) {
+    const currentEvidence = fs.existsSync(evidenceMapPath)
+        ? fs.readFileSync(evidenceMapPath, "utf8")
+        : "";
     const currentDisposition = fs.existsSync(dispositionPath)
         ? fs.readFileSync(dispositionPath, "utf8")
         : "";
     const currentJson = fs.existsSync(jsonPath) ? fs.readFileSync(jsonPath, "utf8") : "";
     const currentMd = fs.existsSync(mdPath) ? fs.readFileSync(mdPath, "utf8") : "";
     const stale = [];
+    if (currentEvidence !== expectedEvidence) stale.push("docs/operation-evidence-map.json");
     if (currentDisposition !== expectedDisposition) stale.push("docs/operation-dispositions.json");
     if (currentJson !== expectedJson) stale.push("docs/operation-parity.json");
     if (currentMd !== expectedMd) stale.push("docs/operation-parity.md");
