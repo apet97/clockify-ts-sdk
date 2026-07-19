@@ -2705,6 +2705,187 @@ test("does not let another callable bind overwrite suppress native bind", async 
     );
 });
 
+test("models native bind restored after a custom bind assignment", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; const nativeBind = assign.bind; assign.bind = ((_thisArg: unknown) => (_patch: unknown) => undefined) as typeof assign.bind; assign.bind = nativeBind; assign.bind(Object, holder)({ request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps conditional native and custom bind paths", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; if (choose) assign.bind = ((_thisArg: unknown) => (_patch: unknown) => undefined) as typeof assign.bind; assign.bind(Object, holder)({ request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, setup, invocation] of [
+    [
+        "direct custom binder",
+        "const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder) { return (patch: unknown) => Object.assign(target, patch); }) as typeof assign.bind;",
+        "assign.bind(Object, holder)({ request: body as any });",
+    ],
+    [
+        "custom binder through call",
+        "const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder) { return (patch: unknown) => Object.assign(target, patch); }) as typeof assign.bind;",
+        "assign.bind.call(assign, Object, holder)({ request: body as any });",
+    ],
+    [
+        "custom binder through apply",
+        "const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder) { return (patch: unknown) => Object.assign(target, patch); }) as typeof assign.bind;",
+        "assign.bind.apply(assign, [Object, holder])({ request: body as any });",
+    ],
+    [
+        "conditional custom binder return",
+        "const assign = Object.assign; assign.bind = (function (_thisArg: unknown, target: Holder, choose: boolean) { return choose ? (patch: unknown) => Object.assign(target, patch) : (_patch: unknown) => undefined; }) as typeof assign.bind;",
+        "assign.bind(Object, holder, true)({ request: body as any });",
+    ],
+]) {
+    test("models unsafe effects from " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ' +
+                setup +
+                " " +
+                invocation +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+for (const [label, overwrite] of [
+    [
+        "Object.defineProperty",
+        'Object.defineProperty(assign, "bind", { value: (_thisArg: unknown) => (_patch: unknown) => undefined });',
+    ],
+    [
+        "Reflect.defineProperty",
+        'Reflect.defineProperty(assign, "bind", { value: (_thisArg: unknown) => (_patch: unknown) => undefined });',
+    ],
+    [
+        "Reflect.set",
+        'Reflect.set(assign, "bind", (_thisArg: unknown) => (_patch: unknown) => undefined);',
+    ],
+    [
+        "Object.assign",
+        "Object.assign(assign, { bind: (_thisArg: unknown) => (_patch: unknown) => undefined });",
+    ],
+]) {
+    test("recognizes a custom bind property written by " + label, async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; ' +
+                overwrite +
+                " assign.bind(Object, holder)({ request: body as any }); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+test("models a native bind restored through Reflect.set", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; const nativeBind = assign.bind; assign.bind = ((_thisArg: unknown) => (_patch: unknown) => undefined) as typeof assign.bind; Reflect.set(assign, "bind", nativeBind); assign.bind(Object, holder)({ request: body as any }); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, overwrite] of [
+    [
+        "assignment",
+        "Reflect.apply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply;",
+    ],
+    [
+        "Object.defineProperty",
+        'Object.defineProperty(Reflect, "apply", { value: (_target: unknown, _receiver: unknown, _args: unknown[]) => undefined });',
+    ],
+    [
+        "Reflect.defineProperty",
+        'Reflect.defineProperty(Reflect, "apply", { value: (_target: unknown, _receiver: unknown, _args: unknown[]) => undefined });',
+    ],
+    [
+        "Reflect.set",
+        'Reflect.set(Reflect, "apply", (_target: unknown, _receiver: unknown, _args: unknown[]) => undefined);',
+    ],
+    [
+        "Object.assign",
+        "Object.assign(Reflect, { apply: (_target: unknown, _receiver: unknown, _args: unknown[]) => undefined });",
+    ],
+]) {
+    test("does not model Reflect.apply after " + label + " overwrite", async () => {
+        await withFixture(
+            generatedImports +
+                'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ' +
+                overwrite +
+                " Reflect.apply(Object.assign, Object, [holder, { request: body as any }]); return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+test("models Reflect.apply restored to a captured native value", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const nativeApply = Reflect.apply; Reflect.apply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; Reflect.apply = nativeApply; Reflect.apply(Object.assign, Object, [holder, { request: body as any }]); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps a captured native Reflect.apply alias after property overwrite", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const apply = Reflect.apply; Reflect.apply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; apply(Object.assign, Object, [holder, { request: body as any }]); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps conditional native and overwritten Reflect.apply paths", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; if (choose) Reflect.apply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; Reflect.apply(Object.assign, Object, [holder, { request: body as any }]); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
 for (const [label, source] of [
     [
         "shadow Object.call",

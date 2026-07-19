@@ -246,10 +246,15 @@ make docs-drift
   `bind.call`/`bind.apply` adapters are modeled only when the returned function
   is invoked and the reaching member retains native `Function.prototype.bind`
   identity rather than an exact-callable custom/overwritten property; sibling
-  callable writes stay isolated. Global-provenance direct/aliased/computed
-  `Reflect.apply` is normalized through the same bounded
-  static/spread argument-list path. Unresolved/invalid governed apply lists fail
-  closed; uninvoked binds remain non-effects.
+  callable writes stay isolated. Assignment, `Object.assign`,
+  `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set` bind-member
+  writes are ordered; captured-native restoration resumes native normalization,
+  while invoked custom-binder return values retain captured receiver effects.
+  Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
+  the same bounded static/spread argument-list path only while its ordered
+  reaching member is native; restoration and captured-native aliases remain
+  native. Unresolved/invalid governed apply lists fail closed; uninvoked binds
+  remain non-effects.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely
