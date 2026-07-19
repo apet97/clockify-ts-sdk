@@ -238,12 +238,30 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
     const findingKeys = new Set();
     const writesBySymbol = new Map();
 
-    function addWrite(name, value, position) {
-        if (!ts.isIdentifier(name)) return;
-        const symbol = unalias(checker, checker.getSymbolAtLocation(name));
+    function symbolForWriteTarget(target) {
+        if (ts.isIdentifier(target)) {
+            return unalias(checker, checker.getSymbolAtLocation(target));
+        }
+        if (ts.isPropertyAccessExpression(target) || ts.isElementAccessExpression(target)) {
+            return unalias(
+                checker,
+                checker.getSymbolAtLocation(target.name ?? target.argumentExpression),
+            );
+        }
+        return null;
+    }
+
+    function addWrite(target, value, position, declaredType = null) {
+        const symbol = symbolForWriteTarget(target);
         if (!symbol) return;
         const writes = writesBySymbol.get(symbol) ?? [];
-        writes.push({ value, position, sourceFile: name.getSourceFile() });
+        writes.push({
+            value,
+            position,
+            sourceFile: target.getSourceFile(),
+            node: target,
+            declaredType,
+        });
         writesBySymbol.set(symbol, writes);
     }
 
@@ -251,12 +269,17 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         if (sourceFile.isDeclarationFile) continue;
         function indexWrites(node) {
             if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
-                addWrite(node.name, node.initializer, node.pos);
+                addWrite(node.name, node.initializer, node.pos, node.type);
+            }
+            if (ts.isPropertyDeclaration(node) && node.initializer) {
+                addWrite(node.name, node.initializer, node.pos, node.type);
             }
             if (
                 ts.isBinaryExpression(node) &&
                 node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-                ts.isIdentifier(node.left)
+                (ts.isIdentifier(node.left) ||
+                    ts.isPropertyAccessExpression(node.left) ||
+                    ts.isElementAccessExpression(node.left))
             ) {
                 addWrite(node.left, node.right, node.pos);
             }
@@ -291,12 +314,153 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         );
     }
 
+    function directStatementInLinearContainer(node) {
+        let current = node;
+        while (current.parent) {
+            if (ts.isBlock(current.parent) || ts.isSourceFile(current.parent)) {
+                return ts.isStatement(current)
+                    ? { statement: current, container: current.parent }
+                    : null;
+            }
+            current = current.parent;
+        }
+        return null;
+    }
+
+    function statementDefinitelyWritesSymbol(statement, symbol) {
+        if (ts.isBlock(statement)) {
+            return statement.statements.some((child) =>
+                statementDefinitelyWritesSymbol(child, symbol),
+            );
+        }
+        if (ts.isVariableStatement(statement)) {
+            return statement.declarationList.declarations.some(
+                (declaration) =>
+                    declaration.initializer != null &&
+                    ts.isIdentifier(declaration.name) &&
+                    symbolForWriteTarget(declaration.name) === symbol,
+            );
+        }
+        if (ts.isExpressionStatement(statement)) {
+            const expression = statement.expression;
+            return (
+                ts.isBinaryExpression(expression) &&
+                expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+                symbolForWriteTarget(expression.left) === symbol
+            );
+        }
+        if (ts.isIfStatement(statement)) {
+            return (
+                statement.elseStatement != null &&
+                statementDefinitelyWritesSymbol(statement.thenStatement, symbol) &&
+                statementDefinitelyWritesSymbol(statement.elseStatement, symbol)
+            );
+        }
+        if (ts.isLabeledStatement(statement)) {
+            return statementDefinitelyWritesSymbol(statement.statement, symbol);
+        }
+        return false;
+    }
+
+    function latestDefiniteWriteCutoff(symbol, use) {
+        const useLocation = directStatementInLinearContainer(use);
+        if (!useLocation) return null;
+        let cutoff = null;
+        for (const statement of useLocation.container.statements) {
+            if (statement === useLocation.statement) break;
+            if (statementDefinitelyWritesSymbol(statement, symbol)) cutoff = statement.pos;
+        }
+        return cutoff;
+    }
+
+    function receiverOrigins(expression, beforePosition, seen = new Set()) {
+        if (
+            ts.isParenthesizedExpression(expression) ||
+            ts.isNonNullExpression(expression) ||
+            ts.isSatisfiesExpression(expression) ||
+            ts.isAsExpression(expression) ||
+            ts.isTypeAssertionExpression(expression)
+        ) {
+            return receiverOrigins(expression.expression, beforePosition, seen);
+        }
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            return receiverOrigins(expression.expression, beforePosition, seen);
+        }
+        if (!ts.isIdentifier(expression)) return new Set();
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return new Set();
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const origins = new Set();
+        for (const write of writesBySymbol.get(symbol) ?? []) {
+            if (write.position >= beforePosition) continue;
+            for (const origin of receiverOrigins(write.value, write.position, nextSeen)) {
+                origins.add(origin);
+            }
+        }
+        if (origins.size === 0) origins.add(symbol);
+        return origins;
+    }
+
+    function writeMayReachExpression(write, expression) {
+        if (
+            !(ts.isPropertyAccessExpression(write.node) ||
+                ts.isElementAccessExpression(write.node)) ||
+            !(ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression))
+        ) {
+            return true;
+        }
+        const writeOrigins = receiverOrigins(write.node.expression, write.position);
+        const useOrigins = receiverOrigins(expression.expression, expression.pos);
+        if (writeOrigins.size === 0 || useOrigins.size === 0) return true;
+        return [...writeOrigins].some((origin) => useOrigins.has(origin));
+    }
+
+    function reachingWrites(symbol, expression) {
+        const writes = (writesBySymbol.get(symbol) ?? [])
+            .filter(
+                (write) =>
+                    write.sourceFile === expression.getSourceFile() &&
+                    write.position < expression.pos &&
+                    writeMayReachExpression(write, expression),
+            )
+            .sort((left, right) => left.position - right.position);
+        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+        return {
+            hasDominator: cutoff != null,
+            writes: cutoff == null ? writes : writes.filter((write) => write.position >= cutoff),
+        };
+    }
+
+    function traceWrites(symbol, expression, context, depth, seen) {
+        const reaching = reachingWrites(symbol, expression);
+        for (const write of reaching.writes) {
+            if (
+                write.declaredType &&
+                context.atBoundaryValue &&
+                (checker.getTypeFromTypeNode(write.declaredType).flags & ts.TypeFlags.Any) !== 0
+            ) {
+                addFinding(
+                    write.declaredType,
+                    context.packageName,
+                    "annotated any request value",
+                    write.declaredType.getText(),
+                    context.expectedRequestType,
+                );
+            }
+            trace(write.value, context, depth + 1, seen);
+        }
+        return reaching;
+    }
+
     function traceBindingElement(binding, context, depth, seen) {
         const pattern = binding.parent;
-        if (!ts.isObjectBindingPattern(pattern)) return;
+        if (!ts.isObjectBindingPattern(pattern) && !ts.isArrayBindingPattern(pattern)) return;
         const declaration = pattern.parent;
         if (!ts.isVariableDeclaration(declaration) || !declaration.initializer) return;
-        const key = (binding.propertyName ?? binding.name).getText(binding.getSourceFile());
+        const key = ts.isObjectBindingPattern(pattern)
+            ? (binding.propertyName ?? binding.name).getText(binding.getSourceFile())
+            : pattern.elements.indexOf(binding);
 
         function traceProperty(source, propertyDepth, propertySeen) {
             if (propertyDepth > MAX_TRACE_DEPTH) return;
@@ -323,6 +487,13 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                     ) {
                         trace(property.initializer, context, propertyDepth + 1, propertySeen);
                     }
+                }
+                return;
+            }
+            if (ts.isArrayLiteralExpression(source) && typeof key === "number") {
+                const element = source.elements[key];
+                if (element && !ts.isOmittedExpression(element)) {
+                    trace(element, context, propertyDepth + 1, propertySeen);
                 }
                 return;
             }
@@ -418,20 +589,6 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         );
                     }
                 }
-                if (
-                    ts.isVariableDeclaration(declaration) &&
-                    declaration.type &&
-                    context.atBoundaryValue &&
-                    (checker.getTypeFromTypeNode(declaration.type).flags & ts.TypeFlags.Any) !== 0
-                ) {
-                    addFinding(
-                        declaration.type,
-                        context.packageName,
-                        "annotated any request variable",
-                        declaration.type.getText(),
-                        context.expectedRequestType,
-                    );
-                }
                 if (ts.isBindingElement(declaration)) {
                     traceBindingElement(declaration, context, depth, nextSeen);
                 }
@@ -442,15 +599,8 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                 trace(substitution, context, depth + 1, nextSeen);
                 return;
             }
-            const writes = (writesBySymbol.get(symbol) ?? [])
-                .filter(
-                    (write) =>
-                        write.sourceFile === expression.getSourceFile() &&
-                        write.position < expression.pos,
-                )
-                .sort((left, right) => right.position - left.position);
-            if (writes[0]) {
-                trace(writes[0].value, context, depth + 1, nextSeen);
+            const reaching = traceWrites(symbol, expression, context, depth, nextSeen);
+            if (reaching.writes.length > 0) {
                 return;
             }
             for (const declaration of symbol?.declarations ?? []) {
@@ -465,9 +615,28 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                 checker,
                 checker.getSymbolAtLocation(expression.name ?? expression.argumentExpression),
             );
+            const reaching = traceWrites(symbol, expression, context, depth, nextSeen);
+            if (reaching.writes.length > 0 && reaching.hasDominator) return;
             for (const declaration of symbol?.declarations ?? []) {
                 if (ts.isPropertyAssignment(declaration)) {
                     trace(declaration.initializer, context, depth + 1, nextSeen);
+                } else if (ts.isGetAccessorDeclaration(declaration)) {
+                    for (const returned of functionReturnExpressions(declaration)) {
+                        trace(returned, context, depth + 1, nextSeen);
+                    }
+                } else if (
+                    ts.isPropertyDeclaration(declaration) &&
+                    declaration.type &&
+                    context.atBoundaryValue &&
+                    (checker.getTypeFromTypeNode(declaration.type).flags & ts.TypeFlags.Any) !== 0
+                ) {
+                    addFinding(
+                        declaration.type,
+                        context.packageName,
+                        "annotated any request property",
+                        declaration.type.getText(),
+                        context.expectedRequestType,
+                    );
                 }
             }
             return;
@@ -526,6 +695,8 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         if (ts.isBinaryExpression(expression)) {
             if (expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
                 trace(expression.right, context, depth + 1, nextSeen);
+            } else if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
+                trace(expression.right, context, depth + 1, nextSeen);
             } else {
                 trace(expression.left, context, depth + 1, nextSeen);
                 trace(expression.right, context, depth + 1, nextSeen);
@@ -559,6 +730,101 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                 }
             }
         }
+    }
+
+    function staticPropertyName(expression) {
+        if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+        const argument = expression.argumentExpression;
+        if (ts.isStringLiteralLike(argument) || ts.isNumericLiteral(argument)) {
+            return argument.text;
+        }
+        return null;
+    }
+
+    function typesBeforeAnyErasure(expression, depth = 0, seen = new Set()) {
+        if (!expression || depth > MAX_TRACE_DEPTH) return [];
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
+        if (seen.has(key)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
+
+        if (
+            ts.isParenthesizedExpression(expression) ||
+            ts.isNonNullExpression(expression) ||
+            ts.isSatisfiesExpression(expression) ||
+            ts.isAwaitExpression(expression)
+        ) {
+            return typesBeforeAnyErasure(expression.expression, depth + 1, nextSeen);
+        }
+        if (ts.isAsExpression(expression) || ts.isTypeAssertionExpression(expression)) {
+            const asserted = checker.getTypeFromTypeNode(expression.type);
+            if ((asserted.flags & ts.TypeFlags.Any) !== 0) {
+                return typesBeforeAnyErasure(expression.expression, depth + 1, nextSeen);
+            }
+            return [checker.getTypeAtLocation(expression)];
+        }
+        if (ts.isIdentifier(expression)) {
+            const current = checker.getTypeAtLocation(expression);
+            if ((current.flags & ts.TypeFlags.Any) === 0) return [current];
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            const writes = reachingWrites(symbol, expression).writes;
+            const recovered = writes.flatMap((write) =>
+                typesBeforeAnyErasure(write.value, depth + 1, nextSeen),
+            );
+            if (recovered.length > 0) return recovered;
+            for (const declaration of symbol?.declarations ?? []) {
+                if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+                    recovered.push(
+                        ...typesBeforeAnyErasure(declaration.initializer, depth + 1, nextSeen),
+                    );
+                }
+            }
+            return recovered.length > 0 ? recovered : [current];
+        }
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const current = checker.getTypeAtLocation(expression);
+            if ((current.flags & ts.TypeFlags.Any) === 0) return [current];
+            const propertyName = staticPropertyName(expression);
+            if (propertyName == null) return [current];
+            const recovered = [];
+            for (const receiverType of typesBeforeAnyErasure(
+                expression.expression,
+                depth + 1,
+                nextSeen,
+            )) {
+                const property = checker.getPropertyOfType(
+                    checker.getApparentType(receiverType),
+                    propertyName,
+                );
+                if (property) {
+                    recovered.push(checker.getTypeOfSymbolAtLocation(property, expression));
+                }
+            }
+            return recovered.length > 0 ? recovered : [current];
+        }
+        return [checker.getTypeAtLocation(expression)];
+    }
+
+    function addSignatureBoundaries(boundaries, call, signature, argumentOffset = 0) {
+        signature.parameters.forEach((parameter, index) => {
+            const argument = call.arguments[index + argumentOffset];
+            if (!argument) return;
+            const declaration = parameter.valueDeclaration ?? parameter.declarations?.[0];
+            const expectedType = checker.getTypeOfSymbolAtLocation(parameter, declaration ?? call);
+            const expectedRequestType =
+                requestNameFromType(checker, expectedType) ??
+                requestNameFromTypeNode(checker, declaration?.type);
+            if (
+                expectedRequestType &&
+                !boundaries.some(
+                    (boundary) =>
+                        boundary.argument === argument &&
+                        boundary.expectedRequestType === expectedRequestType,
+                )
+            ) {
+                boundaries.push({ argument, expectedRequestType });
+            }
+        });
     }
 
     function requestBoundaryArguments(call) {
@@ -602,16 +868,12 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         }
 
         const signature = checker.getResolvedSignature(call);
-        signature?.parameters.forEach((parameter, index) => {
-            const argument = call.arguments[index];
-            if (!argument) return;
-            const declaration = parameter.valueDeclaration ?? parameter.declarations?.[0];
-            const expectedType = checker.getTypeOfSymbolAtLocation(parameter, declaration ?? call);
-            const expectedRequestType =
-                requestNameFromType(checker, expectedType) ??
-                requestNameFromTypeNode(checker, declaration?.type);
-            if (expectedRequestType) boundaries.push({ argument, expectedRequestType });
-        });
+        if (signature) addSignatureBoundaries(boundaries, call, signature);
+        for (const recoveredType of typesBeforeAnyErasure(call.expression)) {
+            for (const recoveredSignature of recoveredType.getCallSignatures()) {
+                addSignatureBoundaries(boundaries, call, recoveredSignature);
+            }
+        }
         return boundaries;
     }
 
