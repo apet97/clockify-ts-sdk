@@ -93,7 +93,6 @@
         "remote-mutation-proof-pending"
       ],
       "requiredReadinessBlockingRiskIds": [
-        "expense-update-file-schema",
         "operation-parity-generated-reachability",
         "consumer-request-casts",
         "cross-package-release-proof-asymmetry",
@@ -252,21 +251,21 @@
     },
     {
       "id": "expense-update-file-schema",
-      "status": "open",
-      "finalReadinessBlocking": true,
+      "status": "accepted",
+      "finalReadinessBlocking": false,
       "surface": "Expense update request schema",
-      "summary": "The generated expense-update request shape still exposes a multipart file field that the supported scalar update workflow does not model truthfully.",
-      "impact": "Callers may need an unsafe request cast or may assume a file-upload update shape that the supported workflow cannot prove.",
-      "mitigation": "Keep the explicit scalar-versus-multipart mismatch visible until Task 3 corrects the contract and removes the unsupported path.",
-      "closureGate": "`make risk-register` (including `scripts/check-risk-register.readiness.test.mjs`), `make sdk-codegen-test consumer-cast-budget`, `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`, and `make contract-gates`.",
+      "summary": "The canonical and generated expense-update multipart request now keeps file optional while preserving the existing expense-create contract.",
+      "impact": "Scalar updates compile without an unsafe request cast, while callers that supply a receipt still emit one binary file part.",
+      "mitigation": "Keep the upstream create-vs-update schema regression, downstream generated-type compile proof, exact multipart wire tests, and cast-budget gate active.",
+      "closureGate": "Closed 2026-07-19 by the Task 3 sanitized receipt, upstream OpenAPI drift/tool gates, downstream codegen and multipart tests, cast removal, consumer-cast budget, risk-register, and contract gates.",
       "evidence": [
         {
-          "path": "cli/src/commands/expenses.ts",
-          "contains": "expense update scalar shape omits the generated multipart file"
+          "path": "docs/roadmap-1.0-receipts/task-03-expense-update-schema.md",
+          "contains": "file is optional for expense update only"
         },
         {
-          "path": "docs/roadmap-1.0.md",
-          "contains": "expense-update-file-schema"
+          "path": "wrapper/tests/expense-update-multipart.test.ts",
+          "contains": "accepts a typed scalar update and emits no file part"
         }
       ]
     },
@@ -309,7 +308,7 @@
           "contains": "allowedRequestCastBudget"
         },
         {
-          "path": "cli/src/commands/expenses.ts",
+          "path": "mcp/src/tools/workflows/review.ts",
           "contains": "KEEP as never"
         }
       ]

@@ -7,6 +7,12 @@ once v1.0.0 ships.
 
 ## [Unreleased]
 
+### Fixed
+
+- Expense update requests now type `file` as optional, matching the multipart
+  wire contract; scalar updates compile without casts and receipt updates keep
+  the binary file part.
+
 ### Added
 
 - Added `listExpensesFiltered`, a bounded typed expense-envelope walker with

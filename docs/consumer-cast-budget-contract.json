@@ -3,13 +3,10 @@
   "purpose": "Every `as never` in cli/src + mcp/src must be eliminated or annotated `KEEP as never` for a documented generated-type mismatch. The residual unannotated budget ratchets to 0; the two forwarding seams (result.ts, output-schema.ts) are exempt by path. Request construction uses generated request unions, typed body envelopes, and operation-specific validation. The retired request-body escape is forbidden in consumer source.",
   "allowedRequestCastBudget": 0,
   "residueNotes": {
-    "lastReduced": "2026-07-12",
+    "lastReduced": "2026-07-19",
     "annotatedKeepAsNever": {
-      "cli": [
-        "cli/src/commands/expenses.ts (expense update scalar body omits the generated multipart file)"
-      ],
+      "cli": [],
       "mcp": [
-        "mcp/src/tools/expenses.ts (expense update scalar body omits the generated multipart file)",
         "mcp/src/tools/workflows/review.ts + mcp/src/tools/workflows/resolve.ts (timeEntries.listForUser list/search/view request+response envelope does not match the wire shape)"
       ]
     },
