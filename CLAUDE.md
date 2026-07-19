@@ -219,8 +219,11 @@ make docs-drift
   variable/property writes (including computed keys), ordered receiver aliases,
   parameter defaults, compound/destructuring assignments, nested/defaulted/rest
   bindings, called same-file/imported helper side effects (including nested
-  receivers and synchronous `call`/`apply`/`bind`), documented synchronous
-  `forEach`/`map` callback effects, `Object.assign`, `Reflect.set`, accessors,
+  receivers and synchronous `call`/`apply`/`bind`), named/aliased synchronous
+  array callback effects on statically known non-empty receivers (`forEach`,
+  `map`, `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`,
+  and `reduceRight`), aliased `Object.assign`/`Reflect.set` effects with bounded
+  patch/spread/factory provenance, accessors,
   contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
@@ -228,7 +231,8 @@ make docs-drift
   including later holder writes and exact `Function.call` trampolines.
   Receiver-producing calls follow bounded return provenance, not all call
   arguments. Exported/default-exported/escaped callables keep defaults
-  reachable; asynchronous callbacks are not treated as pre-request effects.
+  reachable; asynchronous, known-empty, unknown-emptiness, and definitely
+  short-circuited callbacks are not treated as pre-request effects.
   Discarded comma operands are not request contributors. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,

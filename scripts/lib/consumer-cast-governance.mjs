@@ -584,6 +584,32 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         return true;
     }
 
+    function isWithin(node, container) {
+        for (let current = node; current; current = current.parent) {
+            if (current === container) return true;
+            if (current === container.parent) return false;
+        }
+        return false;
+    }
+
+    function expressionDefinitelySkipped(node) {
+        for (let current = node.parent; current; current = current.parent) {
+            if (!ts.isBinaryExpression(current) || !isWithin(node, current.right)) continue;
+            const state = definiteExpressionState(current.left);
+            if (
+                (current.operatorToken.kind === ts.SyntaxKind.BarBarToken &&
+                    state.truthy === true) ||
+                (current.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+                    state.truthy === false) ||
+                (current.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+                    state.nullish === false)
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     for (const sourceFile of program.getSourceFiles()) {
         if (sourceFile.isDeclarationFile) continue;
         function indexWrites(node) {
@@ -634,6 +660,19 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             .find((declaration) => declaration && ts.isFunctionLike(declaration));
     }
 
+    function unwrapExpression(expression) {
+        while (
+            ts.isParenthesizedExpression(expression) ||
+            ts.isNonNullExpression(expression) ||
+            ts.isAsExpression(expression) ||
+            ts.isTypeAssertionExpression(expression) ||
+            ts.isSatisfiesExpression(expression)
+        ) {
+            expression = expression.expression;
+        }
+        return expression;
+    }
+
     function isGlobalBuiltin(expression, name) {
         if (!ts.isIdentifier(expression) || expression.text !== name) return false;
         const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
@@ -644,7 +683,185 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         );
     }
 
-    function addEffectWrite(receiver, value, propertyNames, call) {
+    function reachingExpressionValues(
+        expression,
+        beforePosition,
+        seen = new Set(),
+        substitutions = new Map(),
+    ) {
+        expression = unwrapExpression(expression);
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            const substituted = substitutions.get(symbol);
+            if (substituted) {
+                return reachingExpressionValues(substituted, beforePosition, seen, substitutions);
+            }
+            if (!symbol || seen.has(symbol) || isGlobalBuiltin(expression, expression.text)) {
+                return [{ expression, substitutions }];
+            }
+            const nextSeen = new Set(seen);
+            nextSeen.add(symbol);
+            const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+            const writes = (writesBySymbol.get(symbol) ?? []).filter(
+                (write) =>
+                    write.position < beforePosition &&
+                    (cutoff == null || write.position >= cutoff),
+            );
+            return writes.length === 0
+                ? [{ expression, substitutions }]
+                : writes.flatMap((write) =>
+                      reachingExpressionValues(
+                          write.value,
+                          write.position,
+                          nextSeen,
+                          substitutions,
+                      ),
+                  );
+        }
+        if (ts.isCallExpression(expression)) {
+            const declaration = functionDeclarationForExpression(expression.expression);
+            if (declaration?.body) {
+                const key = `${declaration.getSourceFile().fileName}:${declaration.pos}:return`;
+                if (seen.has(key)) return [];
+                const nextSeen = new Set(seen);
+                nextSeen.add(key);
+                const nested = new Map(substitutions);
+                declaration.parameters.forEach((parameter, index) => {
+                    const argument = expression.arguments[index];
+                    if (!argument) return;
+                    const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                    if (symbol) nested.set(symbol, argument);
+                });
+                return functionReturnExpressions(declaration).flatMap((returned) =>
+                    reachingExpressionValues(returned, expression.pos, nextSeen, nested),
+                );
+            }
+        }
+        return [{ expression, substitutions }];
+    }
+
+    function objectPropertyEntries(
+        source,
+        beforePosition,
+        seen = new Set(),
+        substitutions = new Map(),
+    ) {
+        const entries = [];
+        for (const value of reachingExpressionValues(source, beforePosition, seen, substitutions)) {
+            const expression = unwrapExpression(value.expression);
+            if (!ts.isObjectLiteralExpression(expression)) continue;
+            for (const property of expression.properties) {
+                if (ts.isSpreadAssignment(property)) {
+                    entries.push(
+                        ...objectPropertyEntries(
+                            property.expression,
+                            beforePosition,
+                            seen,
+                            value.substitutions,
+                        ),
+                    );
+                    continue;
+                }
+                if (!property.name) continue;
+                const names = ts.isComputedPropertyName(property.name)
+                    ? literalPropertyNames(checker.getTypeAtLocation(property.name.expression))
+                    : [
+                          property.name
+                              .getText(expression.getSourceFile())
+                              .replace(/^['"]|['"]$/g, ""),
+                      ];
+                if (ts.isPropertyAssignment(property)) {
+                    entries.push({
+                        value: property.initializer,
+                        names,
+                        substitutions: value.substitutions,
+                    });
+                } else if (ts.isShorthandPropertyAssignment(property)) {
+                    entries.push({
+                        value: property.name,
+                        names,
+                        substitutions: value.substitutions,
+                    });
+                }
+            }
+        }
+        return entries;
+    }
+
+    function expressionResolvesToGlobal(expression, name, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        if (isGlobalBuiltin(expression, name)) return true;
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+        return (writesBySymbol.get(symbol) ?? [])
+            .filter(
+                (write) =>
+                    write.position < beforePosition &&
+                    (cutoff == null || write.position >= cutoff),
+            )
+            .some((write) =>
+                expressionResolvesToGlobal(write.value, name, write.position, nextSeen),
+            );
+    }
+
+    function expressionResolvesToBuiltinMember(
+        expression,
+        globalName,
+        memberName,
+        beforePosition,
+        seen = new Set(),
+    ) {
+        expression = unwrapExpression(expression);
+        if (
+            ts.isPropertyAccessExpression(expression) &&
+            expression.name.text === memberName &&
+            expressionResolvesToGlobal(expression.expression, globalName, beforePosition)
+        ) {
+            return true;
+        }
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            if (!symbol || seen.has(symbol)) return false;
+            const nextSeen = new Set(seen);
+            nextSeen.add(symbol);
+            const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+            return (writesBySymbol.get(symbol) ?? [])
+                .filter(
+                    (write) =>
+                        write.position < beforePosition &&
+                        (cutoff == null || write.position >= cutoff),
+                )
+                .some((write) =>
+                    expressionResolvesToBuiltinMember(
+                        write.value,
+                        globalName,
+                        memberName,
+                        write.position,
+                        nextSeen,
+                    ),
+                );
+        }
+        if (ts.isPropertyAccessExpression(expression)) {
+            return objectPropertyEntries(expression.expression, beforePosition).some(
+                (entry) =>
+                    entry.names?.includes(expression.name.text) &&
+                    expressionResolvesToBuiltinMember(
+                        entry.value,
+                        globalName,
+                        memberName,
+                        beforePosition,
+                        seen,
+                    ),
+            );
+        }
+        return false;
+    }
+
+    function addEffectWrite(receiver, value, propertyNames, call, substitutions = new Map()) {
         propertyWrites.push({
             value,
             position: call.pos,
@@ -653,6 +870,7 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             receiverOverride: receiver,
             propertyNames,
             effectWrite: true,
+            substitutions,
         });
     }
 
@@ -684,9 +902,10 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         function indexCallArguments(node) {
             if (ts.isCallExpression(node)) {
                 const declaration = checker.getResolvedSignature(node)?.declaration;
-                addInvocation(declaration, node, node.arguments);
+                const skipped = expressionDefinitelySkipped(node);
+                if (!skipped) addInvocation(declaration, node, node.arguments);
 
-                if (ts.isPropertyAccessExpression(node.expression)) {
+                if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
                     const invocation = node.expression.name.text;
                     const target = node.expression.expression;
                     if (["call", "apply"].includes(invocation)) {
@@ -700,69 +919,72 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         addInvocation(targetDeclaration, node, args);
                     }
 
-                    if (
-                        ["forEach", "map"].includes(invocation) &&
-                        node.arguments[0] &&
-                        (ts.isArrowFunction(node.arguments[0]) ||
-                            ts.isFunctionExpression(node.arguments[0]))
-                    ) {
-                        const receiver = node.expression.expression;
-                        const values = ts.isArrayLiteralExpression(receiver)
-                            ? receiver.elements.filter(ts.isExpression)
-                            : [receiver];
-                        for (const value of values) {
-                            addInvocation(node.arguments[0], node, [value]);
-                        }
-                    }
-
-                    if (
-                        invocation === "assign" &&
-                        isGlobalBuiltin(node.expression.expression, "Object") &&
-                        node.arguments[0]
-                    ) {
-                        for (const source of node.arguments.slice(1)) {
-                            if (!ts.isObjectLiteralExpression(source)) continue;
-                            for (const property of source.properties) {
-                                if (!property.name) continue;
-                                const names = ts.isComputedPropertyName(property.name)
-                                    ? literalPropertyNames(
-                                          checker.getTypeAtLocation(property.name.expression),
-                                      )
-                                    : [
-                                          property.name
-                                              .getText(source.getSourceFile())
-                                              .replace(/^['"]|['"]$/g, ""),
-                                      ];
-                                if (ts.isPropertyAssignment(property)) {
-                                    addEffectWrite(
-                                        node.arguments[0],
-                                        property.initializer,
-                                        names,
-                                        node,
-                                    );
-                                } else if (ts.isShorthandPropertyAssignment(property)) {
-                                    addEffectWrite(node.arguments[0], property.name, names, node);
+                    const synchronousArrayMethods = new Set([
+                        "forEach",
+                        "map",
+                        "filter",
+                        "every",
+                        "some",
+                        "find",
+                        "findIndex",
+                        "flatMap",
+                        "reduce",
+                        "reduceRight",
+                    ]);
+                    if (synchronousArrayMethods.has(invocation) && node.arguments[0]) {
+                        const callback = functionDeclarationForExpression(node.arguments[0]);
+                        const receiver = unwrapExpression(node.expression.expression);
+                        if (callback && ts.isArrayLiteralExpression(receiver)) {
+                            const values = receiver.elements.filter(ts.isExpression);
+                            if (["reduce", "reduceRight"].includes(invocation)) {
+                                const ordered =
+                                    invocation === "reduceRight" ? [...values].reverse() : values;
+                                let accumulator = node.arguments[1] ?? ordered.shift();
+                                for (const value of ordered) {
+                                    if (!accumulator) break;
+                                    addInvocation(callback, node, [accumulator, value]);
+                                    accumulator = value;
                                 }
+                            } else {
+                                for (const value of values) addInvocation(callback, node, [value]);
                             }
                         }
                     }
+                }
 
-                    if (
-                        invocation === "set" &&
-                        isGlobalBuiltin(node.expression.expression, "Reflect") &&
-                        node.arguments.length >= 3
-                    ) {
-                        const key = node.arguments[1];
-                        const names =
-                            ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
-                                ? [key.text]
-                                : literalPropertyNames(checker.getTypeAtLocation(key));
-                        addEffectWrite(node.arguments[0], node.arguments[2], names, node);
+                if (
+                    !skipped &&
+                    node.arguments[0] &&
+                    expressionResolvesToBuiltinMember(node.expression, "Object", "assign", node.pos)
+                ) {
+                    for (const source of node.arguments.slice(1)) {
+                        for (const property of objectPropertyEntries(source, node.pos)) {
+                            addEffectWrite(
+                                node.arguments[0],
+                                property.value,
+                                property.names,
+                                node,
+                                property.substitutions,
+                            );
+                        }
                     }
                 }
 
+                if (
+                    !skipped &&
+                    node.arguments.length >= 3 &&
+                    expressionResolvesToBuiltinMember(node.expression, "Reflect", "set", node.pos)
+                ) {
+                    const key = node.arguments[1];
+                    const names =
+                        ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
+                            ? [key.text]
+                            : literalPropertyNames(checker.getTypeAtLocation(key));
+                    addEffectWrite(node.arguments[0], node.arguments[2], names, node);
+                }
+
                 const bound = boundInvocation(node.expression, node);
-                if (bound) addInvocation(bound.declaration, node, bound.arguments);
+                if (!skipped && bound) addInvocation(bound.declaration, node, bound.arguments);
             }
             ts.forEachChild(node, indexCallArguments);
         }

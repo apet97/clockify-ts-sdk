@@ -1275,6 +1275,115 @@ for (const method of ["forEach", "map"]) {
     });
 }
 
+for (const [label, callback] of [
+    ["named", "mutate"],
+    ["aliased", "callback"],
+]) {
+    test(`models synchronous Array.forEach effects through a ${label} callback`, async () => {
+        await withFixture(
+            `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(target: Holder) { target.request = body as any; } const callback = mutate; [holder].forEach(${callback}); return client.projects.create(holder.request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+for (const [method, callbackTail] of [
+    ["filter", "return true;"],
+    ["every", "return true;"],
+    ["some", "return false;"],
+    ["find", "return true;"],
+    ["findIndex", "return true;"],
+    ["flatMap", "return [target];"],
+]) {
+    test(`models synchronous Array.${method} named callback effects`, async () => {
+        await withFixture(
+            `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(target: Holder) { target.request = body as any; ${callbackTail} } [holder].${method}(mutate); return client.projects.create(holder.request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+for (const method of ["reduce", "reduceRight"]) {
+    test(`models synchronous Array.${method} callback argument substitution`, async () => {
+        await withFixture(
+            `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(accumulator: Holder, current: Holder) { current.request = body as any; return accumulator; } [holder].${method}(mutate, holder); return client.projects.create(holder.request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+for (const method of [
+    "forEach",
+    "map",
+    "filter",
+    "every",
+    "some",
+    "find",
+    "findIndex",
+    "flatMap",
+]) {
+    test(`does not claim Array.${method} callback effects for a known-empty receiver`, async () => {
+        await withFixture(
+            `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(target: Holder) { target.request = body as any; return true; } ([] as Holder[]).${method}(mutate); return client.projects.create(holder.request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+test("does not claim a named asynchronous callback effect before the request", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate() { holder.request = body as any; } setTimeout(mutate, 0); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not claim a synchronous callback effect behind a definite logical short circuit", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(target: Holder) { target.request = body as any; return true; } true || [holder].some(mutate); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not claim callback execution for a receiver that is not statically non-empty", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, values: Holder[]) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(target: Holder) { target.request = body as any; } values.forEach(mutate); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("models Object.assign request writes", async () => {
     await withFixture(
         `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; Object.assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,
@@ -1291,6 +1400,88 @@ test("models Reflect.set request writes", async () => {
         async (root) => {
             const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
             assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, source] of [
+    ["patch variable", "const patch = { request: body as any }; Object.assign(holder, patch);"],
+    [
+        "spread source",
+        "const patch = { request: body as any }; Object.assign(holder, { ...patch });",
+    ],
+    [
+        "factory-returned patch",
+        "function patch() { return { request: body as any }; } Object.assign(holder, patch());",
+    ],
+    [
+        "aliased Object.assign",
+        "const assign = Object.assign; assign(holder, { request: body as any });",
+    ],
+    [
+        "namespace-aliased Object.assign",
+        "const Objects = Object; Objects.assign(holder, { request: body as any });",
+    ],
+    [
+        "property-aliased Object.assign",
+        "const api = { assign: Object.assign }; api.assign(holder, { request: body as any });",
+    ],
+    ["aliased Reflect.set", 'const set = Reflect.set; set(holder, "request", body as any);'],
+    [
+        "namespace-aliased Reflect.set",
+        'const Reflection = Reflect; Reflection.set(holder, "request", body as any);',
+    ],
+]) {
+    test(`models request writes through a ${label}`, async () => {
+        await withFixture(
+            `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ${source} return client.projects.create(holder.request); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("does not spread an aliased Object.assign effect across receivers", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const other: Holder = { request: { workspaceId: "other" } }; const assign = Object.assign; const patch = { request: body as any }; assign(other, patch); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not treat an unrelated local assign function as Object.assign", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nfunction assign(_target: Holder, _patch: unknown) {}\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not retain overwritten Object.assign alias provenance", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; let assign: (target: Holder, patch: Partial<Holder>) => Holder = Object.assign; assign = (target) => target; assign(holder, { request: body as any }); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not retain an overwritten Object.assign patch value", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; let patch: Holder = { request: body as any }; patch = { request: { workspaceId: "replacement" } }; Object.assign(holder, patch); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
         },
     );
 });
