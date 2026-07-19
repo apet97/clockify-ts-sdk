@@ -131,8 +131,6 @@ export interface ClockifyClientEnhancements {
      * Off by default.
      */
     allowNonClockifyHttpsHost?: boolean;
-    /** @deprecated Use `allowNonClockifyHttpsHost`. Removed in 1.0. */
-    allowInsecureBaseUrl?: boolean;
 }
 
 /**
@@ -275,7 +273,6 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
         maxRetries,
         debug,
         allowNonClockifyHttpsHost,
-        allowInsecureBaseUrl,
         // Pull auth fields off the rest spread so `passthrough` only
         // carries the non-auth BaseClientOptions fields (environment,
         // headers, etc.) — we re-add the resolved auth below.
@@ -295,7 +292,7 @@ export function createClockifyClient(options: CreateClockifyClientOptions = {}):
     // — and their auth headers — to an attacker-controlled host. String
     // suppliers resolve at request time and pass through unvalidated.
     const { environment: rawEnvironment, baseUrl: rawBaseUrl, ...basePassthrough } = passthrough;
-    const allowAlternateHost = allowNonClockifyHttpsHost ?? allowInsecureBaseUrl ?? false;
+    const allowAlternateHost = allowNonClockifyHttpsHost ?? false;
     const validatedEnvironment = validateClockifyBaseUrl(rawEnvironment, allowAlternateHost);
     const validatedBaseUrl = validateClockifyBaseUrl(rawBaseUrl, allowAlternateHost);
     const sanitizedPassthrough = {

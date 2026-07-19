@@ -5,6 +5,7 @@
   "directory": "wrapper/examples",
   "readme": "wrapper/examples/README.md",
   "examples": [
+    "archive-then-delete-adapter.ts",
     "auth.ts",
     "bulk-archive.ts",
     "create-project.ts",

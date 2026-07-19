@@ -7,7 +7,7 @@
 import { mapBounded } from "clockify-sdk-ts-115/bulk";
 import { runComposition } from "clockify-sdk-ts-115/compose";
 import { resolvePeriod } from "clockify-sdk-ts-115/dates";
-import { ensureTag } from "clockify-sdk-ts-115/ensure";
+import { archiveThenDeleteProject, ensureTag } from "clockify-sdk-ts-115/ensure";
 import { toMinor, invoiceItemUnitPriceToWire } from "clockify-sdk-ts-115/money";
 import { detailedFilter } from "clockify-sdk-ts-115/reports";
 import { resolveEntityRef } from "clockify-sdk-ts-115/resolve";
@@ -23,6 +23,27 @@ const billableTag = await ensureTag({
         const tag = { id: "000000000000000000000102", name };
         tags.push(tag);
         return tag;
+    },
+});
+
+const projectState = { id: PROJECT_ID, name: "Website refresh", archived: false };
+const archiveOrder: string[] = [];
+const deleteResult = await archiveThenDeleteProject({
+    workspaceId: "000000000000000000000001",
+    id: PROJECT_ID,
+    adapter: {
+        getCurrent: async () => {
+            archiveOrder.push("getCurrent");
+            return projectState;
+        },
+        archive: async ({ current }) => {
+            archiveOrder.push("archive");
+            projectState.name = current.name;
+            projectState.archived = true;
+        },
+        delete: async () => {
+            archiveOrder.push("delete");
+        },
     },
 });
 
@@ -67,6 +88,8 @@ const composition = await runComposition([
 
 console.log({
     tagId: billableTag.id,
+    deleteResult,
+    archiveOrder,
     projectId: resolvedProject.id,
     invoiceUnitPrice,
     lastWeek,

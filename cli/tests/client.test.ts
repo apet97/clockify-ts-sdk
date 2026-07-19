@@ -34,7 +34,7 @@ describe("buildClient base URL allowlist (H1)", () => {
     });
 
     it("stays strict: CLI does not silently opt in to arbitrary HTTPS hosts", async () => {
-        // buildClient hard-codes allowInsecureBaseUrl: false, so even an
+        // buildClient hard-codes allowNonClockifyHttpsHost: false, so even an
         // env-var-injected host is rejected — never a console.warn pass.
         const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         await expect(buildClient({ ...base, baseUrl: "https://attacker.test/api/v1" })).rejects.toThrow(

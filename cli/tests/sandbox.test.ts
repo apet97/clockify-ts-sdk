@@ -163,7 +163,21 @@ describeLive("@apet97/clockify-cli-115 live sandbox", () => {
                     archiveThenDeleteProject({
                         workspaceId: workspaceId!,
                         id: projectId,
-                        resource: sdkClient.projects,
+                        adapter: {
+                            getCurrent: ({ workspaceId, id }) =>
+                                sdkClient.projects.get({ workspaceId, projectId: id }),
+                            archive: async ({ workspaceId, id, current }) => {
+                                await sdkClient.projects.update({
+                                    workspaceId,
+                                    projectId: id,
+                                    name: current.name,
+                                    archived: true,
+                                });
+                            },
+                            delete: async ({ workspaceId, id }) => {
+                                await sdkClient.projects.delete({ workspaceId, projectId: id });
+                            },
+                        },
                     }),
                 ),
             deleteClient: (clientId) =>
@@ -171,7 +185,30 @@ describeLive("@apet97/clockify-cli-115 live sandbox", () => {
                     archiveThenDeleteClient({
                         workspaceId: workspaceId!,
                         id: clientId,
-                        resource: sdkClient.clients,
+                        adapter: {
+                            getCurrent: ({ workspaceId, id }) =>
+                                sdkClient.clients.get({ workspaceId, clientId: id }),
+                            archive: async ({ workspaceId, id, current }) => {
+                                const body: ClockifyRequestBody<ClockifyApi.UpdateClientsRequest> =
+                                    {
+                                        name: current.name,
+                                        archived: true,
+                                    };
+                                for (const key of [
+                                    "address",
+                                    "currencyCode",
+                                    "email",
+                                    "note",
+                                ] as const) {
+                                    const value = current[key];
+                                    if (typeof value === "string") body[key] = value;
+                                }
+                                await sdkClient.clients.update({ workspaceId, clientId: id, body });
+                            },
+                            delete: async ({ workspaceId, id }) => {
+                                await sdkClient.clients.delete({ workspaceId, clientId: id });
+                            },
+                        },
                     }),
                 ),
             deleteTag: (tagId) =>

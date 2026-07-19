@@ -41,3 +41,17 @@ test("createClockifyClient accepts enhancement options alongside auth", () => {
     });
     expectTypeOf(c).toEqualTypeOf<ClockifyClient>();
 });
+
+test("createClockifyClient exposes only the precise alternate HTTPS host opt-in", () => {
+    createClockifyClient({
+        apiKey: "x",
+        environment: "https://clockify-proxy.example.com/api/v1",
+        allowNonClockifyHttpsHost: true,
+    });
+
+    createClockifyClient({
+        apiKey: "x",
+        // @ts-expect-error: removed in 1.0; use allowNonClockifyHttpsHost
+        allowInsecureBaseUrl: true,
+    });
+});

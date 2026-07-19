@@ -27,6 +27,13 @@ Use this pattern when a public symbol or behavior needs to go away:
 The SDK helper lives in `wrapper/deprecation.ts`; tests live in
 `wrapper/tests/deprecation.test.ts`.
 
+The approved 1.0 closure removes three already-replaced pre-1.0 names without
+keeping aliases: `allowInsecureBaseUrl` → `allowNonClockifyHttpsHost`,
+`findOrCreateClient` → `ensureClient`, and `ArchiveThenDeleteResource` →
+`ArchiveThenDeleteAdapter<TCurrent>`. The executable mapping is governed by
+`docs/breaking-change-review-contract.json`; compile-negative fixtures prove the
+old SDK names/options stay absent.
+
 ## Compatibility window
 
 Keep deprecated public paths until the next major version unless explicit maintainer approval and migration receipt exist. Add the replacement first, then keep changelog and migration-guide notes current while the old path exists. The breaking-change review must state what remains temporarily supported and which final proof stack closes the removal.

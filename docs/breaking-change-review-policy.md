@@ -45,6 +45,16 @@ note, or handoff packet:
   still line up?
 - What residual risk remains for users or agents?
 
+For the 1.0 SDK closure, the governed mappings are exact:
+
+- `allowInsecureBaseUrl` → `allowNonClockifyHttpsHost`
+- `findOrCreateClient` → `ensureClient`
+- `ArchiveThenDeleteResource` → `ArchiveThenDeleteAdapter<TCurrent>`
+
+The old names are removed rather than retained as aliases. The narrow gate runs
+negative fixtures that fail if any removed symbol or replacement is omitted;
+the SDK compiler fixtures fail if an old import or option resolves again.
+
 ## Forbidden shortcuts
 
 - Do not remove a public path only because generated code changed shape.

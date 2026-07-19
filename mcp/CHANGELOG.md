@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Breaking
+
+- Renamed the code-level `LoadContextOptions.allowInsecureBaseUrl` field to
+  `allowNonClockifyHttpsHost`, matching the SDK option and its HTTPS-only
+  behavior. Environment-based startup remains strict by default.
+
 ### Fixed
 
 - MCP review/fix workflows now call `timeEntries.listForUser` with its generated

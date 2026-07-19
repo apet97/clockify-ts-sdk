@@ -324,7 +324,7 @@
     "sync": "bash scripts/sync-sdk.sh",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "build": "node ../scripts/generate-package-versions.mjs && npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && bash scripts/finalize-cjs.sh",
-    "build:smoke": "bash scripts/verify-dual-build.sh",
+    "build:smoke": "bash scripts/verify-dual-build.sh && npm run type-check:breaking",
     "docs": "node ../scripts/generate-package-versions.mjs && typedoc",
     "docs:resources": "tsx scripts/gen-resource-docs.ts",
     "format": "prettier --write .",
@@ -337,6 +337,7 @@
     "mutation": "node ../scripts/generate-package-versions.mjs && cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run wrapper/stryker.conf.json",
     "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",
     "test:types": "node ../scripts/generate-package-versions.mjs && vitest --typecheck.only --run",
+    "type-check:breaking": "tsc -p tsconfig.types-bundler.json && tsc -p tsconfig.types-public-package.json",
     "size": "size-limit",
     "prepublishOnly": "npm run sync && npm run type-check && npm test && npm run clean && npm run build && npm run build:smoke"
   },

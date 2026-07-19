@@ -220,10 +220,24 @@ export const registerClientsCommand: Registrar = (program, services) => {
         .description("Delete a client by ID (archives first; an active client cannot be deleted).")
         .action(async function (this: Command, id: string) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // archiveThenDeleteClient owns the live-verified GET → typed replacement
-            // archive → DELETE sequence and its empty-name guard. Bare DELETE of an
-            // ACTIVE client 400s and clients.archive 404s.
-            await archiveThenDeleteClient({ workspaceId, id, resource: client.clients });
+            await archiveThenDeleteClient({
+                workspaceId,
+                id,
+                adapter: {
+                    getCurrent: ({ workspaceId: currentWorkspaceId, id: clientId }) =>
+                        client.clients.get({ workspaceId: currentWorkspaceId, clientId }),
+                    archive: async ({ workspaceId: currentWorkspaceId, id: clientId, current }) => {
+                        await client.clients.update({
+                            workspaceId: currentWorkspaceId,
+                            clientId,
+                            body: reconstructClientBody({ ...current, archived: true }),
+                        });
+                    },
+                    delete: async ({ workspaceId: currentWorkspaceId, id: clientId }) => {
+                        await client.clients.delete({ workspaceId: currentWorkspaceId, clientId });
+                    },
+                },
+            });
             printReceipt(
                 {
                     ok: true,
