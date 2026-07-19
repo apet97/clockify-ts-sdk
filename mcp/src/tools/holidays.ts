@@ -306,14 +306,16 @@ export function registerHolidaysTools(server: McpServer, ctx: Context): void {
                         endDate: existingPeriod.endDate,
                     },
                 };
-                const existingOccursAnnually = existing.occursAnnually ?? false;
-                if (typeof existingOccursAnnually !== "boolean") {
-                    throw new TypeError(`Holiday ${args.holidayId} occursAnnually is invalid.`);
+                const occursAnnually = args.occursAnnually ?? existing.occursAnnually;
+                if (typeof occursAnnually !== "boolean") {
+                    throw new TypeError(
+                        `Holiday ${args.holidayId} required occursAnnually is missing or invalid.`,
+                    );
                 }
                 const body: ClockifyRequestBody<ClockifyApi.UpdateHolidaysRequest> = {
                     name,
                     datePeriod: { startDate, endDate },
-                    occursAnnually: args.occursAnnually ?? existingOccursAnnually,
+                    occursAnnually,
                 };
                 if (existing.occursAnnually !== undefined) {
                     currentBody.occursAnnually = existing.occursAnnually;

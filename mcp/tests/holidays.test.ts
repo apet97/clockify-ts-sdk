@@ -99,6 +99,21 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
         expect(envelope(res).ok).toBe(true);
     });
 
+    it("fails closed when read-back omits required occursAnnually instead of inventing false", async () => {
+        const captured: Record<string, unknown> = {};
+        const { occursAnnually: _omitted, ...withoutRecurrence } = existingHoliday();
+        const client = await connect(holidaysContext(captured, withoutRecurrence));
+
+        const res = await callGuarded(client, {
+            name: "clockify_holidays_update",
+            arguments: { holidayId: "hol-1", name: "Xmas Day" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(JSON.stringify(envelope(res))).toMatch(/occursAnnually.*missing or invalid/i);
+        expect(captured.update).toBeUndefined();
+    });
+
     it("lets explicit userIds replace the assignment", async () => {
         const captured: Record<string, unknown> = {};
         const client = await connect(holidaysContext(captured));
@@ -130,6 +145,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             id: "hol-1",
             name: "Orphan",
             datePeriod: { startDate: "2026-01-01", endDate: "2026-01-01" },
+            occursAnnually: false,
         };
         const client = await connect(holidaysContext(captured, noScope));
         const res = await callGuarded(client, {
@@ -150,6 +166,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             id: "hol-1",
             name: "Winter break",
             datePeriod: { startDate: "2026-12-24", endDate: "2026-12-26" },
+            occursAnnually: false,
             userIds: ["u1"],
         };
         const client = await connect(holidaysContext(captured, multiDay));
@@ -168,6 +185,7 @@ describe("clockify_holidays_update — replace-safe (list-scan, full body, scope
             id: "hol-1",
             name: "All-staff",
             datePeriod: { startDate: "2026-01-01", endDate: "2026-01-01" },
+            occursAnnually: false,
             everyoneIncludingNew: true,
         };
         const client = await connect(holidaysContext(captured, everyone));

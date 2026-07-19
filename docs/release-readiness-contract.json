@@ -48,6 +48,7 @@
   "riskRegister": {
     "path": "docs/risk-register.json",
     "requiredOpenFinalReadinessBlockingIds": [
+      "consumer-request-casts",
       "cross-package-release-proof-asymmetry",
       "remote-mutation-proof-pending"
     ],

@@ -532,9 +532,10 @@ cli-write-safety:
 	node scripts/check-cli-write-safety.mjs
 	node --test scripts/check-cli-write-safety.test.mjs
 
-consumer-cast-budget:
+consumer-cast-budget: sdk-wrapper-build
 	node --test scripts/check-consumer-cast-budget.test.mjs
 	node scripts/check-consumer-cast-budget.mjs
+	npm run type-check:breaking -w clockify-sdk-ts-115
 
 test-matrix:
 	node scripts/check-test-matrix-contract.mjs

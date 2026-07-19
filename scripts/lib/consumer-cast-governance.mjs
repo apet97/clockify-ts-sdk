@@ -3,39 +3,26 @@ import path from "node:path";
 
 import ts from "typescript";
 
+const MAX_TRACE_DEPTH = 24;
+
 async function listTypeScript(root, relativeRoot) {
     const files = [];
     const stack = [relativeRoot];
     while (stack.length > 0) {
         const directory = stack.pop();
-        for (const entry of await readdir(path.join(root, directory), { withFileTypes: true })) {
+        let entries;
+        try {
+            entries = await readdir(path.join(root, directory), { withFileTypes: true });
+        } catch {
+            continue;
+        }
+        for (const entry of entries) {
             const relativePath = path.join(directory, entry.name);
             if (entry.isDirectory()) stack.push(relativePath);
             else if (entry.isFile() && entry.name.endsWith(".ts")) files.push(relativePath);
         }
     }
     return files.sort();
-}
-
-function requestClientCall(node) {
-    if (!ts.isCallExpression(node) || !ts.isPropertyAccessExpression(node.expression)) return false;
-    const receiver = node.expression.expression.getText();
-    return /(?:^|\.)(?:client|clockify)(?:\.|$)/.test(receiver);
-}
-
-function belongsToRequestCall(node) {
-    let cursor = node;
-    while (cursor.parent) {
-        cursor = cursor.parent;
-        if (requestClientCall(cursor)) return cursor.arguments.some((argument) => argument === node || argument.pos <= node.pos && argument.end >= node.end);
-        if (ts.isStatement(cursor) || ts.isFunctionLike(cursor)) return false;
-    }
-    return false;
-}
-
-function finding(relativePath, sourceFile, node, kind, assertedType) {
-    const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-    return { file: relativePath, line: line + 1, kind, assertedType };
 }
 
 function nonEmptyString(value) {
@@ -59,100 +46,457 @@ async function readText(root, relativePath) {
     }
 }
 
-function isGeneratedRequestType(typeNode, sourceFile) {
-    if (!ts.isTypeReferenceNode(typeNode)) return false;
-    const name = typeNode.typeName.getText(sourceFile);
-    return /(?:^|\.)[A-Za-z_$][A-Za-z0-9_$]*Request$/.test(name);
+function normalize(fileName) {
+    return fileName.replaceAll("\\", "/");
 }
 
-function functionName(node) {
-    if (ts.isFunctionDeclaration(node) && node.name) return node.name.text;
-    if (
-        (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) &&
-        ts.isVariableDeclaration(node.parent) &&
-        ts.isIdentifier(node.parent.name)
-    ) {
-        return node.parent.name.text;
-    }
-    return null;
+function isGeneratedRequestDeclaration(declaration) {
+    const fileName = normalize(declaration.getSourceFile().fileName);
+    return (
+        /\/(?:wrapper\/(?:src|dist\/(?:esm|cjs)\/src)|output\/ts-sdk)\/api\/resources\/.*\/client\/requests\//.test(
+            fileName,
+        ) ||
+        /\/node_modules\/clockify-sdk-ts-115\/(?:requests\.d\.ts|dist\/(?:esm|cjs)\/src\/api\/resources\/.*\/client\/requests\/)/.test(
+            fileName,
+        )
+    );
 }
 
-function blanketCastInFunction(node, sourceFile) {
-    const typeParameters = new Set((node.typeParameters ?? []).map((parameter) => parameter.name.text));
-    let blanket = null;
-    function visit(candidate) {
-        if (blanket) return;
-        if (ts.isAsExpression(candidate) || ts.isTypeAssertionExpression(candidate)) {
-            const assertedType = candidate.type.getText(sourceFile);
-            if (["any", "never"].includes(assertedType) || typeParameters.has(assertedType)) {
-                blanket = candidate;
-                return;
-            }
+function unalias(checker, symbol) {
+    let current = symbol;
+    const seen = new Set();
+    while (current && (current.flags & ts.SymbolFlags.Alias) !== 0 && !seen.has(current)) {
+        seen.add(current);
+        try {
+            current = checker.getAliasedSymbol(current);
+        } catch {
+            break;
         }
-        ts.forEachChild(candidate, visit);
     }
-    if (node.body) visit(node.body);
-    return blanket;
+    return current;
 }
 
-function anyBoundaryInFunction(node) {
-    for (const parameter of node.parameters) {
-        if (parameter.type?.kind === ts.SyntaxKind.AnyKeyword) return parameter.type;
+function requestNameFromTypeNode(checker, node, seen = new Set()) {
+    if (!node || seen.has(node)) return null;
+    seen.add(node);
+    if (ts.isParenthesizedTypeNode(node) || ts.isTypeOperatorNode(node)) {
+        return requestNameFromTypeNode(checker, node.type, seen);
     }
-    if (node.type?.kind === ts.SyntaxKind.AnyKeyword) return node.type;
-    return null;
-}
-
-function calledIdentifiers(node) {
-    const names = new Set();
-    function visit(candidate) {
-        if (ts.isCallExpression(candidate) && ts.isIdentifier(candidate.expression)) {
-            names.add(candidate.expression.text);
+    if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
+        for (const child of node.types) {
+            const name = requestNameFromTypeNode(checker, child, seen);
+            if (name) return name;
         }
-        ts.forEachChild(candidate, visit);
     }
-    visit(node);
-    return names;
-}
-
-function scanSource(relativePath, source) {
-    const sourceFile = ts.createSourceFile(relativePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    const findings = [];
-    const blanketHelpers = new Map();
-    const requestHelperCalls = new Set();
-    function discoverHelpers(node) {
-        if (ts.isFunctionLike(node)) {
-            const name = functionName(node);
-            const blanket = blanketCastInFunction(node, sourceFile);
-            const anyBoundary = anyBoundaryInFunction(node);
-            if (name && anyBoundary) blanketHelpers.set(name, { node: anyBoundary, kind: "any request helper" });
-            else if (name && blanket) blanketHelpers.set(name, { node: blanket, kind: "request helper" });
+    if (ts.isTupleTypeNode(node)) {
+        for (const child of node.elements) {
+            const name = requestNameFromTypeNode(checker, child, seen);
+            if (name) return name;
         }
-        ts.forEachChild(node, discoverHelpers);
     }
-    discoverHelpers(sourceFile);
-
-    function visit(node) {
-        if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
-            const assertedType = node.type.getText(sourceFile);
+    if (ts.isTypeReferenceNode(node)) {
+        const symbol = unalias(checker, checker.getSymbolAtLocation(node.typeName));
+        if (symbol) {
             if (
-                isGeneratedRequestType(node.type, sourceFile) ||
-                (assertedType === "never" && belongsToRequestCall(node))
+                /Request$/.test(symbol.getName()) &&
+                (symbol.declarations ?? []).some(isGeneratedRequestDeclaration)
             ) {
-                findings.push(finding(relativePath, sourceFile, node, "request assertion", assertedType));
+                return symbol.getName();
             }
-        }
-        if (requestClientCall(node)) {
-            for (const argument of node.arguments) {
-                for (const helperName of calledIdentifiers(argument)) {
-                    requestHelperCalls.add(helperName);
+            for (const declaration of symbol.declarations ?? []) {
+                if (ts.isTypeAliasDeclaration(declaration)) {
+                    const name = requestNameFromTypeNode(checker, declaration.type, seen);
+                    if (name) return name;
                 }
             }
         }
+        for (const argument of node.typeArguments ?? []) {
+            const name = requestNameFromTypeNode(checker, argument, seen);
+            if (name) return name;
+        }
+    }
+    if (ts.isArrayTypeNode(node)) return requestNameFromTypeNode(checker, node.elementType, seen);
+    return null;
+}
+
+function requestNameFromType(checker, type, seen = new Set()) {
+    if (!type || seen.has(type)) return null;
+    seen.add(type);
+    for (const symbol of [type.aliasSymbol, type.getSymbol?.()]) {
+        const target = unalias(checker, symbol);
+        if (
+            target &&
+            /Request$/.test(target.getName()) &&
+            (target.declarations ?? []).some(isGeneratedRequestDeclaration)
+        ) {
+            return target.getName();
+        }
+        for (const declaration of target?.declarations ?? []) {
+            if (ts.isTypeAliasDeclaration(declaration)) {
+                const name = requestNameFromTypeNode(checker, declaration.type);
+                if (name) return name;
+            }
+        }
+    }
+    for (const argument of type.aliasTypeArguments ?? []) {
+        const name = requestNameFromType(checker, argument, seen);
+        if (name) return name;
+    }
+    if ((type.flags & (ts.TypeFlags.Union | ts.TypeFlags.Intersection)) !== 0) {
+        for (const child of type.types ?? []) {
+            const name = requestNameFromType(checker, child, seen);
+            if (name) return name;
+        }
+    }
+    if ((type.flags & ts.TypeFlags.Object) !== 0 && type.objectFlags & ts.ObjectFlags.Reference) {
+        for (const argument of checker.getTypeArguments(type)) {
+            const name = requestNameFromType(checker, argument, seen);
+            if (name) return name;
+        }
+    }
+    return null;
+}
+
+function typeContainsTypeParameter(checker, type, seen = new Set()) {
+    if (!type || seen.has(type)) return false;
+    seen.add(type);
+    if ((type.flags & ts.TypeFlags.TypeParameter) !== 0) return true;
+    const children = [...(type.aliasTypeArguments ?? []), ...(type.types ?? [])];
+    if ((type.flags & ts.TypeFlags.Object) !== 0 && type.objectFlags & ts.ObjectFlags.Reference) {
+        children.push(...checker.getTypeArguments(type));
+    }
+    return children.some((child) => typeContainsTypeParameter(checker, child, seen));
+}
+
+function exactMakeTargets(closureGate) {
+    if (!nonEmptyString(closureGate)) return new Set();
+    const targets = new Set();
+    for (const match of closureGate.matchAll(
+        /(?:^|[;&|]\s*|\n\s*)make(?:\s+--?[\w-]+(?:=[^\s]+)?)?\s+([A-Za-z0-9][A-Za-z0-9_.-]*)/g,
+    )) {
+        targets.add(match[1]);
+    }
+    return targets;
+}
+
+function makefileHasExactTarget(makefile, target) {
+    if (!nonEmptyString(makefile) || !nonEmptyString(target)) return false;
+    const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`^${escaped}\\s*:`, "m").test(makefile);
+}
+
+function sourceRelative(root, sourceFile) {
+    const relative = path.relative(root, sourceFile.fileName);
+    return normalize(relative || path.basename(sourceFile.fileName));
+}
+
+function nodeLine(sourceFile, node) {
+    return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+}
+
+function functionDisplayName(declaration) {
+    if (declaration.name && ts.isIdentifier(declaration.name)) return declaration.name.text;
+    if (ts.isVariableDeclaration(declaration.parent) && ts.isIdentifier(declaration.parent.name)) {
+        return declaration.parent.name.text;
+    }
+    if (ts.isPropertyAssignment(declaration.parent)) return declaration.parent.name.getText();
+    return "anonymous";
+}
+
+function functionReturnExpressions(declaration) {
+    if (!declaration.body) return [];
+    if (!ts.isBlock(declaration.body)) return [declaration.body];
+    const returns = [];
+    function visit(node) {
+        if (node !== declaration && ts.isFunctionLike(node)) return;
+        if (ts.isReturnStatement(node) && node.expression) returns.push(node.expression);
         ts.forEachChild(node, visit);
     }
-    visit(sourceFile);
-    return { findings, blanketHelpers, requestHelperCalls, sourceFile };
+    visit(declaration.body);
+    return returns;
+}
+
+function createProgram(rootNames) {
+    return ts.createProgram({
+        rootNames,
+        options: {
+            allowJs: false,
+            module: ts.ModuleKind.ESNext,
+            moduleResolution: ts.ModuleResolutionKind.Bundler,
+            noEmit: true,
+            skipLibCheck: true,
+            strict: false,
+            target: ts.ScriptTarget.ES2022,
+        },
+    });
+}
+
+function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) {
+    const program = createProgram(rootNames);
+    const checker = program.getTypeChecker();
+    const findings = [];
+    const findingKeys = new Set();
+
+    function addFinding(node, packageName, kind, assertedType, expectedRequestType) {
+        const sourceFile = node.getSourceFile();
+        const file = sourceRelative(root, sourceFile);
+        const line = nodeLine(sourceFile, node);
+        const key = `${file}:${node.pos}:${kind}:${expectedRequestType}`;
+        if (findingKeys.has(key)) return;
+        findingKeys.add(key);
+        findings.push({
+            file,
+            line,
+            kind,
+            assertedType,
+            expectedRequestType,
+            generatedRequestType: expectedRequestType,
+            packageName,
+        });
+    }
+
+    function trace(expression, context, depth = 0, seen = new Set()) {
+        if (!expression || depth > MAX_TRACE_DEPTH) return;
+        const traceKey = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
+        if (seen.has(traceKey)) return;
+        const nextSeen = new Set(seen);
+        nextSeen.add(traceKey);
+
+        if (
+            ts.isParenthesizedExpression(expression) ||
+            ts.isNonNullExpression(expression) ||
+            ts.isSatisfiesExpression(expression) ||
+            ts.isAwaitExpression(expression)
+        ) {
+            trace(expression.expression, context, depth + 1, nextSeen);
+            return;
+        }
+        if (ts.isAsExpression(expression) || ts.isTypeAssertionExpression(expression)) {
+            const asserted = checker.getTypeFromTypeNode(expression.type);
+            const assertedText = expression.type.getText(expression.getSourceFile());
+            const generated =
+                requestNameFromTypeNode(checker, expression.type) ??
+                requestNameFromType(checker, asserted);
+            if ((asserted.flags & ts.TypeFlags.Any) !== 0) {
+                addFinding(
+                    expression,
+                    context.packageName,
+                    "request assertion",
+                    assertedText,
+                    context.expectedRequestType,
+                );
+            } else if ((asserted.flags & ts.TypeFlags.Never) !== 0) {
+                addFinding(
+                    expression,
+                    context.packageName,
+                    "request assertion",
+                    "never",
+                    context.expectedRequestType,
+                );
+            } else if (generated) {
+                addFinding(
+                    expression,
+                    context.packageName,
+                    "generated request assertion",
+                    assertedText,
+                    context.expectedRequestType,
+                );
+            } else if (context.atBoundaryValue && typeContainsTypeParameter(checker, asserted)) {
+                addFinding(
+                    expression,
+                    context.packageName,
+                    "generic request helper",
+                    assertedText,
+                    context.expectedRequestType,
+                );
+            }
+            trace(expression.expression, context, depth + 1, nextSeen);
+            return;
+        }
+        if (ts.isIdentifier(expression)) {
+            const original = checker.getSymbolAtLocation(expression);
+            const symbol = unalias(checker, original);
+            const substitution =
+                context.substitutions.get(original) ?? context.substitutions.get(symbol);
+            if (substitution) {
+                trace(substitution, context, depth + 1, nextSeen);
+                return;
+            }
+            for (const declaration of symbol?.declarations ?? []) {
+                if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+                    trace(declaration.initializer, context, depth + 1, nextSeen);
+                } else if (ts.isParameter(declaration)) {
+                    const parameterType = checker.getTypeAtLocation(declaration);
+                    if ((parameterType.flags & ts.TypeFlags.Any) !== 0) {
+                        addFinding(
+                            declaration.type ?? declaration,
+                            context.packageName,
+                            `any request helper ${functionDisplayName(declaration.parent)}`,
+                            declaration.type?.getText() ?? "any",
+                            context.expectedRequestType,
+                        );
+                    }
+                }
+            }
+            return;
+        }
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const symbol = unalias(
+                checker,
+                checker.getSymbolAtLocation(expression.name ?? expression.argumentExpression),
+            );
+            for (const declaration of symbol?.declarations ?? []) {
+                if (ts.isPropertyAssignment(declaration)) {
+                    trace(declaration.initializer, context, depth + 1, nextSeen);
+                }
+            }
+            return;
+        }
+        if (ts.isCallExpression(expression)) {
+            const resultType = checker.getTypeAtLocation(expression);
+            const signature = checker.getResolvedSignature(expression);
+            const declaration = signature?.declaration;
+            if ((resultType.flags & ts.TypeFlags.Any) !== 0) {
+                addFinding(
+                    expression,
+                    context.packageName,
+                    `any request helper ${declaration ? functionDisplayName(declaration) : expression.expression.getText()}`,
+                    "any",
+                    context.expectedRequestType,
+                );
+            }
+            for (const argument of expression.arguments) {
+                trace(argument, { ...context, atBoundaryValue: false }, depth + 1, nextSeen);
+            }
+            if (declaration && ts.isFunctionLike(declaration) && declaration.body) {
+                const substitutions = new Map(context.substitutions);
+                declaration.parameters.forEach((parameter, index) => {
+                    if (!expression.arguments[index]) return;
+                    const symbol = checker.getSymbolAtLocation(parameter.name);
+                    substitutions.set(symbol, expression.arguments[index]);
+                    substitutions.set(unalias(checker, symbol), expression.arguments[index]);
+                    const parameterType = checker.getTypeAtLocation(parameter);
+                    if ((parameterType.flags & ts.TypeFlags.Any) !== 0) {
+                        addFinding(
+                            parameter.type ?? parameter,
+                            context.packageName,
+                            `any request helper ${functionDisplayName(declaration)}`,
+                            parameter.type?.getText() ?? "any",
+                            context.expectedRequestType,
+                        );
+                    }
+                });
+                const nestedContext = { ...context, substitutions };
+                for (const returned of functionReturnExpressions(declaration)) {
+                    trace(returned, nestedContext, depth + 1, nextSeen);
+                }
+            }
+            return;
+        }
+        if (ts.isConditionalExpression(expression)) {
+            trace(expression.whenTrue, context, depth + 1, nextSeen);
+            trace(expression.whenFalse, context, depth + 1, nextSeen);
+            return;
+        }
+        if (ts.isObjectLiteralExpression(expression) || ts.isArrayLiteralExpression(expression)) {
+            for (const child of expression.properties ?? expression.elements ?? []) {
+                if (ts.isPropertyAssignment(child)) {
+                    trace(
+                        child.initializer,
+                        { ...context, atBoundaryValue: false },
+                        depth + 1,
+                        nextSeen,
+                    );
+                } else if (ts.isSpreadAssignment(child) || ts.isSpreadElement(child)) {
+                    trace(
+                        child.expression,
+                        { ...context, atBoundaryValue: false },
+                        depth + 1,
+                        nextSeen,
+                    );
+                }
+            }
+        }
+    }
+
+    for (const [packageName, relativeRoot] of Object.entries(packageRoots)) {
+        const absoluteRoot = normalize(path.resolve(root, relativeRoot));
+        for (const sourceFile of program.getSourceFiles()) {
+            const sourceName = normalize(path.resolve(sourceFile.fileName));
+            if (
+                sourceFile.isDeclarationFile ||
+                !(sourceName === absoluteRoot || sourceName.startsWith(`${absoluteRoot}/`))
+            ) {
+                continue;
+            }
+            function visit(node) {
+                if (ts.isCallExpression(node)) {
+                    const signature = checker.getResolvedSignature(node);
+                    signature?.parameters.forEach((parameter, index) => {
+                        const argument = node.arguments[index];
+                        if (!argument) return;
+                        const declaration =
+                            parameter.valueDeclaration ?? parameter.declarations?.[0];
+                        const expectedType = checker.getTypeOfSymbolAtLocation(
+                            parameter,
+                            declaration ?? node,
+                        );
+                        const expectedRequestType =
+                            requestNameFromType(checker, expectedType) ??
+                            requestNameFromTypeNode(checker, declaration?.type);
+                        if (expectedRequestType) {
+                            trace(argument, {
+                                expectedRequestType,
+                                packageName,
+                                atBoundaryValue: true,
+                                substitutions: new Map(),
+                            });
+                        }
+                    });
+                }
+                if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) {
+                    const generated =
+                        requestNameFromTypeNode(checker, node.type) ??
+                        requestNameFromType(checker, checker.getTypeFromTypeNode(node.type));
+                    if (generated) {
+                        addFinding(
+                            node,
+                            packageName,
+                            "generated request assertion",
+                            node.type.getText(sourceFile),
+                            generated,
+                        );
+                    }
+                }
+                ts.forEachChild(node, visit);
+            }
+            visit(sourceFile);
+        }
+    }
+    const escapeFailures = [];
+    if (nonEmptyString(forbiddenIdentifier)) {
+        const absoluteRoot = normalize(path.resolve(root));
+        for (const sourceFile of program.getSourceFiles()) {
+            const sourceName = normalize(path.resolve(sourceFile.fileName));
+            if (
+                sourceFile.isDeclarationFile ||
+                !(sourceName === absoluteRoot || sourceName.startsWith(`${absoluteRoot}/`)) ||
+                sourceName.includes("/node_modules/")
+            ) {
+                continue;
+            }
+            function visit(node) {
+                if (ts.isIdentifier(node) && node.text === forbiddenIdentifier) {
+                    escapeFailures.push(
+                        `forbidden request escape \`${forbiddenIdentifier}\` in import closure at ${sourceRelative(root, sourceFile)}:${nodeLine(sourceFile, node)}`,
+                    );
+                }
+                ts.forEachChild(node, visit);
+            }
+            visit(sourceFile);
+        }
+    }
+    return { findings, escapeFailures };
 }
 
 function exceptionLocationMatches(exception, finding, source) {
@@ -166,64 +510,128 @@ function exceptionLocationMatches(exception, finding, source) {
     }
     const start = exception.range?.startLine;
     const end = exception.range?.endLine;
-    return Number.isInteger(start) && Number.isInteger(end) && start > 0 && end >= start && finding.line >= start && finding.line <= end;
+    return (
+        Number.isInteger(start) &&
+        Number.isInteger(end) &&
+        start > 0 &&
+        end >= start &&
+        finding.line >= start &&
+        finding.line <= end
+    );
 }
 
-async function validateException({ root, packageName, exception, findings, sources, riskRegister, discrepancies, makefile }) {
+async function validateException({
+    root,
+    packageName,
+    exception,
+    findings,
+    sources,
+    riskRegister,
+    discrepancies,
+    makefile,
+}) {
     const label = `requestCastGovernance.exceptions.${packageName}`;
     const failures = [];
-    for (const field of ["id", "file", "generatedRequestType", "discrepancyId", "openRiskId", "exactClosureGate"]) {
-        if (!nonEmptyString(exception?.[field])) failures.push(`${label}.${field} must be a non-empty string`);
+    for (const field of [
+        "id",
+        "file",
+        "generatedRequestType",
+        "discrepancyId",
+        "openRiskId",
+        "exactClosureGate",
+    ]) {
+        if (!nonEmptyString(exception?.[field]))
+            failures.push(`${label}.${field} must be a non-empty string`);
     }
     const hasMarker = nonEmptyString(exception?.codeMarker);
     const hasRange = exception?.range != null;
-    if (hasMarker === hasRange) {
+    if (hasMarker === hasRange)
         failures.push(`${label}.file/range or codeMarker must select exactly one stable location`);
-    }
     if (hasRange) {
-        if (!Number.isInteger(exception.range?.startLine) || !Number.isInteger(exception.range?.endLine)) {
+        if (
+            !Number.isInteger(exception.range?.startLine) ||
+            !Number.isInteger(exception.range?.endLine)
+        ) {
             failures.push(`${label}.range requires integer startLine and endLine`);
-        } else if (exception.range.startLine <= 0 || exception.range.endLine < exception.range.startLine) {
+        } else if (
+            exception.range.startLine <= 0 ||
+            exception.range.endLine < exception.range.startLine
+        ) {
             failures.push(`${label}.range must be a positive ordered line range`);
         }
     }
-    if (exception?.evidence == null || typeof exception.evidence !== "object" || Array.isArray(exception.evidence)) {
+    if (
+        exception?.evidence == null ||
+        typeof exception.evidence !== "object" ||
+        Array.isArray(exception.evidence)
+    ) {
         failures.push(`${label}.evidence must be an object`);
     } else {
-        if (!nonEmptyString(exception.evidence.path)) failures.push(`${label}.evidence.path must be a non-empty string`);
-        if (!nonEmptyString(exception.evidence.anchor)) failures.push(`${label}.evidence.anchor must be a non-empty string`);
+        if (!nonEmptyString(exception.evidence.path))
+            failures.push(`${label}.evidence.path must be a non-empty string`);
+        if (!nonEmptyString(exception.evidence.anchor))
+            failures.push(`${label}.evidence.anchor must be a non-empty string`);
     }
 
     const source = nonEmptyString(exception?.file) ? sources.get(exception.file) : null;
-    if (nonEmptyString(exception?.file) && source == null) failures.push(`${label}.file does not exist in its governed source root`);
+    if (nonEmptyString(exception?.file) && source == null)
+        failures.push(`${label}.file does not exist in its governed source root`);
     if (source != null && hasMarker) {
         const occurrences = source.split(exception.codeMarker).length - 1;
-        if (occurrences !== 1) failures.push(`${label}.codeMarker must exist exactly once; found ${occurrences}`);
+        if (occurrences !== 1)
+            failures.push(`${label}.codeMarker must exist exactly once; found ${occurrences}`);
     }
-    if (nonEmptyString(exception?.generatedRequestType) && !/(?:^|\.)[A-Za-z_$][A-Za-z0-9_$]*Request$/.test(exception.generatedRequestType)) {
-        failures.push(`${label}.generatedRequestType must name an exact generated *Request type`);
-    }
-    if (nonEmptyString(exception?.discrepancyId) && !discrepancies?.includes(`\`${exception.discrepancyId}\``)) {
+    if (
+        nonEmptyString(exception?.discrepancyId) &&
+        !discrepancies?.includes(`\`${exception.discrepancyId}\``)
+    ) {
         failures.push(`${label}.discrepancyId does not exist in spec/evidence/discrepancies.md`);
     }
     const risk = riskRegister?.risks?.find((entry) => entry?.id === exception?.openRiskId);
     if (nonEmptyString(exception?.openRiskId) && (!risk || risk.status !== "open")) {
         failures.push(`${label}.openRiskId must reference an existing open risk`);
     }
-    if (risk && nonEmptyString(exception?.exactClosureGate) && !risk.closureGate?.includes(exception.exactClosureGate)) {
-        failures.push(`${label}.exactClosureGate is not owned by the referenced open risk`);
+    if (
+        risk &&
+        nonEmptyString(exception?.exactClosureGate) &&
+        !exactMakeTargets(risk.closureGate).has(exception.exactClosureGate)
+    ) {
+        failures.push(
+            `${label}.exactClosureGate is not an exact Make target owned by the referenced open risk`,
+        );
     }
-    if (nonEmptyString(exception?.exactClosureGate) && !makefile?.includes(`${exception.exactClosureGate}:`)) {
+    if (
+        nonEmptyString(exception?.exactClosureGate) &&
+        !makefileHasExactTarget(makefile, exception.exactClosureGate)
+    ) {
         failures.push(`${label}.exactClosureGate target does not exist in Makefile`);
     }
     if (nonEmptyString(exception?.evidence?.path) && nonEmptyString(exception?.evidence?.anchor)) {
         const evidence = await readText(root, exception.evidence.path);
         if (evidence == null) failures.push(`${label}.evidence.path does not exist`);
-        else if (!evidence.includes(exception.evidence.anchor)) failures.push(`${label}.evidence.anchor does not exist`);
+        else if (!evidence.includes(exception.evidence.anchor))
+            failures.push(`${label}.evidence.anchor does not exist`);
     }
 
-    const matches = source == null ? [] : findings.filter((item) => exceptionLocationMatches(exception, item, source));
-    if (matches.length !== 1) failures.push(`${label} is stale or orphaned; expected exactly one governed cast, found ${matches.length}`);
+    const locationMatches =
+        source == null
+            ? []
+            : findings.filter((item) => exceptionLocationMatches(exception, item, source));
+    if (
+        locationMatches.length === 1 &&
+        exception?.generatedRequestType !== locationMatches[0].expectedRequestType
+    ) {
+        failures.push(
+            `${label}.generatedRequestType must exactly equal finding type ${locationMatches[0].expectedRequestType}`,
+        );
+    }
+    const matches = locationMatches.filter(
+        (item) => exception?.generatedRequestType === item.expectedRequestType,
+    );
+    if (matches.length !== 1)
+        failures.push(
+            `${label} is stale or orphaned; expected exactly one governed cast, found ${matches.length}`,
+        );
     return { failures, matches };
 }
 
@@ -231,60 +639,41 @@ export async function validateConsumerCastGovernance({ root, contract }) {
     const failures = [];
     const findings = [];
     const sources = new Map();
-    const helpersByPackage = new Map();
-    const helperCallsByPackage = new Map();
     if (contract?.schemaVersion !== 2) failures.push("schemaVersion must be 2");
     const governance = contract?.requestCastGovernance;
     if (governance == null || typeof governance !== "object" || Array.isArray(governance)) {
         return { failures: [...failures, "requestCastGovernance must be an object"], findings };
     }
-    if (typeof governance.canonicalZeroBaseline !== "boolean") {
+    if (typeof governance.canonicalZeroBaseline !== "boolean")
         failures.push("requestCastGovernance.canonicalZeroBaseline must be boolean");
-    }
     for (const packageName of ["cli", "mcp"]) {
-        if (!nonEmptyString(governance.sourceRoots?.[packageName])) {
-            failures.push(`requestCastGovernance.sourceRoots.${packageName} must be a non-empty string`);
-        }
-        if (!Array.isArray(governance.exceptions?.[packageName])) {
+        if (!nonEmptyString(governance.sourceRoots?.[packageName]))
+            failures.push(
+                `requestCastGovernance.sourceRoots.${packageName} must be a non-empty string`,
+            );
+        if (!Array.isArray(governance.exceptions?.[packageName]))
             failures.push(`requestCastGovernance.exceptions.${packageName} must be an array`);
-        }
     }
+
+    const rootNames = [];
     for (const [packageName, relativeRoot] of Object.entries(governance.sourceRoots ?? {})) {
         if (!nonEmptyString(relativeRoot)) continue;
         for (const relativePath of await listTypeScript(root, relativeRoot)) {
-            const source = await readFile(path.join(root, relativePath), "utf8");
-            sources.set(relativePath, source);
-            const analysis = scanSource(relativePath, source);
-            findings.push(...analysis.findings.map((item) => ({ ...item, packageName })));
-            const packageHelpers = helpersByPackage.get(packageName) ?? new Map();
-            for (const [name, helper] of analysis.blanketHelpers) {
-                const entries = packageHelpers.get(name) ?? [];
-                entries.push({ ...helper, relativePath, sourceFile: analysis.sourceFile });
-                packageHelpers.set(name, entries);
-            }
-            helpersByPackage.set(packageName, packageHelpers);
-            const packageCalls = helperCallsByPackage.get(packageName) ?? new Set();
-            for (const name of analysis.requestHelperCalls) packageCalls.add(name);
-            helperCallsByPackage.set(packageName, packageCalls);
+            rootNames.push(path.join(root, relativePath));
+            sources.set(relativePath, await readFile(path.join(root, relativePath), "utf8"));
         }
     }
-    for (const [packageName, helperNames] of helperCallsByPackage) {
-        const helpers = helpersByPackage.get(packageName) ?? new Map();
-        for (const helperName of helperNames) {
-            for (const helper of helpers.get(helperName) ?? []) {
-                findings.push({
-                    ...finding(
-                        helper.relativePath,
-                        helper.sourceFile,
-                        helper.node,
-                        `${helper.kind} ${helperName}`,
-                        "blanket",
-                    ),
-                    packageName,
-                });
-            }
-        }
-    }
+    const analysis = analyzeProgram({
+        root,
+        rootNames,
+        packageRoots: governance.sourceRoots ?? {},
+        forbiddenIdentifier:
+            contract?.forbiddenRequestEscape?.importClosure === true
+                ? contract.forbiddenRequestEscape.identifier
+                : null,
+    });
+    findings.push(...analysis.findings);
+    failures.push(...analysis.escapeFailures);
 
     const [riskText, discrepancies, makefile] = await Promise.all([
         readText(root, "docs/risk-register.json"),
@@ -300,15 +689,19 @@ export async function validateConsumerCastGovernance({ root, contract }) {
     const matchedFindings = new Set();
     const exceptionIds = new Set();
     for (const packageName of ["cli", "mcp"]) {
-        const exceptions = Array.isArray(governance.exceptions?.[packageName]) ? governance.exceptions[packageName] : [];
-        if (governance.canonicalZeroBaseline === true && exceptions.length > 0) {
-            failures.push(`requestCastGovernance.exceptions.${packageName} must stay empty in the canonical zero baseline`);
-        }
+        const exceptions = Array.isArray(governance.exceptions?.[packageName])
+            ? governance.exceptions[packageName]
+            : [];
+        if (governance.canonicalZeroBaseline === true && exceptions.length > 0)
+            failures.push(
+                `requestCastGovernance.exceptions.${packageName} must stay empty in the canonical zero baseline`,
+            );
         for (const exception of exceptions) {
             if (nonEmptyString(exception?.id)) {
-                if (exceptionIds.has(exception.id)) {
-                    failures.push(`requestCastGovernance exception id ${exception.id} must be unique`);
-                }
+                if (exceptionIds.has(exception.id))
+                    failures.push(
+                        `requestCastGovernance exception id ${exception.id} must be unique`,
+                    );
                 exceptionIds.add(exception.id);
             }
             const validation = await validateException({
@@ -323,17 +716,19 @@ export async function validateConsumerCastGovernance({ root, contract }) {
             });
             failures.push(...validation.failures);
             for (const item of validation.matches) {
-                if (matchedFindings.has(item)) {
+                if (matchedFindings.has(item))
                     failures.push(
                         `requestCastGovernance exception ${exception?.id ?? "(missing id)"} duplicates ${item.file}:${item.line}`,
                     );
-                }
                 matchedFindings.add(item);
             }
         }
     }
     for (const item of findings) {
-        if (!matchedFindings.has(item)) failures.push(`${item.kind} \`as ${item.assertedType}\` at ${item.file}:${item.line}`);
+        if (!matchedFindings.has(item))
+            failures.push(
+                `${item.kind} \`as ${item.assertedType}\` for ${item.expectedRequestType} at ${item.file}:${item.line}`,
+            );
     }
     return { failures, findings };
 }

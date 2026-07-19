@@ -21,6 +21,8 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Kept discrepancy-ledger coverage exact by removing the stale compensated-test
+  mapping after `consumer.cast-budget` became a resolved finding.
 - Extended the existing public-package compile fixture to prove the root-exported
   archive/delete adapter callback inputs remain free of blanket `any` types; the
   zero request-cast contract reuses this proof rather than adding a parallel gate.

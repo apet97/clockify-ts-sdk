@@ -25,7 +25,8 @@
   },
   "publicNoAnyProof": {
     "path": "wrapper/tests/types/breaking-changes.test-d.ts",
-    "compilerGate": "make breaking-change-review",
+    "compilerGate": "consumer-cast-budget",
+    "compilerCommand": "npm run type-check:breaking -w clockify-sdk-ts-115",
     "contains": [
       "_GetInputIsNotAny",
       "_ArchiveInputIsNotAny",
@@ -45,7 +46,8 @@
       "mcp/src",
       "mcp/tests"
     ],
-    "wrapperRootTypeScript": true
+    "wrapperRootTypeScript": true,
+    "importClosure": true
   },
   "residueNotes": {
     "lastReduced": "2026-07-19",
