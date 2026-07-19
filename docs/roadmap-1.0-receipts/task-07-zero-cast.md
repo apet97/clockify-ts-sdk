@@ -28,14 +28,16 @@ generated request property and is not a blanket request-object assertion.
 `Program`/`TypeChecker` over `cli/src` and `mcp/src`, proves generated request
 provenance from the Clockify request modules, and traces request values through
 bounded variable aliases, client aliases, helper calls, imports, namespaces,
-properties, annotated/later-assigned variables, binding elements, binary/logical/
-sequence expressions, spread arguments and object spreads, assigned results,
-declaration-only casters, Function `call`/`apply`/`bind`, and transitive/generic
-wrapper chains. It rejects request-boundary structural, `any`/`never`, direct or
-chained generated-request assertions, angle-bracket assertions, and request-
-producing generic adapters. It deliberately ignores unrelated local/third-party
-`*Request` names, unrelated `any` parameters, response narrows, ordinary non-
-request assertions, and test-only fixture casts.
+properties, all potentially reaching variable/property writes, property
+declarations/accessors, object and array bindings, contributing binary/logical/
+sequence expressions, spread arguments and object spreads, declaration-only
+casters, Function `call`/`apply`/`bind`, any-erased receiver/method provenance,
+and transitive/generic wrapper chains. It rejects request-boundary structural,
+`any`/`never`, direct or chained generated-request assertions, angle-bracket
+assertions, and request-producing generic adapters. It deliberately ignores
+discarded comma operands, definitely overwritten values, unrelated local/third-
+party `*Request` names, unrelated `any` parameters, response narrows, ordinary
+non-request assertions, and test-only fixture casts.
 
 A noncanonical exception validates only when it has all of:
 
@@ -55,8 +57,9 @@ contract additionally rejects every non-empty exception array, even if the
 record is otherwise complete.
 
 The canonical contract pins the complete governed roots, wrapper-root scan,
-import closure, proof file, exact `IsAny`/`AssertFalse` semantics, all six exact
-adapter callback operands, owning target, and compiler command. `make consumer-
+import closure, proof file, exact `IsAny`/`AssertFalse` semantics, both exact
+public adapter imports/type arguments, all six exact adapter callback operands,
+owning target, and compiler command. `make consumer-
 cast-budget` depends on SDK codegen/build and executes the Task 6
 `type-check:breaking` compiler proof; marker comments, hollow operands, and
 comment-only Make prerequisites/recipes cannot satisfy the gate.
@@ -80,6 +83,14 @@ spreads, ambient/interface/imported declaration-only casters, and Function
 unflagged, pinned the exact six public-proof operands plus `IsAny`, and rejected
 required Make wiring present only in comments. The final governance suite passes
 **87/87** fixtures.
+
+The third corrective review added RED/GREEN cases for branch-dependent reaching
+writes and definitely-overwritten controls, receiver-specific property writes/
+declarations/accessors, array bindings, direct and aliased receiver/method erasure to `any`,
+and comma-expression contribution semantics. It also proved a compiler-green
+local structural adapter counterfeit cannot replace the exact imported root and
+`./ensure` `ArchiveThenDeleteAdapter<CurrentClient>` aliases. The final
+governance suite passes **104/104** fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
@@ -105,7 +116,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final round-two results: wrapper **763 passed / 7 skipped**, CLI **388 passed / 12
+Final round-three results: wrapper **763 passed / 7 skipped**, CLI **388 passed / 12
 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

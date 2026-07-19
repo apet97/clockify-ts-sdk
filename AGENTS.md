@@ -391,11 +391,14 @@ end-to-end and green before push. Drift gates are non-negotiable.
     and the ledger together.
 11. **CLI/MCP request casts stay at zero.** `make consumer-cast-budget`
     builds a TypeScript Program for `cli/src` and `mcp/src`; symbol provenance
-    plus bounded request-bound dataflow rejects direct, chained, structural,
-    angle-bracket, `as never`, annotated/assigned `any`, binding/expression/
-    spread, helper-hidden generic, declaration-only, imported/transitive, and
-    Function `call`/`apply`/`bind` request escapes without treating arbitrary
-    local `*Request` names or unrelated `any` parameters as request values.
+    plus bounded request-bound dataflow conservatively traces all potentially
+    reaching variable/property writes, bindings, accessors, expressions, and
+    spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
+    annotated/assigned `any`, helper-hidden generic, declaration-only,
+    imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
+    request calls whose receiver or method was erased to `any`, without treating
+    arbitrary local `*Request` names or unrelated `any` parameters as request
+    values. Discarded comma-expression operands are not request contributors.
     Construct generated request unions directly,
     using `ClockifyRequestBody<T>` for typed bodies. Both canonical
     exception arrays are empty. A future temporary exception requires
@@ -406,8 +409,9 @@ end-to-end and green before push. Drift gates are non-negotiable.
     in `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a
     second public-type gate. The cast-budget Make target executes that compiler
     proof itself after SDK codegen/build; the gate pins the exact `IsAny`
-    definition and all six callback operands, and marker/Make comments are not
-    proof.
+    definition, both public adapter imports and type arguments, and all six
+    callback operands. Local structural counterfeits and marker/Make comments
+    are not proof.
 
 ## 6. The wrapper layout
 

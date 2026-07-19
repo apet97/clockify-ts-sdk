@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "purpose": "CLI and MCP request construction must contain zero escape-hatch assertions. The compiler-aware ratchet uses generated-type provenance and request-bound dataflow across aliases, assignments, bindings, expressions, spreads, helpers, and Function invocation adapters while ignoring response narrows, unrelated any values, ordinary non-request assertions, and test-only fixtures. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
+  "purpose": "CLI and MCP request construction must contain zero escape-hatch assertions. The compiler-aware ratchet uses generated-type provenance and conservative request-bound dataflow across all potentially reaching variable and property writes, bindings, accessors, contributing expressions, spreads, helpers, Function invocation adapters, and any-erased receivers/methods while ignoring discarded comma operands, response narrows, unrelated any values, ordinary non-request assertions, and test-only fixtures. The public proof pins exact adapter import provenance and type arguments. A future exception is valid only with a complete, live governance record, but the canonical 1.0 baseline requires both package exception arrays to remain exactly empty.",
   "requestCastGovernance": {
     "canonicalZeroBaseline": true,
     "sourceRoots": {
@@ -37,6 +37,24 @@
     ],
     "isAnyDefinition": "0extends1&T?true:false",
     "assertFalseDefinition": "Textendsfalse=T",
+    "adapterAliases": {
+      "Adapter": {
+        "typeName": "ArchiveThenDeleteAdapter",
+        "importedName": "ArchiveThenDeleteAdapter",
+        "module": "clockify-sdk-ts-115/ensure",
+        "typeArguments": [
+          "CurrentClient"
+        ]
+      },
+      "RootAdapter": {
+        "typeName": "RootArchiveThenDeleteAdapter",
+        "importedName": "ArchiveThenDeleteAdapter",
+        "module": "clockify-sdk-ts-115",
+        "typeArguments": [
+          "CurrentClient"
+        ]
+      }
+    },
     "operands": {
       "_GetInputIsNotAny": "Parameters<Adapter[\"getCurrent\"]>[0]",
       "_ArchiveInputIsNotAny": "Parameters<Adapter[\"archive\"]>[0]",

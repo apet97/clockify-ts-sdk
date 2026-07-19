@@ -31,6 +31,20 @@ export const CANONICAL_CONSUMER_CAST_CONTRACT = Object.freeze({
         ]),
         isAnyDefinition: "0extends1&T?true:false",
         assertFalseDefinition: "Textendsfalse=T",
+        adapterAliases: Object.freeze({
+            Adapter: Object.freeze({
+                typeName: "ArchiveThenDeleteAdapter",
+                importedName: "ArchiveThenDeleteAdapter",
+                module: "clockify-sdk-ts-115/ensure",
+                typeArguments: Object.freeze(["CurrentClient"]),
+            }),
+            RootAdapter: Object.freeze({
+                typeName: "RootArchiveThenDeleteAdapter",
+                importedName: "ArchiveThenDeleteAdapter",
+                module: "clockify-sdk-ts-115",
+                typeArguments: Object.freeze(["CurrentClient"]),
+            }),
+        }),
         operands: Object.freeze({
             _GetInputIsNotAny: 'Parameters<Adapter["getCurrent"]>[0]',
             _ArchiveInputIsNotAny: 'Parameters<Adapter["archive"]>[0]',
@@ -88,9 +102,29 @@ export function validatePublicNoAnyProofSource(
         ts.ScriptKind.TS,
     );
     const assertions = new Map();
+    const aliases = new Map();
+    const importedTypes = new Map();
     let isAnyDefinition = null;
     let assertFalseDefinition = null;
     const compact = (value) => value.replace(/\s+/g, "");
+    for (const statement of sourceFile.statements) {
+        if (
+            !ts.isImportDeclaration(statement) ||
+            !ts.isStringLiteral(statement.moduleSpecifier) ||
+            !statement.importClause ||
+            !statement.importClause.namedBindings ||
+            !ts.isNamedImports(statement.importClause.namedBindings)
+        ) {
+            continue;
+        }
+        for (const specifier of statement.importClause.namedBindings.elements) {
+            importedTypes.set(specifier.name.text, {
+                importedName: (specifier.propertyName ?? specifier.name).text,
+                module: statement.moduleSpecifier.text,
+                typeOnly: statement.importClause.isTypeOnly || specifier.isTypeOnly,
+            });
+        }
+    }
     for (const statement of sourceFile.statements) {
         if (!ts.isTypeAliasDeclaration(statement)) continue;
         if (statement.name.text === "IsAny") {
@@ -120,6 +154,10 @@ export function validatePublicNoAnyProofSource(
             }
             continue;
         }
+        if (Object.hasOwn(proof.adapterAliases ?? {}, statement.name.text)) {
+            aliases.set(statement.name.text, statement.type);
+            continue;
+        }
         const outer = statement.type;
         const inner = ts.isTypeReferenceNode(outer) ? outer.typeArguments?.[0] : null;
         const validShape =
@@ -139,6 +177,29 @@ export function validatePublicNoAnyProofSource(
     }
     if (assertFalseDefinition !== proof.assertFalseDefinition) {
         failures.push("publicNoAnyProof AssertFalse definition is not canonical");
+    }
+    for (const [aliasName, expected] of Object.entries(proof.adapterAliases ?? {})) {
+        const alias = aliases.get(aliasName);
+        const validAlias =
+            alias &&
+            ts.isTypeReferenceNode(alias) &&
+            ts.isIdentifier(alias.typeName) &&
+            alias.typeName.text === expected.typeName &&
+            (alias.typeArguments?.length ?? 0) === expected.typeArguments.length &&
+            (alias.typeArguments ?? []).every(
+                (argument, index) =>
+                    compact(argument.getText(sourceFile)) === compact(expected.typeArguments[index]),
+            );
+        const imported = importedTypes.get(expected.typeName);
+        const validImport =
+            imported?.importedName === expected.importedName &&
+            imported?.module === expected.module &&
+            imported?.typeOnly === true;
+        if (!validAlias || !validImport) {
+            failures.push(
+                `publicNoAnyProof ${aliasName} must resolve to imported ${expected.module} ${expected.importedName}<${expected.typeArguments.join(", ")}>`,
+            );
+        }
     }
     for (const marker of proof.contains) {
         const expectedOperand = compact(proof.operands?.[marker] ?? "");

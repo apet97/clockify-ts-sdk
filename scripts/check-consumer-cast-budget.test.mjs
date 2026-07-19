@@ -5,6 +5,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+import ts from "typescript";
+
 import {
     CANONICAL_CONSUMER_CAST_CONTRACT,
     validateCanonicalConsumerCastContract,
@@ -319,6 +321,96 @@ test("rejects a request escape introduced by a later assignment", async () => {
     );
 });
 
+test("rejects every branch assignment that may reach the request boundary", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown, unsafe: boolean) { let request: ClockifyApi.CreateProjectsRequest = { workspaceId: "safe" }; if (unsafe) { request = body as any; } else { request = { workspaceId: "also-safe" }; } return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("does not flag an unsafe value that is definitely overwritten before the request", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { let request: any = body as any; request = { workspaceId: "safe" }; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not flag an unsafe prior value when both control-flow branches overwrite it", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown, first: boolean) { let request: any = body as any; if (first) { request = { workspaceId: "first-safe" }; } else { request = { workspaceId: "second-safe" }; } return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("rejects request escapes introduced by property writes", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const holder: { request: ClockifyApi.CreateProjectsRequest } = { request: { workspaceId: "safe" } }; holder.request = body as any; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("does not flag an unsafe property value definitely overwritten before the request", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const holder: { request: ClockifyApi.CreateProjectsRequest } = { request: { workspaceId: "safe" } }; holder.request = body as any; holder.request = { workspaceId: "safe-again" }; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not conflate property writes on distinct receiver symbols", async () => {
+    await withFixture(
+        `${generatedImports}interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const unsafe: Holder = { request: { workspaceId: "initial" } }; unsafe.request = body as any; const safe: Holder = { request: { workspaceId: "safe" } }; return client.projects.create(safe.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("rejects request escapes from relevant property declarations", async () => {
+    await withFixture(
+        `${generatedImports}class Holder { request: any; constructor(body: unknown) { this.request = body; } }\nexport async function run(client: FixtureClient, body: unknown) { const holder = new Holder(body); return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects request escapes returned by relevant accessors", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const holder = { get request(): ClockifyApi.CreateProjectsRequest { return body as any; } }; return client.projects.create(holder.request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("rejects request escapes flowing through array binding elements", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const [request]: [ClockifyApi.CreateProjectsRequest] = [body as any]; return client.projects.create(request); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
 test("rejects request escapes flowing through object binding elements", async () => {
     await withFixture(
         `${generatedImports}export async function run(client: FixtureClient, body: unknown) { const { request } = { request: body as any }; return client.projects.create(request); }\n`,
@@ -444,6 +536,32 @@ for (const [label, invocation] of [
     });
 }
 
+for (const [label, invocation] of [
+    ["erased client receiver", "(client as any).projects.create(body as never)"],
+    ["erased request method", "(client.projects.create as any)(body as never)"],
+    [
+        "aliased erased client receiver",
+        "(() => { const erased = client as any; return erased.projects.create(body as never); })()",
+    ],
+    [
+        "aliased erased request method",
+        "(() => { const create = client.projects.create as any; return create(body as never); })()",
+    ],
+]) {
+    test(`rejects a request escape through an ${label}`, async () => {
+        await withFixture(
+            `${generatedImports}export async function run(client: FixtureClient, body: unknown) { return ${invocation}; }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
 test("does not flag an unrelated any logger parameter that cannot flow into the request", async () => {
     await withFixture(
         requestFixture(
@@ -553,13 +671,82 @@ for (const [label, mutate] of [
     });
 }
 
+test("rejects local structural counterfeit adapter aliases", async () => {
+    const source = await readFile(
+        path.join(repoRoot, CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.path),
+        "utf8",
+    );
+    const counterfeit = source
+        .replace(
+            "type Adapter = ArchiveThenDeleteAdapter<CurrentClient>;",
+            "type Adapter = { getCurrent(input: unknown): unknown; archive(input: unknown): unknown; delete(input: unknown): unknown };",
+        )
+        .replace(
+            "type RootAdapter = RootArchiveThenDeleteAdapter<CurrentClient>;",
+            "type RootAdapter = Adapter;",
+        );
+    assert.notDeepEqual(validatePublicNoAnyProofSource(counterfeit), []);
+});
+
+test("rejects a compiler-green counterfeit no-any fixture without public import provenance", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "clockify-counterfeit-proof-"));
+    try {
+        const fixture = path.join(root, "counterfeit.ts");
+        const source = [
+            "type IsAny<T> = 0 extends 1 & T ? true : false;",
+            "type AssertFalse<T extends false> = T;",
+            "interface CurrentClient { marker: number }",
+            "type Adapter = { getCurrent(input: unknown): unknown; archive(input: unknown): unknown; delete(input: unknown): unknown };",
+            "type RootAdapter = Adapter;",
+            'type _GetInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["getCurrent"]>[0]>>;',
+            'type _ArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["archive"]>[0]>>;',
+            'type _DeleteInputIsNotAny = AssertFalse<IsAny<Parameters<Adapter["delete"]>[0]>>;',
+            'type _RootGetInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["getCurrent"]>[0]>>;',
+            'type _RootArchiveInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["archive"]>[0]>>;',
+            'type _RootDeleteInputIsNotAny = AssertFalse<IsAny<Parameters<RootAdapter["delete"]>[0]>>;',
+            "",
+        ].join("\n");
+        await writeFile(fixture, source);
+        const program = ts.createProgram({
+            rootNames: [fixture],
+            options: { noEmit: true, strict: true, skipLibCheck: true },
+        });
+        assert.deepEqual(ts.getPreEmitDiagnostics(program), []);
+        assert.notDeepEqual(validatePublicNoAnyProofSource(source), []);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
+
+test("does not flag a discarded unsafe comma-expression operand", async () => {
+    await withFixture(
+        requestFixture('(body as never, { workspaceId: "safe" })'),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("still rejects the contributing branch of a conditional request expression", async () => {
+    await withFixture(
+        `${generatedImports}export async function run(client: FixtureClient, body: unknown, unsafe: boolean) { return client.projects.create(unsafe ? body as never : { workspaceId: "safe" }); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as never.*CreateProjectsRequest/i);
+        },
+    );
+});
+
 test("rejects proof markers that exist only in comments", () => {
     const comments = CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.contains
         .map((marker) => `// type ${marker} = AssertFalse<IsAny<unknown>>;`)
         .join("\n");
     assert.equal(
         validatePublicNoAnyProofSource(comments).length,
-        CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.contains.length + 2,
+        CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.contains.length +
+            Object.keys(CANONICAL_CONSUMER_CAST_CONTRACT.publicNoAnyProof.adapterAliases).length +
+            2,
     );
 });
 
