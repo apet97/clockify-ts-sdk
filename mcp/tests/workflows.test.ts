@@ -1258,7 +1258,24 @@ describe("P0 correctness — pagination + validation", () => {
                     projectId: "p9",
                     taskId: "ta9",
                     tagIds: ["tg9"],
-                    customFieldValues: [{ customFieldId: "cf1", value: "keep" }],
+                    customFieldValues: [
+                        {
+                            customFieldId: "cf1",
+                            sourceType: "PROJECT",
+                            value: "keep",
+                            timeEntryId: "e1",
+                            name: "Customer tier",
+                            type: "WORKSPACE",
+                        },
+                        {
+                            customFieldId: "cf2",
+                            sourceType: "TIMEENTRY",
+                            value: ["alpha", "beta"],
+                            timeEntryId: "e1",
+                            name: "Labels",
+                            type: "TIMEENTRY",
+                        },
+                    ],
                     timeInterval: {
                         start: "2026-06-15T09:00:00.000Z",
                         end: "2026-06-15T10:00:00.000Z",
@@ -1269,12 +1286,16 @@ describe("P0 correctness — pagination + validation", () => {
         // The live wire is a PUT-replace: model update as DROPPING every key the
         // caller omits (the opposite of the default merge fake), so any field
         // fix_entry forgets to forward is provably wiped.
+        let updateBody: Record<string, unknown> | undefined;
+        let updates = 0;
         (ctx.client.timeEntries as { update: unknown }).update = async (
             payload: Record<string, unknown>,
         ) => {
+            updates += 1;
             const idx = ctx.state.entries.findIndex((e) => e.id === payload.timeEntryId);
             if (idx === -1) throw Object.assign(new Error("entry not found"), { statusCode: 404 });
             const sent = (payload.body ?? payload) as Record<string, unknown>;
+            updateBody = sent;
             const replaced = {
                 id: ctx.state.entries[idx]!.id,
                 userId: ctx.state.entries[idx]!.userId,
@@ -1296,8 +1317,155 @@ describe("P0 correctness — pagination + validation", () => {
         expect(entry.projectId).toBe("p9");
         expect(entry.taskId).toBe("ta9");
         expect(entry.tagIds).toEqual(["tg9"]);
-        expect(entry.customFields).toEqual([{ customFieldId: "cf1", value: "keep" }]);
+        expect(updateBody?.customFields).toEqual([
+            { customFieldId: "cf1", sourceType: "PROJECT", value: "keep" },
+            { customFieldId: "cf2", value: ["alpha", "beta"] },
+        ]);
+        expect(entry.customFields).toEqual([
+            { customFieldId: "cf1", sourceType: "PROJECT", value: "keep" },
+            { customFieldId: "cf2", value: ["alpha", "beta"] },
+        ]);
         expect(entry.billable).toBe(true);
+        expect(updates).toBe(1);
+    });
+
+    it("fix_entry fails closed before update when a read custom field has no id", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e1",
+                    description: "Original",
+                    billable: true,
+                    customFieldValues: [{ value: "orphaned" }],
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                },
+            ],
+        });
+        let updates = 0;
+        (ctx.client.timeEntries as { update: unknown }).update = async () => {
+            updates += 1;
+            return {};
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", new_description: "must-not-apply" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({
+            ok: false,
+            error: { code: "invalid_request", message: expect.stringMatching(/customFieldId/) },
+        });
+        expect(updates).toBe(0);
+        expect(ctx.state.entries[0]?.description).toBe("Original");
+    });
+
+    it("fix_entry fails closed before update on duplicate read custom-field ids", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e1",
+                    description: "Original",
+                    billable: true,
+                    customFieldValues: [
+                        { customFieldId: "cf1", value: "first" },
+                        { customFieldId: "cf1", value: "second" },
+                    ],
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                },
+            ],
+        });
+        let updates = 0;
+        (ctx.client.timeEntries as { update: unknown }).update = async () => {
+            updates += 1;
+            return {};
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", new_description: "must-not-apply" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({
+            ok: false,
+            error: {
+                code: "invalid_request",
+                message: expect.stringMatching(/duplicate.*customFieldId.*cf1/i),
+            },
+        });
+        expect(updates).toBe(0);
+    });
+
+    it("fix_entry fails closed before update on a non-JSON custom-field value", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e1",
+                    description: "Original",
+                    billable: true,
+                    customFieldValues: [{ customFieldId: "cf1", value: Number.NaN }],
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                },
+            ],
+        });
+        let updates = 0;
+        (ctx.client.timeEntries as { update: unknown }).update = async () => {
+            updates += 1;
+            return {};
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", new_description: "must-not-apply" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({
+            ok: false,
+            error: {
+                code: "invalid_request",
+                message: expect.stringMatching(/customFieldValues\[0\]\.value/),
+            },
+        });
+        expect(updates).toBe(0);
+    });
+
+    it("fix_entry fails closed before update on an unsupported read sourceType", async () => {
+        const ctx = fakeContext({
+            entries: [
+                {
+                    id: "e1",
+                    description: "Original",
+                    billable: true,
+                    customFieldValues: [
+                        { customFieldId: "cf1", sourceType: "USER", value: "x" },
+                    ],
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
+                },
+            ],
+        });
+        let updates = 0;
+        (ctx.client.timeEntries as { update: unknown }).update = async () => {
+            updates += 1;
+            return {};
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { entry_id: "e1", new_description: "must-not-apply" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect(parse(res)).toMatchObject({
+            ok: false,
+            error: {
+                code: "invalid_request",
+                message: expect.stringMatching(/customFieldValues\[0\]\.sourceType/),
+            },
+        });
+        expect(updates).toBe(0);
     });
 
     it("review rejects an explicit start+end range with a garbage end (offline, field-named)", async () => {

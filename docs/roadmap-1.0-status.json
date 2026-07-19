@@ -44,6 +44,7 @@
     "openApiChanged": false,
     "generatedTruth": "timeEntries.listForUser accepts ClockifyApi.ListForUserTimeEntriesRequest and returns ClockifyApi.TimeEntry[]; both MCP review/fix paths use those types directly.",
     "scanContract": "Review retains its all-page maxPages guard; fix retains cross-page ambiguity detection and stops before inspecting entry 10,001.",
+    "customFieldProjection": "Replace-style fixes rebuild each read customFieldValues item as a validated writable customFields object, strip read-only fields, and fail before update on malformed or duplicate values.",
     "task7RequestCastRiskStatus": "open"
   },
   "operationReachability": {

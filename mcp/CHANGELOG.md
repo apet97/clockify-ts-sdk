@@ -8,7 +8,9 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 - MCP review/fix workflows now call `timeEntries.listForUser` with its generated
   request and `TimeEntry` types, preserve custom-field values on replace-style
-  fixes, detect ambiguity across pages, and stop before inspecting entry 10,001.
+  fixes through a validated read-to-write projection that strips hydrated
+  read-only fields, detect ambiguity across pages, and stop before inspecting
+  entry 10,001.
 - `clockify_expenses_update` now dispatches its stored typed preview directly;
   regenerated API truth makes the multipart `file` field optional without a
   request cast.

@@ -2693,7 +2693,7 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     body + untyped scopeFilter), `workflows/resolve.ts` `projects.create`
     (conditional-spread widening under EOPT), `expenseCategories.list` (no page/page-size
     slot), and `timeOffPolicies.list` (`page` typed as string).
-  - *Still `KEEP as never` as of this 2026-06-20 snapshot* and why: the
+  - *Historical snapshot only — still `KEEP as never` as of 2026-06-20* and why: the
     multipart-file omission on expense create/update scalar bodies (`expenses.ts`
     cli+mcp), the too-narrow invoice
     status PATCH body (`invoices.ts`), the `changeTimeOffRequestStatus` status/note
@@ -2706,9 +2706,14 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     `ExpenseUpdateRequest.file` is optional too, regenerated the SDK, and removed
     the final expense-update request casts from both CLI and MCP. Exact wrapper
     multipart tests cover scalar updates with no `file` part and binary updates
-    with one `file` part. The remaining current `KEEP as never` residue is the
-    `timeEntries.listForUser` request/response envelope mismatch tracked for
-    Task 4; the 2026-06-20 counts above remain historical evidence.
+    with one `file` part.
+  - *Resolved for `timeEntries.listForUser` 2026-07-19:* Task 4 bound the MCP
+    review/fix workflows directly to generated `ListForUserTimeEntriesRequest`
+    and `TimeEntry` types, removed both request/response cast pairs plus their
+    cast-budget exception, and retained later-page matching, cross-page
+    ambiguity detection, empty-page termination, and the exact 10,000-entry fix
+    scan ceiling. The 2026-06-20 counts and `KEEP as never` list above remain
+    explicitly historical evidence; they are not the current cast inventory.
 
 ---
 
