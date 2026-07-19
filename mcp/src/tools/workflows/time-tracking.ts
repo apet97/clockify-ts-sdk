@@ -24,6 +24,8 @@ type CreateTimeEntryRequest = Extract<
     ClockifyApi.CreateTimeEntryRequest,
     { workspaceId: string; start: string }
 >;
+type UpdateTimeEntryBody = ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest>;
+type WritableCustomField = NonNullable<UpdateTimeEntryBody["customFields"]>[number];
 
 export function timeEntryInputSchema({ finished }: { finished: boolean }) {
     const schema: Record<string, z.ZodTypeAny> = {
@@ -213,8 +215,9 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
     const nextProjectId = projectId || str(entry.projectId);
     const nextTaskId = taskId || str(entry.taskId);
     const nextTagIds = tagIds.length ? tagIds : arrayOfStrings(entry.tagIds);
+    const customFields = writableCustomFields(entry.customFieldValues);
     if (!start) throw new Error("entry start is required to update this time entry");
-    const body: ClockifyRequestBody<ClockifyApi.UpdateTimeEntriesRequest> = {
+    const body: UpdateTimeEntryBody = {
         start,
         description,
         billable: requestedBillable ?? entry.billable === true,
@@ -222,9 +225,7 @@ export async function fixEntry(ctx: Context, args: AnyRecord) {
         ...(nextProjectId ? { projectId: nextProjectId } : {}),
         ...(nextTaskId ? { taskId: nextTaskId } : {}),
         ...(nextTagIds.length ? { tagIds: nextTagIds } : {}),
-        ...(entry.customFieldValues !== undefined
-            ? { customFields: entry.customFieldValues }
-            : {}),
+        ...(customFields !== undefined ? { customFields } : {}),
         ...(entry.type === "REGULAR" || entry.type === "BREAK" ? { type: entry.type } : {}),
     };
     const request: ClockifyApi.UpdateTimeEntriesRequest = {
@@ -309,4 +310,79 @@ function optionalBoolean(value: unknown, field: string): boolean | undefined {
     if (value === undefined) return undefined;
     if (typeof value !== "boolean") throw new TypeError(`${field} must be a boolean`);
     return value;
+}
+
+function writableCustomFields(
+    values: ClockifyApi.TimeEntry["customFieldValues"],
+): WritableCustomField[] | undefined {
+    const seenIds = new Set<string>();
+    return values?.map((value, index) => {
+        if (value === null || typeof value !== "object" || Array.isArray(value)) {
+            throw new TypeError(`invalid customFieldValues[${index}]; an object is required`);
+        }
+        if (typeof value.customFieldId !== "string" || value.customFieldId.trim() === "") {
+            throw new TypeError(
+                `invalid customFieldValues[${index}].customFieldId; a non-empty string is required`,
+            );
+        }
+        const customFieldId = value.customFieldId.trim();
+        if (seenIds.has(customFieldId)) {
+            throw new TypeError(
+                `invalid duplicate customFieldId ${JSON.stringify(customFieldId)} in customFieldValues`,
+            );
+        }
+        seenIds.add(customFieldId);
+        const sourceType = value.sourceType;
+        if (
+            sourceType !== undefined &&
+            sourceType !== "WORKSPACE" &&
+            sourceType !== "PROJECT" &&
+            sourceType !== "TIMEENTRY"
+        ) {
+            throw new TypeError(
+                `invalid customFieldValues[${index}].sourceType ${JSON.stringify(sourceType)}`,
+            );
+        }
+        return {
+            customFieldId,
+            ...(sourceType === "WORKSPACE" || sourceType === "PROJECT"
+                ? { sourceType }
+                : {}),
+            value: writableCustomFieldValue(value.value, `customFieldValues[${index}].value`),
+        };
+    });
+}
+
+function writableCustomFieldValue(
+    value: unknown,
+    path: string,
+    ancestors: ReadonlySet<object> = new Set(),
+): unknown {
+    if (value === null || typeof value === "string" || typeof value === "boolean") return value;
+    if (typeof value === "number") {
+        if (Number.isFinite(value)) return value;
+        throw new TypeError(`invalid ${path}; numbers must be finite`);
+    }
+    if (typeof value !== "object") {
+        throw new TypeError(`invalid ${path}; a JSON-compatible value is required`);
+    }
+    if (ancestors.has(value)) {
+        throw new TypeError(`invalid ${path}; cyclic values are not supported`);
+    }
+    const prototype = Object.getPrototypeOf(value);
+    if (!Array.isArray(value) && prototype !== Object.prototype && prototype !== null) {
+        throw new TypeError(`invalid ${path}; a JSON-compatible value is required`);
+    }
+    const nestedAncestors = new Set(ancestors).add(value);
+    if (Array.isArray(value)) {
+        return value.map((item, index) =>
+            writableCustomFieldValue(item, `${path}[${index}]`, nestedAncestors),
+        );
+    }
+    return Object.fromEntries(
+        Object.entries(value).map(([key, item]) => [
+            key,
+            writableCustomFieldValue(item, `${path}.${key}`, nestedAncestors),
+        ]),
+    );
 }

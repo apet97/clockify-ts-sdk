@@ -12,9 +12,13 @@ OpenAPI snapshot, generator, generated output, or synced wrapper tree changed.
 
 Both MCP review/fix paths now use those generated types directly. Their two
 request/response cast pairs, `KEEP as never` annotations, and combined
-cast-budget exception are gone. The generated response field
-`customFieldValues` is mapped directly to the update request's `customFields`
-field so replace-style fixes preserve existing values.
+cast-budget exception are gone. Each generated response-side
+`customFieldValues` item is projected into a fresh update-side `customFields`
+object containing only a validated non-empty `customFieldId`, JSON-compatible
+`value`, and an allowed grounded `sourceType` (`WORKSPACE` or `PROJECT`).
+Read-only `timeEntryId`, `name`, and `type` fields are stripped. Malformed,
+unsupported, or duplicate values fail before the replace-style update so state
+cannot be silently lost.
 
 ## Pagination and bound proof
 
@@ -27,7 +31,9 @@ field so replace-style fixes preserve existing values.
 - the fix scan inspects at most 10,000 entries and rejects before reading the
   sentry at position 10,001; and
 - generated `TimeEntry.timeInterval` and `customFieldValues` fields are consumed
-  without response casts.
+  without response casts; realistic hydrated custom fields are projected to the
+  exact writable wire shape, while malformed IDs/values and duplicate IDs issue
+  an error without an update.
 
 `mcp/tests/iter-maxpages.test.ts` retains the review walk's 1,000-page guard
 using generated `TimeEntry` fixtures. Existing confirmation and stored-preview
