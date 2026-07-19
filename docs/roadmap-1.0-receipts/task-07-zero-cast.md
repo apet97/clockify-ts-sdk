@@ -243,6 +243,18 @@ failed against `d499b6b`; the three native-alias/conditional controls stayed
 green. The finished focused set passes **19/19**, and the complete controller
 suite passes **389/389** fixtures while retaining the prior 370 cases.
 
+The seventeenth corrective review recognizes an unshadowed canonical
+`Function.prototype.bind` value as native when assigned or restored, without
+requiring `Function.prototype` itself to expose call signatures. Custom binders
+now register their own synchronous invocation-time effects for direct, `call`,
+and `apply` paths before their returned callable is invoked. Lifted effect
+ordering preserves conditional alternatives: a later definite safe returned
+write can dominate an earlier unsafe binder-body write, while a conditional safe
+write cannot. Seven of the initial 10 focused cases failed against `b1fe041`;
+the shadow/non-native and definite-overwrite controls stayed green. The finished
+focused set passes **10/10**, and the complete controller suite passes
+**399/399** fixtures while retaining the prior 389 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -267,7 +279,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final sixteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final seventeenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all
