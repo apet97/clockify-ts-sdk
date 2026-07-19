@@ -1,4 +1,5 @@
 import { iterAll } from "clockify-sdk-ts-115/iter";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { z } from "zod";
 
 import { successResult } from "../../result.js";
@@ -28,11 +29,19 @@ export async function reviewPeriod(ctx: Context, action: string, args: AnyRecord
     // Walk ALL pages so the review covers the whole period. A single
     // page:1/200 fetch silently truncated a busy week and still reported
     // count: entries.length as if complete. iterAll honors Last-Page.
-    const entries: AnyRecord[] = [];
-    for await (const entry of iterAll<AnyRecord, AnyRecord>(
-        // KEEP as never: generated list/search/view request or response envelope does not match this wire shape.
-        (req) => ctx.client.timeEntries.listForUser(req as never) as never,
-        { workspaceId: ctx.workspaceId, userId, start: range.start, end: range.end },
+    const request: Omit<ClockifyApi.ListForUserTimeEntriesRequest, "page" | "page-size"> = {
+        workspaceId: ctx.workspaceId,
+        userId,
+        start: range.start,
+        end: range.end,
+    };
+    const entries: ClockifyApi.TimeEntry[] = [];
+    for await (const entry of iterAll<
+        ClockifyApi.ListForUserTimeEntriesRequest,
+        ClockifyApi.TimeEntry
+    >(
+        (pageRequest) => ctx.client.timeEntries.listForUser(pageRequest),
+        request,
         // maxPages caps the walk so a backend that keeps returning Last-Page:false
         // (or full pages) can't spin forever — 1000 * 200 = 200k entries is far
         // beyond any real review window.

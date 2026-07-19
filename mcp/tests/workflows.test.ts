@@ -1,5 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { ClockifyApi } from "clockify-sdk-ts-115/requests";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { Context } from "../src/client.js";
@@ -29,6 +30,8 @@ type FakeState = {
     tasks: Array<{ id: string; name: string; projectId: string }>;
     tags: Array<{ id: string; name: string }>;
     entries: Array<Record<string, unknown>>;
+    timeEntryListRequests: ClockifyApi.ListForUserTimeEntriesRequest[];
+    timeEntryPages?: Record<number, Array<Record<string, unknown>>>;
     clientListRequests: unknown[];
     cleanupRequests: unknown[];
     webhookCreates: number;
@@ -43,6 +46,8 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
         tasks: seed?.tasks ?? [],
         tags: seed?.tags ?? [],
         entries: seed?.entries ?? [],
+        timeEntryListRequests: [],
+        ...(seed?.timeEntryPages ? { timeEntryPages: seed.timeEntryPages } : {}),
         clientListRequests: [],
         cleanupRequests: [],
         webhookCreates: 0,
@@ -198,9 +203,11 @@ function fakeContext(seed?: Partial<FakeState>): Context & { state: FakeState } 
                 // that returned the full array on every page would loop to
                 // maxPages. Returns the requested slice; a short page ends
                 // the walk via the length heuristic.
-                listForUser: async (req: { page?: number; "page-size"?: number } = {}) => {
+                listForUser: async (req: ClockifyApi.ListForUserTimeEntriesRequest) => {
+                    state.timeEntryListRequests.push(req);
                     const page = req.page ?? 1;
                     const size = req["page-size"] ?? 50;
+                    if (state.timeEntryPages) return state.timeEntryPages[page] ?? [];
                     return state.entries.slice((page - 1) * size, page * size);
                 },
                 create: async (body: Record<string, unknown>) => {
@@ -1033,17 +1040,49 @@ describe("workflow tools", () => {
 describe("P0 correctness — pagination + validation", () => {
     function bulkEntries(
         n: number,
-        overrides: (i: number) => Record<string, unknown> = () => ({}),
+        overrides: (i: number) => Partial<ClockifyApi.TimeEntry> = () => ({}),
     ) {
         return Array.from({ length: n }, (_, i) => ({
             id: `e${i}`,
+            billable: false,
             description: `entry ${i}`,
-            start: "2026-06-15T09:00:00.000Z",
-            end: "2026-06-15T10:00:00.000Z",
+            isLocked: false,
             projectId: "p1",
+            timeInterval: {
+                start: "2026-06-15T09:00:00.000Z",
+                end: "2026-06-15T10:00:00.000Z",
+            },
+            type: "REGULAR" as const,
+            userId: fakeUser.id,
+            workspaceId: "ws-1",
             ...overrides(i),
-        }));
+        })) satisfies ClockifyApi.TimeEntry[];
     }
+
+    it("review_week constructs the generated listForUser request with exact query names", async () => {
+        const ctx = fakeContext();
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_review_week",
+            arguments: {
+                start: "2026-06-15T00:00:00.000Z",
+                end: "2026-06-22T00:00:00.000Z",
+            },
+        });
+
+        expect(res.isError).toBeFalsy();
+        expect(ctx.state.timeEntryListRequests).toEqual([
+            {
+                workspaceId: "ws-1",
+                userId: fakeUser.id,
+                start: "2026-06-15T00:00:00.000Z",
+                end: "2026-06-22T00:00:00.000Z",
+                page: 1,
+                "page-size": 200,
+            },
+        ]);
+        expect(ctx.state.timeEntryListRequests[0]).not.toHaveProperty("pageSize");
+    });
 
     it("review_week walks ALL pages, not just the first 200 (no silent truncation)", async () => {
         const ctx = fakeContext({ entries: bulkEntries(250) });
@@ -1107,10 +1146,66 @@ describe("P0 correctness — pagination + validation", () => {
         expect(ctx.state.entries.map((e) => e.description)).toEqual(["DUP", "DUP"]);
     });
 
-    it("fix_entry bounds the scan and reports a narrow-the-window error past 10k entries", async () => {
-        // >10000 non-matching entries: the scan stops at the cap and asks to narrow
-        // the window (or pass entry_id) rather than draining the whole history.
-        const ctx = fakeContext({ entries: bulkEntries(10_050) });
+    it("fix_entry discovers ambiguity across different pages and never updates", async () => {
+        const ctx = fakeContext({
+            entries: bulkEntries(201, (i) =>
+                i === 0 || i === 200 ? { description: "DUP-across-pages" } : {},
+            ),
+        });
+        let updates = 0;
+        const realUpdate = (
+            ctx.client.timeEntries as unknown as {
+                update: (b: Record<string, unknown>) => Promise<unknown>;
+            }
+        ).update;
+        (ctx.client.timeEntries as { update: unknown }).update = async (
+            body: Record<string, unknown>,
+        ) => {
+            updates += 1;
+            return realUpdate(body);
+        };
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { exact_description: "DUP-across-pages", new_description: "nope" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((parse(res).error as { message: string }).message).toMatch(/found at least 2/);
+        expect(ctx.state.timeEntryListRequests.map((request) => request.page)).toEqual([1, 2]);
+        expect(updates).toBe(0);
+    });
+
+    it("fix_entry stops on an empty intermediate page under the pagination contract", async () => {
+        const ctx = fakeContext({
+            timeEntryPages: {
+                1: bulkEntries(200),
+                2: [],
+                3: bulkEntries(1, () => ({ description: "unreachable-match" })),
+            },
+        });
+        const client = await connect(ctx);
+        const res = await client.callTool({
+            name: "clockify_fix_entry",
+            arguments: { exact_description: "unreachable-match", new_description: "nope" },
+        });
+
+        expect(res.isError).toBe(true);
+        expect((parse(res).error as { message: string }).message).toMatch(/found 0/);
+        expect(ctx.state.timeEntryListRequests.map((request) => request.page)).toEqual([1, 2]);
+    });
+
+    it("fix_entry stops at exactly 10k entries before inspecting entry 10,001", async () => {
+        // The first entry beyond the bound is a sentry: merely reading its
+        // description throws. The workflow must report its bounded-scan error
+        // without evaluating that entry.
+        const entries = bulkEntries(10_050);
+        Object.defineProperty(entries[10_000]!, "description", {
+            get: () => {
+                throw new Error("entry 10,001 was inspected");
+            },
+        });
+        const ctx = fakeContext({ entries });
         const client = await connect(ctx);
         const res = await client.callTool({
             name: "clockify_fix_entry",
@@ -1122,6 +1217,9 @@ describe("P0 correctness — pagination + validation", () => {
         expect((env.error as { message: string }).message).toMatch(
             /scanned more than|narrow the window/,
         );
+        expect((env.error as { message: string }).message).not.toContain(
+            "entry 10,001 was inspected",
+        );
     });
 
     it("fix_entry resolves task & tag names into the update body (was a silent no-op)", async () => {
@@ -1130,8 +1228,8 @@ describe("P0 correctness — pagination + validation", () => {
                 {
                     id: "e1",
                     description: "Work",
-                    start: "2026-06-15T09:00:00.000Z",
                     projectId: "p9",
+                    timeInterval: { start: "2026-06-15T09:00:00.000Z" },
                 },
             ],
             projects: [{ id: "p9", name: "Launch" }],
@@ -1160,6 +1258,7 @@ describe("P0 correctness — pagination + validation", () => {
                     projectId: "p9",
                     taskId: "ta9",
                     tagIds: ["tg9"],
+                    customFieldValues: [{ customFieldId: "cf1", value: "keep" }],
                     timeInterval: {
                         start: "2026-06-15T09:00:00.000Z",
                         end: "2026-06-15T10:00:00.000Z",
@@ -1197,6 +1296,7 @@ describe("P0 correctness — pagination + validation", () => {
         expect(entry.projectId).toBe("p9");
         expect(entry.taskId).toBe("ta9");
         expect(entry.tagIds).toEqual(["tg9"]);
+        expect(entry.customFields).toEqual([{ customFieldId: "cf1", value: "keep" }]);
         expect(entry.billable).toBe(true);
     });
 

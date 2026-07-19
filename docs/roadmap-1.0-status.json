@@ -37,6 +37,15 @@
     "openApiChanged": true,
     "openApiTruthChange": "ExpenseUpdateRequest.file is optional; ExpenseCreateRequest.required remains amount, categoryId, date, userId."
   },
+  "task4": {
+    "status": "implemented",
+    "receipt": "docs/roadmap-1.0-receipts/task-04-list-for-user.md",
+    "taskBase": "af5cbdc90c0459c5124a8cbc80734ae2f7fe3777",
+    "openApiChanged": false,
+    "generatedTruth": "timeEntries.listForUser accepts ClockifyApi.ListForUserTimeEntriesRequest and returns ClockifyApi.TimeEntry[]; both MCP review/fix paths use those types directly.",
+    "scanContract": "Review retains its all-page maxPages guard; fix retains cross-page ambiguity detection and stops before inspecting entry 10,001.",
+    "task7RequestCastRiskStatus": "open"
+  },
   "operationReachability": {
     "status": "no-generated-reachability-receipt-recorded",
     "observedParitySummary": {
