@@ -34,7 +34,11 @@ aliases, parameter defaults, compound/destructuring assignments, property
 declarations/accessors, recursively nested/defaulted/rest object and array
 bindings, called same-file/imported helper side effects (including nested
 receivers and synchronous `call`/`apply`/`bind`), documented synchronous
-`forEach`/`map` callback effects, `Object.assign`, `Reflect.set`, contributing
+named/aliased synchronous array callback effects on statically known non-empty
+receivers (`forEach`, `map`, `filter`, `every`, `some`, `find`, `findIndex`,
+`flatMap`, `reduce`, and `reduceRight`), aliased `Object.assign`/`Reflect.set`
+effects with bounded patch-variable, spread-source, and factory-return
+provenance, contributing
 binary/logical/sequence expressions, spread arguments and object spreads,
 declaration-only casters, Function `call`/`apply`/`bind`, any-erased
 receiver/method/helper/holder provenance including later holder writes and exact
@@ -130,6 +134,17 @@ documented synchronous `forEach`/`map` callback effects, `Object.assign`, and
 exclusions, unused factory arguments, asynchronous callbacks, and unrelated-
 object effects remain unflagged. The final governance suite passes **184/184**
 fixtures.
+
+The seventh corrective review added RED/GREEN coverage for named and aliased
+callbacks across all ten governed synchronous array methods, including
+`reduce`/`reduceRight` argument substitution. It also covers patch variables,
+object spreads, factory-returned patches, and direct/namespace/property aliases
+of `Object.assign` plus direct/namespace aliases of `Reflect.set`. Known-empty
+and unknown-emptiness receivers, definite logical short circuits, named async
+callbacks, distinct mutation receivers, and unrelated local `assign` functions
+remain unflagged. Overwritten mutation aliases and patch values are also cut
+off by bounded reaching-write provenance. The final governance suite passes
+**217/217** fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
