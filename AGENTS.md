@@ -395,8 +395,14 @@ end-to-end and green before push. Drift gates are non-negotiable.
     reaching receiver-qualified variable/property writes (including literal and
     unresolved computed keys), ordered receiver aliases, parameter defaults,
     compound/destructuring assignments, nested/defaulted/rest bindings,
-    called same-file/imported helper side effects, accessors, expressions, and
-    spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
+    called same-file/imported helper side effects (including nested receivers
+    and synchronous `call`/`apply`/`bind`), documented synchronous array
+    callbacks (`forEach`/`map`), `Object.assign`, `Reflect.set`, accessors,
+    expressions, and spreads. Receiver-producing calls follow bounded return
+    provenance rather than treating every argument as an origin. Exported,
+    default-exported, or escaped callables keep parameter defaults reachable;
+    asynchronous callbacks do not become pre-request effects. It rejects
+    direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
     request calls whose receiver, method, helper parameter/result, or holder
