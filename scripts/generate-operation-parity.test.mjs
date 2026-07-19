@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -13,6 +14,7 @@ function canonicalFixture() {
     const inventoryOperations = [];
     const receiptOperations = [];
     const classifications = [];
+    const evidenceMappings = [];
     const dispositions = [];
 
     for (let index = 0; index < explicitCount + derivedCount; index += 1) {
@@ -36,6 +38,9 @@ function canonicalFixture() {
                 sdkNaming: "operationId-derived",
                 generatedGroup: resource,
                 generatedMethod: methodName,
+            });
+            evidenceMappings.push({
+                operationId,
                 evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
             });
         }
@@ -58,6 +63,7 @@ function canonicalFixture() {
         inventory: { operationCount: 169, operations: inventoryOperations },
         receipt: { ok: true, operationCount: 169, operations: receiptOperations },
         classifications,
+        evidenceMappings,
         artifact: {
             schemaVersion: 1,
             summary: {
@@ -135,7 +141,6 @@ test("rejects explicit and operationId-derived naming classification inversions"
         sdkNaming: "operationId-derived",
         generatedGroup: "resource0",
         generatedMethod: "method0",
-        evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
     });
     fixture.artifact.operations[0].sdkNaming = "operationId-derived";
     fixture.artifact.operations[155].sdkNaming = "explicit";
@@ -178,4 +183,106 @@ test("builds generated reachability from the codegen receipt for explicit and de
         clientPath: "client.receiptDerivedGroup.receiptDerivedMethod",
         reachable: true,
     });
+});
+
+test("governs evidence for an explicit operation independently of SDK naming classification", () => {
+    const fixture = canonicalFixture();
+    fixture.evidenceMappings = [
+        {
+            operationId: "operation0",
+            evidenceIds: ["invoices.update.missing-bill-from-and-client-address"],
+        },
+    ];
+
+    const artifact = buildOperationDisposition(fixture);
+
+    assert.deepEqual(artifact.operations[0].evidenceIds, [
+        "invoices.update.missing-bill-from-and-client-address",
+    ]);
+    assert.deepEqual(artifact.operations[1].evidenceIds, []);
+});
+
+test("rejects evidence embedded in the SDK naming registry", () => {
+    const fixture = canonicalFixture();
+    fixture.classifications[0].evidenceIds = [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+    ];
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /classification.*must not govern evidence/i.test(failure)));
+});
+
+test("rejects an unsuccessful receipt plus duplicate and missing receipt operations", () => {
+    const fixture = canonicalFixture();
+    fixture.receipt.ok = false;
+    fixture.receipt.operations[168] = structuredClone(fixture.receipt.operations[167]);
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /receipt\.ok.*expected true/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation167.*duplicate.*receipt/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation168.*missing.*receipt/i.test(failure)));
+});
+
+test("rejects receipt and disposition method or path drift", () => {
+    const fixture = canonicalFixture();
+    fixture.receipt.operations[0].path = "/wrong-receipt-path";
+    fixture.artifact.operations[1].httpMethod = "DELETE";
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /operation0.*receipt method\/path.*OpenAPI/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation1.*disposition method\/path.*receipt/i.test(failure)));
+});
+
+test("rejects orphaned, unknown, duplicate, and mismatched operation evidence", () => {
+    const fixture = canonicalFixture();
+    fixture.knownEvidenceIds = new Set([
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+    ]);
+    fixture.evidenceMappings.push(
+        {
+            operationId: "orphanOperation",
+            evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
+        },
+        {
+            operationId: "operation0",
+            evidenceIds: ["unknown.evidence.anchor"],
+        },
+        {
+            operationId: "operation0",
+            evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
+        },
+    );
+    fixture.artifact.operations[155].evidenceIds = [];
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /orphanOperation.*evidence mapping.*missing.*inventory/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation0.*duplicate evidence mapping/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation0.*unknown evidenceId/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation155.*evidenceIds differ from governance/i.test(failure)));
+});
+
+test("governs the corrected scheduling and explicit invoice evidence attribution", () => {
+    const evidenceDocument = JSON.parse(
+        readFileSync(new URL("../docs/operation-evidence-map.json", import.meta.url), "utf8"),
+    );
+    const evidenceByOperation = new Map(
+        evidenceDocument.mappings.map((mapping) => [mapping.operationId, mapping.evidenceIds]),
+    );
+
+    assert.deepEqual(evidenceByOperation.get("createRecurringAssignment"), [
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped",
+    ]);
+    assert.ok(
+        !evidenceByOperation
+            .get("changeRecurringPeriod")
+            .includes("scheduling.createRecurring.returns-array-and-publish-is-range-scoped"),
+    );
+    assert.deepEqual(evidenceByOperation.get("updateInvoice"), [
+        "invoices.update.replace-and-tax-discount-zeroing",
+        "invoices.update.missing-bill-from-and-client-address",
+    ]);
 });

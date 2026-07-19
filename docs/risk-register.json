@@ -274,9 +274,9 @@
       "finalReadinessBlocking": false,
       "surface": "Generated operation parity",
       "summary": "All 169 corrected OpenAPI operations have receipt-derived generated SDK reachability dispositions: 155 explicitly named and 14 governed operationId-derived.",
-      "impact": "Generated method additions, removals, renames, duplicates, count drift, or naming reclassification now fail the existing parity gate until disposition governance is updated deliberately.",
-      "mitigation": "Keep the codegen receipt, 14-row naming registry, 169-row disposition artifact, fixture validator, and operation-parity drift gate in lockstep.",
-      "closureGate": "Closed 2026-07-19 by receipt-derived 169/155/14 parity, all-operation dispositions, fail-closed fixture tests, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
+      "impact": "Generated method additions, removals, renames, duplicates, count drift, naming reclassification, or operation-evidence drift now fail the owning operation-coverage gate until governance is updated deliberately.",
+      "mitigation": "Keep the generated receipt, names-only 14-row registry, sparse operation-evidence map, 169-row disposition artifact, canonical validator, and deterministic operation-coverage prerequisites in lockstep.",
+      "closureGate": "Closed 2026-07-19 by receipt-derived 169/155/14 parity, all-operation dispositions, the canonical fail-closed `operation-coverage` validator and clean-input wiring, `make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift`, `make risk-register contract-gates`, and `docs/roadmap-1.0-receipts/task-05-generated-reachability.md`.",
       "evidence": [
         {
           "path": "docs/operation-dispositions.json",
@@ -285,6 +285,10 @@
         {
           "path": "docs/sdk-operation-naming-classifications.json",
           "contains": "\"sdkNaming\": \"operationId-derived\""
+        },
+        {
+          "path": "docs/operation-evidence-map.json",
+          "contains": "\"operationId\": \"updateInvoice\""
         },
         {
           "path": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md",

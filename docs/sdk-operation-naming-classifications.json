@@ -6,117 +6,85 @@
       "operationId": "uploadImage",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "files",
-      "generatedMethod": "uploadImage",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "uploadImage"
     },
     {
       "operationId": "getCurrentUser",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "users",
-      "generatedMethod": "getCurrentUser",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "getCurrentUser"
     },
     {
       "operationId": "addLimitedUsersWithInfo",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "workspaces",
-      "generatedMethod": "addLimitedUsersWithInfo",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "surface.audit.2026-06-23"
-      ]
+      "generatedMethod": "addLimitedUsersWithInfo"
     },
     {
       "operationId": "generateDetailedReportV1",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "expenseReport",
-      "generatedMethod": "generateDetailedReportV1",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "generateDetailedReportV1"
     },
     {
       "operationId": "changeRecurringPeriod",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "scheduling",
-      "generatedMethod": "changeRecurringPeriod",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
-      ]
+      "generatedMethod": "changeRecurringPeriod"
     },
     {
       "operationId": "changeTimeOffRequestStatus",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "timeOff",
-      "generatedMethod": "changeTimeOffRequestStatus",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "time-off.change-status.union-and-note"
-      ]
+      "generatedMethod": "changeTimeOffRequestStatus"
     },
     {
       "operationId": "deleteMany",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "timeEntries",
-      "generatedMethod": "deleteMany",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "deleteMany"
     },
     {
       "operationId": "updateUserStatus",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "workspaces",
-      "generatedMethod": "updateUserStatus",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "updateUserStatus"
     },
     {
       "operationId": "updateUserCostRate",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "workspaces",
-      "generatedMethod": "updateUserCostRate",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
-      ]
+      "generatedMethod": "updateUserCostRate"
     },
     {
       "operationId": "updateUserCustomFieldValue",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "users",
-      "generatedMethod": "updateUserCustomFieldValue",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "updateUserCustomFieldValue"
     },
     {
       "operationId": "updateUserHourlyRate",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "workspaces",
-      "generatedMethod": "updateUserHourlyRate",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
-      ]
+      "generatedMethod": "updateUserHourlyRate"
     },
     {
       "operationId": "findUserTeamManagers",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "users",
-      "generatedMethod": "findUserTeamManagers",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "findUserTeamManagers"
     },
     {
       "operationId": "filterWorkspaceUsers",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "users",
-      "generatedMethod": "filterWorkspaceUsers",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "generatedMethod": "filterWorkspaceUsers"
     },
     {
       "operationId": "getWebhookEventStatusesWithLatestLog",
       "sdkNaming": "operationId-derived",
       "generatedGroup": "webhooks",
-      "generatedMethod": "getWebhookEventStatusesWithLatestLog",
-      "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "surface.audit.2026-06-23"
-      ]
+      "generatedMethod": "getWebhookEventStatusesWithLatestLog"
     }
   ]
 }

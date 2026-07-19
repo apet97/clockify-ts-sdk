@@ -117,6 +117,7 @@ with a grounded "did you mean?" on a miss), and `clockify-sdk-ts-115/dates` reso
 | [`upstream-drift-contract.json`](./upstream-drift-contract.json) | edit intentionally | Upstream API drift lifecycle, evidence, routing, regeneration, and proof contract. |
 | [`operation-coverage-contract.json`](./operation-coverage-contract.json) | edit intentionally | OpenAPI/SDK/MCP operation coverage and exact generated-SDK split contract. |
 | [`operation-dispositions.json`](./operation-dispositions.json) | `make operation-parity` | All 169 operations mapped to codegen-receipt reachability, naming class, and evidence identifiers. |
+| [`operation-evidence-map.json`](./operation-evidence-map.json) | edit intentionally | Sparse governed discrepancy anchors for applicable explicit or operationId-derived operations. |
 | [`sdk-operation-naming-classifications.json`](./sdk-operation-naming-classifications.json) | edit intentionally | Governed registry for the exact 14 operationId-derived generated methods. |
 | [`operation-parity.json`](./operation-parity.json) / [`operation-parity.md`](./operation-parity.md) | `make operation-parity` | Receipt-derived generated SDK, TS MCP, and GOCLMCP parity join. |
 | [`official-openapi-drift-contract.json`](./official-openapi-drift-contract.json) | edit intentionally | Official-vs-custom OpenAPI drift pipeline contract. |

@@ -14,6 +14,7 @@ const receiptPath = path.join(root, "output", "ts-sdk", "codegen-receipt.json");
 const goCatalogPath = path.join(root, "..", "GOCLMCP", "docs", "tool-catalog.json");
 const overridesPath = path.join(root, "docs", "operation-parity-overrides.json");
 const classificationsPath = path.join(root, "docs", "sdk-operation-naming-classifications.json");
+const evidenceMapPath = path.join(root, "docs", "operation-evidence-map.json");
 const discrepancyLedgerPath = path.join(root, "spec", "evidence", "discrepancies.md");
 const dispositionPath = path.join(root, "docs", "operation-dispositions.json");
 const jsonPath = path.join(root, "docs", "operation-parity.json");
@@ -150,6 +151,7 @@ function build({ disposition, inventory }) {
             openapi: "docs/openapi-operations.json",
             sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
             sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
+            operationEvidence: "docs/operation-evidence-map.json",
             operationDispositions: "docs/operation-dispositions.json",
             tsMcp: "docs/mcp-tool-manifest.json",
             goMcp: "../GOCLMCP/docs/tool-catalog.json",
@@ -208,11 +210,25 @@ if (
     process.exit(1);
 }
 const classifications = classificationDocument.classifications ?? [];
+const evidenceDocument = readJson(evidenceMapPath);
+if (
+    evidenceDocument.schemaVersion !== 1 ||
+    typeof evidenceDocument.purpose !== "string" ||
+    !Array.isArray(evidenceDocument.mappings)
+) {
+    console.error("Operation evidence map must have schemaVersion 1, purpose, and mappings");
+    process.exit(1);
+}
+const evidenceMappings = evidenceDocument.mappings;
 const discrepancyLedger = fs.readFileSync(discrepancyLedgerPath, "utf8");
 const knownEvidenceIds = new Set(
     [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
 );
-const dispositionCore = buildOperationDisposition({ classifications, inventory, receipt });
+const dispositionCore = buildOperationDisposition({
+    evidenceMappings,
+    inventory,
+    receipt,
+});
 const disposition = {
     schemaVersion: dispositionCore.schemaVersion,
     purpose: "All corrected OpenAPI operations mapped to codegen-receipt reachability and governed SDK naming classification.",
@@ -220,6 +236,7 @@ const disposition = {
         openapi: "docs/openapi-operations.json",
         sdkCodegenReceipt: "output/ts-sdk/codegen-receipt.json",
         sdkNamingClassifications: "docs/sdk-operation-naming-classifications.json",
+        operationEvidence: "docs/operation-evidence-map.json",
         discrepancyLedger: "spec/evidence/discrepancies.md",
     },
     summary: dispositionCore.summary,
@@ -228,6 +245,7 @@ const disposition = {
 const dispositionFailures = validateOperationDisposition({
     artifact: disposition,
     classifications,
+    evidenceMappings,
     inventory,
     knownEvidenceIds,
     receipt,

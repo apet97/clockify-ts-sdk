@@ -272,11 +272,9 @@ openapi-operations-drift:
 	node scripts/generate-openapi-operations.mjs --check
 
 operation-parity: mcp-tool-manifest
-	node --test scripts/generate-operation-parity.test.mjs
 	node scripts/generate-operation-parity.mjs --write
 
 operation-parity-drift: mcp-tool-manifest-drift
-	node --test scripts/generate-operation-parity.test.mjs
 	node scripts/generate-operation-parity.mjs --check
 
 mcp-tool-manifest: sdk-wrapper-build
@@ -285,7 +283,8 @@ mcp-tool-manifest: sdk-wrapper-build
 mcp-tool-manifest-drift: sdk-wrapper-build
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check
 
-operation-coverage:
+operation-coverage: operation-parity-drift
+	node --test scripts/generate-operation-parity.test.mjs
 	node scripts/check-operation-coverage.mjs
 
 openapi-lint:
