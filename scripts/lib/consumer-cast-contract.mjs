@@ -113,7 +113,21 @@ export function validatePublicNoAnyProofSource(
         if (
             !ts.isImportDeclaration(statement) ||
             !ts.isStringLiteral(statement.moduleSpecifier) ||
-            !statement.importClause ||
+            !statement.importClause
+        ) {
+            continue;
+        }
+        if (proof.requiredBuiltins?.includes(statement.importClause.name?.text)) {
+            shadowedBuiltins.add(statement.importClause.name.text);
+        }
+        if (
+            statement.importClause.namedBindings &&
+            ts.isNamespaceImport(statement.importClause.namedBindings) &&
+            proof.requiredBuiltins?.includes(statement.importClause.namedBindings.name.text)
+        ) {
+            shadowedBuiltins.add(statement.importClause.namedBindings.name.text);
+        }
+        if (
             !statement.importClause.namedBindings ||
             !ts.isNamedImports(statement.importClause.namedBindings)
         ) {
@@ -192,7 +206,9 @@ export function validatePublicNoAnyProofSource(
     }
     for (const builtin of proof.requiredBuiltins ?? []) {
         if (shadowedBuiltins.has(builtin)) {
-            failures.push(`publicNoAnyProof must use the unshadowed TypeScript ${builtin} built-in`);
+            failures.push(
+                `publicNoAnyProof must use the unshadowed TypeScript ${builtin} built-in`,
+            );
         }
     }
     for (const [aliasName, expected] of Object.entries(proof.adapterAliases ?? {})) {
@@ -205,7 +221,8 @@ export function validatePublicNoAnyProofSource(
             (alias.typeArguments?.length ?? 0) === expected.typeArguments.length &&
             (alias.typeArguments ?? []).every(
                 (argument, index) =>
-                    compact(argument.getText(sourceFile)) === compact(expected.typeArguments[index]),
+                    compact(argument.getText(sourceFile)) ===
+                    compact(expected.typeArguments[index]),
             );
         const imported = importedTypes.get(expected.typeName);
         const validImport =

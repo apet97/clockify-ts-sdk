@@ -393,12 +393,15 @@ end-to-end and green before push. Drift gates are non-negotiable.
     builds a TypeScript Program for `cli/src` and `mcp/src`; symbol provenance
     plus bounded request-bound dataflow conservatively traces all potentially
     reaching receiver-qualified variable/property writes (including literal and
-    unresolved computed keys), nested/defaulted bindings, accessors,
-    expressions, and spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
+    unresolved computed keys), ordered receiver aliases, parameter defaults,
+    compound/destructuring assignments, nested/defaulted/rest bindings,
+    called same-file/imported helper side effects, accessors, expressions, and
+    spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
     request calls whose receiver, method, helper parameter/result, or holder
-    property was erased to `any`, without treating
+    property was erased to `any` (including later holder writes and exact
+    `Function.call` trampolines), without treating
     arbitrary local `*Request` names or unrelated `any` parameters as request
     values. Discarded comma-expression operands are not request contributors.
     Construct generated request unions directly,
@@ -411,7 +414,8 @@ end-to-end and green before push. Drift gates are non-negotiable.
     in `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a
     second public-type gate. The cast-budget Make target executes that compiler
     proof itself after SDK codegen/build; the gate pins the exact `IsAny`
-    definition, the unshadowed TypeScript `Parameters` built-in, both public
+    definition, the unshadowed TypeScript `Parameters` built-in across local and
+    every import-clause binding form, both public
     adapter imports and type arguments, and all six callback operands. Local
     structural/built-in counterfeits and marker/Make comments are not proof.
 
