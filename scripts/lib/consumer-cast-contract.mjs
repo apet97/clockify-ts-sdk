@@ -31,6 +31,7 @@ export const CANONICAL_CONSUMER_CAST_CONTRACT = Object.freeze({
         ]),
         isAnyDefinition: "0extends1&T?true:false",
         assertFalseDefinition: "Textendsfalse=T",
+        requiredBuiltins: Object.freeze(["Parameters"]),
         adapterAliases: Object.freeze({
             Adapter: Object.freeze({
                 typeName: "ArchiveThenDeleteAdapter",
@@ -104,6 +105,7 @@ export function validatePublicNoAnyProofSource(
     const assertions = new Map();
     const aliases = new Map();
     const importedTypes = new Map();
+    const shadowedBuiltins = new Set();
     let isAnyDefinition = null;
     let assertFalseDefinition = null;
     const compact = (value) => value.replace(/\s+/g, "");
@@ -118,6 +120,9 @@ export function validatePublicNoAnyProofSource(
             continue;
         }
         for (const specifier of statement.importClause.namedBindings.elements) {
+            if (proof.requiredBuiltins?.includes(specifier.name.text)) {
+                shadowedBuiltins.add(specifier.name.text);
+            }
             importedTypes.set(specifier.name.text, {
                 importedName: (specifier.propertyName ?? specifier.name).text,
                 module: statement.moduleSpecifier.text,
@@ -126,6 +131,13 @@ export function validatePublicNoAnyProofSource(
         }
     }
     for (const statement of sourceFile.statements) {
+        if (
+            statement.name &&
+            ts.isIdentifier(statement.name) &&
+            proof.requiredBuiltins?.includes(statement.name.text)
+        ) {
+            shadowedBuiltins.add(statement.name.text);
+        }
         if (!ts.isTypeAliasDeclaration(statement)) continue;
         if (statement.name.text === "IsAny") {
             const parameter = statement.typeParameters?.[0];
@@ -177,6 +189,11 @@ export function validatePublicNoAnyProofSource(
     }
     if (assertFalseDefinition !== proof.assertFalseDefinition) {
         failures.push("publicNoAnyProof AssertFalse definition is not canonical");
+    }
+    for (const builtin of proof.requiredBuiltins ?? []) {
+        if (shadowedBuiltins.has(builtin)) {
+            failures.push(`publicNoAnyProof must use the unshadowed TypeScript ${builtin} built-in`);
+        }
     }
     for (const [aliasName, expected] of Object.entries(proof.adapterAliases ?? {})) {
         const alias = aliases.get(aliasName);

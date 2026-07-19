@@ -392,11 +392,13 @@ end-to-end and green before push. Drift gates are non-negotiable.
 11. **CLI/MCP request casts stay at zero.** `make consumer-cast-budget`
     builds a TypeScript Program for `cli/src` and `mcp/src`; symbol provenance
     plus bounded request-bound dataflow conservatively traces all potentially
-    reaching variable/property writes, bindings, accessors, expressions, and
-    spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
+    reaching receiver-qualified variable/property writes (including literal and
+    unresolved computed keys), nested/defaulted bindings, accessors,
+    expressions, and spreads. It rejects direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
-    request calls whose receiver or method was erased to `any`, without treating
+    request calls whose receiver, method, helper parameter/result, or holder
+    property was erased to `any`, without treating
     arbitrary local `*Request` names or unrelated `any` parameters as request
     values. Discarded comma-expression operands are not request contributors.
     Construct generated request unions directly,
@@ -409,9 +411,9 @@ end-to-end and green before push. Drift gates are non-negotiable.
     in `wrapper/tests/types/breaking-changes.test-d.ts`; do not add a
     second public-type gate. The cast-budget Make target executes that compiler
     proof itself after SDK codegen/build; the gate pins the exact `IsAny`
-    definition, both public adapter imports and type arguments, and all six
-    callback operands. Local structural counterfeits and marker/Make comments
-    are not proof.
+    definition, the unshadowed TypeScript `Parameters` built-in, both public
+    adapter imports and type arguments, and all six callback operands. Local
+    structural/built-in counterfeits and marker/Make comments are not proof.
 
 ## 6. The wrapper layout
 

@@ -28,10 +28,11 @@ generated request property and is not a blanket request-object assertion.
 `Program`/`TypeChecker` over `cli/src` and `mcp/src`, proves generated request
 provenance from the Clockify request modules, and traces request values through
 bounded variable aliases, client aliases, helper calls, imports, namespaces,
-properties, all potentially reaching variable/property writes, property
-declarations/accessors, object and array bindings, contributing binary/logical/
+properties, all potentially reaching receiver-qualified variable/property
+writes (including computed keys), property declarations/accessors, recursively
+nested/defaulted object and array bindings, contributing binary/logical/
 sequence expressions, spread arguments and object spreads, declaration-only
-casters, Function `call`/`apply`/`bind`, any-erased receiver/method provenance,
+casters, Function `call`/`apply`/`bind`, any-erased receiver/method/helper/holder provenance,
 and transitive/generic wrapper chains. It rejects request-boundary structural,
 `any`/`never`, direct or chained generated-request assertions, angle-bracket
 assertions, and request-producing generic adapters. It deliberately ignores
@@ -57,7 +58,8 @@ contract additionally rejects every non-empty exception array, even if the
 record is otherwise complete.
 
 The canonical contract pins the complete governed roots, wrapper-root scan,
-import closure, proof file, exact `IsAny`/`AssertFalse` semantics, both exact
+import closure, proof file, exact `IsAny`/`AssertFalse` semantics, the unshadowed
+TypeScript `Parameters` built-in, both exact
 public adapter imports/type arguments, all six exact adapter callback operands,
 owning target, and compiler command. `make consumer-
 cast-budget` depends on SDK codegen/build and executes the Task 6
@@ -92,6 +94,15 @@ local structural adapter counterfeit cannot replace the exact imported root and
 `./ensure` `ArchiveThenDeleteAdapter<CurrentClient>` aliases. The final
 governance suite passes **104/104** fixtures.
 
+The fourth corrective review added RED/GREEN cases for receiver-qualified
+property cutoffs, literal and unresolved computed writes, nested bindings,
+omitted and explicit-`undefined` defaults, and interprocedural generated-call
+recovery through any-typed helper parameters/results, holder values, and erased
+Function `.call`. It preserves negative controls for different receivers,
+definitely overwritten values, known different keys, unreachable defaults, and
+unrelated any helpers. Compiler-green `type Parameters<T> = [unknown]` proof
+counterfeits now fail. The final governance suite passes **123/123** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -116,7 +127,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final round-three results: wrapper **763 passed / 7 skipped**, CLI **388 passed / 12
+Final round-four results: wrapper **763 passed / 7 skipped**, CLI **388 passed / 12
 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all
