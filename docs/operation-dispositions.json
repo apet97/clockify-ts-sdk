@@ -6,6 +6,7 @@
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json",
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
     "operationEvidence": "docs/operation-evidence-map.json",
+    "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
     "discrepancyLedger": "spec/evidence/discrepancies.md"
   },
   "summary": {
@@ -40,7 +41,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getCurrentUser",
@@ -68,7 +71,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deferred-list-endpoints.not-paginated-or-not-live"
+      ]
     },
     {
       "operationId": "addWorkspace",
@@ -107,7 +112,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getApprovalRequests",
@@ -120,7 +127,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "submitApprovalRequest",
@@ -198,7 +208,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "audit-log.actions.closed-enum",
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdClients",
@@ -211,7 +224,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdClients",
@@ -224,7 +240,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdClientsClientId",
@@ -250,7 +268,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "clients.update.archived-missing-from-canonical-request",
+        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+      ]
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdClientsClientId",
@@ -263,7 +284,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.clients-blocked"
+      ]
     },
     {
       "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
@@ -289,7 +313,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "listWorkspaceCustomFields",
@@ -302,7 +328,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "createWorkspaceCustomField",
@@ -315,7 +345,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "custom-fields.create.required-missing-from-request"
+      ]
     },
     {
       "operationId": "updateWorkspaceCustomField",
@@ -354,7 +386,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getDeletedEntityInfo",
@@ -367,7 +401,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getUpdatedEntityInfo",
@@ -380,7 +416,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getWorkspaceExpenses",
@@ -394,7 +432,9 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
-        "expenses.list.start-end-ignored-client-filtered"
+        "expenses.list.start-end-ignored-client-filtered",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
@@ -408,7 +448,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "getExpenseById",
@@ -421,7 +463,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "updateExpense",
@@ -434,7 +480,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "deleteExpense",
@@ -447,7 +497,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "downloadExpenseReceipt",
@@ -473,7 +526,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "addExpenseCategory",
@@ -512,7 +569,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deletes.archive-first"
+      ]
     },
     {
       "operationId": "archiveExpenseCategory",
@@ -538,7 +597,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "createHoliday",
@@ -551,7 +614,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "holidays.update.replace-and-scope-filter"
+      ]
     },
     {
       "operationId": "updateHoliday",
@@ -564,7 +629,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "holidays.update.replace-and-scope-filter"
+      ]
     },
     {
       "operationId": "deleteHoliday",
@@ -590,7 +657,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deferred-list-endpoints.not-paginated-or-not-live"
+      ]
     },
     {
       "operationId": "updateWorkspaceBillableRate",
@@ -603,7 +672,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getWorkspaceInvoices",
@@ -616,7 +687,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "addInvoice",
@@ -629,7 +703,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.create.note-subject-dropped",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "getInvoiceById",
@@ -642,7 +719,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "updateInvoice",
@@ -656,8 +737,11 @@
       },
       "sdkNaming": "explicit",
       "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "invoices.update.missing-bill-from-and-client-address",
         "invoices.update.replace-and-tax-discount-zeroing",
-        "invoices.update.missing-bill-from-and-client-address"
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
       ]
     },
     {
@@ -671,7 +755,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "duplicateInvoice",
@@ -684,7 +771,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "exportInvoice",
@@ -710,7 +799,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.items-unit-price-scale",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "deleteInvoiceItem",
@@ -736,7 +828,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.items-unit-price-scale",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "getInvoicePayments",
@@ -749,7 +844,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "addInvoicePayment",
@@ -762,7 +861,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "invoices.payments.post-returns-invoice",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "deleteInvoicePayment",
@@ -788,7 +890,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "filterInvoices",
@@ -801,7 +905,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "getInvoiceSettings",
@@ -814,7 +920,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
     },
     {
       "operationId": "updateInvoiceSettings",
@@ -827,7 +936,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions",
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "addLimitedUsersWithInfo",
@@ -869,7 +982,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getWorkspaceProjects",
@@ -882,7 +997,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "createProject",
@@ -895,7 +1013,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getProjectById",
@@ -921,7 +1041,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+      ]
     },
     {
       "operationId": "deleteProject",
@@ -934,7 +1056,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.projects-tasks"
+      ]
     },
     {
       "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
@@ -960,7 +1085,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "updateProjectCustomField",
@@ -1038,7 +1167,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "addTaskOnProject",
@@ -1051,7 +1183,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "tasks.create.billable-missing-from-create-request"
+      ]
     },
     {
       "operationId": "getTaskById",
@@ -1090,7 +1224,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.projects-tasks"
+      ]
     },
     {
       "operationId": "updateTaskCostRate",
@@ -1103,7 +1240,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get"
+      ]
     },
     {
       "operationId": "updateTaskBillableRate",
@@ -1116,7 +1256,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get"
+      ]
     },
     {
       "operationId": "updateProjectTemplate",
@@ -1142,7 +1285,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "updateProjectUserHourlyRate",
@@ -1155,7 +1302,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "createProjectFromTemplate",
@@ -1181,7 +1332,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "generateDetailedReport",
@@ -1194,7 +1347,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "generateDetailedReportV1",
@@ -1208,7 +1364,9 @@
       },
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
@@ -1222,7 +1380,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "generateWeeklyReport",
@@ -1235,7 +1396,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
     },
     {
       "operationId": "copyScheduledAssignment",
@@ -1261,7 +1425,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "getScheduledAssignmentsPerProject",
@@ -1274,7 +1441,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "scheduling.list-per-project.start-end-required-camel-pagesize",
+        "scheduling.project-totals.get-vs-post"
+      ]
     },
     {
       "operationId": "getScheduledAssignmentsOnProject",
@@ -1287,7 +1457,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "scheduling.list-per-project.start-end-required-camel-pagesize",
+        "scheduling.project-totals.get-vs-post"
+      ]
     },
     {
       "operationId": "publishAssignments",
@@ -1300,7 +1473,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions",
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
+      ]
     },
     {
       "operationId": "createRecurringAssignment",
@@ -1382,7 +1559,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdSharedReports",
@@ -1395,7 +1574,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdSharedReports",
@@ -1408,7 +1589,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
@@ -1421,7 +1604,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId",
@@ -1434,7 +1619,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTags",
@@ -1447,7 +1634,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdTags",
@@ -1460,7 +1650,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTagsTagId",
@@ -1577,7 +1769,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-entries.mark-invoiced.bulk-route-404-deferred"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
@@ -1590,7 +1784,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "entries.stoptimer.route-404-no-static-resource",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "getBalancesForPolicy",
@@ -1603,7 +1801,12 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getBalanceForUser.page-types.docs-claim-string",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "updateBalance",
@@ -1616,7 +1819,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getBalanceForUser",
@@ -1629,7 +1834,12 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getBalanceForUser.page-types.docs-claim-string",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "getTimeOffPolicies",
@@ -1642,7 +1852,13 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "fern.x-fern-pagination.bare-array-unsupported",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getTimeOffPolicies.sort-order.enum-tightened",
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "time-off-policies.response.missing-replacement-fields"
+      ]
     },
     {
       "operationId": "createTimeOffPolicy",
@@ -1655,7 +1871,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off-policies.create.approve-is-optional",
+        "time-off.policies.scope.status-active-not-all",
+        "time-off.policies.update.replace-and-scope-filter"
+      ]
     },
     {
       "operationId": "getTimeOffPolicy",
@@ -1668,7 +1888,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off-policies.response.missing-replacement-fields"
+      ]
     },
     {
       "operationId": "updateTimeOffPolicy",
@@ -1681,7 +1903,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off-policies.response.missing-replacement-fields",
+        "time-off.policies.scope.status-active-not-all",
+        "time-off.policies.update.replace-and-scope-filter"
+      ]
     },
     {
       "operationId": "changeTimeOffPolicyStatus",
@@ -1720,7 +1946,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off.submit.period-shape-is-policy-type-dependent"
+      ]
     },
     {
       "operationId": "changeTimeOffRequestStatus",
@@ -1735,8 +1963,8 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "time-off.requests.update-status.wrong-method-and-field",
-        "time-off.change-status.union-and-note"
+        "time-off.change-status.union-and-note",
+        "time-off.requests.update-status.wrong-method-and-field"
       ]
     },
     {
@@ -1750,7 +1978,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off.requests.delete.policy-scoped-only-pending"
+      ]
     },
     {
       "operationId": "createTimeOffRequestForUser",
@@ -1763,7 +1993,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off.submit.period-shape-is-policy-type-dependent"
+      ]
     },
     {
       "operationId": "getAllTimeOffRequestsOnWorkspace",
@@ -1776,7 +2008,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
@@ -1789,7 +2025,13 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "single-gets.404-405-read-from-list",
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision",
+        "time-off.requests.get.dead-route"
+      ]
     },
     {
       "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
@@ -1802,7 +2044,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off.requests.delete.policy-scoped-only-pending"
+      ]
     },
     {
       "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
@@ -1815,7 +2059,11 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision"
+      ]
     },
     {
       "operationId": "findAllGroupsOnWorkspace",
@@ -1828,7 +2076,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "addNewGroup",
@@ -1893,7 +2144,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
@@ -1906,7 +2159,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
@@ -1945,7 +2201,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "entries.stoptimer.route-404-no-static-resource"
+      ]
     },
     {
       "operationId": "deleteMany",
@@ -1986,7 +2244,10 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
     },
     {
       "operationId": "addUserToWorkspace",
@@ -2029,7 +2290,9 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
       ]
     },
     {
@@ -2060,7 +2323,9 @@
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
       ]
     },
     {
@@ -2075,7 +2340,9 @@
       },
       "sdkNaming": "operationId-derived",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules"
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
       ]
     },
     {
@@ -2089,7 +2356,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "removeUserManagerRole",
@@ -2102,7 +2371,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "filterWorkspaceUsers",
@@ -2143,7 +2414,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "webhook.create.name-required-on-api-key-not-addon"
+      ]
     },
     {
       "operationId": "getWebhookById",
@@ -2221,7 +2494,9 @@
         "reachable": true
       },
       "sdkNaming": "explicit",
-      "evidenceIds": []
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "getWebhookEventStatusesWithLatestLog",

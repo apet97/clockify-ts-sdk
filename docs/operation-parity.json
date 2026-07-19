@@ -6,6 +6,7 @@
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json",
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
     "operationEvidence": "docs/operation-evidence-map.json",
+    "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
     "operationDispositions": "docs/operation-dispositions.json",
     "tsMcp": "docs/mcp-tool-manifest.json",
     "goMcp": "../GOCLMCP/docs/tool-catalog.json",

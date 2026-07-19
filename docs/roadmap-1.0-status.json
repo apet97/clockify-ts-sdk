@@ -58,8 +58,9 @@
     "reachabilitySource": "output/ts-sdk/codegen-receipt.json",
     "dispositionArtifact": "docs/operation-dispositions.json",
     "derivedNamingRegistry": "docs/sdk-operation-naming-classifications.json",
+    "operationEvidenceAnchorInventory": "docs/operation-evidence-anchor-inventory.json",
     "operationEvidenceMap": "docs/operation-evidence-map.json",
-    "failClosedProof": "make operation-coverage regenerates ignored inputs, runs scripts/generate-operation-parity.test.mjs, and reuses the canonical validator to reject stale counts, unsuccessful or duplicate/missing receipts, new/renamed/unclassified derived operations, duplicate/missing dispositions, method/path drift, explicit/derived inversion, and orphan/unknown/mismatched operation evidence."
+    "failClosedProof": "make operation-coverage regenerates ignored inputs, runs scripts/generate-operation-parity.test.mjs, and reuses the canonical validator to reject stale counts, unsuccessful or duplicate/missing receipts, new/renamed/unclassified derived operations, duplicate/missing dispositions, method/path drift, explicit/derived inversion, unreviewed ledger anchors, omitted/duplicate/orphan evidence-audit rows, false empty markers, and disposition/evidence mismatch."
   },
   "crossPackageReleaseProof": {
     "status": "no-retained-exact-artifact-receipt-recorded",

@@ -26,6 +26,7 @@
     "operationDispositions": "docs/operation-dispositions.json",
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
     "operationEvidence": "docs/operation-evidence-map.json",
+    "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
     "discrepancyLedger": "spec/evidence/discrepancies.md",
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json"
   },
@@ -89,6 +90,7 @@
     "docs/openapi-operations.json",
     "docs/operation-dispositions.json",
     "docs/operation-evidence-map.json",
+    "docs/operation-evidence-anchor-inventory.json",
     "docs/operation-parity.json",
     "docs/operation-parity-overrides.json",
     "docs/sdk-operation-naming-classifications.json",
@@ -117,10 +119,24 @@
     {
       "path": "docs/operation-evidence-map.json",
       "contains": [
-        "Governed discrepancy-ledger evidence",
-        "createRecurringAssignment",
-        "updateInvoice",
+        "Explicit evidence audit for every corrected OpenAPI operation",
+        "audited-no-applicable-evidence",
+        "publishAssignments",
+        "addInvoice",
+        "createWebhook",
+        "getTimeOffPolicies",
+        "operations",
         "evidenceIds"
+      ]
+    },
+    {
+      "path": "docs/operation-evidence-anchor-inventory.json",
+      "contains": [
+        "Separately reviewed inventory",
+        "operation-specific",
+        "not-operation-specific",
+        "updateInvoice",
+        "evidenceId"
       ]
     },
     {

@@ -4,17 +4,41 @@ export const CANONICAL_SDK_OPERATION_COUNTS = Object.freeze({
     sdkOperationIdDerived: 14,
 });
 
+const NO_APPLICABLE_EVIDENCE_REASON =
+    "No operation-specific discrepancy anchor applies in the current ledger.";
+
+export function buildOperationEvidenceAudit({ evidenceAnchors = [], inventory }) {
+    const evidenceByOperation = new Map(
+        (inventory?.operations ?? []).map((operation) => [operation.operationId, []]),
+    );
+    for (const anchor of evidenceAnchors) {
+        if (anchor?.applicability !== "operation-specific") continue;
+        for (const operationId of anchor.operationIds ?? []) {
+            evidenceByOperation.get(operationId)?.push(anchor.evidenceId);
+        }
+    }
+    return (inventory?.operations ?? []).map((operation) => {
+        const evidenceIds = evidenceByOperation.get(operation.operationId) ?? [];
+        return evidenceIds.length > 0
+            ? { operationId: operation.operationId, status: "applicable", evidenceIds }
+            : {
+                  operationId: operation.operationId,
+                  status: "audited-no-applicable-evidence",
+                  evidenceIds: [],
+                  reason: NO_APPLICABLE_EVIDENCE_REASON,
+              };
+    });
+}
+
 export function buildOperationDisposition({
-    evidenceMappings = [],
+    evidenceAudit = [],
     inventory,
     receipt,
 }) {
     const inventoryById = new Map(
         (inventory?.operations ?? []).map((operation) => [operation.operationId, operation]),
     );
-    const evidenceById = new Map(
-        evidenceMappings.map((mapping) => [mapping.operationId, mapping.evidenceIds]),
-    );
+    const evidenceById = new Map(evidenceAudit.map((row) => [row.operationId, row.evidenceIds]));
     const operations = (receipt?.operations ?? []).map((generatedOperation) => {
         const inventoryOperation = inventoryById.get(generatedOperation.operationId);
         const explicit = Boolean(inventoryOperation?.sdkGroup && inventoryOperation?.sdkMethod);
@@ -48,7 +72,8 @@ export function buildOperationDisposition({
 export function validateOperationDisposition({
     artifact,
     classifications = [],
-    evidenceMappings = [],
+    evidenceAnchors = [],
+    evidenceAudit = [],
     inventory,
     knownEvidenceIds,
     receipt,
@@ -114,7 +139,93 @@ export function validateOperationDisposition({
     const receiptById = collectById("receipt", receiptOperations);
     const dispositionById = collectById("disposition", dispositionOperations);
     const classificationById = collectById("classification", classifications);
-    const evidenceById = collectById("evidence mapping", evidenceMappings);
+    const evidenceAuditById = collectById("evidence audit", evidenceAudit);
+
+    const anchorCounts = new Map();
+    const anchorsById = new Map();
+    for (const anchor of evidenceAnchors) {
+        anchorCounts.set(anchor?.evidenceId, (anchorCounts.get(anchor?.evidenceId) ?? 0) + 1);
+        anchorsById.set(anchor?.evidenceId, anchor);
+    }
+    for (const [evidenceId, count] of anchorCounts) {
+        if (count > 1) failures.push(`${evidenceId}: duplicate evidence anchor rows (${count})`);
+    }
+
+    const expectedEvidenceByOperation = new Map(
+        inventoryOperations.map((operation) => [operation.operationId, []]),
+    );
+    for (const anchor of evidenceAnchors) {
+        const operationIds = Array.isArray(anchor?.operationIds) ? anchor.operationIds : [];
+        if (knownEvidenceIds && !knownEvidenceIds.has(anchor?.evidenceId)) {
+            failures.push(`${anchor?.evidenceId}: anchor inventory evidenceId is absent from the discrepancy ledger`);
+        }
+        if (anchor?.applicability === "operation-specific") {
+            if (operationIds.length === 0) {
+                failures.push(`${anchor?.evidenceId}: operation-specific anchor must govern at least one operation`);
+            }
+            if (new Set(operationIds).size !== operationIds.length) {
+                failures.push(`${anchor?.evidenceId}: anchor inventory operationIds must be unique`);
+            }
+            for (const operationId of operationIds) {
+                if (!inventoryById.has(operationId)) {
+                    failures.push(`${anchor?.evidenceId}: anchor inventory references unknown operation ${operationId}`);
+                    continue;
+                }
+                expectedEvidenceByOperation.get(operationId).push(anchor.evidenceId);
+            }
+        } else if (anchor?.applicability === "not-operation-specific") {
+            if (operationIds.length !== 0) {
+                failures.push(`${anchor?.evidenceId}: not-operation-specific anchor must have no operationIds`);
+            }
+            if (typeof anchor?.reason !== "string" || anchor.reason.trim() === "") {
+                failures.push(`${anchor?.evidenceId}: not-operation-specific anchor must include a reason`);
+            }
+        } else {
+            failures.push(`${anchor?.evidenceId}: anchor applicability must be operation-specific or not-operation-specific`);
+        }
+    }
+    if (knownEvidenceIds) {
+        for (const evidenceId of knownEvidenceIds) {
+            if (!anchorsById.has(evidenceId)) {
+                failures.push(`${evidenceId}: discrepancy-ledger anchor is missing from the anchor inventory`);
+            }
+        }
+    }
+
+    for (const operationId of inventoryById.keys()) {
+        if (!evidenceAuditById.has(operationId)) failures.push(`${operationId}: missing evidence audit row`);
+    }
+    for (const operationId of evidenceAuditById.keys()) {
+        if (!inventoryById.has(operationId)) {
+            failures.push(`${operationId}: evidence audit row is missing from the OpenAPI inventory`);
+        }
+    }
+    for (const auditRow of evidenceAudit) {
+        const expectedEvidence = expectedEvidenceByOperation.get(auditRow.operationId) ?? [];
+        const hasEvidenceArray = Array.isArray(auditRow.evidenceIds);
+        const actualEvidence = hasEvidenceArray ? auditRow.evidenceIds : [];
+        if (!hasEvidenceArray) {
+            failures.push(`${auditRow.operationId}: evidence audit evidenceIds must be an array`);
+        }
+        if (expectedEvidence.length > 0) {
+            if (
+                auditRow.status !== "applicable" ||
+                JSON.stringify(actualEvidence) !== JSON.stringify(expectedEvidence)
+            ) {
+                failures.push(`${auditRow.operationId}: evidence audit differs from anchor inventory`);
+            }
+        } else {
+            if (auditRow.status !== "audited-no-applicable-evidence") {
+                failures.push(`${auditRow.operationId}: evidence audit must use audited-no-applicable-evidence`);
+            }
+            if (actualEvidence.length !== 0) {
+                failures.push(`${auditRow.operationId}: no-applicable-evidence audit must have empty evidenceIds`);
+            }
+            if (typeof auditRow.reason !== "string" || auditRow.reason.trim() === "") {
+                failures.push(`${auditRow.operationId}: no-applicable-evidence audit must include a reason`);
+            }
+        }
+    }
 
     for (const operationId of inventoryById.keys()) {
         if (!receiptById.has(operationId)) failures.push(`${operationId}: missing codegen receipt row`);
@@ -148,25 +259,6 @@ export function validateOperationDisposition({
             }
         }
     }
-    for (const mapping of evidenceMappings) {
-        if (!inventoryById.has(mapping.operationId)) {
-            failures.push(`${mapping.operationId}: evidence mapping is missing from the OpenAPI inventory`);
-        }
-        if (!Array.isArray(mapping.evidenceIds) || mapping.evidenceIds.length === 0) {
-            failures.push(`${mapping.operationId}: evidence mapping evidenceIds must be non-empty`);
-        } else {
-            const uniqueEvidence = new Set(mapping.evidenceIds);
-            if (uniqueEvidence.size !== mapping.evidenceIds.length) {
-                failures.push(`${mapping.operationId}: evidence mapping evidenceIds must be unique`);
-            }
-            for (const evidenceId of mapping.evidenceIds) {
-                if (knownEvidenceIds && !knownEvidenceIds.has(evidenceId)) {
-                    failures.push(`${mapping.operationId}: unknown evidenceId ${evidenceId}`);
-                }
-            }
-        }
-    }
-
     let derivedCount = 0;
     for (const operation of inventoryOperations) {
         const hasGroup = typeof operation.sdkGroup === "string" && operation.sdkGroup.length > 0;
@@ -220,7 +312,8 @@ export function validateOperationDisposition({
             if (disposition.httpMethod !== generated.httpMethod || disposition.path !== generated.path) {
                 failures.push(`${operation.operationId}: disposition method/path differs from codegen receipt`);
             }
-            const expectedEvidence = evidenceById.get(operation.operationId)?.evidenceIds ?? [];
+            const expectedEvidence =
+                evidenceAuditById.get(operation.operationId)?.evidenceIds ?? [];
             if (JSON.stringify(disposition.evidenceIds) !== JSON.stringify(expectedEvidence)) {
                 failures.push(`${operation.operationId}: disposition evidenceIds differ from governance`);
             }

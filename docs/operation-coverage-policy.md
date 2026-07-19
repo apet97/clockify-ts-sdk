@@ -32,10 +32,12 @@ rationale, risk-register note, and migration/support wording.
 - `docs/sdk-operation-naming-classifications.json` governs the exact 14
   operationId-derived operations and fails closed on additions, removals,
   renames, duplicates, or reclassification. It governs names only.
-- `docs/operation-evidence-map.json` separately governs discrepancy anchors for
-  applicable explicit or operationId-derived operations. Unknown anchors,
-  orphan operations, duplicate mappings, and disposition drift fail closed;
-  operations without applicable evidence need no fabricated mapping.
+- `docs/operation-evidence-anchor-inventory.json` separately reviews every
+  current discrepancy anchor as operation-specific or not operation-specific.
+  `docs/operation-evidence-map.json` is the derived 169-row audit: each operation
+  either carries its non-empty applicable anchor set or an explicit audited-no-
+  applicable-evidence marker and reason. Omitted/duplicate/orphan rows, unreviewed
+  ledger anchors, false empty markers, and disposition drift fail closed.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
@@ -55,7 +57,8 @@ Escalate before accepting a coverage drop when:
 
 - A workflow tool disappears from TS MCP or GOCLMCP parity.
 - An OpenAPI operation no longer appears exactly once in the codegen receipt or
-  disposition artifact.
+  disposition and evidence-audit artifacts.
+- A discrepancy-ledger anchor lacks an explicit reviewed applicability decision.
 - A generated group/method changes without updating the governed naming
   classification.
 - A curated override is removed without a replacement inference or reason.

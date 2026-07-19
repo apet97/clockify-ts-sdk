@@ -1,95 +1,1236 @@
 {
   "schemaVersion": 1,
-  "purpose": "Governed discrepancy-ledger evidence attached to applicable generated SDK operations independently of SDK naming classification.",
-  "mappings": [
+  "purpose": "Explicit evidence audit for every corrected OpenAPI operation, derived from the separately reviewed complete discrepancy-anchor inventory.",
+  "sources": {
+    "openapi": "docs/openapi-operations.json",
+    "anchorInventory": "docs/operation-evidence-anchor-inventory.json",
+    "discrepancyLedger": "spec/evidence/discrepancies.md"
+  },
+  "summary": {
+    "operations": 169,
+    "applicable": 109,
+    "auditedNoApplicableEvidence": 60
+  },
+  "operations": [
     {
       "operationId": "uploadImage",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "getSharedReportsSharedReportId",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
     },
     {
       "operationId": "getCurrentUser",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "getAllMyWorkspaces",
+      "status": "applicable",
+      "evidenceIds": [
+        "deferred-list-endpoints.not-paginated-or-not-live"
+      ]
+    },
+    {
+      "operationId": "addWorkspace",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getWorkspaceInfo",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getAddonWebhooksOnWorkspace",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getApprovalRequests",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "submitApprovalRequest",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "resubmitEntriesForApproval",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "submitApprovalRequestForUser",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "resubmitEntriesForApprovalForUser",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateApprovalRequest",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "searchAuditLogs",
+      "status": "applicable",
+      "evidenceIds": [
+        "audit-log.actions.closed-enum",
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdClients",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdClients",
+      "status": "applicable",
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdClientsClientId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdClientsClientId",
+      "status": "applicable",
+      "evidenceIds": [
+        "clients.update.archived-missing-from-canonical-request",
+        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+      ]
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdClientsClientId",
+      "status": "applicable",
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.clients-blocked"
+      ]
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdClientsClientIdArchive",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateWorkspaceCostRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "listWorkspaceCustomFields",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "createWorkspaceCustomField",
+      "status": "applicable",
+      "evidenceIds": [
+        "custom-fields.create.required-missing-from-request"
+      ]
+    },
+    {
+      "operationId": "updateWorkspaceCustomField",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteWorkspaceCustomField",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getCreatedEntityInfo",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getDeletedEntityInfo",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getUpdatedEntityInfo",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWorkspaceExpenses",
+      "status": "applicable",
+      "evidenceIds": [
+        "expenses.list.start-end-ignored-client-filtered",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "createExpense",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "getExpenseCategories",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "addExpenseCategory",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateExpenseCategory",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteExpenseCategory",
+      "status": "applicable",
+      "evidenceIds": [
+        "deletes.archive-first"
+      ]
+    },
+    {
+      "operationId": "archiveExpenseCategory",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getExpenseById",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "updateExpense",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "deleteExpense",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "downloadExpenseReceipt",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getWorkspaceHolidays",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "createHoliday",
+      "status": "applicable",
+      "evidenceIds": [
+        "holidays.update.replace-and-scope-filter"
+      ]
+    },
+    {
+      "operationId": "getWorkspaceHolidaysInPeriod",
+      "status": "applicable",
+      "evidenceIds": [
+        "deferred-list-endpoints.not-paginated-or-not-live"
+      ]
+    },
+    {
+      "operationId": "updateHoliday",
+      "status": "applicable",
+      "evidenceIds": [
+        "holidays.update.replace-and-scope-filter"
+      ]
+    },
+    {
+      "operationId": "deleteHoliday",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateWorkspaceBillableRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWorkspaceInvoices",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "addInvoice",
+      "status": "applicable",
+      "evidenceIds": [
+        "invoices.create.note-subject-dropped",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "filterInvoices",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "getInvoiceSettings",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "updateInvoiceSettings",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getInvoiceById",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "updateInvoice",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "invoices.update.missing-bill-from-and-client-address",
+        "invoices.update.replace-and-tax-discount-zeroing",
+        "money.amount-units.expenses-major-invoices-minor",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "deleteInvoice",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions"
+      ]
+    },
+    {
+      "operationId": "duplicateInvoice",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "exportInvoice",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "addInvoiceItem",
+      "status": "applicable",
+      "evidenceIds": [
+        "invoices.items-unit-price-scale",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "importInvoiceItems",
+      "status": "applicable",
+      "evidenceIds": [
+        "invoices.items-unit-price-scale",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "deleteInvoiceItem",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getInvoicePayments",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "money.amount-units.expenses-major-invoices-minor",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "addInvoicePayment",
+      "status": "applicable",
+      "evidenceIds": [
+        "invoices.payments.post-returns-invoice",
+        "money.amount-units.expenses-major-invoices-minor"
+      ]
+    },
+    {
+      "operationId": "deleteInvoicePayment",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "changeInvoiceStatus",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
     },
     {
       "operationId": "addLimitedUsersWithInfo",
+      "status": "applicable",
       "evidenceIds": [
         "fern.x-fern-sdk-method-name.drops-resource-modules",
         "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getMemberProfile",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateMemberProfile",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWorkspaceProjects",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "createProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "createProjectFromTemplate",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getProjectById",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.sdk.clients-update-body-vs-projects-update-top-level"
+      ]
+    },
+    {
+      "operationId": "deleteProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.projects-tasks"
+      ]
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdProjectsProjectIdArchive",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "listProjectCustomFields",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "updateProjectCustomField",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "removeProjectCustomField",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateProjectEstimate",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "assignOrRemoveProjectUsers",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateProjectMemberships",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "findTasksOnProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "addTaskOnProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "tasks.create.billable-missing-from-create-request"
+      ]
+    },
+    {
+      "operationId": "getTaskById",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateTaskOnProject",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteTaskFromProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "deletes.archive-first",
+        "deletes.archive-first.projects-tasks"
+      ]
+    },
+    {
+      "operationId": "updateTaskCostRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "updateTaskBillableRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get"
+      ]
+    },
+    {
+      "operationId": "updateProjectTemplate",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateProjectUserCostRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "updateProjectUserHourlyRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "generateAttendanceReport",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "generateDetailedReport",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
       "operationId": "generateDetailedReportV1",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "changeRecurringPeriod",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "changeTimeOffRequestStatus",
+      "status": "applicable",
       "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
         "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "time-off.requests.update-status.wrong-method-and-field",
-        "time-off.change-status.union-and-note"
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
-      "operationId": "deleteMany",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "updateUserStatus",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "updateUserCostRate",
+      "operationId": "generateSummaryReport",
+      "status": "applicable",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
-      "operationId": "updateUserCustomFieldValue",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "updateUserHourlyRate",
+      "operationId": "generateWeeklyReport",
+      "status": "applicable",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "rates.put-minor-units-no-get"
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09",
+        "money.amount-units.expenses-major-invoices-minor"
       ]
     },
     {
-      "operationId": "findUserTeamManagers",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "filterWorkspaceUsers",
-      "evidenceIds": ["fern.x-fern-sdk-method-name.drops-resource-modules"]
-    },
-    {
-      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "operationId": "getAllSchedulingAssignments",
+      "status": "applicable",
       "evidenceIds": [
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-        "surface.audit.2026-06-23"
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "getScheduledAssignmentsPerProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "scheduling.list-per-project.start-end-required-camel-pagesize",
+        "scheduling.project-totals.get-vs-post"
+      ]
+    },
+    {
+      "operationId": "getScheduledAssignmentsOnProject",
+      "status": "applicable",
+      "evidenceIds": [
+        "scheduling.list-per-project.start-end-required-camel-pagesize",
+        "scheduling.project-totals.get-vs-post"
+      ]
+    },
+    {
+      "operationId": "publishAssignments",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern-check.no-conflicting-endpoint-paths.literal-vs-id-siblings",
+        "routes.literal-vs-parameterized.collisions",
+        "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
       ]
     },
     {
       "operationId": "createRecurringAssignment",
+      "status": "applicable",
       "evidenceIds": [
         "scheduling.createRecurring.returns-array-and-publish-is-range-scoped"
       ]
     },
     {
-      "operationId": "updateInvoice",
+      "operationId": "updateRecurringAssignment",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteRecurringAssignment",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "changeRecurringPeriod",
+      "status": "applicable",
       "evidenceIds": [
-        "invoices.update.replace-and-tax-discount-zeroing",
-        "invoices.update.missing-bill-from-and-client-address"
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
       ]
     },
     {
-      "operationId": "getWorkspaceExpenses",
-      "evidenceIds": ["expenses.list.start-end-ignored-client-filtered"]
+      "operationId": "getUsersCapacityTotals",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getUserCapacityTotal",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped"
+      ]
+    },
+    {
+      "operationId": "copyScheduledAssignment",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdSharedReports",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdSharedReports",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdSharedReportsSharedReportId",
+      "status": "applicable",
+      "evidenceIds": [
+        "config.per-op-host-vs-environment-override.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTags",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdTags",
+      "status": "applicable",
+      "evidenceIds": [
+        "entity.name-reserved-after-delete.cross-repo-2026-06-09"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTagsTagId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdTagsTagId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTagsTagId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdTimeEntries",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoiced",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeEntriesInvoicedBulk",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-entries.mark-invoiced.bulk-route-404-deferred"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
+      "status": "applicable",
+      "evidenceIds": [
+        "entries.stoptimer.route-404-no-static-resource",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTimeEntriesTimeEntryId",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getBalancesForPolicy",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getBalanceForUser.page-types.docs-claim-string",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "updateBalance",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getBalanceForUser",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getBalanceForUser.page-types.docs-claim-string",
+        "pagination.iter-known-set.envelope-and-unpaginated",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "getTimeOffPolicies",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-pagination.bare-array-unsupported",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "getTimeOffPolicies.sort-order.enum-tightened",
+        "pagination.last-page-header.live-audit-2026-05-25",
+        "time-off-policies.response.missing-replacement-fields"
+      ]
+    },
+    {
+      "operationId": "createTimeOffPolicy",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off-policies.create.approve-is-optional",
+        "time-off.policies.scope.status-active-not-all",
+        "time-off.policies.update.replace-and-scope-filter"
+      ]
+    },
+    {
+      "operationId": "getTimeOffPolicy",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off-policies.response.missing-replacement-fields"
+      ]
+    },
+    {
+      "operationId": "updateTimeOffPolicy",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off-policies.response.missing-replacement-fields",
+        "time-off.policies.scope.status-active-not-all",
+        "time-off.policies.update.replace-and-scope-filter"
+      ]
+    },
+    {
+      "operationId": "changeTimeOffPolicyStatus",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteTimeOffPolicy",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "createTimeOffRequest",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off.submit.period-shape-is-policy-type-dependent"
+      ]
+    },
+    {
+      "operationId": "changeTimeOffRequestStatus",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "time-off.change-status.union-and-note",
+        "time-off.requests.update-status.wrong-method-and-field"
+      ]
+    },
+    {
+      "operationId": "deleteTimeOffRequest",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off.requests.delete.policy-scoped-only-pending"
+      ]
+    },
+    {
+      "operationId": "createTimeOffRequestForUser",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off.submit.period-shape-is-policy-type-dependent"
+      ]
+    },
+    {
+      "operationId": "getAllTimeOffRequestsOnWorkspace",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "status": "applicable",
+      "evidenceIds": [
+        "single-gets.404-405-read-from-list",
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision",
+        "time-off.requests.get.dead-route"
+      ]
+    },
+    {
+      "operationId": "deleteWorkspacesWorkspaceIdTimeOffRequestsRequestId",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off.requests.delete.policy-scoped-only-pending"
+      ]
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus",
+      "status": "applicable",
+      "evidenceIds": [
+        "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
+        "time-off.request.missing-top-level-fields",
+        "time-off.request.status.schema-collision"
+      ]
+    },
+    {
+      "operationId": "findAllGroupsOnWorkspace",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "addNewGroup",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateGroup",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteGroup",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "addUsersToGroup",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "removeUserFromGroup",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "putWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdUserUserIdTimeEntries",
+      "status": "applicable",
+      "evidenceIds": [
+        "entries.stoptimer.route-404-no-static-resource"
+      ]
+    },
+    {
+      "operationId": "deleteMany",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "postWorkspacesWorkspaceIdUserUserIdTimeEntriesTimeEntryIdDuplicate",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "findWorkspaceUsers",
+      "status": "applicable",
+      "evidenceIds": [
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "addUserToWorkspace",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "filterWorkspaceUsers",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "updateUserStatus",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "updateUserCostRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "updateUserCustomFieldValue",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules"
+      ]
+    },
+    {
+      "operationId": "updateUserHourlyRate",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "money.amount-units.expenses-major-invoices-minor",
+        "rates.put-minor-units-no-get",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "findUserTeamManagers",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "gen-clockify-openapi.pagination-params-stamped",
+        "pagination.last-page-header.live-audit-2026-05-25"
+      ]
+    },
+    {
+      "operationId": "giveUserManagerRole",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "removeUserManagerRole",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWebhooksOnWorkspace",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "createWebhook",
+      "status": "applicable",
+      "evidenceIds": [
+        "webhook.create.name-required-on-api-key-not-addon"
+      ]
+    },
+    {
+      "operationId": "getWebhookById",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "updateWebhook",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "deleteWebhook",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdGenerateNewToken",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getWorkspacesWorkspaceIdWebhooksWebhookIdLogs",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
+    },
+    {
+      "operationId": "getWebhookLogs",
+      "status": "applicable",
+      "evidenceIds": [
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "getWebhookEventStatusesWithLatestLog",
+      "status": "applicable",
+      "evidenceIds": [
+        "fern.x-fern-sdk-method-name.drops-resource-modules",
+        "surface.audit.2026-06-23"
+      ]
+    },
+    {
+      "operationId": "patchWorkspacesWorkspaceIdWebhooksWebhookIdToken",
+      "status": "audited-no-applicable-evidence",
+      "evidenceIds": [],
+      "reason": "No operation-specific discrepancy anchor applies in the current ledger."
     }
   ]
 }

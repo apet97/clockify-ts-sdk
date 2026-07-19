@@ -14,7 +14,8 @@ function canonicalFixture() {
     const inventoryOperations = [];
     const receiptOperations = [];
     const classifications = [];
-    const evidenceMappings = [];
+    const evidenceAnchors = [];
+    const evidenceAudit = [];
     const dispositions = [];
 
     for (let index = 0; index < explicitCount + derivedCount; index += 1) {
@@ -39,11 +40,21 @@ function canonicalFixture() {
                 generatedGroup: resource,
                 generatedMethod: methodName,
             });
-            evidenceMappings.push({
-                operationId,
-                evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
-            });
         }
+        evidenceAudit.push(
+            explicit
+                ? {
+                      operationId,
+                      status: "audited-no-applicable-evidence",
+                      evidenceIds: [],
+                      reason: "No operation-specific discrepancy anchor applies in the current ledger.",
+                  }
+                : {
+                      operationId,
+                      status: "applicable",
+                      evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
+                  },
+        );
         dispositions.push({
             operationId,
             httpMethod,
@@ -63,7 +74,15 @@ function canonicalFixture() {
         inventory: { operationCount: 169, operations: inventoryOperations },
         receipt: { ok: true, operationCount: 169, operations: receiptOperations },
         classifications,
-        evidenceMappings,
+        evidenceAnchors: [
+            {
+                evidenceId: "fern.x-fern-sdk-method-name.drops-resource-modules",
+                applicability: "operation-specific",
+                operationIds: classifications.map((classification) => classification.operationId),
+            },
+        ],
+        evidenceAudit,
+        knownEvidenceIds: new Set(["fern.x-fern-sdk-method-name.drops-resource-modules"]),
         artifact: {
             schemaVersion: 1,
             summary: {
@@ -75,6 +94,64 @@ function canonicalFixture() {
         },
     };
 }
+
+test("rejects an omitted operation evidence-audit row", () => {
+    const fixture = canonicalFixture();
+    fixture.evidenceAudit.pop();
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /operation168.*missing.*evidence audit/i.test(failure)));
+});
+
+test("rejects a false audited-no-evidence marker when the anchor inventory maps evidence", () => {
+    const fixture = canonicalFixture();
+    fixture.evidenceAudit[155] = {
+        operationId: "operation155",
+        status: "audited-no-applicable-evidence",
+        evidenceIds: [],
+        reason: "Incorrect empty marker.",
+    };
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /operation155.*evidence audit.*anchor inventory/i.test(failure)));
+});
+
+test("requires every no-applicable-evidence audit row to carry an explicit empty evidenceIds array", () => {
+    const fixture = canonicalFixture();
+    delete fixture.evidenceAudit[0].evidenceIds;
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /operation0.*evidenceIds.*array/i.test(failure)));
+});
+
+test("rejects duplicate, orphaned, and incomplete operation evidence-audit rows", () => {
+    const fixture = canonicalFixture();
+    fixture.evidenceAudit[168] = structuredClone(fixture.evidenceAudit[167]);
+    fixture.evidenceAudit.push({
+        operationId: "orphanOperation",
+        status: "audited-no-applicable-evidence",
+        evidenceIds: [],
+        reason: "Not a real operation.",
+    });
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /operation167.*duplicate evidence audit/i.test(failure)));
+    assert.ok(failures.some((failure) => /operation168.*missing evidence audit/i.test(failure)));
+    assert.ok(failures.some((failure) => /orphanOperation.*evidence audit.*missing.*inventory/i.test(failure)));
+});
+
+test("rejects a discrepancy-ledger anchor omitted from the reviewed anchor inventory", () => {
+    const fixture = canonicalFixture();
+    fixture.knownEvidenceIds.add("new.unreviewed.anchor");
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /new\.unreviewed\.anchor.*missing.*anchor inventory/i.test(failure)));
+});
 
 test("rejects the stale 156 explicit / 13 operationId-derived expectation", () => {
     const fixture = canonicalFixture();
@@ -187,12 +264,12 @@ test("builds generated reachability from the codegen receipt for explicit and de
 
 test("governs evidence for an explicit operation independently of SDK naming classification", () => {
     const fixture = canonicalFixture();
-    fixture.evidenceMappings = [
+    fixture.evidenceAudit[0] =
         {
             operationId: "operation0",
+            status: "applicable",
             evidenceIds: ["invoices.update.missing-bill-from-and-client-address"],
-        },
-    ];
+        };
 
     const artifact = buildOperationDisposition(fixture);
 
@@ -236,53 +313,80 @@ test("rejects receipt and disposition method or path drift", () => {
     assert.ok(failures.some((failure) => /operation1.*disposition method\/path.*receipt/i.test(failure)));
 });
 
-test("rejects orphaned, unknown, duplicate, and mismatched operation evidence", () => {
+test("rejects orphaned, unknown, duplicate, and mismatched anchor-governed evidence", () => {
     const fixture = canonicalFixture();
-    fixture.knownEvidenceIds = new Set([
-        "fern.x-fern-sdk-method-name.drops-resource-modules",
-    ]);
-    fixture.evidenceMappings.push(
+    fixture.evidenceAnchors[0].operationIds.push("orphanOperation");
+    fixture.evidenceAnchors.push(
+        structuredClone(fixture.evidenceAnchors[0]),
         {
-            operationId: "orphanOperation",
-            evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
-        },
-        {
-            operationId: "operation0",
-            evidenceIds: ["unknown.evidence.anchor"],
-        },
-        {
-            operationId: "operation0",
-            evidenceIds: ["fern.x-fern-sdk-method-name.drops-resource-modules"],
+            evidenceId: "unknown.evidence.anchor",
+            applicability: "operation-specific",
+            operationIds: ["operation0"],
         },
     );
     fixture.artifact.operations[155].evidenceIds = [];
 
     const failures = validateOperationDisposition(fixture);
 
-    assert.ok(failures.some((failure) => /orphanOperation.*evidence mapping.*missing.*inventory/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation0.*duplicate evidence mapping/i.test(failure)));
-    assert.ok(failures.some((failure) => /operation0.*unknown evidenceId/i.test(failure)));
+    assert.ok(failures.some((failure) => /anchor inventory.*unknown operation orphanOperation/i.test(failure)));
+    assert.ok(failures.some((failure) => /duplicate evidence anchor/i.test(failure)));
+    assert.ok(failures.some((failure) => /unknown\.evidence\.anchor.*absent.*discrepancy ledger/i.test(failure)));
     assert.ok(failures.some((failure) => /operation155.*evidenceIds differ from governance/i.test(failure)));
 });
 
-test("governs the corrected scheduling and explicit invoice evidence attribution", () => {
+test("governs all 169 operations and the reviewed concrete evidence omissions", () => {
     const evidenceDocument = JSON.parse(
         readFileSync(new URL("../docs/operation-evidence-map.json", import.meta.url), "utf8"),
     );
     const evidenceByOperation = new Map(
-        evidenceDocument.mappings.map((mapping) => [mapping.operationId, mapping.evidenceIds]),
+        evidenceDocument.operations.map((row) => [row.operationId, row.evidenceIds]),
     );
 
+    assert.equal(evidenceDocument.operations.length, 169);
+    assert.equal(evidenceByOperation.size, 169);
     assert.deepEqual(evidenceByOperation.get("createRecurringAssignment"), [
         "scheduling.createRecurring.returns-array-and-publish-is-range-scoped",
     ]);
+    assert.ok(
+        evidenceByOperation
+            .get("publishAssignments")
+            .includes("scheduling.createRecurring.returns-array-and-publish-is-range-scoped"),
+    );
     assert.ok(
         !evidenceByOperation
             .get("changeRecurringPeriod")
             .includes("scheduling.createRecurring.returns-array-and-publish-is-range-scoped"),
     );
-    assert.deepEqual(evidenceByOperation.get("updateInvoice"), [
-        "invoices.update.replace-and-tax-discount-zeroing",
-        "invoices.update.missing-bill-from-and-client-address",
-    ]);
+    assert.ok(
+        evidenceByOperation.get("addInvoice").includes("invoices.create.note-subject-dropped"),
+    );
+    assert.ok(
+        evidenceByOperation
+            .get("createWebhook")
+            .includes("webhook.create.name-required-on-api-key-not-addon"),
+    );
+    assert.ok(
+        evidenceByOperation
+            .get("getTimeOffPolicies")
+            .includes("getTimeOffPolicies.sort-order.enum-tightened"),
+    );
+});
+
+test("classifies every unique current discrepancy-ledger anchor exactly once", () => {
+    const ledger = readFileSync(
+        new URL("../spec/evidence/discrepancies.md", import.meta.url),
+        "utf8",
+    );
+    const ledgerIds = new Set([...ledger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]));
+    const anchorDocument = JSON.parse(
+        readFileSync(
+            new URL("../docs/operation-evidence-anchor-inventory.json", import.meta.url),
+            "utf8",
+        ),
+    );
+    const anchorIds = anchorDocument.anchors.map((anchor) => anchor.evidenceId);
+
+    assert.equal(ledgerIds.size, 62);
+    assert.equal(anchorIds.length, 62);
+    assert.deepEqual(new Set(anchorIds), ledgerIds);
 });

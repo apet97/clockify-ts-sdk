@@ -19,9 +19,11 @@ The governed split is exact:
 - `docs/sdk-operation-naming-classifications.json` governs the expected
   generated group/method for all 14 derived methods; it contains no evidence
   policy.
-- `docs/operation-evidence-map.json` separately governs existing discrepancy
-  anchors for any applicable explicit or derived operation. Operations without
-  applicable evidence keep an empty list without a fabricated mapping.
+- `docs/operation-evidence-anchor-inventory.json` separately reviews all 62
+  unique current discrepancy anchors as operation-specific or not operation-
+  specific. `docs/operation-evidence-map.json` derives exactly 169 audit rows;
+  each operation has non-empty applicable evidence or an explicit audited-no-
+  applicable-evidence status and reason.
 - SDK generated reachability remains distinct from the 92 TS MCP exact matches,
   82 GOCLMCP exact matches, and 32 curated parity overrides.
 
@@ -49,7 +51,9 @@ receipt does not duplicate those rows as prose.
 
 Operation-level evidence is intentionally independent of naming. In particular,
 `scheduling.createRecurring.returns-array-and-publish-is-range-scoped` belongs
-to explicit `createRecurringAssignment`, not derived `changeRecurringPeriod`;
+to explicit `createRecurringAssignment` and `publishAssignments`, not derived
+`changeRecurringPeriod`; `addInvoice`, `createWebhook`, and
+`getTimeOffPolicies` likewise carry their applicable ledger anchors; and
 explicit `updateInvoice` links both its replacement-semantics and corrected
 request-schema discrepancy entries.
 
@@ -67,8 +71,9 @@ that the validator rejects:
   drift;
 - an explicit operation classified as derived or a derived operation
   classified as explicit; and
-- embedded naming evidence, orphan/unknown/duplicate evidence mappings, or
-  disposition/evidence mismatch; and
+- embedded naming evidence, an unreviewed ledger anchor, omitted/duplicate/orphan
+  evidence-audit rows, a false no-evidence marker, or disposition/evidence
+  mismatch; and
 - any departure from all 169 operations appearing exactly once.
 
 The regular `operation-parity` writer and `operation-parity-drift` checker use
