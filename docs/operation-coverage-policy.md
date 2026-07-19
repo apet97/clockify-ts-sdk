@@ -38,6 +38,12 @@ rationale, risk-register note, and migration/support wording.
   either carries its non-empty applicable anchor set or an explicit audited-no-
   applicable-evidence marker and reason. Omitted/duplicate/orphan rows, unreviewed
   ledger anchors, false empty markers, and disposition drift fail closed.
+- `docs/operation-evidence-semantic-contract.json` independently pins the
+  canonical pagination routes and the validator derives collision-route and
+  transitive response-schema sets from current OpenAPI truth. The writer also
+  compares the pagination contract with GOCLMCP's `PAGINATED_LIST_OPS` whenever
+  the sibling generator is present. Manual inventory drift from those semantic
+  sets fails closed.
 - `docs/operation-parity.json` remains the cross-surface parity truth and keeps
   generated SDK reachability distinct from TS MCP and GOCLMCP coverage.
 - `docs/operation-parity-overrides.json` is where non-mechanical mappings and intentional absences are explained.
@@ -59,6 +65,7 @@ Escalate before accepting a coverage drop when:
 - An OpenAPI operation no longer appears exactly once in the codegen receipt or
   disposition and evidence-audit artifacts.
 - A discrepancy-ledger anchor lacks an explicit reviewed applicability decision.
+- A reviewed anchor set differs from its independent route/schema expectation.
 - A generated group/method changes without updating the governed naming
   classification.
 - A curated override is removed without a replacement inference or reason.
@@ -69,7 +76,8 @@ Escalate before accepting a coverage drop when:
 - `make operation-coverage` checks no-regression coverage thresholds.
 - `make openapi-lint` checks operation count, SDK stamps, pagination, and Last-Page invariants.
 - `make operation-parity-drift` checks generated parity metadata is current.
-- Its fixture suite proves new, renamed, unclassified, duplicated, missing,
-  count-mismatched, and reclassified operations fail closed.
+- Its fixture suites prove new, renamed, unclassified, duplicated, missing,
+  count-mismatched, reclassified, or semantically misattributed operations fail
+  closed.
 - `make generator-comparison` checks SDK stamps against generated TypeScript methods.
 - `make naming-taxonomy` checks cross-surface vocabulary around the mappings.

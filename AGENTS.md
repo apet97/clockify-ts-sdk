@@ -574,8 +574,10 @@ Tracked in `spec/evidence/discrepancies.md` with full repro:
    `docs/sdk-operation-naming-classifications.json`; every discrepancy anchor
    is reviewed in `docs/operation-evidence-anchor-inventory.json`, and its
    operation attribution or explicit no-applicable-evidence decision is
-   materialized across all 169 rows in `docs/operation-evidence-map.json`. Naming
-   and evidence are materialized together for every operation in
+   checked against source/schema-derived expectations in
+   `docs/operation-evidence-semantic-contract.json` before being materialized
+   across all 169 rows in `docs/operation-evidence-map.json`. Naming and evidence
+   are materialized together for every operation in
    `docs/operation-dispositions.json`.
 
 Re-attempt item 1 only after the upstream gating concern resolves

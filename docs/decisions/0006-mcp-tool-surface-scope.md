@@ -64,8 +64,10 @@ proves reachable operationId-derived methods. The governed set is `uploadImage`,
 pairs live in the names-only `docs/sdk-operation-naming-classifications.json`;
 every discrepancy anchor is reviewed separately in
 `docs/operation-evidence-anchor-inventory.json`, and the resulting attribution
-or explicit no-applicable-evidence decision for each of the 169 operations lives
-in `docs/operation-evidence-map.json`. Adding explicit stamps is
+is checked against independent pagination/route/schema expectations in
+`docs/operation-evidence-semantic-contract.json`; the resulting attribution or
+explicit no-applicable-evidence decision for each of the 169 operations lives in
+`docs/operation-evidence-map.json`. Adding explicit stamps is
 optional API naming work, not a missing-method fix; any addition, removal,
 rename, duplicate, or reclassification now fails the parity gate until that
 governance is deliberately updated.
@@ -88,7 +90,8 @@ implied to be missing by accident.
 `make operation-parity` regenerates `docs/operation-dispositions.json` and
 `docs/operation-parity.{json,md}` by joining the OpenAPI inventory, local codegen
 receipt, governed derived-name registry, reviewed discrepancy-anchor inventory,
-169-row operation-evidence audit, TS MCP tool names, and GOCLMCP tool catalog.
+independent semantic expectations, 169-row operation-evidence audit, TS MCP tool
+names, and GOCLMCP tool catalog.
 `make operation-coverage` owns the fixture suite and canonical validator, failing
 closed on receipt, disposition, classification, path, anchor-review, and
 operation-evidence drift; `docs/operation-parity-overrides.json` carries curated MCP

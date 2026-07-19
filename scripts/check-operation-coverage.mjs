@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { parse } from "yaml";
 
 import { validateOperationDisposition } from "./lib/operation-parity-contract.mjs";
+import { buildOperationEvidenceSemanticExpectations } from "./lib/operation-evidence-semantics.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -170,6 +172,8 @@ function validateContractShape() {
         safeRelativePath("reportInputs.sdkNamingClassifications", contract.reportInputs.sdkNamingClassifications);
         safeRelativePath("reportInputs.operationEvidence", contract.reportInputs.operationEvidence);
         safeRelativePath("reportInputs.operationEvidenceAnchors", contract.reportInputs.operationEvidenceAnchors);
+        safeRelativePath("reportInputs.operationEvidenceSemantics", contract.reportInputs.operationEvidenceSemantics);
+        safeRelativePath("reportInputs.correctedOpenapi", contract.reportInputs.correctedOpenapi);
         safeRelativePath("reportInputs.discrepancyLedger", contract.reportInputs.discrepancyLedger);
         safeRelativePath("reportInputs.sdkCodegenReceipt", contract.reportInputs.sdkCodegenReceipt);
     }
@@ -184,6 +188,7 @@ function validateContractShape() {
         const exactGeneratedInputWiring = {
             coveragePrerequisites: ["operation-parity-drift"],
             coverageRecipes: [
+                "node --test scripts/operation-evidence-semantics.test.mjs",
                 "node --test scripts/generate-operation-parity.test.mjs",
                 "node scripts/check-operation-coverage.mjs",
             ],
@@ -319,6 +324,14 @@ const evidenceAnchors =
         contract.reportInputs.operationEvidenceAnchors,
         "reportInputs.operationEvidenceAnchors",
     )) ?? {};
+const evidenceSemantics =
+    (await readJsonRel(
+        contract.reportInputs.operationEvidenceSemantics,
+        "reportInputs.operationEvidenceSemantics",
+    )) ?? {};
+const correctedOpenapi = parse(
+    await readRel(contract.reportInputs.correctedOpenapi, "reportInputs.correctedOpenapi"),
+);
 const receipt =
     (await readJsonRel(contract.reportInputs.sdkCodegenReceipt, "reportInputs.sdkCodegenReceipt")) ?? {};
 const discrepancyLedger = await readRel(
@@ -361,6 +374,16 @@ if (
         "must have schemaVersion 1, purpose, and anchors",
     );
 }
+if (
+    evidenceSemantics.schemaVersion !== 1 ||
+    typeof evidenceSemantics.purpose !== "string" ||
+    !Array.isArray(evidenceSemantics.canonicalPaginatedRoutes)
+) {
+    fail(
+        contract.reportInputs.operationEvidenceSemantics,
+        "must have schemaVersion 1, purpose, and canonicalPaginatedRoutes",
+    );
+}
 const knownEvidenceIds = new Set(
     [...discrepancyLedger.matchAll(/^### `([^`]+)`/gm)].map((match) => match[1]),
 );
@@ -372,6 +395,11 @@ for (const failure of validateOperationDisposition({
     inventory: openapi,
     knownEvidenceIds,
     receipt,
+    semanticEvidenceExpectations: buildOperationEvidenceSemanticExpectations({
+        inventory: openapi,
+        openapi: correctedOpenapi,
+        semanticContract: evidenceSemantics,
+    }),
 })) {
     fail("generated operation truth", failure);
 }

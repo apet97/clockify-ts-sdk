@@ -27,12 +27,15 @@
     "sdkNamingClassifications": "docs/sdk-operation-naming-classifications.json",
     "operationEvidence": "docs/operation-evidence-map.json",
     "operationEvidenceAnchors": "docs/operation-evidence-anchor-inventory.json",
+    "operationEvidenceSemantics": "docs/operation-evidence-semantic-contract.json",
+    "correctedOpenapi": "spec/corrected/clockify.corrected.openapi.yaml",
     "discrepancyLedger": "spec/evidence/discrepancies.md",
     "sdkCodegenReceipt": "output/ts-sdk/codegen-receipt.json"
   },
   "generatedInputWiring": {
     "coveragePrerequisites": ["operation-parity-drift"],
     "coverageRecipes": [
+      "node --test scripts/operation-evidence-semantics.test.mjs",
       "node --test scripts/generate-operation-parity.test.mjs",
       "node scripts/check-operation-coverage.mjs"
     ],
@@ -91,6 +94,7 @@
     "docs/operation-dispositions.json",
     "docs/operation-evidence-map.json",
     "docs/operation-evidence-anchor-inventory.json",
+    "docs/operation-evidence-semantic-contract.json",
     "docs/operation-parity.json",
     "docs/operation-parity-overrides.json",
     "docs/sdk-operation-naming-classifications.json",
@@ -137,6 +141,14 @@
         "not-operation-specific",
         "updateInvoice",
         "evidenceId"
+      ]
+    },
+    {
+      "path": "docs/operation-evidence-semantic-contract.json",
+      "contains": [
+        "Independent semantic expectations",
+        "PAGINATED_LIST_OPS",
+        "canonicalPaginatedRoutes"
       ]
     },
     {

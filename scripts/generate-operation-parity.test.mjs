@@ -153,6 +153,21 @@ test("rejects a discrepancy-ledger anchor omitted from the reviewed anchor inven
     assert.ok(failures.some((failure) => /new\.unreviewed\.anchor.*missing.*anchor inventory/i.test(failure)));
 });
 
+test("rejects an anchor inventory set that disagrees with independent semantic expectations", () => {
+    const fixture = canonicalFixture();
+    fixture.semanticEvidenceExpectations = {
+        "fern.x-fern-sdk-method-name.drops-resource-modules": {
+            applicability: "operation-specific",
+            operationIds: fixture.classifications.map((classification) => classification.operationId),
+        },
+    };
+    fixture.evidenceAnchors[0].operationIds.pop();
+
+    const failures = validateOperationDisposition(fixture);
+
+    assert.ok(failures.some((failure) => /drops-resource-modules.*semantic expectation/i.test(failure)));
+});
+
 test("rejects the stale 156 explicit / 13 operationId-derived expectation", () => {
     const fixture = canonicalFixture();
     fixture.artifact.summary.sdkExplicitlyNamed = 156;

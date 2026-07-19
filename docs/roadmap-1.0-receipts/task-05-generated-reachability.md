@@ -24,6 +24,14 @@ The governed split is exact:
   specific. `docs/operation-evidence-map.json` derives exactly 169 audit rows;
   each operation has non-empty applicable evidence or an explicit audited-no-
   applicable-evidence status and reason.
+- The final re-audit classifies 48 anchors as operation-specific and 14 as not
+  operation-specific. The operation audit contains 109 applicable rows and 60
+  explicit no-applicable-evidence rows.
+- `docs/operation-evidence-semantic-contract.json` prevents that reviewed
+  inventory from merely validating itself. Pagination is pinned to the exact 21
+  GOCLMCP `PAGINATED_LIST_OPS` routes; collision sets derive from the six route
+  templates; and both shared time-off-status findings derive transitively from
+  OpenAPI response-schema references.
 - SDK generated reachability remains distinct from the 92 TS MCP exact matches,
   82 GOCLMCP exact matches, and 32 curated parity overrides.
 
@@ -57,6 +65,12 @@ to explicit `createRecurringAssignment` and `publishAssignments`, not derived
 explicit `updateInvoice` links both its replacement-semantics and corrected
 request-schema discrepancy entries.
 
+The historical Fern bare-array pagination finding is generator-wide rather
+than attributed only to `getTimeOffPolicies`; `getUserCapacityTotal` is excluded
+from canonical paginated-list evidence; both collision anchors include
+`addExpenseCategory`; and both shared `TimeOffRequestStatus` anchors cover all
+seven response-reachable operations.
+
 ## Fail-closed proof
 
 `scripts/generate-operation-parity.test.mjs` uses in-memory fixtures and proves
@@ -74,6 +88,8 @@ that the validator rejects:
 - embedded naming evidence, an unreviewed ledger anchor, omitted/duplicate/orphan
   evidence-audit rows, a false no-evidence marker, or disposition/evidence
   mismatch; and
+- a reviewed anchor operation set that disagrees with its independent
+  pagination, route-family, or transitive response-schema expectation; and
 - any departure from all 169 operations appearing exactly once.
 
 The regular `operation-parity` writer and `operation-parity-drift` checker use
@@ -83,7 +99,7 @@ them to fixtures.
 ## Closure proof
 
 ```text
-node --test scripts/generate-operation-parity.test.mjs
+node --test scripts/operation-evidence-semantics.test.mjs scripts/generate-operation-parity.test.mjs
 make sdk-codegen sdk-codegen-drift sdk-codegen-test generator-comparison operation-parity operation-parity-drift
 make operation-coverage openapi-lint
 make risk-register contract-gates

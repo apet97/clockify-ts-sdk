@@ -104,6 +104,7 @@
             "applicability": "operation-specific",
             "operationIds": [
                 "getExpenseCategories",
+                "addExpenseCategory",
                 "getExpenseById",
                 "updateExpense",
                 "deleteExpense",
@@ -128,8 +129,9 @@
         },
         {
             "evidenceId": "fern.x-fern-pagination.bare-array-unsupported",
-            "applicability": "operation-specific",
-            "operationIds": ["getTimeOffPolicies"]
+            "applicability": "not-operation-specific",
+            "operationIds": [],
+            "reason": "Historical Fern generator limitation observed while x-fern-pagination was experimentally stamped across a then-18-operation set; the extension is not present on the current corrected OpenAPI operations."
         },
         {
             "evidenceId": "fern.x-fern-sdk-method-name.drops-resource-modules",
@@ -173,7 +175,6 @@
                 "listProjectCustomFields",
                 "findTasksOnProject",
                 "getAllSchedulingAssignments",
-                "getUserCapacityTotal",
                 "getWorkspacesWorkspaceIdTags",
                 "getWorkspacesWorkspaceIdTimeEntriesStatusInProgress",
                 "getBalancesForPolicy",
@@ -313,6 +314,7 @@
             "applicability": "operation-specific",
             "operationIds": [
                 "getExpenseCategories",
+                "addExpenseCategory",
                 "getExpenseById",
                 "updateExpense",
                 "deleteExpense",
@@ -414,6 +416,10 @@
             "evidenceId": "time-off-b.yaml.changedForUserName.malformed-inline-yaml",
             "applicability": "operation-specific",
             "operationIds": [
+                "createTimeOffRequest",
+                "changeTimeOffRequestStatus",
+                "deleteTimeOffRequest",
+                "createTimeOffRequestForUser",
                 "getAllTimeOffRequestsOnWorkspace",
                 "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
                 "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"
@@ -457,6 +463,10 @@
             "evidenceId": "time-off.request.status.schema-collision",
             "applicability": "operation-specific",
             "operationIds": [
+                "createTimeOffRequest",
+                "changeTimeOffRequestStatus",
+                "deleteTimeOffRequest",
+                "createTimeOffRequestForUser",
                 "getAllTimeOffRequestsOnWorkspace",
                 "getWorkspacesWorkspaceIdTimeOffRequestsRequestId",
                 "patchWorkspacesWorkspaceIdTimeOffRequestsRequestIdStatus"

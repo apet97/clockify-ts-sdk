@@ -284,6 +284,7 @@ mcp-tool-manifest-drift: sdk-wrapper-build
 	cd mcp && node --import tsx scripts/generate-tool-manifest.mjs --check
 
 operation-coverage: operation-parity-drift
+	node --test scripts/operation-evidence-semantics.test.mjs
 	node --test scripts/generate-operation-parity.test.mjs
 	node scripts/check-operation-coverage.mjs
 
