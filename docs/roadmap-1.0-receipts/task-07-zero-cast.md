@@ -205,9 +205,19 @@ before governed built-in effect classification. Direct, aliased, and computed
 receiver-qualified descriptor/order semantics through Function `call`, static
 tuple/array `apply`, and later-invoked `bind` captures. Normalization preserves
 destructured aliases and reaching overwrite identity, stays bounded, and leaves
-shadow globals, unrelated functions, overwritten aliases/keys, unknown or
-invalid apply lists, and uninvoked binds as non-effects. The final governance
-suite passes **339/339** fixtures.
+shadow globals, unrelated functions, overwritten aliases/keys, and uninvoked
+binds as non-effects. The final governance suite passes **339/339** fixtures.
+
+The fourteenth corrective review retains every reachable callee alternative
+when a bound-function candidate is present, so a mixed local/bound path cannot
+incorrectly establish cross-statement dominance. Equivalent governed paths may
+still dominate only when every path has the same receiver and property effect.
+Static `apply` arrays now flatten bounded, statically resolvable tuple/array
+spreads and aliases while unresolved, non-array, or overflowing governed apply
+lists fail closed. Invoked `bind.call`/`bind.apply` factories, including aliased
+and computed bind members, normalize recursively; merely creating the bound
+function remains a non-effect. The final governance suite passes **354/354**
+fixtures.
 
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
@@ -233,7 +243,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final thirteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final fourteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

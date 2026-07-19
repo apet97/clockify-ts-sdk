@@ -420,9 +420,12 @@ end-to-end and green before push. Drift gates are non-negotiable.
     const-literal element access to governed `Object`/`Reflect` members preserves
     built-in symbol identity; overwritten keys and shadow/local lookalikes do not
     become effects. Governed built-ins are normalized through direct/aliased/
-    computed Function `call`, static tuple/array `apply`, and later-invoked
-    `bind` captures before effect classification; unknown/invalid apply lists and
-    uninvoked binds remain non-effects. It rejects
+    computed Function `call`, bounded static tuple/array `apply` (including
+    statically resolvable spreads), and later-invoked `bind` captures before
+    effect classification. Mixed local/bound alternatives remain distinct;
+    recursive `bind.call`/`bind.apply` adapters are modeled only when their
+    returned function is invoked; and unresolved/invalid governed apply lists
+    fail closed while uninvoked binds remain non-effects. It rejects
     direct, chained, structural, angle-bracket, `as never`,
     annotated/assigned `any`, helper-hidden generic, declaration-only,
     imported/transitive, Function `call`/`apply`/`bind`, and symbol-provenance
