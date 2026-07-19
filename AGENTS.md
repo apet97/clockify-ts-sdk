@@ -436,7 +436,12 @@ end-to-end and green before push. Drift gates are non-negotiable.
     substitutions and later definite-write dominance remain ordered. Immediate
     nested invocation preserves an explicit intra-expression phase: binder-body
     effects precede returned-callable effects even when both calls share the
-    same source position; conditional later writes do not dominate.
+    same source position. A later phase dominates only when every registered
+    mutually exclusive path performs an equivalent receiver/name-qualified
+    definite write. Lifted direct property assignments retain original
+    within-phase sequence and become definite only on unconditional paths with
+    no preceding function exit; conditional or early-return writes do not
+    dominate.
     Global-provenance direct/aliased/computed `Reflect.apply`
     is normalized through the same bounded static/spread argument-list path only
     while its reaching member value is native. The same ordered write forms can
