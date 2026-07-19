@@ -231,6 +231,18 @@ through direct, `call`, or `apply` paths. Shadow `Reflect`, unrelated targets,
 custom bind members, and uninvoked native binds remain non-effects. The final
 governance suite passes **370/370** fixtures.
 
+The sixteenth corrective review orders reaching `Function.prototype.bind` and
+`Reflect.apply` member values across direct assignment, `Object.assign`,
+`Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set`. Definite
+native restoration resumes normalization; conditional native/custom paths retain
+both alternatives, and captured native `Reflect.apply` aliases remain stable
+after later member overwrite. Invoked custom binders now propagate the captured
+receiver substitutions of their returned callable through direct, `call`,
+`apply`, and conditional-return paths. Sixteen of the initial 19 focused cases
+failed against `d499b6b`; the three native-alias/conditional controls stayed
+green. The finished focused set passes **19/19**, and the complete controller
+suite passes **389/389** fixtures while retaining the prior 370 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -255,7 +267,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final fifteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final sixteenth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

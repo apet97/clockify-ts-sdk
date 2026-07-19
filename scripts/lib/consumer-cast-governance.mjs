@@ -318,9 +318,13 @@ function analyzeProgram({
         addInvocation(declaration, node, args);
     }
 
-    function addInvocation(declaration, node, args) {
+    function addInvocation(declaration, node, args, capturedSubstitutions = new Map()) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
-        const invocation = { node, arguments: [...args] };
+        const invocation = {
+            node,
+            arguments: [...args],
+            capturedSubstitutions: new Map(capturedSubstitutions),
+        };
         const calls = callsByDeclaration.get(declaration) ?? [];
         if (
             !calls.some(
@@ -329,6 +333,10 @@ function analyzeProgram({
                     existing.arguments.length === invocation.arguments.length &&
                     existing.arguments.every(
                         (argument, index) => argument === invocation.arguments[index],
+                    ) &&
+                    existing.capturedSubstitutions.size === invocation.capturedSubstitutions.size &&
+                    [...existing.capturedSubstitutions].every(
+                        ([symbol, value]) => invocation.capturedSubstitutions.get(symbol) === value,
                     ),
             )
         ) {
@@ -1585,12 +1593,8 @@ function analyzeProgram({
         );
     }
 
-    function nativeBindMemberTarget(expression, beforePosition) {
+    function libMemberSymbol(expression, memberName) {
         expression = unwrapExpression(expression);
-        const adapter = invocationAdapter(expression, beforePosition);
-        if (adapter?.name !== "bind") return null;
-        if (checker.getTypeAtLocation(adapter.target).getCallSignatures().length === 0) return null;
-
         const memberSymbol = ts.isPropertyAccessExpression(expression)
             ? unalias(checker, checker.getSymbolAtLocation(expression.name))
             : ts.isElementAccessExpression(expression)
@@ -1598,50 +1602,158 @@ function analyzeProgram({
                     checker,
                     checker.getPropertyOfType(
                         checker.getApparentType(checker.getTypeAtLocation(expression.expression)),
-                        "bind",
+                        memberName,
                     ),
                 )
               : null;
-        if (
-            !(memberSymbol?.declarations ?? []).some(
-                (declaration) =>
-                    declaration.getSourceFile().isDeclarationFile &&
-                    /\/lib\.[^/]+\.d\.ts$/.test(normalize(declaration.getSourceFile().fileName)),
-            )
-        ) {
-            return null;
-        }
+        return (memberSymbol?.declarations ?? []).some(
+            (declaration) =>
+                declaration.getSourceFile().isDeclarationFile &&
+                /\/lib\.[^/]+\.d\.ts$/.test(normalize(declaration.getSourceFile().fileName)),
+        )
+            ? memberSymbol
+            : null;
+    }
 
-        const useLocation = directStatementInLinearContainer(expression);
-        const overwritten = [...propertyWrites, ...wildcardPropertyWrites].some((write) => {
-            if (
-                write.position >= beforePosition ||
-                write.sourceFile !== expression.getSourceFile() ||
-                (write.propertyNames != null && !write.propertyNames.includes("bind")) ||
-                !(
-                    ts.isPropertyAccessExpression(write.node) ||
-                    ts.isElementAccessExpression(write.node)
-                ) ||
-                !sameCallableAlternatives(write.node.expression, adapter.target, write.position)
-            ) {
-                return false;
-            }
-            const writeLocation = directStatementInLinearContainer(write.node);
+    function memberWriteReceiver(write) {
+        if (write.receiverOverride) return write.receiverOverride;
+        return ts.isPropertyAccessExpression(write.node) || ts.isElementAccessExpression(write.node)
+            ? write.node.expression
+            : null;
+    }
+
+    function matchingMemberWrites(receiver, memberName, beforePosition, use) {
+        return applyOrderedEffectCutoffs(
+            [...propertyWrites, ...wildcardPropertyWrites]
+                .filter((write) => {
+                    const writeReceiver = memberWriteReceiver(write);
+                    return (
+                        write.position < beforePosition &&
+                        write.sourceFile === use.getSourceFile() &&
+                        (write.propertyNames == null || write.propertyNames.includes(memberName)) &&
+                        writeReceiver != null &&
+                        sameCallableAlternatives(writeReceiver, receiver, write.position)
+                    );
+                })
+                .sort((left, right) => left.position - right.position),
+            [memberName],
+        );
+    }
+
+    function writeDefinitelySetsMember(write, memberName) {
+        if (write.definiteEffectNames?.includes(memberName)) return true;
+        return (
+            !write.effectGroup &&
+            !write.conditional &&
+            (write.propertyNames == null || write.propertyNames.includes(memberName))
+        );
+    }
+
+    function statementDefinitelySetsMember(statement, writes, memberName) {
+        if (ts.isBlock(statement)) {
+            return statement.statements.some((child) =>
+                statementDefinitelySetsMember(child, writes, memberName),
+            );
+        }
+        if (ts.isIfStatement(statement)) {
             return (
-                useLocation != null &&
-                writeLocation != null &&
-                writeLocation.container === useLocation.container &&
+                statement.elseStatement != null &&
+                statementDefinitelySetsMember(statement.thenStatement, writes, memberName) &&
+                statementDefinitelySetsMember(statement.elseStatement, writes, memberName)
+            );
+        }
+        if (ts.isLabeledStatement(statement)) {
+            return statementDefinitelySetsMember(statement.statement, writes, memberName);
+        }
+        if (!ts.isExpressionStatement(statement)) return false;
+        return writes.some((write) => {
+            const location = directStatementInLinearContainer(write.node);
+            return (
+                location?.statement === statement &&
+                writeDefinitelySetsMember(write, memberName) &&
                 expressionDefinitelyExecutesInStatement(write.node)
             );
         });
-        if (overwritten) return null;
-        return adapter.target;
     }
 
-    function bindMemberTargets(expression, beforePosition, seen = new Set()) {
+    function memberValueAlternatives(
+        receiver,
+        memberName,
+        memberExpression,
+        beforePosition,
+        defaultValue,
+    ) {
+        const writes = matchingMemberWrites(receiver, memberName, beforePosition, memberExpression);
+        const useLocation = directStatementInLinearContainer(memberExpression);
+        let cutoff = null;
+        if (useLocation) {
+            for (const statement of useLocation.container.statements) {
+                if (statement === useLocation.statement) break;
+                if (statementDefinitelySetsMember(statement, writes, memberName)) {
+                    cutoff = statement.pos;
+                }
+            }
+        }
+        const reaching =
+            cutoff == null ? writes : writes.filter((write) => write.position >= cutoff);
+        const values = reaching.map((write) => ({
+            value: write.value,
+            position: write.position,
+        }));
+        if (cutoff == null) values.unshift(defaultValue);
+        return bounded(values, `${memberName} member alternatives`);
+    }
+
+    function isNativeBindValue(expression, beforePosition, seen = new Set()) {
         expression = unwrapExpression(expression);
-        const directTarget = nativeBindMemberTarget(expression, beforePosition);
-        if (directTarget) return [{ target: directTarget }];
+        const adapter = invocationAdapter(expression, beforePosition);
+        if (
+            adapter?.name === "bind" &&
+            checker.getTypeAtLocation(adapter.target).getCallSignatures().length > 0 &&
+            libMemberSymbol(expression, "bind")
+        ) {
+            return true;
+        }
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return reachingExpressionValues(expression, beforePosition).some((value) =>
+            isNativeBindValue(value.expression, value.expression.pos ?? beforePosition, nextSeen),
+        );
+    }
+
+    function bindMemberAlternatives(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        const adapter = invocationAdapter(expression, beforePosition);
+        if (adapter?.name === "bind") {
+            if (checker.getTypeAtLocation(adapter.target).getCallSignatures().length === 0) {
+                return [];
+            }
+            const nativeSymbol = libMemberSymbol(expression, "bind");
+            if (!nativeSymbol) return [];
+            return bounded(
+                memberValueAlternatives(adapter.target, "bind", expression, beforePosition, {
+                    value: null,
+                    position: expression.pos,
+                }).flatMap((alternative) => {
+                    if (
+                        alternative.value == null ||
+                        isNativeBindValue(alternative.value, alternative.position)
+                    ) {
+                        return [{ kind: "native", target: adapter.target }];
+                    }
+                    return reachingExpressionValues(alternative.value, alternative.position).map(
+                        (value) => ({
+                            kind: "custom",
+                            expression: value.expression,
+                        }),
+                    );
+                }),
+                "bind member values",
+            );
+        }
         if (!ts.isIdentifier(expression)) return [];
         const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
         if (!symbol || seen.has(symbol)) return [];
@@ -1649,9 +1761,100 @@ function analyzeProgram({
         nextSeen.add(symbol);
         return bounded(
             reachingExpressionValues(expression, beforePosition).flatMap((value) =>
-                bindMemberTargets(value.expression, value.pos ?? beforePosition, nextSeen),
+                bindMemberAlternatives(
+                    value.expression,
+                    value.expression.pos ?? beforePosition,
+                    nextSeen,
+                ),
             ),
-            "bind member alternatives",
+            "bind member aliases",
+        );
+    }
+
+    function customBinderReturns(expression, args, beforePosition) {
+        const alternatives = [];
+        for (const value of reachingExpressionValues(expression, beforePosition)) {
+            const declaration = functionDeclarationForExpression(value.expression);
+            if (!declaration?.body) continue;
+            const substitutions = new Map();
+            declaration.parameters.forEach((parameter, index) => {
+                const argument = args[index];
+                if (!argument) return;
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (symbol) substitutions.set(symbol, argument);
+            });
+            for (const returned of functionReturnExpressions(declaration)) {
+                alternatives.push(
+                    ...reachingExpressionValues(
+                        returned,
+                        beforePosition,
+                        new Set(),
+                        substitutions,
+                    ).map((returnedValue) => ({
+                        kind: "returned",
+                        expression: returnedValue.expression,
+                        substitutions: returnedValue.substitutions,
+                    })),
+                );
+            }
+        }
+        return bounded(alternatives, "custom binder returns");
+    }
+
+    function reflectApplyAlternatives(expression, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        if (
+            (ts.isPropertyAccessExpression(expression) ||
+                ts.isElementAccessExpression(expression)) &&
+            expressionResolvesToGlobal(expression.expression, "Reflect", beforePosition)
+        ) {
+            const names = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : expression.argumentExpression
+                  ? reachingPropertyNames(expression.argumentExpression, beforePosition)
+                  : [];
+            if (!names.includes("apply") || !libMemberSymbol(expression, "apply")) return [];
+            return bounded(
+                memberValueAlternatives(
+                    expression.expression,
+                    "apply",
+                    expression,
+                    beforePosition,
+                    { value: null, position: expression.pos },
+                ).flatMap((alternative) => {
+                    if (alternative.value == null) return [{ kind: "native" }];
+                    const values = reachingExpressionValues(
+                        alternative.value,
+                        alternative.position,
+                    );
+                    return values.map((value) =>
+                        expressionResolvesToBuiltinMember(
+                            value.expression,
+                            "Reflect",
+                            "apply",
+                            value.expression.pos,
+                        )
+                            ? { kind: "native" }
+                            : { kind: "custom", expression: value.expression },
+                    );
+                }),
+                "Reflect.apply member values",
+            );
+        }
+        if (!ts.isIdentifier(expression)) return [];
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return bounded(
+            reachingExpressionValues(expression, beforePosition).flatMap((value) =>
+                reflectApplyAlternatives(
+                    value.expression,
+                    value.expression.pos ?? beforePosition,
+                    nextSeen,
+                ),
+            ),
+            "Reflect.apply aliases",
         );
     }
 
@@ -1667,28 +1870,42 @@ function analyzeProgram({
             const alternatives = values.flatMap((value) =>
                 boundFunctionAlternatives(value.expression, value.pos ?? beforePosition, nextSeen),
             );
-            return alternatives.some((alternative) => alternative.kind === "bound")
+            return alternatives.some((alternative) => alternative.kind !== "plain")
                 ? bounded(alternatives, "bound function alternatives")
                 : [{ kind: "plain", expression }];
         }
         if (!ts.isCallExpression(expression)) return [{ kind: "plain", expression }];
 
         const direct = invocationAdapter(expression.expression, expression.pos);
-        const directBindTarget = nativeBindMemberTarget(expression.expression, expression.pos);
-        if (directBindTarget) {
-            return [
-                {
-                    kind: "bound",
-                    target: directBindTarget,
-                    arguments: [...expression.arguments.slice(1)],
-                },
-            ];
+        const directBindAlternatives = bindMemberAlternatives(
+            expression.expression,
+            expression.pos,
+        );
+        if (directBindAlternatives.length > 0) {
+            return bounded(
+                directBindAlternatives.flatMap((alternative) =>
+                    alternative.kind === "native"
+                        ? [
+                              {
+                                  kind: "bound",
+                                  target: alternative.target,
+                                  arguments: [...expression.arguments.slice(1)],
+                              },
+                          ]
+                        : customBinderReturns(
+                              alternative.expression,
+                              [...expression.arguments],
+                              expression.pos,
+                          ),
+                ),
+                "direct bind returns",
+            );
         }
         if (!direct || !["call", "apply"].includes(direct.name)) {
             return [{ kind: "plain", expression }];
         }
-        const bindTargets = bindMemberTargets(direct.target, expression.pos);
-        if (bindTargets.length === 0 || !expression.arguments[0]) {
+        const bindAlternatives = bindMemberAlternatives(direct.target, expression.pos);
+        if (bindAlternatives.length === 0 || !expression.arguments[0]) {
             return [{ kind: "plain", expression }];
         }
         const bindArgumentLists =
@@ -1703,11 +1920,19 @@ function analyzeProgram({
                 );
             }
         }
-        const alternatives = bindArgumentLists.lists.map((list) => ({
-            kind: "bound",
-            target: expression.arguments[0],
-            arguments: [...list.slice(1)],
-        }));
+        const alternatives = bindArgumentLists.lists.flatMap((list) =>
+            bindAlternatives.flatMap((alternative) =>
+                alternative.kind === "native"
+                    ? [
+                          {
+                              kind: "bound",
+                              target: expression.arguments[0],
+                              arguments: [...list.slice(1)],
+                          },
+                      ]
+                    : customBinderReturns(alternative.expression, list, expression.pos),
+            ),
+        );
         return alternatives.length > 0
             ? bounded(alternatives, "recursive bind alternatives")
             : [{ kind: "plain", expression }];
@@ -1721,14 +1946,18 @@ function analyzeProgram({
         nextSeen.add(key);
 
         const boundCandidates = boundFunctionAlternatives(expression, beforePosition, nextSeen);
-        const candidates = boundCandidates.some((candidate) => candidate.kind === "bound")
+        const candidates = boundCandidates.some((candidate) => candidate.kind !== "plain")
             ? boundCandidates.map((candidate) =>
                   candidate.kind === "bound"
                       ? {
                             expression: candidate.target,
                             boundArguments: candidate.arguments,
                         }
-                      : { expression: candidate.expression },
+                      : {
+                            expression: candidate.expression,
+                            invokeReturned: candidate.kind === "returned",
+                            substitutions: candidate.substitutions,
+                        },
               )
             : [{ expression }];
         const normalized = [];
@@ -1744,25 +1973,48 @@ function analyzeProgram({
                 );
                 continue;
             }
+            if (candidate.invokeReturned) {
+                const declaration = functionDeclarationForExpression(candidate.expression);
+                if (declaration?.body) {
+                    addInvocation(declaration, expression, args, candidate.substitutions);
+                }
+                normalized.push(
+                    ...normalizeEffectiveCalls(
+                        candidate.expression,
+                        args,
+                        beforePosition,
+                        nextSeen,
+                    ),
+                );
+                continue;
+            }
             const callee = unwrapExpression(candidate.expression);
 
-            if (
-                expressionResolvesToBuiltinMember(callee, "Reflect", "apply", beforePosition) &&
-                args[0]
-            ) {
-                const appliedLists = staticApplyArgumentLists(args[2], beforePosition);
-                if (!appliedLists.complete) {
-                    const governed = governedBuiltinMember(args[0], beforePosition);
-                    if (governed) {
-                        analysisFailures.add(
-                            `consumer cast analysis could not statically resolve ${governed} Reflect.apply argument list`,
+            const reflectApply = reflectApplyAlternatives(callee, beforePosition);
+            if (reflectApply.length > 0) {
+                for (const alternative of reflectApply) {
+                    if (alternative.kind === "custom") {
+                        const declaration = functionDeclarationForExpression(
+                            alternative.expression,
+                        );
+                        if (declaration?.body) addInvocation(declaration, expression, args);
+                        continue;
+                    }
+                    if (!args[0]) continue;
+                    const appliedLists = staticApplyArgumentLists(args[2], beforePosition);
+                    if (!appliedLists.complete) {
+                        const governed = governedBuiltinMember(args[0], beforePosition);
+                        if (governed) {
+                            analysisFailures.add(
+                                `consumer cast analysis could not statically resolve ${governed} Reflect.apply argument list`,
+                            );
+                        }
+                    }
+                    for (const applied of appliedLists.lists) {
+                        normalized.push(
+                            ...normalizeEffectiveCalls(args[0], applied, beforePosition, nextSeen),
                         );
                     }
-                }
-                for (const applied of appliedLists.lists) {
-                    normalized.push(
-                        ...normalizeEffectiveCalls(args[0], applied, beforePosition, nextSeen),
-                    );
                 }
                 continue;
             }
@@ -2299,7 +2551,7 @@ function analyzeProgram({
     }
 
     function parameterSubstitutions(declaration, invocation) {
-        const substitutions = new Map();
+        const substitutions = new Map(invocation.capturedSubstitutions);
         declaration.parameters.forEach((parameter, index) => {
             const argument = invocation.arguments[index];
             if (!argument) return;

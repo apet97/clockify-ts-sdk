@@ -426,9 +426,16 @@ end-to-end and green before push. Drift gates are non-negotiable.
     recursive `bind.call`/`bind.apply` adapters are modeled only when their
     returned function is invoked, and only when the reaching member retains the
     native `Function.prototype.bind` identity rather than an exact-callable
-    custom/overwritten property; sibling callable writes stay isolated.
+    custom/overwritten property; sibling callable writes stay isolated. Reaching
+    bind-member writes are ordered across assignment, `Object.assign`,
+    `Object.defineProperty`, `Reflect.defineProperty`, and `Reflect.set`;
+    restoring a captured native member restores native normalization, while a
+    custom binder's invoked returned callable retains its captured receiver
+    substitutions and effects.
     Global-provenance direct/aliased/computed `Reflect.apply`
-    is normalized through the same bounded static/spread argument-list path.
+    is normalized through the same bounded static/spread argument-list path only
+    while its reaching member value is native. The same ordered write forms can
+    overwrite or restore that member; captured native aliases remain native.
     Unresolved/invalid governed apply lists fail closed while uninvoked binds
     remain non-effects. It rejects
     direct, chained, structural, angle-bracket, `as never`,
