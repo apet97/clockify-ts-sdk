@@ -223,9 +223,10 @@ make docs-drift
   array callback effects on statically recoverable non-empty receivers (`forEach`,
   `map`, `filter`, `every`, `some`, `find`, `findIndex`, `flatMap`, `reduce`,
   and `reduceRight`) with reducer-return propagation and bounded return-aware
-  short-circuiting, aliased `Object.assign`/`Reflect.set` effects with bounded
+  short-circuiting across conditional/logical/sequence receiver alternatives,
+  aliased/destructured `Object.assign`/`Reflect.set` effects with bounded
   left-to-right patch/spread/factory provenance and definite same-key overwrite
-  semantics, accessors,
+  semantics across sequential calls, accessors,
   contributing expressions/spreads, direct/chained/
   structural assertions, declaration-only/imported/transitive generic helpers,
   Function `call`/`apply`/`bind`, and symbol-provenance calls erased through
@@ -235,6 +236,8 @@ make docs-drift
   arguments. Exported/default-exported/escaped callables keep defaults
   reachable; asynchronous, known-empty, unknown-emptiness, and definitely
   short-circuited callbacks are not treated as pre-request effects.
+  Alternative, synthetic-invocation, and work overflow fail closed with stable
+  governance errors.
   Discarded comma operands are not request contributors. Build generated requests directly and use
   `ClockifyRequestBody<T>` for typed bodies. The canonical CLI/MCP exception
   arrays must remain empty; any future exception needs the full location,

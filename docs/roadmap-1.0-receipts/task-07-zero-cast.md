@@ -156,6 +156,17 @@ patches. Unresolved computed and spread keys stay conservative when last, while
 a later explicit same-key write safely dominates them. The final governance
 suite passes **237/237** fixtures.
 
+The ninth corrective review added RED/GREEN coverage for conditional, logical,
+and sequence array receiver alternatives; nested helper effects from synthetic
+inline callback invocations; and receiver-qualified dominance across sequential
+`Object.assign`/`Reflect.set` calls. Unresolved direct assign sources now carry
+the same ordered wildcard semantics as unresolved spreads. Destructured and
+renamed built-in aliases follow reaching overwrite provenance without accepting
+shadow objects. Explicit limits cap static alternatives at 64, synthetic
+invocations at 256, and total expansion work at 10,000; overflow produces a
+stable fail-closed governance error. The final governance suite passes
+**254/254** fixtures.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
