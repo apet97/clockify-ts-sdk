@@ -13,7 +13,8 @@ once v1.0.0 ships.
   strict inclusive client-side date filtering, `Last-Page` support, explicit
   warning, and lossless page/offset continuation metadata for the live route
   that ignores `start`/`end`. Requested scans are preflighted against the
-  supported page ceiling and never emit an out-of-range continuation.
+  supported page ceiling and publish a continuation-specific `nextMaxPages` so
+  every advertised next request remains runnable.
 
 ## [0.12.1](https://github.com/apet97/clockify-ts-sdk/compare/wrapper-v0.12.0...wrapper-v0.12.1) - 2026-07-14
 
