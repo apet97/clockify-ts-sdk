@@ -21,12 +21,18 @@ make release-readiness
 
 This preflight is static and no-network. It does not run Git, npm, Docker,
 Fern, tests, builds, or Clockify API calls, and it is not release proof. It
-prints the release-readiness report: required proof commands and file-state
-signals such as performance calibration and temporary context removal.
-For automation, the JSON report exposes compact blocker arrays:
-`blockingSignalIds` and `blockingRiskIds` in the release-readiness report.
-Those arrays are orientation only, not proof; use them to decide which receipt
-or risk-register item to close next.
+validates the release-readiness contract and prints only the contract-pass
+result; it does not print a blocker report or blocker arrays.
+
+To inspect the active risk-routing report and its blocker array, run:
+
+```bash
+make risk-status-report
+```
+
+That no-network report prints the final-readiness status, blocker count, and
+`readinessBlockingRiskIds`. It is orientation only, not proof; use it to decide
+which receipt or risk-register item to close next.
 
 For the active 1.0 sequence, `docs/risk-register.json` names six required open
 final-readiness blockers. While any remains open, the risk report must remain

@@ -5,12 +5,14 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { buildReport as buildReleaseDecisionPlan } from "./release-decision-plan.mjs";
 import { buildReport as buildRiskStatusReport } from "./risk-status-report.mjs";
+import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
 
 const root = process.cwd();
 let failures = [];
-const contractPath = process.env.CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH
-    ? path.resolve(process.env.CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH)
-    : path.join(root, "docs", "release-readiness-contract.json");
+const { riskRegisterPath, releaseContractPath: contractPath } = resolveReadinessTestFixtures({
+    canonicalRiskRegisterPath: path.join(root, "docs", "risk-register.json"),
+    canonicalReleaseContractPath: path.join(root, "docs", "release-readiness-contract.json"),
+});
 const contract = JSON.parse(await readFile(contractPath, "utf8"));
 
 async function readRel(relPath, label = relPath) {
@@ -28,12 +30,6 @@ async function existsRel(relPath, label = relPath) {
     } catch {
         return false;
     }
-}
-
-async function readRiskRegister(relPath, label = relPath) {
-    const configured = process.env.CLOCKIFY_RISK_REGISTER_PATH;
-    if (configured) return readFile(path.resolve(configured), "utf8");
-    return readRel(relPath, label);
 }
 
 function fail(label, message) {
@@ -280,7 +276,7 @@ const contractInventory = await readRel("docs/contract-inventory.json", "contrac
 const enterpriseAudit = await readRel("docs/enterprise-hardening-audit.json", "enterpriseAudit");
 
 if (contract.riskRegister) {
-    const riskRegister = JSON.parse(await readRiskRegister(contract.riskRegister.path, "riskRegister.path"));
+    const riskRegister = JSON.parse(await readFile(riskRegisterPath, "utf8"));
     const requiredBlockerIds = contract.riskRegister.requiredOpenFinalReadinessBlockingIds ?? [];
     const riskRegisterBlockerIds =
         riskRegister.reportGenerator?.generatedReport?.requiredReadinessBlockingRiskIds ?? [];
@@ -301,10 +297,7 @@ if (contract.riskRegister) {
             fail("riskRegister", `${id} must set finalReadinessBlocking: true`);
         }
     }
-    const riskStatus = await buildRiskStatusReport({
-        status: "all",
-        registerPath: process.env.CLOCKIFY_RISK_REGISTER_PATH,
-    });
+    const riskStatus = await buildRiskStatusReport({ status: "all", registerPath: riskRegisterPath });
     assertExactFields(
         riskStatus.riskRoutingSummary,
         { finalReadinessRiskStatus: contract.riskRegister.expectedFinalReadinessRiskStatus },

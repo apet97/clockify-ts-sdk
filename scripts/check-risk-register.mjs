@@ -6,18 +6,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildReport } from "./risk-status-report.mjs";
+import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-function configuredInputPath(name, defaultRelativePath) {
-    const configured = process.env[name];
-    return configured ? path.resolve(configured) : path.join(root, defaultRelativePath);
-}
-
-const registerPath = configuredInputPath("CLOCKIFY_RISK_REGISTER_PATH", "docs/risk-register.json");
-const releaseContractPath = configuredInputPath(
-    "CLOCKIFY_RELEASE_READINESS_CONTRACT_PATH",
-    "docs/release-readiness-contract.json",
-);
+const { riskRegisterPath: registerPath, releaseContractPath } = resolveReadinessTestFixtures({
+    canonicalRiskRegisterPath: path.join(root, "docs", "risk-register.json"),
+    canonicalReleaseContractPath: path.join(root, "docs", "release-readiness-contract.json"),
+});
 const markdownPath = path.join(root, "docs", "risk-register.md");
 const register = JSON.parse(fs.readFileSync(registerPath, "utf8"));
 const releaseContract = JSON.parse(fs.readFileSync(releaseContractPath, "utf8"));
@@ -312,7 +307,7 @@ if (register.reportGenerator) {
         fail("docs/risk-register.md", "missing risk status report command");
     }
 
-    const generatedReport = await buildReport({ status: "all" });
+    const generatedReport = await buildReport({ status: "all", registerPath });
     const generatedContract = register.reportGenerator.generatedReport ?? {};
     assertExactFields(generatedReport, generatedContract.exactFields, "reportGenerator.generatedReport");
     assertKeys(generatedReport.counts, generatedContract.requiredCountKeys, "reportGenerator.generatedReport.counts");

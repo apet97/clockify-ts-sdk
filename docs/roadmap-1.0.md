@@ -17,6 +17,9 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 - Task 1 is implemented but awaits two independent approvals. Pending tasks
   have no completion evidence recorded; this roadmap does not treat a local
   task ledger or an ignored agent report as durable proof.
+- Task 1 approvals must cover the complete corrected range `ec68c61..HEAD`.
+  Resolve `git rev-parse HEAD` immediately before each approval record; an
+  approval that names only the initial implementation commit is insufficient.
 - Future receipts live under `docs/roadmap-1.0-receipts/` at the exact path
   named below. A planned path is not present evidence: its absence keeps the
   corresponding task pending.
@@ -25,7 +28,7 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 
 | Task | Depends on | Status | Evidence now | Exact closure command and required artifact | Release-blocking |
 |---|---|---|---|---|---|
-| 1. Truthful readiness baseline | — | implemented; approvals pending | commit `e0f44a40de3059c9c2618f56440c0b428702361c`; `docs/roadmap-1.0-status.json` | `make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the commit | Yes |
+| 1. Truthful readiness baseline | — | implemented; approvals pending | initial commit `e0f44a40de3059c9c2618f56440c0b428702361c`; `docs/roadmap-1.0-status.json` | `make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved `HEAD` and full `ec68c61..HEAD` range | Yes |
 | 2. Expense filter contract | 1 | pending | none recorded | `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md` | Yes |
 | 3. Expense update schema | 2 | pending | none recorded | `make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md` | Yes |
 | 4. Typed listForUser workflows | 3 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage | Yes |
