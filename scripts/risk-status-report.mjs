@@ -133,7 +133,7 @@ export async function buildReport(options = { status: "all" }) {
     if (!VALID_STATUSES.has(status)) {
         throw new Error(`Unknown status: ${status}`);
     }
-    const register = await readJson(options.registerPath ?? process.env.CLOCKIFY_RISK_REGISTER_PATH ?? "docs/risk-register.json");
+    const register = await readJson(options.registerPath ?? "docs/risk-register.json");
     const risks = status === "all" ? register.risks : register.risks.filter((risk) => risk.status === status);
 
     const performanceBudgets = await readJsonOptional("docs/performance-budgets.json", {});

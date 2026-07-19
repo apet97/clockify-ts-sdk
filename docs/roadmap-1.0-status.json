@@ -10,7 +10,13 @@
     }
   },
   "task1": {
-    "implementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
+    "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
+    "approvalTarget": {
+      "reviewedRange": "ec68c61..HEAD",
+      "reviewedHead": "HEAD",
+      "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
+      "approvalCannotNameOnlyInitialImplementationCommit": true
+    },
     "status": "implemented-awaiting-independent-approvals",
     "requiredIndependentApprovals": 2,
     "recordedIndependentApprovals": 0
