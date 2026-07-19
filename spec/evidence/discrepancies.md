@@ -2641,34 +2641,30 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
   `_strictnessNote` and `docs/consumer-cast-budget-contract.json` record the same.
 - **Status:** `resolved` (2026-06-22).
 
-### `consumer.cast-budget` — COMPENSATED 2026-06-18
+### `consumer.cast-budget` — RESOLVED 2026-07-19
 
-- **Action:** the consumer list-request casts (`projects.list`, `clients.list`,
+- **Action:** all consumer list/write request objects now bind directly to
+  generated request unions or to a typed `ClockifyRequestBody<T>` before the
+  flattened request is assembled. The source-aware gate proves CLI 0 / MCP 0
+  request casts and canonical exceptions 0 / 0. The progression began by moving
+  the list-request casts (`projects.list`, `clients.list`,
   `tags.list`, `tasks.list`, `timeEntries.listForUser`, `userGroups.list`,
   `approvals.list`, `scheduling.list`, and the CLI mirrors) are typed with their
-  generated `ClockifyApi.List*Request` types where the generated type is clean.
-  Write-side create/update calls now prefer the generated request union's
-  body-envelope arm via `clockify-sdk-ts-115/requests`
-  (`ClockifyRequestBody<T>` + `wireBody<T>` only where a validated live shape is
-  genuinely outside the generated type). Inline single-id extractions collapse
+  generated `ClockifyApi.List*Request` types. Inline single-id extractions collapse
   onto `entityId()` (`mcp/src/result.ts`; CLI commands import it directly from
-  the `clockify-sdk-ts-115/operation-receipt` subpath). Surviving
-  `as never` casts are an enumerated allow-list (archive-before-delete overlays,
-  status-union, report/audit passthrough, runtime body-spread writes, and
-  multipart/list envelope mismatches), each immediately line-commented
-  `// KEEP as never` and enforced by `scripts/check-consumer-cast-budget.mjs`.
-- **KEEP allow-list:** `mcp/src/tools/clients.ts` + `cli/src/commands/clients.ts`
+  the `clockify-sdk-ts-115/operation-receipt` subpath).
+- **Historical KEEP allow-list (now empty):** `mcp/src/tools/clients.ts` + `cli/src/commands/clients.ts`
   + `mcp/src/tools/workflows/resolve.ts` (clients.update body-envelope
   `archived`), `mcp/src/tools/workflows/resolve.ts` (tasks.update DONE overlay),
   `mcp/src/tools/timeOff.ts` (changeTimeOffRequestStatus union+note),
   `mcp/src/tools/{reports,audit,invoices,expenses}.ts` and CLI mirrors
   (passthrough/envelope lists), plus runtime body-spread writes whose generated
-  flattened request types reject locally validated bodies.
-- **Status:** `compensated-in-consumer-layer` (updated 2026-06-22). Gate:
-  `make consumer-cast-budget` (budget 0, ratchet target 0). The former wrapper EOPT
+  flattened request types rejected locally validated bodies. These were removed
+  before the Task 7 canonical-zero scan; they are not current exceptions.
+- **Status:** `resolved` (2026-07-19). Gate: `make consumer-cast-budget`
+  (source-aware request casts 0, canonical exceptions 0). The former wrapper EOPT
   differential was retired 2026-06-22 — EOPT is now enforced wrapper-wide by `npm run
-  type-check`. Current consumer ratio: typed request bindings >= 100,
-  `Record<string, unknown>` literals <= 40, live `KEEP as never` comments <= 60.
+  type-check`. Current request-cast exceptions: CLI 0, MCP 0.
 - **2026-06-20 reduction:** after the corrected OpenAPI re-snapshot, the residual
   annotated `KEEP as never` count fell **cli 5->1, mcp 22->7**.
   - *Cleanly dropped* (regenerated type now matches the literal exactly): the
@@ -2714,6 +2710,18 @@ exact wiring notes and stay `open` until coded + probe-pinned here.
     ambiguity detection, empty-page termination, and the exact 10,000-entry fix
     scan ceiling. The 2026-06-20 counts and `KEEP as never` list above remain
     explicitly historical evidence; they are not the current cast inventory.
+  - *Resolved at the request boundary 2026-07-19:* Task 7 replaced the literal
+    `as never` budget with a TypeScript-AST ratchet covering direct, chained,
+    angle-bracket, never, helper-hidden, and any-backed request assertions. The
+    scan exposed two residual holiday request-object casts; both now construct
+    generated request unions from typed `ClockifyRequestBody<T>` values. Current
+    inventory is CLI 0 / MCP 0 with canonical exception arrays CLI 0 / MCP 0.
+    Future exception records are accepted by the reusable validator only when
+    file/range-or-marker, generated type, discrepancy, open risk, evidence
+    anchor, exact closure target, and one-to-one live cast location all validate;
+    the canonical 1.0 contract rejects non-empty arrays. The Task 6 public type
+    fixture also proves the root and `./ensure` archive/delete adapter inputs are
+    not blanket `any`.
 
 ---
 

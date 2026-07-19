@@ -1,129 +1,132 @@
 #!/usr/bin/env node
-// Every `as never` in cli/src + mcp/src must be either eliminated or
-// annotated with a `KEEP as never` comment on the same line or in the contiguous
-// comment block immediately above it. result.ts/output-schema.ts are forwarding
-// seams and are exempt.
+// Source-aware zero request-cast ratchet for CLI/MCP request construction.
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { validateConsumerCastGovernance } from "./lib/consumer-cast-governance.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const failures = [];
-const ROOTS = ["cli/src", "mcp/src"];
-const FORBIDDEN_IDENTIFIER_ROOTS = [
-    "wrapper/tests",
-    "wrapper/examples",
-    "cli/src",
-    "cli/tests",
-    "mcp/src",
-    "mcp/tests",
-];
-
 const contract = JSON.parse(
     await readFile(path.join(root, "docs/consumer-cast-budget-contract.json"), "utf8"),
 );
-if (contract.schemaVersion !== 1) failures.push("schemaVersion must be 1");
-const budget = contract.allowedRequestCastBudget;
-if (!Number.isInteger(budget) || budget < 0) {
-    failures.push("allowedRequestCastBudget must be a non-negative integer");
-}
-const exemptSuffixes = contract.exemptPathSuffixes;
-if (!Array.isArray(exemptSuffixes) || !exemptSuffixes.every((value) => typeof value === "string")) {
-    failures.push("exemptPathSuffixes must be an array of strings");
-}
-const pathExemptions = Array.isArray(exemptSuffixes) ? exemptSuffixes : [];
 
-function isAnnotated(lines, index) {
-    if (/KEEP as never/.test(lines[index])) return true;
-    for (let cursor = index - 1; cursor >= 0 && /^\s*\/\//.test(lines[cursor]); cursor -= 1) {
-        if (/KEEP as never/.test(lines[cursor])) return true;
-    }
-    return false;
-}
-
-if (
-    !isAnnotated(["// KEEP as never: x", "// rationale", "foo as never;"], 2) ||
-    isAnnotated(["const x = 1;", "foo as never;"], 1)
-) {
-    failures.push("annotation self-test regressed: must accept `KEEP as never` and reject a bare `as never`");
-}
-
-async function listTs(dir) {
-    const out = [];
-    const stack = [dir];
-    while (stack.length) {
-        const d = stack.pop();
+async function listTypeScript(relativeRoot) {
+    const files = [];
+    const stack = [relativeRoot];
+    while (stack.length > 0) {
+        const directory = stack.pop();
         let entries;
         try {
-            entries = await readdir(path.join(root, d), { withFileTypes: true });
+            entries = await readdir(path.join(root, directory), { withFileTypes: true });
         } catch {
-            failures.push(`missing directory ${d}`);
+            failures.push(`missing governed directory ${directory}`);
             continue;
         }
-        for (const e of entries) {
-            const rel = path.join(d, e.name);
-            if (e.isDirectory()) stack.push(rel);
-            else if (e.name.endsWith(".ts")) out.push(rel);
+        for (const entry of entries) {
+            const relativePath = path.join(directory, entry.name);
+            if (entry.isDirectory()) stack.push(relativePath);
+            else if (entry.isFile() && entry.name.endsWith(".ts")) files.push(relativePath);
         }
     }
-    return out.sort();
+    return files.sort();
 }
 
-let unannotated = 0;
-const offenders = [];
-const forbiddenIdentifier = "wireBody";
-const forbiddenIdentifierPattern = new RegExp(`\\b${forbiddenIdentifier}\\b`);
-const forbiddenIdentifierOffenders = [];
-for (const r of ROOTS) {
-    for (const rel of await listTs(r)) {
-        if (pathExemptions.some((s) => rel.endsWith(s))) continue;
-        const lines = (await readFile(path.join(root, rel), "utf8")).split("\n");
-        for (let i = 0; i < lines.length; i++) {
-            if (!/\bas never\b/.test(lines[i])) continue;
-            if (!isAnnotated(lines, i)) {
-                unannotated++;
-                offenders.push(`${rel}:${i + 1}`);
+const validation = await validateConsumerCastGovernance({ root, contract });
+failures.push(...validation.failures);
+const governance = contract.requestCastGovernance;
+if (governance?.canonicalZeroBaseline !== true) {
+    failures.push("requestCastGovernance.canonicalZeroBaseline must stay true");
+}
+if (JSON.stringify(governance?.sourceRoots) !== JSON.stringify({ cli: "cli/src", mcp: "mcp/src" })) {
+    failures.push("requestCastGovernance.sourceRoots must govern exactly cli/src and mcp/src");
+}
+if (
+    governance?.exceptions == null ||
+    Object.keys(governance.exceptions).sort().join(",") !== "cli,mcp"
+) {
+    failures.push("requestCastGovernance.exceptions must contain exactly cli and mcp arrays");
+}
+
+const escapeContract = contract.forbiddenRequestEscape;
+if (
+    escapeContract == null ||
+    escapeContract.identifier !== "wireBody" ||
+    !Array.isArray(escapeContract.roots)
+) {
+    failures.push("forbiddenRequestEscape must name an identifier and governed roots");
+} else {
+    const governedFiles = new Set();
+    for (const relativeRoot of escapeContract.roots) {
+        for (const relativePath of await listTypeScript(relativeRoot)) governedFiles.add(relativePath);
+    }
+    if (escapeContract.wrapperRootTypeScript === true) {
+        for (const entry of await readdir(path.join(root, "wrapper"), { withFileTypes: true })) {
+            if (entry.isFile() && entry.name.endsWith(".ts")) {
+                governedFiles.add(path.join("wrapper", entry.name));
+            }
+        }
+    }
+    const identifierPattern = new RegExp(`\\b${escapeContract.identifier}\\b`);
+    for (const relativePath of [...governedFiles].sort()) {
+        const lines = (await readFile(path.join(root, relativePath), "utf8")).split("\n");
+        for (let index = 0; index < lines.length; index += 1) {
+            if (identifierPattern.test(lines[index])) {
+                failures.push(
+                    `forbidden request escape \`${escapeContract.identifier}\` at ${relativePath}:${index + 1}`,
+                );
             }
         }
     }
 }
 
-const forbiddenFiles = new Set();
-for (const scanRoot of FORBIDDEN_IDENTIFIER_ROOTS) {
-    for (const rel of await listTs(scanRoot)) forbiddenFiles.add(rel);
-}
-for (const entry of await readdir(path.join(root, "wrapper"), { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith(".ts")) {
-        forbiddenFiles.add(path.join("wrapper", entry.name));
+const publicProof = contract.publicNoAnyProof;
+if (
+    publicProof == null ||
+    typeof publicProof.path !== "string" ||
+    typeof publicProof.compilerGate !== "string" ||
+    !Array.isArray(publicProof.contains)
+) {
+    failures.push("publicNoAnyProof must name its existing compiler proof and markers");
+} else {
+    let proofSource = "";
+    try {
+        proofSource = await readFile(path.join(root, publicProof.path), "utf8");
+    } catch {
+        failures.push(`publicNoAnyProof.path does not exist: ${publicProof.path}`);
     }
-}
-for (const rel of [...forbiddenFiles].sort()) {
-    const lines = (await readFile(path.join(root, rel), "utf8")).split("\n");
-    for (let i = 0; i < lines.length; i++) {
-        if (forbiddenIdentifierPattern.test(lines[i])) {
-            forbiddenIdentifierOffenders.push(`${rel}:${i + 1}`);
+    for (const marker of publicProof.contains) {
+        if (typeof marker !== "string" || !proofSource.includes(marker)) {
+            failures.push(`publicNoAnyProof is missing marker ${String(marker)}`);
         }
     }
-}
-
-if (forbiddenIdentifierOffenders.length > 0) {
-    failures.push(
-        `forbidden request escape \`${forbiddenIdentifier}\` found in governed TypeScript`,
-    );
-    for (const offender of forbiddenIdentifierOffenders) {
-        failures.push(`  forbidden: ${offender}`);
+    const [makeCommand, makeTarget, ...tail] = publicProof.compilerGate.split(/\s+/);
+    const makefile = await readFile(path.join(root, "Makefile"), "utf8");
+    if (makeCommand !== "make" || !makeTarget || tail.length > 0 || !makefile.includes(`${makeTarget}:`)) {
+        failures.push(`publicNoAnyProof.compilerGate must name one existing make target`);
     }
 }
 
-if (unannotated > budget) {
-    failures.push(`unannotated \`as never\` count ${unannotated} exceeds budget ${budget}`);
-    for (const o of offenders) failures.push(`  unannotated: ${o}`);
+for (const packageName of ["wrapper", "cli", "mcp"]) {
+    const strictness = contract.strictness?.[packageName];
+    for (const option of ["strict", "noUncheckedIndexedAccess", "noImplicitOverride", "exactOptionalPropertyTypes"]) {
+        if (strictness?.[option] !== true) failures.push(`strictness.${packageName}.${option} must be true`);
+    }
 }
 
 if (failures.length > 0) {
     console.error("Consumer cast budget failed:");
-    for (const f of failures) console.error(`- ${f}`);
+    for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
 }
 
-console.log(`Consumer cast budget passed (${unannotated} unannotated \`as never\`, budget ${budget}).`);
+const counts = Object.fromEntries(
+    ["cli", "mcp"].map((packageName) => [
+        packageName,
+        validation.findings.filter((finding) => finding.packageName === packageName).length,
+    ]),
+);
+console.log(
+    `Consumer cast budget passed (request casts: CLI ${counts.cli}, MCP ${counts.mcp}; exceptions: CLI 0, MCP 0; public any-adapter proof governed).`,
+);

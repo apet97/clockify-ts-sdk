@@ -21,6 +21,9 @@ once v1.0.0 ships.
 
 ### Changed
 
+- Extended the existing public-package compile fixture to prove the root-exported
+  archive/delete adapter callback inputs remain free of blanket `any` types; the
+  zero request-cast contract reuses this proof rather than adding a parallel gate.
 - Corrected operation coverage documentation to distinguish all 169 generated
   SDK methods from the exact 155 explicitly named / 14 operationId-derived
   naming split, backed by the local codegen receipt, a reviewed inventory of
