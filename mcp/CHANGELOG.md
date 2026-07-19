@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-mcp-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `clockify_expenses_list` now uses the shared bounded SDK date filter, exposes
+  distinct `limit`/`pageSize`/`page`/`maxPages` controls, and returns the
+  client-side-filter warning plus next-page metadata.
+
 ## [0.6.2](https://github.com/apet97/clockify-ts-sdk/compare/mcp-v0.6.1...mcp-v0.6.2) - 2026-07-14
 
 ### Fixed

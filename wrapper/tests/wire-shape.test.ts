@@ -93,6 +93,11 @@ const LEDGER_COVERAGE: Record<string, readonly string[]> = {
         "mcp/tests/sdk-narrow.test.ts",
     ],
     "invoices.payments.post-returns-invoice": ["wrapper/tests/wire-shape.test.ts"],
+    "expenses.list.start-end-ignored-client-filtered": [
+        "wrapper/tests/expense-list.test.ts",
+        "cli/tests/read-commands-expenses.test.ts",
+        "mcp/tests/expenses.test.ts",
+    ],
 };
 
 /**

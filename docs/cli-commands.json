@@ -1,241 +1,241 @@
 {
-  "schemaVersion": 1,
-  "commands": [
-    {
-      "command": "clk115 status",
-      "description": "Print workspace, current user, and running timer."
-    },
-    {
-      "command": "clk115 doctor",
-      "description": "Check local CLI configuration without contacting Clockify."
-    },
-    {
-      "command": "clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]",
-      "description": "Start a timer. Resolves project, task, and tag names to IDs."
-    },
-    {
-      "command": "clk115 stop",
-      "description": "Stop the running timer for the current user."
-    },
-    {
-      "command": "clk115 log <duration> <description> [-p project] [-t task] [--tag tag…] [--billable] [--end iso]",
-      "description": "Log a finished entry. Resolves project, task, and tag names to IDs. Duration accepts `1h30m`, `90m`, or `PT1H30M`."
-    },
-    {
-      "command": "clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]",
-      "description": "List time entries for the current user."
-    },
-    {
-      "command": "clk115 entries delete <id>",
-      "description": "Delete a time entry."
-    },
-    {
-      "command": "clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]",
-      "description": "List projects."
-    },
-    {
-      "command": "clk115 projects create <name> [--client id] [--color hex] [--billable]",
-      "description": "Create a project."
-    },
-    {
-      "command": "clk115 projects get <id>",
-      "description": "Get one project by ID."
-    },
-    {
-      "command": "clk115 projects update <id> [--name text] [--client id] [--color hex] [--note text] [--billable|--no-billable] [--archived|--no-archived]",
-      "description": "Update a project."
-    },
-    {
-      "command": "clk115 projects delete <id>",
-      "description": "Delete a project (archives first; an active project cannot be deleted)."
-    },
-    {
-      "command": "clk115 clients list [--limit N] [--page N] [--name text] [--archived]",
-      "description": "List clients."
-    },
-    {
-      "command": "clk115 clients create <name> [--note text]",
-      "description": "Create a client."
-    },
-    {
-      "command": "clk115 clients get <id>",
-      "description": "Get one client by ID."
-    },
-    {
-      "command": "clk115 clients update <id> [--name text] [--note text] [--address text] [--archived|--no-archived]",
-      "description": "Update a client."
-    },
-    {
-      "command": "clk115 clients delete <id>",
-      "description": "Delete a client (archives first; an active client cannot be deleted)."
-    },
-    {
-      "command": "clk115 tasks list <projectId> [--limit N] [--page N] [--name text]",
-      "description": "List tasks for a project."
-    },
-    {
-      "command": "clk115 tasks create <projectId> <name> [--billable] [--estimate iso] [--assignee id…]",
-      "description": "Create a task under a project."
-    },
-    {
-      "command": "clk115 tasks get <projectId> <id>",
-      "description": "Get one task by project ID and task ID."
-    },
-    {
-      "command": "clk115 tasks update <projectId> <id> [--name text] [--status ACTIVE|DONE] [--estimate iso] [--billable|--no-billable] [--assignee id…]",
-      "description": "Update a task."
-    },
-    {
-      "command": "clk115 tasks delete <projectId> <id>",
-      "description": "Delete a task (marks DONE first; an active task cannot be deleted)."
-    },
-    {
-      "command": "clk115 tags list [--limit N] [--page N] [--name text] [--archived]",
-      "description": "List tags."
-    },
-    {
-      "command": "clk115 tags create <name>",
-      "description": "Create a tag."
-    },
-    {
-      "command": "clk115 tags get <id>",
-      "description": "Get one tag by ID."
-    },
-    {
-      "command": "clk115 tags update <id> [--name text] [--archived|--no-archived]",
-      "description": "Update a tag."
-    },
-    {
-      "command": "clk115 tags delete <id>",
-      "description": "Delete a tag."
-    },
-    {
-      "command": "clk115 webhooks list [--type type]",
-      "description": "List outbound webhooks."
-    },
-    {
-      "command": "clk115 webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]",
-      "description": "Create a webhook subscription."
-    },
-    {
-      "command": "clk115 webhooks delete <id>",
-      "description": "Delete a webhook subscription."
-    },
-    {
-      "command": "clk115 invoices list",
-      "description": "List invoices in the workspace."
-    },
-    {
-      "command": "clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]",
-      "description": "Create an invoice draft."
-    },
-    {
-      "command": "clk115 expenses list [--limit N] [--page N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]",
-      "description": "List workspace expenses."
-    },
-    {
-      "command": "clk115 expenses get <id>",
-      "description": "Get one expense by ID."
-    },
-    {
-      "command": "clk115 expenses create --amount N --category id --date YYYY-MM-DD [--user id] [--project id] [--task id] [--notes text] [--billable|--no-billable]",
-      "description": "Create an expense (scalar body; --user defaults to the API-key owner)."
-    },
-    {
-      "command": "clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable|--no-billable]",
-      "description": "Update an expense (full replace of amount, category, date)."
-    },
-    {
-      "command": "clk115 expenses delete <id>",
-      "description": "Delete an expense."
-    },
-    {
-      "command": "clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]",
-      "description": "List time-off requests."
-    },
-    {
-      "command": "clk115 timeoff submit --policy id --start date (--end date | --days N) [--note text] [--half-day --half-day-period FIRST_HALF|SECOND_HALF]",
-      "description": "Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies)."
-    },
-    {
-      "command": "clk115 scheduling list [--limit N] [--page N] [--name text]",
-      "description": "List scheduling assignments."
-    },
-    {
-      "command": "clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]",
-      "description": "Create a scheduling assignment. Drafts by default; pass `--publish` to publish."
-    },
-    {
-      "command": "clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS|DOES_NOT_CONTAIN --page N --limit N]",
-      "description": "Search the workspace audit log. Window must be ≤ 31 days."
-    },
-    {
-      "command": "clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name|id…] [--client name|id…]",
-      "description": "Summary report totals over a date range, grouped per --groups. Read-only."
-    },
-    {
-      "command": "clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]",
-      "description": "Detailed report listing individual time entries over a date range. Read-only."
-    },
-    {
-      "command": "clk115 reports weekly [--period p] [--from date] [--to date] [--group USER|PROJECT] [--subgroup TIME]",
-      "description": "Weekly report aggregating tracked time per week over a date range. Read-only."
-    },
-    {
-      "command": "clk115 reports attendance [--period p] [--from date] [--to date]",
-      "description": "Attendance report of clock-in/out activity over a date range. Read-only."
-    },
-    {
-      "command": "clk115 shared-reports list",
-      "description": "List the workspace's shared (public-link) reports. Read-only."
-    },
-    {
-      "command": "clk115 shared-reports view <id> [--export-type JSON_V1|JSON|CSV|XLSX|PDF]",
-      "description": "View a shared report's rendered data by ID (not workspace-scoped). Read-only."
-    },
-    {
-      "command": "clk115 shared-reports create --name X --type T --filter json [--public]",
-      "description": "Create a shared (public-link) report."
-    },
-    {
-      "command": "clk115 shared-reports update <id> --name X --type T --filter json [--public]",
-      "description": "Replace a shared report by ID (full replace of name, type, and filter)."
-    },
-    {
-      "command": "clk115 shared-reports delete <id>",
-      "description": "Delete a shared report."
-    },
-    {
-      "command": "clk115 users me",
-      "description": "Show the current authenticated user (the API-key owner). Read-only."
-    },
-    {
-      "command": "clk115 users list [--limit N] [--page N] [--name text]",
-      "description": "List members of the workspace. Read-only."
-    },
-    {
-      "command": "clk115 users invite <email> [--no-send-email]",
-      "description": "Invite (add) a user to the workspace by email."
-    },
-    {
-      "command": "clk115 users update-profile <userId> [--name text] [--image-url url] [--remove-image] [--week-start day] [--work-capacity iso] [--working-days days…]",
-      "description": "Update one user's member profile."
-    },
-    {
-      "command": "clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json|@file|-] [--all] [--page-size N] [--max-pages N] [--include-headers]",
-      "description": "Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID."
-    },
-    {
-      "command": "clk115 completion [zsh|bash|fish]",
-      "description": "Print a shell completion script for zsh, bash, or fish."
-    },
-    {
-      "command": "clk115 help [command]",
-      "description": "Print per-command help."
-    },
-    {
-      "command": "clk115 --version",
-      "description": "Print CLI version."
-    }
-  ]
+    "schemaVersion": 1,
+    "commands": [
+        {
+            "command": "clk115 status",
+            "description": "Print workspace, current user, and running timer."
+        },
+        {
+            "command": "clk115 doctor",
+            "description": "Check local CLI configuration without contacting Clockify."
+        },
+        {
+            "command": "clk115 start [description] [-p project] [-t task] [--tag tag…] [--billable]",
+            "description": "Start a timer. Resolves project, task, and tag names to IDs."
+        },
+        {
+            "command": "clk115 stop",
+            "description": "Stop the running timer for the current user."
+        },
+        {
+            "command": "clk115 log <duration> <description> [-p project] [-t task] [--tag tag…] [--billable] [--end iso]",
+            "description": "Log a finished entry. Resolves project, task, and tag names to IDs. Duration accepts `1h30m`, `90m`, or `PT1H30M`."
+        },
+        {
+            "command": "clk115 entries list [--limit N] [--page N] [--from YYYY-MM-DD] [--to YYYY-MM-DD] [--description text]",
+            "description": "List time entries for the current user."
+        },
+        {
+            "command": "clk115 entries delete <id>",
+            "description": "Delete a time entry."
+        },
+        {
+            "command": "clk115 projects list [--limit N] [--page N] [--name text] [--archived] [--client id]",
+            "description": "List projects."
+        },
+        {
+            "command": "clk115 projects create <name> [--client id] [--color hex] [--billable]",
+            "description": "Create a project."
+        },
+        {
+            "command": "clk115 projects get <id>",
+            "description": "Get one project by ID."
+        },
+        {
+            "command": "clk115 projects update <id> [--name text] [--client id] [--color hex] [--note text] [--billable|--no-billable] [--archived|--no-archived]",
+            "description": "Update a project."
+        },
+        {
+            "command": "clk115 projects delete <id>",
+            "description": "Delete a project (archives first; an active project cannot be deleted)."
+        },
+        {
+            "command": "clk115 clients list [--limit N] [--page N] [--name text] [--archived]",
+            "description": "List clients."
+        },
+        {
+            "command": "clk115 clients create <name> [--note text]",
+            "description": "Create a client."
+        },
+        {
+            "command": "clk115 clients get <id>",
+            "description": "Get one client by ID."
+        },
+        {
+            "command": "clk115 clients update <id> [--name text] [--note text] [--address text] [--archived|--no-archived]",
+            "description": "Update a client."
+        },
+        {
+            "command": "clk115 clients delete <id>",
+            "description": "Delete a client (archives first; an active client cannot be deleted)."
+        },
+        {
+            "command": "clk115 tasks list <projectId> [--limit N] [--page N] [--name text]",
+            "description": "List tasks for a project."
+        },
+        {
+            "command": "clk115 tasks create <projectId> <name> [--billable] [--estimate iso] [--assignee id…]",
+            "description": "Create a task under a project."
+        },
+        {
+            "command": "clk115 tasks get <projectId> <id>",
+            "description": "Get one task by project ID and task ID."
+        },
+        {
+            "command": "clk115 tasks update <projectId> <id> [--name text] [--status ACTIVE|DONE] [--estimate iso] [--billable|--no-billable] [--assignee id…]",
+            "description": "Update a task."
+        },
+        {
+            "command": "clk115 tasks delete <projectId> <id>",
+            "description": "Delete a task (marks DONE first; an active task cannot be deleted)."
+        },
+        {
+            "command": "clk115 tags list [--limit N] [--page N] [--name text] [--archived]",
+            "description": "List tags."
+        },
+        {
+            "command": "clk115 tags create <name>",
+            "description": "Create a tag."
+        },
+        {
+            "command": "clk115 tags get <id>",
+            "description": "Get one tag by ID."
+        },
+        {
+            "command": "clk115 tags update <id> [--name text] [--archived|--no-archived]",
+            "description": "Update a tag."
+        },
+        {
+            "command": "clk115 tags delete <id>",
+            "description": "Delete a tag."
+        },
+        {
+            "command": "clk115 webhooks list [--type type]",
+            "description": "List outbound webhooks."
+        },
+        {
+            "command": "clk115 webhooks create --name X --url U --event E [--trigger-source-type T --trigger-source ids]",
+            "description": "Create a webhook subscription."
+        },
+        {
+            "command": "clk115 webhooks delete <id>",
+            "description": "Delete a webhook subscription."
+        },
+        {
+            "command": "clk115 invoices list",
+            "description": "List invoices in the workspace."
+        },
+        {
+            "command": "clk115 invoices create --client id --number N --currency USD --issued YYYY-MM-DD --due YYYY-MM-DD [--time-view-mode mode]",
+            "description": "Create an invoice draft."
+        },
+        {
+            "command": "clk115 expenses list [--limit N] [--page-size N] [--max-pages N] [--page N] [--start date] [--end date]",
+            "description": "List workspace expenses; date bounds are applied client-side across bounded pages."
+        },
+        {
+            "command": "clk115 expenses get <id>",
+            "description": "Get one expense by ID."
+        },
+        {
+            "command": "clk115 expenses create --amount N --category id --date YYYY-MM-DD [--user id] [--project id] [--task id] [--notes text] [--billable|--no-billable]",
+            "description": "Create an expense (scalar body; --user defaults to the API-key owner)."
+        },
+        {
+            "command": "clk115 expenses update <id> --amount N --category id --date YYYY-MM-DD --user id [--project id] [--task id] [--notes text] [--billable|--no-billable]",
+            "description": "Update an expense (full replace of amount, category, date)."
+        },
+        {
+            "command": "clk115 expenses delete <id>",
+            "description": "Delete an expense."
+        },
+        {
+            "command": "clk115 timeoff list [--page N] [--limit N] [--start date] [--end date] [--status APPROVED,PENDING,…] [--user ids]",
+            "description": "List time-off requests."
+        },
+        {
+            "command": "clk115 timeoff submit --policy id --start date (--end date | --days N) [--note text] [--half-day --half-day-period FIRST_HALF|SECOND_HALF]",
+            "description": "Submit a time-off request against a policy. Provide --end (HOURS-unit policies) or --days (DAYS-unit policies)."
+        },
+        {
+            "command": "clk115 scheduling list [--limit N] [--page N] [--name text]",
+            "description": "List scheduling assignments."
+        },
+        {
+            "command": "clk115 scheduling create --user id --project id --start date --end date --hours-per-day N [--task id --note text --billable --include-non-working-days --publish]",
+            "description": "Create a scheduling assignment. Drafts by default; pass `--publish` to publish."
+        },
+        {
+            "command": "clk115 audit-log search --start RFC3339 --end RFC3339 --actions A,B,… [--authors ids --authors-mode CONTAINS|DOES_NOT_CONTAIN --page N --limit N]",
+            "description": "Search the workspace audit log. Window must be ≤ 31 days."
+        },
+        {
+            "command": "clk115 reports summary [--period p] [--from date] [--to date] [--groups PROJECT,TASK] [--billable] [--project name|id…] [--client name|id…]",
+            "description": "Summary report totals over a date range, grouped per --groups. Read-only."
+        },
+        {
+            "command": "clk115 reports detailed [--period p] [--from date] [--to date] [--page N] [--page-size N]",
+            "description": "Detailed report listing individual time entries over a date range. Read-only."
+        },
+        {
+            "command": "clk115 reports weekly [--period p] [--from date] [--to date] [--group USER|PROJECT] [--subgroup TIME]",
+            "description": "Weekly report aggregating tracked time per week over a date range. Read-only."
+        },
+        {
+            "command": "clk115 reports attendance [--period p] [--from date] [--to date]",
+            "description": "Attendance report of clock-in/out activity over a date range. Read-only."
+        },
+        {
+            "command": "clk115 shared-reports list",
+            "description": "List the workspace's shared (public-link) reports. Read-only."
+        },
+        {
+            "command": "clk115 shared-reports view <id> [--export-type JSON_V1|JSON|CSV|XLSX|PDF]",
+            "description": "View a shared report's rendered data by ID (not workspace-scoped). Read-only."
+        },
+        {
+            "command": "clk115 shared-reports create --name X --type T --filter json [--public]",
+            "description": "Create a shared (public-link) report."
+        },
+        {
+            "command": "clk115 shared-reports update <id> --name X --type T --filter json [--public]",
+            "description": "Replace a shared report by ID (full replace of name, type, and filter)."
+        },
+        {
+            "command": "clk115 shared-reports delete <id>",
+            "description": "Delete a shared report."
+        },
+        {
+            "command": "clk115 users me",
+            "description": "Show the current authenticated user (the API-key owner). Read-only."
+        },
+        {
+            "command": "clk115 users list [--limit N] [--page N] [--name text]",
+            "description": "List members of the workspace. Read-only."
+        },
+        {
+            "command": "clk115 users invite <email> [--no-send-email]",
+            "description": "Invite (add) a user to the workspace by email."
+        },
+        {
+            "command": "clk115 users update-profile <userId> [--name text] [--image-url url] [--remove-image] [--week-start day] [--work-capacity iso] [--working-days days…]",
+            "description": "Update one user's member profile."
+        },
+        {
+            "command": "clk115 api <method> <path> [-q key=value…] [-H key=value…] [--body json|@file|-] [--all] [--page-size N] [--max-pages N] [--include-headers]",
+            "description": "Call a Clockify API path directly through the SDK client. Fills {workspaceId} from --workspace or CLOCKIFY_WORKSPACE_ID."
+        },
+        {
+            "command": "clk115 completion [zsh|bash|fish]",
+            "description": "Print a shell completion script for zsh, bash, or fish."
+        },
+        {
+            "command": "clk115 help [command]",
+            "description": "Print per-command help."
+        },
+        {
+            "command": "clk115 --version",
+            "description": "Print CLI version."
+        }
+    ]
 }

@@ -20,6 +20,8 @@ dist/cjs/error-codes.d.ts
 dist/cjs/error-codes.js
 dist/cjs/errors.d.ts
 dist/cjs/errors.js
+dist/cjs/expense-list.d.ts
+dist/cjs/expense-list.js
 dist/cjs/generated/version.d.ts
 dist/cjs/generated/version.js
 dist/cjs/health.d.ts
@@ -1417,6 +1419,8 @@ dist/esm/error-codes.d.ts
 dist/esm/error-codes.js
 dist/esm/errors.d.ts
 dist/esm/errors.js
+dist/esm/expense-list.d.ts
+dist/esm/expense-list.js
 dist/esm/generated/version.d.ts
 dist/esm/generated/version.js
 dist/esm/health.d.ts

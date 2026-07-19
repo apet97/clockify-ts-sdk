@@ -511,7 +511,7 @@ describe("typed read compatibility", () => {
             "2026-06-30",
         );
 
-        expect(calls[0]).toEqual({ workspaceId: "ws-1", page: 1, "page-size": 25 });
+        expect(calls[0]).toEqual({ workspaceId: "ws-1", page: 1, "page-size": 50 });
         expect(calls[0]).not.toHaveProperty("start");
         expect(calls[0]).not.toHaveProperty("end");
     });

@@ -358,39 +358,106 @@ describe("expense category full-replacement update", () => {
     });
 });
 
-describe("clockify_expenses_list — narrows the live list envelope (TEST-02)", () => {
-    function listContext(response: unknown, captured: Record<string, unknown>): Context {
+describe("clockify_expenses_list — shared bounded client-side filter", () => {
+    function listContext(
+        list: (request: Record<string, unknown>) => Promise<unknown>,
+        captured: Record<string, unknown>,
+    ): Context {
         return {
             workspaceId: "ws-1",
             client: {
                 expenses: {
-                    list: async (req: unknown) => {
-                        captured.list = req;
-                        return response;
+                    list: async (request: Record<string, unknown>) => {
+                        const calls = (captured.calls ??= []) as Record<string, unknown>[];
+                        calls.push(request);
+                        return list(request);
                     },
                 },
             } as never,
         };
     }
 
-    const A = { id: "exp-a" };
-    const B = { id: "exp-b" };
-
-    // The prior shipping bug returned count:undefined because the nested
-    // {expenses:{expenses,count}} envelope was not unwrapped. Pin every tolerated
-    // shape so a regression in the narrowing closure is caught offline.
-    it.each([
-        ["nested {expenses:{expenses,count}}", { expenses: { expenses: [A, B], count: 2 } }],
-        ["single-level {expenses:[...]}", { expenses: [A, B] }],
-        ["bare array", [A, B]],
-    ])("unwraps the %s shape to a 2-item list", async (_label, response) => {
+    it("walks typed nested pages, applies total limit, and propagates warning/next metadata", async () => {
         const captured: Record<string, unknown> = {};
-        const client = await connect(listContext(response, captured));
-        const res = await client.callTool({ name: "clockify_expenses_list", arguments: {} });
+        const client = await connect(
+            listContext(async (request) => {
+                const page = request.page as number;
+                const pages: Record<number, Array<Record<string, unknown>>> = {
+                    2: [
+                        { id: "before", date: "2026-05-31" },
+                        { id: "first", date: "2026-06-01" },
+                    ],
+                    3: [
+                        { id: "outside", date: "2026-07-01" },
+                        { id: "middle", date: "2026-06-15T12:00:00Z" },
+                    ],
+                    4: [
+                        { id: "last", date: "2026-06-30T23:59:59Z" },
+                        { id: "later", date: "2026-06-20" },
+                    ],
+                };
+                return { expenses: { expenses: pages[page] ?? [], count: 2 } };
+            }, captured),
+        );
+        const res = await client.callTool({
+            name: "clockify_expenses_list",
+            arguments: {
+                page: 2,
+                pageSize: 2,
+                limit: 3,
+                maxPages: 3,
+                start: "2026-06-01",
+                end: "2026-06-30T23:59:59Z",
+            },
+        });
         expect(res.isError).toBeFalsy();
         const json = envelope(res);
-        expect(Array.isArray(json.data)).toBe(true);
-        expect((json.data as unknown[]).length).toBe(2);
-        expect((json.meta as { count: number }).count).toBe(2);
+        expect((json.data as Array<{ id: string }>).map((item) => item.id)).toEqual([
+            "first",
+            "middle",
+            "last",
+        ]);
+        expect(captured.calls).toEqual([
+            expect.objectContaining({ page: 2, "page-size": 2 }),
+            expect.objectContaining({ page: 3, "page-size": 2 }),
+            expect.objectContaining({ page: 4, "page-size": 2 }),
+        ]);
+        expect(captured.calls).not.toEqual(
+            expect.arrayContaining([expect.objectContaining({ start: expect.anything() })]),
+        );
+        expect(json.meta).toMatchObject({
+            count: 3,
+            page: 2,
+            pageSize: 2,
+            limit: 3,
+            pagesFetched: 3,
+            nextPage: 5,
+            hasMore: true,
+        });
+        expect(json.warnings).toEqual([
+            expect.objectContaining({
+                code: "client_side_filter",
+                message: expect.stringMatching(/client-side/i),
+            }),
+        ]);
+        expect(json.next).toEqual([
+            expect.objectContaining({
+                tool: "clockify_expenses_list",
+                args: expect.objectContaining({ page: 5, pageSize: 2, limit: 3 }),
+            }),
+        ]);
+    });
+
+    it("rejects unsafe page bounds before listing", async () => {
+        const captured: Record<string, unknown> = {};
+        const client = await connect(
+            listContext(async () => ({ expenses: { expenses: [] } }), captured),
+        );
+        const res = await client.callTool({
+            name: "clockify_expenses_list",
+            arguments: { page: 1_000_001 },
+        });
+        expect(res.isError).toBe(true);
+        expect(captured.calls).toBeUndefined();
     });
 });

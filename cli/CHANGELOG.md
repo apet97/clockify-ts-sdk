@@ -4,6 +4,12 @@ All notable changes to `@apet97/clockify-cli-115` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `expenses list --limit` now caps total returned records instead of wire page
+  size; `--page-size` and `--max-pages` control the shared bounded client-side
+  date-filter scan and the command emits the live-contract warning.
+
 ## [0.3.1](https://github.com/apet97/clockify-ts-sdk/compare/cli-v0.3.0...cli-v0.3.1) - 2026-07-14
 
 ### Fixed

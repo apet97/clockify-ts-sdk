@@ -1,56 +1,54 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Tracked 1.0 readiness status snapshot. It records observed gaps and required proof artifacts; it is not completion evidence.",
-  "baseline": {
-    "typescriptCommit": "ec68c61",
-    "packages": {
-      "sdk": "0.12.1",
-      "cli": "0.3.1",
-      "mcp": "0.6.2"
+    "schemaVersion": 1,
+    "purpose": "Tracked 1.0 readiness status snapshot. It records observed gaps and required proof artifacts; it is not completion evidence.",
+    "baseline": {
+        "typescriptCommit": "ec68c61",
+        "packages": {
+            "sdk": "0.12.1",
+            "cli": "0.3.1",
+            "mcp": "0.6.2"
+        }
+    },
+    "task1": {
+        "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
+        "approvalTarget": {
+            "reviewedRange": "ec68c61..HEAD",
+            "reviewedHead": "HEAD",
+            "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
+            "approvalCannotNameOnlyInitialImplementationCommit": true
+        },
+        "status": "implemented-awaiting-independent-approvals",
+        "requiredIndependentApprovals": 2,
+        "recordedIndependentApprovals": 0
+    },
+    "task2": {
+        "status": "implemented",
+        "liveDecision": "expense-list ignores start/end and honors page/page-size",
+        "receipt": "docs/roadmap-1.0-receipts/task-02-expense-filter.md",
+        "openApiChanged": false
+    },
+    "operationReachability": {
+        "status": "no-generated-reachability-receipt-recorded",
+        "observedParitySummary": {
+            "operations": 169,
+            "sdkNamed": 156
+        },
+        "currentMappingMethod": "scripts/generate-operation-parity.mjs derives inferredSdk from OpenAPI sdkGroup and sdkMethod; it does not import the generated SDK or execute the named method.",
+        "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md maps every claimed SDK path to an importable generated client method."
+    },
+    "crossPackageReleaseProof": {
+        "status": "no-retained-exact-artifact-receipt-recorded",
+        "packages": ["clockify-sdk-ts-115", "@apet97/clockify-cli-115", "@apet97/clockify-mcp-115"],
+        "currentPackSmokeBehavior": "scripts/pack-consumer-smoke.mjs creates temporary tarballs and temporary consumer roots, then removes them unless KEEP_CLOCKIFY_PACK_SMOKE_TEMP=1.",
+        "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs."
+    },
+    "remoteMutationProof": {
+        "status": "no-retained-github-mutation-run-recorded",
+        "workflow": ".github/workflows/mutation.yml",
+        "currentTargets": ["all", "wrapper", "mcp"],
+        "artifactPattern": "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
+        "retentionDays": 14,
+        "retainedRunUrl": null,
+        "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md records GitHub Actions run URLs and retained mutation-reports artifact names for every approved target."
     }
-  },
-  "task1": {
-    "initialImplementationCommit": "e0f44a40de3059c9c2618f56440c0b428702361c",
-    "approvalTarget": {
-      "reviewedRange": "ec68c61..HEAD",
-      "reviewedHead": "HEAD",
-      "resolutionRule": "Resolve git rev-parse HEAD and git diff --name-only ec68c61..HEAD immediately before recording each approval; both approval records must name that resolved head and full range.",
-      "approvalCannotNameOnlyInitialImplementationCommit": true
-    },
-    "status": "implemented-awaiting-independent-approvals",
-    "requiredIndependentApprovals": 2,
-    "recordedIndependentApprovals": 0
-  },
-  "operationReachability": {
-    "status": "no-generated-reachability-receipt-recorded",
-    "observedParitySummary": {
-      "operations": 169,
-      "sdkNamed": 156
-    },
-    "currentMappingMethod": "scripts/generate-operation-parity.mjs derives inferredSdk from OpenAPI sdkGroup and sdkMethod; it does not import the generated SDK or execute the named method.",
-    "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-05-generated-reachability.md maps every claimed SDK path to an importable generated client method."
-  },
-  "crossPackageReleaseProof": {
-    "status": "no-retained-exact-artifact-receipt-recorded",
-    "packages": [
-      "clockify-sdk-ts-115",
-      "@apet97/clockify-cli-115",
-      "@apet97/clockify-mcp-115"
-    ],
-    "currentPackSmokeBehavior": "scripts/pack-consumer-smoke.mjs creates temporary tarballs and temporary consumer roots, then removes them unless KEEP_CLOCKIFY_PACK_SMOKE_TEMP=1.",
-    "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-13-exact-artifact.md names the three tarball digests, consumer commands, and successful outputs."
-  },
-  "remoteMutationProof": {
-    "status": "no-retained-github-mutation-run-recorded",
-    "workflow": ".github/workflows/mutation.yml",
-    "currentTargets": [
-      "all",
-      "wrapper",
-      "mcp"
-    ],
-    "artifactPattern": "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
-    "retentionDays": 14,
-    "retainedRunUrl": null,
-    "requiredClosureArtifact": "docs/roadmap-1.0-receipts/task-18-remote-mutation.md records GitHub Actions run URLs and retained mutation-reports artifact names for every approved target."
-  }
 }

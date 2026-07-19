@@ -1,164 +1,144 @@
 {
-  "schemaVersion": 1,
-  "purpose": "Release and handoff readiness evidence contract for SDK, CLI, MCP, OpenAPI/local generation, docs, security, performance, and live proof.",
-  "wiring": {
-    "makeTarget": "release-readiness",
-    "checker": "scripts/check-release-readiness.mjs",
-    "enterpriseAuditId": "release-readiness"
-  },
-  "checklist": {
-    "path": "docs/release-readiness-checklist.md",
-    "contains": [
-      "Readiness rule",
-      "Required evidence",
-      "Publish decision boundary",
-      "Release workflow maintainer decision planner",
-      "node scripts/plan.mjs release-decision --decision all",
-      "Handoff decision boundary",
-      "Operator checklist",
-      "Do not run `npm publish` from a laptop",
-      "Live proof is completed in a sacrificial sandbox",
-      "make axioms-contract",
-      "make perfect-fast",
-      "make perfect-full",
-      "make perfect-live"
+    "schemaVersion": 1,
+    "purpose": "Release and handoff readiness evidence contract for SDK, CLI, MCP, OpenAPI/local generation, docs, security, performance, and live proof.",
+    "wiring": {
+        "makeTarget": "release-readiness",
+        "checker": "scripts/check-release-readiness.mjs",
+        "enterpriseAuditId": "release-readiness"
+    },
+    "checklist": {
+        "path": "docs/release-readiness-checklist.md",
+        "contains": [
+            "Readiness rule",
+            "Required evidence",
+            "Publish decision boundary",
+            "Release workflow maintainer decision planner",
+            "node scripts/plan.mjs release-decision --decision all",
+            "Handoff decision boundary",
+            "Operator checklist",
+            "Do not run `npm publish` from a laptop",
+            "Live proof is completed in a sacrificial sandbox",
+            "make axioms-contract",
+            "make perfect-fast",
+            "make perfect-full",
+            "make perfect-live"
+        ],
+        "forbiddenMarkers": ["TODO", "TBD", "PASTE TOKEN"]
+    },
+    "requiredTargets": [
+        "release-readiness",
+        "release-decision-plan",
+        "axioms-contract",
+        "perfect-fast",
+        "perfect-full",
+        "perfect-live",
+        "pack-smoke"
     ],
-    "forbiddenMarkers": [
-      "TODO",
-      "TBD",
-      "PASTE TOKEN"
-    ]
-  },
-  "requiredTargets": [
-    "release-readiness",
-    "release-decision-plan",
-    "axioms-contract",
-    "perfect-fast",
-    "perfect-full",
-    "perfect-live",
-    "pack-smoke"
-  ],
-  "requiredDocs": [
-    "docs/release-readiness-checklist.md",
-    "docs/support-runbook.md",
-    "docs/release-support-policy.md",
-    "docs/supply-chain-policy.md",
-    "docs/risk-register.md"
-  ],
-  "riskRegister": {
-    "path": "docs/risk-register.json",
-    "requiredOpenFinalReadinessBlockingIds": [
-      "expense-date-filter-contract",
-      "expense-update-file-schema",
-      "operation-parity-generated-reachability",
-      "consumer-request-casts",
-      "cross-package-release-proof-asymmetry",
-      "remote-mutation-proof-pending"
+    "requiredDocs": [
+        "docs/release-readiness-checklist.md",
+        "docs/support-runbook.md",
+        "docs/release-support-policy.md",
+        "docs/supply-chain-policy.md",
+        "docs/risk-register.md"
     ],
-    "expectedFinalReadinessRiskStatus": "blocked"
-  },
-  "decisionPlanner": {
-    "path": "scripts/release-decision-plan.mjs",
-    "contains": [
-      "network",
-      "commandsExecuted",
-      "envValuesCaptured",
-      "legacy-release-workflow-needs-maintainer-decision",
-      "explicitMaintainerApprovalRequired",
-      "local-tarball-handoff",
-      "tag-github-release-only",
-      "npm-via-ci",
-      "retire-legacy-workflow",
-      "This plan is not proof"
-    ],
-    "generatedReport": {
-      "exactFields": {
-        "schemaVersion": 1,
-        "network": "none",
-        "commandsExecuted": [],
-        "envValuesCaptured": false,
-        "reportScope": "release-decision-plan",
-        "selectedDecision": "all",
-        "riskId": "legacy-release-workflow-needs-maintainer-decision",
-        "publishPermission": "none",
-        "ciCdChangePermission": "none"
-      },
-      "requiredDecisionIds": [
-        "local-tarball-handoff",
-        "tag-github-release-only",
-        "npm-via-ci",
-        "retire-legacy-workflow"
-      ],
-      "requiredDecisionFlags": {
-        "local-tarball-handoff": {
-          "defaultSafe": true,
-          "explicitMaintainerApprovalRequired": false
-        },
-        "tag-github-release-only": {
-          "defaultSafe": false,
-          "explicitMaintainerApprovalRequired": true
-        },
-        "npm-via-ci": {
-          "defaultSafe": false,
-          "explicitMaintainerApprovalRequired": true
-        },
-        "retire-legacy-workflow": {
-          "defaultSafe": false,
-          "explicitMaintainerApprovalRequired": true
+    "riskRegister": {
+        "path": "docs/risk-register.json",
+        "requiredOpenFinalReadinessBlockingIds": [
+            "expense-update-file-schema",
+            "operation-parity-generated-reachability",
+            "consumer-request-casts",
+            "cross-package-release-proof-asymmetry",
+            "remote-mutation-proof-pending"
+        ],
+        "expectedFinalReadinessRiskStatus": "blocked"
+    },
+    "decisionPlanner": {
+        "path": "scripts/release-decision-plan.mjs",
+        "contains": [
+            "network",
+            "commandsExecuted",
+            "envValuesCaptured",
+            "legacy-release-workflow-needs-maintainer-decision",
+            "explicitMaintainerApprovalRequired",
+            "local-tarball-handoff",
+            "tag-github-release-only",
+            "npm-via-ci",
+            "retire-legacy-workflow",
+            "This plan is not proof"
+        ],
+        "generatedReport": {
+            "exactFields": {
+                "schemaVersion": 1,
+                "network": "none",
+                "commandsExecuted": [],
+                "envValuesCaptured": false,
+                "reportScope": "release-decision-plan",
+                "selectedDecision": "all",
+                "riskId": "legacy-release-workflow-needs-maintainer-decision",
+                "publishPermission": "none",
+                "ciCdChangePermission": "none"
+            },
+            "requiredDecisionIds": [
+                "local-tarball-handoff",
+                "tag-github-release-only",
+                "npm-via-ci",
+                "retire-legacy-workflow"
+            ],
+            "requiredDecisionFlags": {
+                "local-tarball-handoff": {
+                    "defaultSafe": true,
+                    "explicitMaintainerApprovalRequired": false
+                },
+                "tag-github-release-only": {
+                    "defaultSafe": false,
+                    "explicitMaintainerApprovalRequired": true
+                },
+                "npm-via-ci": {
+                    "defaultSafe": false,
+                    "explicitMaintainerApprovalRequired": true
+                },
+                "retire-legacy-workflow": {
+                    "defaultSafe": false,
+                    "explicitMaintainerApprovalRequired": true
+                }
+            },
+            "warningMustContain": ["not proof", "does not run Git", "npm publish", "CI/CD changes"]
         }
-      },
-      "warningMustContain": [
-        "not proof",
-        "does not run Git",
-        "npm publish",
-        "CI/CD changes"
-      ]
-    }
-  },
-  "evidenceAreas": [
-    "Source of truth",
-    "Generated boundary",
-    "SDK package",
-    "CLI package",
-    "MCP package",
-    "Packed consumer",
-    "Public contracts",
-    "Docs",
-    "Changelogs",
-    "Security posture",
-    "Performance",
-    "Live proof"
-  ],
-  "supportingEvidence": [
-    {
-      "path": "docs/release-support-policy.md",
-      "contains": [
-        "Do not run `npm publish`",
-        "Release readiness checklist",
-        "completed sandbox live proof"
-      ]
     },
-    {
-      "path": "docs/supply-chain-policy.md",
-      "contains": [
-        "prepublishOnly",
-        "publishConfig.provenance",
-        "Required receipts"
-      ]
-    },
-    {
-      "path": "docs/support-runbook.md",
-      "contains": [
-        "Safe diagnostic bundle",
-        "Redaction rules",
-        "Escalation template"
-      ]
-    },
-    {
-      "path": "docs/risk-register.json",
-      "contains": [
-        "legacy-release-workflow-needs-maintainer-decision"
-      ]
-    }
-  ]
+    "evidenceAreas": [
+        "Source of truth",
+        "Generated boundary",
+        "SDK package",
+        "CLI package",
+        "MCP package",
+        "Packed consumer",
+        "Public contracts",
+        "Docs",
+        "Changelogs",
+        "Security posture",
+        "Performance",
+        "Live proof"
+    ],
+    "supportingEvidence": [
+        {
+            "path": "docs/release-support-policy.md",
+            "contains": [
+                "Do not run `npm publish`",
+                "Release readiness checklist",
+                "completed sandbox live proof"
+            ]
+        },
+        {
+            "path": "docs/supply-chain-policy.md",
+            "contains": ["prepublishOnly", "publishConfig.provenance", "Required receipts"]
+        },
+        {
+            "path": "docs/support-runbook.md",
+            "contains": ["Safe diagnostic bundle", "Redaction rules", "Escalation template"]
+        },
+        {
+            "path": "docs/risk-register.json",
+            "contains": ["legacy-release-workflow-needs-maintainer-decision"]
+        }
+    ]
 }

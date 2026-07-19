@@ -81,6 +81,12 @@ export {
     type PageEnvelope,
     type PaginatedRequest,
 } from "./iter.js";
+export {
+    listExpensesFiltered,
+    type ExpenseListFetcher,
+    type ExpenseListOptions,
+    type ExpenseListResult,
+} from "./expense-list.js";
 export { paginate, type PaginateOptions } from "./pagination.js";
 export {
     paginatedList,
@@ -223,12 +229,7 @@ export {
 } from "./reports.js";
 
 // Bounded-parallel bulk helper.
-export {
-    mapBounded,
-    type BulkFailure,
-    type BulkResult,
-    type MapBoundedOptions,
-} from "./bulk.js";
+export { mapBounded, type BulkFailure, type BulkResult, type MapBoundedOptions } from "./bulk.js";
 
 // Transactional multi-step composition with rollback (runComposition + leftBehindNote).
 export {

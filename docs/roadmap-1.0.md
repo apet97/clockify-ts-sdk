@@ -29,7 +29,7 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | Task | Depends on | Status | Evidence now | Exact closure command and required artifact | Release-blocking |
 |---|---|---|---|---|---|
 | 1. Truthful readiness baseline | — | implemented; approvals pending | initial commit `e0f44a40de3059c9c2618f56440c0b428702361c`; `docs/roadmap-1.0-status.json` | `make risk-register risk-status-report release-readiness contract-gates`; `docs/roadmap-1.0-receipts/task-01-approvals.md` records two independent approvals naming the resolved `HEAD` and full `ec68c61..HEAD` range | Yes |
-| 2. Expense filter contract | 1 | pending | none recorded | `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md` | Yes |
+| 2. Expense filter contract | 1 | implemented | sanitized live receipt + shared SDK helper and focused wrapper/CLI/MCP tests | `npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts && npm test -w @apet97/clockify-mcp-115 -- tests/expenses.test.ts && make operation-parity-drift`; `docs/roadmap-1.0-receipts/task-02-expense-filter.md` | Yes |
 | 3. Expense update schema | 2 | pending | none recorded | `make sdk-codegen-test consumer-cast-budget && npm test -w @apet97/clockify-cli-115 -- tests/read-commands-expenses.test.ts`; `docs/roadmap-1.0-receipts/task-03-expense-update-schema.md` | Yes |
 | 4. Typed listForUser workflows | 3 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115 && make consumer-cast-budget`; `docs/roadmap-1.0-receipts/task-04-list-for-user.md` names `listForUser` coverage | Yes |
 | 5. Truthful operation parity | 4 | pending | none recorded | `make sdk-codegen sdk-codegen-drift operation-parity-drift`; `docs/roadmap-1.0-receipts/task-05-generated-reachability.md` maps every claimed SDK path to an importable method | Yes |
@@ -56,9 +56,8 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | 26. Project membership administration | 25 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
 | 27. Experimental entity-change feed | 26 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
-The six open readiness blockers in `docs/risk-register.json` are the current
-release-blocking baseline: `expense-date-filter-contract`,
-`expense-update-file-schema`, `operation-parity-generated-reachability`,
+The five open readiness blockers in `docs/risk-register.json` are the current
+release-blocking baseline: `expense-update-file-schema`, `operation-parity-generated-reachability`,
 `consumer-request-casts`, `cross-package-release-proof-asymmetry`, and
 `remote-mutation-proof-pending`. Use `make risk-status-report` to inspect the
 current blocked status and blocker count; `make release-readiness` validates the

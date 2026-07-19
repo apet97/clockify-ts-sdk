@@ -7,8 +7,8 @@
  * owner. Unlike the MCP tool, `--category` takes a raw category ID (the CLI does
  * not resolve category names — same as `expenses update`).
  */
+import { listExpensesFiltered } from "clockify-sdk-ts-115/expense-list";
 import { entityId } from "clockify-sdk-ts-115/operation-receipt";
-import { type ClockifyApi } from "clockify-sdk-ts-115/requests";
 import type { Command } from "commander";
 
 import { printObject, printRecords } from "../output.js";
@@ -58,31 +58,37 @@ export const registerExpensesCommand: Registrar = (program, services) => {
 
     leafCommand(expenses, "list", "read")
         .description("List expenses in the workspace.")
-        .option("--limit <n>", "Items per page (default 25, max 200).", parseIntArg, 25)
+        .option("--limit <n>", "Total records to return (default 25, max 10000).", parseIntArg, 25)
+        .option(
+            "--page-size <n>",
+            "Records fetched per page (default 50, max 200).",
+            parseIntArg,
+            50,
+        )
+        .option(
+            "--max-pages <n>",
+            "Maximum pages to scan (default 100, max 1000).",
+            parseIntArg,
+            100,
+        )
         .option("--page <n>", "Page number.", parseIntArg, 1)
-        .option("--start <date>", "Start of the date range (YYYY-MM-DD).")
-        .option("--end <date>", "End of the date range (YYYY-MM-DD).")
+        .option("--start <date>", "Inclusive start bound (YYYY-MM-DD or ISO-8601).")
+        .option("--end <date>", "Inclusive end bound (YYYY-MM-DD or ISO-8601).")
         .action(async function (this: Command, opts) {
             const { client, workspaceId, output } = await resolveContext(this, services);
-            // Generated `ListExpensesRequest` carries only paging. Keep --start/--end
-            // entirely client-side and send only the typed request fields upstream.
-            const req: ClockifyApi.ListExpensesRequest = {
-                workspaceId,
-                page: opts.page,
-                "page-size": clampPageSize(opts.limit, 200),
-            };
-            const response = (await client.expenses.list(req)) as {
-                expenses?: { expenses?: unknown[] } | unknown[];
-            };
-            // Upstream returns a doubly-nested envelope
-            // ({expenses: {expenses: [...]}}) per the SDK probe evidence.
-            const items = (() => {
-                const inner = response.expenses;
-                if (Array.isArray(inner)) return inner;
-                if (inner && Array.isArray(inner.expenses)) return inner.expenses;
-                return [] as unknown[];
-            })();
-            const rows = items.map((raw) => {
+            const result = await listExpensesFiltered(
+                client.expenses.list.bind(client.expenses),
+                { workspaceId },
+                {
+                    page: opts.page as number,
+                    pageSize: clampPageSize(opts.pageSize as number, 200),
+                    limit: opts.limit as number,
+                    maxPages: opts.maxPages as number,
+                    ...(opts.start ? { start: opts.start as string } : {}),
+                    ...(opts.end ? { end: opts.end as string } : {}),
+                },
+            );
+            const rows = result.items.map((raw) => {
                 const e = raw as {
                     id?: string;
                     category?: { name?: string } | string;
@@ -113,24 +119,8 @@ export const registerExpensesCommand: Registrar = (program, services) => {
                     billable: e.billable === true,
                 };
             });
-            // The wire ignores --start/--end (see comment above), so apply the date
-            // range here. Clockify expense `date` is ISO-8601, so a lexicographic
-            // compare against the YYYY-MM-DD bounds is correct. This filters only the
-            // rows on the fetched page (default 25, max 200 via --limit); a range
-            // spanning multiple pages needs a larger --limit.
-            const startDay = opts.start as string | undefined;
-            const endDay = opts.end as string | undefined;
-            const visible =
-                startDay || endDay
-                    ? rows.filter((r) => {
-                          const day = (r.date ?? "").slice(0, 10);
-                          if (!day) return false;
-                          if (startDay && day < startDay) return false;
-                          if (endDay && day > endDay) return false;
-                          return true;
-                      })
-                    : rows;
-            printRecords(visible, output);
+            for (const warning of result.warnings) console.error(`WARN ${warning}`);
+            printRecords(rows, output);
         });
 
     leafCommand(expenses, "create", "write")

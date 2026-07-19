@@ -1,146 +1,84 @@
 {
-  "_strictnessNote": "All four strictness flags (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride) are ON for the wrapper compile. The EOPT/TS4114 blockers in the GENERATED error scaffold + core/request.ts were fixed at their source -- this repo's local SDK generator scripts/generate-sdk-from-openapi.mjs (override on the cause members; explicit `| undefined` on optional scaffold props; signal `?? null`), NOT ../GOCLMCP/ which owns only the OpenAPI spec -- so the regenerated wrapper/src compiles clean. See spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked (resolved) and docs/consumer-cast-budget-contract.json.",
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noImplicitOverride": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
+    "_strictnessNote": "All four strictness flags (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride) are ON for the wrapper compile. The EOPT/TS4114 blockers in the GENERATED error scaffold + core/request.ts were fixed at their source -- this repo's local SDK generator scripts/generate-sdk-from-openapi.mjs (override on the cause members; explicit `| undefined` on optional scaffold props; signal `?? null`), NOT ../GOCLMCP/ which owns only the OpenAPI spec -- so the regenerated wrapper/src compiles clean. See spec/evidence/discrepancies.md strictness.wrapper-eopt-noimplicitoverride-blocked (resolved) and docs/consumer-cast-budget-contract.json.",
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "noImplicitOverride": true,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "lib": ["ES2023", "DOM", "DOM.Iterable"],
+        "types": ["node"],
+        "noEmit": true,
+        "baseUrl": ".",
+        "paths": {
+            "clockify-sdk-ts-115": ["./index.ts"],
+            "clockify-sdk-ts-115/create-client": ["./create-client.ts"],
+            "clockify-sdk-ts-115/composed-fetch": ["./composed-fetch.ts"],
+            "clockify-sdk-ts-115/iter": ["./iter.ts"],
+            "clockify-sdk-ts-115/expense-list": ["./expense-list.ts"],
+            "clockify-sdk-ts-115/webhooks": ["./webhooks.ts"],
+            "clockify-sdk-ts-115/webhook-events": ["./webhook-events.ts"],
+            "clockify-sdk-ts-115/pagination": ["./pagination.ts"],
+            "clockify-sdk-ts-115/paginated-list": ["./paginated-list.ts"],
+            "clockify-sdk-ts-115/with-response": ["./with-response.ts"],
+            "clockify-sdk-ts-115/errors": ["./errors.ts"],
+            "clockify-sdk-ts-115/deprecation": ["./deprecation.ts"],
+            "clockify-sdk-ts-115/scoped-client": ["./scoped-client.ts"],
+            "clockify-sdk-ts-115/otel-hooks": ["./otel-hooks.ts"],
+            "clockify-sdk-ts-115/health": ["./health.ts"],
+            "clockify-sdk-ts-115/rate-limit": ["./rate-limit.ts"],
+            "clockify-sdk-ts-115/diagnostics": ["./diagnostics.ts"],
+            "clockify-sdk-ts-115/request-options": ["./request-options.ts"],
+            "clockify-sdk-ts-115/operation-receipt": ["./operation-receipt.ts"],
+            "clockify-sdk-ts-115/money": ["./money.ts"],
+            "clockify-sdk-ts-115/invoice-body": ["./invoice-body.ts"],
+            "clockify-sdk-ts-115/dates": ["./dates.ts"],
+            "clockify-sdk-ts-115/resolve": ["./resolve.ts"],
+            "clockify-sdk-ts-115/ensure": ["./ensure.ts"],
+            "clockify-sdk-ts-115/reports": ["./reports.ts"],
+            "clockify-sdk-ts-115/bulk": ["./bulk.ts"],
+            "clockify-sdk-ts-115/compose": ["./compose.ts"],
+            "clockify-sdk-ts-115/requests": ["./requests.ts"]
+        }
+    },
+    "include": [
+        "src/**/*.ts",
+        "internal/**/*.ts",
+        "index.ts",
+        "create-client.ts",
+        "composed-fetch.ts",
+        "iter.ts",
+        "expense-list.ts",
+        "pagination.ts",
+        "paginated-list.ts",
+        "webhook-url.ts",
+        "webhooks.ts",
+        "webhook-events.ts",
+        "with-response.ts",
+        "error-codes.ts",
+        "errors.ts",
+        "deprecation.ts",
+        "scoped-client.ts",
+        "otel-hooks.ts",
+        "health.ts",
+        "diagnostics.ts",
+        "rate-limit.ts",
+        "request-options.ts",
+        "operation-receipt.ts",
+        "money.ts",
+        "invoice-body.ts",
+        "dates.ts",
+        "resolve.ts",
+        "ensure.ts",
+        "requests.ts",
+        "tests/**/*.ts",
+        "examples/**/*.ts",
+        "scripts/**/*.ts"
     ],
-    "types": [
-      "node"
-    ],
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "clockify-sdk-ts-115": [
-        "./index.ts"
-      ],
-      "clockify-sdk-ts-115/create-client": [
-        "./create-client.ts"
-      ],
-      "clockify-sdk-ts-115/composed-fetch": [
-        "./composed-fetch.ts"
-      ],
-      "clockify-sdk-ts-115/iter": [
-        "./iter.ts"
-      ],
-      "clockify-sdk-ts-115/webhooks": [
-        "./webhooks.ts"
-      ],
-      "clockify-sdk-ts-115/webhook-events": [
-        "./webhook-events.ts"
-      ],
-      "clockify-sdk-ts-115/pagination": [
-        "./pagination.ts"
-      ],
-      "clockify-sdk-ts-115/paginated-list": [
-        "./paginated-list.ts"
-      ],
-      "clockify-sdk-ts-115/with-response": [
-        "./with-response.ts"
-      ],
-      "clockify-sdk-ts-115/errors": [
-        "./errors.ts"
-      ],
-      "clockify-sdk-ts-115/deprecation": [
-        "./deprecation.ts"
-      ],
-      "clockify-sdk-ts-115/scoped-client": [
-        "./scoped-client.ts"
-      ],
-      "clockify-sdk-ts-115/otel-hooks": [
-        "./otel-hooks.ts"
-      ],
-      "clockify-sdk-ts-115/health": [
-        "./health.ts"
-      ],
-      "clockify-sdk-ts-115/rate-limit": [
-        "./rate-limit.ts"
-      ],
-      "clockify-sdk-ts-115/diagnostics": [
-        "./diagnostics.ts"
-      ],
-      "clockify-sdk-ts-115/request-options": [
-        "./request-options.ts"
-      ],
-      "clockify-sdk-ts-115/operation-receipt": [
-        "./operation-receipt.ts"
-      ],
-      "clockify-sdk-ts-115/money": [
-        "./money.ts"
-      ],
-      "clockify-sdk-ts-115/invoice-body": [
-        "./invoice-body.ts"
-      ],
-      "clockify-sdk-ts-115/dates": [
-        "./dates.ts"
-      ],
-      "clockify-sdk-ts-115/resolve": [
-        "./resolve.ts"
-      ],
-      "clockify-sdk-ts-115/ensure": [
-        "./ensure.ts"
-      ],
-      "clockify-sdk-ts-115/reports": [
-        "./reports.ts"
-      ],
-      "clockify-sdk-ts-115/bulk": [
-        "./bulk.ts"
-      ],
-      "clockify-sdk-ts-115/compose": [
-        "./compose.ts"
-      ],
-      "clockify-sdk-ts-115/requests": [
-        "./requests.ts"
-      ]
-    }
-  },
-  "include": [
-    "src/**/*.ts",
-    "internal/**/*.ts",
-    "index.ts",
-    "create-client.ts",
-    "composed-fetch.ts",
-    "iter.ts",
-    "pagination.ts",
-    "paginated-list.ts",
-    "webhook-url.ts",
-    "webhooks.ts",
-    "webhook-events.ts",
-    "with-response.ts",
-    "error-codes.ts",
-    "errors.ts",
-    "deprecation.ts",
-    "scoped-client.ts",
-    "otel-hooks.ts",
-    "health.ts",
-    "diagnostics.ts",
-    "rate-limit.ts",
-    "request-options.ts",
-    "operation-receipt.ts",
-    "money.ts",
-    "invoice-body.ts",
-    "dates.ts",
-    "resolve.ts",
-    "ensure.ts",
-    "requests.ts",
-    "tests/**/*.ts",
-    "examples/**/*.ts",
-    "scripts/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "scripts/deno-smoke.ts"
-  ]
+    "exclude": ["node_modules", "dist", "scripts/deno-smoke.ts"]
 }
