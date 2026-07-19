@@ -7,11 +7,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildReport } from "./risk-status-report.mjs";
 import { resolveReadinessTestFixtures } from "./readiness-test-fixtures.mjs";
+import { validateRoadmapTask3Status } from "./roadmap-status-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const { riskRegisterPath: registerPath, releaseContractPath } = resolveReadinessTestFixtures({
+const {
+    riskRegisterPath: registerPath,
+    releaseContractPath,
+    roadmapStatusPath,
+} = resolveReadinessTestFixtures({
     canonicalRiskRegisterPath: path.join(root, "docs", "risk-register.json"),
     canonicalReleaseContractPath: path.join(root, "docs", "release-readiness-contract.json"),
+    canonicalRoadmapStatusPath: path.join(root, "docs", "roadmap-1.0-status.json"),
 });
 const markdownPath = path.join(root, "docs", "risk-register.md");
 const register = JSON.parse(fs.readFileSync(registerPath, "utf8"));
@@ -227,6 +233,9 @@ function validateRegisterShape() {
 }
 
 validateRegisterShape();
+for (const failure of validateRoadmapTask3Status(JSON.parse(fs.readFileSync(roadmapStatusPath, "utf8")))) {
+    failures.push(`roadmap-1.0-status: ${failure}`);
+}
 
 if (failures.length > 0) {
     console.error("risk register contract shape failed");

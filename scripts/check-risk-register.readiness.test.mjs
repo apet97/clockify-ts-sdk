@@ -6,10 +6,12 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { validateRoadmapTask3Status } from "./roadmap-status-contract.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const riskRegisterPath = path.join(root, "docs", "risk-register.json");
 const releaseContractPath = path.join(root, "docs", "release-readiness-contract.json");
+const roadmapStatusPath = path.join(root, "docs", "roadmap-1.0-status.json");
 
 function requiredBlockers(register) {
     return register.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds;
@@ -26,6 +28,73 @@ function testFixtureArgs(registerPath, releaseContractPath) {
 async function writeFixture(pathname, value) {
     await writeFile(pathname, `${JSON.stringify(value, null, 2)}\n`);
 }
+
+test("Task 3 roadmap status is pinned and rejects omission or stale implementation truth", async () => {
+    const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
+        readFile(roadmapStatusPath, "utf8"),
+        readFile(riskRegisterPath, "utf8"),
+        readFile(releaseContractPath, "utf8"),
+    ]);
+    const roadmapStatus = JSON.parse(roadmapStatusText);
+
+    assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
+
+    const cases = [
+        {
+            name: "omitted",
+            mutate(fixture) {
+                delete fixture.task3;
+            },
+            expected: /task3.*missing/i,
+        },
+        {
+            name: "stale-status",
+            mutate(fixture) {
+                fixture.task3.status = "pending";
+            },
+            expected: /task3\.status.*implemented/,
+        },
+        {
+            name: "stale-openapi-truth",
+            mutate(fixture) {
+                fixture.task3.openApiChanged = false;
+                fixture.task3.upstreamCommit = "a246a6fbbef69024df500417f14442152d9d1569";
+            },
+            expected: /task3\.openApiChanged.*true/,
+        },
+    ];
+
+    const fixtureDirectory = await mkdtemp(path.join(tmpdir(), "clockify-roadmap-status-"));
+    try {
+        for (const testCase of cases) {
+            const fixture = structuredClone(roadmapStatus);
+            testCase.mutate(fixture);
+            const fixtureRegisterPath = path.join(fixtureDirectory, `${testCase.name}-risk.json`);
+            const fixtureReleasePath = path.join(fixtureDirectory, `${testCase.name}-release.json`);
+            const fixtureRoadmapPath = path.join(fixtureDirectory, `${testCase.name}-roadmap.json`);
+            await Promise.all([
+                writeFile(fixtureRegisterPath, riskRegisterText),
+                writeFile(fixtureReleasePath, releaseContractText),
+                writeFixture(fixtureRoadmapPath, fixture),
+            ]);
+
+            const result = runCommand(
+                "scripts/check-risk-register.mjs",
+                [
+                    "--test-readiness-fixtures",
+                    fixtureRegisterPath,
+                    fixtureReleasePath,
+                    fixtureRoadmapPath,
+                ],
+                { ...process.env, NODE_ENV: "test" },
+            );
+            assert.notEqual(result.status, 0, `checker accepted ${testCase.name} Task 3 status`);
+            assert.match(result.stderr, testCase.expected);
+        }
+    } finally {
+        await rm(fixtureDirectory, { recursive: true, force: true });
+    }
+});
 
 test("removing any blocker from either readiness contract fails both validators without mutating tracked docs", async () => {
     const [originalRegister, originalReleaseContract] = await Promise.all([
