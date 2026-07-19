@@ -4,6 +4,9 @@ import path from "node:path";
 import ts from "typescript";
 
 const MAX_TRACE_DEPTH = 24;
+const MAX_STATIC_ALTERNATIVES = 64;
+const MAX_SYNTHETIC_INVOCATIONS = 256;
+const MAX_ANALYSIS_WORK = 10000;
 
 async function listTypeScript(root, relativeRoot) {
     const files = [];
@@ -241,6 +244,36 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
     const wildcardPropertyWrites = [];
     const callArgumentsByParameter = new Map();
     const callsByDeclaration = new Map();
+    const analysisFailures = new Set();
+    let analysisWork = 0;
+    let syntheticInvocations = 0;
+
+    function bounded(values, kind = "alternatives") {
+        analysisWork += values.length;
+        if (analysisWork > MAX_ANALYSIS_WORK) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (work; max ${MAX_ANALYSIS_WORK})`,
+            );
+        }
+        if (values.length > MAX_STATIC_ALTERNATIVES) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (${kind}; max ${MAX_STATIC_ALTERNATIVES})`,
+            );
+            return values.slice(0, MAX_STATIC_ALTERNATIVES);
+        }
+        return values;
+    }
+
+    function addSyntheticInvocation(declaration, node, args) {
+        syntheticInvocations += 1;
+        if (syntheticInvocations > MAX_SYNTHETIC_INVOCATIONS) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (invocations; max ${MAX_SYNTHETIC_INVOCATIONS})`,
+            );
+            return;
+        }
+        addInvocation(declaration, node, args);
+    }
 
     function addInvocation(declaration, node, args) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
@@ -491,6 +524,41 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         }
     }
 
+    function indexBindingPatternWrites(pattern, source, position, projection = []) {
+        if (ts.isObjectBindingPattern(pattern)) {
+            for (const element of pattern.elements) {
+                if (element.dotDotDotToken) continue;
+                const property = element.propertyName ?? element.name;
+                if (!ts.isIdentifier(property) && !ts.isStringLiteralLike(property)) continue;
+                const names = [property.text];
+                const nextProjection = [...projection, { kind: "property", names }];
+                if (ts.isIdentifier(element.name)) {
+                    addWrite(element.name, source, position, null, {
+                        projection: nextProjection,
+                        defaultValue: element.initializer,
+                    });
+                } else {
+                    indexBindingPatternWrites(element.name, source, position, nextProjection);
+                }
+            }
+            return;
+        }
+        if (ts.isArrayBindingPattern(pattern)) {
+            pattern.elements.forEach((element, index) => {
+                if (!ts.isBindingElement(element) || element.dotDotDotToken) return;
+                const nextProjection = [...projection, { kind: "array", index }];
+                if (ts.isIdentifier(element.name)) {
+                    addWrite(element.name, source, position, null, {
+                        projection: nextProjection,
+                        defaultValue: element.initializer,
+                    });
+                } else {
+                    indexBindingPatternWrites(element.name, source, position, nextProjection);
+                }
+            });
+        }
+    }
+
     function definiteExpressionState(expression) {
         while (
             ts.isParenthesizedExpression(expression) ||
@@ -616,6 +684,13 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
                 addWrite(node.name, node.initializer, node.pos, node.type);
             }
+            if (
+                ts.isVariableDeclaration(node) &&
+                (ts.isObjectBindingPattern(node.name) || ts.isArrayBindingPattern(node.name)) &&
+                node.initializer
+            ) {
+                indexBindingPatternWrites(node.name, node.initializer, node.pos);
+            }
             if (ts.isPropertyDeclaration(node) && node.initializer) {
                 addWrite(node.name, node.initializer, node.pos, node.type);
             }
@@ -690,6 +765,54 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         substitutions = new Map(),
     ) {
         expression = unwrapExpression(expression);
+        if (ts.isConditionalExpression(expression)) {
+            return bounded([
+                ...reachingExpressionValues(
+                    expression.whenTrue,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                ),
+                ...reachingExpressionValues(
+                    expression.whenFalse,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                ),
+            ]);
+        }
+        if (ts.isBinaryExpression(expression)) {
+            if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
+                return reachingExpressionValues(
+                    expression.right,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                );
+            }
+            if (
+                [
+                    ts.SyntaxKind.BarBarToken,
+                    ts.SyntaxKind.AmpersandAmpersandToken,
+                    ts.SyntaxKind.QuestionQuestionToken,
+                ].includes(expression.operatorToken.kind)
+            ) {
+                return bounded([
+                    ...reachingExpressionValues(
+                        expression.left,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                    ),
+                    ...reachingExpressionValues(
+                        expression.right,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                    ),
+                ]);
+            }
+        }
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const substituted = substitutions.get(symbol);
@@ -708,12 +831,14 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             );
             return writes.length === 0
                 ? [{ expression, substitutions }]
-                : writes.flatMap((write) =>
-                      reachingExpressionValues(
-                          write.value,
-                          write.position,
-                          nextSeen,
-                          substitutions,
+                : bounded(
+                      writes.flatMap((write) =>
+                          reachingExpressionValues(
+                              write.value,
+                              write.position,
+                              nextSeen,
+                              substitutions,
+                          ),
                       ),
                   );
         }
@@ -731,8 +856,10 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                     const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                     if (symbol) nested.set(symbol, argument);
                 });
-                return functionReturnExpressions(declaration).flatMap((returned) =>
-                    reachingExpressionValues(returned, expression.pos, nextSeen, nested),
+                return bounded(
+                    functionReturnExpressions(declaration).flatMap((returned) =>
+                        reachingExpressionValues(returned, expression.pos, nextSeen, nested),
+                    ),
                 );
             }
         }
@@ -807,8 +934,10 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         value.substitutions,
                     );
                     if (spreadAlternatives.length > 0) {
-                        sequences = sequences.flatMap((sequence) =>
-                            spreadAlternatives.map((spread) => [...sequence, ...spread]),
+                        sequences = bounded(
+                            sequences.flatMap((sequence) =>
+                                spreadAlternatives.map((spread) => [...sequence, ...spread]),
+                            ),
                         );
                     } else {
                         const unresolved = {
@@ -845,7 +974,7 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             }
             alternatives.push(...sequences);
         }
-        return alternatives;
+        return bounded(alternatives);
     }
 
     function expressionResolvesToGlobal(expression, name, beforePosition, seen = new Set()) {
@@ -894,15 +1023,28 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         write.position < beforePosition &&
                         (cutoff == null || write.position >= cutoff),
                 )
-                .some((write) =>
-                    expressionResolvesToBuiltinMember(
+                .some((write) => {
+                    const projectedMember = write.projection?.at(-1);
+                    if (
+                        projectedMember?.kind === "property" &&
+                        projectedMember.names.includes(memberName) &&
+                        expressionResolvesToGlobal(
+                            write.value,
+                            globalName,
+                            write.position,
+                            nextSeen,
+                        )
+                    ) {
+                        return true;
+                    }
+                    return expressionResolvesToBuiltinMember(
                         write.value,
                         globalName,
                         memberName,
                         write.position,
                         nextSeen,
-                    ),
-                );
+                    );
+                });
         }
         if (ts.isPropertyAccessExpression(expression)) {
             return objectPropertyEntries(expression.expression, beforePosition).some(
@@ -928,6 +1070,7 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         substitutions = new Map(),
         effectGroup = null,
         effectOrder = 0,
+        definiteEffectNames = [],
     ) {
         propertyWrites.push({
             value,
@@ -940,7 +1083,18 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             substitutions,
             effectGroup,
             effectOrder,
+            definiteEffectNames,
         });
+    }
+
+    function definitelyFinalNames(sequence) {
+        const names = new Set();
+        for (let index = sequence.length - 1; index >= 0; index -= 1) {
+            const propertyNames = sequence[index].names;
+            if (propertyNames == null) break;
+            if (propertyNames.length === 1) names.add(propertyNames[0]);
+        }
+        return names;
     }
 
     function substituteStaticExpression(expression, substitutions) {
@@ -1122,16 +1276,16 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                                     const next = [];
                                     for (const accumulator of accumulators) {
                                         const args = [accumulator, value];
-                                        addInvocation(callback, node, args);
+                                        addSyntheticInvocation(callback, node, args);
                                         next.push(...callbackReturnOrigins(callback, args));
                                     }
-                                    accumulators = next;
+                                    accumulators = bounded(next);
                                     if (accumulators.length === 0) break;
                                 }
                             } else {
                                 for (const value of values) {
                                     const args = [value];
-                                    addInvocation(callback, node, args);
+                                    addSyntheticInvocation(callback, node, args);
                                     const result = callbackBooleanResult(callback, args);
                                     if (
                                         (["some", "find", "findIndex"].includes(invocation) &&
@@ -1155,11 +1309,25 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                     for (const source of node.arguments.slice(1)) {
                         const alternatives = objectPropertySequences(source, node.pos);
                         if (alternatives.length > 0) {
-                            sequences = sequences.flatMap((sequence) =>
-                                alternatives.map((alternative) => [...sequence, ...alternative]),
+                            sequences = bounded(
+                                sequences.flatMap((sequence) =>
+                                    alternatives.map((alternative) => [
+                                        ...sequence,
+                                        ...alternative,
+                                    ]),
+                                ),
                             );
+                        } else {
+                            sequences = sequences.map((sequence) => [
+                                ...sequence,
+                                { value: source, names: null, substitutions: new Map() },
+                            ]);
                         }
                     }
+                    const finalNameSets = sequences.map(definitelyFinalNames);
+                    const definiteEffectNames = [...(finalNameSets[0] ?? new Set())].filter(
+                        (name) => finalNameSets.every((names) => names.has(name)),
+                    );
                     sequences.forEach((sequence, pathIndex) => {
                         const effectGroup = `${node.getSourceFile().fileName}:${node.pos}:assign:${pathIndex}`;
                         sequence.forEach((property, effectOrder) => {
@@ -1171,6 +1339,7 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                                 property.substitutions,
                                 effectGroup,
                                 effectOrder,
+                                definiteEffectNames,
                             );
                         });
                     });
@@ -1186,7 +1355,16 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                         ts.isStringLiteralLike(key) || ts.isNumericLiteral(key)
                             ? [key.text]
                             : literalPropertyNames(checker.getTypeAtLocation(key));
-                    addEffectWrite(node.arguments[0], node.arguments[2], names, node);
+                    addEffectWrite(
+                        node.arguments[0],
+                        node.arguments[2],
+                        names,
+                        node,
+                        new Map(),
+                        `${node.getSourceFile().fileName}:${node.pos}:reflect-set`,
+                        0,
+                        names?.length === 1 ? names : [],
+                    );
                 }
 
                 const bound = boundInvocation(node.expression, node);
@@ -1353,22 +1531,38 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
     function effectiveWrites(write, use) {
         const declaration = enclosingFunction(write.node);
         if (!declaration || declaration === enclosingFunction(use)) return [write];
-        return activeCallsOf(declaration, use).map((invocation) => {
+        const useFunction = enclosingFunction(use);
+        function lift(effect, owner, invocation, depth = 0) {
+            if (depth > MAX_TRACE_DEPTH) return [];
             const call = invocation.node;
-            const substitutions = parameterSubstitutions(declaration, invocation);
-            const receiver =
-                ts.isPropertyAccessExpression(write.node) ||
+            const substitutions = parameterSubstitutions(owner, invocation);
+            const originalReceiver =
+                effect.receiverOverride ??
+                (ts.isPropertyAccessExpression(write.node) ||
                 ts.isElementAccessExpression(write.node)
-                    ? substituteReceiver(write.node.expression, substitutions)
-                    : null;
-            return {
-                ...write,
+                    ? write.node.expression
+                    : null);
+            const receiver = originalReceiver
+                ? substituteReceiver(originalReceiver, substitutions)
+                : null;
+            const lifted = {
+                ...effect,
                 position: call.pos,
                 sourceFile: call.getSourceFile(),
                 receiverOverride: receiver,
-                substitutions,
+                substitutions: new Map([...(effect.substitutions ?? []), ...substitutions]),
             };
-        });
+            const caller = enclosingFunction(call);
+            if (!caller || caller === useFunction) return [lifted];
+            return activeCallsOf(caller, use).flatMap((callerInvocation) =>
+                lift(lifted, caller, callerInvocation, depth + 1),
+            );
+        }
+        return bounded(
+            activeCallsOf(declaration, use).flatMap((invocation) =>
+                lift(write, declaration, invocation),
+            ),
+        );
     }
 
     function receiverOrigins(
@@ -1506,6 +1700,27 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
         );
     }
 
+    function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
+        if (usePropertyNames?.length !== 1) return writes;
+        const useLocation = directStatementInLinearContainer(expression);
+        if (!useLocation) return writes;
+        const useName = usePropertyNames[0];
+        let cutoff = null;
+        for (const write of writes) {
+            if (!write.definiteEffectNames?.includes(useName)) continue;
+            const location = directStatementInLinearContainer(write.node);
+            if (
+                !location ||
+                location.container !== useLocation.container ||
+                !ts.isExpressionStatement(location.statement)
+            ) {
+                continue;
+            }
+            cutoff = Math.max(cutoff ?? -1, write.position);
+        }
+        return cutoff == null ? writes : writes.filter((write) => write.position >= cutoff);
+    }
+
     function reachingWrites(symbol, expression) {
         const usePropertyNames = ts.isPropertyAccessExpression(expression)
             ? [expression.name.text]
@@ -1521,17 +1736,21 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
                           write.propertyNames.some((name) => usePropertyNames.includes(name)),
                   )
                 : [];
-        const writes = applyOrderedEffectCutoffs(
-            [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
-                .flatMap((write) => effectiveWrites(write, expression))
-                .filter(
-                    (write) =>
-                        write.sourceFile === expression.getSourceFile() &&
-                        write.position < expression.pos &&
-                        writeMayReachExpression(write, expression),
-                )
-                .sort((left, right) => left.position - right.position)
-                .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+        const writes = applyCrossStatementEffectCutoff(
+            applyOrderedEffectCutoffs(
+                [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
+                    .flatMap((write) => effectiveWrites(write, expression))
+                    .filter(
+                        (write) =>
+                            write.sourceFile === expression.getSourceFile() &&
+                            write.position < expression.pos &&
+                            writeMayReachExpression(write, expression),
+                    )
+                    .sort((left, right) => left.position - right.position)
+                    .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+                usePropertyNames,
+            ),
+            expression,
             usePropertyNames,
         );
         const cutoff = latestDefiniteWriteCutoff(symbol, expression);
@@ -2514,7 +2733,7 @@ function analyzeProgram({ root, rootNames, packageRoots, forbiddenIdentifier }) 
             visit(sourceFile);
         }
     }
-    return { findings, escapeFailures };
+    return { findings, escapeFailures: [...escapeFailures, ...analysisFailures] };
 }
 
 function exceptionLocationMatches(exception, finding, source) {
