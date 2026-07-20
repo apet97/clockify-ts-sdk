@@ -440,9 +440,15 @@ end-to-end and green before push. Drift gates are non-negotiable.
     recursively with incremented execution phases and refined alternative-path
     leaves; the bounded depth/work/alternative limits and unresolved invoked
     returns fail closed, while a returned callable that is not invoked remains
-    a non-effect. A later phase dominates only when every registered
-    mutually exclusive path performs an equivalent receiver/name-qualified
-    definite write. Lifted direct property assignments retain original
+    a non-effect. Mixed native/custom bind alternatives retain every path;
+    normalized native writes carry the same phase/path identity as returned
+    custom callables. A custom-binder branch with no recoverable return keeps
+    its path and fails closed only if that result is invoked. Request-contributing
+    helper tracing also fails closed when its depth bound is exhausted; deep
+    uncalled helpers and non-contributing helper arguments remain non-effects. A
+    later phase dominates only when every
+    registered mutually exclusive path performs an equivalent receiver/name-
+    qualified definite write. Lifted direct property assignments retain original
     within-phase sequence and become definite only on unconditional paths with
     no preceding function exit; conditional or early-return writes do not
     dominate.
