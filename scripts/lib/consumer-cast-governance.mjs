@@ -259,6 +259,7 @@ function analyzeProgram({
     const wildcardPropertyWrites = [];
     const callArgumentsByParameter = new Map();
     const callsByDeclaration = new Map();
+    const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
     const analysisFailures = new Set();
     const maxAlternatives = analysisLimits.maxAlternatives ?? MAX_STATIC_ALTERNATIVES;
@@ -441,6 +442,7 @@ function analyzeProgram({
             node: target,
             declaredType,
             ...options,
+            ...classExecutionMetadata(target),
         };
         const symbols = options.symbols ?? symbolsForWriteTarget(target);
         if (ts.isPropertyAccessExpression(target) || ts.isElementAccessExpression(target)) {
@@ -803,6 +805,57 @@ function analyzeProgram({
         return false;
     }
 
+    function classExecutionMetadata(node) {
+        function evaluationEffect(phase) {
+            let classOwner = null;
+            for (let current = node.parent; current; current = current.parent) {
+                if (ts.isClassLike(current)) {
+                    classOwner = current;
+                    break;
+                }
+            }
+            return { classEvaluationEffect: true, classOwner, classEvaluationPhase: phase };
+        }
+        for (let current = node; current?.parent; current = current.parent) {
+            const parent = current.parent;
+            if (ts.isHeritageClause(parent)) return evaluationEffect(0);
+            if (ts.isComputedPropertyName(parent)) {
+                return evaluationEffect(1);
+            }
+            if (ts.isPropertyDeclaration(parent)) {
+                if (parent.name && isWithin(node, parent.name)) {
+                    return evaluationEffect(1);
+                }
+                if (parent.initializer && isWithin(node, parent.initializer)) {
+                    if (isStaticClassElement(parent)) return evaluationEffect(2);
+                    return {
+                        classInstanceEffect: true,
+                        classOwner: parent.parent,
+                        classEffectPhase: 0,
+                    };
+                }
+                return { inactiveClassMemberEffect: true };
+            }
+            if (ts.isClassStaticBlockDeclaration(parent)) {
+                return evaluationEffect(2);
+            }
+            if (
+                ts.isMethodDeclaration(parent) ||
+                ts.isGetAccessorDeclaration(parent) ||
+                ts.isSetAccessorDeclaration(parent)
+            ) {
+                if (parent.name && isWithin(node, parent.name)) {
+                    return evaluationEffect(1);
+                }
+                return { inactiveClassMemberEffect: true };
+            }
+            if (ts.isConstructorDeclaration(parent)) {
+                return { classEffectPhase: 1 };
+            }
+        }
+        return {};
+    }
+
     function expressionDefinitelySkipped(node) {
         for (let current = node.parent; current; current = current.parent) {
             if (!ts.isBinaryExpression(current) || !isWithin(node, current.right)) continue;
@@ -880,6 +933,81 @@ function analyzeProgram({
             .getCallSignatures()
             .map((signature) => signature.declaration)
             .find((declaration) => declaration && ts.isFunctionLike(declaration));
+    }
+
+    function classOwnersForNewExpression(
+        expression,
+        beforePosition,
+        seen = new Set(),
+        resolution = { unresolved: false },
+    ) {
+        expression = unwrapExpression(expression);
+        if (ts.isClassExpression(expression)) return [expression];
+        if (ts.isConditionalExpression(expression)) {
+            return bounded(
+                [expression.whenTrue, expression.whenFalse].flatMap((candidate) =>
+                    classOwnersForNewExpression(candidate, beforePosition, seen, resolution),
+                ),
+                "constructed class alternatives",
+            );
+        }
+        if (!ts.isIdentifier(expression)) {
+            resolution.unresolved = true;
+            return [];
+        }
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        const declared = (symbol?.declarations ?? []).filter(
+            (declaration) =>
+                ts.isClassDeclaration(declaration) || ts.isClassExpression(declaration),
+        );
+        if (declared.length > 0) return declared;
+        if (!symbol || seen.has(symbol)) {
+            resolution.unresolved = true;
+            return [];
+        }
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const writes = (writesBySymbol.get(symbol) ?? []).filter(
+            (write) => write.position < beforePosition,
+        );
+        if (writes.length === 0) resolution.unresolved = true;
+        const owners = writes.flatMap((write) =>
+            classOwnersForNewExpression(write.value, write.position, nextSeen, resolution),
+        );
+        return bounded(owners, "constructed class alternatives");
+    }
+
+    function classConstructionLineage(classOwner, seen = new Set(), depth = 0) {
+        if (depth > MAX_TRACE_DEPTH || seen.has(classOwner)) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve constructed class heritage (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return [classOwner];
+        }
+        const extendsClause = classOwner.heritageClauses?.find(
+            (clause) => clause.token === ts.SyntaxKind.ExtendsKeyword,
+        );
+        if (!extendsClause || extendsClause.types.length === 0) return [classOwner];
+        const resolution = { unresolved: false };
+        const baseOwners = classOwnersForNewExpression(
+            extendsClause.types[0].expression,
+            classOwner.pos,
+            new Set(),
+            resolution,
+        );
+        if (baseOwners.length > 1 || (resolution.unresolved && baseOwners.length > 0)) {
+            analysisFailures.add(
+                "consumer cast analysis could not statically resolve constructed class heritage",
+            );
+            return [classOwner];
+        }
+        if (baseOwners.length === 0) return [classOwner];
+        const nextSeen = new Set(seen);
+        nextSeen.add(classOwner);
+        return bounded(
+            [...classConstructionLineage(baseOwners[0], nextSeen, depth + 1), classOwner],
+            "constructed class heritage",
+        );
     }
 
     function unwrapExpression(expression) {
@@ -1877,6 +2005,7 @@ function analyzeProgram({
             executionPhase: execution.executionPhase ?? 0,
             alternativeGroup: execution.alternativeGroup ?? null,
             alternativePath: execution.alternativePath ?? null,
+            ...classExecutionMetadata(call),
         });
     }
 
@@ -2295,20 +2424,37 @@ function analyzeProgram({
                     );
                 }
             }
+            if (ts.isCallExpression(expression)) {
+                return writes.some(
+                    (write) =>
+                        isWithin(write.node, expression) &&
+                        writeDefinitelySetsMember(write, memberName),
+                );
+            }
             if (ts.isClassExpression(expression)) {
-                return expression.members.some((member) => {
-                    if (ts.isClassStaticBlockDeclaration(member)) {
-                        return member.body.statements.some((child) =>
-                            statementDefinitelySetsMember(child, writes, memberName),
+                return (
+                    (expression.heritageClauses ?? []).some((clause) =>
+                        clause.types.some((type) =>
+                            expressionDefinitelySetsMember(type.expression),
+                        ),
+                    ) ||
+                    expression.members.some((member) => {
+                        if (member.name && ts.isComputedPropertyName(member.name)) {
+                            if (expressionDefinitelySetsMember(member.name.expression)) return true;
+                        }
+                        if (ts.isClassStaticBlockDeclaration(member)) {
+                            return member.body.statements.some((child) =>
+                                statementDefinitelySetsMember(child, writes, memberName),
+                            );
+                        }
+                        return (
+                            isStaticClassElement(member) &&
+                            ts.isPropertyDeclaration(member) &&
+                            member.initializer != null &&
+                            expressionDefinitelySetsMember(member.initializer)
                         );
-                    }
-                    return (
-                        isStaticClassElement(member) &&
-                        ts.isPropertyDeclaration(member) &&
-                        member.initializer != null &&
-                        expressionDefinitelySetsMember(member.initializer)
-                    );
-                });
+                    })
+                );
             }
             return false;
         }
@@ -2328,19 +2474,27 @@ function analyzeProgram({
             return statementDefinitelySetsMember(statement.statement, writes, memberName);
         }
         if (ts.isClassDeclaration(statement)) {
-            return statement.members.some((member) => {
-                if (ts.isClassStaticBlockDeclaration(member)) {
-                    return member.body.statements.some((child) =>
-                        statementDefinitelySetsMember(child, writes, memberName),
+            return (
+                (statement.heritageClauses ?? []).some((clause) =>
+                    clause.types.some((type) => expressionDefinitelySetsMember(type.expression)),
+                ) ||
+                statement.members.some((member) => {
+                    if (member.name && ts.isComputedPropertyName(member.name)) {
+                        if (expressionDefinitelySetsMember(member.name.expression)) return true;
+                    }
+                    if (ts.isClassStaticBlockDeclaration(member)) {
+                        return member.body.statements.some((child) =>
+                            statementDefinitelySetsMember(child, writes, memberName),
+                        );
+                    }
+                    return (
+                        isStaticClassElement(member) &&
+                        ts.isPropertyDeclaration(member) &&
+                        member.initializer != null &&
+                        expressionDefinitelySetsMember(member.initializer)
                     );
-                }
-                return (
-                    isStaticClassElement(member) &&
-                    ts.isPropertyDeclaration(member) &&
-                    member.initializer != null &&
-                    expressionDefinitelySetsMember(member.initializer)
-                );
-            });
+                })
+            );
         }
         if (!ts.isExpressionStatement(statement)) return false;
         if (expressionDefinitelySetsMember(statement.expression)) return true;
@@ -3028,7 +3182,12 @@ function analyzeProgram({
             if (analysisExhausted) return;
             if (ts.isCallExpression(node)) {
                 const declaration = checker.getResolvedSignature(node)?.declaration;
-                const skipped = expressionDefinitelySkipped(node);
+                const classExecution = classExecutionMetadata(node);
+                const skipped =
+                    expressionDefinitelySkipped(node) ||
+                    classExecution.inactiveClassMemberEffect ||
+                    (classExecution.classInstanceEffect &&
+                        (instantiationsByClass.get(classExecution.classOwner)?.length ?? 0) === 0);
                 if (!skipped) addInvocation(declaration, node, node.arguments);
 
                 if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
@@ -3101,21 +3260,9 @@ function analyzeProgram({
                     }
                 }
 
-                let classFieldMayExecute = true;
-                for (let ancestor = node.parent; ancestor; ancestor = ancestor.parent) {
-                    if (ts.isPropertyDeclaration(ancestor)) {
-                        classFieldMayExecute =
-                            isStaticClassElement(ancestor) &&
-                            ancestor.initializer != null &&
-                            isWithin(node, ancestor.initializer);
-                        break;
-                    }
-                    if (ts.isFunctionLike(ancestor) || ts.isSourceFile(ancestor)) break;
-                }
-                const effectiveCalls =
-                    skipped || !classFieldMayExecute
-                        ? []
-                        : normalizeEffectiveCalls(node.expression, node.arguments, node.pos);
+                const effectiveCalls = skipped
+                    ? []
+                    : normalizeEffectiveCalls(node.expression, node.arguments, node.pos);
                 effectiveCalls.forEach((effectiveCall, normalizedPathIndex) => {
                     const effectiveExpression = effectiveCall.expression;
                     const effectiveArguments = effectiveCall.arguments;
@@ -3134,21 +3281,24 @@ function analyzeProgram({
                             node.pos,
                         )
                     ) {
-                        const normalizedCallIsDefinite = effectiveCalls.every(
-                            (candidate) =>
-                                candidate.arguments[0] &&
-                                expressionResolvesToBuiltinMember(
-                                    candidate.expression,
-                                    "Object",
-                                    "assign",
-                                    node.pos,
-                                ) &&
-                                sameReceiverAlternatives(
-                                    candidate.arguments[0],
-                                    effectiveArguments[0],
-                                    node.pos,
-                                ),
-                        );
+                        const normalizedCallIsDefinite =
+                            effectiveCalls.length === 1 ||
+                            effectiveCalls.every(
+                                (candidate) =>
+                                    candidate.arguments[0] &&
+                                    expressionResolvesToBuiltinMember(
+                                        candidate.expression,
+                                        "Object",
+                                        "assign",
+                                        node.pos,
+                                    ) &&
+                                    (candidate.arguments[0] === effectiveArguments[0] ||
+                                        sameReceiverAlternatives(
+                                            candidate.arguments[0],
+                                            effectiveArguments[0],
+                                            node.pos,
+                                        )),
+                            );
                         let sequences = [[]];
                         for (const source of effectiveArguments.slice(1)) {
                             const alternatives = objectPropertySequences(source, node.pos);
@@ -3206,23 +3356,26 @@ function analyzeProgram({
                                 : literalPropertyNames(checker.getTypeAtLocation(key));
                         const normalizedCallIsDefinite =
                             names?.length === 1 &&
-                            effectiveCalls.every(
-                                (candidate) =>
-                                    candidate.arguments.length >= 3 &&
-                                    expressionResolvesToBuiltinMember(
-                                        candidate.expression,
-                                        "Reflect",
-                                        "set",
-                                        node.pos,
-                                    ) &&
-                                    sameReceiverAlternatives(
-                                        candidate.arguments[0],
-                                        effectiveArguments[0],
-                                        node.pos,
-                                    ) &&
-                                    singleEffectPropertyName(candidate.arguments[1], node.pos) ===
-                                        names[0],
-                            );
+                            (effectiveCalls.length === 1 ||
+                                effectiveCalls.every(
+                                    (candidate) =>
+                                        candidate.arguments.length >= 3 &&
+                                        expressionResolvesToBuiltinMember(
+                                            candidate.expression,
+                                            "Reflect",
+                                            "set",
+                                            node.pos,
+                                        ) &&
+                                        sameReceiverAlternatives(
+                                            candidate.arguments[0],
+                                            effectiveArguments[0],
+                                            node.pos,
+                                        ) &&
+                                        singleEffectPropertyName(
+                                            candidate.arguments[1],
+                                            node.pos,
+                                        ) === names[0],
+                                ));
                         addEffectWrite(
                             effectiveArguments[0],
                             effectiveArguments[2],
@@ -3273,11 +3426,12 @@ function analyzeProgram({
                                             "defineProperty",
                                             node.pos,
                                         )) &&
-                                    sameReceiverAlternatives(
-                                        candidate.arguments[0],
-                                        effectiveArguments[0],
-                                        node.pos,
-                                    ) &&
+                                    (candidate.arguments[0] === effectiveArguments[0] ||
+                                        sameReceiverAlternatives(
+                                            candidate.arguments[0],
+                                            effectiveArguments[0],
+                                            node.pos,
+                                        )) &&
                                     singleEffectPropertyName(candidate.arguments[1], node.pos) ===
                                         names[0],
                             );
@@ -3357,6 +3511,61 @@ function analyzeProgram({
             }
             ts.forEachChild(node, indexCallArguments);
         }
+        function indexClassInstantiations(node) {
+            if (ts.isNewExpression(node)) {
+                const resolution = { unresolved: false };
+                const classOwners = classOwnersForNewExpression(
+                    node.expression,
+                    node.pos,
+                    new Set(),
+                    resolution,
+                );
+                if (resolution.unresolved && classOwners.length > 0) {
+                    analysisFailures.add(
+                        "consumer cast analysis could not statically resolve constructed class alternative",
+                    );
+                }
+                chargeAnalysisWork(Math.max(0, classOwners.length - 1));
+                const alternativeGroup =
+                    classOwners.length > 1
+                        ? `${node.getSourceFile().fileName}:${node.pos}:constructed-class`
+                        : null;
+                classOwners.forEach((classOwner, classIndex) => {
+                    const alternativePath = alternativeGroup ? String(classIndex) : null;
+                    registerAlternativePath(alternativeGroup, alternativePath);
+                    classConstructionLineage(classOwner).forEach(
+                        (constructionOwner, constructionIndex) => {
+                            const constructionPhaseBase = constructionIndex * 2;
+                            const instantiations =
+                                instantiationsByClass.get(constructionOwner) ?? [];
+                            instantiations.push({
+                                node,
+                                alternativeGroup,
+                                alternativePath,
+                                constructionPhaseBase,
+                            });
+                            instantiationsByClass.set(constructionOwner, instantiations);
+                            const constructor = constructionOwner.members.find(
+                                ts.isConstructorDeclaration,
+                            );
+                            if (constructor) {
+                                addInvocation(
+                                    constructor,
+                                    node,
+                                    node.arguments ?? [],
+                                    new Map(),
+                                    constructionPhaseBase,
+                                    alternativeGroup,
+                                    alternativePath,
+                                );
+                            }
+                        },
+                    );
+                });
+            }
+            ts.forEachChild(node, indexClassInstantiations);
+        }
+        indexClassInstantiations(sourceFile);
         indexCallArguments(sourceFile);
     }
 
@@ -3408,6 +3617,17 @@ function analyzeProgram({
     }
 
     function crossesImmediatelyEvaluatedClassRegion(current, parent) {
+        if (ts.isHeritageClause(parent) || ts.isComputedPropertyName(parent)) return true;
+        if (
+            (ts.isMethodDeclaration(parent) ||
+                ts.isGetAccessorDeclaration(parent) ||
+                ts.isSetAccessorDeclaration(parent) ||
+                ts.isPropertyDeclaration(parent)) &&
+            parent.name === current &&
+            ts.isComputedPropertyName(current)
+        ) {
+            return true;
+        }
         if (ts.isClassStaticBlockDeclaration(parent)) return true;
         if (ts.isPropertyDeclaration(parent)) {
             return (
@@ -3416,7 +3636,13 @@ function analyzeProgram({
                 isWithin(current, parent.initializer)
             );
         }
-        if (ts.isClassLike(parent)) return isStaticClassElement(current);
+        if (ts.isClassLike(parent)) {
+            return (
+                isStaticClassElement(current) ||
+                ts.isHeritageClause(current) ||
+                ("name" in current && current.name && ts.isComputedPropertyName(current.name))
+            );
+        }
         return null;
     }
 
@@ -3431,7 +3657,9 @@ function analyzeProgram({
         ) {
             const parent = current.parent;
             const classRegion = crossesImmediatelyEvaluatedClassRegion(current, parent);
-            if (ts.isFunctionLike(parent) || classRegion === false) return false;
+            if ((ts.isFunctionLike(parent) && classRegion !== true) || classRegion === false) {
+                return false;
+            }
             if (ts.isClassLike(parent) && classRegion !== true) return false;
             if (ts.isBinaryExpression(parent) && current === parent.right) {
                 const state = staticScalar(parent.left, new Map());
@@ -3483,10 +3711,13 @@ function analyzeProgram({
         let current = node;
         while (current !== declaration.body) {
             const parent = current.parent;
-            if (!parent || (ts.isFunctionLike(parent) && parent !== declaration)) {
+            if (!parent) {
                 return false;
             }
             const classRegion = crossesImmediatelyEvaluatedClassRegion(current, parent);
+            if (ts.isFunctionLike(parent) && parent !== declaration && classRegion !== true) {
+                return false;
+            }
             if (classRegion === false || (ts.isClassLike(parent) && classRegion !== true)) {
                 return false;
             }
@@ -3580,19 +3811,30 @@ function analyzeProgram({
                 );
             }
             if (ts.isClassExpression(expression)) {
-                return expression.members.some((member) => {
-                    if (ts.isClassStaticBlockDeclaration(member)) {
-                        return member.body.statements.some((child) =>
-                            statementDefinitelyWritesSymbol(child, symbol, use),
+                return (
+                    (expression.heritageClauses ?? []).some((clause) =>
+                        clause.types.some((type) =>
+                            expressionDefinitelyWritesSymbol(type.expression),
+                        ),
+                    ) ||
+                    expression.members.some((member) => {
+                        if (member.name && ts.isComputedPropertyName(member.name)) {
+                            if (expressionDefinitelyWritesSymbol(member.name.expression))
+                                return true;
+                        }
+                        if (ts.isClassStaticBlockDeclaration(member)) {
+                            return member.body.statements.some((child) =>
+                                statementDefinitelyWritesSymbol(child, symbol, use),
+                            );
+                        }
+                        return (
+                            isStaticClassElement(member) &&
+                            ts.isPropertyDeclaration(member) &&
+                            member.initializer != null &&
+                            expressionDefinitelyWritesSymbol(member.initializer)
                         );
-                    }
-                    return (
-                        isStaticClassElement(member) &&
-                        ts.isPropertyDeclaration(member) &&
-                        member.initializer != null &&
-                        expressionDefinitelyWritesSymbol(member.initializer)
-                    );
-                });
+                    })
+                );
             }
             return false;
         }
@@ -3647,19 +3889,27 @@ function analyzeProgram({
             return statementDefinitelyWritesSymbol(statement.statement, symbol, use);
         }
         if (ts.isClassDeclaration(statement)) {
-            return statement.members.some((member) => {
-                if (ts.isClassStaticBlockDeclaration(member)) {
-                    return member.body.statements.some((child) =>
-                        statementDefinitelyWritesSymbol(child, symbol, use),
+            return (
+                (statement.heritageClauses ?? []).some((clause) =>
+                    clause.types.some((type) => expressionDefinitelyWritesSymbol(type.expression)),
+                ) ||
+                statement.members.some((member) => {
+                    if (member.name && ts.isComputedPropertyName(member.name)) {
+                        if (expressionDefinitelyWritesSymbol(member.name.expression)) return true;
+                    }
+                    if (ts.isClassStaticBlockDeclaration(member)) {
+                        return member.body.statements.some((child) =>
+                            statementDefinitelyWritesSymbol(child, symbol, use),
+                        );
+                    }
+                    return (
+                        isStaticClassElement(member) &&
+                        ts.isPropertyDeclaration(member) &&
+                        member.initializer != null &&
+                        expressionDefinitelyWritesSymbol(member.initializer)
                     );
-                }
-                return (
-                    isStaticClassElement(member) &&
-                    ts.isPropertyDeclaration(member) &&
-                    member.initializer != null &&
-                    expressionDefinitelyWritesSymbol(member.initializer)
-                );
-            });
+                })
+            );
         }
         return false;
     }
@@ -3682,6 +3932,17 @@ function analyzeProgram({
         return null;
     }
 
+    function activeClassInstantiations(classOwner, use) {
+        if (!classOwner) return [];
+        const useFunction = enclosingFunction(use);
+        return (instantiationsByClass.get(classOwner) ?? []).filter(
+            (instantiation) =>
+                instantiation.node.getSourceFile() === use.getSourceFile() &&
+                instantiation.node.pos < use.pos &&
+                enclosingFunction(instantiation.node) === useFunction,
+        );
+    }
+
     function activeCallsOf(declaration, use, depth = 0, seen = new Set()) {
         if (depth > MAX_TRACE_DEPTH || seen.has(declaration)) return [];
         const nextSeen = new Set(seen);
@@ -3690,6 +3951,14 @@ function analyzeProgram({
         const active = [];
         for (const invocation of callsByDeclaration.get(declaration) ?? []) {
             const call = invocation.node;
+            const classExecution = classExecutionMetadata(call);
+            if (classExecution.inactiveClassMemberEffect) continue;
+            if (
+                classExecution.classInstanceEffect &&
+                activeClassInstantiations(classExecution.classOwner, use).length === 0
+            ) {
+                continue;
+            }
             const caller = enclosingFunction(call);
             if (
                 caller === useFunction &&
@@ -3738,6 +4007,50 @@ function analyzeProgram({
     }
 
     function effectiveWrites(write, use) {
+        if (write.inactiveClassMemberEffect) return [];
+        if (write.classEvaluationEffect) {
+            return [
+                {
+                    ...write,
+                    position: write.classOwner?.pos ?? write.position,
+                    executionPhase: write.classEvaluationPhase ?? 0,
+                    executionOrderPath: [
+                        write.classOwner?.pos ?? write.position,
+                        write.classEvaluationPhase ?? 0,
+                        write.position,
+                    ],
+                    definiteEffectNames: [
+                        ...(write.definiteEffectNames ?? []),
+                        ...(write.directPropertyWrite && write.propertyNames?.length === 1
+                            ? write.propertyNames
+                            : []),
+                    ],
+                },
+            ];
+        }
+        if (write.classInstanceEffect) {
+            return activeClassInstantiations(write.classOwner, use).map((instantiation) => ({
+                ...write,
+                position: instantiation.node.pos,
+                sourceFile: instantiation.node.getSourceFile(),
+                executionNode: instantiation.node,
+                executionPhase:
+                    (instantiation.constructionPhaseBase ?? 0) + (write.classEffectPhase ?? 0),
+                executionOrderPath: [
+                    instantiation.node.pos,
+                    (instantiation.constructionPhaseBase ?? 0) + (write.classEffectPhase ?? 0),
+                    write.position,
+                ],
+                alternativeGroup: instantiation.alternativeGroup,
+                alternativePath: instantiation.alternativePath,
+                definiteEffectNames: [
+                    ...(write.definiteEffectNames ?? []),
+                    ...(write.directPropertyWrite && write.propertyNames?.length === 1
+                        ? write.propertyNames
+                        : []),
+                ],
+            }));
+        }
         const declaration = enclosingFunction(write.node);
         if (!declaration || declaration === enclosingFunction(use)) return [write];
         const useFunction = enclosingFunction(use);
@@ -3759,7 +4072,9 @@ function analyzeProgram({
                 position: call.pos,
                 sourceFile: call.getSourceFile(),
                 executionNode: call,
-                executionPhase: (effect.executionPhase ?? 0) + (invocation.executionPhase ?? 0),
+                executionPhase:
+                    (effect.executionPhase ?? effect.classEffectPhase ?? 0) +
+                    (invocation.executionPhase ?? 0),
                 executionSequence: effect.executionSequence ?? write.position,
                 executionOrderPath: [
                     call.pos,
@@ -5798,6 +6113,42 @@ function analyzeProgram({
 
     function requestBoundaryArguments(call) {
         const boundaries = [];
+        const directBuiltinCandidate = unwrapExpression(call.expression);
+        const directBuiltinSyntax =
+            (ts.isPropertyAccessExpression(directBuiltinCandidate) &&
+                ts.isIdentifier(directBuiltinCandidate.expression) &&
+                ["Object", "Reflect"].includes(directBuiltinCandidate.expression.text) &&
+                ["assign", "set", "defineProperty", "defineProperties"].includes(
+                    directBuiltinCandidate.name.text,
+                )) ||
+            (ts.isElementAccessExpression(directBuiltinCandidate) &&
+                ts.isIdentifier(directBuiltinCandidate.expression) &&
+                ["Object", "Reflect"].includes(directBuiltinCandidate.expression.text));
+        let governedCandidate = directBuiltinSyntax
+            ? governedBuiltinMember(directBuiltinCandidate, call.pos)
+            : null;
+        if (!governedCandidate && ts.isIdentifier(directBuiltinCandidate)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(directBuiltinCandidate));
+            const writes = (writesBySymbol.get(symbol) ?? [])
+                .filter((write) => write.position < call.pos)
+                .sort((left, right) => right.position - left.position);
+            const latest = writes[0];
+            const latestValue = latest ? unwrapExpression(latest.value) : null;
+            const latestIsDirectBuiltin =
+                latestValue &&
+                ((ts.isPropertyAccessExpression(latestValue) &&
+                    ts.isIdentifier(latestValue.expression) &&
+                    ["Object", "Reflect"].includes(latestValue.expression.text)) ||
+                    (ts.isElementAccessExpression(latestValue) &&
+                        ts.isIdentifier(latestValue.expression) &&
+                        ["Object", "Reflect"].includes(latestValue.expression.text)));
+            if (latestIsDirectBuiltin) {
+                governedCandidate = governedBuiltinMember(latestValue, latest.position);
+            }
+        }
+        if (governedCandidate) {
+            return boundaries;
+        }
         const directSignature = checker.getResolvedSignature(call);
         if (signatureBelongsToGovernedSource(directSignature)) return boundaries;
         const callee = call.expression;
