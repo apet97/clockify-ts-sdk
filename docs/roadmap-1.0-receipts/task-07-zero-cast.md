@@ -332,6 +332,21 @@ metadata controls stayed green. The finished focused set passes **15/15**, and
 the complete controller suite passes **489/489** fixtures while retaining the
 prior 474 cases.
 
+The twenty-fourth corrective review recovers receiver identity through object-
+literal property projections, known computed properties, destructured aliases,
+and nested combinations, without merging unrelated properties or receivers.
+Object-rest results are modeled as copies: exclusions and the exact snapshot
+position decide whether a source write contributes to a returned rest value or
+spread reconstruction. Lifted nested-helper effects now retain a lexicographic
+invocation/source order path, so unconditional safe-later writes dominate across
+direct and multi-level helper boundaries while conditional writes do not and
+unsafe-last writes remain visible. Local governed-source helpers are traced from
+the eventual SDK boundary rather than misclassified as independent SDK request
+boundaries. Thirteen of the initial 20 focused cases failed against `bdb7db5`;
+the seven unsafe-before, conditional/unsafe-last, and unrelated receiver/property
+controls stayed green. The finished focused set passes **20/20**, and the complete
+controller suite passes **509/509** fixtures while retaining the prior 489 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.

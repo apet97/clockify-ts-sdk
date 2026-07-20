@@ -267,8 +267,9 @@ make docs-drift
   request assertions stay governed. Generic and helper-depth exhaustion share
   one stable deduplicated failure. Returned synchronous request aliases retain
   receiver-qualified direct/computed, normalized builtin, and nested-helper
-  writes, with definite same-property overwrites ordered across the invocation.
-  Phase cutoff requires
+  writes through object-property/destructured aliases; object-rest copies retain
+  exclusions and snapshot timing. Definite same-property overwrites follow nested
+  invocation/source order. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths

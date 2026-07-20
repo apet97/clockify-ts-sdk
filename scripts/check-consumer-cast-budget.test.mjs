@@ -3185,6 +3185,155 @@ test("keeps discarded mutation metadata clean beside a returned request", async 
     );
 });
 
+for (const [label, helperSource] of [
+    [
+        "object-literal property projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; box.request.body = body as any; return request; }",
+    ],
+    [
+        "returned object-literal property projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; box.request.body = body as any; return box.request; }",
+    ],
+    [
+        "known computed object-literal property projection",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const key = "request" as const; const box = { request }; box[key].body = body as any; return request; }',
+    ],
+    [
+        "destructured property alias",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { request: alias } = { request }; alias.body = body as any; return request; }",
+    ],
+    [
+        "nested destructured projection alias",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { nested: { request } }; const { nested: { request: alias } } = box; alias.body = body as any; return request; }",
+    ],
+]) {
+    test(`traces ${label} into a returned request alias`, async () => {
+        await withFixture(returnedMutationFixture(helperSource), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+for (const [label, helperSource] of [
+    [
+        "an unrelated object-literal property",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const other: ClockifyApi.CreateProjectsRequest = { workspaceId: "other" }; const box = { request, other }; box.other.body = body as any; return request; }',
+    ],
+    [
+        "an unrelated destructured property alias",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const other: ClockifyApi.CreateProjectsRequest = { workspaceId: "other" }; const { other: alias } = { request, other }; alias.body = body as any; return request; }',
+    ],
+]) {
+    test(`does not trace ${label} into a returned request alias`, async () => {
+        await withFixture(returnedMutationFixture(helperSource), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, helperSource] of [
+    [
+        "an unsafe write before an object-rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId, ...rest } = request; return { workspaceId, ...rest }; }",
+    ],
+    [
+        "an unsafe write before a nested object-rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; request.body = body as any; const { request: { workspaceId, ...rest } } = box; return { workspaceId, ...rest }; }",
+    ],
+]) {
+    test(`traces ${label} into the returned snapshot`, async () => {
+        await withFixture(returnedMutationFixture(helperSource), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+for (const [label, helperSource] of [
+    [
+        "a later unsafe source write after an object-rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { workspaceId, ...rest } = request; request.body = body as any; return { workspaceId, ...rest }; }",
+    ],
+    [
+        "a later unsafe source write after a direct rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { workspaceId: _workspaceId, ...rest } = request; request.body = body as any; return rest; }",
+    ],
+    [
+        "an excluded unsafe field from an object-rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { body: _body, ...rest } = request; return rest; }",
+    ],
+    [
+        "a later unsafe source write after a nested rest snapshot",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; const { request: { workspaceId, ...rest } } = box; request.body = body as any; return { workspaceId, ...rest }; }",
+    ],
+]) {
+    test(`does not trace ${label} into the returned copy`, async () => {
+        await withFixture(returnedMutationFixture(helperSource), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, helperSource, shouldFail, invocation, runArgs] of [
+    [
+        "nested unsafe then direct safe",
+        'function mutate(request: { body?: unknown }, body: unknown) { request.body = body as any; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { mutate(request, body); request.body = "safe"; return request; }',
+        false,
+    ],
+    [
+        "direct unsafe then nested safe",
+        'function makeSafe(request: { body?: unknown }) { request.body = "safe"; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; makeSafe(request); return request; }',
+        false,
+    ],
+    [
+        "two-level nested unsafe then direct safe",
+        'function mutate(request: { body?: unknown }, body: unknown) { request.body = body as any; }\nfunction forward(request: { body?: unknown }, body: unknown) { mutate(request, body); }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { forward(request, body); request.body = "safe"; return request; }',
+        false,
+    ],
+    [
+        "direct unsafe then two-level nested safe",
+        'function makeSafe(request: { body?: unknown }) { request.body = "safe"; }\nfunction forward(request: { body?: unknown }) { makeSafe(request); }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; forward(request); return request; }',
+        false,
+    ],
+    [
+        "direct unsafe then conditional nested safe",
+        'function maybeSafe(request: { body?: unknown }, choose: boolean) { if (choose) request.body = "safe"; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; maybeSafe(request, choose); return request; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "direct safe then nested unsafe",
+        'function mutate(request: { body?: unknown }, body: unknown) { request.body = body as any; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = "safe"; mutate(request, body); return request; }',
+        true,
+    ],
+    [
+        "nested unsafe on another receiver",
+        'function mutate(request: { body?: unknown }, body: unknown) { request.body = body as any; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const other: { body?: unknown } = {}; mutate(other, body); request.body = "safe"; return request; }',
+        false,
+    ],
+]) {
+    test(`${label} preserves returned-alias effect ordering`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +
