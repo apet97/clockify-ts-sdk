@@ -461,9 +461,14 @@ end-to-end and green before push. Drift gates are non-negotiable.
     the copied receiver remain ordered through direct, multi-hop, and destructured
     aliases. Spread reconstructions follow JavaScript last-write semantics across
     explicit, duplicate, conditional, nested, and statically bounded const/alias/
-    factory patch values; mixed or unresolved patches stay conservative. Every
-    direct reconstruction property/spread and Cartesian path is charged through
-    the common work/alternative limits before materialization. Definite
+    factory patch values; projected property/element and helper-returned rest
+    sources retain per-path provenance, projected safe patches are recovered,
+    and aliases of reconstructed rest objects stay inside the same ordered seam.
+    Mixed or unresolved paths stay conservative, while ordinary non-rest objects
+    stay outside the special case. Every governed projection, destructuring,
+    helper-return, object-literal, direct reconstruction property/spread, recovered
+    path, and Cartesian path is charged through the common work/alternative limits
+    before materialization; reconstruction depth also fails closed. Definite
     same-property overwrites still dominate through nested
     invocation/source order. A later
     phase dominates only when every

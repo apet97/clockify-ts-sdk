@@ -274,9 +274,13 @@ make docs-drift
   ordered through direct, multi-hop, and destructured aliases. Spread
   reconstruction follows JavaScript last-write semantics across explicit,
   duplicate, conditional, nested, and statically bounded const/alias/factory
-  patch values; mixed or unresolved patches stay conservative. Every direct
-  reconstruction property/spread and Cartesian path is charged through the
-  common work/alternative limits before materialization. Definite same-property
+  patch values. Projected property/element and helper-returned rest sources retain
+  path provenance; projected safe patches and aliases of reconstructed rest
+  objects use the same ordered seam, while mixed/unknown paths remain conservative
+  and ordinary non-rest spreads stay outside it. Every governed projection,
+  destructuring, helper-return, object-literal, direct property/spread, recovered
+  path, and Cartesian path is charged through common work/alternative limits
+  before materialization, with fail-closed reconstruction depth. Definite same-property
   overwrites follow nested invocation/source order. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain

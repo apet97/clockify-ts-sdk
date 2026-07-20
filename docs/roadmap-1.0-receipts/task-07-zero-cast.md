@@ -378,6 +378,27 @@ finished correction26 matrix passes **18/18**, the combined correction25/26 plus
 legacy focused set passes **40/40**, and the complete controller suite passes
 **547/547** fixtures while retaining the prior 529 cases.
 
+The twenty-seventh corrective review preserves each unsafe conditional rest path
+instead of collapsing a mixed spread, follows rest-copy identity through nested/
+array destructuring, projected property/element reads, helper returns, and aliases
+of reconstructed rest objects, and recovers projected safe patches only inside the
+actual rest-reconstruction seam. Safe-last and unsafe-last ordering remains exact;
+mixed/unknown paths stay conservative, and ordinary non-rest objects remain outside
+the special case. Source mutations are evaluated at the rest-copy snapshot while
+writes to the copied object retain eventual return-use ordering, including helper
+returns. Governed projection, destructuring, helper-return, object-literal, recovered
+path, and Cartesian work is charged through the common bounds before materialization;
+depth 24, work 25, and alternative-cap fixtures fail closed deterministically. The
+actual repository completes at work 7,761 under the unchanged 10,000 cap, leaving
+2,239 work units of headroom. Tracer
+REDs reproduced conditional-path loss, destructured-alias loss, projected/helper
+rest loss, and reconstructed-rest alias loss; projected safe-patch recovery was
+already green once the shared projection resolver landed. The first broad focused
+run exposed three restored-native bind/Reflect regressions (79/82), so projected
+resolution was restricted back to the governed reconstruction seam; the three
+controls and the final focused **82/82** then passed. The complete controller suite
+passes **581/581** fixtures while retaining all prior 547 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -402,7 +423,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-sixth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-seventh-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

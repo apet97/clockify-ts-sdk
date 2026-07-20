@@ -3707,6 +3707,421 @@ test("fails closed when returned-rest reconstruction alternatives exceed the cap
     );
 });
 
+test("keeps an unsafe conditional rest branch in last-spread reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const other = { body: "other" }; return { body: "safe", ...(choose ? rest : other) }; }',
+            "augment(request, body, choose)",
+            ", choose: boolean",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps an unsafe aliased conditional rest branch in last-spread reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const other = { body: "other" }; const alias = choose ? rest : other; return { body: "safe", ...alias }; }',
+            "augment(request, body, choose)",
+            ", choose: boolean",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("orders a destructured alias of a returned rest copy", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const { copy: alias } = { copy: rest }; return { ...alias, body: "safe" }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("keeps projected property rest provenance in unsafe-last reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { rest }; return { body: "safe", ...box.rest }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps projected element rest provenance in unsafe-last reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = [rest]; return { body: "safe", ...box[0] }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("keeps helper-returned rest provenance in unsafe-last reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; function getRest() { return rest; } return { body: "safe", ...getRest() }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("lets a projected safe patch dominate a returned rest spread", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; return { ...rest, ...box.patch }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("lets a safe patch dominate an aliased reconstructed rest object", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const reconstructed = { ...rest }; const safePatch = { body: "safe" }; return { ...reconstructed, ...safePatch }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, helperSource, shouldFail, invocation, runArgs] of [
+    [
+        "reversed conditional rest branch",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const other = { body: "other" }; return { body: "safe", ...(choose ? other : rest) }; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "conditional rest before a safe final property",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const other = { body: "other" }; return { ...(choose ? rest : other), body: "safe" }; }',
+        false,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "all-safe conditional spread control",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const left = { body: "left" }; const right = { body: "right" }; return { ...(choose ? left : right) }; }',
+        false,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} preserves conditional rest reconstruction paths`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+for (const [label, aliasSetup, returned, shouldFail, invocation, runArgs] of [
+    [
+        "destructured alias unsafe-last",
+        "const { copy: alias } = { copy: rest };",
+        '{ body: "safe", ...alias }',
+        true,
+    ],
+    [
+        "nested destructured alias safe-last",
+        "const { holder: { copy: alias } } = { holder: { copy: rest } };",
+        '{ ...alias, body: "safe" }',
+        false,
+    ],
+    [
+        "array destructured alias safe-last",
+        "const [alias] = [rest];",
+        '{ ...alias, body: "safe" }',
+        false,
+    ],
+    [
+        "multi-hop destructured alias safe-last",
+        "const { copy: first } = { copy: rest }; const [second] = [first];",
+        '{ ...second, body: "safe" }',
+        false,
+    ],
+    [
+        "mixed conditional destructured alias unsafe-last",
+        'const other = { body: "other" }; const { copy: alias } = { copy: choose ? rest : other };',
+        '{ body: "safe", ...alias }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} keeps bounded rest-copy identity`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs ?? ""}) { request.body = body as any; const { ...rest } = request; ${aliasSetup} return ${returned}; }`;
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+for (const [label, setup, returned, shouldFail, invocation, runArgs] of [
+    [
+        "projected property rest safe-last",
+        "const box = { rest };",
+        '{ ...box.rest, body: "safe" }',
+        false,
+    ],
+    [
+        "projected element rest safe-last",
+        "const box = [rest];",
+        '{ ...box[0], body: "safe" }',
+        false,
+    ],
+    [
+        "helper-returned rest safe-last",
+        "function getRest() { return rest; }",
+        '{ ...getRest(), body: "safe" }',
+        false,
+    ],
+    [
+        "all-path helper conditional rest unsafe-last",
+        "function getRest() { return choose ? rest : rest; }",
+        '{ body: "safe", ...getRest() }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "mixed helper conditional rest unsafe-last",
+        'const other = { body: "other" }; function getRest() { return choose ? rest : other; }',
+        '{ body: "safe", ...getRest() }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} preserves projected or returned rest provenance`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs ?? ""}) { request.body = body as any; const { ...rest } = request; ${setup} return ${returned}; }`;
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+for (const [label, setup, returned, shouldFail, invocation, runArgs] of [
+    [
+        "projected element safe patch",
+        'const box = [{ body: "safe" }];',
+        "{ ...rest, ...box[0] }",
+        false,
+    ],
+    [
+        "projected unsafe patch after rest",
+        "const box = { patch: { body: body as any } };",
+        "{ ...rest, ...box.patch }",
+        true,
+    ],
+    [
+        "projected safe patch before rest",
+        'const box = { patch: { body: "safe" } };',
+        "{ ...box.patch, ...rest }",
+        true,
+    ],
+    [
+        "aliased projected safe patch",
+        'const box = { patch: { body: "safe" } }; const alias = box.patch;',
+        "{ ...rest, ...alias }",
+        false,
+    ],
+    [
+        "factory-projected safe patch",
+        'function makeBox() { return { patch: { body: "safe" } }; }',
+        "{ ...rest, ...makeBox().patch }",
+        false,
+    ],
+    [
+        "mixed projected conditional patch",
+        'const box = { patch: choose ? { body: "safe" } : {} };',
+        "{ ...rest, ...box.patch }",
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} preserves projected patch order`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs ?? ""}) { request.body = body as any; const { ...rest } = request; ${setup} return ${returned}; }`;
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+for (const [label, setup, returned, shouldFail] of [
+    [
+        "reconstructed rest unsafe-last",
+        'const reconstructed = { ...rest }; const safePatch = { body: "safe" };',
+        "{ ...safePatch, ...reconstructed }",
+        true,
+    ],
+    [
+        "multi-hop reconstructed rest safe-last",
+        'const reconstructed = { ...rest }; const alias = reconstructed; const safePatch = { body: "safe" };',
+        "{ ...alias, ...safePatch }",
+        false,
+    ],
+    [
+        "ordinary non-rest spread control",
+        'const ordinary = { marker: "safe" };',
+        '{ ...ordinary, body: "safe" }',
+        false,
+    ],
+]) {
+    test(`${label} scopes reconstructed-rest handling`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; ${setup} return ${returned}; }`;
+        await withFixture(returnedMutationFixture(helperSource), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail) {
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            } else {
+                assert.deepEqual(result.failures, []);
+            }
+        });
+    });
+}
+
+test("keeps earlier rest provenance through a self-assignment cycle", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; let alias = rest; alias = alias; return { body: "safe", ...alias }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("fails closed at the governed helper-return reconstruction depth", async () => {
+    const helpers = Array.from({ length: 30 }, (_, index) =>
+        index === 0
+            ? "function getRest0() { return rest; }"
+            : `function getRest${index}() { return getRest${index - 1}(); }`,
+    ).join(" ");
+    await withFixture(
+        returnedMutationFixture(
+            `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; ${helpers} return { body: "safe", ...getRest29() }; }`,
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /analysis exceeded governed reconstruction depth 24/i,
+            );
+        },
+    );
+});
+
+test("charges projected rest reconstruction traversal to the common work cap", async () => {
+    const boxes = Array.from(
+        { length: 12 },
+        (_, index) =>
+            `const box${index} = { rest: ${index === 0 ? "rest" : `box${index - 1}.rest`} };`,
+    ).join(" ");
+    await withFixture(
+        returnedMutationFixture(
+            `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; ${boxes} return { body: "safe", ...box11.rest }; }`,
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 256, maxInvocations: 256, maxWork: 25 },
+            });
+            assert.match(result.failures.join("\n"), /analysis limit exceeded.*work.*25/i);
+            assert.deepEqual(result.analysisStats, { work: 25, exhausted: true });
+        },
+    );
+});
+
+test("caps projected rest reconstruction alternatives before materialization", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const boxes = choose ? { rest } : { rest }; return { body: "safe", ...boxes.rest }; }',
+            "augment(request, body, choose)",
+            ", choose: boolean",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 1_000 },
+            });
+            assert.match(result.failures.join("\n"), /analysis limit exceeded.*max 1/i);
+            assert.equal(result.analysisStats.exhausted, false);
+            assert.ok(result.analysisStats.work < 1_000);
+        },
+    );
+});
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +
