@@ -319,6 +319,19 @@ below-limit controls stayed green. The finished focused set passes **10/10**,
 and the complete controller suite passes **474/474** fixtures while retaining
 the prior 464 cases.
 
+The twenty-third corrective review follows synchronous mutations into a request
+alias that a helper returns. Receiver-qualified direct property and element
+writes, unresolved computed writes, normalized `Object.assign`/`Reflect.set`/
+property-definition effects (including `.call`/`.apply`), and nested called-
+helper writes now contribute to the returned request. Same-property safe-later
+writes retain cross-statement and same-invocation dominance; conditional writes,
+returned alias alternatives, unrelated receivers, and discarded metadata keep
+their conservative/control behavior. Twelve of the initial 15 focused cases
+failed against `491aa2f`; the three safe-later, unrelated-receiver, and discarded-
+metadata controls stayed green. The finished focused set passes **15/15**, and
+the complete controller suite passes **489/489** fixtures while retaining the
+prior 474 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.

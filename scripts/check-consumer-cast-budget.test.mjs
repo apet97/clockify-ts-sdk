@@ -3068,6 +3068,123 @@ for (const [label, terminal] of [
     });
 }
 
+function returnedMutationFixture(
+    helperSource,
+    invocation = "augment(request, body)",
+    runArgs = "",
+) {
+    return (
+        generatedImports +
+        `${helperSource}\nexport async function run(client: FixtureClient, body: unknown${runArgs}) { const request: ClockifyApi.CreateProjectsRequest = { workspaceId: "safe" }; return client.projects.create(${invocation}); }\n`
+    );
+}
+
+for (const [label, helperSource, invocation, runArgs] of [
+    [
+        "direct property assignment",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return request; }",
+    ],
+    [
+        "known element assignment",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request["body"] = body as any; return request; }',
+    ],
+    [
+        "unresolved computed assignment",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, key: string) { request[key] = body as any; return request; }",
+        "augment(request, body, key)",
+        ", key: string",
+    ],
+    [
+        "returned local alias assignment",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const alias = request; alias.body = body as any; return request; }",
+    ],
+    [
+        "direct Object.assign",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { Object.assign(request, { body: body as any }); return request; }",
+    ],
+    [
+        "Object.assign.call",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { Object.assign.call(Object, request, { body: body as any }); return request; }",
+    ],
+    [
+        "Object.assign.apply",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { Object.assign.apply(Object, [request, { body: body as any }]); return request; }",
+    ],
+    [
+        "Reflect.set",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { Reflect.set(request, "body", body as any); return request; }',
+    ],
+    [
+        "Object.defineProperty",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { Object.defineProperty(request, "body", { value: body as any }); return request; }',
+    ],
+    [
+        "nested called helper",
+        "function mutate(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { mutate(request, body); return request; }",
+    ],
+    [
+        "conditional returned-request assignment",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { if (choose) request.body = body as any; return request; }",
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "returned alias alternative",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, other: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; return choose ? request : other; }",
+        'augment(request, { workspaceId: "other" }, body, choose)',
+        ", choose: boolean",
+    ],
+]) {
+    test(`traces ${label} into a returned request alias`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+}
+
+test("allows a definite safe-later overwrite on a returned request alias", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; request.body = "safe"; return request; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not trace a mutation on an unrelated receiver into the returned request", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const unrelated: { body?: unknown } = {}; unrelated.body = body as any; return request; }",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("keeps discarded mutation metadata clean beside a returned request", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            "function metadata(value: unknown) { return value as any; }\nfunction augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { metadata(body); return request; }",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +

@@ -265,7 +265,10 @@ make docs-drift
   assertion/annotated-any/any-helper findings require request contribution;
   returned-parameter substitution restores it, while source-wide generated-
   request assertions stay governed. Generic and helper-depth exhaustion share
-  one stable deduplicated failure. Phase cutoff requires
+  one stable deduplicated failure. Returned synchronous request aliases retain
+  receiver-qualified direct/computed, normalized builtin, and nested-helper
+  writes, with definite same-property overwrites ordered across the invocation.
+  Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths
