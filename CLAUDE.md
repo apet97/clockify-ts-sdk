@@ -281,7 +281,12 @@ make docs-drift
   request-field contributions enter reconstruction, so nested storage stays inert
   until a later spread flattens it; ordinary non-rest spreads stay outside the seam.
   Typed helper parameters remain provenance anchors for inline literal arguments,
-  including nested and aliased returns. Every governed projection,
+  and helper return access paths survive object shorthand, nested object, array,
+  alias, conditional, and unknown projections with safe-later/unsafe-last order
+  evaluated at the projected use. Governed reconstructed patch properties use
+  receiver-qualified reaching direct/computed/builtin writes rather than only an
+  initializer; complete branch writes dominate while partial, compound, delete,
+  and unresolved paths stay conservative. Every governed projection,
   destructuring, helper-return, object-literal, direct property/spread, recovered
   path, and Cartesian path is charged through common work/alternative limits
   before materialization, with every reconstruction recursion edge depth-guarded
@@ -291,7 +296,9 @@ make docs-drift
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths
   without a preceding function exit, except complete `if`/`else` same-property
-  overwrites form an all-path cutoff.
+  overwrites form an all-path cutoff. Nested arrow/function/class method/accessor
+  bodies are execution boundaries for definite member writes; only actually
+  invoked IIFE/`call`/`apply`/`bind` effects lift into the caller.
   Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
   the same bounded static/spread argument-list path only while its ordered
   reaching member is native; restoration and captured-native aliases remain

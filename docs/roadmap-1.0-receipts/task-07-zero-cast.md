@@ -418,6 +418,23 @@ The complete controller suite passes **611/611** fixtures while retaining all
 prior 581 cases. The actual repository completes at work **8,039/10,000** with
 **1,961** units of headroom and no findings.
 
+The twenty-ninth corrective review carries helper-return access paths through
+shorthand and nested object projections, array elements, aliases, conditional
+alternatives, and unknown computed access. The projected use position governs
+helper-local safe-later/unsafe-last mutation order for inline literal, named
+typed, and inferred request arguments. Definite member-write analysis now uses
+the actual execution node and stops at uninvoked arrow/function/class method/
+accessor boundaries; invoked IIFE, `call`, `apply`, and `bind` effects remain
+lifted into the caller. Within the governed rest-reconstruction seam, projected
+patch properties resolve receiver-qualified reaching direct, computed, aliased,
+`Object.defineProperty`, and `Reflect.set` writes rather than only the object
+initializer. Complete branch writes dominate, while partial, compound, delete,
+and unresolved computed paths stay conservative. Thirty-one new correction29
+cases pass alongside both legacy regressions exposed by the first full run; the
+complete controller suite passes **642/642**, retaining all prior 611 fixtures.
+The actual repository completes at work **8,593/10,000** with **1,407** units of
+headroom and no findings.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -442,7 +459,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-eighth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-ninth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

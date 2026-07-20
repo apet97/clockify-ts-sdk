@@ -4403,6 +4403,245 @@ for (const [label, setup, returned, shouldFail] of [
     });
 }
 
+test("keeps an inline helper mutation through a shorthand return projection", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+            'augment({ workspaceId: "w" }, body).request',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, helperSource, invocation, shouldFail, runArgs] of [
+    [
+        "inline array projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return [request]; }",
+        'augment({ workspaceId: "w" }, body)[0]',
+        true,
+    ],
+    [
+        "nested shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { nested: { request } }; }",
+        'augment({ workspaceId: "w" }, body).nested.request',
+        true,
+    ],
+    [
+        "aliased shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const wrapped = { request }; return wrapped; }",
+        'augment({ workspaceId: "w" }, body).request',
+        true,
+    ],
+    [
+        "conditional shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; return choose ? { request } : { request }; }",
+        'augment({ workspaceId: "w" }, body, choose).request',
+        true,
+        ", choose: boolean",
+    ],
+    [
+        "safe-later shorthand projection",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; request.body = "safe"; return { request }; }',
+        'augment({ workspaceId: "w" }, body).request',
+        false,
+    ],
+    [
+        "unsafe-last shorthand projection",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = "safe"; request.body = body as any; return { request }; }',
+        'augment({ workspaceId: "w" }, body).request',
+        true,
+    ],
+    [
+        "named typed shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        "augment(request, body).request",
+        true,
+    ],
+    [
+        "inferred alias shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; } function forward(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const inferred = request; return augment(inferred, body); }",
+        "forward(request, body).request",
+        true,
+    ],
+    [
+        "unknown computed shorthand projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        "augment(request, body)[key]",
+        true,
+        ", key: string",
+    ],
+]) {
+    test(`${label} preserves helper return projection provenance`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+test("ignores an uninvoked arrow write when resolving Reflect.apply", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; (() => { Reflect.apply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; }); Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, setup, shouldFail, runArgs] of [
+    ["uninvoked function expression", "(function () { Reflect.apply = safeApply; });", true],
+    [
+        "uninvoked function declaration",
+        "function configure() { Reflect.apply = safeApply; } void configure;",
+        true,
+    ],
+    ["uninvoked class method", "(class { configure() { Reflect.apply = safeApply; } });", true],
+    [
+        "uninvoked class accessor",
+        "(class { get configure() { Reflect.apply = safeApply; return 1; } });",
+        true,
+    ],
+    [
+        "uninvoked conditional arrow",
+        "(choose ? (() => { Reflect.apply = safeApply; }) : (() => { Reflect.apply = safeApply; }));",
+        true,
+        ", choose: boolean",
+    ],
+    ["invoked arrow IIFE", "(() => { Reflect.apply = safeApply; })();", false],
+    [
+        "invoked function call adapter",
+        "(function () { Reflect.apply = safeApply; }).call(undefined);",
+        false,
+    ],
+    [
+        "invoked arrow bind adapter",
+        "(() => { Reflect.apply = safeApply; }).bind(undefined)();",
+        false,
+    ],
+]) {
+    test(`${label} respects execution boundaries for member writes`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown${runArgs ?? ""}) { const holder: Holder = { request: { workspaceId: "safe" } }; const safeApply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; ${setup} Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail) {
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            } else {
+                assert.deepEqual(result.failures, []);
+            }
+        });
+    });
+}
+
+test("uses the latest projected patch property write in rest reconstruction", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; box.patch = { body: body as any }; return { ...rest, ...box.patch }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, helperSource, shouldFail, invocation, runArgs] of [
+    [
+        "unsafe initializer then safe direct write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: body as any } }; box.patch = { body: "safe" }; return { ...rest, ...box.patch }; }',
+        false,
+    ],
+    [
+        "safe initializer then unsafe computed write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; box["patch"] = { body: body as any }; return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "safe initializer then unsafe alias write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; const alias = box; alias.patch = { body: body as any }; return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "unsafe initializer then all-path safe writes",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: body as any } }; if (choose) box.patch = { body: "left" }; else box.patch = { body: "right" }; return { ...rest, ...box.patch }; }',
+        false,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "unsafe initializer then partial safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: body as any } }; if (choose) box.patch = { body: "safe" }; return { ...rest, ...box.patch }; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "unsafe initializer then compound safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box: { patch?: { body?: unknown } } = { patch: { body: body as any } }; box.patch ||= { body: "safe" }; return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "safe initializer then delete",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box: { patch?: { body?: unknown } } = { patch: { body: "safe" } }; delete box.patch; return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "safe initializer then unsafe defineProperty",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; Object.defineProperty(box, "patch", { value: { body: body as any } }); return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "unsafe initializer then safe defineProperty",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: body as any } }; Object.defineProperty(box, "patch", { value: { body: "safe" } }); return { ...rest, ...box.patch }; }',
+        false,
+    ],
+    [
+        "safe initializer then unsafe Reflect.set",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const box = { patch: { body: "safe" } }; Reflect.set(box, "patch", { body: body as any }); return { ...rest, ...box.patch }; }',
+        true,
+    ],
+    [
+        "safe initializer then unknown computed write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, key: string) { request.body = body as any; const { ...rest } = request; const box: Record<string, { body?: unknown }> = { patch: { body: "safe" } }; box[key] = { body: body as any }; return { ...rest, ...box.patch }; }',
+        true,
+        "augment(request, body, key)",
+        ", key: string",
+    ],
+]) {
+    test(`${label} honors projected property last-write semantics`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +

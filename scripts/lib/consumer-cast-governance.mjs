@@ -921,6 +921,7 @@ function analyzeProgram({
         substitutions = new Map(),
         governed = false,
         depth = 0,
+        recoverProjectedWrites = false,
     ) {
         if (governed) {
             chargeAnalysisWork(1);
@@ -941,42 +942,73 @@ function analyzeProgram({
                 : computedPropertyNames(expression);
             if (names?.length > 0) {
                 const alternatives = [];
-                for (const base of reachingExpressionValues(
-                    expression.expression,
-                    beforePosition,
-                    seen,
-                    substitutions,
-                    governed,
-                    depth + 1,
-                )) {
-                    for (const name of names) {
-                        const step = /^\d+$/.test(name)
-                            ? { kind: "array", index: Number(name) }
-                            : { kind: "property", names: [name] };
-                        const projected = projectedExpressions(
-                            base.expression,
-                            [step],
-                            0,
-                            new Set(),
-                            true,
+                function appendResolved(resolved) {
+                    chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching projected access values; max ${maxAlternatives})`,
                         );
-                        for (const candidate of projected) {
-                            const resolved = reachingExpressionValues(
-                                candidate,
-                                beforePosition,
-                                seen,
-                                base.substitutions,
-                                governed,
-                                depth + 1,
+                    }
+                    alternatives.push(...resolved.slice(0, available));
+                }
+                for (const name of names) {
+                    const memberAlternatives = recoverProjectedWrites
+                        ? memberValueAlternatives(
+                              expression.expression,
+                              name,
+                              expression,
+                              beforePosition,
+                              { value: null, position: expression.pos },
+                          )
+                        : [{ value: null, position: expression.pos }];
+                    chargeAnalysisWork(memberAlternatives.length);
+                    for (const memberAlternative of memberAlternatives) {
+                        if (memberAlternative.value != null) {
+                            appendResolved(
+                                reachingExpressionValues(
+                                    memberAlternative.value,
+                                    memberAlternative.position,
+                                    seen,
+                                    substitutions,
+                                    governed,
+                                    depth + 1,
+                                    recoverProjectedWrites,
+                                ),
                             );
-                            chargeAnalysisWork(resolved.length);
-                            const available = maxAlternatives - alternatives.length;
-                            if (resolved.length > available) {
-                                analysisFailures.add(
-                                    `consumer cast analysis limit exceeded (reaching projected access values; max ${maxAlternatives})`,
+                            continue;
+                        }
+                        for (const base of reachingExpressionValues(
+                            expression.expression,
+                            beforePosition,
+                            seen,
+                            substitutions,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        )) {
+                            const step = /^\d+$/.test(name)
+                                ? { kind: "array", index: Number(name) }
+                                : { kind: "property", names: [name] };
+                            const projected = projectedExpressions(
+                                base.expression,
+                                [step],
+                                0,
+                                new Set(),
+                                true,
+                            );
+                            for (const candidate of projected) {
+                                const resolved = reachingExpressionValues(
+                                    candidate,
+                                    beforePosition,
+                                    seen,
+                                    base.substitutions,
+                                    governed,
+                                    depth + 1,
+                                    recoverProjectedWrites,
                                 );
+                                appendResolved(resolved);
                             }
-                            alternatives.push(...resolved.slice(0, available));
                         }
                     }
                 }
@@ -1010,6 +1042,7 @@ function analyzeProgram({
                     substitutions,
                     governed,
                     depth + 1,
+                    recoverProjectedWrites,
                 );
                 chargeAnalysisWork(resolved.length);
                 const available = maxAlternatives - alternatives.length;
@@ -1033,6 +1066,7 @@ function analyzeProgram({
                     substitutions,
                     governed,
                     depth + 1,
+                    recoverProjectedWrites,
                 );
             }
             if (
@@ -1067,6 +1101,7 @@ function analyzeProgram({
                         substitutions,
                         governed,
                         depth + 1,
+                        recoverProjectedWrites,
                     );
                     chargeAnalysisWork(resolved.length);
                     const available = maxAlternatives - alternatives.length;
@@ -1100,6 +1135,7 @@ function analyzeProgram({
                     substitutions,
                     governed,
                     depth + 1,
+                    recoverProjectedWrites,
                 );
             }
             if (!symbol || seen.has(symbol) || isGlobalBuiltin(expression, expression.text)) {
@@ -1130,6 +1166,7 @@ function analyzeProgram({
                         substitutions,
                         governed,
                         depth + 1,
+                        recoverProjectedWrites,
                     );
                     chargeAnalysisWork(resolved.length);
                     const available = maxAlternatives - alternatives.length;
@@ -1181,6 +1218,7 @@ function analyzeProgram({
                         nested,
                         true,
                         depth + 1,
+                        recoverProjectedWrites,
                     );
                     chargeAnalysisWork(resolved.length);
                     const available = maxAlternatives - alternatives.length;
@@ -1396,6 +1434,8 @@ function analyzeProgram({
                     property.expression.pos,
                     new Set(),
                     substitutions,
+                    true,
+                    0,
                     true,
                 );
                 const alternatives = [];
@@ -2163,6 +2203,12 @@ function analyzeProgram({
     function matchingMemberWrites(receiver, memberName, beforePosition, use) {
         return applyOrderedEffectCutoffs(
             [...propertyWrites, ...wildcardPropertyWrites]
+                .flatMap((write) =>
+                    effectiveWrites(write, use).map((effective) => ({
+                        ...effective,
+                        receiverOverride: memberWriteReceiver(write),
+                    })),
+                )
                 .filter((write) => {
                     const writeReceiver = memberWriteReceiver(write);
                     return (
@@ -2205,10 +2251,11 @@ function analyzeProgram({
         }
         if (!ts.isExpressionStatement(statement)) return false;
         return writes.some((write) => {
+            const executionNode = write.executionNode ?? write.node;
             return (
-                isWithin(write.node, statement) &&
+                isWithin(executionNode, statement) &&
                 writeDefinitelySetsMember(write, memberName) &&
-                expressionDefinitelyExecutesInStatement(write.node)
+                expressionDefinitelyExecutesInStatement(executionNode, statement)
             );
         });
     }
@@ -3246,10 +3293,11 @@ function analyzeProgram({
         return null;
     }
 
-    function expressionDefinitelyExecutesInStatement(node) {
+    function expressionDefinitelyExecutesInStatement(node, expectedStatement = null) {
         let current = node;
         while (current.parent && !ts.isExpressionStatement(current)) {
             const parent = current.parent;
+            if (ts.isFunctionLike(parent) || ts.isClassLike(parent)) return false;
             if (ts.isBinaryExpression(parent) && current === parent.right) {
                 const state = staticScalar(parent.left, new Map());
                 if (
@@ -3275,14 +3323,17 @@ function analyzeProgram({
             }
             current = parent;
         }
-        return ts.isExpressionStatement(current);
+        return (
+            ts.isExpressionStatement(current) &&
+            (expectedStatement == null || current === expectedStatement)
+        );
     }
 
     function statementMayExitFunction(statement) {
         let mayExit = false;
         function visit(node) {
             if (mayExit) return;
-            if (node !== statement && ts.isFunctionLike(node)) return;
+            if (node !== statement && (ts.isFunctionLike(node) || ts.isClassLike(node))) return;
             if (ts.isReturnStatement(node) || ts.isThrowStatement(node)) {
                 mayExit = true;
                 return;
@@ -3297,7 +3348,13 @@ function analyzeProgram({
         let current = node;
         while (current !== declaration.body) {
             const parent = current.parent;
-            if (!parent || (ts.isFunctionLike(parent) && parent !== declaration)) return false;
+            if (
+                !parent ||
+                (ts.isFunctionLike(parent) && parent !== declaration) ||
+                ts.isClassLike(parent)
+            ) {
+                return false;
+            }
             if (ts.isBlock(parent) && ts.isStatement(current)) {
                 const statementIndex = parent.statements.indexOf(current);
                 if (
@@ -4127,7 +4184,24 @@ function analyzeProgram({
                             ts.isVoidExpression(value),
                     ));
             for (const value of values) {
-                trace(value, { ...context, substitutions, accessPath: [] }, depth + 1, seen);
+                trace(
+                    value,
+                    {
+                        ...context,
+                        substitutions,
+                        accessPath: [],
+                        ...(accessPath.length > 0
+                            ? {
+                                  returnedAliasBeforePosition:
+                                      context.returnedAliasBeforePosition ?? expression.pos,
+                                  returnedAliasUseExpression:
+                                      context.returnedAliasUseExpression ?? expression,
+                              }
+                            : {}),
+                    },
+                    depth + 1,
+                    seen,
+                );
             }
             if (defaultReachable) {
                 trace(
@@ -4790,6 +4864,35 @@ function analyzeProgram({
             return;
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const projectionSteps = ts.isPropertyAccessExpression(expression)
+                ? [{ kind: "property", names: [expression.name.text] }]
+                : (computedPropertyNames(expression)?.map((name) => ({
+                      kind: /^\d+$/.test(name) ? "array" : "property",
+                      ...(/^\d+$/.test(name) ? { index: Number(name) } : { names: [name] }),
+                  })) ?? []);
+            let projectionRoot = expression.expression;
+            while (
+                ts.isPropertyAccessExpression(projectionRoot) ||
+                ts.isElementAccessExpression(projectionRoot)
+            ) {
+                projectionRoot = projectionRoot.expression;
+            }
+            if (!ts.isIdentifier(projectionRoot)) {
+                for (const access of projectionSteps.length > 0 ? projectionSteps : [null]) {
+                    trace(
+                        expression.expression,
+                        {
+                            ...context,
+                            accessPath: access
+                                ? [access, ...(context.accessPath ?? [])]
+                                : context.accessPath,
+                        },
+                        depth + 1,
+                        nextSeen,
+                    );
+                }
+                return;
+            }
             if (
                 context.topLevelRequestFieldsOnly ||
                 (context.returnedAliasRoot &&
@@ -4833,12 +4936,6 @@ function analyzeProgram({
                     checker.getSymbolAtLocation(expression.expression),
                 );
                 const receiverWrites = writesBySymbol.get(receiverSymbol) ?? [];
-                const accessNames = ts.isPropertyAccessExpression(expression)
-                    ? [{ kind: "property", names: [expression.name.text] }]
-                    : (computedPropertyNames(expression)?.map((name) => ({
-                          kind: /^\d+$/.test(name) ? "array" : "property",
-                          ...(/^\d+$/.test(name) ? { index: Number(name) } : { names: [name] }),
-                      })) ?? []);
                 if (
                     (receiverSymbol?.declarations ?? []).some(
                         (declaration) =>
@@ -4846,7 +4943,7 @@ function analyzeProgram({
                     ) ||
                     receiverWrites.some((write) => (write.projection?.length ?? 0) > 0)
                 ) {
-                    for (const access of accessNames.length > 0 ? accessNames : [null]) {
+                    for (const access of projectionSteps.length > 0 ? projectionSteps : [null]) {
                         trace(
                             expression.expression,
                             {
@@ -4955,6 +5052,36 @@ function analyzeProgram({
             return;
         }
         if (
+            (context.accessPath?.length ?? 0) > 0 &&
+            (ts.isObjectLiteralExpression(expression) || ts.isArrayLiteralExpression(expression))
+        ) {
+            const projected = projectedExpressions(
+                expression,
+                context.accessPath,
+                0,
+                new Set(),
+                true,
+            );
+            if (projected.length > 0) {
+                for (const value of projected) {
+                    trace(
+                        value,
+                        {
+                            ...context,
+                            accessPath: [],
+                            returnedAliasBeforePosition:
+                                context.returnedAliasBeforePosition ?? expression.pos,
+                            returnedAliasUseExpression:
+                                context.returnedAliasUseExpression ?? expression,
+                        },
+                        depth + 1,
+                        nextSeen,
+                    );
+                }
+                return;
+            }
+        }
+        if (
             ts.isObjectLiteralExpression(expression) &&
             requestContributing &&
             expression.properties.some((property) => {
@@ -5042,6 +5169,8 @@ function analyzeProgram({
                         depth + 1,
                         nextSeen,
                     );
+                } else if (ts.isShorthandPropertyAssignment(child)) {
+                    trace(child.name, { ...context, atBoundaryValue: false }, depth + 1, nextSeen);
                 } else if (ts.isGetAccessorDeclaration(child)) {
                     for (const returned of functionReturnExpressions(child)) {
                         trace(
