@@ -347,6 +347,20 @@ the seven unsafe-before, conditional/unsafe-last, and unrelated receiver/propert
 controls stayed green. The finished focused set passes **20/20**, and the complete
 controller suite passes **509/509** fixtures while retaining the prior 489 cases.
 
+The twenty-fifth corrective review separates an object-rest source snapshot from
+the identity of its copied receiver. Later writes to the source remain frozen at
+the snapshot, while definite safe-later writes to the rest copy dominate and
+conditional safe writes remain conservative. Returned object reconstructions
+now follow JavaScript last-write semantics across spreads, duplicate explicit
+properties, conditional alternatives, and nested rest copies. Projected direct,
+computed, and destructured property reads resolve the receiver-qualified reaching
+property write at that exact read; aliases created earlier retain their captured
+identity, including the inverse case where the old alias itself is returned.
+Ten of the initial 20 focused cases failed against `e64478c`; the ten
+conditional, unsafe-last, current-property, and inverse controls stayed green.
+The finished focused set passes **20/20**, and the complete controller suite
+passes **529/529** fixtures while retaining the prior 509 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -371,7 +385,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-second-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-fifth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

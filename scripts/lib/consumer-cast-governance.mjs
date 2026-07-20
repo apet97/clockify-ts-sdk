@@ -1089,6 +1089,95 @@ function analyzeProgram({
         return bounded(alternatives);
     }
 
+    function directObjectPropertySequences(source, substitutions = new Map()) {
+        source = unwrapExpression(source);
+        if (!ts.isObjectLiteralExpression(source)) return [];
+        let sequences = [[]];
+        for (const property of source.properties) {
+            if (ts.isSpreadAssignment(property)) {
+                const spread = unwrapExpression(property.expression);
+                let alternatives;
+                if (ts.isConditionalExpression(spread)) {
+                    alternatives = [spread.whenTrue, spread.whenFalse].flatMap((branch) => {
+                        const branchSequences = directObjectPropertySequences(
+                            branch,
+                            substitutions,
+                        );
+                        return branchSequences.length > 0 ? branchSequences : [[]];
+                    });
+                } else {
+                    alternatives = directObjectPropertySequences(spread, substitutions);
+                }
+                if (alternatives.length === 0) {
+                    alternatives = [
+                        [
+                            {
+                                value: property.expression,
+                                names: null,
+                                substitutions,
+                            },
+                        ],
+                    ];
+                }
+                const combined = [];
+                let overflow = false;
+                for (const sequence of sequences) {
+                    for (const alternative of alternatives) {
+                        if (combined.length >= maxAlternatives) {
+                            overflow = true;
+                            break;
+                        }
+                        combined.push([...sequence, ...alternative]);
+                    }
+                    if (overflow) break;
+                }
+                if (overflow) {
+                    analysisFailures.add(
+                        `consumer cast analysis limit exceeded (returned object spread paths; max ${maxAlternatives})`,
+                    );
+                }
+                sequences = combined;
+                continue;
+            }
+            if (!property.name) continue;
+            const names = ts.isComputedPropertyName(property.name)
+                ? literalPropertyNames(checker.getTypeAtLocation(property.name.expression))
+                : [property.name.getText(source.getSourceFile()).replace(/^['"]|['"]$/g, "")];
+            const entries = ts.isPropertyAssignment(property)
+                ? [{ value: property.initializer, names, substitutions }]
+                : ts.isShorthandPropertyAssignment(property)
+                  ? [{ value: property.name, names, substitutions }]
+                  : ts.isGetAccessorDeclaration(property)
+                    ? functionReturnExpressions(property).map((returned) => ({
+                          value: returned,
+                          names,
+                          substitutions,
+                      }))
+                    : [];
+            if (entries.length > 0) {
+                const combined = [];
+                let overflow = false;
+                for (const sequence of sequences) {
+                    for (const entry of entries) {
+                        if (combined.length >= maxAlternatives) {
+                            overflow = true;
+                            break;
+                        }
+                        combined.push([...sequence, entry]);
+                    }
+                    if (overflow) break;
+                }
+                if (overflow) {
+                    analysisFailures.add(
+                        `consumer cast analysis limit exceeded (returned object property paths; max ${maxAlternatives})`,
+                    );
+                }
+                sequences = combined;
+            }
+        }
+        return sequences;
+    }
+
     function getterEffectValues(entry, beforePosition) {
         const effects = [];
         for (const candidate of reachingExpressionValues(
@@ -2875,14 +2964,26 @@ function analyzeProgram({
             );
         }
         if (ts.isExpressionStatement(statement)) {
-            const expression = statement.expression;
+            let expression = statement.expression;
+            while (ts.isParenthesizedExpression(expression)) expression = expression.expression;
             if (
                 !ts.isBinaryExpression(expression) ||
-                expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken ||
-                !symbolsForWriteTarget(expression.left).includes(symbol)
+                expression.operatorToken.kind !== ts.SyntaxKind.EqualsToken
             ) {
                 return false;
             }
+            if (
+                ts.isObjectLiteralExpression(expression.left) ||
+                ts.isArrayLiteralExpression(expression.left)
+            ) {
+                return propertyWrites.some(
+                    (write) =>
+                        write.position === expression.pos &&
+                        symbolsForWriteTarget(write.node).includes(symbol) &&
+                        writeMayReachExpression(write, use),
+                );
+            }
+            if (!symbolsForWriteTarget(expression.left).includes(symbol)) return false;
             return writeMayReachExpression(
                 { node: expression.left, position: expression.pos },
                 use,
@@ -3058,22 +3159,80 @@ function analyzeProgram({
                 ? [expression.name.text]
                 : computedPropertyNames(expression);
             if (followProjections && names?.length) {
+                const origins = new Set();
+                const projectedRequestType = requestNameFromType(
+                    checker,
+                    checker.getTypeAtLocation(expression),
+                );
+                if (projectedRequestType) {
+                    const propertySymbol = symbolForWriteTarget(expression);
+                    const useOrigins = receiverOrigins(
+                        expression.expression,
+                        expression.pos,
+                        seen,
+                        substitutions,
+                    );
+                    const cutoff = latestDefiniteWriteCutoff(propertySymbol, expression);
+                    const reachingPropertyWrites = propertyWrites.filter((write) => {
+                        if (
+                            write.sourceFile !== expression.getSourceFile() ||
+                            write.position >= expression.pos ||
+                            (cutoff != null && write.position < cutoff) ||
+                            (write.propertyNames != null &&
+                                !write.propertyNames.some((name) => names.includes(name)))
+                        ) {
+                            return false;
+                        }
+                        const receiver = memberWriteReceiver(write);
+                        if (!receiver) return false;
+                        const writeOrigins = receiverOrigins(
+                            receiver,
+                            write.position,
+                            seen,
+                            substitutions,
+                        );
+                        return (
+                            writeOrigins.size === 0 ||
+                            useOrigins.size === 0 ||
+                            [...writeOrigins].some((origin) => useOrigins.has(origin))
+                        );
+                    });
+                    for (const write of reachingPropertyWrites) {
+                        for (const value of projectedExpressions(
+                            write.value,
+                            write.projection ?? [],
+                        )) {
+                            for (const origin of receiverOrigins(
+                                value,
+                                write.position,
+                                seen,
+                                substitutions,
+                                followProjections,
+                            )) {
+                                origins.add(origin);
+                            }
+                        }
+                    }
+                    if (cutoff != null) return origins;
+                }
                 const projected = projectedExpressions(expression.expression, [
                     { kind: "property", names },
                 ]);
                 if (projected.length !== 1 || projected[0] !== expression.expression) {
-                    return new Set(
-                        projected.flatMap((value) => [
-                            ...receiverOrigins(
-                                value,
-                                beforePosition,
-                                seen,
-                                substitutions,
-                                followProjections,
-                            ),
-                        ]),
-                    );
+                    for (const value of projected) {
+                        for (const origin of receiverOrigins(
+                            value,
+                            beforePosition,
+                            seen,
+                            substitutions,
+                            followProjections,
+                        )) {
+                            origins.add(origin);
+                        }
+                    }
+                    return origins;
                 }
+                if (origins.size > 0) return origins;
             }
             return receiverOrigins(
                 expression.expression,
@@ -3664,6 +3823,14 @@ function analyzeProgram({
                         ...(stepContext.returnedAliasExcludedNames ?? []),
                         ...step.excluded,
                     ],
+                    returnedAliasCopySymbols: [
+                        ...(stepContext.returnedAliasCopySymbols ?? []),
+                        ...(ts.isIdentifier(step.binding.name)
+                            ? [
+                                  unalias(checker, checker.getSymbolAtLocation(step.binding.name)),
+                              ].filter(Boolean)
+                            : []),
+                    ],
                 });
                 return;
             }
@@ -3806,13 +3973,29 @@ function analyzeProgram({
 
     function traceReturnedAliasWrites(expression, context, depth, seen) {
         if (context.requestContributing === false || (context.accessPath?.length ?? 0) > 0) return;
+        const returnedUse = context.returnedAliasUseExpression ?? expression;
         const beforePosition = context.returnedAliasBeforePosition ?? expression.pos;
+        const returnedUsePosition = returnedUse.pos;
         const excludedNames = new Set(context.returnedAliasExcludedNames ?? []);
+        const copySymbols = new Set(context.returnedAliasCopySymbols ?? []);
+        const returnedIdentifierSymbol = ts.isIdentifier(expression)
+            ? unalias(checker, checker.getSymbolAtLocation(expression))
+            : null;
+        const identifierCarriesProjection =
+            ts.isIdentifier(expression) &&
+            (ts.isShorthandPropertyAssignment(expression.parent) ||
+                (writesBySymbol.get(returnedIdentifierSymbol) ?? []).some((write) => {
+                    const value = unwrapExpression(write.value);
+                    return (
+                        (write.projection?.length ?? 0) > 0 ||
+                        ts.isPropertyAccessExpression(value) ||
+                        ts.isElementAccessExpression(value)
+                    );
+                }));
         const followReturnedProjections =
             (ts.isPropertyAccessExpression(expression) ||
                 ts.isElementAccessExpression(expression) ||
-                (ts.isIdentifier(expression) &&
-                    ts.isShorthandPropertyAssignment(expression.parent))) &&
+                identifierCarriesProjection) &&
             requestNameFromType(checker, checker.getTypeAtLocation(expression)) ===
                 context.expectedRequestType;
         const returnedOrigins = receiverOrigins(
@@ -3830,18 +4013,25 @@ function analyzeProgram({
                     !context.returnedAliasScanLocalOnly ||
                     enclosingFunction(write.node) === enclosingFunction(expression),
             )
-            .flatMap((write) => effectiveWrites(write, expression))
+            .flatMap((write) => effectiveWrites(write, returnedUse))
             .filter((write) => {
+                const receiver = memberWriteReceiver(write);
+                if (!receiver) return false;
+                const receiverSymbol = ts.isIdentifier(receiver)
+                    ? unalias(checker, checker.getSymbolAtLocation(receiver))
+                    : null;
+                const writesCopiedReceiver = receiverSymbol && copySymbols.has(receiverSymbol);
                 if (
                     write.sourceFile !== expression.getSourceFile() ||
-                    write.position >= beforePosition ||
-                    (write.propertyNames?.length > 0 &&
+                    write.position >=
+                        (writesCopiedReceiver ? returnedUsePosition : beforePosition) ||
+                    (!writesCopiedReceiver &&
+                        write.propertyNames?.length > 0 &&
                         write.propertyNames.every((name) => excludedNames.has(name)))
                 ) {
                     return false;
                 }
-                const receiver = memberWriteReceiver(write);
-                if (!receiver) return false;
+                if (writesCopiedReceiver) return true;
                 const substitutions = new Map(context.substitutions);
                 for (const [parameter, argument] of write.substitutions ?? []) {
                     substitutions.set(parameter, argument);
@@ -3894,7 +4084,7 @@ function analyzeProgram({
                         ),
                         [propertyName],
                     ),
-                    expression,
+                    returnedUse,
                     [propertyName],
                 ),
             ),
@@ -4039,7 +4229,12 @@ function analyzeProgram({
                     }
                 }
                 if (ts.isBindingElement(declaration)) {
-                    traceBindingElement(declaration, context, depth, nextSeen);
+                    traceBindingElement(
+                        declaration,
+                        { ...context, returnedAliasUseExpression: expression },
+                        depth,
+                        nextSeen,
+                    );
                 }
             }
             const substitution =
@@ -4227,6 +4422,63 @@ function analyzeProgram({
                 trace(expression.right, context, depth + 1, nextSeen);
             }
             return;
+        }
+        if (
+            ts.isObjectLiteralExpression(expression) &&
+            requestContributing &&
+            expression.properties.some((property) => {
+                if (!ts.isSpreadAssignment(property)) return false;
+                const spread = unwrapExpression(property.expression);
+                if (!ts.isIdentifier(spread)) return false;
+                const symbol = unalias(checker, checker.getSymbolAtLocation(spread));
+                return (symbol?.declarations ?? []).some(
+                    (declaration) => ts.isBindingElement(declaration) && declaration.dotDotDotToken,
+                );
+            })
+        ) {
+            const sequences = directObjectPropertySequences(expression, context.substitutions);
+            if (sequences.length > 0) {
+                for (const sequence of sequences) {
+                    const overwrittenNames = new Set();
+                    for (const entry of [...sequence].reverse()) {
+                        if (
+                            entry.names?.length > 0 &&
+                            entry.names.every((name) => overwrittenNames.has(name))
+                        ) {
+                            continue;
+                        }
+                        const substitutions = new Map(context.substitutions);
+                        for (const [parameter, argument] of entry.substitutions ?? []) {
+                            substitutions.set(parameter, argument);
+                        }
+                        trace(
+                            entry.value,
+                            {
+                                ...context,
+                                substitutions,
+                                atBoundaryValue:
+                                    entry.names == null &&
+                                    context.atBoundaryValue &&
+                                    typeMayCarryRequest(
+                                        checker.getTypeAtLocation(entry.value),
+                                        context.expectedRequestType,
+                                    ),
+                                returnedAliasExcludedNames:
+                                    entry.names == null
+                                        ? [
+                                              ...(context.returnedAliasExcludedNames ?? []),
+                                              ...overwrittenNames,
+                                          ]
+                                        : context.returnedAliasExcludedNames,
+                            },
+                            depth + 1,
+                            nextSeen,
+                        );
+                        for (const name of entry.names ?? []) overwrittenNames.add(name);
+                    }
+                }
+                return;
+            }
         }
         if (ts.isObjectLiteralExpression(expression) || ts.isArrayLiteralExpression(expression)) {
             for (const child of expression.properties ?? expression.elements ?? []) {
