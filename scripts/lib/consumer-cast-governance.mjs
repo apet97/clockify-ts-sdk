@@ -1342,7 +1342,7 @@ function analyzeProgram({
                     substitutions,
                 );
             }
-            for (const method of ["all", "allSettled"]) {
+            for (const method of ["all", "allSettled", "race", "any"]) {
                 if (
                     expression.arguments.length === 0 ||
                     !expressionResolvesToBuiltinMember(
@@ -1365,7 +1365,7 @@ function analyzeProgram({
                 );
                 return (
                     collections.length > 0 &&
-                    collections.every((collection) => {
+                    collections.some((collection) => {
                         const value = unwrapExpression(collection.expression);
                         return (
                             ts.isArrayLiteralExpression(value) &&
@@ -1496,8 +1496,7 @@ function analyzeProgram({
         }
         return (
             changed.length > 0 &&
-            changed.length === resolved.length &&
-            changed.every((candidate) =>
+            changed.some((candidate) =>
                 expressionCompletionDependsOn(
                     candidate.expression,
                     invocation,
@@ -1533,12 +1532,51 @@ function analyzeProgram({
         nextSeen.add(node);
         const useFunction = enclosingFunction(use);
         const nodeFunction = enclosingFunction(node);
+        function branchConstraints(candidate) {
+            const constraints = new Map();
+            let branchDepth = 0;
+            for (let current = candidate; current?.parent; current = current.parent) {
+                chargeAnalysisWork(1);
+                branchDepth += 1;
+                if (branchDepth > MAX_TRACE_DEPTH) {
+                    analysisFailures.add(
+                        `consumer cast analysis could not statically resolve awaited local completion branch path (depth limit ${MAX_TRACE_DEPTH})`,
+                    );
+                    return null;
+                }
+                const parent = current.parent;
+                if (ts.isFunctionLike(parent)) break;
+                if (ts.isIfStatement(parent)) {
+                    if (isWithin(candidate, parent.thenStatement)) constraints.set(parent, "then");
+                    else if (parent.elseStatement && isWithin(candidate, parent.elseStatement)) {
+                        constraints.set(parent, "else");
+                    }
+                } else if (ts.isConditionalExpression(parent)) {
+                    if (isWithin(candidate, parent.whenTrue)) constraints.set(parent, "true");
+                    else if (isWithin(candidate, parent.whenFalse)) {
+                        constraints.set(parent, "false");
+                    }
+                }
+            }
+            return constraints;
+        }
+        function canReachUseOnSameBranch(awaited) {
+            const awaitedConstraints = branchConstraints(awaited);
+            const useConstraints = branchConstraints(use);
+            if (!awaitedConstraints || !useConstraints) return false;
+            return [...awaitedConstraints].every(
+                ([owner, branch]) =>
+                    !useConstraints.has(owner) || useConstraints.get(owner) === branch,
+            );
+        }
         const localAwait = awaitExpressions.some(
             (awaited) =>
                 awaited.getSourceFile() === node.getSourceFile() &&
                 (awaited.pos > node.pos || isWithin(node, awaited.expression)) &&
                 enclosingFunction(awaited) === nodeFunction &&
-                expressionDefinitelyExecutesOnInvocation(awaited, nodeFunction) &&
+                (nodeFunction !== useFunction || awaited.pos < use.pos) &&
+                !expressionDefinitelySkipped(awaited) &&
+                canReachUseOnSameBranch(awaited) &&
                 expressionCompletionDependsOn(awaited.expression, node, awaited.pos),
         );
         if (!localAwait) return false;
