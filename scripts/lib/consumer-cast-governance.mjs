@@ -1337,6 +1337,274 @@ function analyzeProgram({
         );
     }
 
+    const expressionWritesBySubstitutions = new WeakMap();
+
+    function cloneExpressionSubstitutions(substitutions) {
+        const next = new Map(substitutions);
+        const prior = expressionWritesBySubstitutions.get(substitutions) ?? [];
+        if (prior.length > 0) expressionWritesBySubstitutions.set(next, prior);
+        return next;
+    }
+
+    function expressionWriteTarget(target) {
+        if (ts.isIdentifier(target)) {
+            const symbol = valueSymbolAtIdentifier(target);
+            return symbol ? { symbol } : null;
+        }
+        if (
+            (ts.isPropertyAccessExpression(target) || ts.isElementAccessExpression(target)) &&
+            ts.isIdentifier(target.expression)
+        ) {
+            const receiverSymbol = valueSymbolAtIdentifier(target.expression);
+            const names = ts.isPropertyAccessExpression(target)
+                ? [target.name.text]
+                : computedPropertyNames(target);
+            if (receiverSymbol && names?.length === 1) {
+                return { receiverSymbol, name: names[0] };
+            }
+        }
+        return null;
+    }
+
+    function substitutionsWithExpressionWrite(substitutions, target, values) {
+        const next = cloneExpressionSubstitutions(substitutions);
+        const prior = expressionWritesBySubstitutions.get(substitutions) ?? [];
+        expressionWritesBySubstitutions.set(next, [...prior, { ...target, values }]);
+        return next;
+    }
+
+    function latestExpressionWrite(symbol, substitutions) {
+        const writes = expressionWritesBySubstitutions.get(substitutions) ?? [];
+        return (
+            writes.findLast((write) => write.symbol === symbol && write.receiverSymbol == null)
+                ?.values ?? null
+        );
+    }
+
+    function hasExpressionWrites(substitutions) {
+        return (expressionWritesBySubstitutions.get(substitutions) ?? []).length > 0;
+    }
+
+    function latestExpressionMemberWrite(receiverSymbol, name, substitutions) {
+        const writes = expressionWritesBySubstitutions.get(substitutions) ?? [];
+        return (
+            writes.findLast(
+                (write) => write.receiverSymbol === receiverSymbol && write.name === name,
+            )?.values ?? null
+        );
+    }
+
+    function expressionContainsSequentialWrite(node, root = node) {
+        if (ts.isFunctionLike(node) || ts.isClassLike(node)) return false;
+        if (
+            ts.isBinaryExpression(node) &&
+            [
+                ts.SyntaxKind.EqualsToken,
+                ts.SyntaxKind.BarBarEqualsToken,
+                ts.SyntaxKind.AmpersandAmpersandEqualsToken,
+                ts.SyntaxKind.QuestionQuestionEqualsToken,
+            ].includes(node.operatorToken.kind)
+        ) {
+            return true;
+        }
+        let found = false;
+        ts.forEachChild(node, (child) => {
+            if (!found && expressionContainsSequentialWrite(child, root)) found = true;
+        });
+        return found;
+    }
+
+    function assignmentTargetEnvironmentStates(
+        target,
+        beforePosition,
+        seen,
+        substitutions,
+        governed,
+        depth,
+        recoverProjectedWrites,
+    ) {
+        const evaluated = [];
+        if (ts.isPropertyAccessExpression(target) || ts.isElementAccessExpression(target)) {
+            evaluated.push(target.expression);
+            if (ts.isElementAccessExpression(target) && target.argumentExpression) {
+                evaluated.push(target.argumentExpression);
+            }
+        }
+        if (!evaluated.some((value) => expressionContainsSequentialWrite(value))) {
+            return [substitutions];
+        }
+        let states = [substitutions];
+        for (const value of evaluated) {
+            states = bounded(
+                states.flatMap((state) =>
+                    reachingExpressionValues(
+                        value,
+                        beforePosition,
+                        seen,
+                        state,
+                        governed,
+                        depth + 1,
+                        recoverProjectedWrites,
+                    ).map((candidate) => candidate.substitutions),
+                ),
+                "assignment target evaluation environments",
+            );
+        }
+        return states;
+    }
+
+    function staticArrayEvaluationElements(expression, seen = new Set(), depth = 0) {
+        expression = unwrapExpression(expression);
+        if (depth > MAX_TRACE_DEPTH || seen.has(expression)) return null;
+        if (!ts.isArrayLiteralExpression(expression)) return null;
+        const nextSeen = new Set(seen);
+        nextSeen.add(expression);
+        const elements = [];
+        for (const element of expression.elements) {
+            if (ts.isOmittedExpression(element)) {
+                elements.push(null);
+                continue;
+            }
+            if (!ts.isSpreadElement(element)) {
+                elements.push(element);
+                continue;
+            }
+            const spread = staticArrayEvaluationElements(element.expression, nextSeen, depth + 1);
+            if (!spread) return null;
+            elements.push(...spread);
+        }
+        return elements;
+    }
+
+    function staticObjectEvaluationProperties(expression, seen = new Set(), depth = 0) {
+        expression = unwrapExpression(expression);
+        if (depth > MAX_TRACE_DEPTH || seen.has(expression)) return null;
+        if (!ts.isObjectLiteralExpression(expression)) return null;
+        const nextSeen = new Set(seen);
+        nextSeen.add(expression);
+        const properties = [];
+        for (const property of expression.properties) {
+            if (!ts.isSpreadAssignment(property)) {
+                properties.push(property);
+                continue;
+            }
+            const spread = staticObjectEvaluationProperties(
+                property.expression,
+                nextSeen,
+                depth + 1,
+            );
+            if (!spread) return null;
+            properties.push(...spread);
+        }
+        return properties;
+    }
+
+    function orderedLiteralProjectionValues(
+        container,
+        name,
+        beforePosition,
+        seen,
+        substitutions,
+        depth,
+        recoverProjectedWrites,
+    ) {
+        container = unwrapExpression(container);
+        const arrayElements = staticArrayEvaluationElements(container);
+        if (arrayElements) {
+            if (!/^\d+$/.test(name)) return null;
+            const targetIndex = Number(name);
+            let states = [{ substitutions, captured: [] }];
+            for (let index = 0; index < arrayElements.length; index += 1) {
+                const element = arrayElements[index];
+                if (!element) continue;
+                states = bounded(
+                    states.flatMap((state) =>
+                        reachingExpressionValues(
+                            element,
+                            beforePosition,
+                            seen,
+                            state.substitutions,
+                            true,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ).map((candidate) => ({
+                            substitutions: candidate.substitutions,
+                            captured: index === targetIndex ? [candidate] : state.captured,
+                        })),
+                    ),
+                    "ordered array projection environments",
+                );
+            }
+            return states.flatMap((state) => state.captured);
+        }
+        const objectProperties = staticObjectEvaluationProperties(container);
+        if (!objectProperties) return null;
+        let states = [{ substitutions, captured: [] }];
+        for (const property of objectProperties) {
+            const computedName = property.name && ts.isComputedPropertyName(property.name);
+            if (computedName) {
+                states = bounded(
+                    states.flatMap((state) =>
+                        reachingExpressionValues(
+                            property.name.expression,
+                            beforePosition,
+                            seen,
+                            state.substitutions,
+                            true,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ).map((candidate) => ({
+                            substitutions: candidate.substitutions,
+                            captured: state.captured,
+                        })),
+                    ),
+                    "ordered object computed-name environments",
+                );
+            }
+            const names = property.name
+                ? computedName
+                    ? ts.isStringLiteralLike(property.name.expression) ||
+                      ts.isNumericLiteral(property.name.expression)
+                        ? [property.name.expression.text]
+                        : literalPropertyNames(checker.getTypeAtLocation(property.name.expression))
+                    : [property.name.getText(container.getSourceFile()).replace(/^['"]|['"]$/g, "")]
+                : [];
+            const value = ts.isPropertyAssignment(property)
+                ? property.initializer
+                : ts.isShorthandPropertyAssignment(property)
+                  ? property.name
+                  : null;
+            if (!value) {
+                if (names?.includes(name)) return null;
+                continue;
+            }
+            states = bounded(
+                states.flatMap((state) =>
+                    reachingExpressionValues(
+                        value,
+                        beforePosition,
+                        seen,
+                        state.substitutions,
+                        true,
+                        depth + 1,
+                        recoverProjectedWrites,
+                    ).flatMap((candidate) => {
+                        const base = {
+                            substitutions: candidate.substitutions,
+                            captured: state.captured,
+                        };
+                        if (names == null) {
+                            return [base, { ...base, captured: [candidate] }];
+                        }
+                        return [names.includes(name) ? { ...base, captured: [candidate] } : base];
+                    }),
+                ),
+                "ordered object projection environments",
+            );
+        }
+        return states.flatMap((state) => state.captured);
+    }
+
     function reachingExpressionValues(
         expression,
         beforePosition,
@@ -1375,7 +1643,43 @@ function analyzeProgram({
                     }
                     alternatives.push(...resolved.slice(0, available));
                 }
+                if (ts.isIdentifier(expression.expression)) {
+                    const receiverSymbol = valueSymbolAtIdentifier(expression.expression);
+                    if (receiverSymbol) {
+                        for (const name of names) {
+                            const memberWrite = latestExpressionMemberWrite(
+                                receiverSymbol,
+                                name,
+                                substitutions,
+                            );
+                            if (memberWrite) {
+                                appendResolved(
+                                    memberWrite.map((value) => ({
+                                        ...value,
+                                        substitutions,
+                                    })),
+                                );
+                            }
+                        }
+                        if (alternatives.length > 0) return alternatives;
+                    }
+                }
                 for (const name of names) {
+                    const ordered = expressionContainsSequentialWrite(expression.expression)
+                        ? orderedLiteralProjectionValues(
+                              expression.expression,
+                              name,
+                              beforePosition,
+                              seen,
+                              substitutions,
+                              depth,
+                              recoverProjectedWrites,
+                          )
+                        : null;
+                    if (ordered) {
+                        appendResolved(ordered);
+                        continue;
+                    }
                     const memberAlternatives = recoverProjectedWrites
                         ? memberValueAlternatives(
                               expression.expression,
@@ -1438,53 +1742,169 @@ function analyzeProgram({
                 return alternatives.length > 0 ? alternatives : [{ expression, substitutions }];
             }
         }
-        if (ts.isConditionalExpression(expression)) {
-            const condition = staticScalar(expression.condition, substitutions);
-            const branches = condition.known
-                ? [condition.value ? expression.whenTrue : expression.whenFalse]
-                : [expression.whenTrue, expression.whenFalse];
-            if (!governed) {
-                return bounded(
-                    branches.flatMap((branch) =>
-                        reachingExpressionValues(branch, beforePosition, seen, substitutions),
+        if (
+            governed &&
+            ts.isArrayLiteralExpression(expression) &&
+            expressionContainsSequentialWrite(expression)
+        ) {
+            let states = [substitutions];
+            for (const element of expression.elements) {
+                if (ts.isOmittedExpression(element)) continue;
+                const value = ts.isSpreadElement(element) ? element.expression : element;
+                states = bounded(
+                    states.flatMap((state) =>
+                        reachingExpressionValues(
+                            value,
+                            beforePosition,
+                            seen,
+                            state,
+                            true,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ).map((candidate) => candidate.substitutions),
                     ),
+                    "reaching array evaluation environments",
                 );
             }
-            const alternatives = [];
-            for (const branch of branches) {
-                const resolved = reachingExpressionValues(
-                    branch,
-                    beforePosition,
-                    seen,
-                    substitutions,
-                    governed,
-                    depth + 1,
-                    recoverProjectedWrites,
-                );
-                chargeAnalysisWork(resolved.length);
-                const available = maxAlternatives - alternatives.length;
-                if (resolved.length > available) {
-                    analysisFailures.add(
-                        `consumer cast analysis limit exceeded (reaching conditional values; max ${maxAlternatives})`,
+            return states.map((state) => ({ expression, substitutions: state }));
+        }
+        if (
+            governed &&
+            ts.isObjectLiteralExpression(expression) &&
+            expressionContainsSequentialWrite(expression)
+        ) {
+            let states = [substitutions];
+            for (const property of expression.properties) {
+                const evaluated = [];
+                if (property.name && ts.isComputedPropertyName(property.name)) {
+                    evaluated.push(property.name.expression);
+                }
+                if (ts.isPropertyAssignment(property)) evaluated.push(property.initializer);
+                else if (ts.isShorthandPropertyAssignment(property)) evaluated.push(property.name);
+                else if (ts.isSpreadAssignment(property)) evaluated.push(property.expression);
+                for (const value of evaluated) {
+                    states = bounded(
+                        states.flatMap((state) =>
+                            reachingExpressionValues(
+                                value,
+                                beforePosition,
+                                seen,
+                                state,
+                                true,
+                                depth + 1,
+                                recoverProjectedWrites,
+                            ).map((candidate) => candidate.substitutions),
+                        ),
+                        "reaching object evaluation environments",
                     );
                 }
-                for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
-                    alternatives.push(resolved[index]);
+            }
+            return states.map((state) => ({ expression, substitutions: state }));
+        }
+        if (ts.isConditionalExpression(expression)) {
+            if (
+                !expressionContainsSequentialWrite(expression.condition) &&
+                !hasExpressionWrites(substitutions)
+            ) {
+                const condition = staticScalar(expression.condition, substitutions);
+                const branches = condition.known
+                    ? [condition.value ? expression.whenTrue : expression.whenFalse]
+                    : [expression.whenTrue, expression.whenFalse];
+                const values = branches.flatMap((branch) =>
+                    reachingExpressionValues(
+                        branch,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                        governed,
+                        depth + 1,
+                        recoverProjectedWrites,
+                    ),
+                );
+                const resolved = governed
+                    ? bounded(values, "reaching conditional values")
+                    : bounded(values);
+                if (governed) chargeAnalysisWork(resolved.length);
+                return resolved;
+            }
+            const alternatives = [];
+            const conditionValues = reachingExpressionValues(
+                expression.condition,
+                beforePosition,
+                seen,
+                substitutions,
+                governed,
+                depth + 1,
+                recoverProjectedWrites,
+            );
+            for (const conditionValue of conditionValues) {
+                const scalar = staticScalar(
+                    conditionValue.expression,
+                    conditionValue.substitutions,
+                );
+                const state = definiteExpressionState(conditionValue.expression);
+                const branches = scalar.known
+                    ? [scalar.value ? expression.whenTrue : expression.whenFalse]
+                    : state.truthy === true
+                      ? [expression.whenTrue]
+                      : state.truthy === false
+                        ? [expression.whenFalse]
+                        : [expression.whenTrue, expression.whenFalse];
+                for (const branch of branches) {
+                    const resolved = reachingExpressionValues(
+                        branch,
+                        beforePosition,
+                        seen,
+                        conditionValue.substitutions,
+                        governed,
+                        depth + 1,
+                        recoverProjectedWrites,
+                    );
+                    if (governed) chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching conditional values; max ${maxAlternatives})`,
+                        );
+                    }
+                    alternatives.push(...resolved.slice(0, available));
                 }
             }
             return alternatives;
         }
         if (ts.isBinaryExpression(expression)) {
             if (expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
-                return reachingExpressionValues(
-                    expression.right,
+                const targetStates = assignmentTargetEnvironmentStates(
+                    expression.left,
                     beforePosition,
                     seen,
                     substitutions,
                     governed,
-                    depth + 1,
+                    depth,
                     recoverProjectedWrites,
                 );
+                const values = bounded(
+                    targetStates.flatMap((state) =>
+                        reachingExpressionValues(
+                            expression.right,
+                            beforePosition,
+                            seen,
+                            state,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ),
+                    ),
+                    "assignment result environments",
+                );
+                const target = expressionWriteTarget(expression.left);
+                if (!target) return values;
+                return values.map((value) => ({
+                    ...value,
+                    substitutions: substitutionsWithExpressionWrite(value.substitutions, target, [
+                        value,
+                    ]),
+                }));
             }
             if (
                 [
@@ -1493,17 +1913,31 @@ function analyzeProgram({
                     ts.SyntaxKind.QuestionQuestionEqualsToken,
                 ].includes(expression.operatorToken.kind)
             ) {
-                const leftValues = reachingExpressionValues(
+                const targetStates = assignmentTargetEnvironmentStates(
                     expression.left,
                     expression.pos,
                     seen,
                     substitutions,
                     governed,
-                    depth + 1,
+                    depth,
                     recoverProjectedWrites,
                 );
-                const retainedLeft = [];
-                let rightMayExecute = leftValues.length === 0;
+                const leftValues = bounded(
+                    targetStates.flatMap((state) =>
+                        reachingExpressionValues(
+                            expression.left,
+                            expression.pos,
+                            seen,
+                            state,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ),
+                    ),
+                    "logical assignment target environments",
+                );
+                const alternatives = [];
+                const target = expressionWriteTarget(expression.left);
                 for (const value of leftValues) {
                     const state = definiteExpressionState(value.expression);
                     const retainsLeft =
@@ -1524,34 +1958,83 @@ function analyzeProgram({
                         (expression.operatorToken.kind ===
                             ts.SyntaxKind.QuestionQuestionEqualsToken &&
                             state.nullish !== false);
-                    if (retainsLeft) retainedLeft.push(value);
-                    if (executesRight) rightMayExecute = true;
+                    if (retainsLeft) alternatives.push(value);
+                    if (executesRight) {
+                        const rightValues = reachingExpressionValues(
+                            expression.right,
+                            beforePosition,
+                            seen,
+                            value.substitutions,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        );
+                        alternatives.push(
+                            ...rightValues.map((rightValue) =>
+                                target
+                                    ? {
+                                          ...rightValue,
+                                          substitutions: substitutionsWithExpressionWrite(
+                                              rightValue.substitutions,
+                                              target,
+                                              [rightValue],
+                                          ),
+                                      }
+                                    : rightValue,
+                            ),
+                        );
+                    }
                 }
-                const rightValues = rightMayExecute
-                    ? reachingExpressionValues(
-                          expression.right,
-                          beforePosition,
-                          seen,
-                          substitutions,
-                          governed,
-                          depth + 1,
-                          recoverProjectedWrites,
-                      )
-                    : [];
-                return bounded(
-                    [...retainedLeft, ...rightValues],
-                    "reaching logical assignment values",
-                );
+                if (leftValues.length === 0) {
+                    const rightValues = reachingExpressionValues(
+                        expression.right,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                        governed,
+                        depth + 1,
+                        recoverProjectedWrites,
+                    );
+                    alternatives.push(
+                        ...rightValues.map((rightValue) =>
+                            target
+                                ? {
+                                      ...rightValue,
+                                      substitutions: substitutionsWithExpressionWrite(
+                                          rightValue.substitutions,
+                                          target,
+                                          [rightValue],
+                                      ),
+                                  }
+                                : rightValue,
+                        ),
+                    );
+                }
+                return bounded(alternatives, "reaching logical assignment values");
             }
             if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
-                return reachingExpressionValues(
-                    expression.right,
+                const leftValues = reachingExpressionValues(
+                    expression.left,
                     beforePosition,
                     seen,
                     substitutions,
                     governed,
                     depth + 1,
                     recoverProjectedWrites,
+                );
+                return bounded(
+                    leftValues.flatMap((leftValue) =>
+                        reachingExpressionValues(
+                            expression.right,
+                            beforePosition,
+                            seen,
+                            leftValue.substitutions,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
+                        ),
+                    ),
+                    "reaching sequence values",
                 );
             }
             if (
@@ -1561,33 +2044,97 @@ function analyzeProgram({
                     ts.SyntaxKind.QuestionQuestionToken,
                 ].includes(expression.operatorToken.kind)
             ) {
-                const leftState = definiteExpressionState(expression.left);
-                const operands = (() => {
-                    if (expression.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
-                        if (leftState.truthy === true) return [expression.left];
-                        if (leftState.truthy === false) return [expression.right];
-                    }
-                    if (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
-                        if (leftState.truthy === false) return [expression.left];
-                        if (leftState.truthy === true) return [expression.right];
-                    }
-                    if (expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken) {
-                        if (leftState.nullish === false) return [expression.left];
-                        if (leftState.nullish === true) return [expression.right];
-                    }
-                    return [expression.left, expression.right];
-                })();
-                if (!governed) {
-                    return bounded(
-                        operands.flatMap((operand) =>
-                            reachingExpressionValues(operand, beforePosition, seen, substitutions),
+                if (
+                    !expressionContainsSequentialWrite(expression.left) &&
+                    !hasExpressionWrites(substitutions)
+                ) {
+                    const leftState = definiteExpressionState(expression.left);
+                    const operands = (() => {
+                        if (expression.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+                            if (leftState.truthy === true) return [expression.left];
+                            if (leftState.truthy === false) return [expression.right];
+                        }
+                        if (
+                            expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken
+                        ) {
+                            if (leftState.truthy === false) return [expression.left];
+                            if (leftState.truthy === true) return [expression.right];
+                        }
+                        if (expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken) {
+                            if (leftState.nullish === false) return [expression.left];
+                            if (leftState.nullish === true) return [expression.right];
+                        }
+                        return [expression.left, expression.right];
+                    })();
+                    const values = operands.flatMap((operand) =>
+                        reachingExpressionValues(
+                            operand,
+                            beforePosition,
+                            seen,
+                            substitutions,
+                            governed,
+                            depth + 1,
+                            recoverProjectedWrites,
                         ),
                     );
+                    const resolved = governed
+                        ? bounded(values, "reaching logical values")
+                        : bounded(values);
+                    if (governed) chargeAnalysisWork(resolved.length);
+                    return resolved;
                 }
                 const alternatives = [];
-                for (const operand of operands) {
+                const leftValues = reachingExpressionValues(
+                    expression.left,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    governed,
+                    depth + 1,
+                    recoverProjectedWrites,
+                );
+                for (const leftValue of leftValues) {
+                    const state = definiteExpressionState(leftValue.expression);
+                    const retainsLeft =
+                        (expression.operatorToken.kind === ts.SyntaxKind.BarBarToken &&
+                            state.truthy !== false) ||
+                        (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+                            state.truthy !== true) ||
+                        (expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+                            state.nullish !== true);
+                    const executesRight =
+                        (expression.operatorToken.kind === ts.SyntaxKind.BarBarToken &&
+                            state.truthy !== true) ||
+                        (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken &&
+                            state.truthy !== false) ||
+                        (expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+                            state.nullish !== false);
+                    const resolved = [
+                        ...(retainsLeft ? [leftValue] : []),
+                        ...(executesRight
+                            ? reachingExpressionValues(
+                                  expression.right,
+                                  beforePosition,
+                                  seen,
+                                  leftValue.substitutions,
+                                  governed,
+                                  depth + 1,
+                                  recoverProjectedWrites,
+                              )
+                            : []),
+                    ];
+                    if (governed) chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching logical values; max ${maxAlternatives})`,
+                        );
+                    }
+                    alternatives.push(...resolved.slice(0, available));
+                }
+                if (leftValues.length === 0) {
                     const resolved = reachingExpressionValues(
-                        operand,
+                        expression.right,
                         beforePosition,
                         seen,
                         substitutions,
@@ -1595,22 +2142,21 @@ function analyzeProgram({
                         depth + 1,
                         recoverProjectedWrites,
                     );
-                    chargeAnalysisWork(resolved.length);
                     const available = maxAlternatives - alternatives.length;
-                    if (resolved.length > available) {
-                        analysisFailures.add(
-                            `consumer cast analysis limit exceeded (reaching logical values; max ${maxAlternatives})`,
-                        );
-                    }
-                    for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
-                        alternatives.push(resolved[index]);
-                    }
+                    alternatives.push(...resolved.slice(0, available));
                 }
                 return alternatives;
             }
         }
         if (ts.isIdentifier(expression)) {
             const symbol = valueSymbolAtIdentifier(expression);
+            const expressionWrite = symbol ? latestExpressionWrite(symbol, substitutions) : null;
+            if (expressionWrite) {
+                return expressionWrite.map((value) => ({
+                    ...value,
+                    substitutions,
+                }));
+            }
             if (
                 (symbol?.declarations ?? []).some(
                     (declaration) => ts.isBindingElement(declaration) && declaration.dotDotDotToken,
@@ -1679,52 +2225,92 @@ function analyzeProgram({
                 if (seen.has(key)) return [];
                 const nextSeen = new Set(seen);
                 nextSeen.add(key);
-                const nested = new Map(substitutions);
-                declaration.parameters.forEach((parameter, index) => {
-                    const argument = expression.arguments[index];
-                    if (!argument) return;
-                    const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
-                    if (symbol) nested.set(symbol, argument);
+                let argumentStates = [{ substitutions, arguments: [...expression.arguments] }];
+                if (expression.arguments.some(expressionContainsSequentialWrite)) {
+                    argumentStates = [{ substitutions, arguments: [] }];
+                    for (const argument of expression.arguments) {
+                        argumentStates = bounded(
+                            argumentStates.flatMap((state) =>
+                                reachingExpressionValues(
+                                    argument,
+                                    expression.pos,
+                                    seen,
+                                    state.substitutions,
+                                    governed,
+                                    depth + 1,
+                                    recoverProjectedWrites,
+                                ).map((value) => ({
+                                    substitutions: value.substitutions,
+                                    arguments: [
+                                        ...state.arguments,
+                                        value.sourceExpression ?? value.expression,
+                                    ],
+                                })),
+                            ),
+                            "reaching call argument environments",
+                        );
+                    }
+                }
+                const nestedStates = argumentStates.map((state) => {
+                    const nested = cloneExpressionSubstitutions(state.substitutions);
+                    declaration.parameters.forEach((parameter, index) => {
+                        const argument = state.arguments[index];
+                        if (!argument) return;
+                        const symbol = unalias(
+                            checker,
+                            checker.getSymbolAtLocation(parameter.name),
+                        );
+                        if (symbol) nested.set(symbol, argument);
+                    });
+                    return nested;
                 });
                 if (!governed) {
                     return bounded(
-                        functionReturnExpressions(declaration).flatMap((returned) =>
-                            reachingExpressionValues(
-                                returned,
-                                expression.pos,
-                                nextSeen,
-                                nested,
-                            ).map((candidate) => ({
-                                ...candidate,
-                                sourceExpression: candidate.sourceExpression ?? expression,
-                            })),
+                        nestedStates.flatMap((nested) =>
+                            functionReturnExpressions(declaration).flatMap((returned) =>
+                                reachingExpressionValues(
+                                    returned,
+                                    expression.pos,
+                                    nextSeen,
+                                    nested,
+                                ).map((candidate) => ({
+                                    ...candidate,
+                                    sourceExpression: candidate.sourceExpression ?? expression,
+                                })),
+                            ),
                         ),
                     );
                 }
                 const alternatives = [];
-                for (const returned of functionReturnExpressions(declaration)) {
-                    const resolved = reachingExpressionValues(
-                        returned,
-                        expression.pos,
-                        nextSeen,
-                        nested,
-                        true,
-                        depth + 1,
-                        recoverProjectedWrites,
-                    );
-                    chargeAnalysisWork(resolved.length);
-                    const available = maxAlternatives - alternatives.length;
-                    if (resolved.length > available) {
-                        analysisFailures.add(
-                            `consumer cast analysis limit exceeded (reaching helper-return values; max ${maxAlternatives})`,
+                for (const nested of nestedStates) {
+                    for (const returned of functionReturnExpressions(declaration)) {
+                        const resolved = reachingExpressionValues(
+                            returned,
+                            expression.pos,
+                            nextSeen,
+                            nested,
+                            true,
+                            depth + 1,
+                            recoverProjectedWrites,
                         );
-                    }
-                    for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
-                        const candidate = resolved[index];
-                        alternatives.push({
-                            ...candidate,
-                            sourceExpression: candidate.sourceExpression ?? expression,
-                        });
+                        chargeAnalysisWork(resolved.length);
+                        const available = maxAlternatives - alternatives.length;
+                        if (resolved.length > available) {
+                            analysisFailures.add(
+                                `consumer cast analysis limit exceeded (reaching helper-return values; max ${maxAlternatives})`,
+                            );
+                        }
+                        for (
+                            let index = 0;
+                            index < Math.min(resolved.length, available);
+                            index += 1
+                        ) {
+                            const candidate = resolved[index];
+                            alternatives.push({
+                                ...candidate,
+                                sourceExpression: candidate.sourceExpression ?? expression,
+                            });
+                        }
                     }
                 }
                 return alternatives;
@@ -4670,6 +5256,25 @@ function analyzeProgram({
                     receiverProjection,
                 );
             }
+            const expressionWrite = receiverSymbol
+                ? latestExpressionWrite(receiverSymbol, substitutions)
+                : null;
+            if (expressionWrite) {
+                return bounded(
+                    expressionWrite.flatMap((value) =>
+                        getterDeclarationsForReceiver(
+                            value.sourceExpression ?? value.expression,
+                            names,
+                            null,
+                            seen,
+                            depth + 1,
+                            substitutions,
+                            receiverProjection,
+                        ),
+                    ),
+                    "receiver expression-local write alternatives",
+                );
+            }
         }
         const resolvedMember =
             memberSymbol ??
@@ -4754,6 +5359,47 @@ function analyzeProgram({
             }
             factoryCall = unwrapExpression(factoryCall.expression);
         }
+        if (
+            factoryCall &&
+            projection.length > 0 &&
+            (ts.isArrayLiteralExpression(factoryCall) ||
+                ts.isObjectLiteralExpression(factoryCall)) &&
+            expressionContainsSequentialWrite(factoryCall)
+        ) {
+            const key = `${factoryCall.getSourceFile().fileName}:${factoryCall.pos}:${factoryCall.end}:getter-ordered-container:${JSON.stringify(projection)}`;
+            if (seen.has(key)) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve recursive ordered receiver container`,
+                );
+                return [];
+            }
+            const nextSeen = new Set(seen);
+            nextSeen.add(key);
+            const alternatives = reachingExpressionValues(
+                receiver,
+                receiver.pos,
+                nextSeen,
+                substitutions,
+                true,
+            );
+            if (alternatives.length === 0) return direct;
+            return bounded(
+                alternatives.flatMap((alternative) => {
+                    const value = alternative.sourceExpression ?? alternative.expression;
+                    if (value === receiver) return direct;
+                    return getterDeclarationsForReceiver(
+                        value,
+                        names,
+                        null,
+                        nextSeen,
+                        depth + 1,
+                        alternative.substitutions,
+                        [],
+                    );
+                }),
+                "ordered receiver container alternatives",
+            );
+        }
         if (factoryCall && projection.length > 0 && isReceiverValueWrapper(factoryCall)) {
             const key = `${factoryCall.getSourceFile().fileName}:${factoryCall.pos}:${factoryCall.end}:getter-projected-wrapper:${JSON.stringify(projection)}`;
             if (seen.has(key)) {
@@ -4824,34 +5470,64 @@ function analyzeProgram({
                     complete = false;
                     continue;
                 }
-                const nextSubstitutions = new Map(substitutions);
-                declaration.parameters.forEach((parameter, index) => {
-                    const argument = effectiveCall.arguments[index];
-                    if (!argument) return;
-                    const parameterSymbol = unalias(
-                        checker,
-                        checker.getSymbolAtLocation(parameter.name),
-                    );
-                    if (parameterSymbol) nextSubstitutions.set(parameterSymbol, argument);
+                let argumentStates = [{ substitutions, arguments: [...effectiveCall.arguments] }];
+                if (effectiveCall.arguments.some(expressionContainsSequentialWrite)) {
+                    argumentStates = [{ substitutions, arguments: [] }];
+                    for (const argument of effectiveCall.arguments) {
+                        argumentStates = bounded(
+                            argumentStates.flatMap((state) =>
+                                reachingExpressionValues(
+                                    argument,
+                                    factoryCall.pos,
+                                    nextSeen,
+                                    state.substitutions,
+                                    true,
+                                    depth + 1,
+                                ).map((value) => ({
+                                    substitutions: value.substitutions,
+                                    arguments: [
+                                        ...state.arguments,
+                                        value.sourceExpression ?? value.expression,
+                                    ],
+                                })),
+                            ),
+                            "receiver getter factory argument environments",
+                        );
+                    }
+                }
+                const nextSubstitutionStates = argumentStates.map((state) => {
+                    const nextSubstitutions = cloneExpressionSubstitutions(state.substitutions);
+                    declaration.parameters.forEach((parameter, index) => {
+                        const argument = state.arguments[index];
+                        if (!argument) return;
+                        const parameterSymbol = unalias(
+                            checker,
+                            checker.getSymbolAtLocation(parameter.name),
+                        );
+                        if (parameterSymbol) nextSubstitutions.set(parameterSymbol, argument);
+                    });
+                    return nextSubstitutions;
                 });
                 const returned = functionReturnExpressions(declaration);
                 if (returned.length === 0) complete = false;
                 for (const returnedExpression of returned) {
                     const projected = projectedExpressions(returnedExpression, projection);
                     if (projected.length === 0) complete = false;
-                    resolved.push(
-                        ...projected.flatMap((value) =>
-                            getterDeclarationsForReceiver(
-                                value,
-                                names,
-                                null,
-                                nextSeen,
-                                depth + 1,
-                                nextSubstitutions,
-                                [],
+                    for (const nextSubstitutions of nextSubstitutionStates) {
+                        resolved.push(
+                            ...projected.flatMap((value) =>
+                                getterDeclarationsForReceiver(
+                                    value,
+                                    names,
+                                    null,
+                                    nextSeen,
+                                    depth + 1,
+                                    nextSubstitutions,
+                                    [],
+                                ),
                             ),
-                        ),
-                    );
+                        );
+                    }
                 }
             }
             return bounded(
