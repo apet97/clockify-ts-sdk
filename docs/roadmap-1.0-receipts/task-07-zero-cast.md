@@ -306,6 +306,19 @@ failure before helper depth was limited to request-contributing return paths.
 The finished focused set passes **21/21**, and the complete controller suite
 passes **464/464** fixtures while retaining the prior 443 cases.
 
+The twenty-second corrective review makes request contribution govern every
+trace-local assertion, annotated-any, and any-returning-helper finding. Ignored
+metadata remains clean even through 40 helpers, while a parameter substituted
+back into a request-producing return restores contribution and detection.
+Source-wide generated-request assertions remain independently governed. Generic
+AST and helper-depth exhaustion now use the same stable Set-backed failure before
+either guard returns, so deeply nested returned-parameter calls cannot bypass the
+ratchet or create duplicate noise. Five of the initial 10 focused cases failed
+against `30b5c79`; the five contributing, public, legitimate non-request, and
+below-limit controls stayed green. The finished focused set passes **10/10**,
+and the complete controller suite passes **474/474** fixtures while retaining
+the prior 464 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -330,7 +343,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-first-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-second-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

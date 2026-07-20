@@ -2955,6 +2955,119 @@ test("does not fail on a deep non-contributing helper argument to a safe request
     );
 });
 
+test("ignores a shallow any-cast metadata helper when the safe request factory discards it", async () => {
+    await withFixture(
+        generatedImports +
+            'function metadata(value: unknown) { return value as any; }\nfunction safeRequest(_metadata: unknown) { return { workspaceId: "safe" }; }\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(safeRequest(metadata(body))); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("ignores a deep any-cast metadata helper chain discarded by a safe request factory", async () => {
+    const metadataHelpers = Array.from({ length: 40 }, (_unused, index) =>
+        index === 39
+            ? `function metadata${index}(value: unknown) { return value as any; }`
+            : `function metadata${index}(value: unknown) { return metadata${index + 1}(value); }`,
+    ).join("\n");
+    await withFixture(
+        `${generatedImports}${metadataHelpers}\nfunction safeRequest(_metadata: unknown) { return { workspaceId: "safe" }; }\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(safeRequest(metadata0(body))); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("catches a shallow any-cast metadata value re-entering the returned request", async () => {
+    await withFixture(
+        generatedImports +
+            "function metadata(value: unknown) { return value as any; }\nfunction requestFromMetadata(value: unknown) { return value; }\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(requestFromMetadata(metadata(body))); }\n",
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, firstArgument, secondArgument, expected] of [
+    ["ignored first", "metadata(body)", '{ workspaceId: "safe" }', null],
+    ["contributing second", '"metadata"', "metadata(body)", /as any.*CreateProjectsRequest/i],
+]) {
+    test(`tracks only the returned parameter in mixed helper arguments: ${label}`, async () => {
+        await withFixture(
+            generatedImports +
+                `function metadata(value: unknown) { return value as any; }\nfunction selectRequest(_ignored: unknown, request: unknown) { return request; }\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(selectRequest(${firstArgument}, ${secondArgument})); }\n`,
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (expected) assert.match(result.failures.join("\n"), expected);
+                else assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+test("still governs a public generated-request assertion outside a request call", async () => {
+    await withFixture(
+        generatedImports +
+            "export const publicRequest = {} as ClockifyApi.CreateProjectsRequest;\n",
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /generated request assertion/i);
+        },
+    );
+});
+
+test("keeps a legitimate non-request assertion clean in ignored metadata", async () => {
+    await withFixture(
+        generatedImports +
+            'function safeRequest(_metadata: unknown) { return { workspaceId: "safe" }; }\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(safeRequest(body as Record<string, unknown>)); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+function nestedIdentityFixture(length, terminal) {
+    const helpers = Array.from(
+        { length },
+        (_unused, index) => `function identity${index}<T>(value: T) { return value; }`,
+    ).join("\n");
+    let expression = terminal;
+    for (let index = length - 1; index >= 0; index -= 1) {
+        expression = `identity${index}(${expression})`;
+    }
+    return `${generatedImports}${helpers}\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(${expression}); }\n`;
+}
+
+test("catches a below-limit returned-parameter any cast", async () => {
+    await withFixture(nestedIdentityFixture(5, "body as any"), async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, terminal] of [
+    ["unsafe", "body as ClockifyApi.CreateProjectsRequest"],
+    ["safe but unresolved", '{ workspaceId: "safe" }'],
+]) {
+    test(`fails closed once for an over-limit ${label} returned-parameter chain`, async () => {
+        await withFixture(nestedIdentityFixture(40, terminal), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            const depthFailures = result.failures.filter((failure) =>
+                /consumer cast analysis exceeded governed request trace depth 24/i.test(failure),
+            );
+            assert.equal(depthFailures.length, 1);
+        });
+    });
+}
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +

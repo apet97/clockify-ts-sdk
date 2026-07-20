@@ -446,7 +446,13 @@ end-to-end and green before push. Drift gates are non-negotiable.
     its path and fails closed only if that result is invoked. Request-contributing
     helper tracing also fails closed when its depth bound is exhausted; deep
     uncalled helpers and non-contributing helper arguments remain non-effects. A
-    later phase dominates only when every
+    trace-local assertion, annotated-any, and any-returning-helper finding is
+    emitted only while that value contributes to the request; a parameter that
+    re-enters a request-producing return restores contribution. Source-wide
+    generated-request assertions remain governed independently. Generic AST and
+    helper-depth exhaustion share one stable fail-closed diagnostic, so nested
+    returned-parameter chains cannot stop silently or duplicate failures. A later
+    phase dominates only when every
     registered mutually exclusive path performs an equivalent receiver/name-
     qualified definite write. Lifted direct property assignments retain original
     within-phase sequence and become definite only on unconditional paths with
