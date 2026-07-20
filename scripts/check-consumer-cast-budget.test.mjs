@@ -6567,6 +6567,226 @@ test("fails closed for cyclic receiver wrapper aliases", async () => {
     });
 });
 
+test("resolves a concrete getter receiver through an assignment expression result", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeFresh(): Base { return new Fresh(); } let source: Base = new Base(); let temp: Base = new Base(); const old = source.registry; source = (temp = makeFresh()); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("resolves a concrete getter receiver through chained assignment results", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeFresh(): Base { return new Fresh(); } let source: Base = new Base(); let first: Base = new Base(); let second: Base = new Base(); const old = source.registry; source = (first = second = makeFresh()); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, setup, expression, shouldFail] of [
+    ["truthy or-assignment", "let temp: Base = new Base();", "temp ||= makeFresh()", true],
+    ["truthy and-assignment", "let temp: Base = new Base();", "temp &&= makeFresh()", false],
+    ["nonnull nullish-assignment", "let temp: Base = new Base();", "temp ??= makeFresh()", true],
+    [
+        "falsey or-assignment",
+        "let temp: Base | undefined = undefined;",
+        "(temp ||= makeFresh()) as Base",
+        false,
+    ],
+    [
+        "nullish nullish-assignment",
+        "let temp: Base | undefined = undefined;",
+        "(temp ??= makeFresh()) as Base",
+        false,
+    ],
+    ["fresh or-assignment pruning", "let temp: Base = new Fresh();", "temp ||= new Base()", false],
+    [
+        "fresh nullish-assignment pruning",
+        "let temp: Base = new Fresh();",
+        "temp ??= new Base()",
+        false,
+    ],
+    [
+        "uncertain or-assignment alternatives",
+        "let temp: Base = choose ? new Base() : new Fresh();",
+        "temp ||= makeFresh()",
+        true,
+    ],
+    [
+        "uncertain and-assignment truthy paths",
+        "let temp: Base = choose ? new Base() : new Fresh();",
+        "temp &&= makeFresh()",
+        false,
+    ],
+    [
+        "property assignment result",
+        "const box: { value: Base } = { value: new Base() };",
+        "box.value = makeFresh()",
+        false,
+    ],
+    [
+        "element assignment result",
+        "const box: { value: Base } = { value: new Base() };",
+        'box["value"] = makeFresh()',
+        false,
+    ],
+    [
+        "property assignment singleton inverse",
+        "const box: { value: Base } = { value: new Fresh() };",
+        "box.value = new Base()",
+        true,
+    ],
+    [
+        "property logical assignment",
+        "const box: { value: Base } = { value: new Base() };",
+        "box.value &&= makeFresh()",
+        false,
+    ],
+    [
+        "element or-assignment pruning",
+        "const box: { value: Base } = { value: new Fresh() };",
+        'box["value"] ||= new Base()',
+        false,
+    ],
+    [
+        "property nullish-assignment",
+        "const box: { value: Base | undefined } = { value: undefined };",
+        "(box.value ??= makeFresh()) as Base",
+        false,
+    ],
+    [
+        "property nullish singleton inverse",
+        "const box: { value: Base | undefined } = { value: undefined };",
+        "(box.value ??= new Base()) as Base",
+        true,
+    ],
+    [
+        "nested assignment wrapper adapter",
+        "let temp: Base = new Base();",
+        "temp = (void 0, choose ? makeFresh.call(undefined) : new Fresh())",
+        false,
+    ],
+]) {
+    test(`${label} preserves assignment result value semantics`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeFresh(): Base { return new Fresh(); } ${setup} let source: Base = new Base(); const old = source.registry; source = (${expression}); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(
+                    result.failures.join("\n"),
+                    /(as any.*CreateProjectsRequest|could not statically resolve)/i,
+                );
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("uses the whole destructuring assignment result before projecting a receiver", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeBox(): { value: Base } { return { value: new Fresh() }; } let temp: Base = new Base(); let source: Base = new Base(); const old = source.registry; source = (({ value: temp } = makeBox()).value); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not treat a destructured target as the whole assignment result", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeBox(): { value: Base } { return { value: new Fresh() }; } let temp: Base = new Base(); let source: Base = new Base(); const old = source.registry; source = (({ value: temp } = makeBox()) as unknown as Base); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not treat compound arithmetic as a receiver assignment value", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } let source: Base = new Base(); let counter = 0; const old = source.registry; source = ((counter += 1) as unknown as Base); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, expression, shouldFail] of [
+    ["inner singleton overwritten by fresh result", "(source = new Base(), makeFresh())", false],
+    ["inner fresh overwritten by singleton result", "(source = makeFresh(), new Base())", true],
+]) {
+    test(`${label} preserves assignment evaluation order`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeFresh(): Base { return new Fresh(); } let source: Base = new Base(); const old = source.registry; source = (${expression}); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed when assignment result alternatives exceed the cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, choose: boolean) { class Safe {} class One { get registry() { return { Ctor: Safe }; } } class Two { get registry() { return { Ctor: Safe }; } } let temp: One | Two = new One(); const current = (temp = choose ? new One() : new Two()).registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*max 1/i);
+    });
+});
+
+test("fails closed when assignment result discovery exceeds the work cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Safe {} class Fresh { get registry() { return { Ctor: Safe }; } } let temp = new Fresh(); const current = (temp = new Fresh()).registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded \(work; max 1\)/i);
+    });
+});
+
+test("fails closed when assignment result resolution exceeds the depth limit", async () => {
+    let assignment = "new Fresh()";
+    for (let index = 0; index < 70; index += 1) assignment = `(temp = ${assignment})`;
+    const source =
+        generatedImports +
+        `export async function run(client: FixtureClient) { class Safe {} class Fresh { get registry() { return { Ctor: Safe }; } } let temp = new Fresh(); const current = (${assignment}).registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n`;
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /governed reconstruction depth/i);
+    });
+});
+
+test("fails closed for cyclic assignment result aliases", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } let source: Base = new Base(); const old = source.registry; let first = {} as Base; let second: Base = first; source = (first = second = first); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(
+            result.failures.join("\n"),
+            /(as any.*CreateProjectsRequest|could not statically resolve)/i,
+        );
+    });
+});
+
 for (const [label, setup, shouldFail] of [
     [
         "definite subclass override",
