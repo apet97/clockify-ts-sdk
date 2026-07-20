@@ -6107,7 +6107,7 @@ test("keeps imported getter factories conservative despite available source", as
     await withFixture(source, async (root) => {
         await writeFile(
             path.join(root, "cli/src/helper.ts"),
-            'export type Registry = { Ctor: new () => unknown }; class Safe {} const singleton: Registry = { Ctor: Safe }; export class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } export function make(): Base { return new Fresh(); }\n',
+            "export type Registry = { Ctor: new () => unknown }; class Safe {} const singleton: Registry = { Ctor: Safe }; export class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } export function make(): Base { return new Fresh(); }\n",
         );
         const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
         assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
@@ -6193,6 +6193,222 @@ test("fails closed when local getter factory resolution exceeds the depth limit"
     const source =
         generatedImports +
         `export async function run(client: FixtureClient) { class Safe {} class Source { get registry() { return { Ctor: Safe }; } } ${factories.join(" ")} const current = make70().registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n`;
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /receiver getter factory depth limit/i);
+    });
+});
+
+test("projects a concrete getter receiver from a declared-base local factory result", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeBox(): { source: Base } { return { source: new Fresh() }; } let source: Base = new Base(); const old = source.registry; source = makeBox().source; const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("projects a concrete getter receiver through factory destructuring assignment", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } function makeBox(): { source: Base } { return { source: new Fresh() }; } let source: Base = new Base(); const old = source.registry; ({ source } = makeBox()); const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, factory, assignment, shouldFail] of [
+    [
+        "element projection",
+        "function makeBox(): { source: Base } { return { source: new Fresh() }; }",
+        'source = makeBox()["source"];',
+        false,
+    ],
+    [
+        "nested projection",
+        "function makeBox(): { nested: { source: Base } } { return { nested: { source: new Fresh() } }; }",
+        "source = makeBox().nested.source;",
+        false,
+    ],
+    [
+        "reverse singleton projection",
+        "function makeBox(): { source: Base } { return { source: new Base() }; }",
+        "source = makeBox().source;",
+        true,
+    ],
+    [
+        "all-fresh conditional projection",
+        "function makeBox(choose: boolean): { source: Base } { return choose ? { source: new Fresh() } : { source: new OtherFresh() }; }",
+        "source = makeBox(choose).source;",
+        false,
+    ],
+    [
+        "mixed conditional projection",
+        "function makeBox(choose: boolean): { source: Base } { return choose ? { source: new Fresh() } : { source: new Base() }; }",
+        "source = makeBox(choose).source;",
+        true,
+    ],
+    [
+        "native call adapter",
+        "function makeFresh(): Base { return new Fresh(); }",
+        "source = makeFresh.call(undefined);",
+        false,
+    ],
+    [
+        "generic projected factory",
+        "function makeBox<T extends Base>(value: T): { source: Base } { return { source: value }; }",
+        "source = makeBox(new Fresh()).source;",
+        false,
+    ],
+    [
+        "native call argument substitution",
+        "function identity<T extends Base>(value: T): Base { return value; }",
+        "source = identity.call(undefined, new Fresh());",
+        false,
+    ],
+    [
+        "native apply adapter",
+        "function makeFresh(): Base { return new Fresh(); }",
+        "source = makeFresh.apply(undefined, []);",
+        false,
+    ],
+    [
+        "native Reflect.apply adapter",
+        "function makeFresh(): Base { return new Fresh(); }",
+        "source = Reflect.apply(makeFresh, undefined, []);",
+        false,
+    ],
+    [
+        "native bind immediate invocation",
+        "function makeFresh(): Base { return new Fresh(); }",
+        "source = makeFresh.bind(undefined)();",
+        false,
+    ],
+    [
+        "custom call adapter",
+        "const adapter = { call(_receiver: unknown): Base { return new Base(); } };",
+        "source = adapter.call(undefined);",
+        true,
+    ],
+    [
+        "custom apply adapter",
+        "const adapter = { apply(_receiver: unknown, _args: []): Base { return new Base(); } };",
+        "source = adapter.apply(undefined, []);",
+        true,
+    ],
+    [
+        "custom bind adapter",
+        "const adapter = { bind(_receiver: unknown): () => Base { return () => new Base(); } };",
+        "source = adapter.bind(undefined)();",
+        true,
+    ],
+    [
+        "custom Reflect apply adapter",
+        "const Reflect = { apply(_target: unknown, _receiver: unknown, _args: []): Base { return new Base(); } }; function makeFresh(): Base { return new Fresh(); }",
+        "source = Reflect.apply(makeFresh, undefined, []);",
+        true,
+    ],
+]) {
+    test(`${label} resolves projected or adapted local getter factories`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } class OtherFresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } ${factory} let source: Base = new Base(); const old = source.registry; ${assignment} const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(
+                    result.failures.join("\n"),
+                    /(as any.*CreateProjectsRequest|could not statically resolve)/i,
+                );
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("keeps imported projected getter factories conservative", async () => {
+    const source =
+        generatedImports +
+        'import { Base, makeBox } from "./helper.js";\ninterface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } let source: Base = new Base(); const old = source.registry; source = makeBox().source; const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        await writeFile(
+            path.join(root, "cli/src/helper.ts"),
+            "export type Registry = { Ctor: new () => unknown }; class Safe {} const singleton: Registry = { Ctor: Safe }; export class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } export function makeBox(): { source: Base } { return { source: new Fresh() }; }\n",
+        );
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("keeps async projected getter factories conservative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } async function makeBox(): Promise<{ source: Base }> { return { source: new Fresh() }; } let source: Base = new Base(); const old = source.registry; source = (await makeBox()).source; const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("keeps projected factory allocations distinct through one getter call site", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; class Base { get registry(): Registry { return { Ctor: Safe }; } } function makeBox(): { source: Base } { return { source: new Base() }; } function read() { return makeBox().source.registry; } const old = read(); const current = read(); old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("fails closed for recursive projected getter factories", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, recurse: boolean) { class Safe {} type Registry = { Ctor: typeof Safe }; class Base { get registry(): Registry { return { Ctor: Safe }; } } function makeBox(value: boolean): { source: Base } { return value ? makeBox(value) : { source: new Base() }; } const current = makeBox(recurse).source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /recursive receiver getter factory/i);
+    });
+});
+
+test("fails closed when projected getter factory returns exceed the alternatives cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, choose: boolean) { class Safe {} class One { get registry() { return { Ctor: Safe }; } } class Two { get registry() { return { Ctor: Safe }; } } function makeBox(): { source: One | Two } { return choose ? { source: new One() } : { source: new Two() }; } const current = makeBox().source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*max 1/i);
+    });
+});
+
+test("fails closed when projected getter factory discovery exceeds the work cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Safe {} class Source { get registry() { return { Ctor: Safe }; } } function makeBox(): { source: Source } { return { source: new Source() }; } const current = makeBox().source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded \(work; max 1\)/i);
+    });
+});
+
+test("fails closed when projected getter factory resolution exceeds the depth limit", async () => {
+    const factories = ["function make0(): { source: Source } { return { source: new Source() }; }"];
+    for (let index = 1; index <= 70; index += 1) {
+        factories.push(
+            `function make${index}(): { source: Source } { return { source: make${index - 1}().source }; }`,
+        );
+    }
+    const source =
+        generatedImports +
+        `export async function run(client: FixtureClient) { class Safe {} class Source { get registry() { return { Ctor: Safe }; } } ${factories.join(" ")} const current = make70().source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n`;
     await withFixture(source, async (root) => {
         const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
         assert.match(result.failures.join("\n"), /receiver getter factory depth limit/i);
@@ -6519,10 +6735,7 @@ test("fails closed when destructured getter read contexts exceed the cap", async
             contract: zeroContract,
             analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
         });
-        assert.match(
-            result.failures.join("\n"),
-            /receiver allocation invocation contexts; max 1/i,
-        );
+        assert.match(result.failures.join("\n"), /receiver allocation invocation contexts; max 1/i);
     });
 });
 
