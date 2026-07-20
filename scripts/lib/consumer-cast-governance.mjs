@@ -10,6 +10,14 @@ const MAX_ANALYSIS_WORK = 10000;
 const THIS_SUBSTITUTION = Symbol("this receiver substitution");
 const REST_ARGUMENTS_SUBSTITUTION = Symbol("rest arguments substitution");
 
+function restArgumentsSubstitution(values) {
+    return { [REST_ARGUMENTS_SUBSTITUTION]: [...values] };
+}
+
+function isRestArgumentsSubstitution(value) {
+    return Boolean(value?.[REST_ARGUMENTS_SUBSTITUTION]);
+}
+
 class AnalysisWorkLimitError extends Error {
     constructor(maxWork, largestCallbackExpansion = 0) {
         super(`consumer cast analysis limit exceeded (work; max ${maxWork})`);
@@ -1080,6 +1088,34 @@ function analyzeProgram({
     }
 
     function statementDefinitelyAbrupt(statement) {
+        if (
+            ts.isExpressionStatement(statement) &&
+            ts.isAwaitExpression(unwrapExpression(statement.expression))
+        ) {
+            const awaited = unwrapExpression(statement.expression).expression;
+            const expression = unwrapExpression(awaited);
+            if (ts.isCallExpression(expression)) {
+                const callee = unwrapExpression(expression.expression);
+                const promiseMember =
+                    ts.isPropertyAccessExpression(callee) &&
+                    isGlobalBuiltin(callee.expression, "Promise")
+                        ? callee.name.text
+                        : null;
+                if (promiseMember === "reject") {
+                    return true;
+                }
+                if (
+                    expression.arguments[0] &&
+                    promiseMember === "any" &&
+                    expressionIsStaticallyEmptyCollection(
+                        expression.arguments[0],
+                        expression.arguments[0].pos,
+                    )
+                ) {
+                    return true;
+                }
+            }
+        }
         if (
             ts.isReturnStatement(statement) ||
             ts.isThrowStatement(statement) ||
@@ -5512,6 +5548,43 @@ function analyzeProgram({
                         null,
                         !effectsOnly,
                     );
+                    if (ts.isIdentifier(unwrapExpression(node.expression))) {
+                        const callee = unwrapExpression(node.expression);
+                        const symbol = unalias(checker, checker.getSymbolAtLocation(callee));
+                        const conditionalInitializers = (symbol?.declarations ?? [])
+                            .filter(ts.isVariableDeclaration)
+                            .map((candidate) => candidate.initializer)
+                            .filter(
+                                (initializer) =>
+                                    initializer &&
+                                    (ts.isConditionalExpression(unwrapExpression(initializer)) ||
+                                        (ts.isBinaryExpression(unwrapExpression(initializer)) &&
+                                            [
+                                                ts.SyntaxKind.BarBarToken,
+                                                ts.SyntaxKind.AmpersandAmpersandToken,
+                                                ts.SyntaxKind.QuestionQuestionToken,
+                                            ].includes(
+                                                unwrapExpression(initializer).operatorToken.kind,
+                                            ))),
+                            );
+                        for (const initializer of conditionalInitializers) {
+                            for (const localDeclaration of callableDeclarationsForValue(
+                                initializer,
+                                node.pos,
+                            ).filter((candidate) => candidate.body)) {
+                                addInvocation(
+                                    localDeclaration,
+                                    node,
+                                    node.arguments,
+                                    new Map(),
+                                    0,
+                                    null,
+                                    null,
+                                    !effectsOnly,
+                                );
+                            }
+                        }
+                    }
                 }
 
                 if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
@@ -6514,7 +6587,7 @@ function analyzeProgram({
                         invocation.node.pos,
                     );
                     substitutions.set(symbol, {
-                        [REST_ARGUMENTS_SUBSTITUTION]: lists[0] ?? [],
+                        ...restArgumentsSubstitution(lists[0] ?? []),
                     });
                 }
                 return;
@@ -6554,7 +6627,7 @@ function analyzeProgram({
                                 (values) =>
                                     new Map([
                                         ...substitutions,
-                                        [symbol, { [REST_ARGUMENTS_SUBSTITUTION]: values }],
+                                        [symbol, restArgumentsSubstitution(values)],
                                     ]),
                             ),
                         ),
@@ -6628,9 +6701,56 @@ function analyzeProgram({
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const substitution = substitutions.get(symbol);
-            return substitution?.[REST_ARGUMENTS_SUBSTITUTION]
-                ? expression
-                : (substitution ?? expression);
+            if (substitution?.[REST_ARGUMENTS_SUBSTITUTION]) return expression;
+            if (substitution) return substitution;
+            for (const declaration of symbol?.declarations ?? []) {
+                if (!ts.isBindingElement(declaration)) continue;
+                const steps = [];
+                let current = declaration;
+                let source = null;
+                while (ts.isBindingElement(current)) {
+                    const pattern = current.parent;
+                    if (ts.isArrayBindingPattern(pattern)) {
+                        if (current.dotDotDotToken) break;
+                        steps.unshift({ kind: "array", index: pattern.elements.indexOf(current) });
+                    } else if (ts.isObjectBindingPattern(pattern)) {
+                        const name = current.propertyName ?? current.name;
+                        const names = ts.isComputedPropertyName(name)
+                            ? literalPropertyNames(checker.getTypeAtLocation(name.expression))
+                            : [name.getText(current.getSourceFile()).replace(/^['"]|['"]$/g, "")];
+                        if (current.dotDotDotToken || names?.length !== 1) break;
+                        steps.unshift({ kind: "property", names });
+                    } else {
+                        break;
+                    }
+                    if (ts.isVariableDeclaration(pattern.parent)) {
+                        source = pattern.parent.initializer;
+                        break;
+                    }
+                    current = pattern.parent;
+                }
+                if (!source) continue;
+                let value = source;
+                if (ts.isIdentifier(value)) {
+                    const sourceSymbol = unalias(checker, checker.getSymbolAtLocation(value));
+                    value = substitutions.get(sourceSymbol) ?? value;
+                }
+                let complete = true;
+                for (const step of steps) {
+                    if (isRestArgumentsSubstitution(value) && step.kind === "array") {
+                        value = value[REST_ARGUMENTS_SUBSTITUTION][step.index];
+                    } else {
+                        const projected = projectedExpressions(value, [step]);
+                        value = projected.length === 1 ? projected[0] : null;
+                    }
+                    if (!value) {
+                        complete = false;
+                        break;
+                    }
+                }
+                if (complete) return value;
+            }
+            return expression;
         }
         if (expression.kind === ts.SyntaxKind.ThisKeyword) {
             return substitutions.get(THIS_SUBSTITUTION) ?? expression;
@@ -6647,7 +6767,8 @@ function analyzeProgram({
                     return rest[Number(names[0])] ?? expression;
                 }
             }
-            return substituteReceiver(expression.expression, substitutions);
+            const base = substituteReceiver(expression.expression, substitutions);
+            return base;
         }
         return expression;
     }
@@ -6674,13 +6795,101 @@ function analyzeProgram({
             );
             return [];
         }
-        if (ts.isGetAccessorDeclaration(owner) && !accessorReadsIndexed) {
+        function isRuntimeDescriptorGetter(declaration) {
+            let descriptor = null;
+            if (
+                ts.isMethodDeclaration(declaration) &&
+                declaration.name?.getText(declaration.getSourceFile()) === "get" &&
+                ts.isObjectLiteralExpression(declaration.parent)
+            ) {
+                descriptor = declaration.parent;
+            } else if (
+                (ts.isArrowFunction(declaration) || ts.isFunctionExpression(declaration)) &&
+                ts.isPropertyAssignment(declaration.parent) &&
+                declaration.parent.name.getText(declaration.getSourceFile()) === "get" &&
+                ts.isObjectLiteralExpression(declaration.parent.parent)
+            ) {
+                descriptor = declaration.parent.parent;
+            }
+            if (!descriptor || !ts.isCallExpression(descriptor.parent)) return false;
+            const call = descriptor.parent;
+            return (
+                call.arguments[2] === descriptor &&
+                (expressionResolvesToBuiltinMember(
+                    call.expression,
+                    "Object",
+                    "defineProperty",
+                    call.pos,
+                ) ||
+                    expressionResolvesToBuiltinMember(
+                        call.expression,
+                        "Reflect",
+                        "defineProperty",
+                        call.pos,
+                    ))
+            );
+        }
+        const indexRuntimeGetters = isRuntimeDescriptorGetter(owner);
+        if (!accessorReadsIndexed && (ts.isGetAccessorDeclaration(owner) || indexRuntimeGetters)) {
             accessorReadsIndexed = true;
-            function localGetterDeclarations(receiver, names = null, ownEnumerableOnly = false) {
-                const reaching = reachingExpressionValues(receiver, receiver.pos);
-                const concrete = reaching
+            const bindingDefaultMayRun = new Map();
+            const runtimeGetterDefinitions = [];
+            const concreteReachingExpressionCache = new Map();
+            function receiverHasPriorMemberWrite(receiver) {
+                receiver = unwrapExpression(receiver);
+                if (
+                    !ts.isPropertyAccessExpression(receiver) &&
+                    !ts.isElementAccessExpression(receiver)
+                ) {
+                    return false;
+                }
+                const names = ts.isPropertyAccessExpression(receiver)
+                    ? [receiver.name.text]
+                    : computedPropertyNames(receiver);
+                if (names?.length !== 1) return false;
+                const base = unwrapExpression(receiver.expression);
+                return propertyWrites.some((write) => {
+                    if (
+                        write.position >= receiver.pos ||
+                        !write.propertyNames?.includes(names[0])
+                    ) {
+                        return false;
+                    }
+                    const writtenBase = memberWriteReceiver(write);
+                    if (!writtenBase) return false;
+                    const left = unwrapExpression(writtenBase);
+                    if (ts.isIdentifier(left) && ts.isIdentifier(base)) {
+                        return (
+                            unalias(checker, checker.getSymbolAtLocation(left)) ===
+                            unalias(checker, checker.getSymbolAtLocation(base))
+                        );
+                    }
+                    return left.getText() === base.getText();
+                });
+            }
+            function concreteReachingExpressions(receiver) {
+                if (concreteReachingExpressionCache.has(receiver)) {
+                    return concreteReachingExpressionCache.get(receiver);
+                }
+                const values = receiverHasPriorMemberWrite(receiver)
+                    ? reachingExpressionValues(
+                          receiver,
+                          receiver.pos,
+                          new Set(),
+                          new Map(),
+                          true,
+                          0,
+                          true,
+                      )
+                    : reachingExpressionValues(receiver, receiver.pos);
+                const concrete = values
                     .map((value) => value.expression)
                     .filter((value) => value !== receiver);
+                concreteReachingExpressionCache.set(receiver, concrete);
+                return concrete;
+            }
+            function localGetterDeclarations(receiver, names = null, ownEnumerableOnly = false) {
+                const concrete = concreteReachingExpressions(receiver);
                 const receiverValues = concrete.length > 0 ? concrete : [receiver];
                 const properties = receiverValues.flatMap((value) => {
                     const receiverType = checker.getApparentType(checker.getTypeAtLocation(value));
@@ -6737,6 +6946,98 @@ function analyzeProgram({
                     }
                 }
             }
+            function descriptorGetterDeclarations(descriptor) {
+                descriptor = unwrapExpression(descriptor);
+                if (!ts.isObjectLiteralExpression(descriptor)) return [];
+                return descriptor.properties.flatMap((property) => {
+                    const name = property.name
+                        ?.getText(property.getSourceFile())
+                        .replace(/^['"]|['"]$/g, "");
+                    if (name !== "get") return [];
+                    if (ts.isMethodDeclaration(property) && property.body) return [property];
+                    if (
+                        ts.isPropertyAssignment(property) &&
+                        ts.isFunctionLike(property.initializer) &&
+                        property.initializer.body
+                    ) {
+                        return [property.initializer];
+                    }
+                    return [];
+                });
+            }
+            function recordRuntimeGetterDefinition(expression, args, activation) {
+                if (
+                    args.length < 3 ||
+                    !(
+                        expressionResolvesToBuiltinMember(
+                            expression,
+                            "Object",
+                            "defineProperty",
+                            activation.pos,
+                        ) ||
+                        expressionResolvesToBuiltinMember(
+                            expression,
+                            "Reflect",
+                            "defineProperty",
+                            activation.pos,
+                        )
+                    )
+                ) {
+                    return;
+                }
+                const names = literalPropertyNames(checker.getTypeAtLocation(args[1]));
+                const getters = descriptorGetterDeclarations(args[2]);
+                if (!names?.length || getters.length === 0) return;
+                runtimeGetterDefinitions.push({
+                    receiver: args[0],
+                    names,
+                    getters,
+                    position: activation.pos,
+                    sourceFile: activation.getSourceFile(),
+                });
+            }
+            function runtimeGetterDeclarations(receiver, names, activation) {
+                const sameRuntimeReceiver = (left, right) => {
+                    left = unwrapExpression(left);
+                    right = unwrapExpression(right);
+                    if (ts.isIdentifier(left) && ts.isIdentifier(right)) {
+                        return (
+                            unalias(checker, checker.getSymbolAtLocation(left)) ===
+                            unalias(checker, checker.getSymbolAtLocation(right))
+                        );
+                    }
+                    return sameReceiverAlternatives(left, right, activation.pos);
+                };
+                const matched = runtimeGetterDefinitions
+                    .filter(
+                        (definition) =>
+                            definition.position < activation.pos &&
+                            definition.sourceFile === activation.getSourceFile() &&
+                            definition.names.some((name) => names?.includes(name)) &&
+                            sameRuntimeReceiver(definition.receiver, receiver),
+                    )
+                    .flatMap((definition) => definition.getters);
+                return bounded(matched, "runtime getter definition alternatives");
+            }
+            function receiversThroughBindingDefault(receivers, initializer, label) {
+                if (!initializer) return bounded(receivers, label);
+                const possibilities = receivers.map((receiver) => ({
+                    receiver,
+                    possibilities: undefinedPossibilities(receiver),
+                }));
+                return bounded(
+                    [
+                        ...possibilities
+                            .filter(({ possibilities: value }) => value.canDefined)
+                            .map(({ receiver }) => receiver),
+                        ...(possibilities.length === 0 ||
+                        possibilities.some(({ possibilities: value }) => value.canUndefined)
+                            ? [initializer]
+                            : []),
+                    ],
+                    label,
+                );
+            }
             function recordBindingPatternActivations(pattern, receivers, activation) {
                 const excluded = new Set();
                 for (const element of pattern.elements) {
@@ -6752,24 +7053,56 @@ function analyzeProgram({
                                 activation,
                                 receiver,
                             );
+                            if (ts.isArrayBindingPattern(pattern)) {
+                                recordAccessorActivation(
+                                    runtimeGetterDeclarations(receiver, names, activation),
+                                    activation,
+                                    receiver,
+                                );
+                            }
                         } else if (element.dotDotDotToken) {
-                            recordAccessorActivation(
-                                localGetterDeclarations(receiver, null, true).filter((getter) => {
-                                    const name = getter.name;
-                                    return (
-                                        !name || !ts.isIdentifier(name) || !excluded.has(name.text)
-                                    );
-                                }),
-                                activation,
-                                receiver,
-                            );
+                            if (ts.isArrayBindingPattern(pattern)) {
+                                const numericNames = runtimeGetterDefinitions
+                                    .flatMap((definition) => definition.names)
+                                    .filter((name) => /^\d+$/.test(name));
+                                recordAccessorActivation(
+                                    [
+                                        ...localGetterDeclarations(receiver).filter((getter) => {
+                                            const name = getter.name;
+                                            return Boolean(
+                                                name &&
+                                                (ts.isIdentifier(name) ||
+                                                    ts.isStringLiteralLike(name) ||
+                                                    ts.isNumericLiteral(name)) &&
+                                                /^\d+$/.test(name.text),
+                                            );
+                                        }),
+                                        ...runtimeGetterDeclarations(
+                                            receiver,
+                                            numericNames,
+                                            activation,
+                                        ),
+                                    ],
+                                    activation,
+                                    receiver,
+                                );
+                            } else {
+                                recordAccessorActivation(
+                                    localGetterDeclarations(receiver, null, true).filter(
+                                        (getter) => {
+                                            const name = getter.name;
+                                            return (
+                                                !name ||
+                                                !ts.isIdentifier(name) ||
+                                                !excluded.has(name.text)
+                                            );
+                                        },
+                                    ),
+                                    activation,
+                                    receiver,
+                                );
+                            }
                         }
-                    }
-                    if (
-                        !ts.isObjectBindingPattern(element.name) &&
-                        !ts.isArrayBindingPattern(element.name)
-                    ) {
-                        continue;
                     }
                     const step = ts.isObjectBindingPattern(pattern)
                         ? names?.length === 1
@@ -6777,11 +7110,29 @@ function analyzeProgram({
                             : null
                         : { kind: "array", index: pattern.elements.indexOf(element) };
                     if (!step) continue;
-                    const nestedReceivers = bounded(
-                        receivers.flatMap((receiver) => projectedExpressions(receiver, [step])),
+                    const projected = receivers.flatMap((receiver) =>
+                        projectedExpressions(receiver, [step]),
+                    );
+                    if (element.initializer) {
+                        bindingDefaultMayRun.set(
+                            element.initializer,
+                            projected.length === 0 ||
+                                projected.some(
+                                    (receiver) => undefinedPossibilities(receiver).canUndefined,
+                                ),
+                        );
+                    }
+                    if (
+                        !ts.isObjectBindingPattern(element.name) &&
+                        !ts.isArrayBindingPattern(element.name)
+                    ) {
+                        continue;
+                    }
+                    const nestedReceivers = receiversThroughBindingDefault(
+                        projected,
+                        element.initializer,
                         "nested implicit accessor binding receivers",
                     );
-                    if (element.initializer) nestedReceivers.push(element.initializer);
                     recordBindingPatternActivations(element.name, nestedReceivers, activation);
                 }
             }
@@ -6830,10 +7181,14 @@ function analyzeProgram({
                     }
                     let target = ts.isPropertyAssignment(property)
                         ? property.initializer
-                        : ts.isSpreadAssignment(property) || ts.isSpreadElement(property)
-                          ? property.expression
-                          : property;
-                    let defaultValue = null;
+                        : ts.isShorthandPropertyAssignment(property)
+                          ? property.name
+                          : ts.isSpreadAssignment(property) || ts.isSpreadElement(property)
+                            ? property.expression
+                            : property;
+                    let defaultValue = ts.isShorthandPropertyAssignment(property)
+                        ? property.objectAssignmentInitializer
+                        : null;
                     if (
                         ts.isBinaryExpression(target) &&
                         target.operatorToken.kind === ts.SyntaxKind.EqualsToken
@@ -6841,23 +7196,35 @@ function analyzeProgram({
                         defaultValue = target.right;
                         target = target.left;
                     }
-                    if (
-                        !ts.isObjectLiteralExpression(target) &&
-                        !ts.isArrayLiteralExpression(target)
-                    ) {
-                        continue;
-                    }
                     const step = ts.isObjectLiteralExpression(pattern)
                         ? names?.length === 1
                             ? { kind: "property", names }
                             : null
                         : { kind: "array", index };
                     if (!step) continue;
-                    const nestedReceivers = bounded(
-                        receivers.flatMap((receiver) => projectedExpressions(receiver, [step])),
+                    const projected = receivers.flatMap((receiver) =>
+                        projectedExpressions(receiver, [step]),
+                    );
+                    if (defaultValue) {
+                        bindingDefaultMayRun.set(
+                            defaultValue,
+                            projected.length === 0 ||
+                                projected.some(
+                                    (receiver) => undefinedPossibilities(receiver).canUndefined,
+                                ),
+                        );
+                    }
+                    if (
+                        !ts.isObjectLiteralExpression(target) &&
+                        !ts.isArrayLiteralExpression(target)
+                    ) {
+                        continue;
+                    }
+                    const nestedReceivers = receiversThroughBindingDefault(
+                        projected,
+                        defaultValue,
                         "nested implicit accessor assignment receivers",
                     );
-                    if (defaultValue) nestedReceivers.push(defaultValue);
                     recordAssignmentPatternActivations(target, nestedReceivers, activation);
                 }
             }
@@ -6874,7 +7241,10 @@ function analyzeProgram({
                         const names = ts.isPropertyAccessExpression(node)
                             ? [node.name.text]
                             : computedPropertyNames(node);
-                        if (!isWrite && names?.length) {
+                        const disabledBindingDefault = [...bindingDefaultMayRun].some(
+                            ([initializer, mayRun]) => !mayRun && isWithin(node, initializer),
+                        );
+                        if (!isWrite && !disabledBindingDefault && names?.length) {
                             const directSymbol = ts.isPropertyAccessExpression(node)
                                 ? unalias(checker, checker.getSymbolAtLocation(node.name))
                                 : names.length === 1
@@ -6889,11 +7259,13 @@ function analyzeProgram({
                                     )
                                   : null;
                             const getters = [
-                                ...(directSymbol?.declarations ?? []).filter(
-                                    (declaration) =>
-                                        ts.isGetAccessorDeclaration(declaration) &&
-                                        declaration.body,
-                                ),
+                                ...(concreteReachingExpressions(node.expression).length === 0
+                                    ? (directSymbol?.declarations ?? []).filter(
+                                          (declaration) =>
+                                              ts.isGetAccessorDeclaration(declaration) &&
+                                              declaration.body,
+                                      )
+                                    : []),
                                 ...localGetterDeclarations(node.expression, names),
                             ].filter((getter, index, all) => all.indexOf(getter) === index);
                             recordAccessorActivation(getters, node, node.expression);
@@ -6965,6 +7337,13 @@ function analyzeProgram({
                         );
                     }
                     if (ts.isCallExpression(node)) {
+                        if (indexRuntimeGetters) {
+                            recordRuntimeGetterDefinition(
+                                node.expression,
+                                [...node.arguments],
+                                node,
+                            );
+                        }
                         const adapter = invocationAdapter(node.expression, node.pos);
                         const boundAlternatives =
                             ts.isIdentifier(node.expression) || ts.isCallExpression(node.expression)
@@ -6980,6 +7359,13 @@ function analyzeProgram({
                                   )
                                 : [];
                         for (const call of normalized) {
+                            if (indexRuntimeGetters) {
+                                recordRuntimeGetterDefinition(
+                                    call.expression,
+                                    call.arguments,
+                                    node,
+                                );
+                            }
                             if (
                                 expressionResolvesToBuiltinMember(
                                     call.expression,
@@ -7012,6 +7398,27 @@ function analyzeProgram({
                                     node,
                                     call.arguments[0],
                                 );
+                            }
+                            if (
+                                call.arguments[0] &&
+                                call.arguments[1] &&
+                                expressionResolvesToBuiltinMember(
+                                    call.expression,
+                                    "Reflect",
+                                    "get",
+                                    node.pos,
+                                )
+                            ) {
+                                const names = literalPropertyNames(
+                                    checker.getTypeAtLocation(call.arguments[1]),
+                                );
+                                if (names?.length) {
+                                    recordAccessorActivation(
+                                        localGetterDeclarations(call.arguments[0], names),
+                                        node,
+                                        call.arguments[2] ?? call.arguments[0],
+                                    );
+                                }
                             }
                         }
                     }
@@ -7052,34 +7459,6 @@ function analyzeProgram({
                     }
                     if (
                         ts.isCallExpression(node) &&
-                        node.arguments.length >= 3 &&
-                        ts.isPropertyAccessExpression(node.expression) &&
-                        node.expression.name.text === "call" &&
-                        callApplyMemberAlternatives(node.expression, node.pos).some(
-                            (alternative) =>
-                                alternative.kind === "native" &&
-                                alternative.name === "call" &&
-                                expressionResolvesToBuiltinMember(
-                                    alternative.target,
-                                    "Reflect",
-                                    "get",
-                                    node.pos,
-                                ),
-                        )
-                    ) {
-                        const names = literalPropertyNames(
-                            checker.getTypeAtLocation(node.arguments[2]),
-                        );
-                        if (names?.length) {
-                            recordAccessorActivation(
-                                localGetterDeclarations(node.arguments[1], names),
-                                node,
-                                node.arguments[1],
-                            );
-                        }
-                    }
-                    if (
-                        ts.isCallExpression(node) &&
                         node.arguments.length >= 2 &&
                         expressionResolvesToBuiltinMember(
                             node.expression,
@@ -7095,7 +7474,7 @@ function analyzeProgram({
                             recordAccessorActivation(
                                 localGetterDeclarations(node.arguments[0], names),
                                 node,
-                                node.arguments[0],
+                                node.arguments[2] ?? node.arguments[0],
                             );
                         }
                     }
@@ -7142,12 +7521,62 @@ function analyzeProgram({
     function writeNeedsBoundaryProjection(write, use) {
         const writeOwner = enclosingFunction(write.node);
         const useOwner = enclosingFunction(use);
+        function isAsyncIifeOwner(owner) {
+            if (
+                (!ts.isArrowFunction(owner) && !ts.isFunctionExpression(owner)) ||
+                (ts.getCombinedModifierFlags(owner) & ts.ModifierFlags.Async) === 0
+            ) {
+                return false;
+            }
+            let value = owner;
+            while (
+                ts.isParenthesizedExpression(value.parent) ||
+                ts.isAsExpression(value.parent) ||
+                ts.isTypeAssertionExpression(value.parent) ||
+                ts.isSatisfiesExpression(value.parent)
+            ) {
+                value = value.parent;
+            }
+            if (ts.isCallExpression(value.parent) && value.parent.expression === value) return true;
+            if (
+                ts.isVariableDeclaration(value.parent) &&
+                value.parent.initializer === value &&
+                ts.isIdentifier(value.parent.name) &&
+                enclosingFunction(value.parent)
+            ) {
+                const invocations = callsByDeclaration.get(owner) ?? [];
+                return invocations.length === 1;
+            }
+            let container = value.parent;
+            while (
+                ts.isConditionalExpression(container) ||
+                (ts.isBinaryExpression(container) &&
+                    [
+                        ts.SyntaxKind.BarBarToken,
+                        ts.SyntaxKind.AmpersandAmpersandToken,
+                        ts.SyntaxKind.QuestionQuestionToken,
+                    ].includes(container.operatorToken.kind))
+            ) {
+                value = container;
+                container = container.parent;
+            }
+            if (
+                ts.isVariableDeclaration(container) &&
+                container.initializer === value &&
+                ts.isIdentifier(container.name) &&
+                enclosingFunction(container)
+            ) {
+                return (callsByDeclaration.get(owner) ?? []).length === 1;
+            }
+            return false;
+        }
         return Boolean(
             writeOwner &&
             useOwner &&
             writeOwner !== useOwner &&
             (callsByDeclaration.get(writeOwner) ?? []).some(
-                (invocation) => invocation.requiresAwaitedCompletion,
+                (invocation) =>
+                    invocation.requiresAwaitedCompletion || isAsyncIifeOwner(writeOwner),
             ),
         );
     }
@@ -8872,6 +9301,12 @@ function analyzeProgram({
         steps.reverse();
 
         function literalSelection(source, key) {
+            if (isRestArgumentsSubstitution(source) && typeof key === "number") {
+                return {
+                    known: true,
+                    value: source[REST_ARGUMENTS_SUBSTITUTION][key] ?? null,
+                };
+            }
             if (ts.isObjectLiteralExpression(source) && typeof key === "string") {
                 for (const property of source.properties) {
                     const name = property.name
@@ -9000,6 +9435,39 @@ function analyzeProgram({
             }
             if (ts.isIdentifier(source)) {
                 const symbol = unalias(checker, checker.getSymbolAtLocation(source));
+                const substituted = stepContext.substitutions?.get(symbol);
+                if (isRestArgumentsSubstitution(substituted)) {
+                    traceStep(substituted, stepIndex, propertyDepth + 1, propertySeen, stepContext);
+                    return;
+                }
+                const restParameter = (symbol?.declarations ?? []).find(
+                    (candidate) => ts.isParameter(candidate) && candidate.dotDotDotToken,
+                );
+                if (restParameter && ts.isFunctionLike(restParameter.parent)) {
+                    const parameterIndex = restParameter.parent.parameters.indexOf(restParameter);
+                    let tracedRest = false;
+                    for (const invocation of callsByDeclaration.get(restParameter.parent) ?? []) {
+                        for (const values of restArgumentLists(
+                            invocation.arguments,
+                            parameterIndex,
+                            invocation.node.pos,
+                        )) {
+                            traceStep(
+                                restArgumentsSubstitution(values),
+                                stepIndex,
+                                propertyDepth + 1,
+                                propertySeen,
+                                {
+                                    ...stepContext,
+                                    bindingUsePosition: invocation.node.pos,
+                                    bindingUseExpression: invocation.node,
+                                },
+                            );
+                            tracedRest = true;
+                        }
+                    }
+                    if (tracedRest) return;
+                }
                 const writes = reachingWrites(symbol, source).writes;
                 if (writes.length > 0) {
                     for (const write of writes) {
@@ -9050,6 +9518,21 @@ function analyzeProgram({
         const externallyCallable = isExternallyCallable(owner);
         let tracedSource = false;
         for (const invocation of invocations) {
+            if (declaration.dotDotDotToken) {
+                for (const values of restArgumentLists(
+                    invocation.arguments,
+                    parameterIndex,
+                    invocation.node.pos,
+                )) {
+                    traceStep(restArgumentsSubstitution(values), 0, depth + 1, seen, {
+                        ...context,
+                        bindingUsePosition: invocation.node.pos,
+                        bindingUseExpression: invocation.node,
+                    });
+                    tracedSource = true;
+                }
+                continue;
+            }
             const argument = invocation.arguments[parameterIndex];
             if (argument && !isDefinitelyUndefined(argument)) {
                 traceStep(argument, 0, depth + 1, seen, {
