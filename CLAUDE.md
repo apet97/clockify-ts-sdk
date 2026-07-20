@@ -261,7 +261,11 @@ make docs-drift
   bind paths retain normalized write identity, and non-returning custom-binder
   branches keep their path and fail closed only when invoked. Request-
   contributing helper trace-depth exhaustion fails closed; deep uncalled helpers
-  and non-contributing helper arguments remain non-effects. Phase cutoff requires
+  and non-contributing helper arguments remain non-effects. Trace-local
+  assertion/annotated-any/any-helper findings require request contribution;
+  returned-parameter substitution restores it, while source-wide generated-
+  request assertions stay governed. Generic and helper-depth exhaustion share
+  one stable deduplicated failure. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths

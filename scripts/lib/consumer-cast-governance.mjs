@@ -3340,6 +3340,7 @@ function analyzeProgram({
             if (
                 write.declaredType &&
                 context.atBoundaryValue &&
+                context.requestContributing !== false &&
                 (checker.getTypeFromTypeNode(write.declaredType).flags & ts.TypeFlags.Any) !== 0
             ) {
                 addFinding(
@@ -3578,8 +3579,20 @@ function analyzeProgram({
         return callableEscapes(declaration);
     }
 
+    function recordTraceDepthFailure(context) {
+        if (context.requestContributing === false) return;
+        analysisFailures.add(
+            `consumer cast analysis exceeded governed request trace depth ${MAX_TRACE_DEPTH}`,
+        );
+    }
+
     function trace(expression, context, depth = 0, seen = new Set()) {
-        if (!expression || depth > MAX_TRACE_DEPTH) return;
+        if (!expression) return;
+        const requestContributing = context.requestContributing !== false;
+        if (depth > MAX_TRACE_DEPTH) {
+            recordTraceDepthFailure(context);
+            return;
+        }
         const traceKey = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
         if (seen.has(traceKey)) return;
         const nextSeen = new Set(seen);
@@ -3604,7 +3617,7 @@ function analyzeProgram({
             const generated =
                 requestNameFromTypeNode(checker, expression.type) ??
                 requestNameFromType(checker, asserted);
-            if ((asserted.flags & ts.TypeFlags.Any) !== 0) {
+            if (requestContributing && (asserted.flags & ts.TypeFlags.Any) !== 0) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3612,7 +3625,7 @@ function analyzeProgram({
                     assertedText,
                     context.expectedRequestType,
                 );
-            } else if ((asserted.flags & ts.TypeFlags.Never) !== 0) {
+            } else if (requestContributing && (asserted.flags & ts.TypeFlags.Never) !== 0) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3620,7 +3633,7 @@ function analyzeProgram({
                     "never",
                     context.expectedRequestType,
                 );
-            } else if (generated) {
+            } else if (requestContributing && generated) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3628,7 +3641,11 @@ function analyzeProgram({
                     assertedText,
                     context.expectedRequestType,
                 );
-            } else if (context.atBoundaryValue && typeContainsTypeParameter(checker, asserted)) {
+            } else if (
+                requestContributing &&
+                context.atBoundaryValue &&
+                typeContainsTypeParameter(checker, asserted)
+            ) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3636,7 +3653,7 @@ function analyzeProgram({
                     assertedText,
                     context.expectedRequestType,
                 );
-            } else if (context.atBoundaryValue) {
+            } else if (requestContributing && context.atBoundaryValue) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3652,7 +3669,7 @@ function analyzeProgram({
             const original = checker.getSymbolAtLocation(expression);
             const symbol = unalias(checker, original);
             for (const declaration of symbol?.declarations ?? []) {
-                if (ts.isParameter(declaration) && context.atBoundaryValue) {
+                if (ts.isParameter(declaration) && context.atBoundaryValue && requestContributing) {
                     const parameterType = checker.getTypeAtLocation(declaration);
                     if ((parameterType.flags & ts.TypeFlags.Any) !== 0) {
                         addFinding(
@@ -3722,6 +3739,7 @@ function analyzeProgram({
                     ts.isPropertyDeclaration(declaration) &&
                     declaration.type &&
                     context.atBoundaryValue &&
+                    requestContributing &&
                     (checker.getTypeFromTypeNode(declaration.type).flags & ts.TypeFlags.Any) !== 0
                 ) {
                     addFinding(
@@ -3780,7 +3798,7 @@ function analyzeProgram({
             const resultType = checker.getTypeAtLocation(expression);
             const signature = checker.getResolvedSignature(expression);
             const declaration = signature?.declaration;
-            if ((resultType.flags & ts.TypeFlags.Any) !== 0) {
+            if (requestContributing && (resultType.flags & ts.TypeFlags.Any) !== 0) {
                 addFinding(
                     expression,
                     context.packageName,
@@ -3791,6 +3809,7 @@ function analyzeProgram({
             }
             if (
                 context.atBoundaryValue &&
+                requestContributing &&
                 requestNameFromType(checker, resultType) === context.expectedRequestType &&
                 declaration &&
                 (declaration.typeParameters?.length ?? 0) > 0 &&
@@ -3821,10 +3840,8 @@ function analyzeProgram({
                     substitutions.set(unalias(checker, symbol), expression.arguments[index]);
                 });
                 const helperDepth = (context.helperDepth ?? 0) + 1;
-                if (context.requestContributing !== false && helperDepth > MAX_TRACE_DEPTH) {
-                    analysisFailures.add(
-                        `consumer cast analysis exceeded governed request trace depth ${MAX_TRACE_DEPTH}`,
-                    );
+                if (requestContributing && helperDepth > MAX_TRACE_DEPTH) {
+                    recordTraceDepthFailure(context);
                 } else {
                     const nestedContext = { ...context, substitutions, helperDepth };
                     for (const returned of functionReturnExpressions(declaration)) {
