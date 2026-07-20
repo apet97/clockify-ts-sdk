@@ -452,6 +452,10 @@ end-to-end and green before push. Drift gates are non-negotiable.
     generated-request assertions remain governed independently. Generic AST and
     helper-depth exhaustion share one stable fail-closed diagnostic, so nested
     returned-parameter chains cannot stop silently or duplicate failures. A later
+    request alias returned from a synchronous helper also carries receiver-
+    qualified direct, computed, normalized builtin, and nested-helper writes;
+    definite same-property overwrites still dominate in source/invocation order.
+    A later
     phase dominates only when every
     registered mutually exclusive path performs an equivalent receiver/name-
     qualified definite write. Lifted direct property assignments retain original

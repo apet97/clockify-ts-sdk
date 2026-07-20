@@ -3227,6 +3227,60 @@ function analyzeProgram({
             : writes.filter((write) => compareExecutionOrder(write, cutoff) >= 0);
     }
 
+    function applySameInvocationEffectCutoff(writes, usePropertyNames) {
+        if (usePropertyNames?.length !== 1) return writes;
+        const useName = usePropertyNames[0];
+        const invocationNodes = new Set(writes.map((write) => write.executionNode).filter(Boolean));
+        let remaining = writes;
+        for (const invocationNode of invocationNodes) {
+            const definiteWrites = writes.filter(
+                (write) =>
+                    write.executionNode === invocationNode &&
+                    write.definiteEffectNames?.includes(useName),
+            );
+            let cutoff = definiteWrites
+                .filter((write) => write.alternativeGroup == null)
+                .sort(compareExecutionOrder)
+                .at(-1);
+            const groups = new Set(
+                definiteWrites.map((write) => write.alternativeGroup).filter(Boolean),
+            );
+            for (const group of groups) {
+                const paths = alternativePathsByGroup.get(group);
+                if (!paths || paths.size === 0) continue;
+                const latestByPath = [];
+                for (const path of paths) {
+                    const latest = definiteWrites
+                        .filter(
+                            (write) =>
+                                write.alternativeGroup === group &&
+                                alternativePathCovers(write.alternativePath, path),
+                        )
+                        .sort(compareExecutionOrder)
+                        .at(-1);
+                    if (!latest) {
+                        latestByPath.length = 0;
+                        break;
+                    }
+                    latestByPath.push(latest);
+                }
+                if (latestByPath.length !== paths.size) continue;
+                const completePathCutoff = latestByPath.sort(compareExecutionOrder)[0];
+                if (cutoff == null || compareExecutionOrder(completePathCutoff, cutoff) > 0) {
+                    cutoff = completePathCutoff;
+                }
+            }
+            if (cutoff) {
+                remaining = remaining.filter(
+                    (write) =>
+                        write.executionNode !== invocationNode ||
+                        compareExecutionOrder(write, cutoff) >= 0,
+                );
+            }
+        }
+        return remaining;
+    }
+
     function reachingWrites(symbol, expression) {
         const usePropertyNames = ts.isPropertyAccessExpression(expression)
             ? [expression.name.text]
@@ -3586,6 +3640,111 @@ function analyzeProgram({
         );
     }
 
+    function traceReturnedAliasWrites(expression, context, depth, seen) {
+        if (context.requestContributing === false || (context.accessPath?.length ?? 0) > 0) return;
+        const returnedOrigins = receiverOrigins(
+            expression,
+            expression.pos,
+            new Set(),
+            context.substitutions,
+        );
+        if (returnedOrigins.size === 0) return;
+
+        const matchingWrites = [...propertyWrites, ...wildcardPropertyWrites]
+            .filter(
+                (write) =>
+                    !context.returnedAliasScanLocalOnly ||
+                    enclosingFunction(write.node) === enclosingFunction(expression),
+            )
+            .flatMap((write) => effectiveWrites(write, expression))
+            .filter((write) => {
+                if (
+                    write.sourceFile !== expression.getSourceFile() ||
+                    write.position >= expression.pos
+                ) {
+                    return false;
+                }
+                const receiver = memberWriteReceiver(write);
+                if (!receiver) return false;
+                const substitutions = new Map(context.substitutions);
+                for (const [parameter, argument] of write.substitutions ?? []) {
+                    substitutions.set(parameter, argument);
+                }
+                const writeOrigins = receiverOrigins(
+                    receiver,
+                    write.position,
+                    new Set(),
+                    substitutions,
+                );
+                return [...writeOrigins].some((origin) => returnedOrigins.has(origin));
+            })
+            .map((write) => {
+                const owner = enclosingFunction(write.node);
+                if (
+                    !write.directPropertyWrite ||
+                    write.propertyNames?.length !== 1 ||
+                    !owner ||
+                    !expressionDefinitelyExecutesOnInvocation(write.node, owner)
+                ) {
+                    return write;
+                }
+                return {
+                    ...write,
+                    definiteEffectNames: [
+                        ...(write.definiteEffectNames ?? []),
+                        ...write.propertyNames,
+                    ],
+                };
+            })
+            .sort(compareExecutionOrder);
+        if (matchingWrites.length === 0) return;
+
+        const propertyNames = [
+            ...new Set(matchingWrites.flatMap((write) => write.propertyNames ?? [])),
+        ];
+        const selected = new Set(
+            propertyNames.flatMap((propertyName) =>
+                applyCrossStatementEffectCutoff(
+                    applySameInvocationEffectCutoff(
+                        applyOrderedEffectCutoffs(
+                            matchingWrites.filter(
+                                (write) =>
+                                    write.propertyNames == null ||
+                                    write.propertyNames.includes(propertyName),
+                            ),
+                            [propertyName],
+                        ),
+                        [propertyName],
+                    ),
+                    expression,
+                    [propertyName],
+                ),
+            ),
+        );
+        if (propertyNames.length === 0) {
+            for (const write of matchingWrites) selected.add(write);
+        }
+
+        for (const write of selected) {
+            const substitutions = new Map(context.substitutions);
+            for (const [parameter, argument] of write.substitutions ?? []) {
+                substitutions.set(parameter, argument);
+            }
+            trace(
+                write.value,
+                {
+                    ...context,
+                    substitutions,
+                    atBoundaryValue: false,
+                    requestContributing: true,
+                    accessPath: [],
+                },
+                depth + 1,
+                seen,
+            );
+        }
+    }
+
     function trace(expression, context, depth = 0, seen = new Set()) {
         if (!expression) return;
         const requestContributing = context.requestContributing !== false;
@@ -3668,6 +3827,7 @@ function analyzeProgram({
         if (ts.isIdentifier(expression)) {
             const original = checker.getSymbolAtLocation(expression);
             const symbol = unalias(checker, original);
+            traceReturnedAliasWrites(expression, context, depth, nextSeen);
             for (const declaration of symbol?.declarations ?? []) {
                 if (ts.isParameter(declaration) && context.atBoundaryValue && requestContributing) {
                     const parameterType = checker.getTypeAtLocation(declaration);
@@ -3707,7 +3867,12 @@ function analyzeProgram({
             const substitution =
                 context.substitutions.get(original) ?? context.substitutions.get(symbol);
             if (substitution) {
-                trace(substitution, context, depth + 1, nextSeen);
+                trace(
+                    substitution,
+                    { ...context, returnedAliasScanLocalOnly: true },
+                    depth + 1,
+                    nextSeen,
+                );
                 return;
             }
             const reaching = traceWrites(symbol, expression, context, depth, nextSeen);
