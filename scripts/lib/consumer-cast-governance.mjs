@@ -1761,6 +1761,120 @@ function analyzeProgram({
                 : continuationCanReachUse(awaited);
         }
         function awaitMayResume(awaited) {
+            function completionKinds(statement, depth = 0) {
+                chargeAnalysisWork(1);
+                if (depth > MAX_TRACE_DEPTH) {
+                    analysisFailures.add(
+                        `consumer cast analysis could not statically resolve rejected await unwinding (depth limit ${MAX_TRACE_DEPTH})`,
+                    );
+                    return new Set();
+                }
+                if (ts.isReturnStatement(statement)) return new Set(["return"]);
+                if (ts.isThrowStatement(statement)) return new Set(["throw"]);
+                if (ts.isBreakStatement(statement) || ts.isContinueStatement(statement)) {
+                    return new Set(["jump"]);
+                }
+                if (ts.isBlock(statement)) {
+                    let states = new Set(["normal"]);
+                    for (const child of statement.statements) {
+                        const next = new Set([...states].filter((state) => state !== "normal"));
+                        if (states.has("normal")) {
+                            for (const state of completionKinds(child, depth + 1)) next.add(state);
+                        }
+                        states = next;
+                    }
+                    return states;
+                }
+                if (ts.isIfStatement(statement)) {
+                    const state = definiteExpressionState(statement.expression);
+                    if (state.truthy === true) {
+                        return completionKinds(statement.thenStatement, depth + 1);
+                    }
+                    if (state.truthy === false) {
+                        return statement.elseStatement
+                            ? completionKinds(statement.elseStatement, depth + 1)
+                            : new Set(["normal"]);
+                    }
+                    return new Set([
+                        ...completionKinds(statement.thenStatement, depth + 1),
+                        ...(statement.elseStatement
+                            ? completionKinds(statement.elseStatement, depth + 1)
+                            : ["normal"]),
+                    ]);
+                }
+                if (ts.isTryStatement(statement)) {
+                    let states = completionKinds(statement.tryBlock, depth + 1);
+                    if (states.has("throw") && statement.catchClause) {
+                        states = new Set([
+                            ...[...states].filter((state) => state !== "throw"),
+                            ...completionKinds(statement.catchClause.block, depth + 1),
+                        ]);
+                    }
+                    if (statement.finallyBlock) {
+                        const finallyStates = completionKinds(statement.finallyBlock, depth + 1);
+                        states = new Set([
+                            ...(finallyStates.has("normal") ? states : []),
+                            ...[...finallyStates].filter((state) => state !== "normal"),
+                        ]);
+                    }
+                    return states;
+                }
+                return new Set(["normal"]);
+            }
+            function rejectedAwaitCanReachUse() {
+                let states = new Set(["throw"]);
+                let current = awaited;
+                let unwindDepth = 0;
+                for (let parent = current.parent; parent; parent = parent.parent) {
+                    chargeAnalysisWork(1);
+                    unwindDepth += 1;
+                    if (unwindDepth > MAX_TRACE_DEPTH) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve rejected await unwinding (depth limit ${MAX_TRACE_DEPTH})`,
+                        );
+                        return false;
+                    }
+                    if (ts.isFunctionLike(parent)) return false;
+                    if (!ts.isTryStatement(parent)) {
+                        current = parent;
+                        continue;
+                    }
+                    const originatedInTry = isWithin(current, parent.tryBlock);
+                    if (
+                        originatedInTry &&
+                        states.has("throw") &&
+                        parent.catchClause &&
+                        isWithin(use, parent.catchClause) &&
+                        !expressionDefinitelySkipped(use)
+                    ) {
+                        return true;
+                    }
+                    if (
+                        parent.finallyBlock &&
+                        !isWithin(current, parent.finallyBlock) &&
+                        isWithin(use, parent.finallyBlock) &&
+                        !expressionDefinitelySkipped(use)
+                    ) {
+                        return true;
+                    }
+                    if (originatedInTry && states.has("throw") && parent.catchClause) {
+                        states = new Set([
+                            ...[...states].filter((state) => state !== "throw"),
+                            ...completionKinds(parent.catchClause.block),
+                        ]);
+                    }
+                    if (parent.finallyBlock && !isWithin(current, parent.finallyBlock)) {
+                        const finallyStates = completionKinds(parent.finallyBlock);
+                        states = new Set([
+                            ...(finallyStates.has("normal") ? states : []),
+                            ...[...finallyStates].filter((state) => state !== "normal"),
+                        ]);
+                    }
+                    if (states.has("normal") && use.pos > parent.end) return true;
+                    current = parent;
+                }
+                return false;
+            }
             const expression = unwrapExpression(awaited.expression);
             if (!ts.isCallExpression(expression) || expression.arguments.length === 0) return true;
             const isEmpty = expressionIsStaticallyEmptyCollection(
@@ -1793,16 +1907,7 @@ function analyzeProgram({
                         expression.pos,
                     ));
             if (!definitelyRejects) return true;
-            return Boolean(
-                ts.findAncestor(awaited, (candidate) =>
-                    ts.isTryStatement(candidate) &&
-                    candidate.catchClause &&
-                    isWithin(awaited, candidate.tryBlock) &&
-                    (isWithin(use, candidate.catchClause) || use.pos > candidate.end)
-                        ? candidate
-                        : null,
-                ),
-            );
+            return rejectedAwaitCanReachUse();
         }
         const localAwait = awaitExpressions.some(
             (awaited) =>
