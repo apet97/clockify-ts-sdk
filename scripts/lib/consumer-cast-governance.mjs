@@ -4570,27 +4570,27 @@ function analyzeProgram({
         );
     }
 
-    function getterDeclarationsForMemberRead(expression, names) {
+    function getterDeclarationsForReceiver(receiverExpression, names, memberSymbol = null) {
         if (!names?.length) return [];
-        const memberSymbol = ts.isPropertyAccessExpression(expression)
-            ? unalias(checker, checker.getSymbolAtLocation(expression.name))
-            : unalias(
-                  checker,
-                  checker.getPropertyOfType(
-                      checker.getApparentType(checker.getTypeAtLocation(expression.expression)),
-                      names[0],
-                  ),
-              );
-        const direct = (memberSymbol?.declarations ?? []).filter(
+        const resolvedMember =
+            memberSymbol ??
+            unalias(
+                checker,
+                checker.getPropertyOfType(
+                    checker.getApparentType(checker.getTypeAtLocation(receiverExpression)),
+                    names[0],
+                ),
+            );
+        const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
         if (direct.length > 0) return direct;
 
-        const receiver = unwrapExpression(expression.expression);
+        const receiver = unwrapExpression(receiverExpression);
         if (!ts.isIdentifier(receiver)) return [];
         const symbol = unalias(checker, checker.getSymbolAtLocation(receiver));
         const values = (writesBySymbol.get(symbol) ?? [])
-            .filter((write) => write.position < expression.pos)
+            .filter((write) => write.position < receiverExpression.pos)
             .map((write) => write.value);
         for (const declaration of symbol?.declarations ?? []) {
             if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
@@ -4608,6 +4608,139 @@ function analyzeProgram({
                 return propertyNames?.some((name) => names.includes(name));
             });
         });
+    }
+
+    function getterDeclarationsForMemberRead(expression, names) {
+        const memberSymbol = ts.isPropertyAccessExpression(expression)
+            ? unalias(checker, checker.getSymbolAtLocation(expression.name))
+            : null;
+        return getterDeclarationsForReceiver(expression.expression, names, memberSymbol);
+    }
+
+    function getterProjectionOrigins(
+        source,
+        projection,
+        readContext,
+        beforePosition,
+        seen,
+        substitutions,
+        followProjections,
+        preserveAllocations,
+        invocationContext,
+    ) {
+        if (!preserveAllocations || projection.length === 0) return null;
+        const [step, ...rest] = projection;
+        if (step.kind !== "property" || step.names?.length !== 1) return null;
+        const getters = getterDeclarationsForReceiver(source, step.names);
+        if (getters.length === 0) {
+            if (rest.length === 0) return null;
+            const receivers = projectedExpressions(source, [step]);
+            if (receivers.length === 1 && receivers[0] === source) return null;
+            const origins = [];
+            let handled = false;
+            for (const receiver of receivers) {
+                const nested = getterProjectionOrigins(
+                    receiver,
+                    rest,
+                    readContext,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    followProjections,
+                    preserveAllocations,
+                    invocationContext,
+                );
+                if (!nested) continue;
+                handled = true;
+                origins.push(...nested);
+            }
+            return handled
+                ? new Set(bounded(origins, "nested receiver getter projection alternatives"))
+                : null;
+        }
+        const readKey = `${readContext.getSourceFile().fileName}:${readContext.pos}:${readContext.end}:receiver-getter-projection`;
+        if (seen.has(readKey)) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve recursive receiver getter projection`,
+            );
+            return new Set();
+        }
+        if (invocationContext.length >= MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve receiver getter projection (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return new Set();
+        }
+        const nextSeen = new Set(seen);
+        nextSeen.add(readKey);
+        const origins = getters.flatMap((getter) =>
+            functionReturnExpressions(getter).flatMap((returned) => {
+                const nextContext = [...invocationContext, { call: readContext, declaration: getter }];
+                if (rest.length > 0) {
+                    const nested = getterProjectionOrigins(
+                        returned,
+                        rest,
+                        readContext,
+                        beforePosition,
+                        nextSeen,
+                        substitutions,
+                        followProjections,
+                        preserveAllocations,
+                        nextContext,
+                    );
+                    if (nested) return [...nested];
+                    return projectedExpressions(returned, rest).flatMap((value) => [
+                        ...receiverOrigins(
+                            value,
+                            beforePosition,
+                            nextSeen,
+                            substitutions,
+                            followProjections,
+                            preserveAllocations,
+                            nextContext,
+                        ),
+                    ]);
+                }
+                return [
+                    ...receiverOrigins(
+                        returned,
+                        beforePosition,
+                        nextSeen,
+                        substitutions,
+                        followProjections,
+                        preserveAllocations,
+                        nextContext,
+                    ),
+                ];
+            }),
+        );
+        return new Set(bounded(origins, "receiver getter projection alternatives"));
+    }
+
+    function parameterBindingProjection(binding) {
+        const projection = [];
+        let current = binding;
+        while (ts.isBindingElement(current)) {
+            const pattern = current.parent;
+            if (ts.isObjectBindingPattern(pattern)) {
+                const property = current.propertyName ?? current.name;
+                const names = ts.isComputedPropertyName(property)
+                    ? literalPropertyNames(checker.getTypeAtLocation(property.expression))
+                    : [property.getText(current.getSourceFile()).replace(/^['"]|['"]$/g, "")];
+                if (current.dotDotDotToken || names?.length !== 1) return null;
+                projection.push({ kind: "property", names });
+            } else if (ts.isArrayBindingPattern(pattern)) {
+                if (current.dotDotDotToken) return null;
+                projection.push({ kind: "array", index: pattern.elements.indexOf(current) });
+            } else {
+                return null;
+            }
+            if (ts.isParameter(pattern.parent)) {
+                return { parameter: pattern.parent, projection: projection.reverse() };
+            }
+            current = pattern.parent;
+        }
+        return null;
     }
 
     function receiverOrigins(
@@ -4976,6 +5109,21 @@ function analyzeProgram({
         for (const write of writesBySymbol.get(symbol) ?? []) {
             if (write.position >= beforePosition) continue;
             if (cutoff != null && write.position < cutoff) continue;
+            const getterOrigins = getterProjectionOrigins(
+                write.value,
+                write.projection ?? [],
+                write.node,
+                write.position,
+                nextSeen,
+                substitutions,
+                followProjections,
+                preserveAllocations,
+                invocationContext,
+            );
+            if (getterOrigins) {
+                for (const origin of getterOrigins) origins.add(origin);
+                continue;
+            }
             const values = followProjections
                 ? projectedExpressions(write.value, write.projection ?? [])
                 : [write.value];
@@ -4990,6 +5138,34 @@ function analyzeProgram({
                     invocationContext,
                 )) {
                     origins.add(origin);
+                }
+            }
+        }
+        if (origins.size === 0 && preserveAllocations) {
+            for (const declaration of symbol.declarations ?? []) {
+                if (!ts.isBindingElement(declaration)) continue;
+                const binding = parameterBindingProjection(declaration);
+                if (!binding) continue;
+                const owner = binding.parameter.parent;
+                const frame = [...invocationContext]
+                    .reverse()
+                    .find((candidate) => candidate.declaration === owner);
+                const parameterIndex = owner.parameters.indexOf(binding.parameter);
+                const argument = frame?.call.arguments[parameterIndex];
+                if (!argument) continue;
+                const projected = getterProjectionOrigins(
+                    argument,
+                    binding.projection,
+                    declaration.name,
+                    frame.call.pos,
+                    nextSeen,
+                    substitutions,
+                    followProjections,
+                    preserveAllocations,
+                    invocationContext,
+                );
+                if (projected) {
+                    for (const origin of projected) origins.add(origin);
                 }
             }
         }
@@ -6557,17 +6733,49 @@ function analyzeProgram({
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const writes = reachingWrites(symbol, expression).writes;
             const values = writes.flatMap((write) =>
-                propertyValueExpressions(
-                    write.value,
-                    propertyName,
-                    depth + 1,
-                    nextSeen,
-                    includeGetters,
-                    followNestedReceivers,
+                projectedExpressions(write.value, write.projection ?? []).flatMap((value) =>
+                    propertyValueExpressions(
+                        value,
+                        propertyName,
+                        depth + 1,
+                        nextSeen,
+                        includeGetters,
+                        followNestedReceivers,
+                    ),
                 ),
             );
             if (values.length > 0) return values;
             for (const declaration of symbol?.declarations ?? []) {
+                if (ts.isBindingElement(declaration)) {
+                    const binding = parameterBindingProjection(declaration);
+                    const [step, ...rest] = binding?.projection ?? [];
+                    if (binding && step?.kind === "property" && step.names.length === 1) {
+                        const getters = getterDeclarationsForReceiver(
+                            binding.parameter.name,
+                            step.names,
+                        );
+                        values.push(
+                            ...getters.flatMap((getter) =>
+                                functionReturnExpressions(getter).flatMap((returned) => {
+                                    const projected =
+                                        rest.length > 0
+                                            ? projectedExpressions(returned, rest)
+                                            : [returned];
+                                    return projected.flatMap((value) =>
+                                        propertyValueExpressions(
+                                            value,
+                                            propertyName,
+                                            depth + 1,
+                                            nextSeen,
+                                            includeGetters,
+                                            followNestedReceivers,
+                                        ),
+                                    );
+                                }),
+                            ),
+                        );
+                    }
+                }
                 if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
                     values.push(
                         ...propertyValueExpressions(
