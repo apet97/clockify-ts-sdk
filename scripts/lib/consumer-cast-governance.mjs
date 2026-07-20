@@ -856,22 +856,74 @@ function analyzeProgram({
         return {};
     }
 
-    function statementDefinitelyExits(statement) {
-        if (ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) return true;
-        if (ts.isBlock(statement)) return statement.statements.some(statementDefinitelyExits);
+    function statementDefinitelyAbrupt(statement) {
+        if (
+            ts.isReturnStatement(statement) ||
+            ts.isThrowStatement(statement) ||
+            ts.isBreakStatement(statement) ||
+            ts.isContinueStatement(statement)
+        ) {
+            return true;
+        }
+        if (ts.isBlock(statement)) return statement.statements.some(statementDefinitelyAbrupt);
         if (!ts.isIfStatement(statement)) return false;
         const state = definiteExpressionState(statement.expression);
-        if (state.truthy === true) return statementDefinitelyExits(statement.thenStatement);
+        if (state.truthy === true) return statementDefinitelyAbrupt(statement.thenStatement);
         if (state.truthy === false) {
             return statement.elseStatement
-                ? statementDefinitelyExits(statement.elseStatement)
+                ? statementDefinitelyAbrupt(statement.elseStatement)
                 : false;
         }
         return Boolean(
             statement.elseStatement &&
-            statementDefinitelyExits(statement.thenStatement) &&
-            statementDefinitelyExits(statement.elseStatement),
+            statementDefinitelyAbrupt(statement.thenStatement) &&
+            statementDefinitelyAbrupt(statement.elseStatement),
         );
+    }
+
+    function staticDiscriminantValue(expression) {
+        expression = unwrapExpression(expression);
+        if (ts.isStringLiteralLike(expression) || ts.isNumericLiteral(expression)) {
+            return { known: true, value: expression.text };
+        }
+        if (expression.kind === ts.SyntaxKind.TrueKeyword) return { known: true, value: true };
+        if (expression.kind === ts.SyntaxKind.FalseKeyword) return { known: true, value: false };
+        if (expression.kind === ts.SyntaxKind.NullKeyword) return { known: true, value: null };
+        const type = checker.getTypeAtLocation(expression);
+        if ((type.flags & ts.TypeFlags.StringLiteral) !== 0) {
+            return { known: true, value: type.value };
+        }
+        if ((type.flags & ts.TypeFlags.NumberLiteral) !== 0) {
+            return { known: true, value: String(type.value) };
+        }
+        if ((type.flags & ts.TypeFlags.BooleanLiteral) !== 0) {
+            return { known: true, value: type.intrinsicName === "true" };
+        }
+        return { known: false, value: undefined };
+    }
+
+    function switchClauseIsReachable(node, statement) {
+        const discriminant = staticDiscriminantValue(statement.expression);
+        if (!discriminant.known) return true;
+        const clauses = statement.caseBlock.clauses;
+        const selectedClause = clauses.findIndex(
+            (clause) =>
+                ts.isCaseClause(clause) &&
+                staticDiscriminantValue(clause.expression).known &&
+                Object.is(staticDiscriminantValue(clause.expression).value, discriminant.value),
+        );
+        const defaultClause = clauses.findIndex(ts.isDefaultClause);
+        const start = selectedClause >= 0 ? selectedClause : defaultClause;
+        if (start < 0) return false;
+        let end = clauses.length - 1;
+        for (let index = start; index < clauses.length; index += 1) {
+            if (clauses[index].statements.some(statementDefinitelyAbrupt)) {
+                end = index;
+                break;
+            }
+        }
+        const owner = clauses.findIndex((clause) => isWithin(node, clause));
+        return owner >= start && owner <= end;
     }
 
     function expressionDefinitelySkipped(node) {
@@ -892,6 +944,17 @@ function analyzeProgram({
                 if (isWithin(node, current.whenTrue) && state.truthy === false) return true;
                 if (isWithin(node, current.whenFalse) && state.truthy === true) return true;
             }
+            if (ts.isWhileStatement(current)) {
+                const state = definiteExpressionState(current.expression);
+                if (isWithin(node, current.statement) && state.truthy === false) return true;
+            }
+            if (ts.isForStatement(current) && current.condition) {
+                const state = definiteExpressionState(current.condition);
+                if (isWithin(node, current.statement) && state.truthy === false) return true;
+            }
+            if (ts.isSwitchStatement(current) && !switchClauseIsReachable(node, current)) {
+                return true;
+            }
             if (!ts.isBinaryExpression(current) || !isWithin(node, current.right)) continue;
             const state = definiteExpressionState(current.left);
             if (
@@ -905,11 +968,18 @@ function analyzeProgram({
                 return true;
             }
         }
-        const location = directStatementInLinearContainer(node);
-        if (location) {
-            for (const statement of location.container.statements) {
-                if (statement === location.statement) break;
-                if (statementDefinitelyExits(statement)) return true;
+        for (let current = node; current?.parent; current = current.parent) {
+            const parent = current.parent;
+            const statements =
+                ts.isBlock(parent) || ts.isSourceFile(parent)
+                    ? parent.statements
+                    : ts.isCaseClause(parent) || ts.isDefaultClause(parent)
+                      ? parent.statements
+                      : null;
+            if (!statements || !ts.isStatement(current)) continue;
+            for (const statement of statements) {
+                if (statement === current) break;
+                if (statementDefinitelyAbrupt(statement)) return true;
             }
         }
         return false;
@@ -930,6 +1000,16 @@ function analyzeProgram({
             }
             if (ts.isPropertyDeclaration(node) && node.initializer) {
                 addWrite(node.name, node.initializer, node.pos, node.type);
+            }
+            if (
+                ts.isDeleteExpression(node) &&
+                (ts.isPropertyAccessExpression(node.expression) ||
+                    ts.isElementAccessExpression(node.expression))
+            ) {
+                addWrite(node.expression, node.expression, node.pos, null, {
+                    deleted: true,
+                    directPropertyWrite: true,
+                });
             }
             if (
                 ts.isBinaryExpression(node) &&
@@ -1023,13 +1103,29 @@ function analyzeProgram({
                 ? [expression.name.text]
                 : computedPropertyNames(expression);
             if (propertyNames?.length === 1) {
-                const values = propertyValueExpressions(
+                const initializerValues = propertyValueExpressions(
                     expression.expression,
                     propertyNames[0],
                     0,
                     new Set(),
                     false,
                 );
+                const propertySymbol = symbolForWriteTarget(expression);
+                const reaching = propertySymbol
+                    ? reachingWrites(propertySymbol, expression)
+                    : { hasDominator: false, writes: [] };
+                const writtenValues = reaching.writes
+                    .filter(
+                        (write) =>
+                            !write.deleted &&
+                            (write.propertyNames == null ||
+                                write.propertyNames.includes(propertyNames[0])),
+                    )
+                    .map((write) => write.value);
+                if (reaching.writes.some((write) => write.deleted)) resolution.unresolved = true;
+                const values = reaching.hasDominator
+                    ? writtenValues
+                    : [...initializerValues, ...writtenValues];
                 if (values.length > 0) {
                     return bounded(
                         values.flatMap((value) =>
@@ -1064,28 +1160,43 @@ function analyzeProgram({
             (declaration) =>
                 ts.isClassDeclaration(declaration) || ts.isClassExpression(declaration),
         );
-        if (declared.length > 0) return declared;
-        if (!symbol || seen.has(symbol)) {
+        if (!symbol) {
             resolution.unresolved = true;
             return [];
         }
+        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+        const declarationOwners = declared.filter(
+            (declaration) => cutoff == null || declaration.pos >= cutoff,
+        );
+        if (seen.has(symbol)) {
+            if (declarationOwners.length === 0) resolution.unresolved = true;
+            return declarationOwners;
+        }
         const nextSeen = new Set(seen);
         nextSeen.add(symbol);
-        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
         const writes = (writesBySymbol.get(symbol) ?? []).filter(
             (write) =>
                 write.position < beforePosition && (cutoff == null || write.position >= cutoff),
         );
-        if (writes.length === 0) resolution.unresolved = true;
-        const owners = writes.flatMap((write) => {
-            const values = write.projection?.length
-                ? projectedExpressions(write.value, write.projection)
-                : [write.value];
-            if (values.length === 0) resolution.unresolved = true;
-            return values.flatMap((value) =>
-                classOwnersForNewExpression(value, write.position, nextSeen, resolution, depth + 1),
-            );
-        });
+        if (writes.length === 0 && declarationOwners.length === 0) resolution.unresolved = true;
+        const owners = [
+            ...declarationOwners,
+            ...writes.flatMap((write) => {
+                const values = write.projection?.length
+                    ? projectedExpressions(write.value, write.projection)
+                    : [write.value];
+                if (values.length === 0) resolution.unresolved = true;
+                return values.flatMap((value) =>
+                    classOwnersForNewExpression(
+                        value,
+                        write.position,
+                        nextSeen,
+                        resolution,
+                        depth + 1,
+                    ),
+                );
+            }),
+        ];
         return bounded(owners, "constructed class alternatives");
     }
 
@@ -2091,6 +2202,8 @@ function analyzeProgram({
         return false;
     }
 
+    const effectWriteKeys = new Set();
+
     function addEffectWrite(
         receiver,
         value,
@@ -2102,6 +2215,9 @@ function analyzeProgram({
         definiteEffectNames = [],
         execution = {},
     ) {
+        const key = `${call.getSourceFile().fileName}:${call.pos}:${effectGroup}:${effectOrder}:${propertyNames?.join(",") ?? "*"}`;
+        if (effectWriteKeys.has(key)) return;
+        effectWriteKeys.add(key);
         propertyWrites.push({
             value,
             position: call.pos,
@@ -3287,12 +3403,39 @@ function analyzeProgram({
         return names?.length === 1 ? names[0] : null;
     }
 
+    function isDirectMutationCallSyntax(expression) {
+        expression = unwrapExpression(expression);
+        if (
+            !ts.isPropertyAccessExpression(expression) &&
+            !ts.isElementAccessExpression(expression)
+        ) {
+            return false;
+        }
+        if (!ts.isIdentifier(expression.expression)) return false;
+        const globalName = expression.expression.text;
+        const memberNames = ts.isPropertyAccessExpression(expression)
+            ? [expression.name.text]
+            : expression.argumentExpression && ts.isStringLiteralLike(expression.argumentExpression)
+              ? [expression.argumentExpression.text]
+              : [];
+        return (
+            (globalName === "Object" &&
+                memberNames.some((name) =>
+                    ["assign", "defineProperty", "defineProperties"].includes(name),
+                )) ||
+            (globalName === "Reflect" &&
+                memberNames.some((name) => ["set", "defineProperty"].includes(name)))
+        );
+    }
+
     for (const sourceFile of program.getSourceFiles()) {
         if (analysisExhausted) break;
         if (sourceFile.isDeclarationFile) continue;
-        function indexCallArguments(node) {
+        function indexCallArguments(node, effectsOnly = false) {
             if (analysisExhausted) return;
             if (ts.isCallExpression(node)) {
+                const preindexMutationCandidate =
+                    !effectsOnly || isDirectMutationCallSyntax(node.expression);
                 const declaration = checker.getResolvedSignature(node)?.declaration;
                 const classExecution = classExecutionMetadata(node);
                 const skipped =
@@ -3300,9 +3443,9 @@ function analyzeProgram({
                     classExecution.inactiveClassMemberEffect ||
                     (classExecution.classInstanceEffect &&
                         (instantiationsByClass.get(classExecution.classOwner)?.length ?? 0) === 0);
-                if (!skipped) addInvocation(declaration, node, node.arguments);
+                if (!effectsOnly && !skipped) addInvocation(declaration, node, node.arguments);
 
-                if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
+                if (!effectsOnly && !skipped && ts.isPropertyAccessExpression(node.expression)) {
                     const invocation = node.expression.name.text;
                     const target = node.expression.expression;
                     if (["call", "apply"].includes(invocation)) {
@@ -3388,9 +3531,10 @@ function analyzeProgram({
                     }
                 }
 
-                const effectiveCalls = skipped
-                    ? []
-                    : normalizeEffectiveCalls(node.expression, node.arguments, node.pos);
+                const effectiveCalls =
+                    skipped || !preindexMutationCandidate
+                        ? []
+                        : normalizeEffectiveCalls(node.expression, node.arguments, node.pos);
                 effectiveCalls.forEach((effectiveCall, normalizedPathIndex) => {
                     const effectiveExpression = effectiveCall.expression;
                     const effectiveArguments = effectiveCall.arguments;
@@ -3635,9 +3779,11 @@ function analyzeProgram({
                 });
 
                 const bound = boundInvocation(node.expression, node);
-                if (!skipped && bound) addInvocation(bound.declaration, node, bound.arguments);
+                if (!effectsOnly && !skipped && bound) {
+                    addInvocation(bound.declaration, node, bound.arguments);
+                }
             }
-            ts.forEachChild(node, indexCallArguments);
+            ts.forEachChild(node, (child) => indexCallArguments(child, effectsOnly));
         }
         function indexClassInstantiations(node) {
             if (ts.isNewExpression(node)) {
@@ -3697,6 +3843,7 @@ function analyzeProgram({
             }
             ts.forEachChild(node, indexClassInstantiations);
         }
+        indexCallArguments(sourceFile, true);
         indexClassInstantiations(sourceFile);
         indexCallArguments(sourceFile);
     }
@@ -3922,6 +4069,15 @@ function analyzeProgram({
     function statementDefinitelyWritesSymbol(statement, symbol, use) {
         function expressionDefinitelyWritesSymbol(expression) {
             expression = unwrapExpression(expression);
+            if (ts.isDeleteExpression(expression)) {
+                return (
+                    symbolsForWriteTarget(expression.expression).includes(symbol) &&
+                    writeMayReachExpression(
+                        { node: expression.expression, position: expression.pos },
+                        use,
+                    )
+                );
+            }
             if (ts.isBinaryExpression(expression)) {
                 if (expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
                     return (
@@ -4601,10 +4757,10 @@ function analyzeProgram({
         return writePath === leafPath || leafPath.startsWith(`${writePath}/`);
     }
 
-    function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
-        if (usePropertyNames?.length !== 1) return writes;
+    function crossStatementEffectCutoff(writes, expression, usePropertyNames) {
+        if (usePropertyNames?.length !== 1) return null;
         const useLocation = directStatementInLinearContainer(expression);
-        if (!useLocation) return writes;
+        if (!useLocation) return null;
         const useName = usePropertyNames[0];
         const definiteWrites = writes.filter((write) => {
             if (!write.definiteEffectNames?.includes(useName)) return false;
@@ -4649,6 +4805,11 @@ function analyzeProgram({
                 cutoff = completePathCutoff;
             }
         }
+        return cutoff;
+    }
+
+    function applyCrossStatementEffectCutoff(writes, expression, usePropertyNames) {
+        const cutoff = crossStatementEffectCutoff(writes, expression, usePropertyNames);
         return cutoff == null
             ? writes
             : writes.filter((write) => compareExecutionOrder(write, cutoff) >= 0);
@@ -4723,26 +4884,31 @@ function analyzeProgram({
                           write.propertyNames.some((name) => usePropertyNames.includes(name)),
                   )
                 : [];
-        const writes = applyCrossStatementEffectCutoff(
-            applyOrderedEffectCutoffs(
-                [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
-                    .flatMap((write) => effectiveWrites(write, expression))
-                    .filter(
-                        (write) =>
-                            write.sourceFile === expression.getSourceFile() &&
-                            write.position < expression.pos &&
-                            writeMayReachExpression(write, expression),
-                    )
-                    .sort(compareExecutionOrder)
-                    .filter((write, index, all) => index === 0 || write !== all[index - 1]),
-                usePropertyNames,
-            ),
+        const orderedWrites = applyOrderedEffectCutoffs(
+            [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
+                .flatMap((write) => effectiveWrites(write, expression))
+                .filter(
+                    (write) =>
+                        write.sourceFile === expression.getSourceFile() &&
+                        write.position < expression.pos &&
+                        writeMayReachExpression(write, expression),
+                )
+                .sort(compareExecutionOrder)
+                .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+            usePropertyNames,
+        );
+        const effectCutoff = crossStatementEffectCutoff(
+            orderedWrites,
             expression,
             usePropertyNames,
         );
+        const writes =
+            effectCutoff == null
+                ? orderedWrites
+                : orderedWrites.filter((write) => compareExecutionOrder(write, effectCutoff) >= 0);
         const cutoff = latestDefiniteWriteCutoff(symbol, expression);
         return {
-            hasDominator: cutoff != null,
+            hasDominator: cutoff != null || effectCutoff != null,
             writes: cutoff == null ? writes : writes.filter((write) => write.position >= cutoff),
         };
     }
