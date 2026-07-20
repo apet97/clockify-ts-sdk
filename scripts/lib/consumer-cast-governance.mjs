@@ -8,6 +8,7 @@ const MAX_STATIC_ALTERNATIVES = 64;
 const MAX_SYNTHETIC_INVOCATIONS = 256;
 const MAX_ANALYSIS_WORK = 10000;
 const THIS_SUBSTITUTION = Symbol("this receiver substitution");
+const REST_ARGUMENTS_SUBSTITUTION = Symbol("rest arguments substitution");
 
 class AnalysisWorkLimitError extends Error {
     constructor(maxWork, largestCallbackExpansion = 0) {
@@ -1866,6 +1867,11 @@ function analyzeProgram({
                         }
                         states = next;
                     }
+                    return states;
+                }
+                if (ts.isLabeledStatement(statement)) {
+                    const states = completionKinds(statement.statement, depth + 1);
+                    if (states.delete(jumpState("break", statement))) states.add("normal");
                     return states;
                 }
                 if (ts.isSwitchStatement(statement)) {
@@ -6499,7 +6505,29 @@ function analyzeProgram({
     function parameterSubstitutions(declaration, invocation) {
         const substitutions = new Map(invocation.capturedSubstitutions);
         declaration.parameters.forEach((parameter, index) => {
-            const argument = invocation.arguments[index];
+            if (parameter.dotDotDotToken) {
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (symbol) {
+                    const lists = restArgumentLists(
+                        invocation.arguments,
+                        index,
+                        invocation.node.pos,
+                    );
+                    substitutions.set(symbol, {
+                        [REST_ARGUMENTS_SUBSTITUTION]: lists[0] ?? [],
+                    });
+                }
+                return;
+            }
+            let argument = invocation.arguments[index];
+            if (parameter.initializer) {
+                const possibilities = argument
+                    ? undefinedPossibilities(argument)
+                    : { canUndefined: true, canDefined: false };
+                if (possibilities.canUndefined && !possibilities.canDefined) {
+                    argument = parameter.initializer;
+                }
+            }
             if (!argument) return;
             const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
             if (symbol) substitutions.set(symbol, argument);
@@ -6507,6 +6535,84 @@ function analyzeProgram({
         const thisReceiver = invocationThisReceiver(invocation.node);
         if (thisReceiver) substitutions.set(THIS_SUBSTITUTION, thisReceiver);
         return substitutions;
+    }
+
+    function parameterSubstitutionAlternatives(declaration, invocation) {
+        let alternatives = [new Map(invocation.capturedSubstitutions)];
+        declaration.parameters.forEach((parameter, index) => {
+            if (parameter.dotDotDotToken) {
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (symbol) {
+                    const lists = restArgumentLists(
+                        invocation.arguments,
+                        index,
+                        invocation.node.pos,
+                    );
+                    alternatives = bounded(
+                        alternatives.flatMap((substitutions) =>
+                            lists.map(
+                                (values) =>
+                                    new Map([
+                                        ...substitutions,
+                                        [symbol, { [REST_ARGUMENTS_SUBSTITUTION]: values }],
+                                    ]),
+                            ),
+                        ),
+                        "rest parameter argument alternatives",
+                    );
+                }
+                return;
+            }
+            const argument = invocation.arguments[index];
+            const possibilities = argument
+                ? undefinedPossibilities(argument)
+                : { canUndefined: true, canDefined: false };
+            const values = [
+                ...(argument && possibilities.canDefined ? [argument] : []),
+                ...(parameter.initializer && possibilities.canUndefined
+                    ? [parameter.initializer]
+                    : []),
+            ];
+            if (values.length === 0) return;
+            const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+            if (!symbol) return;
+            alternatives = bounded(
+                alternatives.flatMap((substitutions) =>
+                    values.map((value) => new Map([...substitutions, [symbol, value]])),
+                ),
+                "parameter default substitution alternatives",
+            );
+        });
+        const thisReceiver = invocationThisReceiver(invocation.node);
+        if (thisReceiver) {
+            alternatives.forEach((substitutions) =>
+                substitutions.set(THIS_SUBSTITUTION, thisReceiver),
+            );
+        }
+        return alternatives;
+    }
+
+    function restArgumentLists(args, start, beforePosition) {
+        let lists = [[]];
+        for (const argument of args.slice(start)) {
+            let alternatives;
+            if (ts.isSpreadElement(argument)) {
+                const spread = staticApplyArgumentLists(argument.expression, beforePosition);
+                if (!spread.complete) {
+                    analysisFailures.add(
+                        "consumer cast analysis could not statically resolve rest parameter spread arguments",
+                    );
+                }
+                alternatives = spread.lists;
+            } else {
+                alternatives = [[argument]];
+            }
+            lists = bounded(
+                lists.flatMap((prefix) => alternatives.map((values) => [...prefix, ...values])),
+                "rest parameter argument lists",
+            );
+        }
+        return lists.length > 0 ? lists : [[]];
     }
 
     function substituteReceiver(expression, substitutions) {
@@ -6521,12 +6627,26 @@ function analyzeProgram({
         }
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
-            return substitutions.get(symbol) ?? expression;
+            const substitution = substitutions.get(symbol);
+            return substitution?.[REST_ARGUMENTS_SUBSTITUTION]
+                ? expression
+                : (substitution ?? expression);
         }
         if (expression.kind === ts.SyntaxKind.ThisKeyword) {
             return substitutions.get(THIS_SUBSTITUTION) ?? expression;
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            if (
+                ts.isElementAccessExpression(expression) &&
+                ts.isIdentifier(expression.expression)
+            ) {
+                const symbol = unalias(checker, checker.getSymbolAtLocation(expression.expression));
+                const rest = substitutions.get(symbol)?.[REST_ARGUMENTS_SUBSTITUTION];
+                const names = computedPropertyNames(expression);
+                if (rest && names?.length === 1 && /^\d+$/.test(names[0])) {
+                    return rest[Number(names[0])] ?? expression;
+                }
+            }
             return substituteReceiver(expression.expression, substitutions);
         }
         return expression;
@@ -6557,12 +6677,19 @@ function analyzeProgram({
         if (ts.isGetAccessorDeclaration(owner) && !accessorReadsIndexed) {
             accessorReadsIndexed = true;
             function localGetterDeclarations(receiver, names = null, ownEnumerableOnly = false) {
-                const receiverType = checker.getApparentType(checker.getTypeAtLocation(receiver));
-                const properties = names
-                    ? names
-                          .map((name) => checker.getPropertyOfType(receiverType, name))
-                          .filter(Boolean)
-                    : checker.getPropertiesOfType(receiverType);
+                const reaching = reachingExpressionValues(receiver, receiver.pos);
+                const concrete = reaching
+                    .map((value) => value.expression)
+                    .filter((value) => value !== receiver);
+                const receiverValues = concrete.length > 0 ? concrete : [receiver];
+                const properties = receiverValues.flatMap((value) => {
+                    const receiverType = checker.getApparentType(checker.getTypeAtLocation(value));
+                    return names
+                        ? names
+                              .map((name) => checker.getPropertyOfType(receiverType, name))
+                              .filter(Boolean)
+                        : checker.getPropertiesOfType(receiverType);
+                });
                 return bounded(
                     [
                         ...new Set(
@@ -6610,6 +6737,130 @@ function analyzeProgram({
                     }
                 }
             }
+            function recordBindingPatternActivations(pattern, receivers, activation) {
+                const excluded = new Set();
+                for (const element of pattern.elements) {
+                    if (ts.isOmittedExpression(element)) continue;
+                    const names = ts.isObjectBindingPattern(pattern)
+                        ? bindingElementNames(element)
+                        : [String(pattern.elements.indexOf(element))];
+                    for (const receiver of receivers) {
+                        if (!element.dotDotDotToken && names?.length) {
+                            names.forEach((name) => excluded.add(name));
+                            recordAccessorActivation(
+                                localGetterDeclarations(receiver, names),
+                                activation,
+                                receiver,
+                            );
+                        } else if (element.dotDotDotToken) {
+                            recordAccessorActivation(
+                                localGetterDeclarations(receiver, null, true).filter((getter) => {
+                                    const name = getter.name;
+                                    return (
+                                        !name || !ts.isIdentifier(name) || !excluded.has(name.text)
+                                    );
+                                }),
+                                activation,
+                                receiver,
+                            );
+                        }
+                    }
+                    if (
+                        !ts.isObjectBindingPattern(element.name) &&
+                        !ts.isArrayBindingPattern(element.name)
+                    ) {
+                        continue;
+                    }
+                    const step = ts.isObjectBindingPattern(pattern)
+                        ? names?.length === 1
+                            ? { kind: "property", names }
+                            : null
+                        : { kind: "array", index: pattern.elements.indexOf(element) };
+                    if (!step) continue;
+                    const nestedReceivers = bounded(
+                        receivers.flatMap((receiver) => projectedExpressions(receiver, [step])),
+                        "nested implicit accessor binding receivers",
+                    );
+                    if (element.initializer) nestedReceivers.push(element.initializer);
+                    recordBindingPatternActivations(element.name, nestedReceivers, activation);
+                }
+            }
+            function recordAssignmentPatternActivations(pattern, receivers, activation) {
+                const properties = ts.isObjectLiteralExpression(pattern)
+                    ? pattern.properties
+                    : pattern.elements;
+                const excluded = new Set();
+                for (const [index, property] of properties.entries()) {
+                    if (ts.isOmittedExpression(property)) continue;
+                    const rest = ts.isSpreadAssignment(property) || ts.isSpreadElement(property);
+                    const names = ts.isObjectLiteralExpression(pattern)
+                        ? rest
+                            ? null
+                            : property.name &&
+                                (ts.isIdentifier(property.name) ||
+                                    ts.isStringLiteralLike(property.name) ||
+                                    ts.isNumericLiteral(property.name))
+                              ? [property.name.text]
+                              : property.name && ts.isComputedPropertyName(property.name)
+                                ? literalPropertyNames(
+                                      checker.getTypeAtLocation(property.name.expression),
+                                  )
+                                : null
+                        : [String(index)];
+                    for (const receiver of receivers) {
+                        if (!rest && names?.length) {
+                            names.forEach((name) => excluded.add(name));
+                            recordAccessorActivation(
+                                localGetterDeclarations(receiver, names),
+                                activation,
+                                receiver,
+                            );
+                        } else if (rest) {
+                            recordAccessorActivation(
+                                localGetterDeclarations(receiver, null, true).filter((getter) => {
+                                    const name = getter.name;
+                                    return (
+                                        !name || !ts.isIdentifier(name) || !excluded.has(name.text)
+                                    );
+                                }),
+                                activation,
+                                receiver,
+                            );
+                        }
+                    }
+                    let target = ts.isPropertyAssignment(property)
+                        ? property.initializer
+                        : ts.isSpreadAssignment(property) || ts.isSpreadElement(property)
+                          ? property.expression
+                          : property;
+                    let defaultValue = null;
+                    if (
+                        ts.isBinaryExpression(target) &&
+                        target.operatorToken.kind === ts.SyntaxKind.EqualsToken
+                    ) {
+                        defaultValue = target.right;
+                        target = target.left;
+                    }
+                    if (
+                        !ts.isObjectLiteralExpression(target) &&
+                        !ts.isArrayLiteralExpression(target)
+                    ) {
+                        continue;
+                    }
+                    const step = ts.isObjectLiteralExpression(pattern)
+                        ? names?.length === 1
+                            ? { kind: "property", names }
+                            : null
+                        : { kind: "array", index };
+                    if (!step) continue;
+                    const nestedReceivers = bounded(
+                        receivers.flatMap((receiver) => projectedExpressions(receiver, [step])),
+                        "nested implicit accessor assignment receivers",
+                    );
+                    if (defaultValue) nestedReceivers.push(defaultValue);
+                    recordAssignmentPatternActivations(target, nestedReceivers, activation);
+                }
+            }
             for (const sourceFile of program.getSourceFiles()) {
                 if (sourceFile.isDeclarationFile) continue;
                 function visit(node) {
@@ -6637,49 +6888,29 @@ function analyzeProgram({
                                         ),
                                     )
                                   : null;
-                            const getters = (directSymbol?.declarations ?? []).filter(
-                                (declaration) =>
-                                    ts.isGetAccessorDeclaration(declaration) && declaration.body,
-                            );
+                            const getters = [
+                                ...(directSymbol?.declarations ?? []).filter(
+                                    (declaration) =>
+                                        ts.isGetAccessorDeclaration(declaration) &&
+                                        declaration.body,
+                                ),
+                                ...localGetterDeclarations(node.expression, names),
+                            ].filter((getter, index, all) => all.indexOf(getter) === index);
                             recordAccessorActivation(getters, node, node.expression);
                         }
                     }
                     if (
                         ts.isVariableDeclaration(node) &&
-                        ts.isObjectBindingPattern(node.name) &&
+                        (ts.isObjectBindingPattern(node.name) ||
+                            ts.isArrayBindingPattern(node.name)) &&
                         node.initializer
                     ) {
-                        const excluded = new Set();
-                        for (const element of node.name.elements) {
-                            const names = bindingElementNames(element);
-                            if (!element.dotDotDotToken && names?.length) {
-                                names.forEach((name) => excluded.add(name));
-                                recordAccessorActivation(
-                                    localGetterDeclarations(node.initializer, names),
-                                    element,
-                                    node.initializer,
-                                );
-                            } else if (element.dotDotDotToken) {
-                                recordAccessorActivation(
-                                    localGetterDeclarations(node.initializer, null, true).filter(
-                                        (getter) => {
-                                            const name = getter.name;
-                                            return (
-                                                !name ||
-                                                !ts.isIdentifier(name) ||
-                                                !excluded.has(name.text)
-                                            );
-                                        },
-                                    ),
-                                    element,
-                                    node.initializer,
-                                );
-                            }
-                        }
+                        recordBindingPatternActivations(node.name, [node.initializer], node);
                     }
                     if (
                         ts.isVariableDeclaration(node) &&
-                        ts.isObjectBindingPattern(node.name) &&
+                        (ts.isObjectBindingPattern(node.name) ||
+                            ts.isArrayBindingPattern(node.name)) &&
                         !node.initializer &&
                         ts.isVariableDeclarationList(node.parent) &&
                         ts.isForOfStatement(node.parent.parent)
@@ -6689,114 +6920,42 @@ function analyzeProgram({
                             iteration.expression,
                         ) ?? []) {
                             if (!receiver) continue;
-                            const excluded = new Set();
-                            for (const element of node.name.elements) {
-                                const names = bindingElementNames(element);
-                                if (!element.dotDotDotToken && names?.length) {
-                                    names.forEach((name) => excluded.add(name));
-                                    recordAccessorActivation(
-                                        localGetterDeclarations(receiver, names),
-                                        iteration,
-                                        receiver,
-                                    );
-                                } else if (element.dotDotDotToken) {
-                                    recordAccessorActivation(
-                                        localGetterDeclarations(receiver, null, true).filter(
-                                            (getter) => {
-                                                const name = getter.name;
-                                                return (
-                                                    !name ||
-                                                    !ts.isIdentifier(name) ||
-                                                    !excluded.has(name.text)
-                                                );
-                                            },
-                                        ),
-                                        iteration,
-                                        receiver,
-                                    );
-                                }
-                            }
+                            recordBindingPatternActivations(node.name, [receiver], iteration);
                         }
                     }
-                    if (ts.isParameter(node) && ts.isObjectBindingPattern(node.name)) {
+                    if (
+                        ts.isParameter(node) &&
+                        (ts.isObjectBindingPattern(node.name) ||
+                            ts.isArrayBindingPattern(node.name))
+                    ) {
                         const parameterIndex = node.parent.parameters.indexOf(node);
                         for (const invocation of callsByDeclaration.get(node.parent) ?? []) {
-                            const receiver =
-                                invocation.arguments[parameterIndex] ?? node.initializer;
-                            if (!receiver) continue;
-                            const excluded = new Set();
-                            for (const element of node.name.elements) {
-                                const names = bindingElementNames(element);
-                                if (!element.dotDotDotToken && names?.length) {
-                                    names.forEach((name) => excluded.add(name));
-                                    recordAccessorActivation(
-                                        localGetterDeclarations(receiver, names),
-                                        invocation.node,
-                                        receiver,
-                                    );
-                                } else if (element.dotDotDotToken) {
-                                    recordAccessorActivation(
-                                        localGetterDeclarations(receiver, null, true).filter(
-                                            (getter) => {
-                                                const name = getter.name;
-                                                return (
-                                                    !name ||
-                                                    !ts.isIdentifier(name) ||
-                                                    !excluded.has(name.text)
-                                                );
-                                            },
-                                        ),
-                                        invocation.node,
-                                        receiver,
-                                    );
-                                }
+                            const argument = invocation.arguments[parameterIndex];
+                            const possibilities = argument
+                                ? undefinedPossibilities(argument)
+                                : { canUndefined: true, canDefined: false };
+                            const receivers = [
+                                ...(argument && possibilities.canDefined ? [argument] : []),
+                                ...(node.initializer && possibilities.canUndefined
+                                    ? [node.initializer]
+                                    : []),
+                            ];
+                            if (receivers.length > 0) {
+                                recordBindingPatternActivations(
+                                    node.name,
+                                    receivers,
+                                    invocation.node,
+                                );
                             }
                         }
                     }
                     if (
                         ts.isBinaryExpression(node) &&
                         node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
-                        ts.isObjectLiteralExpression(node.left)
+                        (ts.isObjectLiteralExpression(node.left) ||
+                            ts.isArrayLiteralExpression(node.left))
                     ) {
-                        const excluded = new Set();
-                        for (const property of node.left.properties) {
-                            if (ts.isSpreadAssignment(property)) {
-                                recordAccessorActivation(
-                                    localGetterDeclarations(node.right, null, true).filter(
-                                        (getter) => {
-                                            const name = getter.name;
-                                            return (
-                                                !name ||
-                                                !ts.isIdentifier(name) ||
-                                                !excluded.has(name.text)
-                                            );
-                                        },
-                                    ),
-                                    property,
-                                    node.right,
-                                );
-                                continue;
-                            }
-                            const name = property.name;
-                            const names =
-                                ts.isIdentifier(name) ||
-                                ts.isStringLiteralLike(name) ||
-                                ts.isNumericLiteral(name)
-                                    ? [name.text]
-                                    : ts.isComputedPropertyName(name)
-                                      ? literalPropertyNames(
-                                            checker.getTypeAtLocation(name.expression),
-                                        )
-                                      : null;
-                            if (names?.length) {
-                                names.forEach((entry) => excluded.add(entry));
-                                recordAccessorActivation(
-                                    localGetterDeclarations(node.right, names),
-                                    property,
-                                    node.right,
-                                );
-                            }
-                        }
+                        recordAssignmentPatternActivations(node.left, [node.right], node);
                     }
                     if (ts.isSpreadAssignment(node)) {
                         recordAccessorActivation(
@@ -6804,6 +6963,57 @@ function analyzeProgram({
                             node,
                             node.expression,
                         );
+                    }
+                    if (ts.isCallExpression(node)) {
+                        const adapter = invocationAdapter(node.expression, node.pos);
+                        const boundAlternatives =
+                            ts.isIdentifier(node.expression) || ts.isCallExpression(node.expression)
+                                ? boundFunctionAlternatives(node.expression, node.pos)
+                                : [];
+                        const normalized =
+                            adapter ||
+                            boundAlternatives.some((alternative) => alternative.kind !== "plain")
+                                ? normalizeEffectiveCalls(
+                                      node.expression,
+                                      [...node.arguments],
+                                      node.pos,
+                                  )
+                                : [];
+                        for (const call of normalized) {
+                            if (
+                                expressionResolvesToBuiltinMember(
+                                    call.expression,
+                                    "Object",
+                                    "assign",
+                                    node.pos,
+                                )
+                            ) {
+                                for (const source of call.arguments.slice(1)) {
+                                    recordAccessorActivation(
+                                        localGetterDeclarations(source, null, true),
+                                        node,
+                                        source,
+                                    );
+                                }
+                            }
+                            if (
+                                call.arguments[0] &&
+                                ["values", "entries"].some((member) =>
+                                    expressionResolvesToBuiltinMember(
+                                        call.expression,
+                                        "Object",
+                                        member,
+                                        node.pos,
+                                    ),
+                                )
+                            ) {
+                                recordAccessorActivation(
+                                    localGetterDeclarations(call.arguments[0], null, true),
+                                    node,
+                                    call.arguments[0],
+                                );
+                            }
+                        }
                     }
                     if (
                         ts.isCallExpression(node) &&
@@ -6895,10 +7105,12 @@ function analyzeProgram({
             }
         }
         const activations = [
-            ...(callsByDeclaration.get(owner) ?? []).map((invocation) => ({
-                node: invocation.node,
-                substitutions: parameterSubstitutions(owner, invocation),
-            })),
+            ...(callsByDeclaration.get(owner) ?? []).flatMap((invocation) =>
+                parameterSubstitutionAlternatives(owner, invocation).map((substitutions) => ({
+                    node: invocation.node,
+                    substitutions,
+                })),
+            ),
             ...(accessorReadsByDeclaration.get(owner) ?? []).flatMap((node) => {
                 const receivers = accessorReceiverByActivation.get(node) ?? [null];
                 return receivers.map((receiver) => {
@@ -8727,7 +8939,7 @@ function analyzeProgram({
                 const alternatives = memberValueAlternatives(
                     source,
                     restAccess.names[0],
-                    source,
+                    stepContext.bindingUseExpression ?? source,
                     stepContext.bindingUsePosition ?? source.pos,
                     null,
                     true,
@@ -8773,7 +8985,7 @@ function analyzeProgram({
                 const alternatives = memberValueAlternatives(
                     source,
                     String(step.key),
-                    source,
+                    stepContext.bindingUseExpression ?? source,
                     stepContext.bindingUsePosition ?? source.pos,
                     null,
                     true,
@@ -8843,12 +9055,14 @@ function analyzeProgram({
                 traceStep(argument, 0, depth + 1, seen, {
                     ...context,
                     bindingUsePosition: invocation.node.pos,
+                    bindingUseExpression: invocation.node,
                 });
                 tracedSource = true;
             } else if (declaration.initializer) {
                 traceStep(declaration.initializer, 0, depth + 1, seen, {
                     ...context,
                     bindingUsePosition: invocation.node.pos,
+                    bindingUseExpression: invocation.node,
                 });
                 tracedSource = true;
             }
@@ -9297,11 +9511,9 @@ function analyzeProgram({
                             calls.length === 0 ||
                             calls.some((call) => {
                                 const argument = call.arguments[parameterIndex];
-                                return (
-                                    !argument ||
-                                    (ts.isIdentifier(argument) && argument.text === "undefined") ||
-                                    ts.isVoidExpression(argument)
-                                );
+                                return argument
+                                    ? undefinedPossibilities(argument).canUndefined
+                                    : true;
                             });
                         if (defaultMayRun) {
                             trace(declaration.initializer, context, depth + 1, nextSeen);
