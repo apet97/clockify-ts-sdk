@@ -4589,12 +4589,14 @@ function analyzeProgram({
         const receiver = unwrapExpression(receiverExpression);
         if (!ts.isIdentifier(receiver)) return [];
         const symbol = unalias(checker, checker.getSymbolAtLocation(receiver));
-        const values = (writesBySymbol.get(symbol) ?? [])
-            .filter((write) => write.position < receiverExpression.pos)
-            .map((write) => write.value);
-        for (const declaration of symbol?.declarations ?? []) {
-            if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
-                values.push(declaration.initializer);
+        const values = reachingWrites(symbol, receiverExpression).writes.map(
+            (write) => write.value,
+        );
+        if (values.length === 0) {
+            for (const declaration of symbol?.declarations ?? []) {
+                if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+                    values.push(declaration.initializer);
+                }
             }
         }
         return values.flatMap((value) => {
@@ -4615,6 +4617,37 @@ function analyzeProgram({
             ? unalias(checker, checker.getSymbolAtLocation(expression.name))
             : null;
         return getterDeclarationsForReceiver(expression.expression, names, memberSymbol);
+    }
+
+    function undefinedPossibilities(expression) {
+        expression = unwrapExpression(expression);
+        if (
+            ts.isIdentifier(expression) && expression.text === "undefined" ||
+            ts.isVoidExpression(expression)
+        ) {
+            return { canDefined: false, canUndefined: true };
+        }
+        if (ts.isConditionalExpression(expression)) {
+            const whenTrue = undefinedPossibilities(expression.whenTrue);
+            const whenFalse = undefinedPossibilities(expression.whenFalse);
+            return {
+                canDefined: whenTrue.canDefined || whenFalse.canDefined,
+                canUndefined: whenTrue.canUndefined || whenFalse.canUndefined,
+            };
+        }
+        const type = checker.getTypeAtLocation(expression);
+        if (type.isUnion()) {
+            return {
+                canDefined: type.types.some((part) => (part.flags & ts.TypeFlags.Undefined) === 0),
+                canUndefined: type.types.some(
+                    (part) => (part.flags & ts.TypeFlags.Undefined) !== 0,
+                ),
+            };
+        }
+        if ((type.flags & ts.TypeFlags.Undefined) !== 0) {
+            return { canDefined: false, canUndefined: true };
+        }
+        return { canDefined: true, canUndefined: false };
     }
 
     function getterProjectionOrigins(
@@ -4719,6 +4752,7 @@ function analyzeProgram({
 
     function parameterBindingProjection(binding) {
         const projection = [];
+        const defaultValue = binding.initializer;
         let current = binding;
         while (ts.isBindingElement(current)) {
             const pattern = current.parent;
@@ -4736,7 +4770,11 @@ function analyzeProgram({
                 return null;
             }
             if (ts.isParameter(pattern.parent)) {
-                return { parameter: pattern.parent, projection: projection.reverse() };
+                return {
+                    parameter: pattern.parent,
+                    projection: projection.reverse(),
+                    defaultValue,
+                };
             }
             current = pattern.parent;
         }
@@ -5122,6 +5160,29 @@ function analyzeProgram({
             );
             if (getterOrigins) {
                 for (const origin of getterOrigins) origins.add(origin);
+                if (write.defaultValue) {
+                    const projectedValues = projectedExpressions(
+                        write.value,
+                        write.projection ?? [],
+                    );
+                    if (
+                        projectedValues.some(
+                            (value) => undefinedPossibilities(value).canUndefined,
+                        )
+                    ) {
+                        for (const origin of receiverOrigins(
+                            write.defaultValue,
+                            write.position,
+                            nextSeen,
+                            substitutions,
+                            followProjections,
+                            preserveAllocations,
+                            invocationContext,
+                        )) {
+                            origins.add(origin);
+                        }
+                    }
+                }
                 continue;
             }
             const values = followProjections
@@ -5166,6 +5227,26 @@ function analyzeProgram({
                 );
                 if (projected) {
                     for (const origin of projected) origins.add(origin);
+                }
+                if (binding.defaultValue) {
+                    const projectedValues = projectedExpressions(argument, binding.projection);
+                    if (
+                        projectedValues.some(
+                            (value) => undefinedPossibilities(value).canUndefined,
+                        )
+                    ) {
+                        for (const origin of receiverOrigins(
+                            binding.defaultValue,
+                            frame.call.pos,
+                            nextSeen,
+                            substitutions,
+                            followProjections,
+                            preserveAllocations,
+                            invocationContext,
+                        )) {
+                            origins.add(origin);
+                        }
+                    }
                 }
             }
         }
@@ -6710,7 +6791,12 @@ function analyzeProgram({
     ) {
         if (!expression || depth > MAX_TRACE_DEPTH) return [];
         const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
-        if (seen.has(key)) return [];
+        if (seen.has(key)) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve recursive constructed property alternative`,
+            );
+            return [];
+        }
         const nextSeen = new Set(seen);
         nextSeen.add(key);
         if (
@@ -6729,21 +6815,48 @@ function analyzeProgram({
                 followNestedReceivers,
             );
         }
+        if (ts.isConditionalExpression(expression)) {
+            return bounded(
+                [expression.whenTrue, expression.whenFalse].flatMap((branch) =>
+                    undefinedPossibilities(branch).canDefined
+                        ? propertyValueExpressions(
+                              branch,
+                              propertyName,
+                              depth + 1,
+                              nextSeen,
+                              includeGetters,
+                              followNestedReceivers,
+                          )
+                        : [],
+                ),
+                "conditional property alternatives",
+            );
+        }
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const writes = reachingWrites(symbol, expression).writes;
-            const values = writes.flatMap((write) =>
-                projectedExpressions(write.value, write.projection ?? []).flatMap((value) =>
-                    propertyValueExpressions(
-                        value,
-                        propertyName,
-                        depth + 1,
-                        nextSeen,
-                        includeGetters,
-                        followNestedReceivers,
-                    ),
-                ),
-            );
+            const values = writes.flatMap((write) => {
+                const projected = projectedExpressions(write.value, write.projection ?? []);
+                const candidates = [...projected];
+                if (
+                    write.defaultValue &&
+                    projected.some((value) => undefinedPossibilities(value).canUndefined)
+                ) {
+                    candidates.push(write.defaultValue);
+                }
+                return candidates.flatMap((value) =>
+                    undefinedPossibilities(value).canDefined
+                        ? propertyValueExpressions(
+                              value,
+                              propertyName,
+                              depth + 1,
+                              nextSeen,
+                              includeGetters,
+                              followNestedReceivers,
+                          )
+                        : [],
+                );
+            });
             if (values.length > 0) return values;
             for (const declaration of symbol?.declarations ?? []) {
                 if (ts.isBindingElement(declaration)) {
@@ -6774,6 +6887,27 @@ function analyzeProgram({
                                 }),
                             ),
                         );
+                        if (binding.defaultValue) {
+                            const getterReturns = getters.flatMap((getter) =>
+                                functionReturnExpressions(getter),
+                            );
+                            if (
+                                getterReturns.some(
+                                    (value) => undefinedPossibilities(value).canUndefined,
+                                )
+                            ) {
+                                values.push(
+                                    ...propertyValueExpressions(
+                                        binding.defaultValue,
+                                        propertyName,
+                                        depth + 1,
+                                        nextSeen,
+                                        includeGetters,
+                                        followNestedReceivers,
+                                    ),
+                                );
+                            }
+                        }
                     }
                 }
                 if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
