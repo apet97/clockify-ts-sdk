@@ -258,6 +258,8 @@ function analyzeProgram({
     const propertyWrites = [];
     const wildcardPropertyWrites = [];
     const callArgumentsByParameter = new Map();
+    const callsThroughParameter = new Map();
+    const forwardedParameters = new Map();
     const callsByDeclaration = new Map();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
@@ -339,6 +341,146 @@ function analyzeProgram({
         alternativePathsByGroup.set(alternativeGroup, paths);
     }
 
+    function callableDeclarationsForValue(expression, beforePosition, seen = new Set(), depth = 0) {
+        if (!expression || depth > MAX_TRACE_DEPTH) return [];
+        expression = unwrapExpression(expression);
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
+        if (seen.has(key)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
+        if (
+            ts.isFunctionDeclaration(expression) ||
+            ts.isFunctionExpression(expression) ||
+            ts.isArrowFunction(expression) ||
+            ts.isMethodDeclaration(expression)
+        ) {
+            return [expression];
+        }
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            const declarations = (symbol?.declarations ?? []).filter(
+                (declaration) =>
+                    ts.isFunctionDeclaration(declaration) ||
+                    ts.isFunctionExpression(declaration) ||
+                    ts.isArrowFunction(declaration) ||
+                    ts.isMethodDeclaration(declaration),
+            );
+            const argumentsForParameter = symbol
+                ? (callArgumentsByParameter.get(symbol) ?? [])
+                : [];
+            return bounded(
+                [
+                    ...declarations,
+                    ...argumentsForParameter.flatMap((argument) =>
+                        callableDeclarationsForValue(
+                            argument,
+                            argument.pos ?? beforePosition,
+                            nextSeen,
+                            depth + 1,
+                        ),
+                    ),
+                ].filter((declaration, index, all) => all.indexOf(declaration) === index),
+                "callback parameter alternatives",
+            );
+        }
+        if (ts.isCallExpression(expression)) {
+            const factory = functionDeclarationForExpression(expression.expression);
+            if (!factory?.body) return [];
+            const substitutions = new Map();
+            factory.parameters.forEach((parameter, index) => {
+                const argument = expression.arguments[index];
+                if (!argument) return;
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (symbol) substitutions.set(symbol, argument);
+            });
+            return bounded(
+                functionReturnExpressions(factory).flatMap((returned) =>
+                    reachingExpressionValues(
+                        returned,
+                        beforePosition,
+                        nextSeen,
+                        substitutions,
+                    ).flatMap((value) =>
+                        callableDeclarationsForValue(
+                            value.expression,
+                            value.expression.pos ?? beforePosition,
+                            nextSeen,
+                            depth + 1,
+                        ),
+                    ),
+                ),
+                "factory-returned callback alternatives",
+            );
+        }
+        return bounded(
+            reachingExpressionValues(expression, beforePosition, nextSeen).flatMap((value) =>
+                value.expression === expression
+                    ? []
+                    : callableDeclarationsForValue(
+                          value.expression,
+                          value.expression.pos ?? beforePosition,
+                          nextSeen,
+                          depth + 1,
+                      ),
+            ),
+            "callback value alternatives",
+        );
+    }
+
+    function materializeParameterCalls(symbol, argument) {
+        for (const call of callsThroughParameter.get(symbol) ?? []) {
+            for (const declaration of callableDeclarationsForValue(argument, call.node.pos)) {
+                const isAsync =
+                    (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0;
+                if (!isAsync) addInvocation(declaration, call.node, call.arguments);
+            }
+        }
+    }
+
+    function registerParameterCall(symbol, node, args) {
+        if (!symbol) return;
+        const declarations = symbol.declarations ?? [];
+        if (!declarations.some(ts.isParameter)) return;
+        const owner = enclosingFunction(node);
+        if (owner && (ts.getCombinedModifierFlags(owner) & ts.ModifierFlags.Async) !== 0) {
+            return;
+        }
+        const calls = callsThroughParameter.get(symbol) ?? [];
+        if (!calls.some((call) => call.node === node)) {
+            calls.push({ node, arguments: [...args] });
+            callsThroughParameter.set(symbol, calls);
+        }
+        for (const argument of callArgumentsByParameter.get(symbol) ?? []) {
+            materializeParameterCalls(symbol, argument);
+        }
+    }
+
+    function recordParameterArgument(symbol, argument, seen = new Set()) {
+        if (!symbol || seen.has(symbol)) return;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const inputs = callArgumentsByParameter.get(symbol) ?? [];
+        if (!inputs.includes(argument)) {
+            inputs.push(argument);
+            callArgumentsByParameter.set(symbol, inputs);
+        }
+        materializeParameterCalls(symbol, argument);
+        if (ts.isIdentifier(argument)) {
+            const source = unalias(checker, checker.getSymbolAtLocation(argument));
+            if ((source?.declarations ?? []).some(ts.isParameter)) {
+                const destinations = forwardedParameters.get(source) ?? new Set();
+                destinations.add(symbol);
+                forwardedParameters.set(source, destinations);
+                for (const sourceArgument of callArgumentsByParameter.get(source) ?? []) {
+                    recordParameterArgument(symbol, sourceArgument, nextSeen);
+                }
+            }
+        }
+        for (const destination of forwardedParameters.get(symbol) ?? []) {
+            recordParameterArgument(destination, argument, nextSeen);
+        }
+    }
+
     function addInvocation(
         declaration,
         node,
@@ -386,9 +528,7 @@ function analyzeProgram({
                 if (!argument || !ts.isIdentifier(parameter.name)) return;
                 const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                 if (!symbol) return;
-                const inputs = callArgumentsByParameter.get(symbol) ?? [];
-                inputs.push(argument);
-                callArgumentsByParameter.set(symbol, inputs);
+                recordParameterArgument(symbol, argument);
             });
     }
 
@@ -3576,6 +3716,66 @@ function analyzeProgram({
         );
     }
 
+    function isNativeCallApplyValue(expression, memberName, beforePosition, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        const adapter = invocationAdapter(expression, beforePosition);
+        if (
+            adapter?.name === memberName &&
+            (checker.getTypeAtLocation(adapter.target).getCallSignatures().length > 0 ||
+                expressionResolvesToFunctionPrototype(adapter.target, beforePosition)) &&
+            libMemberSymbol(expression, memberName)
+        ) {
+            return true;
+        }
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return reachingExpressionValues(expression, beforePosition).some((value) =>
+            isNativeCallApplyValue(
+                value.expression,
+                memberName,
+                value.expression.pos ?? beforePosition,
+                nextSeen,
+            ),
+        );
+    }
+
+    function callApplyMemberAlternatives(expression, beforePosition) {
+        const adapter = invocationAdapter(expression, beforePosition);
+        if (!adapter || !["call", "apply"].includes(adapter.name)) return [];
+        if (checker.getTypeAtLocation(adapter.target).getCallSignatures().length === 0) return [];
+        return bounded(
+            memberValueAlternatives(adapter.target, adapter.name, expression, beforePosition, {
+                value: null,
+                position: expression.pos,
+            }).flatMap((alternative) => {
+                if (
+                    alternative.value == null ||
+                    isNativeCallApplyValue(alternative.value, adapter.name, alternative.position)
+                ) {
+                    return [{ kind: "native", name: adapter.name, target: adapter.target }];
+                }
+                return reachingExpressionValues(alternative.value, alternative.position).map(
+                    (value) =>
+                        isNativeCallApplyValue(
+                            value.expression,
+                            adapter.name,
+                            value.expression.pos ?? alternative.position,
+                        )
+                            ? { kind: "native", name: adapter.name, target: adapter.target }
+                            : {
+                                  kind: "custom",
+                                  name: adapter.name,
+                                  expression: value.expression,
+                              },
+                );
+            }),
+            `${adapter.name} member values`,
+        );
+    }
+
     function expressionResolvesToFunctionPrototype(expression, beforePosition, seen = new Set()) {
         expression = unwrapExpression(expression);
         if (
@@ -4131,36 +4331,70 @@ function analyzeProgram({
 
             const adapter = invocationAdapter(callee, beforePosition);
             if (adapter?.name === "bind") continue;
-            if (adapter?.name === "call") {
-                normalized.push(
-                    ...normalizeEffectiveCalls(
-                        adapter.target,
-                        args.slice(1),
-                        beforePosition,
-                        nextSeen,
-                    ),
-                );
-                continue;
-            }
-            if (adapter?.name === "apply") {
-                const appliedLists = staticApplyArgumentLists(args[1], beforePosition);
-                if (!appliedLists.complete) {
-                    const governed = governedBuiltinMember(adapter.target, beforePosition);
-                    if (governed) {
-                        analysisFailures.add(
-                            `consumer cast analysis could not statically resolve ${governed} apply argument list`,
+            const memberAlternatives = callApplyMemberAlternatives(callee, beforePosition);
+            if (memberAlternatives.length > 0) {
+                const alternativeGroup =
+                    memberAlternatives.length > 1
+                        ? `${callee.getSourceFile().fileName}:${callee.pos}:${callee.end}:${adapter.name}-member`
+                        : null;
+                for (const [index, alternative] of memberAlternatives.entries()) {
+                    const alternativePath = alternativeGroup ? String(index) : null;
+                    registerAlternativePath(alternativeGroup, alternativePath);
+                    if (alternative.kind === "custom") {
+                        const declaration = functionDeclarationForExpression(
+                            alternative.expression,
+                        );
+                        if (declaration?.body) {
+                            addInvocation(
+                                declaration,
+                                callee,
+                                args,
+                                new Map(),
+                                0,
+                                alternativeGroup,
+                                alternativePath,
+                            );
+                        }
+                        continue;
+                    }
+                    if (alternative.name === "call") {
+                        normalized.push(
+                            ...normalizeEffectiveCalls(
+                                alternative.target,
+                                args.slice(1),
+                                beforePosition,
+                                nextSeen,
+                            ).map((call) => ({
+                                ...call,
+                                alternativeGroup: call.alternativeGroup ?? alternativeGroup,
+                                alternativePath: call.alternativePath ?? alternativePath,
+                            })),
+                        );
+                        continue;
+                    }
+                    const appliedLists = staticApplyArgumentLists(args[1], beforePosition);
+                    if (!appliedLists.complete) {
+                        const governed = governedBuiltinMember(alternative.target, beforePosition);
+                        if (governed) {
+                            analysisFailures.add(
+                                `consumer cast analysis could not statically resolve ${governed} apply argument list`,
+                            );
+                        }
+                    }
+                    for (const applied of appliedLists.lists) {
+                        normalized.push(
+                            ...normalizeEffectiveCalls(
+                                alternative.target,
+                                applied,
+                                beforePosition,
+                                nextSeen,
+                            ).map((call) => ({
+                                ...call,
+                                alternativeGroup: call.alternativeGroup ?? alternativeGroup,
+                                alternativePath: call.alternativePath ?? alternativePath,
+                            })),
                         );
                     }
-                }
-                for (const applied of appliedLists.lists) {
-                    normalized.push(
-                        ...normalizeEffectiveCalls(
-                            adapter.target,
-                            applied,
-                            beforePosition,
-                            nextSeen,
-                        ),
-                    );
                 }
                 continue;
             }
@@ -4225,6 +4459,52 @@ function analyzeProgram({
         function indexCallArguments(node, effectsOnly = false) {
             if (analysisExhausted) return;
             if (ts.isCallExpression(node)) {
+                if (ts.isIdentifier(node.expression)) {
+                    registerParameterCall(
+                        unalias(checker, checker.getSymbolAtLocation(node.expression)),
+                        node,
+                        node.arguments,
+                    );
+                }
+                const parameterAdapter = invocationAdapter(node.expression, node.pos);
+                if (
+                    parameterAdapter &&
+                    ["call", "apply"].includes(parameterAdapter.name) &&
+                    ts.isIdentifier(parameterAdapter.target) &&
+                    callApplyMemberAlternatives(node.expression, node.pos).some(
+                        (alternative) => alternative.kind === "native",
+                    )
+                ) {
+                    const parameterArguments =
+                        parameterAdapter.name === "call"
+                            ? [...node.arguments.slice(1)]
+                            : staticApplyArgumentLists(node.arguments[1], node.pos).lists.flat();
+                    registerParameterCall(
+                        unalias(checker, checker.getSymbolAtLocation(parameterAdapter.target)),
+                        node,
+                        parameterArguments,
+                    );
+                }
+                if (ts.isCallExpression(node.expression)) {
+                    const bindAdapter = invocationAdapter(
+                        node.expression.expression,
+                        node.expression.pos,
+                    );
+                    if (
+                        bindAdapter?.name === "bind" &&
+                        ts.isIdentifier(bindAdapter.target) &&
+                        bindMemberAlternatives(
+                            node.expression.expression,
+                            node.expression.pos,
+                        ).some((alternative) => alternative.kind === "native")
+                    ) {
+                        registerParameterCall(
+                            unalias(checker, checker.getSymbolAtLocation(bindAdapter.target)),
+                            node,
+                            [...node.expression.arguments.slice(1), ...node.arguments],
+                        );
+                    }
+                }
                 const preindexMutationCandidate =
                     !effectsOnly || isDirectMutationCallSyntax(node.expression);
                 const declaration = checker.getResolvedSignature(node)?.declaration;
