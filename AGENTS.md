@@ -470,7 +470,13 @@ end-to-end and green before push. Drift gates are non-negotiable.
     ordinary nested storage of a rest copy stays inert until a later spread
     flattens it; ordinary non-rest objects stay outside the special case. Typed
     helper parameters remain provenance anchors when an inline literal argument
-    has no receiver origin, including nested and aliased helper returns. Every
+    has no receiver origin. Helper return access paths are preserved through
+    object shorthand, nested object, array, alias, conditional, and unknown
+    projections, with safe-later/unsafe-last ordering evaluated at the projected
+    use. Inside the governed reconstruction seam, projected patch properties use
+    receiver-qualified reaching direct/computed/builtin writes rather than only
+    their initializer; complete branch writes dominate while partial, compound,
+    delete, and unresolved paths stay conservative. Every
     governed projection, destructuring,
     helper-return, object-literal, direct reconstruction property/spread, recovered
     path, and Cartesian path is charged through the common work/alternative limits
@@ -484,7 +490,10 @@ end-to-end and green before push. Drift gates are non-negotiable.
     within-phase sequence and become definite only on unconditional paths with
     no preceding function exit; conditional or early-return writes do not
     dominate, except that equivalent same-property writes across every branch of
-    a complete `if`/`else` form one all-path cutoff.
+    a complete `if`/`else` form one all-path cutoff. Definite member-write scans
+    stop at nested arrow, function, class method, and accessor execution
+    boundaries; only actually invoked IIFE/`call`/`apply`/`bind` effects are lifted
+    into the caller statement.
     Global-provenance direct/aliased/computed `Reflect.apply`
     is normalized through the same bounded static/spread argument-list path only
     while its reaching member value is native. The same ordered write forms can
