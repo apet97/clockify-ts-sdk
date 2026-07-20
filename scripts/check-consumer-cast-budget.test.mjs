@@ -4504,6 +4504,30 @@ for (const [label, helperSource, setup, invocation, shouldFail, runArgs] of [
     });
 }
 
+test("keeps fresh getter parameter defaults distinct by call site", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; function make(): Registry { return { Ctor: Safe }; } const source = { get registry(): Registry | undefined { return void 0; } }; function read({ registry = make() }: typeof source) { return registry; } const old = read(source); const current = read(source); old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("fails closed when reachable getter defaults exceed the alternative cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, choose: boolean) { class Safe {} const fallback = { Ctor: Safe }; const source = { get registry(): { Ctor: typeof Safe } | undefined { return choose ? { Ctor: Safe } : void 0; } }; const { registry: current = fallback } = source; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded/i);
+    });
+});
+
 test("fails closed when materialized result projection paths exceed the cap", async () => {
     const source =
         generatedImports +
@@ -5962,6 +5986,124 @@ test("keeps destructured singleton-returning getter reads aliased", async () => 
         assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
     });
 });
+
+test("merges reachable singleton defaults with destructured getter origins", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const sharedSingleton: Registry = { Ctor: Safe }; const source = { get registry(): Registry | undefined { return choose ? { Ctor: Safe } : void 0; } }; const { registry: old = sharedSingleton } = source; const { registry: current = sharedSingleton } = source; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("uses only the latest reaching typed getter receiver write", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; interface Source { readonly registry: Registry } const singleton: Registry = { Ctor: Safe }; let source: Source = { get registry() { return singleton; } }; const old = source.registry; source = { get registry() { return { Ctor: Safe }; } }; const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("uses latest reaching typed getter writes through a receiver alias", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; interface Source { readonly registry: Registry } const singleton: Registry = { Ctor: Safe }; let source: Source = { get registry() { return singleton; } }; const old = source.registry; source = { get registry() { return { Ctor: Safe }; } }; const alias = source; const current = alias.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("merges reachable defaults in getter parameter destructuring", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; const source = { get registry(): Registry | undefined { return choose ? { Ctor: Safe } : void 0; } }; function read({ registry = singleton }: typeof source) { return registry; } const old = read(source); const current = read(source); old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, setup, shouldFail] of [
+    [
+        "fresh default factories",
+        "function make(): Registry { return { Ctor: Safe }; } const source = { get registry(): Registry | undefined { return void 0; } }; const { registry: old = make() } = source; const { registry: current = make() } = source; old.Ctor = Unsafe; new current.Ctor();",
+        false,
+    ],
+    [
+        "definitely nonundefined getter",
+        "const singleton: Registry = { Ctor: Safe }; const source = { get registry(): Registry { return { Ctor: Safe }; } }; const { registry: old = singleton } = source; const { registry: current = singleton } = source; old.Ctor = Unsafe; new current.Ctor();",
+        false,
+    ],
+    [
+        "definitely undefined getter",
+        "const singleton: Registry = { Ctor: Safe }; const source = { get registry(): Registry | undefined { return void 0; } }; const { registry: old = singleton } = source; const { registry: current = singleton } = source; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "conditional assignment defaults",
+        "const singleton: Registry = { Ctor: Safe }; const source = { get registry(): Registry | undefined { return choose ? { Ctor: Safe } : void 0; } }; let old; let current; ({ registry: old = singleton } = source); ({ registry: current = singleton } = source); old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "nested conditional defaults",
+        "const singleton: Registry = { Ctor: Safe }; const nested = { get registry(): Registry | undefined { return choose ? { Ctor: Safe } : void 0; } }; const source = { nested }; const { nested: { registry: old = singleton } } = source; const { nested: { registry: current = singleton } } = source; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+]) {
+    test(`${label} preserves reachable getter default identity`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(
+                    result.failures.join("\n"),
+                    label === "nested conditional defaults"
+                        ? /(as any.*CreateProjectsRequest|could not statically resolve)/i
+                        : /as any.*CreateProjectsRequest/i,
+                );
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, setup, shouldFail] of [
+    [
+        "current singleton getter",
+        "let source: Source = { get registry() { return { Ctor: Safe }; } }; const old = source.registry; source = { get registry() { return singleton; } }; const current = source.registry; current.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "conditional receiver rebind",
+        "let source: Source = { get registry() { return singleton; } }; const old = source.registry; if (choose) source = { get registry() { return { Ctor: Safe }; } }; const current = source.registry; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "loop receiver rebind",
+        "let source: Source = { get registry() { return singleton; } }; const old = source.registry; for (const enabled of [choose]) { if (enabled) source = { get registry() { return { Ctor: Safe }; } }; } const current = source.registry; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+]) {
+    test(`${label} preserves reaching typed getter writes`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; interface Source { readonly registry: Registry } const singleton: Registry = { Ctor: Safe }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(
+                    result.failures.join("\n"),
+                    /(as any.*CreateProjectsRequest|could not statically resolve)/i,
+                );
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
 
 test("keeps nested destructured fresh-getter reads distinct", async () => {
     const source =
