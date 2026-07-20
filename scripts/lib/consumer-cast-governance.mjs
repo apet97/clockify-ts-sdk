@@ -476,7 +476,16 @@ function analyzeProgram({
                 : [];
             if (!propertyNames?.some((name) => names.includes(name))) continue;
             if (ts.isPropertyAssignment(property)) return property.initializer;
-            if (ts.isShorthandPropertyAssignment(property)) return property.name;
+            if (ts.isShorthandPropertyAssignment(property)) {
+                const valueSymbol = unalias(
+                    checker,
+                    checker.getShorthandAssignmentValueSymbol(property),
+                );
+                const valueDeclaration = (valueSymbol?.declarations ?? []).find((declaration) =>
+                    ts.isIdentifier(declaration.name),
+                );
+                return valueDeclaration?.name ?? property.name;
+            }
         }
         return null;
     }
@@ -832,6 +841,15 @@ function analyzeProgram({
         return expression;
     }
 
+    function valueSymbolAtIdentifier(identifier) {
+        const symbol =
+            ts.isShorthandPropertyAssignment(identifier.parent) &&
+            identifier.parent.name === identifier
+                ? checker.getShorthandAssignmentValueSymbol(identifier.parent)
+                : checker.getSymbolAtLocation(identifier);
+        return unalias(checker, symbol);
+    }
+
     function isGlobalBuiltin(expression, name) {
         if (!ts.isIdentifier(expression) || expression.text !== name) return false;
         const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
@@ -847,23 +865,110 @@ function analyzeProgram({
         beforePosition,
         seen = new Set(),
         substitutions = new Map(),
+        governed = false,
+        depth = 0,
     ) {
+        if (governed) {
+            chargeAnalysisWork(1);
+            if (depth > MAX_TRACE_DEPTH) {
+                analysisFailures.add(
+                    `consumer cast analysis exceeded governed reconstruction depth ${MAX_TRACE_DEPTH}`,
+                );
+                return [];
+            }
+        }
         expression = unwrapExpression(expression);
+        if (
+            governed &&
+            (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression))
+        ) {
+            const names = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : computedPropertyNames(expression);
+            if (names?.length > 0) {
+                const alternatives = [];
+                for (const base of reachingExpressionValues(
+                    expression.expression,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    governed,
+                    depth + 1,
+                )) {
+                    for (const name of names) {
+                        const step = /^\d+$/.test(name)
+                            ? { kind: "array", index: Number(name) }
+                            : { kind: "property", names: [name] };
+                        const projected = projectedExpressions(
+                            base.expression,
+                            [step],
+                            0,
+                            new Set(),
+                            true,
+                        );
+                        for (const candidate of projected) {
+                            const resolved = reachingExpressionValues(
+                                candidate,
+                                beforePosition,
+                                seen,
+                                base.substitutions,
+                                governed,
+                                depth + 1,
+                            );
+                            chargeAnalysisWork(resolved.length);
+                            const available = maxAlternatives - alternatives.length;
+                            if (resolved.length > available) {
+                                analysisFailures.add(
+                                    `consumer cast analysis limit exceeded (reaching projected access values; max ${maxAlternatives})`,
+                                );
+                            }
+                            alternatives.push(...resolved.slice(0, available));
+                        }
+                    }
+                }
+                return alternatives.length > 0 ? alternatives : [{ expression, substitutions }];
+            }
+        }
         if (ts.isConditionalExpression(expression)) {
-            return bounded([
-                ...reachingExpressionValues(
-                    expression.whenTrue,
+            if (!governed) {
+                return bounded([
+                    ...reachingExpressionValues(
+                        expression.whenTrue,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                    ),
+                    ...reachingExpressionValues(
+                        expression.whenFalse,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                    ),
+                ]);
+            }
+            const branches = [expression.whenTrue, expression.whenFalse];
+            const alternatives = [];
+            for (const branch of branches) {
+                const resolved = reachingExpressionValues(
+                    branch,
                     beforePosition,
                     seen,
                     substitutions,
-                ),
-                ...reachingExpressionValues(
-                    expression.whenFalse,
-                    beforePosition,
-                    seen,
-                    substitutions,
-                ),
-            ]);
+                    governed,
+                    depth + 1,
+                );
+                chargeAnalysisWork(resolved.length);
+                const available = maxAlternatives - alternatives.length;
+                if (resolved.length > available) {
+                    analysisFailures.add(
+                        `consumer cast analysis limit exceeded (reaching conditional values; max ${maxAlternatives})`,
+                    );
+                }
+                for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
+                    alternatives.push(resolved[index]);
+                }
+            }
+            return alternatives;
         }
         if (ts.isBinaryExpression(expression)) {
             if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
@@ -872,6 +977,8 @@ function analyzeProgram({
                     beforePosition,
                     seen,
                     substitutions,
+                    governed,
+                    depth + 1,
                 );
             }
             if (
@@ -881,27 +988,65 @@ function analyzeProgram({
                     ts.SyntaxKind.QuestionQuestionToken,
                 ].includes(expression.operatorToken.kind)
             ) {
-                return bounded([
-                    ...reachingExpressionValues(
-                        expression.left,
+                if (!governed) {
+                    return bounded([
+                        ...reachingExpressionValues(
+                            expression.left,
+                            beforePosition,
+                            seen,
+                            substitutions,
+                        ),
+                        ...reachingExpressionValues(
+                            expression.right,
+                            beforePosition,
+                            seen,
+                            substitutions,
+                        ),
+                    ]);
+                }
+                const alternatives = [];
+                for (const operand of [expression.left, expression.right]) {
+                    const resolved = reachingExpressionValues(
+                        operand,
                         beforePosition,
                         seen,
                         substitutions,
-                    ),
-                    ...reachingExpressionValues(
-                        expression.right,
-                        beforePosition,
-                        seen,
-                        substitutions,
-                    ),
-                ]);
+                        governed,
+                        depth + 1,
+                    );
+                    chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching logical values; max ${maxAlternatives})`,
+                        );
+                    }
+                    for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
+                        alternatives.push(resolved[index]);
+                    }
+                }
+                return alternatives;
             }
         }
         if (ts.isIdentifier(expression)) {
-            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            const symbol = valueSymbolAtIdentifier(expression);
+            if (
+                (symbol?.declarations ?? []).some(
+                    (declaration) => ts.isBindingElement(declaration) && declaration.dotDotDotToken,
+                )
+            ) {
+                return [{ expression, substitutions }];
+            }
             const substituted = substitutions.get(symbol);
             if (substituted) {
-                return reachingExpressionValues(substituted, beforePosition, seen, substitutions);
+                return reachingExpressionValues(
+                    substituted,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    governed,
+                    depth + 1,
+                );
             }
             if (!symbol || seen.has(symbol) || isGlobalBuiltin(expression, expression.text)) {
                 return [{ expression, substitutions }];
@@ -913,18 +1058,36 @@ function analyzeProgram({
                 (write) =>
                     write.position < beforePosition && (cutoff == null || write.position >= cutoff),
             );
-            return writes.length === 0
-                ? [{ expression, substitutions }]
-                : bounded(
-                      writes.flatMap((write) =>
-                          reachingExpressionValues(
-                              write.value,
-                              write.position,
-                              nextSeen,
-                              substitutions,
-                          ),
-                      ),
-                  );
+            if (writes.length === 0) return [{ expression, substitutions }];
+            const alternatives = [];
+            for (const write of writes) {
+                const projected = projectedExpressions(
+                    write.value,
+                    write.projection ?? [],
+                    0,
+                    new Set(),
+                    true,
+                );
+                for (const candidate of projected) {
+                    const resolved = reachingExpressionValues(
+                        candidate,
+                        write.position,
+                        nextSeen,
+                        substitutions,
+                        governed,
+                        depth + 1,
+                    );
+                    chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching projected values; max ${maxAlternatives})`,
+                        );
+                    }
+                    alternatives.push(...resolved.slice(0, available));
+                }
+            }
+            return alternatives;
         }
         if (ts.isCallExpression(expression)) {
             const declaration = functionDeclarationForExpression(expression.expression);
@@ -940,11 +1103,47 @@ function analyzeProgram({
                     const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                     if (symbol) nested.set(symbol, argument);
                 });
-                return bounded(
-                    functionReturnExpressions(declaration).flatMap((returned) =>
-                        reachingExpressionValues(returned, expression.pos, nextSeen, nested),
-                    ),
-                );
+                if (!governed) {
+                    return bounded(
+                        functionReturnExpressions(declaration).flatMap((returned) =>
+                            reachingExpressionValues(
+                                returned,
+                                expression.pos,
+                                nextSeen,
+                                nested,
+                            ).map((candidate) => ({
+                                ...candidate,
+                                sourceExpression: candidate.sourceExpression ?? expression,
+                            })),
+                        ),
+                    );
+                }
+                const alternatives = [];
+                for (const returned of functionReturnExpressions(declaration)) {
+                    const resolved = reachingExpressionValues(
+                        returned,
+                        expression.pos,
+                        nextSeen,
+                        nested,
+                        true,
+                        depth + 1,
+                    );
+                    chargeAnalysisWork(resolved.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (resolved.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (reaching helper-return values; max ${maxAlternatives})`,
+                        );
+                    }
+                    for (let index = 0; index < Math.min(resolved.length, available); index += 1) {
+                        const candidate = resolved[index];
+                        alternatives.push({
+                            ...candidate,
+                            sourceExpression: candidate.sourceExpression ?? expression,
+                        });
+                    }
+                }
+                return alternatives;
             }
         }
         return [{ expression, substitutions }];
@@ -1143,6 +1342,7 @@ function analyzeProgram({
                     property.expression.pos,
                     new Set(),
                     substitutions,
+                    true,
                 );
                 const alternatives = [];
                 for (const value of recovered) {
@@ -1150,27 +1350,44 @@ function analyzeProgram({
                         value.expression,
                         value.substitutions,
                     );
-                    chargeAnalysisWork(recoveredPaths.length);
+                    const candidatePaths =
+                        recoveredPaths.length > 0
+                            ? recoveredPaths
+                            : [
+                                  [
+                                      {
+                                          value: value.sourceExpression ?? value.expression,
+                                          names: null,
+                                          substitutions: value.substitutions,
+                                          restSource: expressionMayAliasObjectRest(
+                                              value.expression,
+                                          ),
+                                      },
+                                  ],
+                              ];
+                    chargeAnalysisWork(candidatePaths.length);
                     const available = maxAlternatives - alternatives.length;
-                    if (recoveredPaths.length > available) {
+                    if (candidatePaths.length > available) {
                         analysisFailures.add(
                             `consumer cast analysis limit exceeded (returned object recovered spread paths; max ${maxAlternatives})`,
                         );
                     }
                     for (
                         let index = 0;
-                        index < Math.min(recoveredPaths.length, available);
+                        index < Math.min(candidatePaths.length, available);
                         index += 1
                     ) {
-                        alternatives.push(recoveredPaths[index]);
+                        alternatives.push(candidatePaths[index]);
                     }
                 }
                 if (alternatives.length === 0) {
+                    chargeAnalysisWork(1);
                     alternatives.push([
                         {
                             value: property.expression,
                             names: null,
                             substitutions,
+                            restSource: expressionMayAliasObjectRest(property.expression),
                         },
                     ]);
                 }
@@ -1207,7 +1424,19 @@ function analyzeProgram({
         return sequences;
     }
 
+    const objectRestAliasCache = new Map();
+
     function expressionMayAliasObjectRest(value, use = value, seen = new Set()) {
+        if (seen.size > 0) return computeExpressionMayAliasObjectRest(value, use, seen);
+        const key = `${value.getSourceFile().fileName}:${value.pos}:${value.end}:${use.pos}:${use.end}`;
+        if (objectRestAliasCache.has(key)) return objectRestAliasCache.get(key);
+        const result = computeExpressionMayAliasObjectRest(value, use, seen);
+        objectRestAliasCache.set(key, result);
+        return result;
+    }
+
+    function computeExpressionMayAliasObjectRest(value, use, seen) {
+        chargeAnalysisWork(1);
         value = unwrapExpression(value);
         if (ts.isConditionalExpression(value)) {
             return (
@@ -1215,8 +1444,56 @@ function analyzeProgram({
                 expressionMayAliasObjectRest(value.whenFalse, value.whenFalse, seen)
             );
         }
+        if (ts.isCallExpression(value)) {
+            return reachingExpressionValues(value, value.pos, seen, new Map(), true).some(
+                (candidate) =>
+                    candidate.expression !== value &&
+                    expressionMayAliasObjectRest(candidate.expression, candidate.expression, seen),
+            );
+        }
+        if (ts.isObjectLiteralExpression(value)) {
+            for (const property of value.properties) {
+                chargeAnalysisWork(1);
+                if (
+                    ts.isSpreadAssignment(property) &&
+                    expressionMayAliasObjectRest(property.expression, property.expression, seen)
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (ts.isPropertyAccessExpression(value) || ts.isElementAccessExpression(value)) {
+            const names = ts.isPropertyAccessExpression(value)
+                ? [value.name.text]
+                : computedPropertyNames(value);
+            if (!names?.length) return false;
+            return reachingExpressionValues(
+                value.expression,
+                value.pos,
+                seen,
+                new Map(),
+                true,
+            ).some((base) =>
+                names.some((name) => {
+                    const step = /^\d+$/.test(name)
+                        ? { kind: "array", index: Number(name) }
+                        : { kind: "property", names: [name] };
+                    const candidates = projectedExpressions(
+                        base.expression,
+                        [step],
+                        0,
+                        new Set(),
+                        true,
+                    );
+                    return candidates.some((candidate) =>
+                        expressionMayAliasObjectRest(candidate, candidate, seen),
+                    );
+                }),
+            );
+        }
         if (!ts.isIdentifier(value)) return false;
-        const symbol = unalias(checker, checker.getSymbolAtLocation(value));
+        const symbol = valueSymbolAtIdentifier(value);
         if (!symbol || seen.has(symbol)) return false;
         if (
             (symbol.declarations ?? []).some(
@@ -1227,11 +1504,24 @@ function analyzeProgram({
         }
         const nextSeen = new Set(seen);
         nextSeen.add(symbol);
-        return reachingWrites(symbol, use).writes.some((write) =>
-            projectedExpressions(write.value, write.projection ?? []).some((candidate) =>
-                expressionMayAliasObjectRest(candidate, candidate, nextSeen),
-            ),
-        );
+        for (const write of reachingWrites(symbol, use).writes) {
+            chargeAnalysisWork(1);
+            const projected = projectedExpressions(
+                write.value,
+                write.projection ?? [],
+                0,
+                new Set(),
+                true,
+            );
+            if (
+                projected.some((candidate) =>
+                    expressionMayAliasObjectRest(candidate, candidate, nextSeen),
+                )
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function getterEffectValues(entry, beforePosition) {
@@ -3638,7 +3928,8 @@ function analyzeProgram({
         };
     }
 
-    function projectedExpressions(source, steps, depth = 0, seen = new Set()) {
+    function projectedExpressions(source, steps, depth = 0, seen = new Set(), charged = false) {
+        if (charged) chargeAnalysisWork(1);
         if (!source || depth > MAX_TRACE_DEPTH) return [];
         if (steps.length === 0) return [source];
         while (
@@ -3664,20 +3955,39 @@ function analyzeProgram({
                 }
             }
             if (values.length > 0) {
-                return values.flatMap((value) =>
-                    projectedExpressions(value, steps, depth + 1, nextSeen),
-                );
+                if (!charged) {
+                    return values.flatMap((value) =>
+                        projectedExpressions(value, steps, depth + 1, nextSeen, charged),
+                    );
+                }
+                const alternatives = [];
+                for (const value of values) {
+                    const projected = projectedExpressions(value, steps, depth + 1, nextSeen, true);
+                    chargeAnalysisWork(projected.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (projected.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (projected values; max ${maxAlternatives})`,
+                        );
+                    }
+                    for (let index = 0; index < Math.min(projected.length, available); index += 1) {
+                        alternatives.push(projected[index]);
+                    }
+                }
+                return alternatives;
             }
         }
         const [step, ...rest] = steps;
         if (step.kind === "property" && ts.isObjectLiteralExpression(source)) {
             const selected = literalObjectProperty(source, step.names);
-            return selected ? projectedExpressions(selected, rest, depth + 1, nextSeen) : [];
+            return selected
+                ? projectedExpressions(selected, rest, depth + 1, nextSeen, charged)
+                : [];
         }
         if (step.kind === "array" && ts.isArrayLiteralExpression(source)) {
             const selected = source.elements[step.index];
             return selected && !ts.isOmittedExpression(selected)
-                ? projectedExpressions(selected, rest, depth + 1, nextSeen)
+                ? projectedExpressions(selected, rest, depth + 1, nextSeen, charged)
                 : [];
         }
         if (step.kind === "objectRest") {
@@ -3689,6 +3999,7 @@ function analyzeProgram({
                     [access, ...rest.slice(1)],
                     depth + 1,
                     nextSeen,
+                    charged,
                 );
             }
         }
@@ -3700,6 +4011,7 @@ function analyzeProgram({
                     [{ kind: "array", index: step.start + access.index }, ...rest.slice(1)],
                     depth + 1,
                     nextSeen,
+                    charged,
                 );
             }
         }
@@ -3875,6 +4187,7 @@ function analyzeProgram({
                 traceStep(source, stepIndex + 1, propertyDepth + 1, propertySeen, {
                     ...stepContext,
                     returnedAliasBeforePosition: declaration.pos,
+                    returnedAliasSnapshotExpression: step.binding.name,
                     returnedAliasExcludedNames: [
                         ...(stepContext.returnedAliasExcludedNames ?? []),
                         ...step.excluded,
@@ -4030,6 +4343,7 @@ function analyzeProgram({
     function traceReturnedAliasWrites(expression, context, depth, seen) {
         if (context.requestContributing === false || (context.accessPath?.length ?? 0) > 0) return;
         const returnedUse = context.returnedAliasUseExpression ?? expression;
+        const snapshotUse = context.returnedAliasSnapshotExpression ?? returnedUse;
         const beforePosition = context.returnedAliasBeforePosition ?? expression.pos;
         const returnedUsePosition = returnedUse.pos;
         const excludedNames = new Set(context.returnedAliasExcludedNames ?? []);
@@ -4095,7 +4409,14 @@ function analyzeProgram({
                     !context.returnedAliasScanLocalOnly ||
                     enclosingFunction(write.node) === enclosingFunction(expression),
             )
-            .flatMap((write) => effectiveWrites(write, returnedUse))
+            .flatMap((write) => {
+                const receiver = memberWriteReceiver(write);
+                const use =
+                    receiver && definitelyAliasesReturnedCopy(receiver, receiver)
+                        ? returnedUse
+                        : snapshotUse;
+                return effectiveWrites(write, use);
+            })
             .filter((write) => {
                 const receiver = memberWriteReceiver(write);
                 if (!receiver) return false;
@@ -4533,10 +4854,11 @@ function analyzeProgram({
                                 atBoundaryValue:
                                     entry.names == null &&
                                     context.atBoundaryValue &&
-                                    typeMayCarryRequest(
-                                        checker.getTypeAtLocation(entry.value),
-                                        context.expectedRequestType,
-                                    ),
+                                    (entry.restSource ||
+                                        typeMayCarryRequest(
+                                            checker.getTypeAtLocation(entry.value),
+                                            context.expectedRequestType,
+                                        )),
                                 returnedAliasExcludedNames:
                                     entry.names == null
                                         ? [
