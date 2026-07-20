@@ -258,6 +258,7 @@ function analyzeProgram({
     const propertyWrites = [];
     const wildcardPropertyWrites = [];
     const callArgumentsByParameter = new Map();
+    const concreteArgumentsByParameter = new Map();
     const callsThroughParameter = new Map();
     const forwardedParameters = new Map();
     const callsByDeclaration = new Map();
@@ -427,12 +428,21 @@ function analyzeProgram({
         );
     }
 
-    function materializeParameterCalls(symbol, argument) {
+    function materializeParameterCalls(symbol, argument, requiredCallerNodes) {
         for (const call of callsThroughParameter.get(symbol) ?? []) {
             for (const declaration of callableDeclarationsForValue(argument, call.node.pos)) {
-                const isAsync =
-                    (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0;
-                if (!isAsync) addInvocation(declaration, call.node, call.arguments);
+                addInvocation(
+                    declaration,
+                    call.node,
+                    call.arguments,
+                    new Map(),
+                    0,
+                    null,
+                    null,
+                    true,
+                    requiredCallerNodes,
+                    call.afterSuspension,
+                );
             }
         }
     }
@@ -441,21 +451,55 @@ function analyzeProgram({
         if (!symbol) return;
         const declarations = symbol.declarations ?? [];
         if (!declarations.some(ts.isParameter)) return;
-        const owner = enclosingFunction(node);
-        if (owner && (ts.getCombinedModifierFlags(owner) & ts.ModifierFlags.Async) !== 0) {
-            return;
-        }
         const calls = callsThroughParameter.get(symbol) ?? [];
         if (!calls.some((call) => call.node === node)) {
-            calls.push({ node, arguments: [...args] });
+            calls.push({
+                node,
+                arguments: [...args],
+                afterSuspension: nodeAfterDefiniteAsyncSuspension(node),
+            });
             callsThroughParameter.set(symbol, calls);
         }
-        for (const argument of callArgumentsByParameter.get(symbol) ?? []) {
-            materializeParameterCalls(symbol, argument);
+        for (const concrete of concreteArgumentsByParameter.get(symbol) ?? []) {
+            materializeParameterCalls(symbol, concrete.argument, concrete.requiredCallerNodes);
         }
     }
 
-    function recordParameterArgument(symbol, argument, seen = new Set()) {
+    function recordConcreteParameterArgument(
+        symbol,
+        argument,
+        requiredCallerNodes,
+        seen = new Set(),
+    ) {
+        if (!symbol || seen.has(symbol)) return;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const concrete = concreteArgumentsByParameter.get(symbol) ?? [];
+        if (
+            !concrete.some(
+                (entry) =>
+                    entry.argument === argument &&
+                    entry.requiredCallerNodes.length === requiredCallerNodes.length &&
+                    entry.requiredCallerNodes.every(
+                        (node, index) => node === requiredCallerNodes[index],
+                    ),
+            )
+        ) {
+            concrete.push({ argument, requiredCallerNodes });
+            concreteArgumentsByParameter.set(symbol, concrete);
+        }
+        materializeParameterCalls(symbol, argument, requiredCallerNodes);
+        for (const forwarding of forwardedParameters.get(symbol) ?? []) {
+            recordConcreteParameterArgument(
+                forwarding.destination,
+                argument,
+                [forwarding.invocation.node, ...requiredCallerNodes],
+                nextSeen,
+            );
+        }
+    }
+
+    function recordParameterArgument(symbol, argument, invocation, seen = new Set()) {
         if (!symbol || seen.has(symbol)) return;
         const nextSeen = new Set(seen);
         nextSeen.add(symbol);
@@ -464,21 +508,37 @@ function analyzeProgram({
             inputs.push(argument);
             callArgumentsByParameter.set(symbol, inputs);
         }
-        materializeParameterCalls(symbol, argument);
         if (ts.isIdentifier(argument)) {
             const source = unalias(checker, checker.getSymbolAtLocation(argument));
             if ((source?.declarations ?? []).some(ts.isParameter)) {
-                const destinations = forwardedParameters.get(source) ?? new Set();
-                destinations.add(symbol);
-                forwardedParameters.set(source, destinations);
-                for (const sourceArgument of callArgumentsByParameter.get(source) ?? []) {
-                    recordParameterArgument(symbol, sourceArgument, nextSeen);
+                const destinations = forwardedParameters.get(source) ?? [];
+                if (
+                    !destinations.some(
+                        (forwarding) =>
+                            forwarding.destination === symbol &&
+                            forwarding.invocation.node === invocation.node,
+                    )
+                ) {
+                    destinations.push({ destination: symbol, invocation });
                 }
+                forwardedParameters.set(source, destinations);
+                for (const concrete of concreteArgumentsByParameter.get(source) ?? []) {
+                    recordConcreteParameterArgument(
+                        symbol,
+                        concrete.argument,
+                        [invocation.node, ...concrete.requiredCallerNodes],
+                        nextSeen,
+                    );
+                }
+                return;
             }
         }
-        for (const destination of forwardedParameters.get(symbol) ?? []) {
-            recordParameterArgument(destination, argument, nextSeen);
-        }
+        recordConcreteParameterArgument(
+            symbol,
+            argument,
+            [invocation.node, ...invocation.requiredCallerNodes],
+            seen,
+        );
     }
 
     function addInvocation(
@@ -490,6 +550,8 @@ function analyzeProgram({
         alternativeGroup = null,
         alternativePath = null,
         recordParameterInputs = true,
+        requiredCallerNodes = [],
+        requiresAwaitedCompletion = false,
     ) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
         const invocation = {
@@ -499,6 +561,8 @@ function analyzeProgram({
             executionPhase,
             alternativeGroup,
             alternativePath,
+            requiredCallerNodes: [...requiredCallerNodes],
+            requiresAwaitedCompletion,
         };
         registerAlternativePath(alternativeGroup, alternativePath);
         const calls = callsByDeclaration.get(declaration) ?? [];
@@ -516,7 +580,12 @@ function analyzeProgram({
                     ) &&
                     existing.executionPhase === invocation.executionPhase &&
                     existing.alternativeGroup === invocation.alternativeGroup &&
-                    existing.alternativePath === invocation.alternativePath,
+                    existing.alternativePath === invocation.alternativePath &&
+                    existing.requiredCallerNodes.length === invocation.requiredCallerNodes.length &&
+                    existing.requiredCallerNodes.every(
+                        (required, index) => required === invocation.requiredCallerNodes[index],
+                    ) &&
+                    existing.requiresAwaitedCompletion === invocation.requiresAwaitedCompletion,
             )
         ) {
             calls.push(invocation);
@@ -528,7 +597,7 @@ function analyzeProgram({
                 if (!argument || !ts.isIdentifier(parameter.name)) return;
                 const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                 if (!symbol) return;
-                recordParameterArgument(symbol, argument);
+                recordParameterArgument(symbol, argument, invocation);
             });
     }
 
@@ -1200,6 +1269,48 @@ function analyzeProgram({
             }
         }
         return false;
+    }
+
+    function nodeAfterDefiniteAsyncSuspension(node) {
+        const owner = enclosingFunction(node);
+        if (!owner || (ts.getCombinedModifierFlags(owner) & ts.ModifierFlags.Async) === 0) {
+            return false;
+        }
+        let suspended = false;
+        function visit(candidate) {
+            if (suspended || candidate.pos >= node.pos) return;
+            if (candidate !== owner && ts.isFunctionLike(candidate)) return;
+            if (
+                ts.isAwaitExpression(candidate) &&
+                enclosingFunction(candidate) === owner &&
+                expressionDefinitelyExecutesOnInvocation(candidate, owner)
+            ) {
+                suspended = true;
+                return;
+            }
+            ts.forEachChild(candidate, visit);
+        }
+        if (owner.body) visit(owner.body);
+        return suspended;
+    }
+
+    function invocationIsAwaitedBeforeUse(node, use) {
+        let current = node;
+        while (
+            current.parent &&
+            (ts.isParenthesizedExpression(current.parent) ||
+                ts.isAsExpression(current.parent) ||
+                ts.isSatisfiesExpression(current.parent) ||
+                ts.isNonNullExpression(current.parent))
+        ) {
+            current = current.parent;
+        }
+        return (
+            current.parent != null &&
+            ts.isAwaitExpression(current.parent) &&
+            current.parent.getSourceFile() === use.getSourceFile() &&
+            current.parent.pos < use.pos
+        );
     }
 
     for (const sourceFile of program.getSourceFiles()) {
@@ -5432,6 +5543,21 @@ function analyzeProgram({
         const active = [];
         for (const invocation of callsByDeclaration.get(declaration) ?? []) {
             const call = invocation.node;
+            const requiredTopLevelCall = invocation.requiredCallerNodes.at(-1);
+            if (
+                invocation.requiresAwaitedCompletion &&
+                !invocationIsAwaitedBeforeUse(requiredTopLevelCall ?? call, use)
+            ) {
+                continue;
+            }
+            if (
+                requiredTopLevelCall &&
+                (requiredTopLevelCall.getSourceFile() !== use.getSourceFile() ||
+                    requiredTopLevelCall.pos >= use.pos ||
+                    expressionDefinitelySkipped(requiredTopLevelCall))
+            ) {
+                continue;
+            }
             const classExecution = classExecutionMetadata(call);
             if (classExecution.inactiveClassMemberEffect) continue;
             if (
@@ -5538,7 +5664,14 @@ function analyzeProgram({
         const declaration = enclosingFunction(write.node);
         if (!declaration || declaration === enclosingFunction(use)) return [write];
         const useFunction = enclosingFunction(use);
-        function lift(effect, owner, invocation, depth = 0) {
+        const writeRequiresAwaitedCompletion = nodeAfterDefiniteAsyncSuspension(write.node);
+        function lift(
+            effect,
+            owner,
+            invocation,
+            depth = 0,
+            requiredCallerNodes = invocation.requiredCallerNodes,
+        ) {
             if (depth > MAX_TRACE_DEPTH) return [];
             const call = invocation.node;
             const substitutions = parameterSubstitutions(owner, invocation);
@@ -5582,14 +5715,29 @@ function analyzeProgram({
             };
             const caller = enclosingFunction(call);
             if (!caller || caller === useFunction) return [lifted];
-            return activeCallsOf(caller, use).flatMap((callerInvocation) =>
-                lift(lifted, caller, callerInvocation, depth + 1),
+            const requiredCaller = requiredCallerNodes[0];
+            const callerInvocations = activeCallsOf(caller, use).filter(
+                (callerInvocation) =>
+                    requiredCaller == null || callerInvocation.node === requiredCaller,
+            );
+            return callerInvocations.flatMap((callerInvocation) =>
+                lift(
+                    lifted,
+                    caller,
+                    callerInvocation,
+                    depth + 1,
+                    requiredCallerNodes.slice(requiredCaller ? 1 : 0),
+                ),
             );
         }
         return bounded(
-            activeCallsOf(declaration, use).flatMap((invocation) =>
-                lift(write, declaration, invocation),
-            ),
+            activeCallsOf(declaration, use)
+                .filter(
+                    (invocation) =>
+                        !writeRequiresAwaitedCompletion ||
+                        invocationIsAwaitedBeforeUse(invocation.node, use),
+                )
+                .flatMap((invocation) => lift(write, declaration, invocation)),
         );
     }
 
