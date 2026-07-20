@@ -290,6 +290,22 @@ seven conditional/noop, mutually exclusive, and non-invoked controls stayed
 green. The finished focused set passes **18/18**, and the complete controller
 suite passes **443/443** fixtures while retaining the prior 425 cases.
 
+The twenty-first corrective review preserves mixed native/custom bind paths
+through nested invocation, classifying native identity per reaching member
+value and carrying execution phase plus alternative identity into normalized
+built-in writes. Non-returning custom-binder branches remain registered and an
+attempt to invoke their unresolved result fails closed without making an
+uninvoked return an effect. Reachable governed request traces now also fail
+closed at the depth bound, while below-limit and unreachable/uncalled chains
+retain their prior behavior. Twelve of the initial 20 focused cases failed
+against `cbad610`; the eight all-safe, non-invoked, below-limit, and unreachable
+controls stayed green. The first canonical run then exposed that generic
+structural depth also counted non-request inputs such as schema descriptions and
+tool context. A real-shape 40-hop metadata argument reproduced that false
+failure before helper depth was limited to request-contributing return paths.
+The finished focused set passes **21/21**, and the complete controller suite
+passes **464/464** fixtures while retaining the prior 443 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -314,7 +330,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twentieth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-first-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

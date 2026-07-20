@@ -319,6 +319,15 @@ function analyzeProgram({
         addInvocation(declaration, node, args);
     }
 
+    function registerAlternativePath(alternativeGroup, alternativePath) {
+        if (alternativeGroup == null || alternativePath == null) return;
+        const paths = alternativePathsByGroup.get(alternativeGroup) ?? new Set();
+        if (![...paths].some((path) => path.startsWith(`${alternativePath}/`))) {
+            paths.add(alternativePath);
+        }
+        alternativePathsByGroup.set(alternativeGroup, paths);
+    }
+
     function addInvocation(
         declaration,
         node,
@@ -337,13 +346,7 @@ function analyzeProgram({
             alternativeGroup,
             alternativePath,
         };
-        if (alternativeGroup != null && alternativePath != null) {
-            const paths = alternativePathsByGroup.get(alternativeGroup) ?? new Set();
-            if (![...paths].some((path) => path.startsWith(`${alternativePath}/`))) {
-                paths.add(alternativePath);
-            }
-            alternativePathsByGroup.set(alternativeGroup, paths);
-        }
+        registerAlternativePath(alternativeGroup, alternativePath);
         const calls = callsByDeclaration.get(declaration) ?? [];
         if (
             !calls.some(
@@ -1312,6 +1315,7 @@ function analyzeProgram({
         effectGroup = null,
         effectOrder = 0,
         definiteEffectNames = [],
+        execution = {},
     ) {
         propertyWrites.push({
             value,
@@ -1325,6 +1329,9 @@ function analyzeProgram({
             effectGroup,
             effectOrder,
             definiteEffectNames,
+            executionPhase: execution.executionPhase ?? 0,
+            alternativeGroup: execution.alternativeGroup ?? null,
+            alternativePath: execution.alternativePath ?? null,
         });
     }
 
@@ -1805,10 +1812,16 @@ function analyzeProgram({
                         return [{ kind: "native", target: adapter.target }];
                     }
                     return reachingExpressionValues(alternative.value, alternative.position).map(
-                        (value) => ({
-                            kind: "custom",
-                            expression: value.expression,
-                        }),
+                        (value) =>
+                            isNativeBindValue(
+                                value.expression,
+                                value.expression.pos ?? alternative.position,
+                            )
+                                ? { kind: "native", target: adapter.target }
+                                : {
+                                      kind: "custom",
+                                      expression: value.expression,
+                                  },
                     );
                 }),
                 "bind member values",
@@ -1858,7 +1871,21 @@ function analyzeProgram({
                     reachingExpressionValues(returned, beforePosition, new Set(), substitutions),
             );
             if (returnedAlternatives.length === 0) {
-                addInvocation(declaration, invocation, args, value.substitutions, 0);
+                const alternativePath = `${pathPrefix}:${valueIndex}:unresolved`;
+                addInvocation(
+                    declaration,
+                    invocation,
+                    args,
+                    value.substitutions,
+                    0,
+                    alternativeGroup,
+                    alternativePath,
+                );
+                alternatives.push({
+                    kind: "unresolved-return",
+                    alternativeGroup,
+                    alternativePath,
+                });
                 continue;
             }
             returnedAlternatives.forEach((returnedValue, returnedIndex) => {
@@ -1885,6 +1912,18 @@ function analyzeProgram({
         return bounded(alternatives, "custom binder returns");
     }
 
+    function nativeBoundAlternative(target, args, alternativeGroup, alternativePath) {
+        registerAlternativePath(alternativeGroup, alternativePath);
+        return {
+            kind: "bound",
+            target,
+            arguments: [...args],
+            executionPhase: 1,
+            alternativeGroup,
+            alternativePath,
+        };
+    }
+
     function refineAlternativePath(group, parentPath, childPaths) {
         if (group == null || parentPath == null) return;
         const paths = alternativePathsByGroup.get(group) ?? new Set();
@@ -1906,7 +1945,36 @@ function analyzeProgram({
         }
         const alternatives = [];
         for (const candidate of candidates) {
-            if (candidate.kind !== "returned") continue;
+            if (candidate.kind === "bound") {
+                const effectiveArguments = [...candidate.arguments, ...args];
+                const governed = governedBuiltinMember(candidate.target, invocation.pos);
+                if (governed === "Object.assign" && effectiveArguments[0]) {
+                    alternatives.push({
+                        kind: "plain",
+                        expression: effectiveArguments[0],
+                        executionPhase: candidate.executionPhase,
+                        alternativeGroup: candidate.alternativeGroup,
+                        alternativePath: candidate.alternativePath,
+                    });
+                } else {
+                    analysisFailures.add(
+                        "consumer cast analysis could not statically resolve invoked nested bound callable result",
+                    );
+                }
+                continue;
+            }
+            if (candidate.kind === "unresolved-return") {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve invoked custom binder return",
+                );
+                continue;
+            }
+            if (candidate.kind !== "returned") {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve invoked nested callable alternative",
+                );
+                continue;
+            }
             const declaration = functionDeclarationForExpression(candidate.expression);
             if (!declaration?.body) {
                 analysisFailures.add(
@@ -2079,11 +2147,12 @@ function analyzeProgram({
                 directBindAlternatives.flatMap((alternative, alternativeIndex) =>
                     alternative.kind === "native"
                         ? [
-                              {
-                                  kind: "bound",
-                                  target: alternative.target,
-                                  arguments: [...expression.arguments.slice(1)],
-                              },
+                              nativeBoundAlternative(
+                                  alternative.target,
+                                  expression.arguments.slice(1),
+                                  alternativeGroup,
+                                  `direct:${alternativeIndex}:native`,
+                              ),
                           ]
                         : customBinderReturns(
                               alternative.expression,
@@ -2121,11 +2190,12 @@ function analyzeProgram({
             bindAlternatives.flatMap((alternative, alternativeIndex) =>
                 alternative.kind === "native"
                     ? [
-                          {
-                              kind: "bound",
-                              target: expression.arguments[0],
-                              arguments: [...list.slice(1)],
-                          },
+                          nativeBoundAlternative(
+                              expression.arguments[0],
+                              list.slice(1),
+                              alternativeGroup,
+                              `${direct.name}:${listIndex}:${alternativeIndex}:native`,
+                          ),
                       ]
                     : customBinderReturns(
                           alternative.expression,
@@ -2151,32 +2221,39 @@ function analyzeProgram({
 
         const boundCandidates = boundFunctionAlternatives(expression, beforePosition, nextSeen);
         const candidates = boundCandidates.some((candidate) => candidate.kind !== "plain")
-            ? boundCandidates.map((candidate) =>
-                  candidate.kind === "bound"
-                      ? {
-                            expression: candidate.target,
-                            boundArguments: candidate.arguments,
-                        }
-                      : {
-                            expression: candidate.expression,
-                            invokeReturned: candidate.kind === "returned",
-                            substitutions: candidate.substitutions,
-                            executionPhase: candidate.executionPhase,
-                            alternativeGroup: candidate.alternativeGroup,
-                            alternativePath: candidate.alternativePath,
-                        },
-              )
+            ? boundCandidates.map((candidate) => ({
+                  expression: candidate.kind === "bound" ? candidate.target : candidate.expression,
+                  boundArguments: candidate.kind === "bound" ? candidate.arguments : null,
+                  invokeReturned: candidate.kind === "returned",
+                  unresolvedReturn: candidate.kind === "unresolved-return",
+                  substitutions: candidate.substitutions,
+                  executionPhase: candidate.executionPhase,
+                  alternativeGroup: candidate.alternativeGroup,
+                  alternativePath: candidate.alternativePath,
+              }))
             : [{ expression }];
         const normalized = [];
         for (const candidate of candidates) {
             if (candidate.boundArguments) {
+                const calls = normalizeEffectiveCalls(
+                    candidate.expression,
+                    [...candidate.boundArguments, ...args],
+                    beforePosition,
+                    nextSeen,
+                );
                 normalized.push(
-                    ...normalizeEffectiveCalls(
-                        candidate.expression,
-                        [...candidate.boundArguments, ...args],
-                        beforePosition,
-                        nextSeen,
-                    ),
+                    ...calls.map((call) => ({
+                        ...call,
+                        executionPhase: call.executionPhase ?? candidate.executionPhase,
+                        alternativeGroup: call.alternativeGroup ?? candidate.alternativeGroup,
+                        alternativePath: call.alternativePath ?? candidate.alternativePath,
+                    })),
+                );
+                continue;
+            }
+            if (candidate.unresolvedReturn) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve invoked custom binder return",
                 );
                 continue;
             }
@@ -2269,7 +2346,13 @@ function analyzeProgram({
                 }
                 continue;
             }
-            normalized.push({ expression: callee, arguments: [...args] });
+            normalized.push({
+                expression: callee,
+                arguments: [...args],
+                executionPhase: candidate.executionPhase,
+                alternativeGroup: candidate.alternativeGroup,
+                alternativePath: candidate.alternativePath,
+            });
         }
         return bounded(normalized, "effective call alternatives");
     }
@@ -2379,6 +2462,11 @@ function analyzeProgram({
                 effectiveCalls.forEach((effectiveCall, normalizedPathIndex) => {
                     const effectiveExpression = effectiveCall.expression;
                     const effectiveArguments = effectiveCall.arguments;
+                    const effectiveExecution = {
+                        executionPhase: effectiveCall.executionPhase,
+                        alternativeGroup: effectiveCall.alternativeGroup,
+                        alternativePath: effectiveCall.alternativePath,
+                    };
 
                     if (
                         effectiveArguments[0] &&
@@ -2439,6 +2527,7 @@ function analyzeProgram({
                                     effectGroup,
                                     effectOrder,
                                     normalizedCallIsDefinite ? definiteEffectNames : [],
+                                    effectiveExecution,
                                 );
                             });
                         });
@@ -2486,6 +2575,7 @@ function analyzeProgram({
                             `${node.getSourceFile().fileName}:${node.pos}:reflect-set:${normalizedPathIndex}`,
                             0,
                             normalizedCallIsDefinite && names?.length === 1 ? names : [],
+                            effectiveExecution,
                         );
                     }
 
@@ -2551,6 +2641,7 @@ function analyzeProgram({
                                         path.length > 0
                                         ? names
                                         : [],
+                                    effectiveExecution,
                                 ),
                             );
                         });
@@ -2597,6 +2688,7 @@ function analyzeProgram({
                                     effectGroup,
                                     effectOrder,
                                     normalizedCallIsDefinite ? definiteEffectNames : [],
+                                    effectiveExecution,
                                 ),
                             );
                         });
@@ -3713,7 +3805,12 @@ function analyzeProgram({
                 );
             }
             for (const argument of expression.arguments) {
-                trace(argument, { ...context, atBoundaryValue: false }, depth + 1, nextSeen);
+                trace(
+                    argument,
+                    { ...context, atBoundaryValue: false, requestContributing: false },
+                    depth + 1,
+                    nextSeen,
+                );
             }
             if (declaration && ts.isFunctionLike(declaration) && declaration.body) {
                 const substitutions = new Map(context.substitutions);
@@ -3723,9 +3820,16 @@ function analyzeProgram({
                     substitutions.set(symbol, expression.arguments[index]);
                     substitutions.set(unalias(checker, symbol), expression.arguments[index]);
                 });
-                const nestedContext = { ...context, substitutions };
-                for (const returned of functionReturnExpressions(declaration)) {
-                    trace(returned, nestedContext, depth + 1, nextSeen);
+                const helperDepth = (context.helperDepth ?? 0) + 1;
+                if (context.requestContributing !== false && helperDepth > MAX_TRACE_DEPTH) {
+                    analysisFailures.add(
+                        `consumer cast analysis exceeded governed request trace depth ${MAX_TRACE_DEPTH}`,
+                    );
+                } else {
+                    const nestedContext = { ...context, substitutions, helperDepth };
+                    for (const returned of functionReturnExpressions(declaration)) {
+                        trace(returned, nestedContext, depth + 1, nextSeen);
+                    }
                 }
             }
             return;
@@ -4113,6 +4217,8 @@ function analyzeProgram({
                             expectedRequestType,
                             packageName,
                             atBoundaryValue: true,
+                            requestContributing: true,
+                            helperDepth: 0,
                             substitutions: new Map(),
                         });
                     }

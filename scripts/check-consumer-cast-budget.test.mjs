@@ -2803,6 +2803,158 @@ test("fails closed for an unresolved invoked nested returned callable", async ()
     );
 });
 
+for (const [label, invocation] of [
+    ["direct", "assign.bind(Object, holder, PATCH)()();"],
+    ["call", "assign.bind.call(assign, Object, holder, PATCH)()();"],
+    ["apply", "assign.bind.apply(assign, [Object, holder, PATCH])()();"],
+    ["computed", 'assign["bind"](Object, holder, PATCH)()();'],
+]) {
+    test(`keeps the native mutation path beside a nested safe custom binder through ${label}`, async () => {
+        await withFixture(
+            generatedImports +
+                'export async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder = Object.assign(() => undefined, { request: { workspaceId: "safe" } }); const assign = Object.assign; const safeBinder = (function (_thisArg: unknown, target: typeof holder, _patch: unknown) { return () => () => { target.request = { workspaceId: "safe" }; }; }) as typeof assign.bind; assign.bind = choose ? Function.prototype.bind : safeBinder; ' +
+                invocation.replace("PATCH", "{ request: body as any }") +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            },
+        );
+    });
+
+    test(`allows all-safe native and nested custom binder paths through ${label}`, async () => {
+        await withFixture(
+            generatedImports +
+                'export async function run(client: FixtureClient, choose: boolean) { const holder = Object.assign(() => undefined, { request: { workspaceId: "safe" } }); const assign = Object.assign; const safeBinder = (function (_thisArg: unknown, target: typeof holder, _patch: unknown) { return () => () => { target.request = { workspaceId: "safe" }; }; }) as typeof assign.bind; assign.bind = choose ? Function.prototype.bind : safeBinder; ' +
+                invocation.replace("PATCH", '{ request: { workspaceId: "safe" } }') +
+                " return client.projects.create(holder.request); }\n",
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                assert.deepEqual(result.failures, []);
+            },
+        );
+    });
+}
+
+for (const [order, binder] of [
+    [
+        "unsafe-first",
+        'choose ? function (_thisArg: unknown, target: Holder, input: unknown) { target.request = input as any; return () => undefined; } : function (_thisArg: unknown, target: Holder, _input: unknown) { target.request = { workspaceId: "safe" }; }',
+    ],
+    [
+        "unsafe-last",
+        'choose ? function (_thisArg: unknown, target: Holder, _input: unknown) { target.request = { workspaceId: "safe" }; } : function (_thisArg: unknown, target: Holder, input: unknown) { target.request = input as any; return () => undefined; }',
+    ],
+]) {
+    for (const [label, invocation] of [
+        ["direct", "assign.bind(Object, holder, body)();"],
+        ["call", "assign.bind.call(assign, Object, holder, body)();"],
+        ["apply", "assign.bind.apply(assign, [Object, holder, body])();"],
+    ]) {
+        test(`keeps ${order} custom-binder effects beside a non-returning ${label} branch`, async () => {
+            await withFixture(
+                generatedImports +
+                    'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; assign.bind = (' +
+                    binder +
+                    ") as typeof assign.bind; " +
+                    invocation +
+                    " return client.projects.create(holder.request); }\n",
+                async (root) => {
+                    const result = await validateConsumerCastGovernance({
+                        root,
+                        contract: zeroContract,
+                    });
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                    assert.match(
+                        result.failures.join("\n"),
+                        /statically resolve.*custom binder return/i,
+                    );
+                },
+            );
+        });
+    }
+}
+
+test("does not invoke an unsafe returned callable beside a non-returning binder branch", async () => {
+    await withFixture(
+        generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const assign = Object.assign; assign.bind = (choose ? function (_thisArg: unknown, target: Holder, input: unknown) { return () => { target.request = input as any; }; } : function (_thisArg: unknown, target: Holder, _input: unknown) { target.request = { workspaceId: "safe" }; }) as typeof assign.bind; const bound = assign.bind(Object, holder, body); void bound; return client.projects.create(holder.request); }\n',
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+function helperChainFixture(length, terminalReturn, requestExpression = "helper0(body)") {
+    const helpers = Array.from({ length }, (_unused, index) =>
+        index === length - 1
+            ? `function helper${index}(value: unknown) { return ${terminalReturn}; }`
+            : `function helper${index}(value: unknown) { return helper${index + 1}(value); }`,
+    ).join("\n");
+    return `${generatedImports}${helpers}\nexport async function run(client: FixtureClient, body: unknown) { return client.projects.create(${requestExpression}); }\n`;
+}
+
+test("traces a below-limit unsafe helper chain", async () => {
+    await withFixture(helperChainFixture(5, "value as any"), async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("allows a below-limit safe helper chain", async () => {
+    await withFixture(helperChainFixture(5, '{ workspaceId: "safe" }'), async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, terminal] of [
+    ["unsafe", "value as any"],
+    ["safe but unresolved", '{ workspaceId: "safe" }'],
+]) {
+    test(`fails closed when a reachable ${label} helper chain exceeds trace depth`, async () => {
+        await withFixture(helperChainFixture(40, terminal), async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(
+                result.failures.join("\n"),
+                /consumer cast analysis exceeded governed request trace depth 24/i,
+            );
+        });
+    });
+}
+
+test("does not fail on an unreachable deep helper chain", async () => {
+    await withFixture(
+        helperChainFixture(40, "value as any", '{ workspaceId: "safe" }'),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("does not fail on a deep non-contributing helper argument to a safe request factory", async () => {
+    const metadataHelpers = Array.from({ length: 40 }, (_unused, index) =>
+        index === 39
+            ? `function metadata${index}(value: unknown) { return value; }`
+            : `function metadata${index}(value: unknown) { return metadata${index + 1}(value); }`,
+    ).join("\n");
+    await withFixture(
+        `${generatedImports}${metadataHelpers}\nfunction safeRequest(_metadata: unknown) { return { workspaceId: "safe" }; }\nexport async function run(client: FixtureClient) { return client.projects.create(safeRequest(metadata0("Validated optional request fields"))); }\n`,
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +

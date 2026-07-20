@@ -257,7 +257,11 @@ make docs-drift
   position. Immediately invoked returned callables are followed recursively
   with incremented phases and refined alternative-path leaves; bounded
   depth/work/alternative exhaustion and unresolved invoked returns fail closed,
-  while merely returning a callable remains a non-effect. Phase cutoff requires
+  while merely returning a callable remains a non-effect. Mixed native/custom
+  bind paths retain normalized write identity, and non-returning custom-binder
+  branches keep their path and fail closed only when invoked. Request-
+  contributing helper trace-depth exhaustion fails closed; deep uncalled helpers
+  and non-contributing helper arguments remain non-effects. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths
