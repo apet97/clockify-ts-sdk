@@ -6886,6 +6886,149 @@ test("projects an awaited completion to an active local boundary helper call", a
     });
 });
 
+test("projects an awaited completion to an active module boundary helper call", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nfunction send(client: FixtureClient, holder: Holder) { return client.projects.create(holder.request); }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(client, holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects an awaited completion to an active imported boundary helper call", async () => {
+    const source =
+        generatedImports +
+        'import { send, type Holder } from "./send.js";\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(client, holder); }\n';
+    await withFixture(source, async (root) => {
+        await writeFile(
+            path.join(root, "cli/src/send.ts"),
+            generatedImports +
+                "export interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function send(client: FixtureClient, holder: Holder) { return client.projects.create(holder.request); }\n",
+        );
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects an awaited completion to an active object method boundary call", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { send() { return client.projects.create(holder.request); } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.send(); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects an awaited completion to an active object getter boundary read", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects an awaited completion to an active class getter boundary read", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Sender { get response() { return client.projects.create(holder.request); } } const sender = new Sender(); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects an awaited completion through aliased and nested getter reads", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; const alias = sender; function read() { return alias.response; } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return read(); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not project to a getter read before the awaited invocation", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; sender.response; const pending = (async () => { await Promise.resolve(); holder.request = body as any; })(); await pending; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not project to an uncalled getter boundary", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; const pending = (async () => { await Promise.resolve(); holder.request = body as any; })(); await pending; void sender; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("projects to a conditionally active getter boundary read", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, enabled: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; if (enabled) return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not project to a statically skipped getter boundary read", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = { get response() { return client.projects.create(holder.request); } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; if (false) return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not invoke an unresolved external accessor boundary", async () => {
+    const source =
+        generatedImports +
+        'import { makeSender } from "unresolved-accessor";\ninterface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender = makeSender(); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        await writeFile(
+            path.join(root, "unresolved-accessor.d.ts"),
+            'declare module "unresolved-accessor" { export interface Sender { readonly response: unknown } export function makeSender(): Sender; }\n',
+        );
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("allows a safe overwrite before an active module boundary helper call", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nfunction send(client: FixtureClient, holder: Holder) { return client.projects.create(holder.request); }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; holder.request = { workspaceId: "safe" }; return send(client, holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not invent a boundary inside an unresolved imported helper", async () => {
+    const source =
+        generatedImports +
+        'import { send } from "unresolved-sender";\ninterface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(client, holder); }\n';
+    await withFixture(source, async (root) => {
+        await writeFile(
+            path.join(root, "unresolved-sender.d.ts"),
+            'declare module "unresolved-sender" { export function send(...args: unknown[]): unknown; }\n',
+        );
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
 test("does not project completion to a boundary helper called before invocation", async () => {
     const source =
         generatedImports +
@@ -7513,6 +7656,76 @@ test("does not resume outside a statically infinite loop after continue", async 
     const source =
         generatedImports +
         'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { continue; } } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not treat a statically skipped break as terminating an infinite continue loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { continue; } if (false) break; } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not treat a break after an always-executed continue as loop termination", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { continue; } break; } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("preserves a reachable conditional break from an infinite rejected-await loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, stop: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { if (stop) break; continue; } } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("preserves a reachable labeled break from an infinite rejected-await loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, stop: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); outer: while (true) { try { await Promise.reject(new Error("stop")); } catch { if (stop) break outer; continue outer; } } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not let a nested switch break terminate an infinite rejected-await loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { switch (1) { case 1: break; } continue; } } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("preserves a finally break that can override rejected-await continue", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, stop: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { try { await Promise.reject(new Error("stop")); } catch { continue; } finally { if (stop) break; } } client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not let unreachable nested-loop breaks terminate an outer infinite loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } void invoke(() => { holder.request = body as any; }); while (true) { while (true) { try { await Promise.reject(new Error("stop")); } catch { continue; } break; } break; } client.projects.create(holder.request); }\n';
     await withFixture(source, async (root) => {
         const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
         assert.deepEqual(result.failures, []);

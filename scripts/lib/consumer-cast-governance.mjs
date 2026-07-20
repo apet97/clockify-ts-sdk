@@ -262,6 +262,7 @@ function analyzeProgram({
     const callsThroughParameter = new Map();
     const forwardedParameters = new Map();
     const callsByDeclaration = new Map();
+    const accessorReadsByDeclaration = new Map();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
     const receiverAllocationOrigins = new Map();
@@ -275,6 +276,7 @@ function analyzeProgram({
     let analysisExhausted = false;
     let largestCallbackExpansion = 0;
     let syntheticInvocations = 0;
+    let accessorReadsIndexed = false;
 
     function chargeAnalysisWork(amount) {
         if (analysisExhausted) return [];
@@ -1808,7 +1810,12 @@ function analyzeProgram({
                 let matchingBreak = false;
                 function visit(node) {
                     if (matchingBreak || (node !== iteration && ts.isFunctionLike(node))) return;
-                    if (ts.isBreakStatement(node) && jumpTarget(node) === iteration) {
+                    if (
+                        ts.isBreakStatement(node) &&
+                        jumpTarget(node) === iteration &&
+                        !expressionDefinitelySkipped(node) &&
+                        breakReachableOnRejectedPath(node, iteration)
+                    ) {
                         matchingBreak = true;
                         return;
                     }
@@ -1894,6 +1901,65 @@ function analyzeProgram({
                     return states;
                 }
                 return new Set(["normal"]);
+            }
+            function rejectedCompletionThrough(statement) {
+                let states = new Set(["throw"]);
+                let current = awaited;
+                let depth = 0;
+                for (let parent = current.parent; parent; parent = parent.parent) {
+                    chargeAnalysisWork(1);
+                    depth += 1;
+                    if (depth > MAX_TRACE_DEPTH) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve rejected await break reachability (depth limit ${MAX_TRACE_DEPTH})`,
+                        );
+                        return new Set();
+                    }
+                    if (ts.isFunctionLike(parent)) return states;
+                    if (ts.isTryStatement(parent)) {
+                        const originatedInTry = isWithin(current, parent.tryBlock);
+                        if (originatedInTry && states.has("throw") && parent.catchClause) {
+                            states = new Set([
+                                ...[...states].filter((state) => state !== "throw"),
+                                ...completionKinds(parent.catchClause.block),
+                            ]);
+                        }
+                        if (parent.finallyBlock && !isWithin(current, parent.finallyBlock)) {
+                            const finallyStates = completionKinds(parent.finallyBlock);
+                            states = new Set([
+                                ...(finallyStates.has("normal") ? states : []),
+                                ...[...finallyStates].filter((state) => state !== "normal"),
+                            ]);
+                        }
+                    }
+                    current = parent;
+                    if (current === statement) return states;
+                }
+                return states;
+            }
+            function breakReachableOnRejectedPath(statement, iteration) {
+                for (
+                    let current = statement;
+                    current && current !== iteration;
+                    current = current.parent
+                ) {
+                    const parent = current.parent;
+                    const statements =
+                        ts.isBlock(parent) || ts.isCaseClause(parent) || ts.isDefaultClause(parent)
+                            ? parent.statements
+                            : null;
+                    if (!statements || !ts.isStatement(current)) continue;
+                    const currentIndex = statements.indexOf(current);
+                    for (const previous of statements.slice(0, currentIndex)) {
+                        if (
+                            isWithin(awaited, previous) &&
+                            !rejectedCompletionThrough(previous).has("normal")
+                        ) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
             }
             function rejectedAwaitCanReachUse() {
                 let states = new Set(["throw"]);
@@ -6351,35 +6417,84 @@ function analyzeProgram({
             );
             return [];
         }
-        const invocations = (callsByDeclaration.get(owner) ?? []).filter(
-            (invocation) => !expressionDefinitelySkipped(invocation.node),
-        );
-        if (invocations.length === 0) return enclosingFunction(owner) ? [] : [use];
+        if (ts.isGetAccessorDeclaration(owner) && !accessorReadsIndexed) {
+            accessorReadsIndexed = true;
+            for (const sourceFile of program.getSourceFiles()) {
+                if (sourceFile.isDeclarationFile) continue;
+                function visit(node) {
+                    if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
+                        const parent = node.parent;
+                        const isWrite =
+                            (ts.isBinaryExpression(parent) && parent.left === node) ||
+                            ts.isDeleteExpression(parent) ||
+                            ts.isPrefixUnaryExpression(parent) ||
+                            ts.isPostfixUnaryExpression(parent);
+                        const names = ts.isPropertyAccessExpression(node)
+                            ? [node.name.text]
+                            : computedPropertyNames(node);
+                        if (!isWrite && names?.length) {
+                            const directSymbol = ts.isPropertyAccessExpression(node)
+                                ? unalias(checker, checker.getSymbolAtLocation(node.name))
+                                : names.length === 1
+                                  ? unalias(
+                                        checker,
+                                        checker.getPropertyOfType(
+                                            checker.getApparentType(
+                                                checker.getTypeAtLocation(node.expression),
+                                            ),
+                                            names[0],
+                                        ),
+                                    )
+                                  : null;
+                            const getters = (directSymbol?.declarations ?? []).filter(
+                                (declaration) =>
+                                    ts.isGetAccessorDeclaration(declaration) && declaration.body,
+                            );
+                            for (const getter of getters) {
+                                const reads = accessorReadsByDeclaration.get(getter) ?? [];
+                                if (!reads.includes(node)) {
+                                    reads.push(node);
+                                    accessorReadsByDeclaration.set(getter, reads);
+                                }
+                            }
+                        }
+                    }
+                    ts.forEachChild(node, visit);
+                }
+                visit(sourceFile);
+            }
+        }
+        const activations = [
+            ...(callsByDeclaration.get(owner) ?? []).map((invocation) => invocation.node),
+            ...(accessorReadsByDeclaration.get(owner) ?? []),
+        ].filter((activation) => !expressionDefinitelySkipped(activation));
+        if (activations.length === 0) return enclosingFunction(owner) ? [] : [use];
         const nextSeen = new Set(seen);
         nextSeen.add(owner);
         return bounded(
-            invocations.flatMap((invocation) =>
-                activeBoundaryUses(invocation.node, depth + 1, nextSeen),
+            activations.flatMap((activation) =>
+                activeBoundaryUses(activation, depth + 1, nextSeen),
             ),
             "active boundary helper invocation alternatives",
         );
     }
 
-    function effectiveWrites(write, use, boundaryProjected = false) {
-        if (write.inactiveClassMemberEffect || expressionDefinitelySkipped(write.node)) return [];
+    function writeNeedsBoundaryProjection(write, use) {
         const writeOwner = enclosingFunction(write.node);
         const useOwner = enclosingFunction(use);
-        const writeCrossesAwaitedInvocation = (callsByDeclaration.get(writeOwner) ?? []).some(
-            (invocation) => invocation.requiresAwaitedCompletion,
-        );
-        if (
-            !boundaryProjected &&
+        return Boolean(
             writeOwner &&
             useOwner &&
             writeOwner !== useOwner &&
-            enclosingFunction(useOwner) &&
-            writeCrossesAwaitedInvocation
-        ) {
+            (callsByDeclaration.get(writeOwner) ?? []).some(
+                (invocation) => invocation.requiresAwaitedCompletion,
+            ),
+        );
+    }
+
+    function effectiveWrites(write, use, boundaryProjected = false) {
+        if (write.inactiveClassMemberEffect || expressionDefinitelySkipped(write.node)) return [];
+        if (!boundaryProjected && writeNeedsBoundaryProjection(write, use)) {
             return bounded(
                 activeBoundaryUses(use).flatMap((projectedUse) =>
                     effectiveWrites(write, projectedUse, true).map((effective) => ({
@@ -6502,8 +6617,9 @@ function analyzeProgram({
                 ),
             );
         }
+        const activeInvocations = activeCallsOf(declaration, use);
         return bounded(
-            activeCallsOf(declaration, use)
+            activeInvocations
                 .filter(
                     (invocation) =>
                         !writeRequiresAwaitedCompletion ||
@@ -7758,38 +7874,59 @@ function analyzeProgram({
                           write.propertyNames.some((name) => usePropertyNames.includes(name)),
                   )
                 : [];
-        const orderedWrites = applySameInvocationSymbolCutoff(
-            applyOrderedEffectCutoffs(
-                [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
-                    .flatMap((write) => effectiveWrites(write, expression))
-                    .filter((write) => {
-                        const effectiveUse = write.boundaryUseOverride ?? expression;
-                        return (
-                            write.sourceFile === effectiveUse.getSourceFile() &&
-                            write.position < effectiveUse.pos &&
-                            writeMayReachExpression(write, effectiveUse)
-                        );
-                    })
-                    .sort(compareExecutionOrder)
-                    .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+        const candidateWrites = [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites];
+        const boundaryUses = candidateWrites.some((write) =>
+            writeNeedsBoundaryProjection(write, expression),
+        )
+            ? activeBoundaryUses(expression)
+            : [expression];
+        const reachingByBoundary = boundaryUses.map((boundaryUse) => {
+            const orderedWrites = applySameInvocationSymbolCutoff(
+                applyOrderedEffectCutoffs(
+                    candidateWrites
+                        .flatMap((write) => effectiveWrites(write, boundaryUse, true))
+                        .filter(
+                            (write) =>
+                                write.sourceFile === boundaryUse.getSourceFile() &&
+                                write.position < boundaryUse.pos &&
+                                writeMayReachExpression(
+                                    write,
+                                    ts.isPropertyAccessExpression(boundaryUse) ||
+                                        ts.isElementAccessExpression(boundaryUse)
+                                        ? expression
+                                        : boundaryUse,
+                                ),
+                        )
+                        .sort(compareExecutionOrder)
+                        .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+                    usePropertyNames,
+                ),
+                symbol,
+                boundaryUse,
+            );
+            const effectCutoff = crossStatementEffectCutoff(
+                orderedWrites,
+                boundaryUse,
                 usePropertyNames,
-            ),
-            symbol,
-            expression,
-        );
-        const effectCutoff = crossStatementEffectCutoff(
-            orderedWrites,
-            expression,
-            usePropertyNames,
-        );
-        const writes =
-            effectCutoff == null
-                ? orderedWrites
-                : orderedWrites.filter((write) => compareExecutionOrder(write, effectCutoff) >= 0);
-        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+            );
+            const writes =
+                effectCutoff == null
+                    ? orderedWrites
+                    : orderedWrites.filter(
+                          (write) => compareExecutionOrder(write, effectCutoff) >= 0,
+                      );
+            const cutoff = latestDefiniteWriteCutoff(symbol, boundaryUse);
+            return {
+                hasDominator: cutoff != null || effectCutoff != null,
+                writes:
+                    cutoff == null ? writes : writes.filter((write) => write.position >= cutoff),
+            };
+        });
         return {
-            hasDominator: cutoff != null || effectCutoff != null,
-            writes: cutoff == null ? writes : writes.filter((write) => write.position >= cutoff),
+            hasDominator:
+                reachingByBoundary.length > 0 &&
+                reachingByBoundary.every((result) => result.hasDominator),
+            writes: reachingByBoundary.flatMap((result) => result.writes),
         };
     }
 
