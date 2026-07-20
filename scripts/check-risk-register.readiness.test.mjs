@@ -12,9 +12,17 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const riskRegisterPath = path.join(root, "docs", "risk-register.json");
 const releaseContractPath = path.join(root, "docs", "release-readiness-contract.json");
 const roadmapStatusPath = path.join(root, "docs", "roadmap-1.0-status.json");
+const roadmapPath = path.join(root, "docs", "roadmap-1.0.md");
 
 function requiredBlockers(register) {
     return register.reportGenerator.generatedReport.requiredReadinessBlockingRiskIds;
+}
+
+function openFinalReadinessBlockers(register) {
+    return register.risks
+        .filter((risk) => risk.status === "open" && risk.finalReadinessBlocking === true)
+        .map((risk) => risk.id)
+        .sort();
 }
 
 function runCommand(command, args = [], env = process.env) {
@@ -158,6 +166,22 @@ test("removing any blocker from either readiness contract fails both validators 
 
     assert.equal(await readFile(riskRegisterPath, "utf8"), originalRegister);
     assert.equal(await readFile(releaseContractPath, "utf8"), originalReleaseContract);
+});
+
+test("roadmap readiness blockers match the canonical open blocking risks", async () => {
+    const [roadmap, registerText] = await Promise.all([
+        readFile(roadmapPath, "utf8"),
+        readFile(riskRegisterPath, "utf8"),
+    ]);
+    const register = JSON.parse(registerText);
+    const section = roadmap.match(
+        /The .*?open readiness blockers in `docs\/risk-register\.json`[\s\S]*?(?=Use `make risk-status-report`)/,
+    )?.[0];
+    assert.ok(section, "roadmap must publish its current open readiness blockers");
+    const documented = [...section.matchAll(/^- `([^`]+)`$/gm)]
+        .map((match) => match[1])
+        .sort();
+    assert.deepEqual(documented, openFinalReadinessBlockers(register));
 });
 
 test("ambient CLOCKIFY fixture paths cannot redirect canonical readiness commands", async () => {

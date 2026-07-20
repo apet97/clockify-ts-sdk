@@ -56,9 +56,13 @@ is [`roadmap-1.0-status.json`](./roadmap-1.0-status.json).
 | 26. Project membership administration | 25 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-26-project-membership.md` | No — post-baseline workflow scope |
 | 27. Experimental entity-change feed | 26 | pending | none recorded | `npm test -w @apet97/clockify-mcp-115`; `docs/roadmap-1.0-receipts/task-27-entity-change-feed.md` | No — experimental scope |
 
-The two open readiness blockers in `docs/risk-register.json` are the current
-release-blocking baseline: `cross-package-release-proof-asymmetry` and
-`remote-mutation-proof-pending`.
+The current open readiness blockers in `docs/risk-register.json` are:
+
+- `consumer-request-casts`
+- `cross-package-release-proof-asymmetry`
+- `remote-mutation-proof-pending`
+
+This list is checked against the canonical open `finalReadinessBlocking` risks.
 Use `make risk-status-report` to inspect the
 current blocked status and blocker count; `make release-readiness` validates the
 release-readiness contract, not a release-ready conclusion.
