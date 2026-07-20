@@ -4585,6 +4585,55 @@ for (const [label, resultSetup, mutation, invocation, shouldFail] of [
         "result.request",
         true,
     ],
+    [
+        "all-path Reflect.set projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'Reflect.set(result.request, "body", "safe");',
+        "result.request",
+        false,
+    ],
+    [
+        "all-path Object.assign projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'Object.assign(result.request, { body: "safe" });',
+        "result.request",
+        false,
+    ],
+    [
+        "aliased Reflect.set projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } }; const set = Reflect.set;',
+        'set(result.request, "body", "safe");',
+        "result.request",
+        false,
+    ],
+    [
+        "array Reflect.set projected write",
+        'const result = choose ? [request] : [{ workspaceId: "safe" }];',
+        'Reflect.set(result[0], "body", "safe");',
+        "result[0]",
+        false,
+    ],
+    [
+        "nested Object.assign projected write",
+        'const result = choose ? { payload: { request } } : { payload: { request: { workspaceId: "safe" } } };',
+        'Object.assign(result.payload.request, { body: "safe" });',
+        "result.payload.request",
+        false,
+    ],
+    [
+        "unsafe-last Reflect.set projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'Reflect.set(result.request, "body", "safe"); Reflect.set(result.request, "body", body as any);',
+        "result.request",
+        true,
+    ],
+    [
+        "partial Reflect.set projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'if (choose) Reflect.set(result.request, "body", "safe");',
+        "result.request",
+        true,
+    ],
 ]) {
     test(`${label} orders writes for every projected receiver alternative`, async () => {
         const source =
@@ -4716,14 +4765,14 @@ for (const [label, setup, shouldFail, runArgs] of [
         true,
     ],
     [
-        "conservative computed static name",
+        "executed computed static name",
         '(class { static [(() => { Reflect.apply = safeApply; return "configured"; })()] = 1; });',
-        true,
+        false,
     ],
     [
-        "conservative class heritage evaluation",
+        "executed class heritage evaluation",
         "(class extends (() => { Reflect.apply = safeApply; return class {}; })() {});",
-        true,
+        false,
     ],
     [
         "uninvoked conditional arrow",
@@ -4805,6 +4854,190 @@ test("accepts an all-path conditional class static overwrite", async () => {
     await withFixture(source, async (root) => {
         const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
         assert.deepEqual(result.failures, []);
+    });
+});
+
+test("traces an unsafe projected patch written by a computed class name", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = "safe"; const { ...rest } = request; const box = { patch: { body: "safe" } }; (class { [(box.patch = { body: body as any }, "configured")]() {} }); return { ...rest, ...box.patch }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+test("traces a native mutation in a computed class method name", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; (class { [Reflect.set(holder, "request", body as any) ? "configured" : "fallback"]() {} }); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, setup, shouldFail] of [
+    [
+        "computed unsafe then static safe",
+        '(class { [(holder.request = body as any, "configured")]() {} static configured = (holder.request = { workspaceId: "safe" }); });',
+        false,
+    ],
+    [
+        "computed safe precedes earlier textual static unsafe",
+        '(class { static configured = (holder.request = body as any); [(holder.request = { workspaceId: "safe" }, "method")]() {} });',
+        true,
+    ],
+]) {
+    test(`${label} preserves class evaluation phase ordering`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, setup, shouldFail, runArgs] of [
+    [
+        "anonymous instantiated instance field Reflect.set",
+        'new (class { configured = Reflect.set(holder, "request", body as any); })();',
+        true,
+    ],
+    [
+        "anonymous instantiated constructor direct write",
+        "new (class { constructor() { holder.request = body as any; } })();",
+        true,
+    ],
+    [
+        "named instantiated instance field Object.assign",
+        "class Configured { configured = Object.assign(holder, { request: body as any }); } new Configured();",
+        true,
+    ],
+    [
+        "named instantiated constructor Reflect.set",
+        'class Configured { constructor() { Reflect.set(holder, "request", body as any); } } new Configured();',
+        true,
+    ],
+    [
+        "uninstantiated direct instance field",
+        "(class { configured = (holder.request = body as any); });",
+        false,
+    ],
+    [
+        "uninstantiated instance field Reflect.set",
+        '(class { configured = Reflect.set(holder, "request", body as any); });',
+        false,
+    ],
+    [
+        "instance field unsafe then constructor safe",
+        'new (class { configured = (holder.request = body as any); constructor() { holder.request = { workspaceId: "safe" }; } })();',
+        false,
+    ],
+    [
+        "instance field safe then constructor unsafe",
+        'new (class { configured = (holder.request = { workspaceId: "safe" }); constructor() { holder.request = body as any; } })();',
+        true,
+    ],
+    [
+        "multiple instance fields safe-last",
+        'new (class { first = (holder.request = body as any); second = (holder.request = { workspaceId: "safe" }); })();',
+        false,
+    ],
+    [
+        "conditional instantiation remains reachable",
+        "class Configured { configured = (holder.request = body as any); } choose ? new Configured() : undefined;",
+        true,
+        ", choose: boolean",
+    ],
+    [
+        "uninstantiated static and instance separation",
+        '(class { static configured = (holder.request = { workspaceId: "safe" }); instance = (holder.request = body as any); });',
+        false,
+    ],
+    [
+        "conditional class alias construction",
+        'const Configured = choose ? class { configured = (holder.request = body as any); } : class { configured = (holder.request = { workspaceId: "safe" }); }; new Configured();',
+        true,
+        ", choose: boolean",
+    ],
+    [
+        "all-safe conditional class alias construction",
+        'const Configured = choose ? class { configured = (holder.request = { workspaceId: "left" }); } : class { configured = (holder.request = { workspaceId: "right" }); }; new Configured();',
+        false,
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} models construction-only effects`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown${runArgs ?? ""}) { const holder: Holder = { request: { workspaceId: "safe" } }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, setup, shouldFail] of [
+    [
+        "inherited instance field",
+        "class Base { configured = (holder.request = body as any); } class Derived extends Base {} new Derived();",
+        true,
+    ],
+    [
+        "inherited constructor",
+        "class Base { constructor() { holder.request = body as any; } } class Derived extends Base {} new Derived();",
+        true,
+    ],
+    [
+        "derived field after inherited unsafe field",
+        'class Base { configured = (holder.request = body as any); } class Derived extends Base { configured = (holder.request = { workspaceId: "safe" }); } new Derived();',
+        false,
+    ],
+]) {
+    test(`${label} preserves base-to-derived construction ordering`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed for an unresolved constructed class alternative", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, hidden: unknown, choose: boolean) { const Configured = choose ? class {} : hidden as any; new Configured(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /statically resolve.*constructed class/i);
+    });
+});
+
+test("fails closed when constructed class alternatives exceed the cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, a: boolean, b: boolean) { const Configured = a ? class {} : b ? class {} : class {}; new Configured(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*alternatives.*1/i);
     });
 });
 
