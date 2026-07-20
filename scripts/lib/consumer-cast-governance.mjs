@@ -1439,23 +1439,17 @@ function analyzeProgram({
             }
         }
         if (ts.isConditionalExpression(expression)) {
+            const condition = staticScalar(expression.condition, substitutions);
+            const branches = condition.known
+                ? [condition.value ? expression.whenTrue : expression.whenFalse]
+                : [expression.whenTrue, expression.whenFalse];
             if (!governed) {
-                return bounded([
-                    ...reachingExpressionValues(
-                        expression.whenTrue,
-                        beforePosition,
-                        seen,
-                        substitutions,
+                return bounded(
+                    branches.flatMap((branch) =>
+                        reachingExpressionValues(branch, beforePosition, seen, substitutions),
                     ),
-                    ...reachingExpressionValues(
-                        expression.whenFalse,
-                        beforePosition,
-                        seen,
-                        substitutions,
-                    ),
-                ]);
+                );
             }
-            const branches = [expression.whenTrue, expression.whenFalse];
             const alternatives = [];
             for (const branch of branches) {
                 const resolved = reachingExpressionValues(
@@ -1499,24 +1493,31 @@ function analyzeProgram({
                     ts.SyntaxKind.QuestionQuestionToken,
                 ].includes(expression.operatorToken.kind)
             ) {
+                const leftState = definiteExpressionState(expression.left);
+                const operands = (() => {
+                    if (expression.operatorToken.kind === ts.SyntaxKind.BarBarToken) {
+                        if (leftState.truthy === true) return [expression.left];
+                        if (leftState.truthy === false) return [expression.right];
+                    }
+                    if (expression.operatorToken.kind === ts.SyntaxKind.AmpersandAmpersandToken) {
+                        if (leftState.truthy === false) return [expression.left];
+                        if (leftState.truthy === true) return [expression.right];
+                    }
+                    if (expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken) {
+                        if (leftState.nullish === false) return [expression.left];
+                        if (leftState.nullish === true) return [expression.right];
+                    }
+                    return [expression.left, expression.right];
+                })();
                 if (!governed) {
-                    return bounded([
-                        ...reachingExpressionValues(
-                            expression.left,
-                            beforePosition,
-                            seen,
-                            substitutions,
+                    return bounded(
+                        operands.flatMap((operand) =>
+                            reachingExpressionValues(operand, beforePosition, seen, substitutions),
                         ),
-                        ...reachingExpressionValues(
-                            expression.right,
-                            beforePosition,
-                            seen,
-                            substitutions,
-                        ),
-                    ]);
+                    );
                 }
                 const alternatives = [];
-                for (const operand of [expression.left, expression.right]) {
+                for (const operand of operands) {
                     const resolved = reachingExpressionValues(
                         operand,
                         beforePosition,
@@ -4614,6 +4615,50 @@ function analyzeProgram({
         const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
+        const wrappedReceiver =
+            ts.isConditionalExpression(receiver) ||
+            (ts.isBinaryExpression(receiver) &&
+                [
+                    ts.SyntaxKind.CommaToken,
+                    ts.SyntaxKind.BarBarToken,
+                    ts.SyntaxKind.AmpersandAmpersandToken,
+                    ts.SyntaxKind.QuestionQuestionToken,
+                ].includes(receiver.operatorToken.kind));
+        if (wrappedReceiver) {
+            const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-wrapper`;
+            if (seen.has(key)) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve recursive receiver wrapper`,
+                );
+                return [];
+            }
+            const nextSeen = new Set(seen);
+            nextSeen.add(key);
+            const alternatives = reachingExpressionValues(
+                receiver,
+                receiver.pos,
+                nextSeen,
+                substitutions,
+                true,
+            );
+            if (alternatives.length === 0) return direct;
+            return bounded(
+                alternatives.flatMap((alternative) => {
+                    const value = alternative.sourceExpression ?? alternative.expression;
+                    if (value === receiver) return direct;
+                    return getterDeclarationsForReceiver(
+                        value,
+                        names,
+                        null,
+                        nextSeen,
+                        depth + 1,
+                        alternative.substitutions,
+                        receiverProjection,
+                    );
+                }),
+                "receiver wrapper alternatives",
+            );
+        }
         const projection = [...receiverProjection];
         let factoryCall = receiver;
         while (
@@ -4705,22 +4750,6 @@ function analyzeProgram({
                 "receiver getter factory return alternatives",
             );
         }
-        if (ts.isConditionalExpression(receiver)) {
-            return bounded(
-                [receiver.whenTrue, receiver.whenFalse].flatMap((value) =>
-                    getterDeclarationsForReceiver(
-                        value,
-                        names,
-                        null,
-                        seen,
-                        depth + 1,
-                        substitutions,
-                        receiverProjection,
-                    ),
-                ),
-                "receiver getter declaration alternatives",
-            );
-        }
         if (!ts.isIdentifier(receiver)) return direct;
         const symbol = unalias(checker, checker.getSymbolAtLocation(receiver));
         const variableReceiver = (symbol?.declarations ?? []).some(
@@ -4731,7 +4760,12 @@ function analyzeProgram({
         );
         if (!variableReceiver) return direct;
         const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-receiver`;
-        if (seen.has(key)) return [];
+        if (seen.has(key)) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve recursive receiver getter wrapper alias`,
+            );
+            return [];
+        }
         const nextSeen = new Set(seen);
         nextSeen.add(key);
         const writes = reachingWrites(symbol, receiverExpression).writes;
