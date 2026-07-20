@@ -261,6 +261,8 @@ function analyzeProgram({
     const callsByDeclaration = new Map();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
+    const receiverAllocationOrigins = new Map();
+    const receiverAllocationContexts = new Map();
     const analysisFailures = new Set();
     const maxAlternatives = analysisLimits.maxAlternatives ?? MAX_STATIC_ALTERNATIVES;
     const maxInvocations = analysisLimits.maxInvocations ?? MAX_SYNTHETIC_INVOCATIONS;
@@ -4575,6 +4577,7 @@ function analyzeProgram({
         substitutions = new Map(),
         followProjections = false,
         preserveAllocations = false,
+        invocationContext = [],
     ) {
         if (
             ts.isParenthesizedExpression(expression) ||
@@ -4590,6 +4593,7 @@ function analyzeProgram({
                 substitutions,
                 followProjections,
                 preserveAllocations,
+                invocationContext,
             );
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
@@ -4647,6 +4651,7 @@ function analyzeProgram({
                                 substitutions,
                                 followProjections,
                                 preserveAllocations,
+                                invocationContext,
                             )) {
                                 origins.add(origin);
                             }
@@ -4666,6 +4671,7 @@ function analyzeProgram({
                             substitutions,
                             followProjections,
                             preserveAllocations,
+                            invocationContext,
                         )) {
                             origins.add(origin);
                         }
@@ -4681,6 +4687,7 @@ function analyzeProgram({
                 substitutions,
                 followProjections,
                 preserveAllocations,
+                invocationContext,
             );
         }
         if (ts.isConditionalExpression(expression)) {
@@ -4692,6 +4699,7 @@ function analyzeProgram({
                     substitutions,
                     followProjections,
                     preserveAllocations,
+                    invocationContext,
                 ),
                 ...receiverOrigins(
                     expression.whenFalse,
@@ -4700,6 +4708,7 @@ function analyzeProgram({
                     substitutions,
                     followProjections,
                     preserveAllocations,
+                    invocationContext,
                 ),
             ]);
         }
@@ -4712,6 +4721,7 @@ function analyzeProgram({
                     substitutions,
                     followProjections,
                     preserveAllocations,
+                    invocationContext,
                 );
             }
             if (
@@ -4727,6 +4737,7 @@ function analyzeProgram({
                         substitutions,
                         followProjections,
                         preserveAllocations,
+                        invocationContext,
                     ),
                     ...receiverOrigins(
                         expression.right,
@@ -4735,6 +4746,7 @@ function analyzeProgram({
                         substitutions,
                         followProjections,
                         preserveAllocations,
+                        invocationContext,
                     ),
                 ]);
             }
@@ -4746,13 +4758,61 @@ function analyzeProgram({
                 ts.isClassExpression(expression) ||
                 ts.isNewExpression(expression))
         ) {
-            return new Set([expression]);
+            const allocationOwner = enclosingFunction(expression);
+            if (
+                !allocationOwner ||
+                !invocationContext.some((frame) => frame.declaration === allocationOwner)
+            ) {
+                return new Set([expression]);
+            }
+            const contextKey = invocationContext
+                .map(({ call }) => `${call.getSourceFile().fileName}:${call.pos}:${call.end}`)
+                .join("|");
+            let contexts = receiverAllocationContexts.get(expression);
+            if (!contexts) {
+                contexts = new Set();
+                receiverAllocationContexts.set(expression, contexts);
+            }
+            if (!contexts.has(contextKey)) {
+                const boundedContexts = bounded(
+                    [...contexts, contextKey],
+                    "receiver allocation invocation contexts",
+                );
+                if (!boundedContexts.includes(contextKey)) return new Set([expression]);
+                contexts.add(contextKey);
+            }
+            const allocationKey = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:${contextKey}`;
+            let origin = receiverAllocationOrigins.get(allocationKey);
+            if (!origin) {
+                origin = {
+                    kind: expression.kind,
+                    pos: expression.pos,
+                    end: expression.end,
+                    allocationSite: expression,
+                    invocationContext: contextKey,
+                };
+                receiverAllocationOrigins.set(allocationKey, origin);
+            }
+            return new Set([origin]);
         }
         if (ts.isCallExpression(expression)) {
             const declaration = checker.getResolvedSignature(expression)?.declaration;
             if (declaration && ts.isFunctionLike(declaration) && declaration.body) {
                 const callKey = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:receiver-call`;
-                if (seen.has(callKey)) return new Set();
+                if (seen.has(callKey)) {
+                    if (preserveAllocations) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve recursive receiver allocation invocation`,
+                        );
+                    }
+                    return new Set();
+                }
+                if (preserveAllocations && invocationContext.length >= MAX_TRACE_DEPTH) {
+                    analysisFailures.add(
+                        `consumer cast analysis could not statically resolve receiver allocation invocation (depth limit ${MAX_TRACE_DEPTH})`,
+                    );
+                    return new Set();
+                }
                 const nextSeen = new Set(seen);
                 nextSeen.add(callKey);
                 const nested = new Map(substitutions);
@@ -4762,17 +4822,24 @@ function analyzeProgram({
                     const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
                     if (symbol) nested.set(symbol, argument);
                 });
+                const nestedInvocationContext = preserveAllocations
+                    ? [...invocationContext, { call: expression, declaration }]
+                    : invocationContext;
                 return new Set(
-                    functionReturnExpressions(declaration).flatMap((returned) => [
-                        ...receiverOrigins(
-                            returned,
-                            beforePosition,
-                            nextSeen,
-                            nested,
-                            followProjections,
-                            preserveAllocations,
-                        ),
-                    ]),
+                    bounded(
+                        functionReturnExpressions(declaration).flatMap((returned) => [
+                            ...receiverOrigins(
+                                returned,
+                                beforePosition,
+                                nextSeen,
+                                nested,
+                                followProjections,
+                                preserveAllocations,
+                                nestedInvocationContext,
+                            ),
+                        ]),
+                        "receiver allocation return alternatives",
+                    ),
                 );
             }
             return new Set(
@@ -4784,6 +4851,7 @@ function analyzeProgram({
                         substitutions,
                         followProjections,
                         preserveAllocations,
+                        invocationContext,
                     ),
                 ]),
             );
@@ -4804,6 +4872,7 @@ function analyzeProgram({
                 substitutions,
                 followProjections,
                 preserveAllocations,
+                invocationContext,
             );
             if (
                 substitutedOrigins.size === 0 &&
@@ -4837,6 +4906,7 @@ function analyzeProgram({
                     substitutions,
                     followProjections,
                     preserveAllocations,
+                    invocationContext,
                 )) {
                     origins.add(origin);
                 }
@@ -6455,6 +6525,23 @@ function analyzeProgram({
                 ),
             );
         }
+        if (ts.isCallExpression(expression)) {
+            const declaration = checker.getResolvedSignature(expression)?.declaration;
+            if (!declaration || !ts.isFunctionLike(declaration) || !declaration.body) return [];
+            return bounded(
+                functionReturnExpressions(declaration).flatMap((returned) =>
+                    propertyValueExpressions(
+                        returned,
+                        propertyName,
+                        depth + 1,
+                        nextSeen,
+                        includeGetters,
+                        followNestedReceivers,
+                    ),
+                ),
+                "factory property alternatives",
+            );
+        }
         if (ts.isObjectLiteralExpression(expression)) {
             const values = [];
             for (const property of expression.properties) {
@@ -6486,6 +6573,33 @@ function analyzeProgram({
                 }
             }
             return values;
+        }
+        if (ts.isNewExpression(expression)) {
+            return bounded(
+                classOwnersForNewExpression(expression.expression, expression.pos).flatMap(
+                    (owner) => {
+                        const values = [];
+                        for (const member of owner.members) {
+                            if (isStaticClassElement(member) || !member.name) continue;
+                            const names = ts.isComputedPropertyName(member.name)
+                                ? literalPropertyNames(
+                                      checker.getTypeAtLocation(member.name.expression),
+                                  )
+                                : [
+                                      member.name
+                                          .getText(expression.getSourceFile())
+                                          .replace(/^['"]|['"]$/g, ""),
+                                  ];
+                            if (!names?.includes(propertyName)) continue;
+                            if (ts.isPropertyDeclaration(member) && member.initializer) {
+                                values.push(member.initializer);
+                            }
+                        }
+                        return values;
+                    },
+                ),
+                "constructed instance property alternatives",
+            );
         }
         if (ts.isArrayLiteralExpression(expression)) {
             const index = Number(propertyName);
