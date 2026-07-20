@@ -1584,6 +1584,7 @@ function analyzeProgram({
         nextSeen.add(node);
         const useFunction = enclosingFunction(use);
         const nodeFunction = enclosingFunction(node);
+        const loopBackAwaits = new Set();
         function branchConstraints(candidate) {
             const constraints = new Map();
             let branchDepth = 0;
@@ -1761,6 +1762,76 @@ function analyzeProgram({
                 : continuationCanReachUse(awaited);
         }
         function awaitMayResume(awaited) {
+            function isIterationStatement(node) {
+                return (
+                    ts.isForStatement(node) ||
+                    ts.isForInStatement(node) ||
+                    ts.isForOfStatement(node) ||
+                    ts.isWhileStatement(node) ||
+                    ts.isDoStatement(node)
+                );
+            }
+            function jumpTarget(statement) {
+                const label = statement.label?.text;
+                if (label) {
+                    for (let parent = statement.parent; parent; parent = parent.parent) {
+                        if (ts.isFunctionLike(parent)) return undefined;
+                        if (ts.isLabeledStatement(parent) && parent.label.text === label) {
+                            return ts.isContinueStatement(statement) ? parent.statement : parent;
+                        }
+                    }
+                    return undefined;
+                }
+                for (let parent = statement.parent; parent; parent = parent.parent) {
+                    if (ts.isFunctionLike(parent)) return undefined;
+                    if (isIterationStatement(parent)) return parent;
+                    if (ts.isBreakStatement(statement) && ts.isSwitchStatement(parent)) {
+                        return parent;
+                    }
+                }
+                return undefined;
+            }
+            function jumpState(kind, target) {
+                return target ? `${kind}:${target.pos}:${target.end}` : `${kind}:unresolved`;
+            }
+            function iterationMayTerminate(iteration) {
+                let definitelyInfinite = false;
+                if (ts.isForStatement(iteration)) {
+                    definitelyInfinite =
+                        !iteration.condition ||
+                        definiteExpressionState(iteration.condition).truthy === true;
+                } else if (ts.isWhileStatement(iteration) || ts.isDoStatement(iteration)) {
+                    definitelyInfinite =
+                        definiteExpressionState(iteration.expression).truthy === true;
+                }
+                if (!definitelyInfinite) return true;
+                let matchingBreak = false;
+                function visit(node) {
+                    if (matchingBreak || (node !== iteration && ts.isFunctionLike(node))) return;
+                    if (ts.isBreakStatement(node) && jumpTarget(node) === iteration) {
+                        matchingBreak = true;
+                        return;
+                    }
+                    ts.forEachChild(node, visit);
+                }
+                visit(iteration.statement);
+                return matchingBreak;
+            }
+            function consumeJumpAt(states, target) {
+                const breakState = jumpState("break", target);
+                const continueState = jumpState("continue", target);
+                const next = new Set(states);
+                if (next.delete(breakState)) next.add("normal");
+                if (isIterationStatement(target) && next.has(continueState)) {
+                    if (isWithin(use, target) && !expressionDefinitelySkipped(use)) {
+                        loopBackAwaits.add(awaited);
+                        return undefined;
+                    }
+                    next.delete(continueState);
+                    if (iterationMayTerminate(target)) next.add("normal");
+                }
+                return next;
+            }
             function completionKinds(statement, depth = 0) {
                 chargeAnalysisWork(1);
                 if (depth > MAX_TRACE_DEPTH) {
@@ -1771,8 +1842,11 @@ function analyzeProgram({
                 }
                 if (ts.isReturnStatement(statement)) return new Set(["return"]);
                 if (ts.isThrowStatement(statement)) return new Set(["throw"]);
-                if (ts.isBreakStatement(statement) || ts.isContinueStatement(statement)) {
-                    return new Set(["jump"]);
+                if (ts.isBreakStatement(statement)) {
+                    return new Set([jumpState("break", jumpTarget(statement))]);
+                }
+                if (ts.isContinueStatement(statement)) {
+                    return new Set([jumpState("continue", jumpTarget(statement))]);
                 }
                 if (ts.isBlock(statement)) {
                     let states = new Set(["normal"]);
@@ -1835,6 +1909,16 @@ function analyzeProgram({
                         return false;
                     }
                     if (ts.isFunctionLike(parent)) return false;
+                    if (
+                        isIterationStatement(parent) ||
+                        ts.isSwitchStatement(parent) ||
+                        ts.isLabeledStatement(parent)
+                    ) {
+                        const consumed = consumeJumpAt(states, parent);
+                        if (!consumed) return true;
+                        states = consumed;
+                        if (states.has("normal") && use.pos > parent.end) return true;
+                    }
                     if (!ts.isTryStatement(parent)) {
                         current = parent;
                         continue;
@@ -1909,20 +1993,26 @@ function analyzeProgram({
             if (!definitelyRejects) return true;
             return rejectedAwaitCanReachUse();
         }
-        const localAwait = awaitExpressions.some(
-            (awaited) =>
-                awaited.getSourceFile() === node.getSourceFile() &&
-                (awaited.pos > node.pos || isWithin(node, awaited.expression)) &&
-                enclosingFunction(awaited) === nodeFunction &&
-                (nodeFunction !== useFunction || awaited.pos < use.pos) &&
-                !expressionDefinitelySkipped(awaited) &&
-                awaitMayResume(awaited) &&
-                canReachUseOnSameBranch(awaited) &&
+        const localAwait = awaitExpressions.some((awaited) => {
+            if (
+                awaited.getSourceFile() !== node.getSourceFile() ||
+                !(awaited.pos > node.pos || isWithin(node, awaited.expression)) ||
+                enclosingFunction(awaited) !== nodeFunction ||
+                expressionDefinitelySkipped(awaited) ||
+                !awaitMayResume(awaited)
+            ) {
+                return false;
+            }
+            const loopsBack = loopBackAwaits.has(awaited);
+            return (
+                (nodeFunction !== useFunction || awaited.pos < use.pos || loopsBack) &&
+                (canReachUseOnSameBranch(awaited) || loopsBack) &&
                 (expressionCompletionDependsOn(awaited.expression, node, awaited.pos) ||
                     (nodeFunction === useFunction &&
                         awaited.pos > node.pos &&
-                        awaited.pos < use.pos)),
-        );
+                        (awaited.pos < use.pos || loopsBack)))
+            );
+        });
         if (!localAwait) return false;
         if (nodeFunction === useFunction) {
             return node.getSourceFile() === use.getSourceFile() && node.pos < use.pos;
@@ -6246,8 +6336,60 @@ function analyzeProgram({
         return expression;
     }
 
-    function effectiveWrites(write, use) {
+    function activeBoundaryUses(use, depth = 0, seen = new Set()) {
+        if (depth > MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve active boundary helper invocation (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return [];
+        }
+        const owner = enclosingFunction(use);
+        if (!owner) return [use];
+        if (seen.has(owner)) {
+            analysisFailures.add(
+                "consumer cast analysis could not statically resolve active boundary helper invocation (cycle)",
+            );
+            return [];
+        }
+        const invocations = (callsByDeclaration.get(owner) ?? []).filter(
+            (invocation) => !expressionDefinitelySkipped(invocation.node),
+        );
+        if (invocations.length === 0) return enclosingFunction(owner) ? [] : [use];
+        const nextSeen = new Set(seen);
+        nextSeen.add(owner);
+        return bounded(
+            invocations.flatMap((invocation) =>
+                activeBoundaryUses(invocation.node, depth + 1, nextSeen),
+            ),
+            "active boundary helper invocation alternatives",
+        );
+    }
+
+    function effectiveWrites(write, use, boundaryProjected = false) {
         if (write.inactiveClassMemberEffect || expressionDefinitelySkipped(write.node)) return [];
+        const writeOwner = enclosingFunction(write.node);
+        const useOwner = enclosingFunction(use);
+        const writeCrossesAwaitedInvocation = (callsByDeclaration.get(writeOwner) ?? []).some(
+            (invocation) => invocation.requiresAwaitedCompletion,
+        );
+        if (
+            !boundaryProjected &&
+            writeOwner &&
+            useOwner &&
+            writeOwner !== useOwner &&
+            enclosingFunction(useOwner) &&
+            writeCrossesAwaitedInvocation
+        ) {
+            return bounded(
+                activeBoundaryUses(use).flatMap((projectedUse) =>
+                    effectiveWrites(write, projectedUse, true).map((effective) => ({
+                        ...effective,
+                        boundaryUseOverride: projectedUse,
+                    })),
+                ),
+                "projected active boundary effects",
+            );
+        }
         if (write.classEvaluationEffect) {
             return [
                 {
@@ -7620,12 +7762,14 @@ function analyzeProgram({
             applyOrderedEffectCutoffs(
                 [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
                     .flatMap((write) => effectiveWrites(write, expression))
-                    .filter(
-                        (write) =>
-                            write.sourceFile === expression.getSourceFile() &&
-                            write.position < expression.pos &&
-                            writeMayReachExpression(write, expression),
-                    )
+                    .filter((write) => {
+                        const effectiveUse = write.boundaryUseOverride ?? expression;
+                        return (
+                            write.sourceFile === effectiveUse.getSourceFile() &&
+                            write.position < effectiveUse.pos &&
+                            writeMayReachExpression(write, effectiveUse)
+                        );
+                    })
                     .sort(compareExecutionOrder)
                     .filter((write, index, all) => index === 0 || write !== all[index - 1]),
                 usePropertyNames,
