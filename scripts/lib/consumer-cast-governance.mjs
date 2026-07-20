@@ -274,6 +274,7 @@ function analyzeProgram({
     const callsByDeclaration = new Map();
     const accessorReadsByDeclaration = new Map();
     const accessorReceiverByActivation = new WeakMap();
+    const syntheticRestCallbackParameters = new Set();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
     const receiverAllocationOrigins = new Map();
@@ -345,6 +346,39 @@ function analyzeProgram({
             return;
         }
         addInvocation(declaration, node, args, new Map(), 0, null, null, recordParameterInputs);
+    }
+
+    function functionMayReachRequestBoundary(declaration, seen = new Set(), depth = 0) {
+        if (!declaration?.body || depth > MAX_TRACE_DEPTH || seen.has(declaration)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(declaration);
+        let reaches = false;
+        function visit(node) {
+            if (reaches) return;
+            if (ts.isFunctionLike(node) && node !== declaration) return;
+            if (ts.isCallExpression(node)) {
+                if (
+                    requestBoundaryArguments(node).length > 0 ||
+                    node.arguments.some((argument) =>
+                        Boolean(requestNameFromType(checker, checker.getTypeAtLocation(argument))),
+                    )
+                ) {
+                    reaches = true;
+                    return;
+                }
+                const called = functionDeclarationForExpression(node.expression);
+                if (
+                    called?.getSourceFile() === declaration.getSourceFile() &&
+                    functionMayReachRequestBoundary(called, nextSeen, depth + 1)
+                ) {
+                    reaches = true;
+                    return;
+                }
+            }
+            ts.forEachChild(node, visit);
+        }
+        visit(declaration.body);
+        return reaches;
     }
 
     function registerAlternativePath(alternativeGroup, alternativePath) {
@@ -3871,6 +3905,8 @@ function analyzeProgram({
         return false;
     }
 
+    const runtimeDescriptorGetterOwners = new Set();
+
     function getterEffectValues(entry, beforePosition) {
         const effects = [];
         for (const candidate of reachingExpressionValues(
@@ -3883,6 +3919,7 @@ function analyzeProgram({
             const declaration = ts.isFunctionLike(expression)
                 ? expression
                 : functionDeclarationForExpression(expression);
+            if (declaration?.body) runtimeDescriptorGetterOwners.add(declaration);
             if (!declaration?.body) {
                 effects.push({
                     value: candidate.expression,
@@ -5532,6 +5569,37 @@ function analyzeProgram({
                     !effectsOnly || isDirectMutationCallSyntax(node.expression);
                 const declaration = checker.getResolvedSignature(node)?.declaration;
                 const classExecution = classExecutionMetadata(node);
+                const inactiveOwner = enclosingFunction(node);
+                const inactiveOwnerIsInvoked = Boolean(
+                    inactiveOwner && (callsByDeclaration.get(inactiveOwner)?.length ?? 0) > 0,
+                );
+                const inactiveRestArrayCallback = Boolean(
+                    classExecution.inactiveClassMemberEffect &&
+                    inactiveOwnerIsInvoked &&
+                    ts.isPropertyAccessExpression(node.expression) &&
+                    [
+                        "forEach",
+                        "map",
+                        "filter",
+                        "every",
+                        "some",
+                        "find",
+                        "findIndex",
+                        "flatMap",
+                        "reduce",
+                        "reduceRight",
+                    ].includes(node.expression.name.text) &&
+                    ts.isIdentifier(node.expression.expression) &&
+                    inactiveOwner?.parameters.some(
+                        (parameter) =>
+                            parameter.dotDotDotToken &&
+                            unalias(checker, checker.getSymbolAtLocation(parameter.name)) ===
+                                unalias(
+                                    checker,
+                                    checker.getSymbolAtLocation(node.expression.expression),
+                                ),
+                    ),
+                );
                 const skipped =
                     expressionDefinitelySkipped(node) ||
                     classExecution.inactiveClassMemberEffect ||
@@ -5587,7 +5655,10 @@ function analyzeProgram({
                     }
                 }
 
-                if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
+                if (
+                    (!skipped || inactiveRestArrayCallback) &&
+                    ts.isPropertyAccessExpression(node.expression)
+                ) {
                     const invocation = node.expression.name.text;
                     const target = node.expression.expression;
                     if (["call", "apply"].includes(invocation)) {
@@ -5647,9 +5718,69 @@ function analyzeProgram({
                         )
                             .map((value) => unwrapExpression(value.expression))
                             .filter(ts.isArrayLiteralExpression);
-                        for (const receiver of receivers) {
-                            const values = receiver.elements.filter(ts.isExpression);
-                            for (const callback of callbacks.slice(0, maxAlternatives)) {
+                        const syntheticReceiverLists = [];
+                        const receiverExpression = unwrapExpression(node.expression.expression);
+                        const owner = enclosingFunction(node);
+                        if (!effectsOnly && owner && ts.isIdentifier(receiverExpression)) {
+                            const receiverSymbol = unalias(
+                                checker,
+                                checker.getSymbolAtLocation(receiverExpression),
+                            );
+                            const receiverIsRestParameter = owner.parameters.some((parameter) => {
+                                if (!parameter.dotDotDotToken) return false;
+                                return (
+                                    unalias(
+                                        checker,
+                                        checker.getSymbolAtLocation(parameter.name),
+                                    ) === receiverSymbol
+                                );
+                            });
+                            if (receiverIsRestParameter) {
+                                for (const invocation of callsByDeclaration.get(owner) ?? []) {
+                                    for (const substitutions of parameterSubstitutionAlternatives(
+                                        owner,
+                                        invocation,
+                                    )) {
+                                        const substituted = substitutions.get(receiverSymbol);
+                                        if (isRestArgumentsSubstitution(substituted)) {
+                                            syntheticReceiverLists.push(
+                                                substituted[REST_ARGUMENTS_SUBSTITUTION],
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        const receiverValueLists = bounded(
+                            [
+                                ...receivers.map((receiver) => ({
+                                    values: receiver.elements.filter(ts.isExpression),
+                                    syntheticRest: false,
+                                })),
+                                ...syntheticReceiverLists.map((values) => ({
+                                    values,
+                                    syntheticRest: true,
+                                })),
+                            ],
+                            "synchronous array receiver alternatives",
+                        );
+                        for (const receiverValues of receiverValueLists) {
+                            const values = receiverValues.values;
+                            const receiverCallbacks = receiverValues.syntheticRest
+                                ? callbacks.filter((callback) =>
+                                      functionMayReachRequestBoundary(callback),
+                                  )
+                                : callbacks;
+                            for (const callback of receiverCallbacks.slice(0, maxAlternatives)) {
+                                if (receiverValues.syntheticRest) {
+                                    for (const parameter of callback.parameters) {
+                                        const symbol = unalias(
+                                            checker,
+                                            checker.getSymbolAtLocation(parameter.name),
+                                        );
+                                        if (symbol) syntheticRestCallbackParameters.add(symbol);
+                                    }
+                                }
                                 if (["reduce", "reduceRight"].includes(invocation)) {
                                     const ordered =
                                         invocation === "reduceRight"
@@ -6665,12 +6796,45 @@ function analyzeProgram({
         return alternatives;
     }
 
+    const restArgumentExpansionStack = new Set();
+
+    function activeSyntheticRestLists(expression) {
+        expression = unwrapExpression(expression);
+        if (!ts.isIdentifier(expression)) return null;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        const parameter = (symbol?.declarations ?? []).find(
+            (declaration) => ts.isParameter(declaration) && declaration.dotDotDotToken,
+        );
+        if (!parameter || restArgumentExpansionStack.has(symbol)) return null;
+        restArgumentExpansionStack.add(symbol);
+        try {
+            return bounded(
+                (callsByDeclaration.get(parameter.parent) ?? []).flatMap((invocation) =>
+                    parameterSubstitutionAlternatives(parameter.parent, invocation).flatMap(
+                        (substitutions) => {
+                            const value = substitutions.get(symbol);
+                            return isRestArgumentsSubstitution(value)
+                                ? [value[REST_ARGUMENTS_SUBSTITUTION]]
+                                : [];
+                        },
+                    ),
+                ),
+                "forwarded rest parameter alternatives",
+            );
+        } finally {
+            restArgumentExpansionStack.delete(symbol);
+        }
+    }
+
     function restArgumentLists(args, start, beforePosition) {
         let lists = [[]];
         for (const argument of args.slice(start)) {
             let alternatives;
             if (ts.isSpreadElement(argument)) {
-                const spread = staticApplyArgumentLists(argument.expression, beforePosition);
+                const synthetic = activeSyntheticRestLists(argument.expression);
+                const spread = synthetic?.length
+                    ? { lists: synthetic, complete: true }
+                    : staticApplyArgumentLists(argument.expression, beforePosition);
                 if (!spread.complete) {
                     analysisFailures.add(
                         "consumer cast analysis could not statically resolve rest parameter spread arguments",
@@ -6788,7 +6952,7 @@ function analyzeProgram({
             return [];
         }
         const owner = enclosingFunction(use);
-        if (!owner) return [{ node: use, receiver }];
+        if (!owner) return [{ node: use, receiver, substitutions: new Map() }];
         if (seen.has(owner)) {
             analysisFailures.add(
                 "consumer cast analysis could not statically resolve active boundary helper invocation (cycle)",
@@ -6796,6 +6960,7 @@ function analyzeProgram({
             return [];
         }
         function isRuntimeDescriptorGetter(declaration) {
+            if (runtimeDescriptorGetterOwners.has(declaration)) return true;
             let descriptor = null;
             if (
                 ts.isMethodDeclaration(declaration) &&
@@ -6813,20 +6978,21 @@ function analyzeProgram({
             }
             if (!descriptor || !ts.isCallExpression(descriptor.parent)) return false;
             const call = descriptor.parent;
-            return (
-                call.arguments[2] === descriptor &&
-                (expressionResolvesToBuiltinMember(
-                    call.expression,
-                    "Object",
-                    "defineProperty",
-                    call.pos,
-                ) ||
-                    expressionResolvesToBuiltinMember(
-                        call.expression,
-                        "Reflect",
+            return normalizeEffectiveCalls(call.expression, [...call.arguments], call.pos).some(
+                (effectiveCall) =>
+                    effectiveCall.arguments[2] === descriptor &&
+                    (expressionResolvesToBuiltinMember(
+                        effectiveCall.expression,
+                        "Object",
                         "defineProperty",
                         call.pos,
-                    ))
+                    ) ||
+                        expressionResolvesToBuiltinMember(
+                            effectiveCall.expression,
+                            "Reflect",
+                            "defineProperty",
+                            call.pos,
+                        )),
             );
         }
         const indexRuntimeGetters = isRuntimeDescriptorGetter(owner);
@@ -6858,6 +7024,7 @@ function analyzeProgram({
                     const writtenBase = memberWriteReceiver(write);
                     if (!writtenBase) return false;
                     const left = unwrapExpression(writtenBase);
+                    if (sameReceiverAlternatives(left, base, receiver.pos)) return true;
                     if (ts.isIdentifier(left) && ts.isIdentifier(base)) {
                         return (
                             unalias(checker, checker.getSymbolAtLocation(left)) ===
@@ -6946,26 +7113,57 @@ function analyzeProgram({
                     }
                 }
             }
-            function descriptorGetterDeclarations(descriptor) {
-                descriptor = unwrapExpression(descriptor);
-                if (!ts.isObjectLiteralExpression(descriptor)) return [];
-                return descriptor.properties.flatMap((property) => {
-                    const name = property.name
-                        ?.getText(property.getSourceFile())
-                        .replace(/^['"]|['"]$/g, "");
-                    if (name !== "get") return [];
-                    if (ts.isMethodDeclaration(property) && property.body) return [property];
-                    if (
-                        ts.isPropertyAssignment(property) &&
-                        ts.isFunctionLike(property.initializer) &&
-                        property.initializer.body
-                    ) {
-                        return [property.initializer];
-                    }
-                    return [];
-                });
+            function descriptorGetterDeclarations(descriptor, beforePosition) {
+                return bounded(
+                    reachingExpressionValues(descriptor, beforePosition).flatMap((candidate) => {
+                        const value = unwrapExpression(candidate.expression);
+                        if (!ts.isObjectLiteralExpression(value)) return [];
+                        return value.properties.flatMap((property) => {
+                            const name = property.name
+                                ?.getText(property.getSourceFile())
+                                .replace(/^['"]|['"]$/g, "");
+                            if (name !== "get") return [];
+                            if (ts.isMethodDeclaration(property) && property.body)
+                                return [property];
+                            if (ts.isPropertyAssignment(property)) {
+                                const declaration = functionDeclarationForExpression(
+                                    property.initializer,
+                                );
+                                return declaration?.body ? [declaration] : [];
+                            }
+                            return [];
+                        });
+                    }),
+                    "runtime descriptor getter alternatives",
+                );
             }
             function recordRuntimeGetterDefinition(expression, args, activation) {
+                if (
+                    args.length >= 2 &&
+                    expressionResolvesToBuiltinMember(
+                        expression,
+                        "Object",
+                        "defineProperties",
+                        activation.pos,
+                    )
+                ) {
+                    for (const path of objectPropertySequences(args[1], activation.pos)) {
+                        for (const descriptor of path) {
+                            if (!descriptor.names?.length) continue;
+                            runtimeGetterDefinitions.push({
+                                receiver: args[0],
+                                names: descriptor.names,
+                                getters: descriptorGetterDeclarations(
+                                    descriptor.value,
+                                    activation.pos,
+                                ),
+                                position: activation.pos,
+                                sourceFile: activation.getSourceFile(),
+                            });
+                        }
+                    }
+                    return;
+                }
                 if (
                     args.length < 3 ||
                     !(
@@ -6986,8 +7184,8 @@ function analyzeProgram({
                     return;
                 }
                 const names = literalPropertyNames(checker.getTypeAtLocation(args[1]));
-                const getters = descriptorGetterDeclarations(args[2]);
-                if (!names?.length || getters.length === 0) return;
+                const getters = descriptorGetterDeclarations(args[2], activation.pos);
+                if (!names?.length) return;
                 runtimeGetterDefinitions.push({
                     receiver: args[0],
                     names,
@@ -7008,11 +7206,26 @@ function analyzeProgram({
                     }
                     return sameReceiverAlternatives(left, right, activation.pos);
                 };
+                const reachingRuntimeWrites = applyCrossStatementEffectCutoff(
+                    propertyWrites.filter(
+                        (write) =>
+                            write.position < activation.pos &&
+                            write.sourceFile === activation.getSourceFile() &&
+                            write.propertyNames?.some((name) => names?.includes(name)) &&
+                            writeMayReachReceiver(write, receiver, activation.pos),
+                    ),
+                    activation,
+                    names,
+                );
+                const reachingPositions = new Set(
+                    reachingRuntimeWrites.map((write) => write.position),
+                );
                 const matched = runtimeGetterDefinitions
                     .filter(
                         (definition) =>
                             definition.position < activation.pos &&
                             definition.sourceFile === activation.getSourceFile() &&
+                            reachingPositions.has(definition.position) &&
                             definition.names.some((name) => names?.includes(name)) &&
                             sameRuntimeReceiver(definition.receiver, receiver),
                     )
@@ -7267,6 +7480,7 @@ function analyzeProgram({
                                       )
                                     : []),
                                 ...localGetterDeclarations(node.expression, names),
+                                ...runtimeGetterDeclarations(node.expression, names, node),
                             ].filter((getter, index, all) => all.indexOf(getter) === index);
                             recordAccessorActivation(getters, node, node.expression);
                         }
@@ -7502,7 +7716,9 @@ function analyzeProgram({
             }),
         ].filter((activation) => !expressionDefinitelySkipped(activation.node));
         if (activations.length === 0)
-            return enclosingFunction(owner) ? [] : [{ node: use, receiver }];
+            return enclosingFunction(owner)
+                ? []
+                : [{ node: use, receiver, substitutions: new Map() }];
         const nextSeen = new Set(seen);
         nextSeen.add(owner);
         return bounded(
@@ -7512,7 +7728,13 @@ function analyzeProgram({
                     depth + 1,
                     nextSeen,
                     receiver ? substituteReceiver(receiver, activation.substitutions) : null,
-                ),
+                ).map((projection) => ({
+                    ...projection,
+                    substitutions: new Map([
+                        ...activation.substitutions,
+                        ...(projection.substitutions ?? []),
+                    ]),
+                })),
             ),
             "active boundary helper invocation alternatives",
         );
@@ -10023,6 +10245,54 @@ function analyzeProgram({
                 );
                 return;
             }
+            if (syntheticRestCallbackParameters.has(symbol)) {
+                const activeValues = bounded(
+                    (concreteArgumentsByParameter.get(symbol) ?? []).map((concrete) => ({
+                        projection: { node: concrete.argument },
+                        value: concrete.argument,
+                    })),
+                    "active parameter trace alternatives",
+                );
+                if (activeValues.length > 0) {
+                    for (const { projection, value } of activeValues) {
+                        const [access, ...remainingAccessPath] = context.accessPath ?? [];
+                        const names =
+                            access?.kind === "property"
+                                ? access.names
+                                : access?.kind === "array"
+                                  ? [String(access.index)]
+                                  : null;
+                        const alternatives = names?.flatMap((name) =>
+                            memberValueAlternatives(
+                                value,
+                                name,
+                                projection.node,
+                                projection.node.pos,
+                                null,
+                            ),
+                        );
+                        if (alternatives?.length) {
+                            for (const alternative of alternatives) {
+                                if (!alternative?.value) continue;
+                                trace(
+                                    alternative.value,
+                                    { ...context, accessPath: remainingAccessPath },
+                                    depth + 1,
+                                    nextSeen,
+                                );
+                            }
+                            continue;
+                        }
+                        trace(
+                            value,
+                            { ...context, returnedAliasScanLocalOnly: true },
+                            depth + 1,
+                            nextSeen,
+                        );
+                    }
+                    return;
+                }
+            }
             const reaching = traceWrites(symbol, expression, context, depth, nextSeen);
             if (reaching.writes.length > 0) {
                 return;
@@ -10030,6 +10300,71 @@ function analyzeProgram({
             for (const declaration of symbol?.declarations ?? []) {
                 if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
                     trace(declaration.initializer, context, depth + 1, nextSeen);
+                }
+                if (
+                    ts.isVariableDeclaration(declaration) &&
+                    !declaration.initializer &&
+                    ts.isVariableDeclarationList(declaration.parent) &&
+                    ts.isForOfStatement(declaration.parent.parent)
+                ) {
+                    const iterable = unwrapExpression(declaration.parent.parent.expression);
+                    const iterableSymbol = ts.isIdentifier(iterable)
+                        ? unalias(checker, checker.getSymbolAtLocation(iterable))
+                        : null;
+                    const projections = [
+                        {
+                            node: expression,
+                            substitutions: context.substitutions,
+                        },
+                        ...activeBoundaryUseProjections(expression),
+                    ];
+                    for (const projection of projections) {
+                        const activeSubstitutions = projection.substitutions ?? new Map();
+                        const substituted = iterableSymbol
+                            ? activeSubstitutions.get(iterableSymbol)
+                            : null;
+                        if (!isRestArgumentsSubstitution(substituted)) continue;
+                        for (const value of substituted[REST_ARGUMENTS_SUBSTITUTION]) {
+                            const [access, ...remainingAccessPath] = context.accessPath ?? [];
+                            const names =
+                                access?.kind === "property"
+                                    ? access.names
+                                    : access?.kind === "array"
+                                      ? [String(access.index)]
+                                      : null;
+                            const alternatives = names?.flatMap((name) =>
+                                memberValueAlternatives(
+                                    value,
+                                    name,
+                                    projection.node,
+                                    projection.node.pos,
+                                    null,
+                                ),
+                            );
+                            if (alternatives?.length) {
+                                for (const alternative of alternatives) {
+                                    if (!alternative?.value) continue;
+                                    trace(
+                                        alternative.value,
+                                        {
+                                            ...context,
+                                            substitutions: activeSubstitutions,
+                                            accessPath: remainingAccessPath,
+                                        },
+                                        depth + 1,
+                                        nextSeen,
+                                    );
+                                }
+                                continue;
+                            }
+                            trace(
+                                value,
+                                { ...context, substitutions: activeSubstitutions },
+                                depth + 1,
+                                nextSeen,
+                            );
+                        }
+                    }
                 }
             }
             return;
@@ -10211,7 +10546,12 @@ function analyzeProgram({
                 if (
                     (receiverSymbol?.declarations ?? []).some(
                         (declaration) =>
-                            ts.isParameter(declaration) || ts.isBindingElement(declaration),
+                            ts.isParameter(declaration) ||
+                            ts.isBindingElement(declaration) ||
+                            (ts.isVariableDeclaration(declaration) &&
+                                !declaration.initializer &&
+                                ts.isVariableDeclarationList(declaration.parent) &&
+                                ts.isForOfStatement(declaration.parent.parent)),
                     ) ||
                     receiverWrites.some(
                         (write) =>
