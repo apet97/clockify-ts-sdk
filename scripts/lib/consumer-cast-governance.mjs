@@ -1404,6 +1404,58 @@ function analyzeProgram({
                     );
                 }
             }
+            const localAsyncWrappers = checker
+                .getTypeAtLocation(expression.expression)
+                .getCallSignatures()
+                .map((signature) => signature.declaration)
+                .filter(
+                    (declaration) =>
+                        declaration &&
+                        ts.isFunctionLike(declaration) &&
+                        declaration.body &&
+                        !declaration.getSourceFile().isDeclarationFile &&
+                        (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0,
+                );
+            if (
+                bounded(localAsyncWrappers, "awaited local async wrapper alternatives").some(
+                    (declaration) => {
+                        const wrapperKey = `async-wrapper:${declaration.getSourceFile().fileName}:${declaration.pos}:${expression.pos}`;
+                        if (seen.has(wrapperKey)) {
+                            analysisFailures.add(
+                                "consumer cast analysis could not statically resolve awaited local completion (cycle)",
+                            );
+                            return false;
+                        }
+                        const wrapperSeen = new Set(seen);
+                        wrapperSeen.add(wrapperKey);
+                        const wrapperSubstitutions = new Map(substitutions);
+                        declaration.parameters.forEach((parameter, index) => {
+                            const argument = expression.arguments[index];
+                            if (!argument) return;
+                            const symbol = unalias(
+                                checker,
+                                checker.getSymbolAtLocation(parameter.name),
+                            );
+                            if (symbol) wrapperSubstitutions.set(symbol, argument);
+                        });
+                        return awaitExpressions.some(
+                            (awaited) =>
+                                enclosingFunction(awaited) === declaration &&
+                                !expressionDefinitelySkipped(awaited) &&
+                                expressionCompletionDependsOn(
+                                    awaited.expression,
+                                    invocation,
+                                    awaited.pos,
+                                    wrapperSeen,
+                                    depth + 1,
+                                    wrapperSubstitutions,
+                                ),
+                        );
+                    },
+                )
+            ) {
+                return true;
+            }
         }
 
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
@@ -1564,9 +1616,192 @@ function analyzeProgram({
             const awaitedConstraints = branchConstraints(awaited);
             const useConstraints = branchConstraints(use);
             if (!awaitedConstraints || !useConstraints) return false;
-            return [...awaitedConstraints].every(
-                ([owner, branch]) =>
-                    !useConstraints.has(owner) || useConstraints.get(owner) === branch,
+            function branchCanCompleteAfter(candidate, owner) {
+                for (
+                    let current = candidate;
+                    current && current !== owner;
+                    current = current.parent
+                ) {
+                    chargeAnalysisWork(1);
+                    const parent = current.parent;
+                    const statements =
+                        ts.isBlock(parent) || ts.isCaseClause(parent) || ts.isDefaultClause(parent)
+                            ? parent.statements
+                            : null;
+                    if (!statements || !ts.isStatement(current)) continue;
+                    const index = statements.indexOf(current);
+                    if (index >= 0 && statements.slice(index + 1).some(statementDefinitelyAbrupt)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            const compatibleBranches = [...awaitedConstraints].every(([owner, branch]) => {
+                if (useConstraints.has(owner)) return useConstraints.get(owner) === branch;
+                return branchCanCompleteAfter(awaited, owner);
+            });
+            if (!compatibleBranches) return false;
+
+            function abruptTarget(statement) {
+                for (let current = statement.parent; current; current = current.parent) {
+                    if (
+                        ts.isIterationStatement(current, false) ||
+                        (ts.isBreakStatement(statement) && ts.isSwitchStatement(current))
+                    ) {
+                        return current;
+                    }
+                    if (ts.isFunctionLike(current)) return null;
+                }
+                return null;
+            }
+            function abruptRunsThroughUse(statement) {
+                for (let current = statement.parent; current; current = current.parent) {
+                    if (ts.isFunctionLike(current)) break;
+                    if (
+                        ts.isTryStatement(current) &&
+                        current.finallyBlock &&
+                        isWithin(statement, current.tryBlock) &&
+                        isWithin(use, current.finallyBlock)
+                    ) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            function statementPreventsUse(statement) {
+                chargeAnalysisWork(1);
+                if (ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) {
+                    return !abruptRunsThroughUse(statement);
+                }
+                if (ts.isBreakStatement(statement) || ts.isContinueStatement(statement)) {
+                    const target = abruptTarget(statement);
+                    return Boolean(target && isWithin(use, target) && use.pos > statement.pos);
+                }
+                if (ts.isBlock(statement)) {
+                    return statement.statements.some(statementPreventsUse);
+                }
+                if (ts.isIfStatement(statement)) {
+                    const state = definiteExpressionState(statement.expression);
+                    if (state.truthy === true) return statementPreventsUse(statement.thenStatement);
+                    if (state.truthy === false) {
+                        return statement.elseStatement
+                            ? statementPreventsUse(statement.elseStatement)
+                            : false;
+                    }
+                    return Boolean(
+                        statement.elseStatement &&
+                        statementPreventsUse(statement.thenStatement) &&
+                        statementPreventsUse(statement.elseStatement),
+                    );
+                }
+                if (ts.isTryStatement(statement)) {
+                    if (statement.finallyBlock && statementPreventsUse(statement.finallyBlock)) {
+                        return true;
+                    }
+                    return (
+                        statementPreventsUse(statement.tryBlock) &&
+                        (!statement.catchClause ||
+                            statementPreventsUse(statement.catchClause.block))
+                    );
+                }
+                return false;
+            }
+            function continuationCanReachUse(candidate) {
+                let depth = 0;
+                for (let current = candidate; current?.parent; current = current.parent) {
+                    chargeAnalysisWork(1);
+                    depth += 1;
+                    if (depth > MAX_TRACE_DEPTH) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve awaited local completion control path (depth limit ${MAX_TRACE_DEPTH})`,
+                        );
+                        return false;
+                    }
+                    const parent = current.parent;
+                    if (ts.isFunctionLike(parent)) return parent === enclosingFunction(use);
+                    const statements =
+                        ts.isBlock(parent) || ts.isCaseClause(parent) || ts.isDefaultClause(parent)
+                            ? parent.statements
+                            : null;
+                    if (statements && ts.isStatement(current)) {
+                        const currentIndex = statements.indexOf(current);
+                        const useStatement = statements.find((statement) =>
+                            isWithin(use, statement),
+                        );
+                        const useIndex = useStatement ? statements.indexOf(useStatement) : -1;
+                        const end = useIndex >= 0 ? useIndex : statements.length;
+                        if (statements.slice(currentIndex + 1, end).some(statementPreventsUse)) {
+                            return false;
+                        }
+                        if (useIndex >= 0) return currentIndex <= useIndex;
+                    }
+                    if (ts.isTryStatement(parent)) {
+                        if (parent.finallyBlock && isWithin(use, parent.finallyBlock)) return true;
+                        if (
+                            parent.finallyBlock &&
+                            !isWithin(candidate, parent.finallyBlock) &&
+                            statementPreventsUse(parent.finallyBlock)
+                        ) {
+                            return false;
+                        }
+                    }
+                    if (ts.isSwitchStatement(parent) && isWithin(use, parent)) {
+                        const clauses = parent.caseBlock.clauses;
+                        const fromIndex = clauses.findIndex((clause) =>
+                            isWithin(candidate, clause),
+                        );
+                        const useIndex = clauses.findIndex((clause) => isWithin(use, clause));
+                        if (fromIndex >= 0 && useIndex >= 0 && fromIndex > useIndex) return false;
+                    }
+                }
+                return false;
+            }
+            return enclosingFunction(awaited) !== enclosingFunction(use)
+                ? true
+                : continuationCanReachUse(awaited);
+        }
+        function awaitMayResume(awaited) {
+            const expression = unwrapExpression(awaited.expression);
+            if (!ts.isCallExpression(expression) || expression.arguments.length === 0) return true;
+            const isEmpty = expressionIsStaticallyEmptyCollection(
+                expression.arguments[0],
+                expression.arguments[0].pos,
+            );
+            if (
+                isEmpty &&
+                expressionResolvesToBuiltinMember(
+                    expression.expression,
+                    "Promise",
+                    "race",
+                    expression.pos,
+                )
+            ) {
+                return false;
+            }
+            const definitelyRejects =
+                expressionResolvesToBuiltinMember(
+                    expression.expression,
+                    "Promise",
+                    "reject",
+                    expression.pos,
+                ) ||
+                (isEmpty &&
+                    expressionResolvesToBuiltinMember(
+                        expression.expression,
+                        "Promise",
+                        "any",
+                        expression.pos,
+                    ));
+            if (!definitelyRejects) return true;
+            return Boolean(
+                ts.findAncestor(awaited, (candidate) =>
+                    ts.isTryStatement(candidate) &&
+                    candidate.catchClause &&
+                    isWithin(awaited, candidate.tryBlock) &&
+                    (isWithin(use, candidate.catchClause) || use.pos > candidate.end)
+                        ? candidate
+                        : null,
+                ),
             );
         }
         const localAwait = awaitExpressions.some(
@@ -1576,8 +1811,12 @@ function analyzeProgram({
                 enclosingFunction(awaited) === nodeFunction &&
                 (nodeFunction !== useFunction || awaited.pos < use.pos) &&
                 !expressionDefinitelySkipped(awaited) &&
+                awaitMayResume(awaited) &&
                 canReachUseOnSameBranch(awaited) &&
-                expressionCompletionDependsOn(awaited.expression, node, awaited.pos),
+                (expressionCompletionDependsOn(awaited.expression, node, awaited.pos) ||
+                    (nodeFunction === useFunction &&
+                        awaited.pos > node.pos &&
+                        awaited.pos < use.pos)),
         );
         if (!localAwait) return false;
         if (nodeFunction === useFunction) {
