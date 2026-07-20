@@ -5577,6 +5577,184 @@ for (const [label, setup, expected] of [
     });
 }
 
+test("uses a later safe numeric array-element constructor target", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } const registry: Array<typeof Safe | typeof Unsafe> = [Unsafe]; registry[0] = Safe; new registry[0](); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("uses a later unsafe numeric array-element constructor target", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } const registry: Array<typeof Safe | typeof Unsafe> = [Safe]; registry[0] = Unsafe; new registry[0](); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not activate construction effects in a statically empty for-of loop", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } for (const value of []) { void value; new Unsafe(); } return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("keeps constructor registry allocations distinct across receiver rebinding", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } const oldObject: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const newSafe: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; let registry = oldObject; const old = registry; registry = newSafe; old.Ctor = Unsafe; new registry.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("keeps Object.assign on an old constructor registry allocation distinct", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } const oldObject: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const newSafe: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; let registry = oldObject; const old = registry; registry = newSafe; Object.assign(old, { Ctor: Unsafe }); new registry.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, setup, expected] of [
+    [
+        "computed unsafe array element overwrite",
+        "const key: 0 = 0; const registry: Array<typeof Safe | typeof Unsafe> = [Safe]; registry[key] = Unsafe; new registry[key]();",
+        "finding",
+    ],
+    [
+        "aliased safe array element overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Unsafe]; const alias = registry; alias[0] = Safe; new registry[0]();",
+        "safe",
+    ],
+    [
+        "destructured safe array element selection",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Unsafe]; registry[0] = Safe; const [Selected] = registry; new Selected();",
+        "safe",
+    ],
+    [
+        "all-path safe array element overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Unsafe]; if (choose) registry[0] = Safe; else registry[0] = AlsoSafe; new registry[0]();",
+        "safe",
+    ],
+    [
+        "partial unsafe array element overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Safe]; if (choose) registry[0] = Unsafe; new registry[0]();",
+        "finding",
+    ],
+    [
+        "Object.assign safe array element overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Unsafe]; Object.assign(registry, { 0: Safe }); new registry[0]();",
+        "safe",
+    ],
+    [
+        "Reflect.set unsafe array element overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Safe]; Reflect.set(registry, 0, Unsafe); new registry[0]();",
+        "finding",
+    ],
+    [
+        "unknown array index overwrite",
+        "const registry: Array<typeof Safe | typeof Unsafe> = [Safe]; registry[index] = Unsafe; new registry[0]();",
+        "finding",
+    ],
+]) {
+    test(`${label} preserves array constructor registry ordering`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean, index: number) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class AlsoSafe {} class Unsafe { configured = (holder.request = body as any); } ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (expected === "safe") assert.deepEqual(result.failures, []);
+            else assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+for (const [label, statement, shouldFail] of [
+    [
+        "empty readonly tuple alias",
+        "const empty = [] as const; for (const value of empty) { void value; new Unsafe(); }",
+        false,
+    ],
+    [
+        "all-path empty conditional iterable",
+        "for (const value of (body ? [] : [])) { void value; new Unsafe(); }",
+        false,
+    ],
+    ["nonempty array", "for (const value of [1]) { void value; new Unsafe(); }", true],
+    ["unknown iterable", "for (const value of values) { void value; new Unsafe(); }", true],
+    ["empty for-in object", "for (const key in {}) { void key; new Unsafe(); }", false],
+    [
+        "spread iterable",
+        "const empty = [] as const; for (const value of [...empty]) { void value; new Unsafe(); }",
+        true,
+    ],
+    ["called iterable", "for (const value of Array.from([])) { void value; new Unsafe(); }", true],
+    [
+        "getter-bearing for-in object",
+        "for (const key in { get value() { return 1; } }) { void key; new Unsafe(); }",
+        true,
+    ],
+    [
+        "break before construction",
+        "for (const value of [1]) { void value; break; new Unsafe(); }",
+        false,
+    ],
+]) {
+    test(`${label} preserves static collection-loop reachability`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, values: Iterable<unknown>) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } ${statement} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, setup, shouldFail] of [
+    [
+        "current allocation direct mutation",
+        "let registry = oldObject; registry = newSafe; registry.Ctor = Unsafe; new registry.Ctor();",
+        true,
+    ],
+    [
+        "current allocation alias mutation",
+        "let registry = oldObject; registry = newSafe; const current = registry; current.Ctor = Unsafe; new registry.Ctor();",
+        true,
+    ],
+    [
+        "conditional allocation rebind",
+        "let registry = oldObject; const old = registry; registry = choose ? oldObject : newSafe; old.Ctor = Unsafe; new registry.Ctor();",
+        true,
+    ],
+]) {
+    test(`${label} preserves constructor registry allocation identity`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } const oldObject: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const newSafe: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
 test("uses the latest projected patch property write in rest reconstruction", async () => {
     await withFixture(
         returnedMutationFixture(

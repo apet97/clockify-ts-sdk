@@ -926,6 +926,66 @@ function analyzeProgram({
         return owner >= start && owner <= end;
     }
 
+    function expressionIsStaticallyEmptyCollection(
+        expression,
+        beforePosition,
+        seen = new Set(),
+        depth = 0,
+    ) {
+        if (depth > MAX_TRACE_DEPTH) return false;
+        expression = unwrapExpression(expression);
+        if (ts.isArrayLiteralExpression(expression)) return expression.elements.length === 0;
+        if (ts.isObjectLiteralExpression(expression)) return expression.properties.length === 0;
+        if (ts.isConditionalExpression(expression)) {
+            chargeAnalysisWork(1);
+            return (
+                expressionIsStaticallyEmptyCollection(
+                    expression.whenTrue,
+                    beforePosition,
+                    seen,
+                    depth + 1,
+                ) &&
+                expressionIsStaticallyEmptyCollection(
+                    expression.whenFalse,
+                    beforePosition,
+                    seen,
+                    depth + 1,
+                )
+            );
+        }
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol || seen.has(symbol)) return false;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
+        const writes = (writesBySymbol.get(symbol) ?? []).filter(
+            (write) =>
+                write.position < beforePosition &&
+                write.projection == null &&
+                (cutoff == null || write.position >= cutoff),
+        );
+        const initializers =
+            writes.length > 0
+                ? writes.map((write) => write.value)
+                : (symbol.declarations ?? [])
+                      .filter(ts.isVariableDeclaration)
+                      .map((declaration) => declaration.initializer)
+                      .filter(Boolean);
+        chargeAnalysisWork(Math.max(0, initializers.length - 1));
+        return (
+            initializers.length > 0 &&
+            initializers.every((initializer) =>
+                expressionIsStaticallyEmptyCollection(
+                    initializer,
+                    initializer.pos,
+                    nextSeen,
+                    depth + 1,
+                ),
+            )
+        );
+    }
+
     function expressionDefinitelySkipped(node) {
         for (let current = node.parent; current; current = current.parent) {
             if (ts.isIfStatement(current)) {
@@ -951,6 +1011,13 @@ function analyzeProgram({
             if (ts.isForStatement(current) && current.condition) {
                 const state = definiteExpressionState(current.condition);
                 if (isWithin(node, current.statement) && state.truthy === false) return true;
+            }
+            if (
+                (ts.isForOfStatement(current) || ts.isForInStatement(current)) &&
+                isWithin(node, current.statement) &&
+                expressionIsStaticallyEmptyCollection(current.expression, current.expression.pos)
+            ) {
+                return true;
             }
             if (ts.isSwitchStatement(current) && !switchClauseIsReachable(node, current)) {
                 return true;
@@ -1110,22 +1177,24 @@ function analyzeProgram({
                     new Set(),
                     false,
                 );
-                const propertySymbol = symbolForWriteTarget(expression);
-                const reaching = propertySymbol
-                    ? reachingWrites(propertySymbol, expression)
-                    : { hasDominator: false, writes: [] };
-                const writtenValues = reaching.writes
-                    .filter(
-                        (write) =>
-                            !write.deleted &&
-                            (write.propertyNames == null ||
-                                write.propertyNames.includes(propertyNames[0])),
-                    )
-                    .map((write) => write.value);
-                if (reaching.writes.some((write) => write.deleted)) resolution.unresolved = true;
-                const values = reaching.hasDominator
-                    ? writtenValues
-                    : [...initializerValues, ...writtenValues];
+                const defaults =
+                    initializerValues.length > 0
+                        ? initializerValues.map((value) => ({ value, position: value.pos }))
+                        : [{ value: null, position: expression.pos }];
+                const alternatives = defaults.flatMap((defaultValue) =>
+                    memberValueAlternatives(
+                        expression.expression,
+                        propertyNames[0],
+                        expression,
+                        expression.pos,
+                        defaultValue,
+                        true,
+                    ),
+                );
+                if (alternatives.some((alternative) => alternative.value == null)) {
+                    resolution.unresolved = true;
+                }
+                const values = alternatives.map((alternative) => alternative.value).filter(Boolean);
                 if (values.length > 0) {
                     return bounded(
                         values.flatMap((value) =>
@@ -2557,7 +2626,13 @@ function analyzeProgram({
             : null;
     }
 
-    function matchingMemberWrites(receiver, memberName, beforePosition, use) {
+    function matchingMemberWrites(
+        receiver,
+        memberName,
+        beforePosition,
+        use,
+        conservativeReceiverOverlap = false,
+    ) {
         function staticReceiverPath(expression) {
             const path = [];
             let current = unwrapExpression(expression);
@@ -2588,9 +2663,33 @@ function analyzeProgram({
             );
         }
         function sameReceiverAlternatives(left, right, position) {
-            if (!requestNameFromType(checker, checker.getTypeAtLocation(right))) return false;
-            const leftOrigins = receiverOrigins(left, position, new Set(), new Map(), true);
-            const rightOrigins = receiverOrigins(right, position, new Set(), new Map(), true);
+            if (
+                !conservativeReceiverOverlap &&
+                !requestNameFromType(checker, checker.getTypeAtLocation(right))
+            ) {
+                return false;
+            }
+            const leftOrigins = receiverOrigins(
+                left,
+                position,
+                new Set(),
+                new Map(),
+                !conservativeReceiverOverlap,
+            );
+            const rightOrigins = receiverOrigins(
+                right,
+                position,
+                new Set(),
+                new Map(),
+                !conservativeReceiverOverlap,
+            );
+            if (conservativeReceiverOverlap) {
+                const boundedLeft = bounded([...leftOrigins], "constructed receiver origins");
+                const boundedRight = new Set(
+                    bounded([...rightOrigins], "constructed receiver origins"),
+                );
+                return boundedLeft.some((origin) => boundedRight.has(origin));
+            }
             return (
                 leftOrigins.size > 0 &&
                 leftOrigins.size === rightOrigins.size &&
@@ -2742,8 +2841,15 @@ function analyzeProgram({
         memberExpression,
         beforePosition,
         defaultValue,
+        conservativeReceiverOverlap = false,
     ) {
-        const writes = matchingMemberWrites(receiver, memberName, beforePosition, memberExpression);
+        const writes = matchingMemberWrites(
+            receiver,
+            memberName,
+            beforePosition,
+            memberExpression,
+            conservativeReceiverOverlap,
+        );
         const useLocation = directStatementInLinearContainer(memberExpression);
         let cutoff = null;
         if (useLocation) {
@@ -4929,6 +5035,27 @@ function analyzeProgram({
         if (seen.has(key)) return [];
         const nextSeen = new Set(seen);
         nextSeen.add(key);
+        const [step, ...rest] = steps;
+        if (
+            ts.isIdentifier(source) &&
+            ((step.kind === "property" && step.names.length === 1) || step.kind === "array")
+        ) {
+            const memberName = step.kind === "property" ? step.names[0] : String(step.index);
+            const initializerValues = propertyValueExpressions(source, memberName);
+            const defaults =
+                initializerValues.length > 0
+                    ? initializerValues.map((value) => ({ value, position: value.pos }))
+                    : [{ value: null, position: source.pos }];
+            const alternatives = defaults.flatMap((defaultValue) =>
+                memberValueAlternatives(source, memberName, source, source.pos, defaultValue, true),
+            );
+            const values = alternatives.map((alternative) => alternative.value).filter(Boolean);
+            if (values.length > 0) {
+                return values.flatMap((value) =>
+                    projectedExpressions(value, rest, depth + 1, nextSeen, charged),
+                );
+            }
+        }
         if (ts.isIdentifier(source)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(source));
             const values = reachingWrites(symbol, source).writes.map((write) => write.value);
@@ -4962,7 +5089,6 @@ function analyzeProgram({
                 return alternatives;
             }
         }
-        const [step, ...rest] = steps;
         if (step.kind === "property" && ts.isObjectLiteralExpression(source)) {
             const selected = literalObjectProperty(source, step.names);
             return selected
@@ -6272,6 +6398,14 @@ function analyzeProgram({
                 }
             }
             return values;
+        }
+        if (ts.isArrayLiteralExpression(expression)) {
+            const index = Number(propertyName);
+            if (!Number.isSafeInteger(index) || index < 0) return [];
+            const element = expression.elements[index];
+            return element && ts.isExpression(element) && !ts.isSpreadElement(element)
+                ? [element]
+                : [];
         }
         return [];
     }
