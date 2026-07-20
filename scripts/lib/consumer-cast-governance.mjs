@@ -1475,6 +1475,74 @@ function analyzeProgram({
             return alternatives;
         }
         if (ts.isBinaryExpression(expression)) {
+            if (expression.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+                return reachingExpressionValues(
+                    expression.right,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    governed,
+                    depth + 1,
+                    recoverProjectedWrites,
+                );
+            }
+            if (
+                [
+                    ts.SyntaxKind.BarBarEqualsToken,
+                    ts.SyntaxKind.AmpersandAmpersandEqualsToken,
+                    ts.SyntaxKind.QuestionQuestionEqualsToken,
+                ].includes(expression.operatorToken.kind)
+            ) {
+                const leftValues = reachingExpressionValues(
+                    expression.left,
+                    expression.pos,
+                    seen,
+                    substitutions,
+                    governed,
+                    depth + 1,
+                    recoverProjectedWrites,
+                );
+                const retainedLeft = [];
+                let rightMayExecute = leftValues.length === 0;
+                for (const value of leftValues) {
+                    const state = definiteExpressionState(value.expression);
+                    const retainsLeft =
+                        (expression.operatorToken.kind === ts.SyntaxKind.BarBarEqualsToken &&
+                            state.truthy !== false) ||
+                        (expression.operatorToken.kind ===
+                            ts.SyntaxKind.AmpersandAmpersandEqualsToken &&
+                            state.truthy !== true) ||
+                        (expression.operatorToken.kind ===
+                            ts.SyntaxKind.QuestionQuestionEqualsToken &&
+                            state.nullish !== true);
+                    const executesRight =
+                        (expression.operatorToken.kind === ts.SyntaxKind.BarBarEqualsToken &&
+                            state.truthy !== true) ||
+                        (expression.operatorToken.kind ===
+                            ts.SyntaxKind.AmpersandAmpersandEqualsToken &&
+                            state.truthy !== false) ||
+                        (expression.operatorToken.kind ===
+                            ts.SyntaxKind.QuestionQuestionEqualsToken &&
+                            state.nullish !== false);
+                    if (retainsLeft) retainedLeft.push(value);
+                    if (executesRight) rightMayExecute = true;
+                }
+                const rightValues = rightMayExecute
+                    ? reachingExpressionValues(
+                          expression.right,
+                          beforePosition,
+                          seen,
+                          substitutions,
+                          governed,
+                          depth + 1,
+                          recoverProjectedWrites,
+                      )
+                    : [];
+                return bounded(
+                    [...retainedLeft, ...rightValues],
+                    "reaching logical assignment values",
+                );
+            }
             if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
                 return reachingExpressionValues(
                     expression.right,
@@ -4615,15 +4683,20 @@ function analyzeProgram({
         const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
-        const wrappedReceiver =
-            ts.isConditionalExpression(receiver) ||
-            (ts.isBinaryExpression(receiver) &&
+        const isReceiverValueWrapper = (value) =>
+            ts.isConditionalExpression(value) ||
+            (ts.isBinaryExpression(value) &&
                 [
                     ts.SyntaxKind.CommaToken,
                     ts.SyntaxKind.BarBarToken,
                     ts.SyntaxKind.AmpersandAmpersandToken,
                     ts.SyntaxKind.QuestionQuestionToken,
-                ].includes(receiver.operatorToken.kind));
+                    ts.SyntaxKind.EqualsToken,
+                    ts.SyntaxKind.BarBarEqualsToken,
+                    ts.SyntaxKind.AmpersandAmpersandEqualsToken,
+                    ts.SyntaxKind.QuestionQuestionEqualsToken,
+                ].includes(value.operatorToken.kind));
+        const wrappedReceiver = isReceiverValueWrapper(receiver);
         if (wrappedReceiver) {
             const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-wrapper`;
             if (seen.has(key)) {
@@ -4680,6 +4753,42 @@ function analyzeProgram({
                 );
             }
             factoryCall = unwrapExpression(factoryCall.expression);
+        }
+        if (factoryCall && projection.length > 0 && isReceiverValueWrapper(factoryCall)) {
+            const key = `${factoryCall.getSourceFile().fileName}:${factoryCall.pos}:${factoryCall.end}:getter-projected-wrapper:${JSON.stringify(projection)}`;
+            if (seen.has(key)) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve recursive projected receiver wrapper`,
+                );
+                return [];
+            }
+            const nextSeen = new Set(seen);
+            nextSeen.add(key);
+            const alternatives = reachingExpressionValues(
+                factoryCall,
+                factoryCall.pos,
+                nextSeen,
+                substitutions,
+                true,
+            );
+            if (alternatives.length === 0) return direct;
+            const resolved = alternatives.flatMap((alternative) => {
+                const value = alternative.sourceExpression ?? alternative.expression;
+                if (value === factoryCall) return direct;
+                return getterDeclarationsForReceiver(
+                    value,
+                    names,
+                    resolvedMember,
+                    nextSeen,
+                    depth + 1,
+                    alternative.substitutions,
+                    projection,
+                );
+            });
+            return bounded(
+                resolved.length > 0 ? resolved : direct,
+                "projected receiver wrapper alternatives",
+            );
         }
         if (factoryCall && ts.isCallExpression(factoryCall)) {
             const key = `${factoryCall.getSourceFile().fileName}:${factoryCall.pos}:${factoryCall.end}:getter-factory:${JSON.stringify(projection)}`;
@@ -4768,7 +4877,19 @@ function analyzeProgram({
         }
         const nextSeen = new Set(seen);
         nextSeen.add(key);
-        const writes = reachingWrites(symbol, receiverExpression).writes;
+        const reachingReceiverWrites = reachingWrites(symbol, receiverExpression).writes;
+        const writes = reachingReceiverWrites.filter(
+            (write) =>
+                !reachingReceiverWrites.some((outerWrite) => {
+                    if (outerWrite === write) return false;
+                    const assignment = outerWrite.node.parent;
+                    return (
+                        ts.isBinaryExpression(assignment) &&
+                        assignment.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+                        isWithin(write.node, assignment.right)
+                    );
+                }),
+        );
         const values = writes.map((write) => ({
             value: write.value,
             projection: write.projection ?? [],
