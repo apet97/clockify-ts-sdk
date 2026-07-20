@@ -266,6 +266,7 @@ function analyzeProgram({
     const alternativePathsByGroup = new Map();
     const receiverAllocationOrigins = new Map();
     const receiverAllocationContexts = new Map();
+    const awaitExpressions = [];
     const analysisFailures = new Set();
     const maxAlternatives = analysisLimits.maxAlternatives ?? MAX_STATIC_ALTERNATIVES;
     const maxInvocations = analysisLimits.maxInvocations ?? MAX_SYNTHETIC_INVOCATIONS;
@@ -1294,28 +1295,275 @@ function analyzeProgram({
         return suspended;
     }
 
-    function invocationIsAwaitedBeforeUse(node, use) {
-        let current = node;
-        while (
-            current.parent &&
-            (ts.isParenthesizedExpression(current.parent) ||
-                ts.isAsExpression(current.parent) ||
-                ts.isSatisfiesExpression(current.parent) ||
-                ts.isNonNullExpression(current.parent))
-        ) {
-            current = current.parent;
+    function typeIsKnownPromise(expression) {
+        const type = checker.getTypeAtLocation(expression);
+        if (checker.getPromisedTypeOfPromise?.(type)) return true;
+        return (
+            type.isUnion?.() &&
+            type.types.length > 0 &&
+            type.types.every((member) => checker.getPromisedTypeOfPromise?.(member))
+        );
+    }
+
+    function expressionCompletionDependsOn(
+        expression,
+        invocation,
+        beforePosition,
+        seen = new Set(),
+        depth = 0,
+        substitutions = new Map(),
+    ) {
+        chargeAnalysisWork(1);
+        if (depth > MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve awaited local completion (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return false;
+        }
+        expression = unwrapExpression(expression);
+        if (expression === invocation) return true;
+
+        if (ts.isCallExpression(expression)) {
+            if (
+                expression.arguments.length > 0 &&
+                expressionResolvesToBuiltinMember(
+                    expression.expression,
+                    "Promise",
+                    "resolve",
+                    expression.pos,
+                )
+            ) {
+                return expressionCompletionDependsOn(
+                    expression.arguments[0],
+                    invocation,
+                    expression.pos,
+                    seen,
+                    depth + 1,
+                    substitutions,
+                );
+            }
+            for (const method of ["all", "allSettled"]) {
+                if (
+                    expression.arguments.length === 0 ||
+                    !expressionResolvesToBuiltinMember(
+                        expression.expression,
+                        "Promise",
+                        method,
+                        expression.pos,
+                    )
+                ) {
+                    continue;
+                }
+                const collections = reachingExpressionValues(
+                    expression.arguments[0],
+                    expression.pos,
+                    seen,
+                    substitutions,
+                    true,
+                    depth + 1,
+                    true,
+                );
+                return (
+                    collections.length > 0 &&
+                    collections.every((collection) => {
+                        const value = unwrapExpression(collection.expression);
+                        return (
+                            ts.isArrayLiteralExpression(value) &&
+                            value.elements.some(
+                                (element) =>
+                                    !ts.isOmittedExpression(element) &&
+                                    expressionCompletionDependsOn(
+                                        ts.isSpreadElement(element) ? element.expression : element,
+                                        invocation,
+                                        expression.pos,
+                                        seen,
+                                        depth + 1,
+                                        collection.substitutions,
+                                    ),
+                            )
+                        );
+                    })
+                );
+            }
+            if (
+                (ts.isPropertyAccessExpression(expression.expression) ||
+                    ts.isElementAccessExpression(expression.expression)) &&
+                typeIsKnownPromise(expression.expression.expression)
+            ) {
+                const memberNames = ts.isPropertyAccessExpression(expression.expression)
+                    ? [expression.expression.name.text]
+                    : computedPropertyNames(expression.expression);
+                if (memberNames?.some((name) => ["then", "catch", "finally"].includes(name))) {
+                    return expressionCompletionDependsOn(
+                        expression.expression.expression,
+                        invocation,
+                        expression.pos,
+                        seen,
+                        depth + 1,
+                        substitutions,
+                    );
+                }
+            }
+        }
+
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const memberNames = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : computedPropertyNames(expression);
+            const receiver = unwrapExpression(expression.expression);
+            if (memberNames?.length === 1 && ts.isIdentifier(receiver)) {
+                const receiverSymbol = valueSymbolAtIdentifier(receiver);
+                const matching = propertyWrites.filter((write) => {
+                    if (
+                        write.position >= beforePosition ||
+                        !write.propertyNames?.includes(memberNames[0]) ||
+                        !(
+                            ts.isPropertyAccessExpression(write.node) ||
+                            ts.isElementAccessExpression(write.node)
+                        )
+                    ) {
+                        return false;
+                    }
+                    const writtenReceiver = unwrapExpression(write.node.expression);
+                    return (
+                        ts.isIdentifier(writtenReceiver) &&
+                        valueSymbolAtIdentifier(writtenReceiver) === receiverSymbol
+                    );
+                });
+                if (matching.length > 0) {
+                    const latest = matching
+                        .sort((left, right) => left.position - right.position)
+                        .at(-1);
+                    const location = directStatementInLinearContainer(latest.node);
+                    const useLocation = directStatementInLinearContainer(expression);
+                    if (
+                        !location ||
+                        !useLocation ||
+                        location.container !== useLocation.container ||
+                        !ts.isExpressionStatement(location.statement) ||
+                        !expressionDefinitelyExecutesInStatement(latest.node, location.statement)
+                    ) {
+                        return false;
+                    }
+                    return expressionCompletionDependsOn(
+                        latest.value,
+                        invocation,
+                        latest.position,
+                        seen,
+                        depth + 1,
+                        substitutions,
+                    );
+                }
+            }
+        }
+
+        const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
+        if (seen.has(key)) {
+            analysisFailures.add(
+                "consumer cast analysis could not statically resolve awaited local completion (cycle)",
+            );
+            return false;
+        }
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
+        const resolved = reachingExpressionValues(
+            expression,
+            beforePosition,
+            new Set(),
+            substitutions,
+            true,
+            depth + 1,
+            false,
+        );
+        const changed = resolved.filter((candidate) => {
+            const value = unwrapExpression(candidate.expression);
+            if (value === expression) return false;
+            return !(
+                ts.isIdentifier(value) &&
+                ts.isIdentifier(expression) &&
+                valueSymbolAtIdentifier(value) === valueSymbolAtIdentifier(expression)
+            );
+        });
+        if (changed.length !== resolved.length && ts.isIdentifier(expression)) {
+            const symbol = valueSymbolAtIdentifier(expression);
+            if (
+                (writesBySymbol.get(symbol) ?? []).some((write) => write.position < beforePosition)
+            ) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve awaited local completion (cycle)",
+                );
+            }
         }
         return (
-            current.parent != null &&
-            ts.isAwaitExpression(current.parent) &&
-            current.parent.getSourceFile() === use.getSourceFile() &&
-            current.parent.pos < use.pos
+            changed.length > 0 &&
+            changed.length === resolved.length &&
+            changed.every((candidate) =>
+                expressionCompletionDependsOn(
+                    candidate.expression,
+                    invocation,
+                    candidate.expression.pos,
+                    nextSeen,
+                    depth + 1,
+                    candidate.substitutions,
+                ),
+            )
+        );
+    }
+
+    function invocationIsAwaitedBeforeUse(
+        node,
+        use,
+        requiredCallerNodes = [],
+        seen = new Set(),
+        depth = 0,
+    ) {
+        if (depth > MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve awaited local completion (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return false;
+        }
+        if (seen.has(node)) {
+            analysisFailures.add(
+                "consumer cast analysis could not statically resolve awaited local completion (cycle)",
+            );
+            return false;
+        }
+        const nextSeen = new Set(seen);
+        nextSeen.add(node);
+        const useFunction = enclosingFunction(use);
+        const nodeFunction = enclosingFunction(node);
+        const localAwait = awaitExpressions.some(
+            (awaited) =>
+                awaited.getSourceFile() === node.getSourceFile() &&
+                (awaited.pos > node.pos || isWithin(node, awaited.expression)) &&
+                enclosingFunction(awaited) === nodeFunction &&
+                expressionDefinitelyExecutesOnInvocation(awaited, nodeFunction) &&
+                expressionCompletionDependsOn(awaited.expression, node, awaited.pos),
+        );
+        if (!localAwait) return false;
+        if (nodeFunction === useFunction) {
+            return node.getSourceFile() === use.getSourceFile() && node.pos < use.pos;
+        }
+        if (!nodeFunction) return false;
+        const requiredCaller = requiredCallerNodes[0];
+        return (callsByDeclaration.get(nodeFunction) ?? []).some(
+            (callerInvocation) =>
+                (requiredCaller == null || callerInvocation.node === requiredCaller) &&
+                invocationIsAwaitedBeforeUse(
+                    callerInvocation.node,
+                    use,
+                    requiredCallerNodes.slice(requiredCaller ? 1 : 0),
+                    nextSeen,
+                    depth + 1,
+                ),
         );
     }
 
     for (const sourceFile of program.getSourceFiles()) {
         if (sourceFile.isDeclarationFile) continue;
         function indexWrites(node) {
+            if (ts.isAwaitExpression(node)) awaitExpressions.push(node);
             if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
                 addWrite(node.name, node.initializer, node.pos, node.type);
             }
@@ -5233,7 +5481,7 @@ function analyzeProgram({
         let mayExit = false;
         function visit(node) {
             if (mayExit) return;
-            if (node !== statement && (ts.isFunctionLike(node) || ts.isClassLike(node))) return;
+            if (ts.isFunctionLike(node) || ts.isClassLike(node)) return;
             if (ts.isReturnStatement(node) || ts.isThrowStatement(node)) {
                 mayExit = true;
                 return;
@@ -5735,7 +5983,11 @@ function analyzeProgram({
                 .filter(
                     (invocation) =>
                         !writeRequiresAwaitedCompletion ||
-                        invocationIsAwaitedBeforeUse(invocation.node, use),
+                        invocationIsAwaitedBeforeUse(
+                            invocation.node,
+                            use,
+                            invocation.requiredCallerNodes,
+                        ),
                 )
                 .flatMap((invocation) => lift(write, declaration, invocation)),
         );
