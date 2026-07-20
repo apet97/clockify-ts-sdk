@@ -1176,6 +1176,7 @@ function analyzeProgram({
                     0,
                     new Set(),
                     false,
+                    true,
                 );
                 const defaults =
                     initializerValues.length > 0
@@ -2675,6 +2676,7 @@ function analyzeProgram({
                 new Set(),
                 new Map(),
                 !conservativeReceiverOverlap,
+                conservativeReceiverOverlap,
             );
             const rightOrigins = receiverOrigins(
                 right,
@@ -2682,6 +2684,7 @@ function analyzeProgram({
                 new Set(),
                 new Map(),
                 !conservativeReceiverOverlap,
+                conservativeReceiverOverlap,
             );
             if (conservativeReceiverOverlap) {
                 const boundedLeft = bounded([...leftOrigins], "constructed receiver origins");
@@ -2695,6 +2698,13 @@ function analyzeProgram({
                 leftOrigins.size === rightOrigins.size &&
                 [...leftOrigins].every((origin) => rightOrigins.has(origin))
             );
+        }
+        function bothHaveConcreteReceiverOrigins(left, right, position) {
+            const hasConcreteOrigin = (expression) =>
+                [...receiverOrigins(expression, position, new Set(), new Map(), false, true)].some(
+                    (origin) => typeof origin.kind === "number",
+                );
+            return hasConcreteOrigin(left) && hasConcreteOrigin(right);
         }
         return applyOrderedEffectCutoffs(
             [...propertyWrites, ...wildcardPropertyWrites]
@@ -2711,7 +2721,13 @@ function analyzeProgram({
                         write.sourceFile === use.getSourceFile() &&
                         (write.propertyNames == null || write.propertyNames.includes(memberName)) &&
                         writeReceiver != null &&
-                        (sameCallableAlternatives(writeReceiver, receiver, write.position) ||
+                        (((!conservativeReceiverOverlap ||
+                            !bothHaveConcreteReceiverOrigins(
+                                writeReceiver,
+                                receiver,
+                                write.position,
+                            )) &&
+                            sameCallableAlternatives(writeReceiver, receiver, write.position)) ||
                             sameStaticReceiverPath(writeReceiver, receiver) ||
                             sameReceiverAlternatives(writeReceiver, receiver, write.position))
                     );
@@ -4558,6 +4574,7 @@ function analyzeProgram({
         seen = new Set(),
         substitutions = new Map(),
         followProjections = false,
+        preserveAllocations = false,
     ) {
         if (
             ts.isParenthesizedExpression(expression) ||
@@ -4572,6 +4589,7 @@ function analyzeProgram({
                 seen,
                 substitutions,
                 followProjections,
+                preserveAllocations,
             );
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
@@ -4628,6 +4646,7 @@ function analyzeProgram({
                                 seen,
                                 substitutions,
                                 followProjections,
+                                preserveAllocations,
                             )) {
                                 origins.add(origin);
                             }
@@ -4646,6 +4665,7 @@ function analyzeProgram({
                             seen,
                             substitutions,
                             followProjections,
+                            preserveAllocations,
                         )) {
                             origins.add(origin);
                         }
@@ -4660,6 +4680,7 @@ function analyzeProgram({
                 seen,
                 substitutions,
                 followProjections,
+                preserveAllocations,
             );
         }
         if (ts.isConditionalExpression(expression)) {
@@ -4670,6 +4691,7 @@ function analyzeProgram({
                     seen,
                     substitutions,
                     followProjections,
+                    preserveAllocations,
                 ),
                 ...receiverOrigins(
                     expression.whenFalse,
@@ -4677,6 +4699,7 @@ function analyzeProgram({
                     seen,
                     substitutions,
                     followProjections,
+                    preserveAllocations,
                 ),
             ]);
         }
@@ -4688,6 +4711,7 @@ function analyzeProgram({
                     seen,
                     substitutions,
                     followProjections,
+                    preserveAllocations,
                 );
             }
             if (
@@ -4702,6 +4726,7 @@ function analyzeProgram({
                         seen,
                         substitutions,
                         followProjections,
+                        preserveAllocations,
                     ),
                     ...receiverOrigins(
                         expression.right,
@@ -4709,9 +4734,19 @@ function analyzeProgram({
                         seen,
                         substitutions,
                         followProjections,
+                        preserveAllocations,
                     ),
                 ]);
             }
+        }
+        if (
+            preserveAllocations &&
+            (ts.isObjectLiteralExpression(expression) ||
+                ts.isArrayLiteralExpression(expression) ||
+                ts.isClassExpression(expression) ||
+                ts.isNewExpression(expression))
+        ) {
+            return new Set([expression]);
         }
         if (ts.isCallExpression(expression)) {
             const declaration = checker.getResolvedSignature(expression)?.declaration;
@@ -4735,6 +4770,7 @@ function analyzeProgram({
                             nextSeen,
                             nested,
                             followProjections,
+                            preserveAllocations,
                         ),
                     ]),
                 );
@@ -4747,6 +4783,7 @@ function analyzeProgram({
                         seen,
                         substitutions,
                         followProjections,
+                        preserveAllocations,
                     ),
                 ]),
             );
@@ -4766,6 +4803,7 @@ function analyzeProgram({
                 seen,
                 substitutions,
                 followProjections,
+                preserveAllocations,
             );
             if (
                 substitutedOrigins.size === 0 &&
@@ -4775,9 +4813,14 @@ function analyzeProgram({
             }
             return substitutedOrigins;
         }
-        if (!symbol || seen.has(symbol)) return new Set();
+        if (!symbol) return new Set();
+        const symbolDeclaration = symbol.declarations?.[0];
+        const symbolKey = `${symbolDeclaration?.getSourceFile().fileName ?? "unknown"}:${
+            symbolDeclaration?.pos ?? String(symbol.escapedName)
+        }:${beforePosition}`;
+        if (seen.has(symbolKey)) return new Set();
         const nextSeen = new Set(seen);
-        nextSeen.add(symbol);
+        nextSeen.add(symbolKey);
         const origins = new Set();
         const cutoff = latestDefiniteWriteCutoff(symbol, expression);
         for (const write of writesBySymbol.get(symbol) ?? []) {
@@ -4793,6 +4836,7 @@ function analyzeProgram({
                     nextSeen,
                     substitutions,
                     followProjections,
+                    preserveAllocations,
                 )) {
                     origins.add(origin);
                 }
@@ -6335,6 +6379,7 @@ function analyzeProgram({
         depth = 0,
         seen = new Set(),
         includeGetters = true,
+        followNestedReceivers = false,
     ) {
         if (!expression || depth > MAX_TRACE_DEPTH) return [];
         const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
@@ -6354,6 +6399,7 @@ function analyzeProgram({
                 depth + 1,
                 nextSeen,
                 includeGetters,
+                followNestedReceivers,
             );
         }
         if (ts.isIdentifier(expression)) {
@@ -6366,6 +6412,7 @@ function analyzeProgram({
                     depth + 1,
                     nextSeen,
                     includeGetters,
+                    followNestedReceivers,
                 ),
             );
             if (values.length > 0) return values;
@@ -6378,11 +6425,35 @@ function analyzeProgram({
                             depth + 1,
                             nextSeen,
                             includeGetters,
+                            followNestedReceivers,
                         ),
                     );
                 }
             }
             return values;
+        }
+        if (
+            followNestedReceivers &&
+            (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression))
+        ) {
+            const names = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : computedPropertyNames(expression);
+            if (names?.length !== 1) return [];
+            const projected = projectedExpressions(expression.expression, [
+                { kind: "property", names },
+            ]);
+            if (projected.length === 1 && projected[0] === expression.expression) return [];
+            return projected.flatMap((value) =>
+                propertyValueExpressions(
+                    value,
+                    propertyName,
+                    depth + 1,
+                    nextSeen,
+                    includeGetters,
+                    followNestedReceivers,
+                ),
+            );
         }
         if (ts.isObjectLiteralExpression(expression)) {
             const values = [];
@@ -6395,6 +6466,23 @@ function analyzeProgram({
                 if (ts.isShorthandPropertyAssignment(property)) values.push(property.name);
                 if (includeGetters && ts.isGetAccessorDeclaration(property)) {
                     values.push(...functionReturnExpressions(property));
+                }
+            }
+            return values;
+        }
+        if (ts.isClassExpression(expression)) {
+            const values = [];
+            for (const member of expression.members) {
+                if (!isStaticClassElement(member) || !member.name) continue;
+                const names = ts.isComputedPropertyName(member.name)
+                    ? literalPropertyNames(checker.getTypeAtLocation(member.name.expression))
+                    : [member.name.getText(expression.getSourceFile()).replace(/^['"]|['"]$/g, "")];
+                if (!names?.includes(propertyName)) continue;
+                if (ts.isPropertyDeclaration(member) && member.initializer) {
+                    values.push(member.initializer);
+                }
+                if (includeGetters && ts.isGetAccessorDeclaration(member)) {
+                    values.push(...functionReturnExpressions(member));
                 }
             }
             return values;

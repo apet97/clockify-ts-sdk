@@ -5627,6 +5627,91 @@ test("keeps Object.assign on an old constructor registry allocation distinct", a
     });
 });
 
+test("keeps inline object allocation sites distinct across constructor registry rebinding", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const old = registry; registry = { Ctor: Safe }; old.Ctor = Unsafe; new registry.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("keeps Object.assign on an old inline object allocation distinct", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const old = registry; registry = { Ctor: Safe }; Object.assign(old, { Ctor: Unsafe }); new registry.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, setup, shouldFail] of [
+    [
+        "old inline array direct mutation",
+        "let registry: Array<typeof Safe | typeof Unsafe> = [Safe]; const old = registry; registry = [Safe]; old[0] = Unsafe; new registry[0]();",
+        false,
+    ],
+    [
+        "old inline array Object.assign mutation",
+        "let registry: Array<typeof Safe | typeof Unsafe> = [Safe]; const old = registry; registry = [Safe]; Object.assign(old, { 0: Unsafe }); new registry[0]();",
+        false,
+    ],
+    [
+        "current inline object mutation",
+        "let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; registry = { Ctor: Safe }; registry.Ctor = Unsafe; new registry.Ctor();",
+        true,
+    ],
+    [
+        "current inline array alias mutation",
+        "let registry: Array<typeof Safe | typeof Unsafe> = [Safe]; registry = [Safe]; const current = registry; current[0] = Unsafe; new registry[0]();",
+        true,
+    ],
+    [
+        "conditional inline object rebind",
+        "let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const old = registry; registry = choose ? old : { Ctor: Safe }; old.Ctor = Unsafe; new registry.Ctor();",
+        true,
+    ],
+    [
+        "nested inline object allocation",
+        "let holder: { registry: { Ctor: typeof Safe | typeof Unsafe } } = { registry: { Ctor: Safe } }; const old = holder.registry; holder = { registry: { Ctor: Safe } }; old.Ctor = Unsafe; new holder.registry.Ctor();",
+        false,
+    ],
+    [
+        "destructured old inline allocation",
+        "let holder: { registry: { Ctor: typeof Safe | typeof Unsafe } } = { registry: { Ctor: Safe } }; const { registry: old } = holder; holder = { registry: { Ctor: Safe } }; old.Ctor = Unsafe; new holder.registry.Ctor();",
+        false,
+    ],
+    [
+        "old inline allocation alias chain",
+        "let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; const old = registry; const older = old; registry = { Ctor: Safe }; older.Ctor = Unsafe; new registry.Ctor();",
+        false,
+    ],
+    [
+        "old inline allocation alias cycle",
+        "let registry: { Ctor: typeof Safe | typeof Unsafe } = { Ctor: Safe }; let old = registry; let older = old; old = older; registry = { Ctor: Safe }; old.Ctor = Unsafe; new registry.Ctor();",
+        false,
+    ],
+    [
+        "old inline class-expression allocation",
+        "let registry: { Ctor: typeof Safe | typeof Unsafe } = class { static Ctor: typeof Safe | typeof Unsafe = Safe; }; const old = registry; registry = class { static Ctor: typeof Safe | typeof Unsafe = Safe; }; old.Ctor = Unsafe; new registry.Ctor();",
+        false,
+    ],
+]) {
+    test(`${label} preserves inline constructor allocation identity`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const requestHolder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (requestHolder.request = body as any); } ${setup} return client.projects.create(requestHolder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
 for (const [label, setup, expected] of [
     [
         "computed unsafe array element overwrite",
