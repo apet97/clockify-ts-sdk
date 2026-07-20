@@ -454,9 +454,14 @@ end-to-end and green before push. Drift gates are non-negotiable.
     returned-parameter chains cannot stop silently or duplicate failures. A later
     request alias returned from a synchronous helper also carries receiver-
     qualified direct, computed, normalized builtin, and nested-helper writes;
-    object-property and destructured aliases preserve that identity, while object-
-    rest copies preserve exclusions and snapshot timing. Definite same-property
-    overwrites still dominate through nested invocation/source order. A later
+    object-property and destructured aliases preserve that identity. Projected
+    property reads use the latest receiver-qualified reaching property write at
+    that read, while an earlier alias keeps the identity it captured. Object-rest
+    copies preserve exclusions and source snapshot timing, but later writes to
+    the copied receiver remain ordered; spread reconstructions follow JavaScript
+    last-write semantics across explicit, duplicate, conditional, and nested
+    properties. Definite same-property overwrites still dominate through nested
+    invocation/source order. A later
     phase dominates only when every
     registered mutually exclusive path performs an equivalent receiver/name-
     qualified definite write. Lifted direct property assignments retain original

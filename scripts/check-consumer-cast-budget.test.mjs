@@ -3334,6 +3334,173 @@ for (const [label, helperSource, shouldFail, invocation, runArgs] of [
     });
 }
 
+for (const [label, helperSource, shouldFail, invocation, runArgs] of [
+    [
+        "rest safe-later write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; rest.body = "safe"; return rest; }',
+        false,
+    ],
+    [
+        "conditional rest safe-later write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; if (choose) rest.body = "safe"; return rest; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "rest unsafe-last write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { workspaceId: _workspaceId, ...rest } = request; rest.body = "safe"; rest.body = body as any; return rest; }',
+        true,
+    ],
+    [
+        "safe-last returned rest spread",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; return { ...rest, body: "safe" }; }',
+        false,
+    ],
+    [
+        "unsafe-last returned rest spread",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; return { body: "safe", ...rest }; }',
+        true,
+    ],
+    [
+        "duplicate safe-last returned property",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { workspaceId: _workspaceId, ...rest } = request; return { ...rest, body: body as any, body: "safe" }; }',
+        false,
+    ],
+    [
+        "conditional safe-later returned spread",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; return { ...rest, ...(choose ? { body: "safe" } : {}) }; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "all-path safe-later returned spread",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; return { ...rest, ...(choose ? { body: "safe" } : { body: "also-safe" }) }; }',
+        false,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "nested rest safe-later write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; request.body = body as any; const { request: { workspaceId: _workspaceId, ...rest } } = box; rest.body = "safe"; return rest; }',
+        false,
+    ],
+    [
+        "nested rest safe-last reconstruction",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; request.body = body as any; const { request: { workspaceId: _workspaceId, ...rest } } = box; return { ...rest, body: "safe" }; }',
+        false,
+    ],
+    [
+        "nested rest unsafe-last reconstruction",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const box = { request }; request.body = body as any; const { request: { workspaceId: _workspaceId, ...rest } } = box; return { body: "safe", ...rest }; }',
+        true,
+    ],
+]) {
+    test(`${label} preserves returned rest copy ordering`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+for (const [label, reassignment, mutation, returned, shouldFail, invocation, runArgs] of [
+    [
+        "direct reassignment ignores the captured old alias",
+        "box.request = other;",
+        "alias.body = body as any;",
+        "box.request",
+        false,
+    ],
+    [
+        "computed reassignment ignores the captured old alias",
+        'box["request"] = other;',
+        "alias.body = body as any;",
+        'box["request"]',
+        false,
+    ],
+    [
+        "destructured reassignment ignores the captured old alias",
+        "({ request: box.request } = { request: other });",
+        "alias.body = body as any;",
+        "box.request",
+        false,
+    ],
+    [
+        "direct reassignment keeps current-property unsafe writes",
+        "box.request = other;",
+        "box.request.body = body as any;",
+        "box.request",
+        true,
+    ],
+    [
+        "computed reassignment keeps current-property unsafe writes",
+        'box["request"] = other;',
+        'box["request"].body = body as any;',
+        'box["request"]',
+        true,
+    ],
+    [
+        "destructured reassignment keeps current-property unsafe writes",
+        "({ request: box.request } = { request: other });",
+        "box.request.body = body as any;",
+        "box.request",
+        true,
+    ],
+    [
+        "direct reassignment preserves unsafe writes on the returned old alias",
+        "box.request = other;",
+        "alias.body = body as any;",
+        "alias",
+        true,
+    ],
+    [
+        "current-property unsafe write does not taint the returned old alias",
+        "box.request = other;",
+        "box.request.body = body as any;",
+        "alias",
+        false,
+    ],
+    [
+        "conditional reassignment keeps the old-alias path conservative",
+        "if (choose) box.request = other;",
+        "alias.body = body as any;",
+        "box.request",
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+]) {
+    test(`${label} for a returned projected property`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs ?? ""}) { const other: ClockifyApi.CreateProjectsRequest = { workspaceId: "other" }; const box = { request }; const alias = box.request; ${reassignment} ${mutation} return ${returned}; }`;
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +
