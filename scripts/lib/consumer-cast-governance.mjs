@@ -4576,8 +4576,30 @@ function analyzeProgram({
         memberSymbol = null,
         seen = new Set(),
         depth = 0,
+        substitutions = new Map(),
     ) {
-        if (!names?.length || depth > MAX_TRACE_DEPTH) return [];
+        if (!names?.length) return [];
+        if (depth > MAX_TRACE_DEPTH) {
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve receiver getter factory depth limit`,
+            );
+            return [];
+        }
+        const receiver = unwrapExpression(receiverExpression);
+        if (ts.isIdentifier(receiver)) {
+            const receiverSymbol = unalias(checker, checker.getSymbolAtLocation(receiver));
+            const substituted = substitutions.get(receiverSymbol);
+            if (substituted) {
+                return getterDeclarationsForReceiver(
+                    substituted,
+                    names,
+                    null,
+                    seen,
+                    depth + 1,
+                    substitutions,
+                );
+            }
+        }
         const resolvedMember =
             memberSymbol ??
             unalias(
@@ -4590,11 +4612,66 @@ function analyzeProgram({
         const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
-        const receiver = unwrapExpression(receiverExpression);
+        if (ts.isCallExpression(receiver)) {
+            const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-factory`;
+            if (seen.has(key)) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve recursive receiver getter factory`,
+                );
+                return [];
+            }
+            const declaration = checker.getResolvedSignature(receiver)?.declaration;
+            const isAsync =
+                declaration &&
+                ts.isFunctionLike(declaration) &&
+                (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0;
+            const isLocal = declaration?.getSourceFile() === receiver.getSourceFile();
+            if (
+                declaration &&
+                ts.isFunctionLike(declaration) &&
+                declaration.body &&
+                !isAsync &&
+                isLocal
+            ) {
+                const nextSeen = new Set(seen);
+                nextSeen.add(key);
+                const nextSubstitutions = new Map(substitutions);
+                declaration.parameters.forEach((parameter, index) => {
+                    const argument = receiver.arguments[index];
+                    if (!argument) return;
+                    const parameterSymbol = unalias(
+                        checker,
+                        checker.getSymbolAtLocation(parameter.name),
+                    );
+                    if (parameterSymbol) nextSubstitutions.set(parameterSymbol, argument);
+                });
+                return bounded(
+                    functionReturnExpressions(declaration).flatMap((returned) =>
+                        getterDeclarationsForReceiver(
+                            returned,
+                            names,
+                            null,
+                            nextSeen,
+                            depth + 1,
+                            nextSubstitutions,
+                        ),
+                    ),
+                    "receiver getter factory return alternatives",
+                );
+            }
+            return direct;
+        }
         if (ts.isConditionalExpression(receiver)) {
             return bounded(
                 [receiver.whenTrue, receiver.whenFalse].flatMap((value) =>
-                    getterDeclarationsForReceiver(value, names, null, seen, depth + 1),
+                    getterDeclarationsForReceiver(
+                        value,
+                        names,
+                        null,
+                        seen,
+                        depth + 1,
+                        substitutions,
+                    ),
                 ),
                 "receiver getter declaration alternatives",
             );
@@ -4625,7 +4702,14 @@ function analyzeProgram({
         if (values.length === 0) return direct;
         return bounded(
             values.flatMap((value) =>
-                getterDeclarationsForReceiver(value, names, null, nextSeen, depth + 1),
+                getterDeclarationsForReceiver(
+                    value,
+                    names,
+                    null,
+                    nextSeen,
+                    depth + 1,
+                    substitutions,
+                ),
             ),
             "reaching receiver getter declarations",
         );
