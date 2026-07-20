@@ -399,6 +399,25 @@ resolution was restricted back to the governed reconstruction seam; the three
 controls and the final focused **82/82** then passed. The complete controller suite
 passes **581/581** fixtures while retaining all prior 547 cases.
 
+The twenty-eighth corrective review keeps a typed helper parameter as an exact
+provenance anchor when an inline literal argument has no receiver origin, so
+direct, nested, aliased, conditional, safe-later, unsafe-last, and complete-versus-
+partial-path helper mutations are governed without conflating unrelated
+parameters. Reconstructed-rest provenance now checks its explicit depth bound at
+every recursive edge and converts a TypeScript-checker stack overflow on an
+adversarial 500-layer input into the same deterministic fail-closed diagnostic;
+below-, exact-, above-bound, cyclic, work-cap, and alternative-cap controls remain
+covered. Getter projection reads only a zero-argument getter whose body is one
+statically safe return expression and never executes user code; throwing,
+side-effectful, and unknown-call getters stay conservative. Ordinary nested rest
+storage no longer becomes an immediate top-level request contribution, while a
+later flattening spread restores provenance and JavaScript safe-final/unsafe-final
+ordering. Complete `if`/`else` same-property writes form an all-path dominance
+cutoff, while partial paths do not. The correction28 matrix passes **30/30**.
+The complete controller suite passes **611/611** fixtures while retaining all
+prior 581 cases. The actual repository completes at work **8,039/10,000** with
+**1,961** units of headroom and no findings.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -423,7 +442,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-seventh-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-eighth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all

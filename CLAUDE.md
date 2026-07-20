@@ -275,17 +275,23 @@ make docs-drift
   reconstruction follows JavaScript last-write semantics across explicit,
   duplicate, conditional, nested, and statically bounded const/alias/factory
   patch values. Projected property/element and helper-returned rest sources retain
-  path provenance; projected safe patches and aliases of reconstructed rest
-  objects use the same ordered seam, while mixed/unknown paths remain conservative
-  and ordinary non-rest spreads stay outside it. Every governed projection,
+  path provenance; non-executing static getter projections, projected safe patches,
+  and aliases of reconstructed rest objects use the same ordered seam. Effectful,
+  throwing, mixed, and unknown getter paths remain conservative. Only top-level
+  request-field contributions enter reconstruction, so nested storage stays inert
+  until a later spread flattens it; ordinary non-rest spreads stay outside the seam.
+  Typed helper parameters remain provenance anchors for inline literal arguments,
+  including nested and aliased returns. Every governed projection,
   destructuring, helper-return, object-literal, direct property/spread, recovered
   path, and Cartesian path is charged through common work/alternative limits
-  before materialization, with fail-closed reconstruction depth. Definite same-property
+  before materialization, with every reconstruction recursion edge depth-guarded
+  and fail-closed before JavaScript stack exhaustion. Definite same-property
   overwrites follow nested invocation/source order. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain
   original within-phase sequence and are definite only on unconditional paths
-  without a preceding function exit.
+  without a preceding function exit, except complete `if`/`else` same-property
+  overwrites form an all-path cutoff.
   Global-provenance direct/aliased/computed `Reflect.apply` is normalized through
   the same bounded static/spread argument-list path only while its ordered
   reaching member is native; restoration and captured-native aliases remain
