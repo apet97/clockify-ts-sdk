@@ -856,8 +856,42 @@ function analyzeProgram({
         return {};
     }
 
+    function statementDefinitelyExits(statement) {
+        if (ts.isReturnStatement(statement) || ts.isThrowStatement(statement)) return true;
+        if (ts.isBlock(statement)) return statement.statements.some(statementDefinitelyExits);
+        if (!ts.isIfStatement(statement)) return false;
+        const state = definiteExpressionState(statement.expression);
+        if (state.truthy === true) return statementDefinitelyExits(statement.thenStatement);
+        if (state.truthy === false) {
+            return statement.elseStatement
+                ? statementDefinitelyExits(statement.elseStatement)
+                : false;
+        }
+        return Boolean(
+            statement.elseStatement &&
+            statementDefinitelyExits(statement.thenStatement) &&
+            statementDefinitelyExits(statement.elseStatement),
+        );
+    }
+
     function expressionDefinitelySkipped(node) {
         for (let current = node.parent; current; current = current.parent) {
+            if (ts.isIfStatement(current)) {
+                const state = definiteExpressionState(current.expression);
+                if (isWithin(node, current.thenStatement) && state.truthy === false) return true;
+                if (
+                    current.elseStatement &&
+                    isWithin(node, current.elseStatement) &&
+                    state.truthy === true
+                ) {
+                    return true;
+                }
+            }
+            if (ts.isConditionalExpression(current)) {
+                const state = definiteExpressionState(current.condition);
+                if (isWithin(node, current.whenTrue) && state.truthy === false) return true;
+                if (isWithin(node, current.whenFalse) && state.truthy === true) return true;
+            }
             if (!ts.isBinaryExpression(current) || !isWithin(node, current.right)) continue;
             const state = definiteExpressionState(current.left);
             if (
@@ -869,6 +903,13 @@ function analyzeProgram({
                     state.nullish === false)
             ) {
                 return true;
+            }
+        }
+        const location = directStatementInLinearContainer(node);
+        if (location) {
+            for (const statement of location.container.statements) {
+                if (statement === location.statement) break;
+                if (statementDefinitelyExits(statement)) return true;
             }
         }
         return false;
@@ -940,16 +981,79 @@ function analyzeProgram({
         beforePosition,
         seen = new Set(),
         resolution = { unresolved: false },
+        depth = 0,
     ) {
+        if (depth > MAX_TRACE_DEPTH) {
+            resolution.unresolved = true;
+            analysisFailures.add(
+                `consumer cast analysis could not statically resolve constructed class target (depth limit ${MAX_TRACE_DEPTH})`,
+            );
+            return [];
+        }
         expression = unwrapExpression(expression);
         if (ts.isClassExpression(expression)) return [expression];
         if (ts.isConditionalExpression(expression)) {
             return bounded(
                 [expression.whenTrue, expression.whenFalse].flatMap((candidate) =>
-                    classOwnersForNewExpression(candidate, beforePosition, seen, resolution),
+                    classOwnersForNewExpression(
+                        candidate,
+                        beforePosition,
+                        seen,
+                        resolution,
+                        depth + 1,
+                    ),
                 ),
                 "constructed class alternatives",
             );
+        }
+        if (ts.isCallExpression(expression)) {
+            const declaration = functionDeclarationForExpression(expression.expression);
+            const returned = declaration ? functionReturnExpressions(declaration) : [];
+            if (returned.length > 0) {
+                return bounded(
+                    returned.flatMap((value) =>
+                        classOwnersForNewExpression(value, value.pos, seen, resolution, depth + 1),
+                    ),
+                    "constructed factory class alternatives",
+                );
+            }
+        }
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            const propertyNames = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : computedPropertyNames(expression);
+            if (propertyNames?.length === 1) {
+                const values = propertyValueExpressions(
+                    expression.expression,
+                    propertyNames[0],
+                    0,
+                    new Set(),
+                    false,
+                );
+                if (values.length > 0) {
+                    return bounded(
+                        values.flatMap((value) =>
+                            classOwnersForNewExpression(
+                                value,
+                                expression.pos,
+                                seen,
+                                resolution,
+                                depth + 1,
+                            ),
+                        ),
+                        "constructed registry class alternatives",
+                    );
+                }
+            }
+        }
+        const constructSignatures = checker.getTypeAtLocation(expression).getConstructSignatures();
+        if (
+            constructSignatures.length > 0 &&
+            constructSignatures.every(
+                (signature) => signature.declaration?.getSourceFile().isDeclarationFile,
+            )
+        ) {
+            return [];
         }
         if (!ts.isIdentifier(expression)) {
             resolution.unresolved = true;
@@ -967,13 +1071,21 @@ function analyzeProgram({
         }
         const nextSeen = new Set(seen);
         nextSeen.add(symbol);
+        const cutoff = latestDefiniteWriteCutoff(symbol, expression);
         const writes = (writesBySymbol.get(symbol) ?? []).filter(
-            (write) => write.position < beforePosition,
+            (write) =>
+                write.position < beforePosition && (cutoff == null || write.position >= cutoff),
         );
         if (writes.length === 0) resolution.unresolved = true;
-        const owners = writes.flatMap((write) =>
-            classOwnersForNewExpression(write.value, write.position, nextSeen, resolution),
-        );
+        const owners = writes.flatMap((write) => {
+            const values = write.projection?.length
+                ? projectedExpressions(write.value, write.projection)
+                : [write.value];
+            if (values.length === 0) resolution.unresolved = true;
+            return values.flatMap((value) =>
+                classOwnersForNewExpression(value, write.position, nextSeen, resolution, depth + 1),
+            );
+        });
         return bounded(owners, "constructed class alternatives");
     }
 
@@ -3217,7 +3329,20 @@ function analyzeProgram({
                         "reduceRight",
                     ]);
                     if (synchronousArrayMethods.has(invocation) && node.arguments[0]) {
-                        const callback = functionDeclarationForExpression(node.arguments[0]);
+                        const callbacks = [
+                            functionDeclarationForExpression(node.arguments[0]),
+                            ...reachingExpressionValues(node.arguments[0], node.pos).map((value) =>
+                                functionDeclarationForExpression(value.expression),
+                            ),
+                        ].filter(
+                            (callback, index, all) => callback && all.indexOf(callback) === index,
+                        );
+                        chargeAnalysisWork(Math.max(0, callbacks.length - 1));
+                        if (callbacks.length > maxAlternatives) {
+                            analysisFailures.add(
+                                `consumer cast analysis limit exceeded (callback alternatives; max ${maxAlternatives})`,
+                            );
+                        }
                         const receivers = reachingExpressionValues(
                             node.expression.expression,
                             node.pos,
@@ -3225,34 +3350,37 @@ function analyzeProgram({
                             .map((value) => unwrapExpression(value.expression))
                             .filter(ts.isArrayLiteralExpression);
                         for (const receiver of receivers) {
-                            if (!callback) continue;
                             const values = receiver.elements.filter(ts.isExpression);
-                            if (["reduce", "reduceRight"].includes(invocation)) {
-                                const ordered =
-                                    invocation === "reduceRight" ? [...values].reverse() : values;
-                                const initial = node.arguments[1] ?? ordered.shift();
-                                let accumulators = initial ? [initial] : [];
-                                for (const value of ordered) {
-                                    const next = [];
-                                    for (const accumulator of accumulators) {
-                                        const args = [accumulator, value];
-                                        addSyntheticInvocation(callback, node, args);
-                                        next.push(...callbackReturnOrigins(callback, args));
+                            for (const callback of callbacks.slice(0, maxAlternatives)) {
+                                if (["reduce", "reduceRight"].includes(invocation)) {
+                                    const ordered =
+                                        invocation === "reduceRight"
+                                            ? [...values].reverse()
+                                            : [...values];
+                                    const initial = node.arguments[1] ?? ordered.shift();
+                                    let accumulators = initial ? [initial] : [];
+                                    for (const value of ordered) {
+                                        const next = [];
+                                        for (const accumulator of accumulators) {
+                                            const args = [accumulator, value];
+                                            addSyntheticInvocation(callback, node, args);
+                                            next.push(...callbackReturnOrigins(callback, args));
+                                        }
+                                        accumulators = bounded(next);
+                                        if (accumulators.length === 0) break;
                                     }
-                                    accumulators = bounded(next);
-                                    if (accumulators.length === 0) break;
-                                }
-                            } else {
-                                for (const value of values) {
-                                    const args = [value];
-                                    addSyntheticInvocation(callback, node, args);
-                                    const result = callbackBooleanResult(callback, args);
-                                    if (
-                                        (["some", "find", "findIndex"].includes(invocation) &&
-                                            result === true) ||
-                                        (invocation === "every" && result === false)
-                                    ) {
-                                        break;
+                                } else {
+                                    for (const value of values) {
+                                        const args = [value];
+                                        addSyntheticInvocation(callback, node, args);
+                                        const result = callbackBooleanResult(callback, args);
+                                        if (
+                                            (["some", "find", "findIndex"].includes(invocation) &&
+                                                result === true) ||
+                                            (invocation === "every" && result === false)
+                                        ) {
+                                            break;
+                                        }
                                     }
                                 }
                             }
@@ -3513,6 +3641,10 @@ function analyzeProgram({
         }
         function indexClassInstantiations(node) {
             if (ts.isNewExpression(node)) {
+                if (expressionDefinitelySkipped(node)) {
+                    ts.forEachChild(node, indexClassInstantiations);
+                    return;
+                }
                 const resolution = { unresolved: false };
                 const classOwners = classOwnersForNewExpression(
                     node.expression,
@@ -3520,9 +3652,9 @@ function analyzeProgram({
                     new Set(),
                     resolution,
                 );
-                if (resolution.unresolved && classOwners.length > 0) {
+                if (resolution.unresolved) {
                     analysisFailures.add(
-                        "consumer cast analysis could not statically resolve constructed class alternative",
+                        `consumer cast analysis could not statically resolve constructed class alternative at ${sourceRelative(root, node.getSourceFile())}:${nodeLine(node.getSourceFile(), node)}`,
                     );
                 }
                 chargeAnalysisWork(Math.max(0, classOwners.length - 1));
@@ -3935,16 +4067,62 @@ function analyzeProgram({
     function activeClassInstantiations(classOwner, use) {
         if (!classOwner) return [];
         const useFunction = enclosingFunction(use);
-        return (instantiationsByClass.get(classOwner) ?? []).filter(
-            (instantiation) =>
-                instantiation.node.getSourceFile() === use.getSourceFile() &&
-                instantiation.node.pos < use.pos &&
-                enclosingFunction(instantiation.node) === useFunction,
+        function liftInvocation(invocation, depth = 0, seen = new Set()) {
+            if (depth > MAX_TRACE_DEPTH) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve constructed helper invocation (depth limit ${MAX_TRACE_DEPTH})`,
+                );
+                return [];
+            }
+            const call = invocation.node;
+            const caller = enclosingFunction(call);
+            if (caller === useFunction) return [invocation];
+            if (!caller || seen.has(caller)) return [];
+            const nextSeen = new Set(seen);
+            nextSeen.add(caller);
+            return bounded(
+                activeCallsOf(caller, use, 0, new Set(), "constructed helper invocation").flatMap(
+                    (callerInvocation) => liftInvocation(callerInvocation, depth + 1, nextSeen),
+                ),
+                "constructed helper invocation alternatives",
+            );
+        }
+        return bounded(
+            (instantiationsByClass.get(classOwner) ?? []).flatMap((instantiation) => {
+                if (instantiation.node.getSourceFile() !== use.getSourceFile()) return [];
+                const ownerFunction = enclosingFunction(instantiation.node);
+                if (ownerFunction === useFunction) {
+                    return instantiation.node.pos < use.pos ? [instantiation] : [];
+                }
+                if (!ownerFunction) return [];
+                return activeCallsOf(
+                    ownerFunction,
+                    use,
+                    0,
+                    new Set(),
+                    "constructed helper invocation",
+                ).flatMap((invocation) =>
+                    liftInvocation(invocation).map((lifted) => ({
+                        ...instantiation,
+                        node: lifted.node,
+                        alternativeGroup: instantiation.alternativeGroup ?? lifted.alternativeGroup,
+                        alternativePath: instantiation.alternativePath ?? lifted.alternativePath,
+                    })),
+                );
+            }),
+            "active constructed class alternatives",
         );
     }
 
-    function activeCallsOf(declaration, use, depth = 0, seen = new Set()) {
-        if (depth > MAX_TRACE_DEPTH || seen.has(declaration)) return [];
+    function activeCallsOf(declaration, use, depth = 0, seen = new Set(), failClosedLabel = null) {
+        if (depth > MAX_TRACE_DEPTH || seen.has(declaration)) {
+            if (failClosedLabel) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve ${failClosedLabel} (${depth > MAX_TRACE_DEPTH ? `depth limit ${MAX_TRACE_DEPTH}` : "cycle"})`,
+                );
+            }
+            return [];
+        }
         const nextSeen = new Set(seen);
         nextSeen.add(declaration);
         const useFunction = enclosingFunction(use);
@@ -3968,7 +4146,10 @@ function analyzeProgram({
                 active.push(invocation);
                 continue;
             }
-            if (caller && activeCallsOf(caller, use, depth + 1, nextSeen).length > 0) {
+            if (
+                caller &&
+                activeCallsOf(caller, use, depth + 1, nextSeen, failClosedLabel).length > 0
+            ) {
                 active.push(invocation);
             }
         }
@@ -5856,7 +6037,13 @@ function analyzeProgram({
         return null;
     }
 
-    function propertyValueExpressions(expression, propertyName, depth = 0, seen = new Set()) {
+    function propertyValueExpressions(
+        expression,
+        propertyName,
+        depth = 0,
+        seen = new Set(),
+        includeGetters = true,
+    ) {
         if (!expression || depth > MAX_TRACE_DEPTH) return [];
         const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
         if (seen.has(key)) return [];
@@ -5874,13 +6061,20 @@ function analyzeProgram({
                 propertyName,
                 depth + 1,
                 nextSeen,
+                includeGetters,
             );
         }
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const writes = reachingWrites(symbol, expression).writes;
             const values = writes.flatMap((write) =>
-                propertyValueExpressions(write.value, propertyName, depth + 1, nextSeen),
+                propertyValueExpressions(
+                    write.value,
+                    propertyName,
+                    depth + 1,
+                    nextSeen,
+                    includeGetters,
+                ),
             );
             if (values.length > 0) return values;
             for (const declaration of symbol?.declarations ?? []) {
@@ -5891,6 +6085,7 @@ function analyzeProgram({
                             propertyName,
                             depth + 1,
                             nextSeen,
+                            includeGetters,
                         ),
                     );
                 }
@@ -5906,7 +6101,7 @@ function analyzeProgram({
                 if (name !== propertyName) continue;
                 if (ts.isPropertyAssignment(property)) values.push(property.initializer);
                 if (ts.isShorthandPropertyAssignment(property)) values.push(property.name);
-                if (ts.isGetAccessorDeclaration(property)) {
+                if (includeGetters && ts.isGetAccessorDeclaration(property)) {
                     values.push(...functionReturnExpressions(property));
                 }
             }

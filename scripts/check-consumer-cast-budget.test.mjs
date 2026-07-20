@@ -5041,6 +5041,341 @@ test("fails closed when constructed class alternatives exceed the cap", async ()
     });
 });
 
+test("does not activate construction effects through a false logical branch", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } false && new Configured(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not activate construction effects through a false statement branch", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } if (false) new Configured(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("constructs only the latest definite class alias assignment", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } class Safe {} let Configured = Unsafe; Configured = Safe; new Configured(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("lifts construction effects through an active helper invocation", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } function configure() { new Configured(); } configure(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("fails closed for a wholly unresolved constructed target", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, hidden: unknown) { new (hidden as any)(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /statically resolve.*constructed class/i);
+    });
+});
+
+test("does not lift construction effects after an unconditional helper return", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } function configure() { return; new Configured(); } configure(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("resolves a statically known class from a registry element", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } const registry = { configured: Configured }; new registry["configured"](); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("resolves a statically known factory-returned class", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } function configured() { return Configured; } new (configured())(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("fails closed for a getter-provided constructed class", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Configured {} const registry = { get configured() { return Configured; } }; new registry.configured(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /statically resolve.*constructed class/i);
+    });
+});
+
+test("orders lifted construction effects at the active helper call", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = { workspaceId: "safe" }); } function configure() { new Configured(); } holder.request = body as any; configure(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, construction, shouldFail] of [
+    ["true logical branch", "true && new Configured();", true],
+    ["false ternary branch", "false ? new Configured() : undefined;", false],
+    ["true ternary branch", "true ? new Configured() : undefined;", true],
+    ["short-circuited logical-or branch", "true || new Configured();", false],
+    ["true statement branch", "if (true) new Configured();", true],
+]) {
+    test(`${label} controls construction-effect reachability`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } ${construction} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, assignments, shouldFail] of [
+    ["safe then unsafe", "let Configured = Safe; Configured = Unsafe;", true],
+    ["partial unsafe overwrite", "let Configured = Safe; if (choose) Configured = Unsafe;", true],
+    [
+        "all-path safe overwrite",
+        "let Configured = Unsafe; if (choose) Configured = Safe; else Configured = AlsoSafe;",
+        false,
+    ],
+]) {
+    test(`${label} preserves reaching class alias assignments`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } class Safe {} class AlsoSafe {} ${assignments} new Configured(); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, invocation, shouldFail] of [
+    ["uncalled helper", "function configure() { new Configured(); } void configure;", false],
+    [
+        "nested active helper",
+        "function inner() { new Configured(); } function outer() { inner(); } outer();",
+        true,
+    ],
+    ["active synchronous callback", "[1].forEach(() => new Configured());", true],
+]) {
+    test(`${label} controls lifted construction effects`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } ${invocation} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed when active construction helper depth is exceeded", async () => {
+    const helpers = ["function h0() { new Configured(); }"];
+    for (let index = 1; index <= 40; index += 1) {
+        helpers.push(`function h${index}() { h${index - 1}(); }`);
+    }
+    const source =
+        generatedImports +
+        `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } ${helpers.join(" ")} h40(); return client.projects.create(holder.request); }\n`;
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /constructed helper invocation.*depth limit/i);
+    });
+});
+
+test("resolves a destructured class alias before construction", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } const { configured: Selected } = { configured: Configured }; new Selected(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, setup, expected] of [
+    [
+        "loop-carried class overwrite",
+        "let Selected = Safe; for (const value of [1]) { void value; Selected = Unsafe; } new Selected();",
+        "finding",
+    ],
+    [
+        "unknown latest class overwrite",
+        "let Selected = Safe; Selected = hidden as any; new Selected();",
+        "resolution",
+    ],
+    [
+        "cyclic class aliases",
+        "let Selected: any; let Other: any; Selected = Other; Other = Selected; new Selected();",
+        "resolution",
+    ],
+]) {
+    test(`${label} remains conservative before construction`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, hidden: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } class Safe {} ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (expected === "finding")
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.match(result.failures.join("\n"), /statically resolve.*constructed class/i);
+        });
+    });
+}
+
+for (const [label, factory, expected] of [
+    ["safe factory", "function select() { return Safe; } new (select())();", "safe"],
+    [
+        "conditional factory",
+        "function select() { return choose ? Unsafe : Safe; } new (select())();",
+        "finding",
+    ],
+    [
+        "static computed registry",
+        'const selectedKey: "configured" = "configured"; const registry = { configured: Unsafe }; new registry[selectedKey]();',
+        "finding",
+    ],
+    [
+        "unknown computed registry",
+        "const registry = { safe: Safe, unsafe: Unsafe }; new registry[key]();",
+        "resolution",
+    ],
+]) {
+    test(`${label} resolves constructed targets conservatively`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean, key: "safe" | "unsafe") { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } class Safe {} ${factory} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (expected === "safe") assert.deepEqual(result.failures, []);
+            else if (expected === "finding")
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.match(result.failures.join("\n"), /statically resolve.*constructed class/i);
+        });
+    });
+}
+
+test("charges constructed class alternatives to the common work cap", async () => {
+    const choices = Array.from({ length: 10 }, (_, index) => `choose${index}`);
+    const runArgs = choices.map((choice) => `, ${choice}: boolean`).join("");
+    const selected = choices.reduceRight(
+        (rest, choice) => `${choice} ? Configured : (${rest})`,
+        "Configured",
+    );
+    const source =
+        generatedImports +
+        `export async function run(client: FixtureClient${runArgs}) { class Configured {} const Selected = ${selected}; new Selected(); return client.projects.create({ workspaceId: "safe" }); }\n`;
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 256, maxInvocations: 256, maxWork: 10 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*work.*10/i);
+        assert.deepEqual(result.analysisStats, { work: 10, exhausted: true });
+    });
+});
+
+test("fails closed for a recursive active construction helper cycle", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } function first() { new Configured(); second(); } function second() { first(); } first(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /constructed helper invocation.*cycle/i);
+    });
+});
+
+test("keeps every synchronous callback class alternative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Unsafe { configured = (holder.request = body as any); } class Safe {} const configure = choose ? () => new Unsafe() : () => new Safe(); [1].forEach(configure); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("allows a statically safe registry class construction", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Configured {} const registry = { configured: Configured }; new registry.configured(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("fails closed for a recursive constructed-class factory", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { function select(): any { return select(); } new (select())(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /constructed class target.*depth limit/i);
+    });
+});
+
+test("lifts construction effects through an invoked IIFE", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Configured { configured = (holder.request = body as any); } (() => new Configured())(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("caps synchronous callback class alternatives", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, choose: boolean) { class Left {} class Right {} const configure = choose ? () => new Left() : () => new Right(); [1].forEach(configure); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*max 1/i);
+    });
+});
+
 test("uses the latest projected patch property write in rest reconstruction", async () => {
     await withFixture(
         returnedMutationFixture(
