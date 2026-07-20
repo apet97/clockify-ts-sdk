@@ -4570,6 +4570,46 @@ function analyzeProgram({
         );
     }
 
+    function getterDeclarationsForMemberRead(expression, names) {
+        if (!names?.length) return [];
+        const memberSymbol = ts.isPropertyAccessExpression(expression)
+            ? unalias(checker, checker.getSymbolAtLocation(expression.name))
+            : unalias(
+                  checker,
+                  checker.getPropertyOfType(
+                      checker.getApparentType(checker.getTypeAtLocation(expression.expression)),
+                      names[0],
+                  ),
+              );
+        const direct = (memberSymbol?.declarations ?? []).filter(
+            (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
+        );
+        if (direct.length > 0) return direct;
+
+        const receiver = unwrapExpression(expression.expression);
+        if (!ts.isIdentifier(receiver)) return [];
+        const symbol = unalias(checker, checker.getSymbolAtLocation(receiver));
+        const values = (writesBySymbol.get(symbol) ?? [])
+            .filter((write) => write.position < expression.pos)
+            .map((write) => write.value);
+        for (const declaration of symbol?.declarations ?? []) {
+            if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+                values.push(declaration.initializer);
+            }
+        }
+        return values.flatMap((value) => {
+            value = unwrapExpression(value);
+            if (!ts.isObjectLiteralExpression(value)) return [];
+            return value.properties.filter((property) => {
+                if (!ts.isGetAccessorDeclaration(property) || !property.body) return false;
+                const propertyNames = ts.isComputedPropertyName(property.name)
+                    ? literalPropertyNames(checker.getTypeAtLocation(property.name.expression))
+                    : [property.name.getText(value.getSourceFile()).replace(/^['"]|['"]$/g, "")];
+                return propertyNames?.some((name) => names.includes(name));
+            });
+        });
+    }
+
     function receiverOrigins(
         expression,
         beforePosition,
@@ -4600,6 +4640,47 @@ function analyzeProgram({
             const names = ts.isPropertyAccessExpression(expression)
                 ? [expression.name.text]
                 : computedPropertyNames(expression);
+            if (preserveAllocations && names?.length === 1) {
+                const getters = getterDeclarationsForMemberRead(expression, names);
+                if (getters.length > 0) {
+                    const readKey = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}:receiver-getter-read`;
+                    if (seen.has(readKey)) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve recursive receiver getter read`,
+                        );
+                        return new Set();
+                    }
+                    if (invocationContext.length >= MAX_TRACE_DEPTH) {
+                        analysisFailures.add(
+                            `consumer cast analysis could not statically resolve receiver getter read (depth limit ${MAX_TRACE_DEPTH})`,
+                        );
+                        return new Set();
+                    }
+                    const nextSeen = new Set(seen);
+                    nextSeen.add(readKey);
+                    return new Set(
+                        bounded(
+                            getters.flatMap((getter) =>
+                                functionReturnExpressions(getter).flatMap((returned) => [
+                                    ...receiverOrigins(
+                                        returned,
+                                        beforePosition,
+                                        nextSeen,
+                                        substitutions,
+                                        followProjections,
+                                        preserveAllocations,
+                                        [
+                                            ...invocationContext,
+                                            { call: expression, declaration: getter },
+                                        ],
+                                    ),
+                                ]),
+                            ),
+                            "receiver getter return alternatives",
+                        ),
+                    );
+                }
+            }
             if (followProjections && names?.length) {
                 const origins = new Set();
                 const projectedRequestType = requestNameFromType(
@@ -6502,13 +6583,29 @@ function analyzeProgram({
             }
             return values;
         }
-        if (
-            followNestedReceivers &&
-            (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression))
-        ) {
+        if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
             const names = ts.isPropertyAccessExpression(expression)
                 ? [expression.name.text]
                 : computedPropertyNames(expression);
+            const getters = getterDeclarationsForMemberRead(expression, names);
+            if (getters.length > 0) {
+                return bounded(
+                    getters.flatMap((getter) =>
+                        functionReturnExpressions(getter).flatMap((returned) =>
+                            propertyValueExpressions(
+                                returned,
+                                propertyName,
+                                depth + 1,
+                                nextSeen,
+                                includeGetters,
+                                followNestedReceivers,
+                            ),
+                        ),
+                    ),
+                    "getter property alternatives",
+                );
+            }
+            if (!followNestedReceivers) return [];
             if (names?.length !== 1) return [];
             const projected = projectedExpressions(expression.expression, [
                 { kind: "property", names },
