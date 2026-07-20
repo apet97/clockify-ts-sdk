@@ -462,13 +462,20 @@ end-to-end and green before push. Drift gates are non-negotiable.
     aliases. Spread reconstructions follow JavaScript last-write semantics across
     explicit, duplicate, conditional, nested, and statically bounded const/alias/
     factory patch values; projected property/element and helper-returned rest
-    sources retain per-path provenance, projected safe patches are recovered,
+    sources retain per-path provenance, non-executing static getter projections
+    and projected safe patches are recovered,
     and aliases of reconstructed rest objects stay inside the same ordered seam.
-    Mixed or unresolved paths stay conservative, while ordinary non-rest objects
-    stay outside the special case. Every governed projection, destructuring,
+    Mixed, effectful, throwing, or unresolved getter paths stay conservative.
+    Only top-level request-field contributions enter the reconstruction seam, so
+    ordinary nested storage of a rest copy stays inert until a later spread
+    flattens it; ordinary non-rest objects stay outside the special case. Typed
+    helper parameters remain provenance anchors when an inline literal argument
+    has no receiver origin, including nested and aliased helper returns. Every
+    governed projection, destructuring,
     helper-return, object-literal, direct reconstruction property/spread, recovered
     path, and Cartesian path is charged through the common work/alternative limits
-    before materialization; reconstruction depth also fails closed. Definite
+    before materialization; reconstruction recursion is guarded at every edge and
+    depth exhaustion fails closed before the JavaScript stack. Definite
     same-property overwrites still dominate through nested
     invocation/source order. A later
     phase dominates only when every
@@ -476,7 +483,8 @@ end-to-end and green before push. Drift gates are non-negotiable.
     qualified definite write. Lifted direct property assignments retain original
     within-phase sequence and become definite only on unconditional paths with
     no preceding function exit; conditional or early-return writes do not
-    dominate.
+    dominate, except that equivalent same-property writes across every branch of
+    a complete `if`/`else` form one all-path cutoff.
     Global-provenance direct/aliased/computed `Reflect.apply`
     is normalized through the same bounded static/spread argument-list path only
     while its reaching member value is native. The same ordered write forms can
