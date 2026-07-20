@@ -6007,6 +6007,102 @@ test("uses only the latest reaching typed getter receiver write", async () => {
     });
 });
 
+test("uses latest reaching values before a directly resolved accessor", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; let source = { get registry(): Registry { return singleton; } }; const old = source.registry; source = { get registry(): Registry { return { Ctor: Safe }; } }; const current = source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, setup, shouldFail] of [
+    [
+        "definite subclass override",
+        "let source: Base = new Base(); const old = source.registry; source = new Fresh(); const current = source.registry; old.Ctor = Unsafe; new current.Ctor();",
+        false,
+    ],
+    [
+        "current base singleton accessor",
+        "let source: Base = new Fresh(); const old = source.registry; source = new Base(); const current = source.registry; current.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "conditional subclass override",
+        "let source: Base = new Base(); const old = source.registry; if (choose) source = new Fresh(); const current = source.registry; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+    [
+        "loop subclass override",
+        "let source: Base = new Base(); const old = source.registry; for (const enabled of [choose]) { if (enabled) source = new Fresh(); } const current = source.registry; old.Ctor = Unsafe; new current.Ctor();",
+        true,
+    ],
+]) {
+    test(`${label} resolves accessors from reaching instance values`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Safe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(
+                    result.failures.join("\n"),
+                    /(as any.*CreateProjectsRequest|could not statically resolve)/i,
+                );
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("keeps static accessor reads direct", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } class Source { static get registry(): { Ctor: typeof Safe | typeof Unsafe } { return { Ctor: Safe }; } } const old = Source.registry; const current = Source.registry; old.Ctor = Unsafe; new current.Ctor(); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("fails closed when reaching accessor alternatives exceed the cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, choose: boolean) { class Safe {} class One { get registry() { return { Ctor: Safe }; } } class Two { get registry() { return { Ctor: Safe }; } } const source = choose ? new One() : new Two(); const current = source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded/i);
+    });
+});
+
+test("fails closed for cyclic reaching accessor receivers", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Safe {} interface Source { readonly registry: { Ctor: typeof Safe } } let first = {} as Source; let second = first; first = second; second = first; const current = first.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /could not statically resolve/i);
+    });
+});
+
+test("fails closed when reaching accessor discovery exceeds the work cap", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient) { class Safe {} const source = { get registry() { return { Ctor: Safe }; } }; const current = source.registry; new current.Ctor(); return client.projects.create({ workspaceId: "safe" }); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded \(work; max 1\)/i);
+    });
+});
+
 test("uses latest reaching typed getter writes through a receiver alias", async () => {
     const source =
         generatedImports +

@@ -4570,8 +4570,14 @@ function analyzeProgram({
         );
     }
 
-    function getterDeclarationsForReceiver(receiverExpression, names, memberSymbol = null) {
-        if (!names?.length) return [];
+    function getterDeclarationsForReceiver(
+        receiverExpression,
+        names,
+        memberSymbol = null,
+        seen = new Set(),
+        depth = 0,
+    ) {
+        if (!names?.length || depth > MAX_TRACE_DEPTH) return [];
         const resolvedMember =
             memberSymbol ??
             unalias(
@@ -4584,11 +4590,28 @@ function analyzeProgram({
         const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
-        if (direct.length > 0) return direct;
-
         const receiver = unwrapExpression(receiverExpression);
-        if (!ts.isIdentifier(receiver)) return [];
+        if (ts.isConditionalExpression(receiver)) {
+            return bounded(
+                [receiver.whenTrue, receiver.whenFalse].flatMap((value) =>
+                    getterDeclarationsForReceiver(value, names, null, seen, depth + 1),
+                ),
+                "receiver getter declaration alternatives",
+            );
+        }
+        if (!ts.isIdentifier(receiver)) return direct;
         const symbol = unalias(checker, checker.getSymbolAtLocation(receiver));
+        const variableReceiver = (symbol?.declarations ?? []).some(
+            (declaration) =>
+                ts.isVariableDeclaration(declaration) ||
+                ts.isParameter(declaration) ||
+                ts.isBindingElement(declaration),
+        );
+        if (!variableReceiver) return direct;
+        const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-receiver`;
+        if (seen.has(key)) return [];
+        const nextSeen = new Set(seen);
+        nextSeen.add(key);
         const values = reachingWrites(symbol, receiverExpression).writes.map(
             (write) => write.value,
         );
@@ -4599,17 +4622,13 @@ function analyzeProgram({
                 }
             }
         }
-        return values.flatMap((value) => {
-            value = unwrapExpression(value);
-            if (!ts.isObjectLiteralExpression(value)) return [];
-            return value.properties.filter((property) => {
-                if (!ts.isGetAccessorDeclaration(property) || !property.body) return false;
-                const propertyNames = ts.isComputedPropertyName(property.name)
-                    ? literalPropertyNames(checker.getTypeAtLocation(property.name.expression))
-                    : [property.name.getText(value.getSourceFile()).replace(/^['"]|['"]$/g, "")];
-                return propertyNames?.some((name) => names.includes(name));
-            });
-        });
+        if (values.length === 0) return direct;
+        return bounded(
+            values.flatMap((value) =>
+                getterDeclarationsForReceiver(value, names, null, nextSeen, depth + 1),
+            ),
+            "reaching receiver getter declarations",
+        );
     }
 
     function getterDeclarationsForMemberRead(expression, names) {
