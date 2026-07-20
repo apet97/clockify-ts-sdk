@@ -458,9 +458,13 @@ end-to-end and green before push. Drift gates are non-negotiable.
     property reads use the latest receiver-qualified reaching property write at
     that read, while an earlier alias keeps the identity it captured. Object-rest
     copies preserve exclusions and source snapshot timing, but later writes to
-    the copied receiver remain ordered; spread reconstructions follow JavaScript
-    last-write semantics across explicit, duplicate, conditional, and nested
-    properties. Definite same-property overwrites still dominate through nested
+    the copied receiver remain ordered through direct, multi-hop, and destructured
+    aliases. Spread reconstructions follow JavaScript last-write semantics across
+    explicit, duplicate, conditional, nested, and statically bounded const/alias/
+    factory patch values; mixed or unresolved patches stay conservative. Every
+    direct reconstruction property/spread and Cartesian path is charged through
+    the common work/alternative limits before materialization. Definite
+    same-property overwrites still dominate through nested
     invocation/source order. A later
     phase dominates only when every
     registered mutually exclusive path performs an equivalent receiver/name-

@@ -269,14 +269,18 @@ function analyzeProgram({
     let largestCallbackExpansion = 0;
     let syntheticInvocations = 0;
 
-    function bounded(values, kind = "alternatives") {
+    function chargeAnalysisWork(amount) {
         if (analysisExhausted) return [];
-        if (analysisWork + values.length > maxWork) {
+        if (analysisWork + amount > maxWork) {
             analysisWork = maxWork;
             analysisExhausted = true;
             throw new AnalysisWorkLimitError(maxWork, largestCallbackExpansion);
         }
-        analysisWork += values.length;
+        analysisWork += amount;
+    }
+
+    function bounded(values, kind = "alternatives") {
+        chargeAnalysisWork(values.length);
         if (values.length > maxAlternatives) {
             analysisFailures.add(
                 `consumer cast analysis limit exceeded (${kind}; max ${maxAlternatives})`,
@@ -1089,54 +1093,92 @@ function analyzeProgram({
         return bounded(alternatives);
     }
 
+    function combineDirectObjectPaths(left, right, kind) {
+        const expansionSize = left.length * right.length;
+        chargeAnalysisWork(expansionSize);
+        const limit = Math.min(expansionSize, maxAlternatives);
+        if (expansionSize > maxAlternatives) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (${kind}; max ${maxAlternatives})`,
+            );
+        }
+        const combined = [];
+        for (const leftPath of left) {
+            for (const rightPath of right) {
+                if (combined.length >= limit) return combined;
+                combined.push([...leftPath, ...rightPath]);
+            }
+        }
+        return combined;
+    }
+
+    function appendDirectObjectEntries(paths, entries, kind) {
+        const expansionSize = paths.length * entries.length;
+        chargeAnalysisWork(expansionSize);
+        const limit = Math.min(expansionSize, maxAlternatives);
+        if (expansionSize > maxAlternatives) {
+            analysisFailures.add(
+                `consumer cast analysis limit exceeded (${kind}; max ${maxAlternatives})`,
+            );
+        }
+        const combined = [];
+        for (const path of paths) {
+            for (const entry of entries) {
+                if (combined.length >= limit) return combined;
+                combined.push([...path, entry]);
+            }
+        }
+        return combined;
+    }
+
     function directObjectPropertySequences(source, substitutions = new Map()) {
         source = unwrapExpression(source);
         if (!ts.isObjectLiteralExpression(source)) return [];
         let sequences = [[]];
         for (const property of source.properties) {
+            chargeAnalysisWork(1);
             if (ts.isSpreadAssignment(property)) {
-                const spread = unwrapExpression(property.expression);
-                let alternatives;
-                if (ts.isConditionalExpression(spread)) {
-                    alternatives = [spread.whenTrue, spread.whenFalse].flatMap((branch) => {
-                        const branchSequences = directObjectPropertySequences(
-                            branch,
-                            substitutions,
+                const recovered = reachingExpressionValues(
+                    property.expression,
+                    property.expression.pos,
+                    new Set(),
+                    substitutions,
+                );
+                const alternatives = [];
+                for (const value of recovered) {
+                    const recoveredPaths = directObjectPropertySequences(
+                        value.expression,
+                        value.substitutions,
+                    );
+                    chargeAnalysisWork(recoveredPaths.length);
+                    const available = maxAlternatives - alternatives.length;
+                    if (recoveredPaths.length > available) {
+                        analysisFailures.add(
+                            `consumer cast analysis limit exceeded (returned object recovered spread paths; max ${maxAlternatives})`,
                         );
-                        return branchSequences.length > 0 ? branchSequences : [[]];
-                    });
-                } else {
-                    alternatives = directObjectPropertySequences(spread, substitutions);
+                    }
+                    for (
+                        let index = 0;
+                        index < Math.min(recoveredPaths.length, available);
+                        index += 1
+                    ) {
+                        alternatives.push(recoveredPaths[index]);
+                    }
                 }
                 if (alternatives.length === 0) {
-                    alternatives = [
-                        [
-                            {
-                                value: property.expression,
-                                names: null,
-                                substitutions,
-                            },
-                        ],
-                    ];
+                    alternatives.push([
+                        {
+                            value: property.expression,
+                            names: null,
+                            substitutions,
+                        },
+                    ]);
                 }
-                const combined = [];
-                let overflow = false;
-                for (const sequence of sequences) {
-                    for (const alternative of alternatives) {
-                        if (combined.length >= maxAlternatives) {
-                            overflow = true;
-                            break;
-                        }
-                        combined.push([...sequence, ...alternative]);
-                    }
-                    if (overflow) break;
-                }
-                if (overflow) {
-                    analysisFailures.add(
-                        `consumer cast analysis limit exceeded (returned object spread paths; max ${maxAlternatives})`,
-                    );
-                }
-                sequences = combined;
+                sequences = combineDirectObjectPaths(
+                    sequences,
+                    alternatives,
+                    "returned object spread paths",
+                );
                 continue;
             }
             if (!property.name) continue;
@@ -1155,27 +1197,41 @@ function analyzeProgram({
                       }))
                     : [];
             if (entries.length > 0) {
-                const combined = [];
-                let overflow = false;
-                for (const sequence of sequences) {
-                    for (const entry of entries) {
-                        if (combined.length >= maxAlternatives) {
-                            overflow = true;
-                            break;
-                        }
-                        combined.push([...sequence, entry]);
-                    }
-                    if (overflow) break;
-                }
-                if (overflow) {
-                    analysisFailures.add(
-                        `consumer cast analysis limit exceeded (returned object property paths; max ${maxAlternatives})`,
-                    );
-                }
-                sequences = combined;
+                sequences = appendDirectObjectEntries(
+                    sequences,
+                    entries,
+                    "returned object property paths",
+                );
             }
         }
         return sequences;
+    }
+
+    function expressionMayAliasObjectRest(value, use = value, seen = new Set()) {
+        value = unwrapExpression(value);
+        if (ts.isConditionalExpression(value)) {
+            return (
+                expressionMayAliasObjectRest(value.whenTrue, value.whenTrue, seen) ||
+                expressionMayAliasObjectRest(value.whenFalse, value.whenFalse, seen)
+            );
+        }
+        if (!ts.isIdentifier(value)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(value));
+        if (!symbol || seen.has(symbol)) return false;
+        if (
+            (symbol.declarations ?? []).some(
+                (declaration) => ts.isBindingElement(declaration) && declaration.dotDotDotToken,
+            )
+        ) {
+            return true;
+        }
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return reachingWrites(symbol, use).writes.some((write) =>
+            projectedExpressions(write.value, write.projection ?? []).some((candidate) =>
+                expressionMayAliasObjectRest(candidate, candidate, nextSeen),
+            ),
+        );
     }
 
     function getterEffectValues(entry, beforePosition) {
@@ -3978,6 +4034,32 @@ function analyzeProgram({
         const returnedUsePosition = returnedUse.pos;
         const excludedNames = new Set(context.returnedAliasExcludedNames ?? []);
         const copySymbols = new Set(context.returnedAliasCopySymbols ?? []);
+        function definitelyAliasesReturnedCopy(value, use, aliasSeen = new Set()) {
+            value = unwrapExpression(value);
+            if (ts.isConditionalExpression(value)) {
+                return (
+                    definitelyAliasesReturnedCopy(value.whenTrue, use, aliasSeen) &&
+                    definitelyAliasesReturnedCopy(value.whenFalse, use, aliasSeen)
+                );
+            }
+            if (!ts.isIdentifier(value)) return false;
+            const symbol = unalias(checker, checker.getSymbolAtLocation(value));
+            if (copySymbols.has(symbol)) return true;
+            if (!symbol || aliasSeen.has(symbol)) return false;
+            const nextSeen = new Set(aliasSeen);
+            nextSeen.add(symbol);
+            const writes = reachingWrites(symbol, use).writes;
+            if (writes.length === 0) return false;
+            const values = writes.flatMap((write) =>
+                projectedExpressions(write.value, write.projection ?? []),
+            );
+            return (
+                values.length > 0 &&
+                values.every((candidate) =>
+                    definitelyAliasesReturnedCopy(candidate, candidate, nextSeen),
+                )
+            );
+        }
         const returnedIdentifierSymbol = ts.isIdentifier(expression)
             ? unalias(checker, checker.getSymbolAtLocation(expression))
             : null;
@@ -4017,10 +4099,7 @@ function analyzeProgram({
             .filter((write) => {
                 const receiver = memberWriteReceiver(write);
                 if (!receiver) return false;
-                const receiverSymbol = ts.isIdentifier(receiver)
-                    ? unalias(checker, checker.getSymbolAtLocation(receiver))
-                    : null;
-                const writesCopiedReceiver = receiverSymbol && copySymbols.has(receiverSymbol);
+                const writesCopiedReceiver = definitelyAliasesReturnedCopy(receiver, receiver);
                 if (
                     write.sourceFile !== expression.getSourceFile() ||
                     write.position >=
@@ -4428,12 +4507,7 @@ function analyzeProgram({
             requestContributing &&
             expression.properties.some((property) => {
                 if (!ts.isSpreadAssignment(property)) return false;
-                const spread = unwrapExpression(property.expression);
-                if (!ts.isIdentifier(spread)) return false;
-                const symbol = unalias(checker, checker.getSymbolAtLocation(spread));
-                return (symbol?.declarations ?? []).some(
-                    (declaration) => ts.isBindingElement(declaration) && declaration.dotDotDotToken,
-                );
+                return expressionMayAliasObjectRest(property.expression);
             })
         ) {
             const sequences = directObjectPropertySequences(expression, context.substitutions);

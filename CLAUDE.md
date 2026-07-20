@@ -271,8 +271,12 @@ make docs-drift
   resolve the latest receiver-qualified reaching property write at that read,
   while earlier aliases retain their captured identity. Object-rest copies retain
   exclusions and source snapshot timing while later copied-receiver writes remain
-  ordered; spread reconstruction follows JavaScript last-write semantics across
-  explicit, duplicate, conditional, and nested properties. Definite same-property
+  ordered through direct, multi-hop, and destructured aliases. Spread
+  reconstruction follows JavaScript last-write semantics across explicit,
+  duplicate, conditional, nested, and statically bounded const/alias/factory
+  patch values; mixed or unresolved patches stay conservative. Every direct
+  reconstruction property/spread and Cartesian path is charged through the
+  common work/alternative limits before materialization. Definite same-property
   overwrites follow nested invocation/source order. Phase cutoff requires
   equivalent receiver/name-qualified definite
   writes on every registered alternative path. Lifted direct assignments retain

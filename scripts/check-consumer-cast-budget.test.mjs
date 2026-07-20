@@ -3501,6 +3501,212 @@ for (const [label, reassignment, mutation, returned, shouldFail, invocation, run
     });
 }
 
+test("lets a definite safe write through an alias of a returned rest copy dominate", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; const alias = rest; alias.body = "safe"; return rest; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+test("orders reconstruction through an alias of a returned rest copy", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; const alias = rest; return { ...alias, body: "safe" }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, helperSource, shouldFail, invocation, runArgs] of [
+    [
+        "multi-alias safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const first = rest; const second = first; second.body = "safe"; return rest; }',
+        false,
+    ],
+    [
+        "destructured-alias safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const { copy: alias } = { copy: rest }; alias.body = "safe"; return rest; }',
+        false,
+    ],
+    [
+        "conditional-alias safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, choose: boolean) { request.body = body as any; const { ...rest } = request; const other: ClockifyApi.CreateProjectsRequest = { workspaceId: "other" }; const alias = choose ? rest : other; alias.body = "safe"; return rest; }',
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "unrelated-alias safe write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { ...rest } = request; const other: ClockifyApi.CreateProjectsRequest = { workspaceId: "other" }; const alias = other; alias.body = "safe"; return rest; }',
+        true,
+    ],
+    [
+        "unsafe-last alias write",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { ...rest } = request; const alias = rest; alias.body = "safe"; alias.body = body as any; return rest; }',
+        true,
+    ],
+]) {
+    test(`${label} preserves returned rest-copy identity`, async () => {
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+test("lets a statically recovered safe patch dominate a returned rest spread", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; const { workspaceId: _workspaceId, ...rest } = request; const safePatch = { body: "safe" }; return { ...rest, ...safePatch }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        },
+    );
+});
+
+for (const [label, setup, returned, shouldFail, invocation, runArgs] of [
+    [
+        "aliased safe patch",
+        'const safePatch = { body: "safe" }; const alias = safePatch;',
+        "{ ...rest, ...alias }",
+        false,
+    ],
+    [
+        "factory-returned safe patch",
+        'function safePatch() { return { body: "safe" }; }',
+        "{ ...rest, ...safePatch() }",
+        false,
+    ],
+    [
+        "all-path conditional safe patch",
+        'const safePatch = choose ? { body: "safe" } : { body: "also-safe" };',
+        "{ ...rest, ...safePatch }",
+        false,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    [
+        "mixed conditional patch",
+        'const safePatch = choose ? { body: "safe" } : {};',
+        "{ ...rest, ...safePatch }",
+        true,
+        "augment(request, body, choose)",
+        ", choose: boolean",
+    ],
+    ["unknown final patch", "const safePatch = body as any;", "{ ...rest, ...safePatch }", true],
+    [
+        "unsafe-last recovered patch",
+        "const unsafePatch = { body: body as any };",
+        '{ ...rest, body: "safe", ...unsafePatch }',
+        true,
+    ],
+    [
+        "unsafe-last rest after safe patch",
+        'const safePatch = { body: "safe" };',
+        "{ ...safePatch, ...rest }",
+        true,
+    ],
+]) {
+    test(`${label} preserves bounded returned-rest patch ordering`, async () => {
+        const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs ?? ""}) { request.body = body as any; const { ...rest } = request; ${setup} return ${returned}; }`;
+        await withFixture(
+            returnedMutationFixture(helperSource, invocation, runArgs),
+            async (root) => {
+                const result = await validateConsumerCastGovernance({
+                    root,
+                    contract: zeroContract,
+                });
+                if (shouldFail) {
+                    assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+                } else {
+                    assert.deepEqual(result.failures, []);
+                }
+            },
+        );
+    });
+}
+
+test("charges returned rest reconstruction paths to the common work cap", async () => {
+    const flags = Array.from({ length: 12 }, (_, index) => `flag${index}`);
+    const runArgs = flags.map((flag) => `, ${flag}: boolean`).join("");
+    const spreads = flags
+        .map(
+            (flag, index) =>
+                `...(${flag} ? { marker${index}: ${index} } : { alternate${index}: ${index} })`,
+        )
+        .join(", ");
+    const helperSource = `function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown${runArgs}) { const { ...rest } = request; return { ...rest, ${spreads} }; }`;
+    const invocation = `augment(request, body, ${flags.join(", ")})`;
+    await withFixture(returnedMutationFixture(helperSource, invocation, runArgs), async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 10_000, maxInvocations: 256, maxWork: 50 },
+        });
+        assert.match(result.failures.join("\n"), /analysis limit exceeded.*work.*50/i);
+        assert.deepEqual(result.analysisStats, { work: 50, exhausted: true });
+    });
+});
+
+test("reports charged returned-rest reconstruction work below the cap", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { const { ...rest } = request; return { ...rest, body: "safe" }; }',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 64, maxInvocations: 256, maxWork: 1_000 },
+            });
+            assert.deepEqual(result.failures, []);
+            assert.equal(result.analysisStats.exhausted, false);
+            assert.ok(result.analysisStats.work >= 4);
+            assert.ok(result.analysisStats.work < 1_000);
+        },
+    );
+});
+
+test("fails closed when returned-rest reconstruction alternatives exceed the cap", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown, a: boolean, b: boolean, c: boolean) { const { ...rest } = request; return { ...rest, ...(a ? { a: 1 } : { aa: 1 }), ...(b ? { b: 1 } : { bb: 1 }), ...(c ? { c: 1 } : { cc: 1 }) }; }",
+            "augment(request, body, a, b, c)",
+            ", a: boolean, b: boolean, c: boolean",
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 4, maxInvocations: 256, maxWork: 1_000 },
+            });
+            assert.match(result.failures.join("\n"), /analysis limit exceeded.*paths.*4/i);
+            assert.equal(result.analysisStats.exhausted, false);
+            assert.ok(result.analysisStats.work < 1_000);
+        },
+    );
+});
+
 test("keeps mutually exclusive descriptor paths through Object.defineProperty.call", async () => {
     await withFixture(
         generatedImports +

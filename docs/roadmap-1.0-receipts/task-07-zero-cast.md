@@ -361,6 +361,23 @@ conditional, unsafe-last, current-property, and inverse controls stayed green.
 The finished focused set passes **20/20**, and the complete controller suite
 passes **529/529** fixtures while retaining the prior 509 cases.
 
+The twenty-sixth corrective review propagates returned rest-copy identity through
+direct, multi-hop, and destructured local aliases, while conditional and
+unrelated aliases remain conservative and unsafe-last writes remain visible.
+Ordered reconstruction recognizes aliased rest spreads and statically bounded
+const, aliased, factory-returned, and all-path conditional patch objects. Mixed
+conditional and unresolved patches remain governed, and safe-before-rest or
+unsafe-final inverses preserve JavaScript last-write behavior. Every direct
+reconstruction property/spread and Cartesian path expansion now charges the
+shared work budget before materialization and retains the existing alternative
+cap. The 12-spread RED fixture deterministically exhausts at work 50; the normal
+fixture reports charged work below its cap, and the actual repository completes
+at work 6,661 under the unchanged 10,000 limit. Four initial tracer cases failed
+against `d451ded` for the expected alias, patch, and accounting reasons. The
+finished correction26 matrix passes **18/18**, the combined correction25/26 plus
+legacy focused set passes **40/40**, and the complete controller suite passes
+**547/547** fixtures while retaining the prior 529 cases.
+
 Holiday update received a separate RED/GREEN regression. When list read-back
 omits generated-required `occursAnnually`, preview now fails closed instead of
 inventing `false`; no live/schema evidence supports that default.
@@ -385,7 +402,7 @@ make pack-snapshot-check
 git diff --check
 ```
 
-Final twenty-fifth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
+Final twenty-sixth-correction results: wrapper **763 passed / 7 skipped**, CLI **388
 passed / 12 skipped**, and MCP **708 passed / 12 skipped**, with blank live credentials;
 all three package lint/type/build gates and wrapper dual-build smoke passed.
 Pack snapshots remained wrapper **2,800**, CLI **36**, MCP **109** paths; all
