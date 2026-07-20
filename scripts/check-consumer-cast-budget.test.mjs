@@ -4416,6 +4416,189 @@ test("keeps an inline helper mutation through a shorthand return projection", as
     );
 });
 
+test("keeps a helper mutation through a materialized shorthand return projection", async () => {
+    await withFixture(
+        returnedMutationFixture(
+            "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+            "result.request",
+        ).replace(
+            "return client.projects.create(result.request);",
+            'const result = augment({ workspaceId: "w" }, body); return client.projects.create(result.request);',
+        ),
+        async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        },
+    );
+});
+
+for (const [label, helperSource, setup, invocation, shouldFail, runArgs] of [
+    [
+        "materialized named argument",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        "const result = augment(request, body);",
+        "result.request",
+        true,
+    ],
+    [
+        "materialized array projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return [request]; }",
+        'const result = augment({ workspaceId: "w" }, body);',
+        "result[0]",
+        true,
+    ],
+    [
+        "materialized nested projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { nested: { request } }; }",
+        'const result = augment({ workspaceId: "w" }, body);',
+        "result.nested.request",
+        true,
+    ],
+    [
+        "materialized alias chain",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        'const result = augment({ workspaceId: "w" }, body); const first = result; const second = first;',
+        "second.request",
+        true,
+    ],
+    [
+        "materialized alias cycle",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        'const result = augment({ workspaceId: "w" }, body); let first = result; let second = first; first = second;',
+        "first.request",
+        true,
+    ],
+    [
+        "materialized safe-later helper",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; request.body = "safe"; return { request }; }',
+        'const result = augment({ workspaceId: "w" }, body);',
+        "result.request",
+        false,
+    ],
+    [
+        "materialized unsafe-last helper",
+        'function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = "safe"; request.body = body as any; return { request }; }',
+        'const result = augment({ workspaceId: "w" }, body);',
+        "result.request",
+        true,
+    ],
+    [
+        "materialized unknown computed projection",
+        "function augment(request: ClockifyApi.CreateProjectsRequest, body: unknown) { request.body = body as any; return { request }; }",
+        "const result = augment(request, body);",
+        "result[key]",
+        true,
+        ", key: string",
+    ],
+]) {
+    test(`${label} preserves helper-local provenance`, async () => {
+        const source =
+            generatedImports +
+            `${helperSource}\nexport async function run(client: FixtureClient, body: unknown${runArgs ?? ""}) { const request: ClockifyApi.CreateProjectsRequest = { workspaceId: "safe" }; ${setup} return client.projects.create(${invocation}); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed when materialized result projection paths exceed the cap", async () => {
+    const source =
+        generatedImports +
+        'function augment(request: ClockifyApi.CreateProjectsRequest) { return { request, other: request }; }\nexport async function run(client: FixtureClient, key: "request" | "other") { const result = augment({ workspaceId: "safe" }); return client.projects.create(result[key]); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 1, maxInvocations: 256, maxWork: 10_000 },
+        });
+        assert.match(result.failures.join("\n"), /result projection paths; max 1/i);
+    });
+});
+
+test("lets an all-path safe write dominate a materialized conditional result projection", async () => {
+    const source =
+        generatedImports +
+        'export async function run(client: FixtureClient, body: unknown, choose: boolean) { const request: ClockifyApi.CreateProjectsRequest = { workspaceId: "safe", body: body as any }; const result = choose ? { request } : { request: { workspaceId: "safe" } }; result.request.body = "safe"; return client.projects.create(result.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+for (const [label, resultSetup, mutation, invocation, shouldFail] of [
+    [
+        "array conditional projection",
+        'const result = choose ? [request] : [{ workspaceId: "safe" }];',
+        'result[0].body = "safe";',
+        "result[0]",
+        false,
+    ],
+    [
+        "static computed conditional projection",
+        'const key: "request" = "request"; const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'result[key].body = "safe";',
+        "result[key]",
+        false,
+    ],
+    [
+        "aliased conditional projection",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } }; const alias = result;',
+        'alias.request.body = "safe";',
+        "result.request",
+        false,
+    ],
+    [
+        "nested conditional projection",
+        'const result = choose ? { payload: { request } } : { payload: { request: { workspaceId: "safe" } } };',
+        'result.payload.request.body = "safe";',
+        "result.payload.request",
+        false,
+    ],
+    [
+        "reversed all-safe conditional writes",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'if (choose) { result.request.body = "safe-a"; } else { result.request.body = "safe-b"; }',
+        "result.request",
+        false,
+    ],
+    [
+        "partial conditional write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'if (choose) result.request.body = "safe";',
+        "result.request",
+        true,
+    ],
+    [
+        "mixed conditional writes",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'if (choose) { result.request.body = "safe"; } else { result.request.body = body as any; }',
+        "result.request",
+        true,
+    ],
+    [
+        "unsafe-last projected write",
+        'const result = choose ? { request } : { request: { workspaceId: "safe" } };',
+        'result.request.body = "safe"; result.request.body = body as any;',
+        "result.request",
+        true,
+    ],
+]) {
+    test(`${label} orders writes for every projected receiver alternative`, async () => {
+        const source =
+            generatedImports +
+            `export async function run(client: FixtureClient, body: unknown, choose: boolean) { const request: ClockifyApi.CreateProjectsRequest = { workspaceId: "safe", body: body as any }; ${resultSetup} ${mutation} return client.projects.create(${invocation}); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
 for (const [label, helperSource, invocation, shouldFail, runArgs] of [
     [
         "inline array projection",
@@ -4516,6 +4699,32 @@ for (const [label, setup, shouldFail, runArgs] of [
         "(class { get configure() { Reflect.apply = safeApply; return 1; } });",
         true,
     ],
+    ["executed class static block", "(class { static { Reflect.apply = safeApply; } });", false],
+    [
+        "executed class static field initializer",
+        "(class { static configured = (Reflect.apply = safeApply); });",
+        false,
+    ],
+    [
+        "executed class declaration static block",
+        "class Configured { static { Reflect.apply = safeApply; } }",
+        false,
+    ],
+    [
+        "unexecuted class instance field initializer",
+        "(class { configured = (Reflect.apply = safeApply); });",
+        true,
+    ],
+    [
+        "conservative computed static name",
+        '(class { static [(() => { Reflect.apply = safeApply; return "configured"; })()] = 1; });',
+        true,
+    ],
+    [
+        "conservative class heritage evaluation",
+        "(class extends (() => { Reflect.apply = safeApply; return class {}; })() {});",
+        true,
+    ],
     [
         "uninvoked conditional arrow",
         "(choose ? (() => { Reflect.apply = safeApply; }) : (() => { Reflect.apply = safeApply; }));",
@@ -4548,6 +4757,56 @@ for (const [label, setup, shouldFail, runArgs] of [
         });
     });
 }
+
+for (const [label, setup, shouldFail, runArgs] of [
+    [
+        "static block native patch",
+        '(class { static { Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); } });',
+        true,
+    ],
+    [
+        "static field native patch",
+        '(class { static configured = Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); });',
+        true,
+    ],
+    [
+        "class declaration static native patch",
+        'class Configured { static { Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); } }',
+        true,
+    ],
+    [
+        "instance field native patch control",
+        '(class { configured = Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); });',
+        false,
+    ],
+    [
+        "method native patch control",
+        '(class { configure() { Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); } });',
+        false,
+    ],
+]) {
+    test(`${label} follows class evaluation effects`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown${runArgs ?? ""}) { const holder: Holder = { request: { workspaceId: "safe" } }; ${setup} return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("accepts an all-path conditional class static overwrite", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, choose: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const safeApply = ((_target: unknown, _receiver: unknown, _args: unknown[]) => undefined) as typeof Reflect.apply; (choose ? class { static { Reflect.apply = safeApply; } } : class { static { Reflect.apply = safeApply; } }); Reflect.apply(Reflect.set, Reflect, [holder, "request", body as any]); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
 
 test("uses the latest projected patch property write in rest reconstruction", async () => {
     await withFixture(
