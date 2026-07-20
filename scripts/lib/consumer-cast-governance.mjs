@@ -2998,6 +2998,10 @@ function analyzeProgram({
                 executionNode: call,
                 executionPhase: (effect.executionPhase ?? 0) + (invocation.executionPhase ?? 0),
                 executionSequence: effect.executionSequence ?? write.position,
+                executionOrderPath: [
+                    call.pos,
+                    ...(effect.executionOrderPath ?? [effect.executionSequence ?? write.position]),
+                ],
                 alternativeGroup: effect.alternativeGroup ?? invocation.alternativeGroup,
                 alternativePath: effect.alternativePath ?? invocation.alternativePath,
                 receiverOverride: receiver,
@@ -3032,6 +3036,7 @@ function analyzeProgram({
         beforePosition,
         seen = new Set(),
         substitutions = new Map(),
+        followProjections = false,
     ) {
         if (
             ts.isParenthesizedExpression(expression) ||
@@ -3040,20 +3045,71 @@ function analyzeProgram({
             ts.isAsExpression(expression) ||
             ts.isTypeAssertionExpression(expression)
         ) {
-            return receiverOrigins(expression.expression, beforePosition, seen, substitutions);
+            return receiverOrigins(
+                expression.expression,
+                beforePosition,
+                seen,
+                substitutions,
+                followProjections,
+            );
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
-            return receiverOrigins(expression.expression, beforePosition, seen, substitutions);
+            const names = ts.isPropertyAccessExpression(expression)
+                ? [expression.name.text]
+                : computedPropertyNames(expression);
+            if (followProjections && names?.length) {
+                const projected = projectedExpressions(expression.expression, [
+                    { kind: "property", names },
+                ]);
+                if (projected.length !== 1 || projected[0] !== expression.expression) {
+                    return new Set(
+                        projected.flatMap((value) => [
+                            ...receiverOrigins(
+                                value,
+                                beforePosition,
+                                seen,
+                                substitutions,
+                                followProjections,
+                            ),
+                        ]),
+                    );
+                }
+            }
+            return receiverOrigins(
+                expression.expression,
+                beforePosition,
+                seen,
+                substitutions,
+                followProjections,
+            );
         }
         if (ts.isConditionalExpression(expression)) {
             return new Set([
-                ...receiverOrigins(expression.whenTrue, beforePosition, seen, substitutions),
-                ...receiverOrigins(expression.whenFalse, beforePosition, seen, substitutions),
+                ...receiverOrigins(
+                    expression.whenTrue,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    followProjections,
+                ),
+                ...receiverOrigins(
+                    expression.whenFalse,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    followProjections,
+                ),
             ]);
         }
         if (ts.isBinaryExpression(expression)) {
             if (expression.operatorToken.kind === ts.SyntaxKind.CommaToken) {
-                return receiverOrigins(expression.right, beforePosition, seen, substitutions);
+                return receiverOrigins(
+                    expression.right,
+                    beforePosition,
+                    seen,
+                    substitutions,
+                    followProjections,
+                );
             }
             if (
                 expression.operatorToken.kind === ts.SyntaxKind.BarBarToken ||
@@ -3061,8 +3117,20 @@ function analyzeProgram({
                 expression.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken
             ) {
                 return new Set([
-                    ...receiverOrigins(expression.left, beforePosition, seen, substitutions),
-                    ...receiverOrigins(expression.right, beforePosition, seen, substitutions),
+                    ...receiverOrigins(
+                        expression.left,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                        followProjections,
+                    ),
+                    ...receiverOrigins(
+                        expression.right,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                        followProjections,
+                    ),
                 ]);
             }
         }
@@ -3082,21 +3150,44 @@ function analyzeProgram({
                 });
                 return new Set(
                     functionReturnExpressions(declaration).flatMap((returned) => [
-                        ...receiverOrigins(returned, beforePosition, nextSeen, nested),
+                        ...receiverOrigins(
+                            returned,
+                            beforePosition,
+                            nextSeen,
+                            nested,
+                            followProjections,
+                        ),
                     ]),
                 );
             }
             return new Set(
                 expression.arguments.flatMap((argument) => [
-                    ...receiverOrigins(argument, beforePosition, seen, substitutions),
+                    ...receiverOrigins(
+                        argument,
+                        beforePosition,
+                        seen,
+                        substitutions,
+                        followProjections,
+                    ),
                 ]),
             );
         }
         if (!ts.isIdentifier(expression)) return new Set();
-        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        const symbol = unalias(
+            checker,
+            followProjections && ts.isShorthandPropertyAssignment(expression.parent)
+                ? checker.getShorthandAssignmentValueSymbol(expression.parent)
+                : checker.getSymbolAtLocation(expression),
+        );
         const substitution = substitutions.get(symbol);
         if (substitution) {
-            return receiverOrigins(substitution, beforePosition, seen, substitutions);
+            return receiverOrigins(
+                substitution,
+                beforePosition,
+                seen,
+                substitutions,
+                followProjections,
+            );
         }
         if (!symbol || seen.has(symbol)) return new Set();
         const nextSeen = new Set(seen);
@@ -3106,13 +3197,19 @@ function analyzeProgram({
         for (const write of writesBySymbol.get(symbol) ?? []) {
             if (write.position >= beforePosition) continue;
             if (cutoff != null && write.position < cutoff) continue;
-            for (const origin of receiverOrigins(
-                write.value,
-                write.position,
-                nextSeen,
-                substitutions,
-            )) {
-                origins.add(origin);
+            const values = followProjections
+                ? projectedExpressions(write.value, write.projection ?? [])
+                : [write.value];
+            for (const value of values) {
+                for (const origin of receiverOrigins(
+                    value,
+                    write.position,
+                    nextSeen,
+                    substitutions,
+                    followProjections,
+                )) {
+                    origins.add(origin);
+                }
             }
         }
         if (origins.size === 0) origins.add(symbol);
@@ -3163,11 +3260,17 @@ function analyzeProgram({
     }
 
     function compareExecutionOrder(left, right) {
-        return (
+        const primary =
             left.position - right.position ||
-            (left.executionPhase ?? 0) - (right.executionPhase ?? 0) ||
-            (left.executionSequence ?? 0) - (right.executionSequence ?? 0)
-        );
+            (left.executionPhase ?? 0) - (right.executionPhase ?? 0);
+        if (primary !== 0) return primary;
+        const leftPath = left.executionOrderPath ?? [left.executionSequence ?? 0];
+        const rightPath = right.executionOrderPath ?? [right.executionSequence ?? 0];
+        for (let index = 0; index < Math.max(leftPath.length, rightPath.length); index += 1) {
+            const compared = (leftPath[index] ?? -1) - (rightPath[index] ?? -1);
+            if (compared !== 0) return compared;
+        }
+        return 0;
     }
 
     function alternativePathCovers(writePath, leafPath) {
@@ -3443,6 +3546,8 @@ function analyzeProgram({
             const pattern = current.parent;
             if (!ts.isObjectBindingPattern(pattern) && !ts.isArrayBindingPattern(pattern)) return;
             let key;
+            let excluded = [];
+            const rest = Boolean(current.dotDotDotToken);
             if (ts.isObjectBindingPattern(pattern)) {
                 const property = current.propertyName ?? current.name;
                 if (ts.isComputedPropertyName(property)) {
@@ -3450,12 +3555,31 @@ function analyzeProgram({
                 } else {
                     key = property.getText(current.getSourceFile()).replace(/^['"]|['"]$/g, "");
                 }
+                if (rest) {
+                    excluded = pattern.elements
+                        .filter((element) => !element.dotDotDotToken)
+                        .flatMap((element) => {
+                            const name = element.propertyName ?? element.name;
+                            if (ts.isComputedPropertyName(name)) {
+                                return (
+                                    literalPropertyNames(
+                                        checker.getTypeAtLocation(name.expression),
+                                    ) ?? []
+                                );
+                            }
+                            return [
+                                name.getText(current.getSourceFile()).replace(/^['"]|['"]$/g, ""),
+                            ];
+                        });
+                }
             } else {
                 key = pattern.elements.indexOf(current);
             }
             steps.push({
                 binding: current,
                 key,
+                rest,
+                excluded,
             });
             if (ts.isVariableDeclaration(pattern.parent)) {
                 declaration = pattern.parent;
@@ -3510,14 +3634,37 @@ function analyzeProgram({
             return false;
         }
 
-        function traceStep(source, stepIndex, propertyDepth, propertySeen) {
+        function traceStep(source, stepIndex, propertyDepth, propertySeen, stepContext = context) {
             if (propertyDepth > MAX_TRACE_DEPTH) return;
             if (stepIndex >= steps.length) {
-                trace(source, context, propertyDepth + 1, propertySeen);
+                trace(source, stepContext, propertyDepth + 1, propertySeen);
                 return;
             }
             if (ts.isParenthesizedExpression(source)) {
-                traceStep(source.expression, stepIndex, propertyDepth + 1, propertySeen);
+                traceStep(
+                    source.expression,
+                    stepIndex,
+                    propertyDepth + 1,
+                    propertySeen,
+                    stepContext,
+                );
+                return;
+            }
+            const step = steps[stepIndex];
+            if (
+                step.rest &&
+                ts.isObjectBindingPattern(step.binding.parent) &&
+                requestNameFromType(checker, checker.getTypeAtLocation(source)) ===
+                    context.expectedRequestType
+            ) {
+                traceStep(source, stepIndex + 1, propertyDepth + 1, propertySeen, {
+                    ...stepContext,
+                    returnedAliasBeforePosition: declaration.pos,
+                    returnedAliasExcludedNames: [
+                        ...(stepContext.returnedAliasExcludedNames ?? []),
+                        ...step.excluded,
+                    ],
+                });
                 return;
             }
             if (ts.isIdentifier(source)) {
@@ -3525,22 +3672,39 @@ function analyzeProgram({
                 const writes = reachingWrites(symbol, source).writes;
                 if (writes.length > 0) {
                     for (const write of writes) {
-                        traceStep(write.value, stepIndex, propertyDepth + 1, propertySeen);
+                        traceStep(
+                            write.value,
+                            stepIndex,
+                            propertyDepth + 1,
+                            propertySeen,
+                            stepContext,
+                        );
                     }
                     return;
                 }
             }
-            const step = steps[stepIndex];
             const selected = literalSelection(source, step.key);
             if (selected.known && !isDefinitelyUndefined(selected.value)) {
-                traceStep(selected.value, stepIndex + 1, propertyDepth + 1, propertySeen);
+                traceStep(
+                    selected.value,
+                    stepIndex + 1,
+                    propertyDepth + 1,
+                    propertySeen,
+                    stepContext,
+                );
                 return;
             }
             if (step.binding.initializer) {
-                traceStep(step.binding.initializer, stepIndex + 1, propertyDepth + 1, propertySeen);
+                traceStep(
+                    step.binding.initializer,
+                    stepIndex + 1,
+                    propertyDepth + 1,
+                    propertySeen,
+                    stepContext,
+                );
             }
             if (!selected.known) {
-                trace(source, context, propertyDepth + 1, propertySeen);
+                trace(source, stepContext, propertyDepth + 1, propertySeen);
             }
         }
 
@@ -3642,11 +3806,21 @@ function analyzeProgram({
 
     function traceReturnedAliasWrites(expression, context, depth, seen) {
         if (context.requestContributing === false || (context.accessPath?.length ?? 0) > 0) return;
+        const beforePosition = context.returnedAliasBeforePosition ?? expression.pos;
+        const excludedNames = new Set(context.returnedAliasExcludedNames ?? []);
+        const followReturnedProjections =
+            (ts.isPropertyAccessExpression(expression) ||
+                ts.isElementAccessExpression(expression) ||
+                (ts.isIdentifier(expression) &&
+                    ts.isShorthandPropertyAssignment(expression.parent))) &&
+            requestNameFromType(checker, checker.getTypeAtLocation(expression)) ===
+                context.expectedRequestType;
         const returnedOrigins = receiverOrigins(
             expression,
-            expression.pos,
+            beforePosition,
             new Set(),
             context.substitutions,
+            followReturnedProjections,
         );
         if (returnedOrigins.size === 0) return;
 
@@ -3660,7 +3834,9 @@ function analyzeProgram({
             .filter((write) => {
                 if (
                     write.sourceFile !== expression.getSourceFile() ||
-                    write.position >= expression.pos
+                    write.position >= beforePosition ||
+                    (write.propertyNames?.length > 0 &&
+                        write.propertyNames.every((name) => excludedNames.has(name)))
                 ) {
                     return false;
                 }
@@ -3675,6 +3851,8 @@ function analyzeProgram({
                     write.position,
                     new Set(),
                     substitutions,
+                    requestNameFromType(checker, checker.getTypeAtLocation(receiver)) ===
+                        context.expectedRequestType,
                 );
                 return [...writeOrigins].some((origin) => returnedOrigins.has(origin));
             })
@@ -3724,7 +3902,6 @@ function analyzeProgram({
         if (propertyNames.length === 0) {
             for (const write of matchingWrites) selected.add(write);
         }
-
         for (const write of selected) {
             const substitutions = new Map(context.substitutions);
             for (const [parameter, argument] of write.substitutions ?? []) {
@@ -3738,6 +3915,7 @@ function analyzeProgram({
                     atBoundaryValue: false,
                     requestContributing: true,
                     accessPath: [],
+                    returnedAliasRoot: false,
                 },
                 depth + 1,
                 seen,
@@ -3887,6 +4065,13 @@ function analyzeProgram({
             return;
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            if (
+                context.returnedAliasRoot &&
+                requestNameFromType(checker, checker.getTypeAtLocation(expression)) ===
+                    context.expectedRequestType
+            ) {
+                traceReturnedAliasWrites(expression, context, depth, nextSeen);
+            }
             const symbol = unalias(
                 checker,
                 checker.getSymbolAtLocation(expression.name ?? expression.argumentExpression),
@@ -4010,7 +4195,18 @@ function analyzeProgram({
                 } else {
                     const nestedContext = { ...context, substitutions, helperDepth };
                     for (const returned of functionReturnExpressions(declaration)) {
-                        trace(returned, nestedContext, depth + 1, nextSeen);
+                        const returnedValue = unwrapExpression(returned);
+                        trace(
+                            returned,
+                            {
+                                ...nestedContext,
+                                returnedAliasRoot:
+                                    ts.isPropertyAccessExpression(returnedValue) ||
+                                    ts.isElementAccessExpression(returnedValue),
+                            },
+                            depth + 1,
+                            nextSeen,
+                        );
                     }
                 }
             }
@@ -4285,6 +4481,16 @@ function analyzeProgram({
         });
     }
 
+    function signatureBelongsToGovernedSource(signature) {
+        const declaration = signature?.declaration;
+        if (!declaration) return false;
+        const sourceName = normalize(path.resolve(declaration.getSourceFile().fileName));
+        return Object.values(packageRoots).some((relativeRoot) => {
+            const sourceRoot = normalize(path.resolve(root, relativeRoot));
+            return sourceName === sourceRoot || sourceName.startsWith(`${sourceRoot}/`);
+        });
+    }
+
     function isFunctionCallTrampoline(expression, depth = 0, seen = new Set()) {
         if (!expression || depth > MAX_TRACE_DEPTH) return false;
         const key = `${expression.getSourceFile().fileName}:${expression.pos}:${expression.end}`;
@@ -4320,6 +4526,8 @@ function analyzeProgram({
 
     function requestBoundaryArguments(call) {
         const boundaries = [];
+        const directSignature = checker.getResolvedSignature(call);
+        if (signatureBelongsToGovernedSource(directSignature)) return boundaries;
         const callee = call.expression;
         if (
             ts.isPropertyAccessExpression(callee) &&
@@ -4370,8 +4578,7 @@ function analyzeProgram({
             return boundaries;
         }
 
-        const signature = checker.getResolvedSignature(call);
-        if (signature) addSignatureBoundaries(boundaries, call, signature);
+        if (directSignature) addSignatureBoundaries(boundaries, call, directSignature);
         for (const recoveredType of typesBeforeAnyErasure(call.expression)) {
             for (const recoveredSignature of recoveredType.getCallSignatures()) {
                 addSignatureBoundaries(boundaries, call, recoveredSignature);

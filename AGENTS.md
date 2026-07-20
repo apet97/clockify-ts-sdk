@@ -454,8 +454,9 @@ end-to-end and green before push. Drift gates are non-negotiable.
     returned-parameter chains cannot stop silently or duplicate failures. A later
     request alias returned from a synchronous helper also carries receiver-
     qualified direct, computed, normalized builtin, and nested-helper writes;
-    definite same-property overwrites still dominate in source/invocation order.
-    A later
+    object-property and destructured aliases preserve that identity, while object-
+    rest copies preserve exclusions and snapshot timing. Definite same-property
+    overwrites still dominate through nested invocation/source order. A later
     phase dominates only when every
     registered mutually exclusive path performs an equivalent receiver/name-
     qualified definite write. Lifted direct property assignments retain original
