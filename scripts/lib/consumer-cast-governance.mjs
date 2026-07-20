@@ -314,8 +314,12 @@ function analyzeProgram({
         return combined;
     }
 
-    function addSyntheticInvocation(declaration, node, args) {
+    function addSyntheticInvocation(declaration, node, args, recordParameterInputs = true) {
         if (analysisExhausted) return;
+        if (!recordParameterInputs) {
+            addInvocation(declaration, node, args, new Map(), 0, null, null, false);
+            return;
+        }
         syntheticInvocations += 1;
         if (syntheticInvocations > maxInvocations) {
             analysisFailures.add(
@@ -323,7 +327,7 @@ function analyzeProgram({
             );
             return;
         }
-        addInvocation(declaration, node, args);
+        addInvocation(declaration, node, args, new Map(), 0, null, null, recordParameterInputs);
     }
 
     function registerAlternativePath(alternativeGroup, alternativePath) {
@@ -343,6 +347,7 @@ function analyzeProgram({
         executionPhase = 0,
         alternativeGroup = null,
         alternativePath = null,
+        recordParameterInputs = true,
     ) {
         if (!declaration || !ts.isFunctionLike(declaration)) return;
         const invocation = {
@@ -375,15 +380,16 @@ function analyzeProgram({
             calls.push(invocation);
             callsByDeclaration.set(declaration, calls);
         }
-        declaration.parameters.forEach((parameter, index) => {
-            const argument = invocation.arguments[index];
-            if (!argument || !ts.isIdentifier(parameter.name)) return;
-            const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
-            if (!symbol) return;
-            const inputs = callArgumentsByParameter.get(symbol) ?? [];
-            inputs.push(argument);
-            callArgumentsByParameter.set(symbol, inputs);
-        });
+        if (recordParameterInputs)
+            declaration.parameters.forEach((parameter, index) => {
+                const argument = invocation.arguments[index];
+                if (!argument || !ts.isIdentifier(parameter.name)) return;
+                const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
+                if (!symbol) return;
+                const inputs = callArgumentsByParameter.get(symbol) ?? [];
+                inputs.push(argument);
+                callArgumentsByParameter.set(symbol, inputs);
+            });
     }
 
     function literalPropertyNames(type) {
@@ -990,6 +996,7 @@ function analyzeProgram({
 
     function expressionDefinitelySkipped(node) {
         for (let current = node.parent; current; current = current.parent) {
+            if (ts.isFunctionLike(current)) break;
             if (ts.isIfStatement(current)) {
                 const state = definiteExpressionState(current.expression);
                 if (isWithin(node, current.thenStatement) && state.truthy === false) return true;
@@ -1038,6 +1045,7 @@ function analyzeProgram({
             }
         }
         for (let current = node; current?.parent; current = current.parent) {
+            if (ts.isFunctionLike(current)) break;
             const parent = current.parent;
             const statements =
                 ts.isBlock(parent) || ts.isSourceFile(parent)
@@ -2264,10 +2272,14 @@ function analyzeProgram({
                     });
                     return nested;
                 });
+                const returnedExpressions = functionReturnExpressions(declaration);
+                if (returnedExpressions.length === 0) {
+                    return nestedStates.map((nested) => ({ expression, substitutions: nested }));
+                }
                 if (!governed) {
                     return bounded(
                         nestedStates.flatMap((nested) =>
-                            functionReturnExpressions(declaration).flatMap((returned) =>
+                            returnedExpressions.flatMap((returned) =>
                                 reachingExpressionValues(
                                     returned,
                                     expression.pos,
@@ -2283,7 +2295,7 @@ function analyzeProgram({
                 }
                 const alternatives = [];
                 for (const nested of nestedStates) {
-                    for (const returned of functionReturnExpressions(declaration)) {
+                    for (const returned of returnedExpressions) {
                         const resolved = reachingExpressionValues(
                             returned,
                             expression.pos,
@@ -4222,9 +4234,20 @@ function analyzeProgram({
                     classExecution.inactiveClassMemberEffect ||
                     (classExecution.classInstanceEffect &&
                         (instantiationsByClass.get(classExecution.classOwner)?.length ?? 0) === 0);
-                if (!effectsOnly && !skipped) addInvocation(declaration, node, node.arguments);
+                if (!skipped) {
+                    addInvocation(
+                        declaration,
+                        node,
+                        node.arguments,
+                        new Map(),
+                        0,
+                        null,
+                        null,
+                        !effectsOnly,
+                    );
+                }
 
-                if (!effectsOnly && !skipped && ts.isPropertyAccessExpression(node.expression)) {
+                if (!skipped && ts.isPropertyAccessExpression(node.expression)) {
                     const invocation = node.expression.name.text;
                     const target = node.expression.expression;
                     if (["call", "apply"].includes(invocation)) {
@@ -4235,7 +4258,16 @@ function analyzeProgram({
                                 : ts.isArrayLiteralExpression(node.arguments[1])
                                   ? node.arguments[1].elements.filter(ts.isExpression)
                                   : [];
-                        addInvocation(targetDeclaration, node, args);
+                        addInvocation(
+                            targetDeclaration,
+                            node,
+                            args,
+                            new Map(),
+                            0,
+                            null,
+                            null,
+                            !effectsOnly,
+                        );
                     }
 
                     const synchronousArrayMethods = new Set([
@@ -4251,11 +4283,14 @@ function analyzeProgram({
                         "reduceRight",
                     ]);
                     if (synchronousArrayMethods.has(invocation) && node.arguments[0]) {
+                        const directCallback = functionDeclarationForExpression(node.arguments[0]);
                         const callbacks = [
-                            functionDeclarationForExpression(node.arguments[0]),
-                            ...reachingExpressionValues(node.arguments[0], node.pos).map((value) =>
-                                functionDeclarationForExpression(value.expression),
-                            ),
+                            directCallback,
+                            ...(effectsOnly
+                                ? []
+                                : reachingExpressionValues(node.arguments[0], node.pos).map(
+                                      (value) => functionDeclarationForExpression(value.expression),
+                                  )),
                         ].filter(
                             (callback, index, all) => callback && all.indexOf(callback) === index,
                         );
@@ -4265,9 +4300,10 @@ function analyzeProgram({
                                 `consumer cast analysis limit exceeded (callback alternatives; max ${maxAlternatives})`,
                             );
                         }
-                        const receivers = reachingExpressionValues(
-                            node.expression.expression,
-                            node.pos,
+                        const receivers = (
+                            effectsOnly
+                                ? [{ expression: unwrapExpression(node.expression.expression) }]
+                                : reachingExpressionValues(node.expression.expression, node.pos)
                         )
                             .map((value) => unwrapExpression(value.expression))
                             .filter(ts.isArrayLiteralExpression);
@@ -4285,7 +4321,12 @@ function analyzeProgram({
                                         const next = [];
                                         for (const accumulator of accumulators) {
                                             const args = [accumulator, value];
-                                            addSyntheticInvocation(callback, node, args);
+                                            addSyntheticInvocation(
+                                                callback,
+                                                node,
+                                                args,
+                                                !effectsOnly,
+                                            );
                                             next.push(...callbackReturnOrigins(callback, args));
                                         }
                                         accumulators = bounded(next);
@@ -4294,7 +4335,7 @@ function analyzeProgram({
                                 } else {
                                     for (const value of values) {
                                         const args = [value];
-                                        addSyntheticInvocation(callback, node, args);
+                                        addSyntheticInvocation(callback, node, args, !effectsOnly);
                                         const result = callbackBooleanResult(callback, args);
                                         if (
                                             (["some", "find", "findIndex"].includes(invocation) &&
@@ -4308,6 +4349,33 @@ function analyzeProgram({
                             }
                         }
                     }
+                }
+
+                if (
+                    !skipped &&
+                    node.arguments[0] &&
+                    ((ts.isPropertyAccessExpression(node.expression) &&
+                        node.expression.name.text === "apply") ||
+                        (ts.isElementAccessExpression(node.expression) &&
+                            node.expression.argumentExpression &&
+                            ts.isStringLiteralLike(node.expression.argumentExpression) &&
+                            node.expression.argumentExpression.text === "apply")) &&
+                    expressionResolvesToBuiltinMember(node.expression, "Reflect", "apply", node.pos)
+                ) {
+                    const targetDeclaration = functionDeclarationForExpression(node.arguments[0]);
+                    const args = ts.isArrayLiteralExpression(node.arguments[2])
+                        ? node.arguments[2].elements.filter(ts.isExpression)
+                        : [];
+                    addInvocation(
+                        targetDeclaration,
+                        node,
+                        args,
+                        new Map(),
+                        0,
+                        null,
+                        null,
+                        !effectsOnly,
+                    );
                 }
 
                 const effectiveCalls =
@@ -4557,9 +4625,29 @@ function analyzeProgram({
                     }
                 });
 
-                const bound = boundInvocation(node.expression, node);
-                if (!effectsOnly && !skipped && bound) {
-                    addInvocation(bound.declaration, node, bound.arguments);
+                const immediateBindCall =
+                    ts.isCallExpression(node.expression) &&
+                    ((ts.isPropertyAccessExpression(node.expression.expression) &&
+                        node.expression.expression.name.text === "bind") ||
+                        (ts.isElementAccessExpression(node.expression.expression) &&
+                            node.expression.expression.argumentExpression &&
+                            ts.isStringLiteralLike(node.expression.expression.argumentExpression) &&
+                            node.expression.expression.argumentExpression.text === "bind"));
+                const bound =
+                    !effectsOnly || immediateBindCall
+                        ? boundInvocation(node.expression, node)
+                        : null;
+                if (!skipped && bound) {
+                    addInvocation(
+                        bound.declaration,
+                        node,
+                        bound.arguments,
+                        new Map(),
+                        0,
+                        null,
+                        null,
+                        !effectsOnly,
+                    );
                 }
             }
             ts.forEachChild(node, (child) => indexCallArguments(child, effectsOnly));
@@ -5123,7 +5211,7 @@ function analyzeProgram({
     }
 
     function effectiveWrites(write, use) {
-        if (write.inactiveClassMemberEffect) return [];
+        if (write.inactiveClassMemberEffect || expressionDefinitelySkipped(write.node)) return [];
         if (write.classEvaluationEffect) {
             return [
                 {
@@ -6408,6 +6496,49 @@ function analyzeProgram({
         return remaining;
     }
 
+    function applySameInvocationSymbolCutoff(writes, symbol, use) {
+        const invocationNodes = new Set(writes.map((write) => write.executionNode).filter(Boolean));
+        let remaining = writes;
+        for (const invocationNode of invocationNodes) {
+            let cutoff = null;
+            const declarations = new Set(
+                writes
+                    .filter((write) => write.executionNode === invocationNode)
+                    .map((write) => enclosingFunction(write.node))
+                    .filter(Boolean),
+            );
+            for (const declaration of declarations) {
+                if (!declaration.body || !ts.isBlock(declaration.body)) continue;
+                const definiteStatement = [...declaration.body.statements]
+                    .reverse()
+                    .find((statement) => statementDefinitelyWritesSymbol(statement, symbol, use));
+                if (!definiteStatement) continue;
+                const statementCutoff = writes
+                    .filter(
+                        (write) =>
+                            write.executionNode === invocationNode &&
+                            enclosingFunction(write.node) === declaration &&
+                            isWithin(write.node, definiteStatement),
+                    )
+                    .sort(compareExecutionOrder)[0];
+                if (
+                    statementCutoff &&
+                    (cutoff == null || compareExecutionOrder(statementCutoff, cutoff) > 0)
+                ) {
+                    cutoff = statementCutoff;
+                }
+            }
+            if (cutoff) {
+                remaining = remaining.filter(
+                    (write) =>
+                        write.executionNode !== invocationNode ||
+                        compareExecutionOrder(write, cutoff) >= 0,
+                );
+            }
+        }
+        return remaining;
+    }
+
     function reachingWrites(symbol, expression) {
         const usePropertyNames = ts.isPropertyAccessExpression(expression)
             ? [expression.name.text]
@@ -6423,18 +6554,22 @@ function analyzeProgram({
                           write.propertyNames.some((name) => usePropertyNames.includes(name)),
                   )
                 : [];
-        const orderedWrites = applyOrderedEffectCutoffs(
-            [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
-                .flatMap((write) => effectiveWrites(write, expression))
-                .filter(
-                    (write) =>
-                        write.sourceFile === expression.getSourceFile() &&
-                        write.position < expression.pos &&
-                        writeMayReachExpression(write, expression),
-                )
-                .sort(compareExecutionOrder)
-                .filter((write, index, all) => index === 0 || write !== all[index - 1]),
-            usePropertyNames,
+        const orderedWrites = applySameInvocationSymbolCutoff(
+            applyOrderedEffectCutoffs(
+                [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites]
+                    .flatMap((write) => effectiveWrites(write, expression))
+                    .filter(
+                        (write) =>
+                            write.sourceFile === expression.getSourceFile() &&
+                            write.position < expression.pos &&
+                            writeMayReachExpression(write, expression),
+                    )
+                    .sort(compareExecutionOrder)
+                    .filter((write, index, all) => index === 0 || write !== all[index - 1]),
+                usePropertyNames,
+            ),
+            symbol,
+            expression,
         );
         const effectCutoff = crossStatementEffectCutoff(
             orderedWrites,
