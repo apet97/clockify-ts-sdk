@@ -6722,6 +6722,50 @@ test("carries assignment-target evaluation effects into a later receiver read", 
     });
 });
 
+test("applies an invoked local helper write before a later receiver read", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Unsafe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } let temp: Base = new Fresh(); function selectUnsafe() { temp = new Base(); } (selectUnsafe(), new temp.registry.Ctor()); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, invocation, shouldFail] of [
+    ["direct safe helper", "selectFresh()", false],
+    ["invoked IIFE", "(() => { temp = new Base(); })()", true],
+    ["nested invoked helper", "outer()", true],
+    ["return before write", "returnBeforeWrite()", false],
+    ["partial conditional write", "selectMaybe(true)", true],
+    ["all-path safe write", "selectSafeEitherWay(true)", false],
+    ["ordered unsafe then safe writes", "selectUnsafeThenSafe()", false],
+    ["ordered safe then unsafe writes", "selectSafeThenUnsafe()", true],
+    ["synchronous callback", "[0].forEach(() => { temp = new Base(); })", true],
+    ["merely passed callback", "acceptCallback(() => { temp = new Base(); })", false],
+    ["Function.call adapter", "selectUnsafe.call(undefined)", true],
+    ["Function.apply adapter", "selectUnsafe.apply(undefined, [])", true],
+    ["Reflect.apply adapter", "Reflect.apply(selectUnsafe, undefined, [])", true],
+    ["bound adapter", "selectUnsafe.bind(undefined)()", true],
+    ["uninvoked helper", "void selectUnsafe", false],
+]) {
+    test(`tracks expression-local invoked helper effects through ${label}`, async () => {
+        const source =
+            generatedImports +
+            'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; class Safe {} class Unsafe { configured = (holder.request = body as any); } type Registry = { Ctor: typeof Safe | typeof Unsafe }; const singleton: Registry = { Ctor: Unsafe }; class Base { get registry(): Registry { return singleton; } } class Fresh extends Base { override get registry(): Registry { return { Ctor: Safe }; } } let temp: Base = new Fresh(); function selectUnsafe() { temp = new Base(); } function selectFresh() { temp = new Fresh(); } function inner() { selectUnsafe(); } function outer() { inner(); } function returnBeforeWrite() { return; temp = new Base(); } function selectMaybe(value: boolean) { if (value) temp = new Base(); } function selectSafeEitherWay(value: boolean) { if (value) temp = new Fresh(); else temp = new Fresh(); } function selectUnsafeThenSafe() { temp = new Base(); temp = new Fresh(); } function selectSafeThenUnsafe() { temp = new Fresh(); temp = new Base(); } function acceptCallback(_callback: () => void) {} (' +
+            invocation +
+            ", new temp.registry.Ctor()); return client.projects.create(holder.request); }\n";
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail) {
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            } else {
+                assert.deepEqual(result.failures, []);
+            }
+        });
+    });
+}
+
 for (const [label, setup, expression, shouldFail] of [
     [
         "comma chain",
