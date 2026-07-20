@@ -4277,10 +4277,10 @@ function analyzeProgram({
                 ts.isObjectLiteralExpression(expression.left) ||
                 ts.isArrayLiteralExpression(expression.left)
             ) {
-                return propertyWrites.some(
+                return (writesBySymbol.get(symbol) ?? []).some(
                     (write) =>
-                        write.position === expression.pos &&
-                        symbolsForWriteTarget(write.node).includes(symbol) &&
+                        write.position >= statement.pos &&
+                        write.position <= statement.end &&
                         writeMayReachExpression(write, use),
                 );
             }
@@ -4577,6 +4577,7 @@ function analyzeProgram({
         seen = new Set(),
         depth = 0,
         substitutions = new Map(),
+        receiverProjection = [],
     ) {
         if (!names?.length) return [];
         if (depth > MAX_TRACE_DEPTH) {
@@ -4597,6 +4598,7 @@ function analyzeProgram({
                     seen,
                     depth + 1,
                     substitutions,
+                    receiverProjection,
                 );
             }
         }
@@ -4612,32 +4614,65 @@ function analyzeProgram({
         const direct = (resolvedMember?.declarations ?? []).filter(
             (declaration) => ts.isGetAccessorDeclaration(declaration) && declaration.body,
         );
-        if (ts.isCallExpression(receiver)) {
-            const key = `${receiver.getSourceFile().fileName}:${receiver.pos}:${receiver.end}:getter-factory`;
+        const projection = [...receiverProjection];
+        let factoryCall = receiver;
+        while (
+            ts.isPropertyAccessExpression(factoryCall) ||
+            ts.isElementAccessExpression(factoryCall)
+        ) {
+            if (ts.isPropertyAccessExpression(factoryCall)) {
+                projection.unshift({ kind: "property", names: [factoryCall.name.text] });
+            } else {
+                const names = computedPropertyNames(factoryCall);
+                if (names?.length !== 1) {
+                    factoryCall = null;
+                    break;
+                }
+                projection.unshift(
+                    /^\d+$/.test(names[0])
+                        ? { kind: "array", index: Number(names[0]) }
+                        : { kind: "property", names },
+                );
+            }
+            factoryCall = unwrapExpression(factoryCall.expression);
+        }
+        if (factoryCall && ts.isCallExpression(factoryCall)) {
+            const key = `${factoryCall.getSourceFile().fileName}:${factoryCall.pos}:${factoryCall.end}:getter-factory:${JSON.stringify(projection)}`;
             if (seen.has(key)) {
                 analysisFailures.add(
                     `consumer cast analysis could not statically resolve recursive receiver getter factory`,
                 );
                 return [];
             }
-            const declaration = checker.getResolvedSignature(receiver)?.declaration;
-            const isAsync =
-                declaration &&
-                ts.isFunctionLike(declaration) &&
-                (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0;
-            const isLocal = declaration?.getSourceFile() === receiver.getSourceFile();
-            if (
-                declaration &&
-                ts.isFunctionLike(declaration) &&
-                declaration.body &&
-                !isAsync &&
-                isLocal
-            ) {
-                const nextSeen = new Set(seen);
-                nextSeen.add(key);
+            const nextSeen = new Set(seen);
+            nextSeen.add(key);
+            const effectiveCalls = normalizeEffectiveCalls(
+                factoryCall.expression,
+                [...factoryCall.arguments],
+                factoryCall.pos,
+            );
+            let complete = effectiveCalls.length > 0;
+            const resolved = [];
+            for (const effectiveCall of effectiveCalls) {
+                const declaration = functionDeclarationForExpression(effectiveCall.expression);
+                const isAsync =
+                    declaration &&
+                    ts.isFunctionLike(declaration) &&
+                    (ts.getCombinedModifierFlags(declaration) & ts.ModifierFlags.Async) !== 0;
+                const isLocal = declaration?.getSourceFile() === factoryCall.getSourceFile();
+                if (
+                    !declaration ||
+                    !ts.isFunctionLike(declaration) ||
+                    !declaration.body ||
+                    isAsync ||
+                    !isLocal
+                ) {
+                    complete = false;
+                    continue;
+                }
                 const nextSubstitutions = new Map(substitutions);
                 declaration.parameters.forEach((parameter, index) => {
-                    const argument = receiver.arguments[index];
+                    const argument = effectiveCall.arguments[index];
                     if (!argument) return;
                     const parameterSymbol = unalias(
                         checker,
@@ -4645,21 +4680,30 @@ function analyzeProgram({
                     );
                     if (parameterSymbol) nextSubstitutions.set(parameterSymbol, argument);
                 });
-                return bounded(
-                    functionReturnExpressions(declaration).flatMap((returned) =>
-                        getterDeclarationsForReceiver(
-                            returned,
-                            names,
-                            null,
-                            nextSeen,
-                            depth + 1,
-                            nextSubstitutions,
+                const returned = functionReturnExpressions(declaration);
+                if (returned.length === 0) complete = false;
+                for (const returnedExpression of returned) {
+                    const projected = projectedExpressions(returnedExpression, projection);
+                    if (projected.length === 0) complete = false;
+                    resolved.push(
+                        ...projected.flatMap((value) =>
+                            getterDeclarationsForReceiver(
+                                value,
+                                names,
+                                null,
+                                nextSeen,
+                                depth + 1,
+                                nextSubstitutions,
+                                [],
+                            ),
                         ),
-                    ),
-                    "receiver getter factory return alternatives",
-                );
+                    );
+                }
             }
-            return direct;
+            return bounded(
+                [...resolved, ...(complete ? [] : direct)],
+                "receiver getter factory return alternatives",
+            );
         }
         if (ts.isConditionalExpression(receiver)) {
             return bounded(
@@ -4671,6 +4715,7 @@ function analyzeProgram({
                         seen,
                         depth + 1,
                         substitutions,
+                        receiverProjection,
                     ),
                 ),
                 "receiver getter declaration alternatives",
@@ -4689,26 +4734,29 @@ function analyzeProgram({
         if (seen.has(key)) return [];
         const nextSeen = new Set(seen);
         nextSeen.add(key);
-        const values = reachingWrites(symbol, receiverExpression).writes.map(
-            (write) => write.value,
-        );
+        const writes = reachingWrites(symbol, receiverExpression).writes;
+        const values = writes.map((write) => ({
+            value: write.value,
+            projection: write.projection ?? [],
+        }));
         if (values.length === 0) {
             for (const declaration of symbol?.declarations ?? []) {
                 if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
-                    values.push(declaration.initializer);
+                    values.push({ value: declaration.initializer, projection: [] });
                 }
             }
         }
         if (values.length === 0) return direct;
         return bounded(
-            values.flatMap((value) =>
+            values.flatMap(({ value, projection: writeProjection }) =>
                 getterDeclarationsForReceiver(
                     value,
                     names,
-                    null,
+                    writeProjection.length > 0 ? resolvedMember : null,
                     nextSeen,
                     depth + 1,
                     substitutions,
+                    writeProjection,
                 ),
             ),
             "reaching receiver getter declarations",
@@ -4725,7 +4773,7 @@ function analyzeProgram({
     function undefinedPossibilities(expression) {
         expression = unwrapExpression(expression);
         if (
-            ts.isIdentifier(expression) && expression.text === "undefined" ||
+            (ts.isIdentifier(expression) && expression.text === "undefined") ||
             ts.isVoidExpression(expression)
         ) {
             return { canDefined: false, canUndefined: true };
@@ -4811,7 +4859,10 @@ function analyzeProgram({
         nextSeen.add(readKey);
         const origins = getters.flatMap((getter) =>
             functionReturnExpressions(getter).flatMap((returned) => {
-                const nextContext = [...invocationContext, { call: readContext, declaration: getter }];
+                const nextContext = [
+                    ...invocationContext,
+                    { call: readContext, declaration: getter },
+                ];
                 if (rest.length > 0) {
                     const nested = getterProjectionOrigins(
                         returned,
@@ -5269,9 +5320,7 @@ function analyzeProgram({
                         write.projection ?? [],
                     );
                     if (
-                        projectedValues.some(
-                            (value) => undefinedPossibilities(value).canUndefined,
-                        )
+                        projectedValues.some((value) => undefinedPossibilities(value).canUndefined)
                     ) {
                         for (const origin of receiverOrigins(
                             write.defaultValue,
@@ -5334,9 +5383,7 @@ function analyzeProgram({
                 if (binding.defaultValue) {
                     const projectedValues = projectedExpressions(argument, binding.projection);
                     if (
-                        projectedValues.some(
-                            (value) => undefinedPossibilities(value).canUndefined,
-                        )
+                        projectedValues.some((value) => undefinedPossibilities(value).canUndefined)
                     ) {
                         for (const origin of receiverOrigins(
                             binding.defaultValue,
@@ -5585,6 +5632,14 @@ function analyzeProgram({
             ts.isSatisfiesExpression(source)
         ) {
             source = source.expression;
+        }
+        if (ts.isConditionalExpression(source)) {
+            return bounded(
+                [source.whenTrue, source.whenFalse].flatMap((value) =>
+                    projectedExpressions(value, steps, depth + 1, seen, charged),
+                ),
+                "conditional projected values",
+            );
         }
         const key = `${source.getSourceFile().fileName}:${source.pos}:${source.end}:${JSON.stringify(steps)}`;
         if (seen.has(key)) return [];
