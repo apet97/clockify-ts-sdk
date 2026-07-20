@@ -7,6 +7,7 @@ const MAX_TRACE_DEPTH = 24;
 const MAX_STATIC_ALTERNATIVES = 64;
 const MAX_SYNTHETIC_INVOCATIONS = 256;
 const MAX_ANALYSIS_WORK = 10000;
+const THIS_SUBSTITUTION = Symbol("this receiver substitution");
 
 class AnalysisWorkLimitError extends Error {
     constructor(maxWork, largestCallbackExpansion = 0) {
@@ -1938,12 +1939,21 @@ function analyzeProgram({
                 return states;
             }
             function breakReachableOnRejectedPath(statement, iteration) {
+                if (statement.pos < awaited.pos) return false;
                 for (
                     let current = statement;
                     current && current !== iteration;
                     current = current.parent
                 ) {
                     const parent = current.parent;
+                    if (
+                        ts.isTryStatement(parent) &&
+                        parent.finallyBlock &&
+                        !isWithin(statement, parent.finallyBlock) &&
+                        !completionKinds(parent.finallyBlock).has("normal")
+                    ) {
+                        return false;
+                    }
                     const statements =
                         ts.isBlock(parent) || ts.isCaseClause(parent) || ts.isDefaultClause(parent)
                             ? parent.statements
@@ -4422,6 +4432,7 @@ function analyzeProgram({
                 )
                 .filter((write) => {
                     const writeReceiver = memberWriteReceiver(write);
+                    const effectiveReceiver = write.boundaryReceiverOverride ?? receiver;
                     return (
                         write.position < beforePosition &&
                         write.sourceFile === use.getSourceFile() &&
@@ -4430,12 +4441,20 @@ function analyzeProgram({
                         (((!conservativeReceiverOverlap ||
                             !bothHaveConcreteReceiverOrigins(
                                 writeReceiver,
-                                receiver,
+                                effectiveReceiver,
                                 write.position,
                             )) &&
-                            sameCallableAlternatives(writeReceiver, receiver, write.position)) ||
-                            sameStaticReceiverPath(writeReceiver, receiver) ||
-                            sameReceiverAlternatives(writeReceiver, receiver, write.position))
+                            sameCallableAlternatives(
+                                writeReceiver,
+                                effectiveReceiver,
+                                write.position,
+                            )) ||
+                            sameStaticReceiverPath(writeReceiver, effectiveReceiver) ||
+                            sameReceiverAlternatives(
+                                writeReceiver,
+                                effectiveReceiver,
+                                write.position,
+                            ))
                     );
                 })
                 .sort((left, right) => left.position - right.position),
@@ -6371,6 +6390,47 @@ function analyzeProgram({
         return active;
     }
 
+    function invocationThisReceiver(call, depth = 0) {
+        if (!ts.isCallExpression(call)) return null;
+        const callee = unwrapExpression(call.expression);
+        if (ts.isIdentifier(callee) && depth < MAX_TRACE_DEPTH) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(callee));
+            for (const declaration of symbol?.declarations ?? []) {
+                if (
+                    ts.isVariableDeclaration(declaration) &&
+                    declaration.initializer &&
+                    ts.isCallExpression(unwrapExpression(declaration.initializer))
+                ) {
+                    const receiver = invocationThisReceiver(
+                        unwrapExpression(declaration.initializer),
+                        depth + 1,
+                    );
+                    if (receiver) return receiver;
+                }
+            }
+        }
+        if (ts.isCallExpression(callee)) {
+            const boundCallee = unwrapExpression(callee.expression);
+            if (ts.isPropertyAccessExpression(boundCallee) && boundCallee.name.text === "bind") {
+                return callee.arguments[0] ?? null;
+            }
+        }
+        if (ts.isPropertyAccessExpression(callee)) {
+            if (["call", "apply", "bind"].includes(callee.name.text)) {
+                return call.arguments[0] ?? null;
+            }
+            return callee.expression;
+        }
+        if (ts.isElementAccessExpression(callee)) {
+            const names = computedPropertyNames(callee);
+            if (names?.length === 1 && ["call", "apply", "bind"].includes(names[0])) {
+                return call.arguments[0] ?? null;
+            }
+            return callee.expression;
+        }
+        return null;
+    }
+
     function parameterSubstitutions(declaration, invocation) {
         const substitutions = new Map(invocation.capturedSubstitutions);
         declaration.parameters.forEach((parameter, index) => {
@@ -6379,6 +6439,8 @@ function analyzeProgram({
             const symbol = unalias(checker, checker.getSymbolAtLocation(parameter.name));
             if (symbol) substitutions.set(symbol, argument);
         });
+        const thisReceiver = invocationThisReceiver(invocation.node);
+        if (thisReceiver) substitutions.set(THIS_SUBSTITUTION, thisReceiver);
         return substitutions;
     }
 
@@ -6396,13 +6458,23 @@ function analyzeProgram({
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             return substitutions.get(symbol) ?? expression;
         }
+        if (expression.kind === ts.SyntaxKind.ThisKeyword) {
+            return substitutions.get(THIS_SUBSTITUTION) ?? expression;
+        }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
             return substituteReceiver(expression.expression, substitutions);
         }
         return expression;
     }
 
-    function activeBoundaryUses(use, depth = 0, seen = new Set()) {
+    function activeBoundaryUseProjections(
+        use,
+        depth = 0,
+        seen = new Set(),
+        receiver = ts.isPropertyAccessExpression(use) || ts.isElementAccessExpression(use)
+            ? use.expression
+            : null,
+    ) {
         if (depth > MAX_TRACE_DEPTH) {
             analysisFailures.add(
                 `consumer cast analysis could not statically resolve active boundary helper invocation (depth limit ${MAX_TRACE_DEPTH})`,
@@ -6410,7 +6482,7 @@ function analyzeProgram({
             return [];
         }
         const owner = enclosingFunction(use);
-        if (!owner) return [use];
+        if (!owner) return [{ node: use, receiver }];
         if (seen.has(owner)) {
             analysisFailures.add(
                 "consumer cast analysis could not statically resolve active boundary helper invocation (cycle)",
@@ -6419,6 +6491,52 @@ function analyzeProgram({
         }
         if (ts.isGetAccessorDeclaration(owner) && !accessorReadsIndexed) {
             accessorReadsIndexed = true;
+            function localGetterDeclarations(receiver, names = null) {
+                const receiverType = checker.getApparentType(checker.getTypeAtLocation(receiver));
+                const properties = names
+                    ? names
+                          .map((name) => checker.getPropertyOfType(receiverType, name))
+                          .filter(Boolean)
+                    : checker.getPropertiesOfType(receiverType);
+                return bounded(
+                    [
+                        ...new Set(
+                            properties.flatMap((property) =>
+                                (unalias(checker, property)?.declarations ?? []).filter(
+                                    (declaration) =>
+                                        ts.isGetAccessorDeclaration(declaration) &&
+                                        declaration.body &&
+                                        !declaration.getSourceFile().isDeclarationFile,
+                                ),
+                            ),
+                        ),
+                    ],
+                    "implicit accessor activation alternatives",
+                );
+            }
+            function bindingElementNames(element) {
+                const name = element.propertyName ?? element.name;
+                if (
+                    ts.isIdentifier(name) ||
+                    ts.isStringLiteralLike(name) ||
+                    ts.isNumericLiteral(name)
+                ) {
+                    return [name.text];
+                }
+                if (ts.isComputedPropertyName(name)) {
+                    return literalPropertyNames(checker.getTypeAtLocation(name.expression));
+                }
+                return null;
+            }
+            function recordAccessorActivation(getters, activation) {
+                for (const getter of getters) {
+                    const reads = accessorReadsByDeclaration.get(getter) ?? [];
+                    if (!reads.includes(activation)) {
+                        reads.push(activation);
+                        accessorReadsByDeclaration.set(getter, reads);
+                    }
+                }
+            }
             for (const sourceFile of program.getSourceFiles()) {
                 if (sourceFile.isDeclarationFile) continue;
                 function visit(node) {
@@ -6450,13 +6568,72 @@ function analyzeProgram({
                                 (declaration) =>
                                     ts.isGetAccessorDeclaration(declaration) && declaration.body,
                             );
-                            for (const getter of getters) {
-                                const reads = accessorReadsByDeclaration.get(getter) ?? [];
-                                if (!reads.includes(node)) {
-                                    reads.push(node);
-                                    accessorReadsByDeclaration.set(getter, reads);
-                                }
+                            recordAccessorActivation(getters, node);
+                        }
+                    }
+                    if (
+                        ts.isVariableDeclaration(node) &&
+                        ts.isObjectBindingPattern(node.name) &&
+                        node.initializer
+                    ) {
+                        const excluded = new Set();
+                        for (const element of node.name.elements) {
+                            const names = bindingElementNames(element);
+                            if (!element.dotDotDotToken && names?.length) {
+                                names.forEach((name) => excluded.add(name));
+                                recordAccessorActivation(
+                                    localGetterDeclarations(node.initializer, names),
+                                    element,
+                                );
+                            } else if (element.dotDotDotToken) {
+                                recordAccessorActivation(
+                                    localGetterDeclarations(node.initializer).filter((getter) => {
+                                        const name = getter.name;
+                                        return (
+                                            !name ||
+                                            !ts.isIdentifier(name) ||
+                                            !excluded.has(name.text)
+                                        );
+                                    }),
+                                    element,
+                                );
                             }
+                        }
+                    }
+                    if (ts.isSpreadAssignment(node)) {
+                        recordAccessorActivation(localGetterDeclarations(node.expression), node);
+                    }
+                    if (
+                        ts.isCallExpression(node) &&
+                        expressionResolvesToBuiltinMember(
+                            node.expression,
+                            "Object",
+                            "assign",
+                            node.pos,
+                        )
+                    ) {
+                        for (const source of node.arguments.slice(1)) {
+                            recordAccessorActivation(localGetterDeclarations(source), source);
+                        }
+                    }
+                    if (
+                        ts.isCallExpression(node) &&
+                        node.arguments.length >= 2 &&
+                        expressionResolvesToBuiltinMember(
+                            node.expression,
+                            "Reflect",
+                            "get",
+                            node.pos,
+                        )
+                    ) {
+                        const names = literalPropertyNames(
+                            checker.getTypeAtLocation(node.arguments[1]),
+                        );
+                        if (names?.length) {
+                            recordAccessorActivation(
+                                localGetterDeclarations(node.arguments[0], names),
+                                node,
+                            );
                         }
                     }
                     ts.forEachChild(node, visit);
@@ -6465,15 +6642,33 @@ function analyzeProgram({
             }
         }
         const activations = [
-            ...(callsByDeclaration.get(owner) ?? []).map((invocation) => invocation.node),
-            ...(accessorReadsByDeclaration.get(owner) ?? []),
-        ].filter((activation) => !expressionDefinitelySkipped(activation));
-        if (activations.length === 0) return enclosingFunction(owner) ? [] : [use];
+            ...(callsByDeclaration.get(owner) ?? []).map((invocation) => ({
+                node: invocation.node,
+                substitutions: parameterSubstitutions(owner, invocation),
+            })),
+            ...(accessorReadsByDeclaration.get(owner) ?? []).map((node) => {
+                const substitutions = new Map();
+                if (
+                    ts.isGetAccessorDeclaration(owner) &&
+                    (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node))
+                ) {
+                    substitutions.set(THIS_SUBSTITUTION, node.expression);
+                }
+                return { node, substitutions };
+            }),
+        ].filter((activation) => !expressionDefinitelySkipped(activation.node));
+        if (activations.length === 0)
+            return enclosingFunction(owner) ? [] : [{ node: use, receiver }];
         const nextSeen = new Set(seen);
         nextSeen.add(owner);
         return bounded(
             activations.flatMap((activation) =>
-                activeBoundaryUses(activation, depth + 1, nextSeen),
+                activeBoundaryUseProjections(
+                    activation.node,
+                    depth + 1,
+                    nextSeen,
+                    receiver ? substituteReceiver(receiver, activation.substitutions) : null,
+                ),
             ),
             "active boundary helper invocation alternatives",
         );
@@ -6496,10 +6691,11 @@ function analyzeProgram({
         if (write.inactiveClassMemberEffect || expressionDefinitelySkipped(write.node)) return [];
         if (!boundaryProjected && writeNeedsBoundaryProjection(write, use)) {
             return bounded(
-                activeBoundaryUses(use).flatMap((projectedUse) =>
-                    effectiveWrites(write, projectedUse, true).map((effective) => ({
+                activeBoundaryUseProjections(use).flatMap((projection) =>
+                    effectiveWrites(write, projection.node, true).map((effective) => ({
                         ...effective,
-                        boundaryUseOverride: projectedUse,
+                        boundaryUseOverride: projection.node,
+                        boundaryReceiverOverride: projection.receiver,
                     })),
                 ),
                 "projected active boundary effects",
@@ -7663,6 +7859,26 @@ function analyzeProgram({
         return [...writeOrigins].some((origin) => useOrigins.has(origin));
     }
 
+    function writeMayReachReceiver(write, receiver, position) {
+        if (
+            !receiver ||
+            !(
+                write.receiverOverride ||
+                ts.isPropertyAccessExpression(write.node) ||
+                ts.isElementAccessExpression(write.node)
+            )
+        ) {
+            return true;
+        }
+        const writeOrigins = receiverOrigins(
+            write.receiverOverride ?? write.node.expression,
+            write.position,
+        );
+        const useOrigins = receiverOrigins(receiver, position);
+        if (writeOrigins.size === 0 || useOrigins.size === 0) return true;
+        return [...writeOrigins].some((origin) => useOrigins.has(origin));
+    }
+
     function applyOrderedEffectCutoffs(writes, usePropertyNames) {
         if (usePropertyNames?.length !== 1) return writes;
         const useName = usePropertyNames[0];
@@ -7875,12 +8091,22 @@ function analyzeProgram({
                   )
                 : [];
         const candidateWrites = [...(writesBySymbol.get(symbol) ?? []), ...matchingPropertyWrites];
-        const boundaryUses = candidateWrites.some((write) =>
+        const boundaryProjections = candidateWrites.some((write) =>
             writeNeedsBoundaryProjection(write, expression),
         )
-            ? activeBoundaryUses(expression)
-            : [expression];
-        const reachingByBoundary = boundaryUses.map((boundaryUse) => {
+            ? activeBoundaryUseProjections(expression)
+            : [
+                  {
+                      node: expression,
+                      receiver:
+                          ts.isPropertyAccessExpression(expression) ||
+                          ts.isElementAccessExpression(expression)
+                              ? expression.expression
+                              : null,
+                  },
+              ];
+        const reachingByBoundary = boundaryProjections.map((boundaryProjection) => {
+            const boundaryUse = boundaryProjection.node;
             const orderedWrites = applySameInvocationSymbolCutoff(
                 applyOrderedEffectCutoffs(
                     candidateWrites
@@ -7895,6 +8121,11 @@ function analyzeProgram({
                                         ts.isElementAccessExpression(boundaryUse)
                                         ? expression
                                         : boundaryUse,
+                                ) &&
+                                writeMayReachReceiver(
+                                    write,
+                                    boundaryProjection.receiver,
+                                    boundaryUse.pos,
                                 ),
                         )
                         .sort(compareExecutionOrder)
@@ -8828,6 +9059,41 @@ function analyzeProgram({
                     rootProjectionPaths.map((path) => [step, ...path]),
                 );
                 projectionRoot = projectionRoot.expression;
+            }
+            if (projectionRoot.kind === ts.SyntaxKind.ThisKeyword) {
+                const thisProjections = activeBoundaryUseProjections(expression);
+                for (const projection of thisProjections) {
+                    if (!projection.receiver || projection.receiver === projectionRoot) continue;
+                    for (const path of rootProjectionPaths.length > 0
+                        ? rootProjectionPaths
+                        : [[]]) {
+                        const [head, ...tail] = path;
+                        if (head?.kind === "property" && head.names?.length) {
+                            for (const name of head.names) {
+                                for (const alternative of memberValueAlternatives(
+                                    projection.receiver,
+                                    name,
+                                    expression,
+                                    projection.node.pos,
+                                    null,
+                                )) {
+                                    if (!alternative?.value) continue;
+                                    trace(
+                                        alternative.value,
+                                        {
+                                            ...context,
+                                            accessPath: [...tail, ...(context.accessPath ?? [])],
+                                            returnedProjectionBoundary: projection.node,
+                                        },
+                                        depth + 1,
+                                        nextSeen,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                return;
             }
             if (!ts.isIdentifier(projectionRoot)) {
                 for (const access of projectionSteps.length > 0 ? projectionSteps : [null]) {
