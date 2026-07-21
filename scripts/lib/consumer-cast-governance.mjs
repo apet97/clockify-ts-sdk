@@ -5899,6 +5899,14 @@ function analyzeProgram({
                                                             unwrappedReceiver,
                                                         )?.declarations ?? []),
                                                     ].some(ts.isBindingElement);
+                                                const projectedBindingTargetsRequest = Boolean(
+                                                    requestNameFromType(
+                                                        checker,
+                                                        checker.getTypeAtLocation(
+                                                            unwrappedReceiver,
+                                                        ),
+                                                    ),
+                                                );
                                                 if (
                                                     !isProjectedBinding &&
                                                     receiverValue !== value &&
@@ -5920,12 +5928,18 @@ function analyzeProgram({
                                                     sourceFile: node.getSourceFile(),
                                                     executionNode: node,
                                                     executionSequence: write.position,
-                                                    receiverOverride: isProjectedBinding
-                                                        ? value
-                                                        : receiverValue,
+                                                    receiverOverride:
+                                                        isProjectedBinding &&
+                                                        projectedBindingTargetsRequest
+                                                            ? value
+                                                            : receiverValue,
                                                     propertyNames:
-                                                        projectedBindingNames.get(receiverValue) ??
-                                                        write.propertyNames,
+                                                        isProjectedBinding &&
+                                                        projectedBindingTargetsRequest
+                                                            ? (projectedBindingNames.get(
+                                                                  receiverValue,
+                                                              ) ?? write.propertyNames)
+                                                            : write.propertyNames,
                                                     substitutions,
                                                     syntheticRestCallbackEffect: true,
                                                 });
@@ -6976,6 +6990,197 @@ function analyzeProgram({
         }
     }
 
+    const syntheticRestDerivedSymbols = new Map();
+    function expressionMayDeriveSyntheticRest(expression, seen = new Set()) {
+        expression = unwrapExpression(expression);
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            if (!symbol) return false;
+            if (syntheticRestDerivedSymbols.has(symbol)) {
+                return syntheticRestDerivedSymbols.get(symbol);
+            }
+            if (seen.has(symbol)) return false;
+            const nextSeen = new Set(seen);
+            nextSeen.add(symbol);
+            const derived = (symbol.declarations ?? []).some((declaration) => {
+                if (ts.isParameter(declaration) && declaration.dotDotDotToken) return true;
+                if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+                    return expressionMayDeriveSyntheticRest(declaration.initializer, nextSeen);
+                }
+                if (
+                    ts.isBindingElement(declaration) &&
+                    declaration.dotDotDotToken &&
+                    ts.isArrayBindingPattern(declaration.parent) &&
+                    ts.isVariableDeclaration(declaration.parent.parent) &&
+                    declaration.parent.parent.initializer
+                ) {
+                    return expressionMayDeriveSyntheticRest(
+                        declaration.parent.parent.initializer,
+                        nextSeen,
+                    );
+                }
+                return false;
+            });
+            syntheticRestDerivedSymbols.set(symbol, derived);
+            return derived;
+        }
+        if (ts.isElementAccessExpression(expression)) {
+            return expressionMayDeriveSyntheticRest(expression.expression, seen);
+        }
+        if (ts.isConditionalExpression(expression)) {
+            return (
+                expressionMayDeriveSyntheticRest(expression.whenTrue, seen) ||
+                expressionMayDeriveSyntheticRest(expression.whenFalse, seen)
+            );
+        }
+        if (
+            ts.isCallExpression(expression) &&
+            ts.isPropertyAccessExpression(expression.expression) &&
+            ["filter", "map", "flatMap", "slice"].includes(expression.expression.name.text)
+        ) {
+            return expressionMayDeriveSyntheticRest(expression.expression.expression, seen);
+        }
+        return false;
+    }
+
+    function applySyntheticArrayMutations(expression, lists, beforePosition) {
+        expression = unwrapExpression(expression);
+        if (!ts.isIdentifier(expression) || lists.length === 0) return lists;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol) return lists;
+        const owner = enclosingFunction(expression);
+        const sameArrayReceiver = (receiver) => {
+            receiver = unwrapExpression(receiver);
+            if (ts.isIdentifier(receiver)) {
+                const receiverSymbol = unalias(checker, checker.getSymbolAtLocation(receiver));
+                return receiverSymbol === symbol;
+            }
+            return false;
+        };
+        const events = [];
+        for (const write of propertyWrites) {
+            const receiver = memberWriteReceiver(write);
+            if (
+                !receiver ||
+                write.position >= beforePosition ||
+                write.sourceFile !== expression.getSourceFile() ||
+                enclosingFunction(write.node) !== owner ||
+                !sameArrayReceiver(receiver, write.position)
+            ) {
+                continue;
+            }
+            const indices = write.propertyNames?.filter((name) => /^\d+$/.test(name)).map(Number);
+            if (indices?.length === 1) {
+                events.push({
+                    kind: "index",
+                    position: write.position,
+                    index: indices[0],
+                    values: [write.value],
+                    conditional: write.conditional === true,
+                });
+            } else if (write.propertyNames == null || write.propertyNames?.length) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve synthetic rest element write",
+                );
+            }
+        }
+        function mayBeSkipped(node) {
+            let current = node;
+            while (current?.parent && current.parent !== owner) {
+                const parent = current.parent;
+                if (
+                    ts.isIfStatement(parent) ||
+                    ts.isConditionalExpression(parent) ||
+                    ts.isForStatement(parent) ||
+                    ts.isForInStatement(parent) ||
+                    ts.isForOfStatement(parent) ||
+                    ts.isWhileStatement(parent) ||
+                    ts.isDoStatement(parent) ||
+                    (ts.isBinaryExpression(parent) &&
+                        [
+                            ts.SyntaxKind.AmpersandAmpersandToken,
+                            ts.SyntaxKind.BarBarToken,
+                            ts.SyntaxKind.QuestionQuestionToken,
+                        ].includes(parent.operatorToken.kind))
+                ) {
+                    return true;
+                }
+                current = parent;
+            }
+            return false;
+        }
+        function visit(node) {
+            if (ts.isFunctionLike(node) && node !== owner) return;
+            if (
+                ts.isCallExpression(node) &&
+                node.pos < beforePosition &&
+                ts.isPropertyAccessExpression(node.expression) &&
+                sameArrayReceiver(node.expression.expression, node.pos)
+            ) {
+                const method = node.expression.name.text;
+                if (["push", "pop", "shift", "unshift", "splice", "reverse"].includes(method)) {
+                    events.push({
+                        kind: "call",
+                        position: node.pos,
+                        method,
+                        arguments: [...node.arguments],
+                        conditional: mayBeSkipped(node),
+                    });
+                }
+            }
+            ts.forEachChild(node, visit);
+        }
+        visit(owner?.body ?? expression.getSourceFile());
+        if (events.length === 0) return lists;
+        let states = bounded(
+            lists.map((values) => [...values]),
+            "materialized synthetic rest mutation states",
+        );
+        for (const event of events.sort((left, right) => left.position - right.position)) {
+            const next = [];
+            for (const values of states) {
+                if (event.conditional) next.push(values);
+                const mutated = [...values];
+                if (event.kind === "index") {
+                    mutated[event.index] = event.values[0];
+                } else if (event.method === "push") {
+                    mutated.push(...event.arguments);
+                } else if (event.method === "unshift") {
+                    mutated.unshift(...event.arguments);
+                } else if (event.method === "pop") {
+                    mutated.pop();
+                } else if (event.method === "shift") {
+                    mutated.shift();
+                } else if (event.method === "reverse") {
+                    mutated.reverse();
+                } else if (event.method === "splice") {
+                    const start = event.arguments[0]
+                        ? staticScalar(event.arguments[0], new Map())
+                        : { known: true, value: 0 };
+                    const remove = event.arguments[1]
+                        ? staticScalar(event.arguments[1], new Map())
+                        : { known: true, value: mutated.length };
+                    if (
+                        !start.known ||
+                        !remove.known ||
+                        !Number.isInteger(start.value) ||
+                        !Number.isInteger(remove.value)
+                    ) {
+                        analysisFailures.add(
+                            "consumer cast analysis could not statically resolve synthetic rest splice bounds",
+                        );
+                        next.push(mutated);
+                        continue;
+                    }
+                    mutated.splice(start.value, remove.value, ...event.arguments.slice(2));
+                }
+                next.push(mutated);
+            }
+            states = bounded(next, "ordered synthetic rest mutation alternatives");
+        }
+        return states;
+    }
+
     function syntheticRestDerivedArrays(
         expression,
         substitutions,
@@ -6994,6 +7199,31 @@ function analyzeProgram({
             const active = activeSyntheticRestLists(expression);
             if (active) return active;
             if (!symbol) return null;
+            for (const declaration of symbol.declarations ?? []) {
+                if (
+                    !ts.isBindingElement(declaration) ||
+                    !declaration.dotDotDotToken ||
+                    !ts.isArrayBindingPattern(declaration.parent) ||
+                    !ts.isVariableDeclaration(declaration.parent.parent) ||
+                    !declaration.parent.parent.initializer
+                ) {
+                    continue;
+                }
+                const sourceLists = syntheticRestDerivedArrays(
+                    declaration.parent.parent.initializer,
+                    substitutions,
+                    beforePosition,
+                    nextSeen,
+                    depth + 1,
+                );
+                if (sourceLists) {
+                    const start = declaration.parent.elements.indexOf(declaration);
+                    return bounded(
+                        sourceLists.map((values) => values.slice(start)),
+                        "synthetic array-rest binding alternatives",
+                    );
+                }
+            }
             const values = reachingExpressionValues(
                 expression,
                 beforePosition,
@@ -7016,7 +7246,24 @@ function analyzeProgram({
                 }),
                 "materialized synthetic rest alternatives",
             );
-            return derived.length > 0 ? derived : null;
+            return derived.length > 0
+                ? applySyntheticArrayMutations(expression, derived, beforePosition)
+                : null;
+        }
+        if (ts.isConditionalExpression(expression)) {
+            const branches = [expression.whenTrue, expression.whenFalse].flatMap(
+                (branch) =>
+                    syntheticRestDerivedArrays(
+                        branch,
+                        substitutions,
+                        beforePosition,
+                        nextSeen,
+                        depth + 1,
+                    ) ?? [],
+            );
+            return branches.length > 0
+                ? bounded(branches, "conditional synthetic rest alternatives")
+                : null;
         }
         if (
             !ts.isCallExpression(expression) ||
@@ -7265,6 +7512,7 @@ function analyzeProgram({
             const bindingDefaultMayRun = new Map();
             const runtimeGetterDefinitions = [];
             const concreteReachingExpressionCache = new Map();
+            const descriptorStructureCache = new Map();
             function receiverHasPriorMemberWrite(receiver) {
                 receiver = unwrapExpression(receiver);
                 if (
@@ -7398,16 +7646,23 @@ function analyzeProgram({
                 );
             }
             function descriptorFieldPossibilities(descriptor, fieldName, beforePosition) {
-                const unresolved = reachingExpressionValues(descriptor, beforePosition).some(
-                    (candidate) =>
-                        !ts.isObjectLiteralExpression(unwrapExpression(candidate.expression)),
-                );
-                const paths = objectPropertySequences(descriptor, beforePosition);
-                if (
-                    paths.length === 0 ||
-                    unresolved ||
-                    runtimeDescriptorSourceIsCyclic(descriptor, beforePosition)
-                ) {
+                let structures = descriptorStructureCache.get(descriptor);
+                if (!structures || structures.beforePosition !== beforePosition) {
+                    const unresolved = reachingExpressionValues(descriptor, beforePosition).some(
+                        (candidate) =>
+                            !ts.isObjectLiteralExpression(unwrapExpression(candidate.expression)),
+                    );
+                    const paths = objectPropertySequences(descriptor, beforePosition);
+                    structures = {
+                        beforePosition,
+                        paths,
+                        unresolved,
+                        cyclic: runtimeDescriptorSourceIsCyclic(descriptor, beforePosition),
+                    };
+                    descriptorStructureCache.set(descriptor, structures);
+                }
+                const { paths, unresolved, cyclic } = structures;
+                if (paths.length === 0 || unresolved || cyclic) {
                     analysisFailures.add(
                         `consumer cast analysis could not statically resolve runtime descriptor ${fieldName}`,
                     );
@@ -7510,6 +7765,11 @@ function analyzeProgram({
                                     "value",
                                     activation.pos,
                                 ),
+                                writablePresence: descriptorFieldPossibilities(
+                                    descriptor.value,
+                                    "writable",
+                                    activation.pos,
+                                ),
                                 enumerablePresence: descriptorFieldPossibilities(
                                     descriptor.value,
                                     "enumerable",
@@ -7570,6 +7830,11 @@ function analyzeProgram({
                     ),
                     getPresence: descriptorFieldPossibilities(args[2], "get", activation.pos),
                     valuePresence: descriptorFieldPossibilities(args[2], "value", activation.pos),
+                    writablePresence: descriptorFieldPossibilities(
+                        args[2],
+                        "writable",
+                        activation.pos,
+                    ),
                     enumerablePresence: descriptorFieldPossibilities(
                         args[2],
                         "enumerable",
@@ -7672,7 +7937,11 @@ function analyzeProgram({
                           };
                     const getters = [];
                     if (definition.getPresence?.canPresent) getters.push(...definition.getters);
-                    if (definition.getPresence?.canAbsent && definition.valuePresence?.canAbsent) {
+                    if (
+                        definition.getPresence?.canAbsent &&
+                        definition.valuePresence?.canAbsent &&
+                        definition.writablePresence?.canAbsent
+                    ) {
                         getters.push(...inherited.getters);
                     }
                     const effective = {
@@ -10679,6 +10948,47 @@ function analyzeProgram({
         }
     }
 
+    function selectedSyntheticMemberAlternatives(selected, names, readSites) {
+        const receiverAware = [];
+        for (const name of names ?? []) {
+            for (const site of readSites) {
+                receiverAware.push(
+                    ...memberValueAlternatives(selected, name, site, site.pos, null),
+                );
+            }
+        }
+        const concrete = receiverAware.filter((candidate) => candidate?.value != null);
+        const alternatives = concrete.length > 0 ? concrete : [];
+        if (
+            concrete.length === 0 &&
+            names?.length &&
+            ts.isObjectLiteralExpression(unwrapExpression(selected))
+        ) {
+            const beforePosition = Math.max(...readSites.map((site) => site.pos));
+            for (const sequence of objectPropertySequences(selected, beforePosition)) {
+                for (const name of names) {
+                    const entry = [...sequence]
+                        .reverse()
+                        .find((candidate) => candidate.names?.includes(name));
+                    if (entry) alternatives.push(entry);
+                }
+            }
+        }
+        const unique = alternatives.filter(
+            (candidate, index, all) =>
+                candidate != null &&
+                all.findIndex(
+                    (other) =>
+                        other != null &&
+                        other.value === candidate.value &&
+                        other.substitutions === candidate.substitutions,
+                ) === index,
+        );
+        return unique.length <= 1
+            ? unique
+            : bounded(unique, "synthetic selected member alternatives");
+    }
+
     function trace(expression, context, depth = 0, seen = new Set()) {
         if (!expression) return;
         const requestContributing = context.requestContributing !== false;
@@ -10990,12 +11300,10 @@ function analyzeProgram({
                         if (!receiverLists) continue;
                         resolved = true;
                         for (const value of receiverLists.flat()) {
-                            for (const alternative of memberValueAlternatives(
+                            for (const alternative of selectedSyntheticMemberAlternatives(
                                 value,
-                                expression.name.text,
-                                projection.node,
-                                projection.node.pos,
-                                null,
+                                [expression.name.text],
+                                [projection.node, expression],
                             )) {
                                 if (!alternative?.value) continue;
                                 trace(
@@ -11017,6 +11325,9 @@ function analyzeProgram({
                       ...(/^\d+$/.test(name) ? { index: Number(name) } : { names: [name] }),
                   })) ?? []);
             let projectionRoot = expression.expression;
+            if (ts.isElementAccessExpression(unwrapExpression(projectionRoot))) {
+                projectionRoot = unwrapExpression(projectionRoot);
+            }
             let rootProjectionPaths = projectionSteps.map((step) => [step]);
             while (
                 ts.isPropertyAccessExpression(projectionRoot) ||
@@ -11032,6 +11343,140 @@ function analyzeProgram({
                     rootProjectionPaths.map((path) => [step, ...path]),
                 );
                 projectionRoot = projectionRoot.expression;
+                if (ts.isElementAccessExpression(unwrapExpression(projectionRoot))) {
+                    projectionRoot = unwrapExpression(projectionRoot);
+                }
+            }
+            if (
+                ts.isIdentifier(projectionRoot) &&
+                expressionMayDeriveSyntheticRest(projectionRoot)
+            ) {
+                let resolvedSyntheticIndex = false;
+                const projectionRootSymbol = unalias(
+                    checker,
+                    checker.getSymbolAtLocation(projectionRoot),
+                );
+                const indexedRootValues = [
+                    ...(projectionRootSymbol?.declarations ?? []).flatMap((declaration) =>
+                        ts.isVariableDeclaration(declaration) && declaration.initializer
+                            ? [
+                                  {
+                                      expression: declaration.initializer,
+                                      substitutions: context.substitutions,
+                                  },
+                              ]
+                            : [],
+                    ),
+                    ...(writesBySymbol.get(projectionRootSymbol) ?? []).map((write) => ({
+                        expression: write.value,
+                        substitutions: write.substitutions ?? context.substitutions,
+                    })),
+                ].filter((candidate) =>
+                    ts.isElementAccessExpression(unwrapExpression(candidate.expression)),
+                );
+                function traceSelectedPath(selected, remaining, projection, substitutions) {
+                    const [member, ...tail] = remaining;
+                    const names =
+                        member?.kind === "property"
+                            ? member.names
+                            : member?.kind === "array"
+                              ? [String(member.index)]
+                              : null;
+                    const alternatives = selectedSyntheticMemberAlternatives(
+                        selected,
+                        names,
+                        [projection.node, expression].filter(
+                            (site, siteIndex, all) => all.indexOf(site) === siteIndex,
+                        ),
+                    );
+                    if (alternatives.length > 0) {
+                        for (const alternative of alternatives) {
+                            trace(
+                                alternative.value,
+                                {
+                                    ...context,
+                                    substitutions: alternative.substitutions ?? substitutions,
+                                    accessPath: tail,
+                                },
+                                depth + 1,
+                                nextSeen,
+                            );
+                        }
+                    } else {
+                        trace(
+                            selected,
+                            { ...context, substitutions, accessPath: remaining },
+                            depth + 1,
+                            nextSeen,
+                        );
+                    }
+                }
+                for (const path of rootProjectionPaths) {
+                    const [first, ...remaining] = path;
+                    const projections = [
+                        { node: expression, substitutions: context.substitutions },
+                        ...activeBoundaryUseProjections(expression),
+                    ];
+                    for (const projection of projections) {
+                        const substitutions = projection.substitutions ?? new Map();
+                        if (first?.kind !== "array" && indexedRootValues.length > 0) {
+                            for (const candidate of indexedRootValues) {
+                                const indexed = unwrapExpression(candidate.expression);
+                                if (
+                                    !ts.isElementAccessExpression(indexed) ||
+                                    !indexed.argumentExpression
+                                ) {
+                                    continue;
+                                }
+                                const index = staticScalar(
+                                    indexed.argumentExpression,
+                                    candidate.substitutions ?? substitutions,
+                                );
+                                if (
+                                    !index.known ||
+                                    !Number.isInteger(index.value) ||
+                                    index.value < 0
+                                ) {
+                                    continue;
+                                }
+                                const receiverLists = syntheticRestDerivedArrays(
+                                    indexed.expression,
+                                    candidate.substitutions ?? substitutions,
+                                    projection.node.pos,
+                                );
+                                if (!receiverLists) continue;
+                                resolvedSyntheticIndex = true;
+                                for (const values of receiverLists) {
+                                    const selected = values[index.value];
+                                    if (selected) {
+                                        traceSelectedPath(
+                                            selected,
+                                            path,
+                                            projection,
+                                            candidate.substitutions ?? substitutions,
+                                        );
+                                    }
+                                }
+                            }
+                            continue;
+                        }
+                        if (first?.kind !== "array") continue;
+                        if (first.index < 0) continue;
+                        const receiverLists = syntheticRestDerivedArrays(
+                            projectionRoot,
+                            substitutions,
+                            projection.node.pos,
+                        );
+                        if (!receiverLists) continue;
+                        resolvedSyntheticIndex = true;
+                        for (const values of receiverLists) {
+                            const selected = values[first.index];
+                            if (!selected) continue;
+                            traceSelectedPath(selected, remaining, projection, substitutions);
+                        }
+                    }
+                }
+                if (resolvedSyntheticIndex) return;
             }
             if (projectionRoot.kind === ts.SyntaxKind.ThisKeyword) {
                 const thisProjections = activeBoundaryUseProjections(expression);
@@ -11289,19 +11734,20 @@ function analyzeProgram({
                             const readSites = [projection.node, expression].filter(
                                 (site, siteIndex, all) => all.indexOf(site) === siteIndex,
                             );
-                            const alternatives = names?.flatMap((name) =>
-                                readSites.flatMap((site) =>
-                                    memberValueAlternatives(selected, name, site, site.pos, null),
-                                ),
+                            const alternatives = selectedSyntheticMemberAlternatives(
+                                selected,
+                                names,
+                                readSites,
                             );
-                            if (alternatives?.length) {
+                            if (alternatives.length) {
                                 for (const alternative of alternatives) {
                                     if (!alternative?.value) continue;
                                     trace(
                                         alternative.value,
                                         {
                                             ...context,
-                                            substitutions,
+                                            substitutions:
+                                                alternative.substitutions ?? substitutions,
                                             accessPath: remainingAccessPath,
                                         },
                                         depth + 1,
