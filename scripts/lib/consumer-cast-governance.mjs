@@ -275,6 +275,7 @@ function analyzeProgram({
     const accessorReadsByDeclaration = new Map();
     const accessorReceiverByActivation = new WeakMap();
     const syntheticRestCallbackParameters = new Set();
+    const syntheticRestCallbackWriteKeys = new Set();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
     const receiverAllocationOrigins = new Map();
@@ -356,6 +357,16 @@ function analyzeProgram({
         function visit(node) {
             if (reaches) return;
             if (ts.isFunctionLike(node) && node !== declaration) return;
+            if (
+                ts.isBinaryExpression(node) &&
+                node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+                (ts.isPropertyAccessExpression(node.left) ||
+                    ts.isElementAccessExpression(node.left)) &&
+                requestNameFromType(checker, checker.getTypeAtLocation(node.left))
+            ) {
+                reaches = true;
+                return;
+            }
             if (ts.isCallExpression(node)) {
                 if (
                     requestBoundaryArguments(node).length > 0 ||
@@ -4232,6 +4243,13 @@ function analyzeProgram({
         if (ts.isStringLiteralLike(expression)) return { known: true, value: expression.text };
         if (ts.isNumericLiteral(expression)) return { known: true, value: Number(expression.text) };
         if (
+            ts.isPrefixUnaryExpression(expression) &&
+            expression.operator === ts.SyntaxKind.MinusToken &&
+            ts.isNumericLiteral(unwrapExpression(expression.operand))
+        ) {
+            return { known: true, value: -Number(unwrapExpression(expression.operand).text) };
+        }
+        if (
             ts.isBinaryExpression(expression) &&
             [
                 ts.SyntaxKind.EqualsEqualsToken,
@@ -5565,9 +5583,22 @@ function analyzeProgram({
                         );
                     }
                 }
-                const preindexMutationCandidate =
-                    !effectsOnly || isDirectMutationCallSyntax(node.expression);
                 const declaration = checker.getResolvedSignature(node)?.declaration;
+                const adapter = invocationAdapter(node.expression, node.pos);
+                const nestedBindAdapter = ts.isCallExpression(node.expression)
+                    ? invocationAdapter(node.expression.expression, node.expression.pos)
+                    : null;
+                const resolvedOrdinaryFluentCall = Boolean(
+                    declaration?.getSourceFile().isDeclarationFile &&
+                    !adapter &&
+                    nestedBindAdapter?.name !== "bind" &&
+                    (ts.isPropertyAccessExpression(node.expression) ||
+                        ts.isElementAccessExpression(node.expression)) &&
+                    ts.isCallExpression(unwrapExpression(node.expression.expression)),
+                );
+                const preindexMutationCandidate =
+                    isDirectMutationCallSyntax(node.expression) ||
+                    (!effectsOnly && !resolvedOrdinaryFluentCall);
                 const classExecution = classExecutionMetadata(node);
                 const inactiveOwner = enclosingFunction(node);
                 const inactiveOwnerIsInvoked = Boolean(
@@ -5779,6 +5810,54 @@ function analyzeProgram({
                                             checker.getSymbolAtLocation(parameter.name),
                                         );
                                         if (symbol) syntheticRestCallbackParameters.add(symbol);
+                                    }
+                                    const parameter = callback.parameters[0];
+                                    const parameterSymbol = parameter
+                                        ? unalias(
+                                              checker,
+                                              checker.getSymbolAtLocation(parameter.name),
+                                          )
+                                        : null;
+                                    for (const value of values) {
+                                        for (const write of [...propertyWrites]) {
+                                            if (
+                                                enclosingFunction(write.node) !== callback ||
+                                                nodeAfterDefiniteAsyncSuspension(write.node)
+                                            ) {
+                                                continue;
+                                            }
+                                            const receiver = memberWriteReceiver(write);
+                                            const receiverSymbol = ts.isIdentifier(
+                                                unwrapExpression(receiver),
+                                            )
+                                                ? unalias(
+                                                      checker,
+                                                      checker.getSymbolAtLocation(
+                                                          unwrapExpression(receiver),
+                                                      ),
+                                                  )
+                                                : null;
+                                            if (
+                                                !parameterSymbol ||
+                                                receiverSymbol !== parameterSymbol
+                                            )
+                                                continue;
+                                            const key = `${node.getSourceFile().fileName}:${node.pos}:${write.node.pos}:${value.pos}`;
+                                            if (syntheticRestCallbackWriteKeys.has(key)) continue;
+                                            syntheticRestCallbackWriteKeys.add(key);
+                                            propertyWrites.push({
+                                                ...write,
+                                                position: node.pos,
+                                                sourceFile: node.getSourceFile(),
+                                                executionNode: node,
+                                                executionSequence: write.position,
+                                                receiverOverride: value,
+                                                substitutions: callbackSubstitutions(callback, [
+                                                    value,
+                                                ]),
+                                                syntheticRestCallbackEffect: true,
+                                            });
+                                        }
                                     }
                                 }
                                 if (["reduce", "reduceRight"].includes(invocation)) {
@@ -6826,6 +6905,94 @@ function analyzeProgram({
         }
     }
 
+    function syntheticRestDerivedArrays(
+        expression,
+        substitutions,
+        beforePosition,
+        seen = new Set(),
+        depth = 0,
+    ) {
+        expression = unwrapExpression(expression);
+        if (depth > MAX_TRACE_DEPTH || seen.has(expression)) return null;
+        const nextSeen = new Set(seen);
+        nextSeen.add(expression);
+        if (ts.isIdentifier(expression)) {
+            const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+            const rest = substitutions.get(symbol)?.[REST_ARGUMENTS_SUBSTITUTION];
+            return rest ? [rest] : activeSyntheticRestLists(expression);
+        }
+        if (
+            !ts.isCallExpression(expression) ||
+            !ts.isPropertyAccessExpression(expression.expression)
+        ) {
+            return null;
+        }
+        const method = expression.expression.name.text;
+        const receiverLists = syntheticRestDerivedArrays(
+            expression.expression.expression,
+            substitutions,
+            beforePosition,
+            nextSeen,
+            depth + 1,
+        );
+        if (!receiverLists) return null;
+        if (["filter", "map", "flatMap"].includes(method)) {
+            const callback = expression.arguments[0]
+                ? functionDeclarationForExpression(expression.arguments[0])
+                : null;
+            if (!callback?.body) {
+                analysisFailures.add(
+                    `consumer cast analysis could not statically resolve synthetic rest ${method} callback`,
+                );
+                return bounded(receiverLists, `synthetic rest ${method} fallback alternatives`);
+            }
+            return bounded(
+                receiverLists.map((values) => {
+                    if (method === "filter") {
+                        return values.filter(
+                            (value) => callbackBooleanResult(callback, [value]) !== false,
+                        );
+                    }
+                    const mapped = values.flatMap((value) =>
+                        callbackReturnOrigins(callback, [value]),
+                    );
+                    if (method === "map") return mapped;
+                    return mapped.flatMap(
+                        (value) => staticArrayEvaluationElements(value) ?? [value],
+                    );
+                }),
+                `synthetic rest ${method} alternatives`,
+            );
+        }
+        if (method === "slice") {
+            const start = expression.arguments[0]
+                ? staticScalar(expression.arguments[0], substitutions)
+                : { known: true, value: 0 };
+            const end = expression.arguments[1]
+                ? staticScalar(expression.arguments[1], substitutions)
+                : { known: true, value: undefined };
+            if (
+                !start.known ||
+                !Number.isInteger(start.value) ||
+                !end.known ||
+                (end.value !== undefined && !Number.isInteger(end.value))
+            ) {
+                analysisFailures.add(
+                    "consumer cast analysis could not statically resolve synthetic rest slice bounds",
+                );
+                return bounded(receiverLists, "synthetic rest slice fallback alternatives");
+            }
+            return bounded(
+                receiverLists.map((values) => values.slice(start.value, end.value)),
+                "synthetic rest slice alternatives",
+            );
+        }
+        analysisFailures.add(
+            `consumer cast analysis could not statically resolve synthetic rest derived method ${method}`,
+        );
+        return bounded(receiverLists, "synthetic rest unresolved derived alternatives");
+    }
+
     function restArgumentLists(args, start, beforePosition) {
         let lists = [[]];
         for (const argument of args.slice(start)) {
@@ -7137,6 +7304,41 @@ function analyzeProgram({
                     "runtime descriptor getter alternatives",
                 );
             }
+            function descriptorFlagPossibilities(descriptor, flagName, beforePosition) {
+                let canTrue = false;
+                let canFalse = false;
+                const candidates = reachingExpressionValues(descriptor, beforePosition);
+                if (candidates.length === 0) return { canTrue: false, canFalse: true };
+                for (const candidate of candidates) {
+                    const paths = objectPropertySequences(candidate.expression, beforePosition);
+                    if (paths.length === 0) {
+                        canFalse = true;
+                        continue;
+                    }
+                    for (const path of paths) {
+                        const enumerable = [...path]
+                            .reverse()
+                            .find((entry) => entry.names?.includes(flagName));
+                        if (!enumerable) {
+                            canFalse = true;
+                            continue;
+                        }
+                        const scalar = staticScalar(
+                            enumerable.value,
+                            enumerable.substitutions ?? candidate.substitutions,
+                        );
+                        if (!scalar.known) {
+                            canTrue = true;
+                            canFalse = true;
+                        } else if (Boolean(scalar.value)) {
+                            canTrue = true;
+                        } else {
+                            canFalse = true;
+                        }
+                    }
+                }
+                return { canTrue, canFalse };
+            }
             function recordRuntimeGetterDefinition(expression, args, activation) {
                 if (
                     args.length >= 2 &&
@@ -7156,6 +7358,24 @@ function analyzeProgram({
                                 getters: descriptorGetterDeclarations(
                                     descriptor.value,
                                     activation.pos,
+                                ),
+                                enumerable: descriptorFlagPossibilities(
+                                    descriptor.value,
+                                    "enumerable",
+                                    activation.pos,
+                                ),
+                                configurable: descriptorFlagPossibilities(
+                                    descriptor.value,
+                                    "configurable",
+                                    activation.pos,
+                                ),
+                                receiverOrigins: receiverOrigins(
+                                    args[0],
+                                    activation.pos,
+                                    new Set(),
+                                    new Map(),
+                                    true,
+                                    true,
                                 ),
                                 position: activation.pos,
                                 sourceFile: activation.getSourceFile(),
@@ -7190,12 +7410,45 @@ function analyzeProgram({
                     receiver: args[0],
                     names,
                     getters,
+                    enumerable: descriptorFlagPossibilities(args[2], "enumerable", activation.pos),
+                    configurable: descriptorFlagPossibilities(
+                        args[2],
+                        "configurable",
+                        activation.pos,
+                    ),
+                    receiverOrigins: receiverOrigins(
+                        args[0],
+                        activation.pos,
+                        new Set(),
+                        new Map(),
+                        true,
+                        true,
+                    ),
                     position: activation.pos,
                     sourceFile: activation.getSourceFile(),
                 });
             }
-            function runtimeGetterDeclarations(receiver, names, activation) {
-                const sameRuntimeReceiver = (left, right) => {
+            function runtimeGetterDeclarations(
+                receiver,
+                names,
+                activation,
+                ownEnumerableOnly = false,
+            ) {
+                const sameRuntimeReceiver = (definition, right) => {
+                    const rightOrigins = receiverOrigins(
+                        right,
+                        activation.pos,
+                        new Set(),
+                        new Map(),
+                        true,
+                        true,
+                    );
+                    if (definition.receiverOrigins?.size && rightOrigins.size) {
+                        return [...definition.receiverOrigins].some((origin) =>
+                            rightOrigins.has(origin),
+                        );
+                    }
+                    let left = definition.receiver;
                     left = unwrapExpression(left);
                     right = unwrapExpression(right);
                     if (ts.isIdentifier(left) && ts.isIdentifier(right)) {
@@ -7225,12 +7478,20 @@ function analyzeProgram({
                         (definition) =>
                             definition.position < activation.pos &&
                             definition.sourceFile === activation.getSourceFile() &&
-                            reachingPositions.has(definition.position) &&
+                            (reachingPositions.has(definition.position) ||
+                                definition.configurable?.canFalse) &&
                             definition.names.some((name) => names?.includes(name)) &&
-                            sameRuntimeReceiver(definition.receiver, receiver),
+                            (!ownEnumerableOnly || definition.enumerable?.canTrue) &&
+                            sameRuntimeReceiver(definition, receiver),
                     )
                     .flatMap((definition) => definition.getters);
                 return bounded(matched, "runtime getter definition alternatives");
+            }
+            function runtimeEnumerableGetterDeclarations(receiver, activation) {
+                const names = runtimeGetterDefinitions.flatMap(
+                    (definition) => definition.names ?? [],
+                );
+                return runtimeGetterDeclarations(receiver, names, activation, true);
             }
             function receiversThroughBindingDefault(receivers, initializer, label) {
                 if (!initializer) return bounded(receivers, label);
@@ -7301,16 +7562,22 @@ function analyzeProgram({
                                 );
                             } else {
                                 recordAccessorActivation(
-                                    localGetterDeclarations(receiver, null, true).filter(
-                                        (getter) => {
-                                            const name = getter.name;
-                                            return (
-                                                !name ||
-                                                !ts.isIdentifier(name) ||
-                                                !excluded.has(name.text)
-                                            );
-                                        },
-                                    ),
+                                    [
+                                        ...localGetterDeclarations(receiver, null, true).filter(
+                                            (getter) => {
+                                                const name = getter.name;
+                                                return (
+                                                    !name ||
+                                                    !ts.isIdentifier(name) ||
+                                                    !excluded.has(name.text)
+                                                );
+                                            },
+                                        ),
+                                        ...runtimeEnumerableGetterDeclarations(
+                                            receiver,
+                                            activation,
+                                        ),
+                                    ],
                                     activation,
                                     receiver,
                                 );
@@ -7381,12 +7648,19 @@ function analyzeProgram({
                             );
                         } else if (rest) {
                             recordAccessorActivation(
-                                localGetterDeclarations(receiver, null, true).filter((getter) => {
-                                    const name = getter.name;
-                                    return (
-                                        !name || !ts.isIdentifier(name) || !excluded.has(name.text)
-                                    );
-                                }),
+                                [
+                                    ...localGetterDeclarations(receiver, null, true).filter(
+                                        (getter) => {
+                                            const name = getter.name;
+                                            return (
+                                                !name ||
+                                                !ts.isIdentifier(name) ||
+                                                !excluded.has(name.text)
+                                            );
+                                        },
+                                    ),
+                                    ...runtimeEnumerableGetterDeclarations(receiver, activation),
+                                ],
                                 activation,
                                 receiver,
                             );
@@ -7545,7 +7819,10 @@ function analyzeProgram({
                     }
                     if (ts.isSpreadAssignment(node)) {
                         recordAccessorActivation(
-                            localGetterDeclarations(node.expression, null, true),
+                            [
+                                ...localGetterDeclarations(node.expression, null, true),
+                                ...runtimeEnumerableGetterDeclarations(node.expression, node),
+                            ],
                             node,
                             node.expression,
                         );
@@ -7590,7 +7867,10 @@ function analyzeProgram({
                             ) {
                                 for (const source of call.arguments.slice(1)) {
                                     recordAccessorActivation(
-                                        localGetterDeclarations(source, null, true),
+                                        [
+                                            ...localGetterDeclarations(source, null, true),
+                                            ...runtimeEnumerableGetterDeclarations(source, node),
+                                        ],
                                         node,
                                         source,
                                     );
@@ -7608,7 +7888,13 @@ function analyzeProgram({
                                 )
                             ) {
                                 recordAccessorActivation(
-                                    localGetterDeclarations(call.arguments[0], null, true),
+                                    [
+                                        ...localGetterDeclarations(call.arguments[0], null, true),
+                                        ...runtimeEnumerableGetterDeclarations(
+                                            call.arguments[0],
+                                            node,
+                                        ),
+                                    ],
                                     node,
                                     call.arguments[0],
                                 );
@@ -7647,7 +7933,10 @@ function analyzeProgram({
                     ) {
                         for (const source of node.arguments.slice(1)) {
                             recordAccessorActivation(
-                                localGetterDeclarations(source, null, true),
+                                [
+                                    ...localGetterDeclarations(source, null, true),
+                                    ...runtimeEnumerableGetterDeclarations(source, node),
+                                ],
                                 source,
                                 source,
                             );
@@ -7666,7 +7955,10 @@ function analyzeProgram({
                         )
                     ) {
                         recordAccessorActivation(
-                            localGetterDeclarations(node.arguments[0], null, true),
+                            [
+                                ...localGetterDeclarations(node.arguments[0], null, true),
+                                ...runtimeEnumerableGetterDeclarations(node.arguments[0], node),
+                            ],
                             node,
                             node.arguments[0],
                         );
@@ -10326,12 +10618,29 @@ function analyzeProgram({
                         if (!isRestArgumentsSubstitution(substituted)) continue;
                         for (const value of substituted[REST_ARGUMENTS_SUBSTITUTION]) {
                             const [access, ...remainingAccessPath] = context.accessPath ?? [];
-                            const names =
+                            let names =
                                 access?.kind === "property"
                                     ? access.names
                                     : access?.kind === "array"
                                       ? [String(access.index)]
                                       : null;
+                            if (!names?.length) {
+                                let consumed = expression;
+                                while (
+                                    ts.isNonNullExpression(consumed.parent) ||
+                                    ts.isParenthesizedExpression(consumed.parent) ||
+                                    ts.isAsExpression(consumed.parent) ||
+                                    ts.isSatisfiesExpression(consumed.parent)
+                                ) {
+                                    consumed = consumed.parent;
+                                }
+                                if (
+                                    ts.isPropertyAccessExpression(consumed.parent) &&
+                                    consumed.parent.expression === consumed
+                                ) {
+                                    names = [consumed.parent.name.text];
+                                }
+                            }
                             const alternatives = names?.flatMap((name) =>
                                 memberValueAlternatives(
                                     value,
@@ -10370,6 +10679,62 @@ function analyzeProgram({
             return;
         }
         if (ts.isPropertyAccessExpression(expression) || ts.isElementAccessExpression(expression)) {
+            if (
+                ts.isPropertyAccessExpression(expression) &&
+                ts.isElementAccessExpression(unwrapExpression(expression.expression))
+            ) {
+                const lookup = unwrapExpression(expression.expression);
+                const key = unwrapExpression(lookup.argumentExpression);
+                const keySymbol = ts.isIdentifier(key)
+                    ? unalias(checker, checker.getSymbolAtLocation(key))
+                    : null;
+                const declaration = (keySymbol?.declarations ?? []).find(ts.isVariableDeclaration);
+                const iteration =
+                    declaration &&
+                    ts.isVariableDeclarationList(declaration.parent) &&
+                    ts.isForInStatement(declaration.parent.parent)
+                        ? declaration.parent.parent
+                        : null;
+                if (
+                    iteration &&
+                    unwrapExpression(iteration.expression).getText() ===
+                        unwrapExpression(lookup.expression).getText()
+                ) {
+                    let resolved = false;
+                    const projections = [
+                        { node: expression, substitutions: context.substitutions },
+                        ...activeBoundaryUseProjections(expression),
+                    ];
+                    for (const projection of projections) {
+                        const substitutions = projection.substitutions ?? new Map();
+                        const receiverLists = syntheticRestDerivedArrays(
+                            lookup.expression,
+                            substitutions,
+                            projection.node.pos,
+                        );
+                        if (!receiverLists) continue;
+                        resolved = true;
+                        for (const value of receiverLists.flat()) {
+                            for (const alternative of memberValueAlternatives(
+                                value,
+                                expression.name.text,
+                                projection.node,
+                                projection.node.pos,
+                                null,
+                            )) {
+                                if (!alternative?.value) continue;
+                                trace(
+                                    alternative.value,
+                                    { ...context, substitutions, accessPath: [] },
+                                    depth + 1,
+                                    nextSeen,
+                                );
+                            }
+                        }
+                    }
+                    if (resolved) return;
+                }
+            }
             const projectionSteps = ts.isPropertyAccessExpression(expression)
                 ? [{ kind: "property", names: [expression.name.text] }]
                 : (computedPropertyNames(expression)?.map((name) => ({
@@ -10595,6 +10960,87 @@ function analyzeProgram({
             return;
         }
         if (ts.isCallExpression(expression)) {
+            if (
+                ts.isPropertyAccessExpression(expression.expression) &&
+                expression.expression.name.text === "at" &&
+                expression.arguments.length === 1
+            ) {
+                const receiver = unwrapExpression(expression.expression.expression);
+                const index = staticScalar(expression.arguments[0], context.substitutions);
+                const projections = [
+                    { node: expression, substitutions: context.substitutions },
+                    ...activeBoundaryUseProjections(expression),
+                ];
+                if (!index.known || !Number.isInteger(index.value)) {
+                    const restDerived = projections.some((projection) =>
+                        Boolean(
+                            syntheticRestDerivedArrays(
+                                receiver,
+                                projection.substitutions ?? new Map(),
+                                projection.node.pos,
+                            ),
+                        ),
+                    );
+                    if (restDerived) {
+                        analysisFailures.add(
+                            "consumer cast analysis could not statically resolve synthetic rest Array.at index",
+                        );
+                        return;
+                    }
+                }
+                if (index.known && Number.isInteger(index.value)) {
+                    let resolved = false;
+                    for (const projection of projections) {
+                        const substitutions = projection.substitutions ?? new Map();
+                        const receiverLists = syntheticRestDerivedArrays(
+                            receiver,
+                            substitutions,
+                            projection.node.pos,
+                        );
+                        if (!receiverLists) continue;
+                        resolved = true;
+                        for (const rest of receiverLists) {
+                            const normalizedIndex =
+                                index.value < 0 ? rest.length + index.value : index.value;
+                            const selected = rest[normalizedIndex];
+                            if (!selected) continue;
+                            const [access, ...remainingAccessPath] = context.accessPath ?? [];
+                            const names =
+                                access?.kind === "property"
+                                    ? access.names
+                                    : access?.kind === "array"
+                                      ? [String(access.index)]
+                                      : null;
+                            const readSites = [projection.node, expression].filter(
+                                (site, siteIndex, all) => all.indexOf(site) === siteIndex,
+                            );
+                            const alternatives = names?.flatMap((name) =>
+                                readSites.flatMap((site) =>
+                                    memberValueAlternatives(selected, name, site, site.pos, null),
+                                ),
+                            );
+                            if (alternatives?.length) {
+                                for (const alternative of alternatives) {
+                                    if (!alternative?.value) continue;
+                                    trace(
+                                        alternative.value,
+                                        {
+                                            ...context,
+                                            substitutions,
+                                            accessPath: remainingAccessPath,
+                                        },
+                                        depth + 1,
+                                        nextSeen,
+                                    );
+                                }
+                            } else {
+                                trace(selected, { ...context, substitutions }, depth + 1, nextSeen);
+                            }
+                        }
+                    }
+                    if (resolved) return;
+                }
+            }
             const resultType = checker.getTypeAtLocation(expression);
             const signature = checker.getResolvedSignature(expression);
             const declaration = signature?.declaration;
