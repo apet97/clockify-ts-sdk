@@ -276,6 +276,7 @@ function analyzeProgram({
     const accessorReceiverByActivation = new WeakMap();
     const syntheticRestCallbackParameters = new Set();
     const syntheticRestCallbackWriteKeys = new Set();
+    const restArgumentExpansionStack = new Set();
     const instantiationsByClass = new Map();
     const alternativePathsByGroup = new Map();
     const receiverAllocationOrigins = new Map();
@@ -362,7 +363,8 @@ function analyzeProgram({
                 node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
                 (ts.isPropertyAccessExpression(node.left) ||
                     ts.isElementAccessExpression(node.left)) &&
-                requestNameFromType(checker, checker.getTypeAtLocation(node.left))
+                (requestNameFromType(checker, checker.getTypeAtLocation(node.left)) ||
+                    requestNameFromType(checker, checker.getTypeAtLocation(node.left.expression)))
             ) {
                 reaches = true;
                 return;
@@ -3950,7 +3952,34 @@ function analyzeProgram({
         return bounded(effects, "getter return alternatives");
     }
 
+    function runtimeDescriptorSourceIsCyclic(expression, position, seen = new Set(), depth = 0) {
+        expression = unwrapExpression(expression);
+        if (depth > MAX_TRACE_DEPTH) return true;
+        if (ts.isConditionalExpression(expression)) {
+            return (
+                runtimeDescriptorSourceIsCyclic(expression.whenTrue, position, seen, depth + 1) ||
+                runtimeDescriptorSourceIsCyclic(expression.whenFalse, position, seen, depth + 1)
+            );
+        }
+        if (!ts.isIdentifier(expression)) return false;
+        const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
+        if (!symbol) return false;
+        if (seen.has(symbol)) return true;
+        const nextSeen = new Set(seen);
+        nextSeen.add(symbol);
+        return (writesBySymbol.get(symbol) ?? [])
+            .filter((write) => write.position < position)
+            .some((write) =>
+                runtimeDescriptorSourceIsCyclic(write.value, write.position, nextSeen, depth + 1),
+            );
+    }
+
     function descriptorEffectSequences(descriptor, beforePosition) {
+        if (runtimeDescriptorSourceIsCyclic(descriptor, beforePosition)) {
+            analysisFailures.add(
+                "consumer cast analysis could not statically resolve cyclic runtime descriptor source",
+            );
+        }
         let sequences = objectPropertySequences(descriptor, beforePosition);
         if (sequences.length === 0) {
             sequences = [
@@ -5752,35 +5781,14 @@ function analyzeProgram({
                         const syntheticReceiverLists = [];
                         const receiverExpression = unwrapExpression(node.expression.expression);
                         const owner = enclosingFunction(node);
-                        if (!effectsOnly && owner && ts.isIdentifier(receiverExpression)) {
-                            const receiverSymbol = unalias(
-                                checker,
-                                checker.getSymbolAtLocation(receiverExpression),
+                        if (!effectsOnly && owner) {
+                            syntheticReceiverLists.push(
+                                ...(syntheticRestDerivedArrays(
+                                    receiverExpression,
+                                    new Map(),
+                                    node.pos,
+                                ) ?? []),
                             );
-                            const receiverIsRestParameter = owner.parameters.some((parameter) => {
-                                if (!parameter.dotDotDotToken) return false;
-                                return (
-                                    unalias(
-                                        checker,
-                                        checker.getSymbolAtLocation(parameter.name),
-                                    ) === receiverSymbol
-                                );
-                            });
-                            if (receiverIsRestParameter) {
-                                for (const invocation of callsByDeclaration.get(owner) ?? []) {
-                                    for (const substitutions of parameterSubstitutionAlternatives(
-                                        owner,
-                                        invocation,
-                                    )) {
-                                        const substituted = substitutions.get(receiverSymbol);
-                                        if (isRestArgumentsSubstitution(substituted)) {
-                                            syntheticReceiverLists.push(
-                                                substituted[REST_ARGUMENTS_SUBSTITUTION],
-                                            );
-                                        }
-                                    }
-                                }
-                            }
                         }
                         const receiverValueLists = bounded(
                             [
@@ -5811,14 +5819,10 @@ function analyzeProgram({
                                         );
                                         if (symbol) syntheticRestCallbackParameters.add(symbol);
                                     }
-                                    const parameter = callback.parameters[0];
-                                    const parameterSymbol = parameter
-                                        ? unalias(
-                                              checker,
-                                              checker.getSymbolAtLocation(parameter.name),
-                                          )
-                                        : null;
                                     for (const value of values) {
+                                        const substitutions = callbackSubstitutions(callback, [
+                                            value,
+                                        ]);
                                         for (const write of [...propertyWrites]) {
                                             if (
                                                 enclosingFunction(write.node) !== callback ||
@@ -5827,36 +5831,105 @@ function analyzeProgram({
                                                 continue;
                                             }
                                             const receiver = memberWriteReceiver(write);
-                                            const receiverSymbol = ts.isIdentifier(
-                                                unwrapExpression(receiver),
-                                            )
-                                                ? unalias(
-                                                      checker,
-                                                      checker.getSymbolAtLocation(
-                                                          unwrapExpression(receiver),
-                                                      ),
-                                                  )
-                                                : null;
-                                            if (
-                                                !parameterSymbol ||
-                                                receiverSymbol !== parameterSymbol
-                                            )
-                                                continue;
-                                            const key = `${node.getSourceFile().fileName}:${node.pos}:${write.node.pos}:${value.pos}`;
-                                            if (syntheticRestCallbackWriteKeys.has(key)) continue;
-                                            syntheticRestCallbackWriteKeys.add(key);
-                                            propertyWrites.push({
-                                                ...write,
-                                                position: node.pos,
-                                                sourceFile: node.getSourceFile(),
-                                                executionNode: node,
-                                                executionSequence: write.position,
-                                                receiverOverride: value,
-                                                substitutions: callbackSubstitutions(callback, [
+                                            if (!receiver) continue;
+                                            let receiverValues = reachingExpressionValues(
+                                                receiver,
+                                                write.position,
+                                                new Set(),
+                                                substitutions,
+                                            ).map((candidate) => candidate.expression);
+                                            const projectedBindingNames = new Map();
+                                            const unwrappedReceiver = unwrapExpression(receiver);
+                                            if (ts.isIdentifier(unwrappedReceiver)) {
+                                                const receiverSymbol = unalias(
+                                                    checker,
+                                                    checker.getSymbolAtLocation(unwrappedReceiver),
+                                                );
+                                                for (const declaration of receiverSymbol?.declarations ??
+                                                    []) {
+                                                    if (!ts.isBindingElement(declaration)) continue;
+                                                    const binding =
+                                                        parameterBindingProjection(declaration);
+                                                    if (binding?.parameter.parent === callback) {
+                                                        for (const projected of projectedExpressions(
+                                                            value,
+                                                            binding.projection,
+                                                        )) {
+                                                            receiverValues.push(projected);
+                                                            const first = binding.projection[0];
+                                                            if (first?.kind === "property") {
+                                                                projectedBindingNames.set(
+                                                                    projected,
+                                                                    first.names,
+                                                                );
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            receiverValues = bounded(
+                                                receiverValues.filter(
+                                                    (candidate, index, all) =>
+                                                        all.indexOf(candidate) === index,
+                                                ),
+                                                "synthetic rest callback receiver alternatives",
+                                            );
+                                            for (const receiverValue of receiverValues) {
+                                                const receiverOriginsAtWrite = receiverOrigins(
+                                                    receiverValue,
+                                                    write.position,
+                                                    new Set(),
+                                                    substitutions,
+                                                    true,
+                                                    true,
+                                                );
+                                                const valueOrigins = receiverOrigins(
                                                     value,
-                                                ]),
-                                                syntheticRestCallbackEffect: true,
-                                            });
+                                                    node.pos,
+                                                    new Set(),
+                                                    new Map(),
+                                                    true,
+                                                    true,
+                                                );
+                                                const isProjectedBinding =
+                                                    receiverValue !== receiver &&
+                                                    ts.isIdentifier(unwrappedReceiver) &&
+                                                    [
+                                                        ...(checker.getSymbolAtLocation(
+                                                            unwrappedReceiver,
+                                                        )?.declarations ?? []),
+                                                    ].some(ts.isBindingElement);
+                                                if (
+                                                    !isProjectedBinding &&
+                                                    receiverValue !== value &&
+                                                    (receiverOriginsAtWrite.size === 0 ||
+                                                        valueOrigins.size === 0 ||
+                                                        ![...receiverOriginsAtWrite].some(
+                                                            (origin) => valueOrigins.has(origin),
+                                                        ))
+                                                ) {
+                                                    continue;
+                                                }
+                                                const key = `${node.getSourceFile().fileName}:${node.pos}:${write.node.pos}:${receiverValue.pos}`;
+                                                if (syntheticRestCallbackWriteKeys.has(key))
+                                                    continue;
+                                                syntheticRestCallbackWriteKeys.add(key);
+                                                propertyWrites.push({
+                                                    ...write,
+                                                    position: node.pos,
+                                                    sourceFile: node.getSourceFile(),
+                                                    executionNode: node,
+                                                    executionSequence: write.position,
+                                                    receiverOverride: isProjectedBinding
+                                                        ? value
+                                                        : receiverValue,
+                                                    propertyNames:
+                                                        projectedBindingNames.get(receiverValue) ??
+                                                        write.propertyNames,
+                                                    substitutions,
+                                                    syntheticRestCallbackEffect: true,
+                                                });
+                                            }
                                         }
                                     }
                                 }
@@ -6875,8 +6948,6 @@ function analyzeProgram({
         return alternatives;
     }
 
-    const restArgumentExpansionStack = new Set();
-
     function activeSyntheticRestLists(expression) {
         expression = unwrapExpression(expression);
         if (!ts.isIdentifier(expression)) return null;
@@ -6919,7 +6990,33 @@ function analyzeProgram({
         if (ts.isIdentifier(expression)) {
             const symbol = unalias(checker, checker.getSymbolAtLocation(expression));
             const rest = substitutions.get(symbol)?.[REST_ARGUMENTS_SUBSTITUTION];
-            return rest ? [rest] : activeSyntheticRestLists(expression);
+            if (rest) return [rest];
+            const active = activeSyntheticRestLists(expression);
+            if (active) return active;
+            if (!symbol) return null;
+            const values = reachingExpressionValues(
+                expression,
+                beforePosition,
+                seen,
+                substitutions,
+            );
+            const derived = bounded(
+                values.flatMap((candidate) => {
+                    const value = unwrapExpression(candidate.expression);
+                    if (value === expression) return [];
+                    return (
+                        syntheticRestDerivedArrays(
+                            value,
+                            candidate.substitutions ?? substitutions,
+                            beforePosition,
+                            nextSeen,
+                            depth + 1,
+                        ) ?? []
+                    );
+                }),
+                "materialized synthetic rest alternatives",
+            );
+            return derived.length > 0 ? derived : null;
         }
         if (
             !ts.isCallExpression(expression) ||
@@ -7281,28 +7378,62 @@ function analyzeProgram({
                 }
             }
             function descriptorGetterDeclarations(descriptor, beforePosition) {
+                const fields = descriptorFieldPossibilities(descriptor, "get", beforePosition);
                 return bounded(
-                    reachingExpressionValues(descriptor, beforePosition).flatMap((candidate) => {
-                        const value = unwrapExpression(candidate.expression);
-                        if (!ts.isObjectLiteralExpression(value)) return [];
-                        return value.properties.flatMap((property) => {
-                            const name = property.name
-                                ?.getText(property.getSourceFile())
-                                .replace(/^['"]|['"]$/g, "");
-                            if (name !== "get") return [];
-                            if (ts.isMethodDeclaration(property) && property.body)
-                                return [property];
-                            if (ts.isPropertyAssignment(property)) {
-                                const declaration = functionDeclarationForExpression(
-                                    property.initializer,
-                                );
-                                return declaration?.body ? [declaration] : [];
-                            }
-                            return [];
-                        });
-                    }),
+                    fields.entries.flatMap((entry) =>
+                        reachingExpressionValues(
+                            entry.value,
+                            beforePosition,
+                            new Set(),
+                            entry.substitutions,
+                        ).flatMap((candidate) => {
+                            const value = unwrapExpression(candidate.expression);
+                            const declaration = ts.isFunctionLike(value)
+                                ? value
+                                : functionDeclarationForExpression(value);
+                            return declaration?.body ? [declaration] : [];
+                        }),
+                    ),
                     "runtime descriptor getter alternatives",
                 );
+            }
+            function descriptorFieldPossibilities(descriptor, fieldName, beforePosition) {
+                const unresolved = reachingExpressionValues(descriptor, beforePosition).some(
+                    (candidate) =>
+                        !ts.isObjectLiteralExpression(unwrapExpression(candidate.expression)),
+                );
+                const paths = objectPropertySequences(descriptor, beforePosition);
+                if (
+                    paths.length === 0 ||
+                    unresolved ||
+                    runtimeDescriptorSourceIsCyclic(descriptor, beforePosition)
+                ) {
+                    analysisFailures.add(
+                        `consumer cast analysis could not statically resolve runtime descriptor ${fieldName}`,
+                    );
+                }
+                if (paths.length === 0) {
+                    return { canPresent: true, canAbsent: true, entries: [] };
+                }
+                let canPresent = false;
+                let canAbsent = false;
+                const entries = [];
+                for (const path of paths) {
+                    const entry = [...path]
+                        .reverse()
+                        .find((candidate) => candidate.names?.includes(fieldName));
+                    if (entry) {
+                        canPresent = true;
+                        entries.push(entry);
+                    } else {
+                        canAbsent = true;
+                    }
+                    if (path.some((candidate) => candidate.names == null)) {
+                        canPresent = true;
+                        canAbsent = true;
+                    }
+                }
+                return { canPresent, canAbsent, entries };
             }
             function descriptorFlagPossibilities(descriptor, flagName, beforePosition) {
                 let canTrue = false;
@@ -7369,6 +7500,26 @@ function analyzeProgram({
                                     "configurable",
                                     activation.pos,
                                 ),
+                                getPresence: descriptorFieldPossibilities(
+                                    descriptor.value,
+                                    "get",
+                                    activation.pos,
+                                ),
+                                valuePresence: descriptorFieldPossibilities(
+                                    descriptor.value,
+                                    "value",
+                                    activation.pos,
+                                ),
+                                enumerablePresence: descriptorFieldPossibilities(
+                                    descriptor.value,
+                                    "enumerable",
+                                    activation.pos,
+                                ),
+                                configurablePresence: descriptorFieldPossibilities(
+                                    descriptor.value,
+                                    "configurable",
+                                    activation.pos,
+                                ),
                                 receiverOrigins: receiverOrigins(
                                     args[0],
                                     activation.pos,
@@ -7378,6 +7529,7 @@ function analyzeProgram({
                                     true,
                                 ),
                                 position: activation.pos,
+                                node: activation,
                                 sourceFile: activation.getSourceFile(),
                             });
                         }
@@ -7416,6 +7568,18 @@ function analyzeProgram({
                         "configurable",
                         activation.pos,
                     ),
+                    getPresence: descriptorFieldPossibilities(args[2], "get", activation.pos),
+                    valuePresence: descriptorFieldPossibilities(args[2], "value", activation.pos),
+                    enumerablePresence: descriptorFieldPossibilities(
+                        args[2],
+                        "enumerable",
+                        activation.pos,
+                    ),
+                    configurablePresence: descriptorFieldPossibilities(
+                        args[2],
+                        "configurable",
+                        activation.pos,
+                    ),
                     receiverOrigins: receiverOrigins(
                         args[0],
                         activation.pos,
@@ -7425,6 +7589,7 @@ function analyzeProgram({
                         true,
                     ),
                     position: activation.pos,
+                    node: activation,
                     sourceFile: activation.getSourceFile(),
                 });
             }
@@ -7459,6 +7624,75 @@ function analyzeProgram({
                     }
                     return sameReceiverAlternatives(left, right, activation.pos);
                 };
+                const effectiveCache = new Map();
+                function mergeFlag(current, presence, previous) {
+                    let canTrue = false;
+                    let canFalse = false;
+                    if (presence?.canPresent) {
+                        canTrue ||= current?.canTrue === true;
+                        canFalse ||= current?.canFalse === true;
+                    }
+                    if (presence?.canAbsent) {
+                        canTrue ||= previous?.canTrue === true;
+                        canFalse ||= previous?.canFalse !== false;
+                    }
+                    return { canTrue, canFalse };
+                }
+                function effectiveRuntimeDefinition(definition, seen = new Set()) {
+                    const cached = effectiveCache.get(definition);
+                    if (cached) return cached;
+                    if (seen.has(definition)) {
+                        analysisFailures.add(
+                            "consumer cast analysis could not statically resolve cyclic runtime descriptor replacement",
+                        );
+                        return {
+                            getters: definition.getters,
+                            enumerable: { canTrue: true, canFalse: true },
+                            configurable: { canTrue: true, canFalse: true },
+                        };
+                    }
+                    const nextSeen = new Set(seen);
+                    nextSeen.add(definition);
+                    const previous = runtimeGetterDefinitions
+                        .filter(
+                            (candidate) =>
+                                candidate !== definition &&
+                                candidate.position < definition.position &&
+                                candidate.sourceFile === definition.sourceFile &&
+                                candidate.names.some((name) => definition.names.includes(name)) &&
+                                sameRuntimeReceiver(candidate, definition.receiver),
+                        )
+                        .sort((left, right) => right.position - left.position)[0];
+                    const inherited = previous
+                        ? effectiveRuntimeDefinition(previous, nextSeen)
+                        : {
+                              getters: [],
+                              enumerable: { canTrue: false, canFalse: true },
+                              configurable: { canTrue: false, canFalse: true },
+                          };
+                    const getters = [];
+                    if (definition.getPresence?.canPresent) getters.push(...definition.getters);
+                    if (definition.getPresence?.canAbsent && definition.valuePresence?.canAbsent) {
+                        getters.push(...inherited.getters);
+                    }
+                    const effective = {
+                        getters: getters.filter(
+                            (getter, index, all) => all.indexOf(getter) === index,
+                        ),
+                        enumerable: mergeFlag(
+                            definition.enumerable,
+                            definition.enumerablePresence,
+                            inherited.enumerable,
+                        ),
+                        configurable: mergeFlag(
+                            definition.configurable,
+                            definition.configurablePresence,
+                            inherited.configurable,
+                        ),
+                    };
+                    effectiveCache.set(definition, effective);
+                    return effective;
+                }
                 const reachingRuntimeWrites = applyCrossStatementEffectCutoff(
                     propertyWrites.filter(
                         (write) =>
@@ -7473,18 +7707,59 @@ function analyzeProgram({
                 const reachingPositions = new Set(
                     reachingRuntimeWrites.map((write) => write.position),
                 );
-                const matched = runtimeGetterDefinitions
-                    .filter(
-                        (definition) =>
-                            definition.position < activation.pos &&
-                            definition.sourceFile === activation.getSourceFile() &&
-                            (reachingPositions.has(definition.position) ||
-                                definition.configurable?.canFalse) &&
-                            definition.names.some((name) => names?.includes(name)) &&
-                            (!ownEnumerableOnly || definition.enumerable?.canTrue) &&
-                            sameRuntimeReceiver(definition, receiver),
-                    )
-                    .flatMap((definition) => definition.getters);
+                const relevantDefinitions = runtimeGetterDefinitions.filter(
+                    (definition) =>
+                        definition.position < activation.pos &&
+                        definition.sourceFile === activation.getSourceFile() &&
+                        definition.names.some((name) => names?.includes(name)) &&
+                        sameRuntimeReceiver(definition, receiver),
+                );
+                const latestDefinitionPosition = Math.max(
+                    -1,
+                    ...relevantDefinitions.map((definition) => definition.position),
+                );
+                function runtimeDefinitionMayBeSkipped(definition) {
+                    let current = definition.node;
+                    while (current?.parent && !ts.isFunctionLike(current.parent)) {
+                        const parent = current.parent;
+                        if (
+                            ts.isIfStatement(parent) ||
+                            ts.isConditionalExpression(parent) ||
+                            ts.isForStatement(parent) ||
+                            ts.isForInStatement(parent) ||
+                            ts.isForOfStatement(parent) ||
+                            ts.isWhileStatement(parent) ||
+                            ts.isDoStatement(parent) ||
+                            (ts.isBinaryExpression(parent) &&
+                                [
+                                    ts.SyntaxKind.AmpersandAmpersandToken,
+                                    ts.SyntaxKind.BarBarToken,
+                                    ts.SyntaxKind.QuestionQuestionToken,
+                                ].includes(parent.operatorToken.kind))
+                        ) {
+                            return true;
+                        }
+                        current = parent;
+                    }
+                    return false;
+                }
+                const matched = relevantDefinitions
+                    .filter((definition) => {
+                        const effective = effectiveRuntimeDefinition(definition);
+                        const hasLaterDefiniteDefinition = relevantDefinitions.some(
+                            (candidate) =>
+                                candidate.position > definition.position &&
+                                !runtimeDefinitionMayBeSkipped(candidate),
+                        );
+                        return (
+                            ((reachingPositions.has(definition.position) &&
+                                !hasLaterDefiniteDefinition) ||
+                                definition.position === latestDefinitionPosition ||
+                                effective.configurable.canFalse) &&
+                            (!ownEnumerableOnly || effective.enumerable.canTrue)
+                        );
+                    })
+                    .flatMap((definition) => effectiveRuntimeDefinition(definition).getters);
                 return bounded(matched, "runtime getter definition alternatives");
             }
             function runtimeEnumerableGetterDeclarations(receiver, activation) {
