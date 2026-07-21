@@ -8353,10 +8353,167 @@ for (const [label, request, shouldFail] of [
     });
 }
 
+for (const [label, index, shouldFail] of [
+    ["exact index", "0", true],
+    ["wrong index", "1", false],
+    ["out-of-range index", "9", false],
+]) {
+    test(`${shouldFail ? "projects" : "does not project"} a materialized synthetic-rest alias through ${label} bracket access`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const safe: Holder = { request: { workspaceId: "safe" } }; function send(...holders: Holder[]) { const derived = holders.map((value) => value); const selected = derived[${index}]; return selected ? client.projects.create(selected.request) : undefined; } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(holder, safe); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("keeps conditional materialized synthetic-rest bracket aliases conservative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, flag: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: [Holder]) { const mapped = holders.map((value) => value); const derived = flag ? mapped : holders; return client.projects.create(derived[0]!.request); } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, callback, shouldFail] of [
+    [
+        "nested object binding",
+        "({ holder: value }: { holder: Holder }) => { value.request = body as any; }",
+        true,
+    ],
+    ["nested array binding", "([value]: [Holder]) => { value.request = body as any; }", true],
+    [
+        "nested safe binding",
+        '({ holder: value }: { holder: Holder }) => { value.request = { workspaceId: "safe" }; }',
+        false,
+    ],
+    [
+        "nested async-late binding",
+        "async ({ holder: value }: { holder: Holder }) => { await Promise.resolve(); value.request = body as any; }",
+        false,
+    ],
+]) {
+    test(`${shouldFail ? "retains" : "keeps inert"} ${label} rest callback mutation`, async () => {
+        const array = label.includes("array") ? "[[holder]]" : "[{ holder }]";
+        const parameter = label.includes("array") ? "[Holder]" : "{ holder: Holder }";
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: ${parameter}[]) { holders.forEach(${callback}); } send(...${array}); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+for (const [label, mutation, shouldFail] of [
+    ["unsafe exact element overwrite", "mapped[0] = { request: body as any };", true],
+    ["safe exact element overwrite", 'mapped[0] = { request: { workspaceId: "safe" } };', false],
+    ["unsafe exact splice", "mapped.splice(0, 1, { request: body as any });", true],
+]) {
+    test(`${label} controls materialized derived-rest reads`, async () => {
+        const initial = label.startsWith("safe") ? "{ request: body as any }" : "holder";
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: Holder[]) { const mapped = holders.map((value) => value); ${mutation} return client.projects.create(mapped.at(0)!.request); } return send(${initial}); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed for an unresolved derived-rest splice index", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder, index: number) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); mapped.splice(index, 1); return client.projects.create(mapped.at(0)!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(
+            result.failures.join("\n"),
+            /could not statically resolve synthetic rest.*splice/i,
+        );
+    });
+});
+
+for (const [label, read] of [
+    ["exact bracket", "return client.projects.create(mapped[0]!.request);"],
+    [
+        "for-in",
+        "for (const index in mapped) return client.projects.create(mapped[index]!.request);",
+    ],
+    [
+        "array destructuring",
+        "const [first] = mapped; return client.projects.create(first.request);",
+    ],
+    [
+        "array-rest destructuring",
+        "const [...copy] = mapped; return client.projects.create(copy[0]!.request);",
+    ],
+]) {
+    test(`observes a later derived-rest element write through ${label}`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); mapped[0] = { request: body as any }; ${read} } return send(holder); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+test("retains both branches of a conditional later derived-rest element write", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder, flag: boolean) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); if (flag) mapped[0] = { request: body as any }; return client.projects.create(mapped[0]!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, firstConfigurable, replacement, shouldFail] of [
+    ["configurable writable true conversion", true, "{ writable: true }", false],
+    ["configurable writable false conversion", true, "{ writable: false }", false],
+    ["non-configurable writable conversion", false, "{ writable: true }", true],
+    [
+        "later getter after writable conversion",
+        true,
+        '{ writable: true }; Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }',
+        true,
+    ],
+]) {
+    test(`${label} controls runtime descriptor activation`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { configurable: ${firstConfigurable}, enumerable: true, get() { return client.projects.create(holder.request); } }); try { Object.defineProperty(sender, "response", ${replacement}); } catch {} async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail)
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            else assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
 for (const [label, source] of [
     [
         "synthetic rest derived paths",
         "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { function send(...holders: [Holder]) { return client.projects.create(holders.map((value) => value).at(0)!.request); } return send(holder); }\n",
+    ],
+    [
+        "synthetic rest bracket derived paths",
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { function send(...holders: [Holder]) { const mapped = holders.map((value) => value); return client.projects.create(mapped[0]!.request); } return send(holder); }\n",
     ],
     [
         "enumerable runtime descriptors",
