@@ -8482,6 +8482,65 @@ test("retains both branches of a conditional later derived-rest element write", 
     });
 });
 
+test("observes an aliased later derived-rest element write through for-in", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); const bad: Holder = { request: body as any }; mapped[0] = bad; for (const key in mapped) return client.projects.create(mapped[key]!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("lets a safe aliased later element overwrite suppress an unsafe derived-rest value", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: body as any }; function send(...holders: Holder[]) { const mapped = holders.map((value) => value); const safe: Holder = { request: { workspaceId: "safe" } }; mapped[0] = safe; for (const key in mapped) return client.projects.create(mapped[key]!.request); } return send(holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("retains a conditional aliased later element write through derived-rest for-in", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder, flag: boolean) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); const bad: Holder = { request: body as any }; if (flag) mapped[0] = bad; for (const key in mapped) return client.projects.create(mapped[key]!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, writeIndex, read] of [
+    ["wrong index", 1, "mapped[0]!.request"],
+    ["out-of-range index", 9, "mapped.at(0)!.request"],
+]) {
+    test(`does not project an aliased ${label} derived-rest element write`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); const bad: Holder = { request: body as any }; mapped[${writeIndex}] = bad; return client.projects.create(${read}); } return send(holder); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("fails closed when aliased derived-rest for-in fallback exceeds the work cap", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder) { function send(...holders: Holder[]) { const mapped = holders.map((value) => value); const bad: Holder = { request: body as any }; mapped[0] = bad; for (const key in mapped) return client.projects.create(mapped[key]!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({
+            root,
+            contract: zeroContract,
+            analysisLimits: { maxAlternatives: 32, maxInvocations: 256, maxWork: 1 },
+        });
+        assert.match(result.failures.join("\n"), /analysis (?:work )?limit exceeded.*max 1/i);
+    });
+});
+
 for (const [label, firstConfigurable, replacement, shouldFail] of [
     ["configurable writable true conversion", true, "{ writable: true }", false],
     ["configurable writable false conversion", true, "{ writable: false }", false],
