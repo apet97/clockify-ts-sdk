@@ -476,6 +476,20 @@ No OpenAPI, generator, synced generated tree, package contents, package version,
 release workflow, tag, publication, GOCLMCP source, Task 8 surface, or live
 Clockify state changed. No local mutation/Stryker command ran.
 
-The inventory is green, but `consumer-request-casts` remains an open
-release-readiness blocker until independent review approves this corrected
-symbol/provenance gate and receipt.
+## Final closure
+
+Task 7 closed on 2026-07-21 at
+`a973fa1ba062c3ee7fa1f539ddd59adc113ed7a9`, covering the complete range
+`5485a65b33831c742f2d9dfe7eebcc4c164b6346..a973fa1ba062c3ee7fa1f539ddd59adc113ed7a9`.
+The final controller passed **1,463/1,463** fixtures twice (standalone and through
+the aggregate contract suite). The production scan reports CLI **0**, MCP **0**,
+exceptions **0/0**, work **8,288/10,000**, and `exhausted:false`; the locked
+production ceiling remains **8,500**. Blank-credential `make perfect-fast`, all
+three dry packs, full and omit-dev audits, and `make risk-register contract-gates`
+passed. No local mutation/Stryker command ran.
+
+Reviewer A approved the complete governed Task 7 range with no Critical or
+Important findings after Correction 62. Reviewer B approved Correction 63 and
+the accumulated governed regression set with no Critical or Important findings.
+The `consumer-request-casts` risk is accepted and is no longer a final-readiness
+blocker; later roadmap blockers remain independently open.
