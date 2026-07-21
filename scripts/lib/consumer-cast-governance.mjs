@@ -11300,15 +11300,38 @@ function analyzeProgram({
                         if (!receiverLists) continue;
                         resolved = true;
                         for (const value of receiverLists.flat()) {
-                            for (const alternative of selectedSyntheticMemberAlternatives(
+                            const alternatives = selectedSyntheticMemberAlternatives(
                                 value,
                                 [expression.name.text],
                                 [projection.node, expression],
-                            )) {
+                            );
+                            if (alternatives.length === 0) {
+                                trace(
+                                    value,
+                                    {
+                                        ...context,
+                                        substitutions,
+                                        accessPath: [
+                                            {
+                                                kind: "property",
+                                                names: [expression.name.text],
+                                            },
+                                            ...(context.accessPath ?? []),
+                                        ],
+                                    },
+                                    depth + 1,
+                                    nextSeen,
+                                );
+                                continue;
+                            }
+                            for (const alternative of alternatives) {
                                 if (!alternative?.value) continue;
                                 trace(
                                     alternative.value,
-                                    { ...context, substitutions, accessPath: [] },
+                                    {
+                                        ...context,
+                                        substitutions: alternative.substitutions ?? substitutions,
+                                    },
                                     depth + 1,
                                     nextSeen,
                                 );
