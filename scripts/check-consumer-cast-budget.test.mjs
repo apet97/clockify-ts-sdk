@@ -7551,7 +7551,7 @@ test("activates a runtime descriptor getter through Object.defineProperty.call",
 test("lets a later exact data descriptor suppress a runtime getter", async () => {
     const source =
         generatedImports +
-        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }); Object.defineProperty(sender, "response", { value: "safe" }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); Object.defineProperty(sender, "response", { value: "safe" }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
     await withFixture(source, async (root) => {
         const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
         assert.deepEqual(result.failures, []);
@@ -7684,7 +7684,7 @@ for (const [label, definitions, shouldFail] of [
     ],
     [
         "later defineProperties data replacing getter",
-        'Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }); Object.defineProperties(sender, { response: { value: "safe" } });',
+        'Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); Object.defineProperties(sender, { response: { value: "safe" } });',
         false,
     ],
     [
@@ -7874,6 +7874,317 @@ test("preserves a getter when a cyclic alias cannot prove the overwrite receiver
         assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
     });
 });
+
+test("projects an exact synthetic rest element through Array.at", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: [Holder]) { return client.projects.create(holders.at(0)!.request); } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects synthetic rest through filter map and exact Array.at", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const safe: Holder = { request: { workspaceId: "safe" } }; const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: [Holder, Holder]) { return client.projects.create(holders.filter(() => true).map((value) => value).at(1)!.request); } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(safe, holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects synthetic rest through a for-in key lookup", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: [Holder]) { for (const key in holders) return client.projects.create(holders[key]!.request); } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return send(holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("activates an enumerable runtime descriptor getter through Object.values", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: Record<string, unknown> = {}; Object.defineProperty(sender, "response", { enumerable: true, get() { return client.projects.create(holder.request); } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return Object.values(sender); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, enumerable] of [
+    ["omitted", ""],
+    ["false", "enumerable: false,"],
+]) {
+    test(`keeps an ${label} enumerable runtime getter inert through Object.values`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: Record<string, unknown> = {}; Object.defineProperty(sender, "response", { ${enumerable} get() { return client.projects.create(holder.request); } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return Object.values(sender); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("retains a synchronous synthetic rest callback that mutates request state", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(...holders: [Holder]) { holders.forEach((value) => { value.request = body as any; }); } mutate(holder); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("projects a synchronous rest callback mutation to the rest boundary", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function send(...holders: [Holder]) { holders.forEach((value) => { value.request = body as any; }); return client.projects.create(holders.at(0)!.request); } return send(holder); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("does not carry a runtime descriptor getter onto a rebound allocation", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; let sender: { response?: unknown } = {}; const old = sender; Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); sender = { response: "safe" }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; void old; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("does not use a throwing non-configurable descriptor replacement as safe proof", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }); try { Object.defineProperty(sender, "response", { value: "safe" }); } catch {} async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, call, shouldFail] of [
+    ["negative exact index", "send(safe, holder)", true],
+    ["wrong exact index", "send(holder, safe)", false],
+    ["zero values", "send()", false],
+]) {
+    test(`${shouldFail ? "projects" : "does not project"} synthetic rest through ${label} Array.at`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const safe: Holder = { request: { workspaceId: "safe" } }; function send(...holders: Holder[]) { const selected = holders.at(-1); return selected ? client.projects.create(selected.request) : undefined; } async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return ${call}; }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail) {
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            } else {
+                assert.deepEqual(result.failures, []);
+            }
+        });
+    });
+}
+
+test("fails closed for an unresolved synthetic rest Array.at index", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder, index: number) { function send(...holders: Holder[]) { const selected = holders.at(index); return selected ? client.projects.create(selected.request) : undefined; } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(
+            result.failures.join("\n"),
+            /could not statically resolve synthetic rest.*at/i,
+        );
+    });
+});
+
+test("fails closed for an unresolved synthetic rest derived method", async () => {
+    const source =
+        generatedImports +
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { function send(...holders: Holder[]) { return client.projects.create(holders.reverse().at(0)!.request); } return send(holder); }\n";
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(
+            result.failures.join("\n"),
+            /could not statically resolve synthetic rest derived method reverse/i,
+        );
+    });
+});
+
+for (const [label, consume] of [
+    ["Object.entries", "Object.entries(sender)"],
+    ["Object.assign", "Object.assign({}, sender)"],
+    ["object spread", "({ ...sender })"],
+    ["object rest", "((({ ...copy }) => copy)(sender))"],
+]) {
+    test(`activates an enumerable runtime descriptor getter through ${label}`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: Record<string, unknown> = {}; Object.defineProperty(sender, "response", { enumerable: true, get() { return client.projects.create(holder.request); } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return ${consume}; }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+        });
+    });
+}
+
+test("keeps a conditionally enumerable runtime descriptor getter conservative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, flag: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: Record<string, unknown> = {}; Object.defineProperty(sender, "response", { enumerable: flag, get() { return client.projects.create(holder.request); } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return Object.values(sender); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("retains a helper-mediated synthetic rest callback mutation", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function write(value: Holder) { value.request = body as any; } function mutate(...holders: [Holder]) { holders.forEach((value) => write(value)); } mutate(holder); return client.projects.create(holder.request); }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, callback] of [
+    ["safe mutation", '(value: Holder) => { value.request = { workspaceId: "safe" }; }'],
+    [
+        "async-late mutation",
+        "async (value: Holder) => { await Promise.resolve(); value.request = body as any; }",
+    ],
+]) {
+    test(`keeps ${label} through a synthetic rest callback inert`, async () => {
+        const source =
+            generatedImports +
+            `interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; function mutate(...holders: [Holder]) { holders.forEach(${callback}); } mutate(holder); return client.projects.create(holder.request); }\n`;
+        await withFixture(source, async (root) => {
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            assert.deepEqual(result.failures, []);
+        });
+    });
+}
+
+test("retains a runtime descriptor getter through its old allocation alias", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; let sender: { response?: unknown } = {}; const old = sender; Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); sender = { response: "safe" }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return old.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("keeps a conditional runtime descriptor receiver rebind conservative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, flag: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; let sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); if (flag) sender = { response: "safe" }; async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("lets a configurable safe getter replace an unsafe getter", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { configurable: true, get() { return client.projects.create(holder.request); } }); Object.defineProperty(sender, "response", { get() { return "safe"; } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.deepEqual(result.failures, []);
+    });
+});
+
+test("keeps an unsafe getter when a non-configurable getter replacement throws", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }); try { Object.defineProperty(sender, "response", { get() { return "safe"; } }); } catch {} async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+test("locks production consumer-cast analysis below the correction headroom ceiling", async () => {
+    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+    assert.equal(result.analysisStats.exhausted, false);
+    assert.ok(result.analysisStats.work <= 8_500, `work ${result.analysisStats.work} > 8500`);
+});
+
+test("keeps a cyclic runtime descriptor receiver alias conservative", async () => {
+    const source =
+        generatedImports +
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport async function run(client: FixtureClient, body: unknown, flag: boolean) { const holder: Holder = { request: { workspaceId: "safe" } }; const sender: { response?: unknown } = {}; let alias = sender; alias = flag ? alias : sender; Object.defineProperty(alias, "response", { get() { return client.projects.create(holder.request); } }); async function invoke(callback: () => void) { await Promise.resolve(); callback(); } const pending = invoke(() => { holder.request = body as any; }); await pending; return sender.response; }\n';
+    await withFixture(source, async (root) => {
+        const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+        assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+    });
+});
+
+for (const [label, request, shouldFail] of [
+    ["unsafe", "body as any", true],
+    ["safe", '{ workspaceId: "safe" }', false],
+]) {
+    test(`keeps ${label} request-boundary tracing through an ordinary declaration-file fluent chain`, async () => {
+        const source =
+            generatedImports +
+            `import { fluent } from "fluent-fixture";\nexport function run(body: unknown) { return fluent.step().submit(${request}); }\n`;
+        await withFixture(source, async (root) => {
+            await mkdir(path.join(root, "node_modules/fluent-fixture"), { recursive: true });
+            await writeFile(
+                path.join(root, "node_modules/fluent-fixture/package.json"),
+                `${JSON.stringify({ name: "fluent-fixture", types: "index.d.ts" })}\n`,
+            );
+            await writeFile(
+                path.join(root, "node_modules/fluent-fixture/index.d.ts"),
+                'import type { ClockifyApi } from "clockify-sdk-ts-115/requests";\nexport interface Fluent { step(): Fluent; submit(request: ClockifyApi.CreateProjectsRequest): unknown; }\nexport const fluent: Fluent;\n',
+            );
+            const result = await validateConsumerCastGovernance({ root, contract: zeroContract });
+            if (shouldFail) {
+                assert.match(result.failures.join("\n"), /as any.*CreateProjectsRequest/i);
+            } else {
+                assert.deepEqual(result.failures, []);
+            }
+        });
+    });
+}
+
+for (const [label, source] of [
+    [
+        "synthetic rest derived paths",
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { function send(...holders: [Holder]) { return client.projects.create(holders.map((value) => value).at(0)!.request); } return send(holder); }\n",
+    ],
+    [
+        "enumerable runtime descriptors",
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { const sender = {}; Object.defineProperty(sender, "response", { enumerable: true, get() { return client.projects.create(holder.request); } }); return Object.values(sender); }\n',
+    ],
+    [
+        "synthetic rest callback effects",
+        "interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, body: unknown, holder: Holder) { function send(...holders: [Holder]) { holders.forEach((value) => { value.request = body as any; }); return client.projects.create(holders.at(0)!.request); } return send(holder); }\n",
+    ],
+    [
+        "runtime descriptor receiver origins",
+        'interface Holder { request: ClockifyApi.CreateProjectsRequest }\nexport function run(client: FixtureClient, holder: Holder) { let sender: { response?: unknown } = {}; Object.defineProperty(sender, "response", { get() { return client.projects.create(holder.request); } }); return sender.response; }\n',
+    ],
+]) {
+    test(`fails closed when ${label} exceed the work cap`, async () => {
+        await withFixture(generatedImports + source, async (root) => {
+            const result = await validateConsumerCastGovernance({
+                root,
+                contract: zeroContract,
+                analysisLimits: { maxAlternatives: 32, maxInvocations: 256, maxWork: 1 },
+            });
+            assert.match(result.failures.join("\n"), /analysis (?:work )?limit exceeded.*max 1/i);
+        });
+    });
+}
 
 for (const [label, call, shouldFail] of [
     ["static spread", "send(...([other, holder] as const))", true],
