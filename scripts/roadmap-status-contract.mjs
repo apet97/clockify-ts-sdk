@@ -128,8 +128,41 @@ const task16Contract = Object.freeze({
     },
 });
 
+const task17Contract = Object.freeze({
+    status: "implemented-awaiting-github-calibration",
+    taskBase: "37c3138a0fa66b7626572972c1fdad2efc44b06c",
+    positiveMutationSources: [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts",
+    ],
+    pinnedTests: [
+        "cli/tests/command-risk.test.ts",
+        "cli/tests/mutation-leaves.test.ts",
+        "cli/tests/receipt.test.ts",
+        "cli/tests/resolve-refs.test.ts",
+    ],
+    globalFloor: 0,
+    globalCalibrationPending: true,
+    moduleFloors: {
+        "cli/src/commands/leaf-command.ts": 0,
+        "cli/src/commands/resolve-refs.ts": 0,
+        "cli/src/receipt.ts": 0,
+    },
+    calibrationPending: [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts",
+    ],
+    remoteProofRecorded: false,
+    requiredIndependentApprovals: 2,
+    recordedIndependentApprovals: 0,
+    next: "Controller must push this calibration-ready scope and dispatch Mutation target=cli; measured floors, receipt, approvals, and Task 18 aggregate proof remain pending.",
+});
+
 const remoteMutationProofContract = Object.freeze({
-    status: "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete",
+    status: "partial-wrapper-and-mcp-individual-proofs-recorded-cli-calibration-pending-and-aggregate-approved-target-proof-incomplete",
+    currentTargets: ["all", "wrapper", "mcp", "cli"],
     retainedRuns: [
         {
             task: 14,
@@ -206,6 +239,22 @@ export function validateRoadmapTask3Status(roadmapStatus) {
             if (!sameValue(actual, expected)) {
                 failures.push(
                     `task16.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
+                );
+            }
+        }
+    }
+    if (
+        roadmapStatus.task17 == null ||
+        typeof roadmapStatus.task17 !== "object" ||
+        Array.isArray(roadmapStatus.task17)
+    ) {
+        failures.push("task17: missing machine-readable Task 17 calibration status");
+    } else {
+        for (const [field, expected] of Object.entries(task17Contract)) {
+            const actual = roadmapStatus.task17[field];
+            if (!sameValue(actual, expected)) {
+                failures.push(
+                    `task17.${field}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`,
                 );
             }
         }

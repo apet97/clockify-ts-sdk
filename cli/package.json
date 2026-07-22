@@ -41,6 +41,7 @@
     "test": "node ../scripts/generate-package-versions.mjs && vitest run",
     "test:coverage": "node ../scripts/generate-package-versions.mjs && vitest run --coverage",
     "test:watch": "node ../scripts/generate-package-versions.mjs && vitest",
+    "mutation": "node ../scripts/generate-package-versions.mjs && npm run build -w clockify-sdk-ts-115 && cd .. && CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' stryker run cli/stryker.conf.json",
     "type-check": "node ../scripts/generate-package-versions.mjs && tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

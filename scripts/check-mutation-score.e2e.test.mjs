@@ -34,6 +34,14 @@ function contract(moduleFloor) {
                 globalFloor: 80,
                 moduleFloors: { "mcp/example.ts": 80 },
             },
+            {
+                id: "cli",
+                report: "cli/reports/mutation/mutation.json",
+                globalFloor: 0,
+                globalCalibrationPending: true,
+                moduleFloors: { "cli/example.ts": 0 },
+                calibrationPending: ["cli/example.ts"],
+            },
         ],
         wiring: {
             makeTarget: "mutation",
@@ -85,6 +93,7 @@ async function createFixture(moduleFloor = 90) {
         mkdir(path.join(root, "scripts/lib"), { recursive: true }),
         mkdir(path.join(root, "wrapper/reports/mutation"), { recursive: true }),
         mkdir(path.join(root, "mcp/reports/mutation"), { recursive: true }),
+        mkdir(path.join(root, "cli/reports/mutation"), { recursive: true }),
     ]);
     await Promise.all([
         cp(
@@ -127,6 +136,11 @@ async function createFixture(moduleFloor = 90) {
                 },
             })}\n`,
         ),
+        writeFile(path.join(root, "cli/example.ts"), "export const example = true;\n"),
+        writeFile(
+            path.join(root, "cli/stryker.conf.json"),
+            `${JSON.stringify({ mutate: ["cli/example.ts"] }, null, 2)}\n`,
+        ),
     ]);
     await writeContract(root, moduleFloor);
     assert.equal(run("git", ["init", "--quiet"], root).status, 0);
@@ -134,13 +148,38 @@ async function createFixture(moduleFloor = 90) {
     return root;
 }
 
-function check(root) {
+function check(root, packageId = "wrapper") {
     return run(
         process.execPath,
-        ["scripts/check-mutation-score.mjs", "--package", "wrapper"],
+        ["scripts/check-mutation-score.mjs", "--package", packageId],
         root,
     );
 }
+
+test("duplicate, substituted, reordered, and unknown mutation package IDs fail closed", async () => {
+    const root = await createFixture(90);
+    try {
+        for (const [name, mutate] of [
+            ["duplicate", (value) => (value.packages[2].id = "mcp")],
+            ["substituted", (value) => (value.packages[2].id = "unknown")],
+            ["reordered", (value) => value.packages.reverse()],
+        ]) {
+            const value = await readJson(root, "docs/mutation-score-contract.json");
+            mutate(value);
+            await writeJson(root, "docs/mutation-score-contract.json", value);
+            const result = check(root);
+            assert.notEqual(result.status, 0, `${name}: ${result.stdout}${result.stderr}`);
+            assert.match(result.stderr, /packages.*ordered package ids wrapper, mcp, cli/i);
+            await writeContract(root, 90);
+        }
+
+        const unknown = check(root, "unknown");
+        assert.notEqual(unknown.status, 0, `${unknown.stdout}${unknown.stderr}`);
+        assert.match(unknown.stderr, /argv\.--package: unknown package id unknown/i);
+    } finally {
+        await rm(root, { recursive: true, force: true });
+    }
+});
 
 test("a committed mutation-floor decrease is rejected against historical maxima", async () => {
     const root = await createFixture(90);
@@ -308,7 +347,7 @@ for (const [label, floor] of [
     });
 }
 
-test("new governed packages and modules do not violate historical retention", async () => {
+test("unknown governed packages are rejected even when their report and source exist", async () => {
     const root = await createFixture(90);
     try {
         const contractValue = await readJson(root, "docs/mutation-score-contract.json");
@@ -346,8 +385,8 @@ test("new governed packages and modules do not violate historical retention", as
         commit(root, "add governed package and module");
 
         const result = check(root);
-        assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
-        assert.match(result.stdout, /mutation score check passed/);
+        assert.notEqual(result.status, 0, `${result.stdout}${result.stderr}`);
+        assert.match(result.stderr, /packages.*ordered package ids wrapper, mcp, cli/i);
     } finally {
         await rm(root, { recursive: true, force: true });
     }
@@ -489,6 +528,10 @@ test("the repository's complete legacy contract history satisfies the immutable 
             cp(
                 path.join(repoRoot, "docs/mutation-score-contract.json"),
                 path.join(root, "docs/mutation-score-contract.json"),
+            ),
+            cp(
+                path.join(repoRoot, "scripts/lib/mutation-score-contract.mjs"),
+                path.join(root, "scripts/lib/mutation-score-contract.mjs"),
             ),
         ]);
 

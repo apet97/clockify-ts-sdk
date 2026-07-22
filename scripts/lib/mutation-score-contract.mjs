@@ -31,6 +31,42 @@ function isSourcePath(packageId, value) {
 }
 
 /**
+ * The only permitted zero global floor is the explicit, temporary CLI first
+ * calibration. Module-zero validation remains coupled to Stryker source scope
+ * below; this function prevents a global zero from slipping past that rule.
+ */
+export function validateMutationCalibration({
+    packageId,
+    globalFloor,
+    globalCalibrationPending,
+    moduleFloors,
+    calibrationPending,
+}) {
+    const failures = [];
+    const isCli = packageId === "cli";
+    if (globalFloor === 0) {
+        if (!isCli) {
+            failures.push(`${packageId}.globalFloor: floor 0 is permitted only for CLI first calibration`);
+        } else if (globalCalibrationPending !== true) {
+            failures.push(`${packageId}.globalFloor: floor 0 requires globalCalibrationPending: true`);
+        }
+    }
+    if (!isCli && globalCalibrationPending !== undefined) {
+        failures.push(`${packageId}.globalCalibrationPending: is permitted only for CLI first calibration`);
+    }
+    if (isCli && globalFloor !== 0 && globalCalibrationPending !== undefined) {
+        failures.push(`${packageId}.globalCalibrationPending: must be removed once the global floor is measured`);
+    }
+    if (!isCli && calibrationPending !== undefined) {
+        failures.push(`${packageId}.calibrationPending: is permitted only for CLI first calibration`);
+    }
+    if (isCli && globalFloor === 0 && Object.values(moduleFloors ?? {}).some((floor) => floor !== 0)) {
+        failures.push(`${packageId}.moduleFloors: CLI global calibration requires every governed module floor to be 0`);
+    }
+    return failures;
+}
+
+/**
  * Require an exact one-to-one mapping between positive Stryker mutation
  * sources and the floor-bearing hand-written modules. Exclusions remain in
  * Stryker config but cannot silently become a governed module floor.

@@ -1270,6 +1270,7 @@
       "contracts": [
         "docs/mutation-score-contract.json"
       ],
+      "scope": "wrapper-mcp-cli-mutation-score-contract",
       "auditIds": [
         "mutation"
       ],

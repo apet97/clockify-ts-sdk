@@ -299,13 +299,45 @@
       }
     }
   },
+  "task17": {
+    "status": "implemented-awaiting-github-calibration",
+    "taskBase": "37c3138a0fa66b7626572972c1fdad2efc44b06c",
+    "positiveMutationSources": [
+      "cli/src/commands/leaf-command.ts",
+      "cli/src/commands/resolve-refs.ts",
+      "cli/src/receipt.ts"
+    ],
+    "pinnedTests": [
+      "cli/tests/command-risk.test.ts",
+      "cli/tests/mutation-leaves.test.ts",
+      "cli/tests/receipt.test.ts",
+      "cli/tests/resolve-refs.test.ts"
+    ],
+    "globalFloor": 0,
+    "globalCalibrationPending": true,
+    "moduleFloors": {
+      "cli/src/commands/leaf-command.ts": 0,
+      "cli/src/commands/resolve-refs.ts": 0,
+      "cli/src/receipt.ts": 0
+    },
+    "calibrationPending": [
+      "cli/src/commands/leaf-command.ts",
+      "cli/src/commands/resolve-refs.ts",
+      "cli/src/receipt.ts"
+    ],
+    "remoteProofRecorded": false,
+    "requiredIndependentApprovals": 2,
+    "recordedIndependentApprovals": 0,
+    "next": "Controller must push this calibration-ready scope and dispatch Mutation target=cli; measured floors, receipt, approvals, and Task 18 aggregate proof remain pending."
+  },
   "remoteMutationProof": {
-    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete",
+    "status": "partial-wrapper-and-mcp-individual-proofs-recorded-cli-calibration-pending-and-aggregate-approved-target-proof-incomplete",
     "workflow": ".github/workflows/mutation.yml",
     "currentTargets": [
       "all",
       "wrapper",
-      "mcp"
+      "mcp",
+      "cli"
     ],
     "artifactPattern": "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}",
     "retentionDays": 14,

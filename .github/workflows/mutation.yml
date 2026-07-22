@@ -12,6 +12,7 @@ on:
           - all
           - wrapper
           - mcp
+          - cli
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -65,6 +66,46 @@ jobs:
         if: ${{ inputs.target == 'mcp' }}
         run: node scripts/check-mutation-score.mjs --package mcp
 
+      - name: Run CLI mutation
+        if: ${{ inputs.target == 'cli' }}
+        run: npm run mutation -w @apet97/clockify-cli-115
+
+      - name: Check CLI mutation floor
+        if: ${{ inputs.target == 'cli' }}
+        run: node scripts/check-mutation-score.mjs --package cli
+
+      - name: Verify expected mutation reports
+        id: mutation-reports
+        if: always()
+        shell: bash
+        run: |
+          case "${{ inputs.target }}" in
+            all)
+              reports=$'wrapper/reports/mutation/mutation.json\nmcp/reports/mutation/mutation.json\ncli/reports/mutation/mutation.json'
+              ;;
+            wrapper)
+              reports='wrapper/reports/mutation/mutation.json'
+              ;;
+            mcp)
+              reports='mcp/reports/mutation/mutation.json'
+              ;;
+            cli)
+              reports='cli/reports/mutation/mutation.json'
+              ;;
+            *)
+              echo "Unsupported mutation target: ${{ inputs.target }}" >&2
+              exit 1
+              ;;
+          esac
+          {
+            echo 'paths<<EOF'
+            echo "$reports"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+          while IFS= read -r report; do
+            test -f "$report"
+          done <<< "$reports"
+
       - name: Upload mutation reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -72,6 +113,4 @@ jobs:
           name: mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
-          path: |
-            wrapper/reports/mutation/**
-            mcp/reports/mutation/**
+          path: ${{ steps.mutation-reports.outputs.paths }}

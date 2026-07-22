@@ -34,10 +34,10 @@ distill the gate, navigation, MCP-tool, and release workflows below.
   separate credentialed sandbox proof.
 - Mutation score proof is GitHub-hosted for routine use. The manual
   **Mutation** workflow runs on `workflow_dispatch` with `target=all`,
-  `wrapper`, or `mcp`; `make mutation-ci` verifies that wiring and is
+  `wrapper`, `mcp`, or `cli`; `make mutation-ci` verifies that wiring and is
   included in `make perfect-full`.
 - Local `make mutation` remains an opt-in maintainer gate. It runs
-  wrapper + MCP Stryker only after SDK codegen and is capped by the
+  wrapper + MCP + CLI Stryker only after SDK codegen and is capped by the
   package Stryker configs.
 - Never hand-edit `spec/corrected/**`, `output/ts-sdk/**`, or
   `wrapper/src/**`. API-truth changes start in `../GOCLMCP/`, then
@@ -297,7 +297,7 @@ Root shortcuts for non-coder operation and future-agent handoff:
 | Check wrapper build-output determinism | `make build-determinism` |
 | Replay redacted typed cassettes | `make cassettes` |
 | Check manual GitHub mutation workflow wiring | `make mutation-ci` |
-| Opt-in local wrapper + mcp mutation-score gate | `make mutation` |
+| Opt-in local wrapper + MCP + CLI mutation-score gate | `make mutation` |
 | Check package tarball snapshots | `make pack-snapshot-check` |
 | Optional sandbox key preflight | `CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' make sandbox-key-health` |
 | Check future-agent guidance parity | `make agent-handoff` |

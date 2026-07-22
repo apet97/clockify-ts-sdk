@@ -522,14 +522,17 @@ make docs-drift
 - `make cassettes` replays committed, redacted response cassettes
   through the typed SDK client and local mock server.
 - `make mutation` runs Stryker against the hand-written wrapper helper
-  modules and the MCP safety-critical modules
+  modules, the MCP safety-critical modules
   (`mcp/src/orchestration/confirmation.ts`, `mcp/src/result.ts`,
-  `mcp/src/tool-risk.ts`), then
-  enforces the `docs/mutation-score-contract.json` floors. The MCP run
+  `mcp/src/tool-risk.ts`), and the CLI command-risk, reference-resolution,
+  and receipt modules, then enforces the `docs/mutation-score-contract.json`
+  floors. The MCP and CLI runs
   mutates the existing Vitest 4 suite — Stryker's vitest-runner accepts
   vitest >=2.0.0, so the unified vitest ^4 across wrapper/cli/mcp is
-  supported without extra handling. The contract is two
-  packages (wrapper + mcp); floors ratchet monotonic-up.
+  supported without extra handling. The contract is three
+  packages (wrapper + mcp + cli); floors ratchet monotonic-up. CLI starts
+  with explicit temporary zero floors for its first GitHub-only calibration;
+  remove those flags only when measured floors are committed.
 - **Run Stryker from the repo ROOT** (`make mutation`), never
   `cd wrapper && npx stryker run`: `wrapper/stryker.conf.json`'s
   `mutate`/`configFile`/`tempDirName` paths are repo-root-relative, so from

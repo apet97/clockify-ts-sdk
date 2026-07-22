@@ -104,7 +104,7 @@ test("Task 3 roadmap status is pinned and rejects omission or stale implementati
     }
 });
 
-test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate proof remains incomplete", async () => {
+test("Tasks 14-16 proofs stay pinned while Task 17 calibration and aggregate proof remain incomplete", async () => {
     const [roadmapStatusText, riskRegisterText, releaseContractText] = await Promise.all([
         readFile(roadmapStatusPath, "utf8"),
         readFile(riskRegisterPath, "utf8"),
@@ -113,7 +113,7 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
     const roadmapStatus = JSON.parse(roadmapStatusText);
     const riskRegister = JSON.parse(riskRegisterText);
     const partialStatus =
-        "partial-wrapper-and-mcp-individual-proofs-recorded-cli-and-aggregate-approved-target-proof-incomplete";
+        "partial-wrapper-and-mcp-individual-proofs-recorded-cli-calibration-pending-and-aggregate-approved-target-proof-incomplete";
     const retainedRuns = [
         {
             task: 14,
@@ -184,6 +184,7 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
     assert.equal(roadmapStatus.remoteMutationProof.status, partialStatus);
     assert.deepEqual(roadmapStatus.remoteMutationProof.retainedRuns, retainedRuns);
     assert.equal(roadmapStatus.remoteMutationProof.aggregateApprovedTargetProofComplete, false);
+    assert.deepEqual(roadmapStatus.remoteMutationProof.currentTargets, ["all", "wrapper", "mcp", "cli"]);
     assert.equal(roadmapStatus.task15.status, "complete");
     assert.equal(roadmapStatus.task15.recordedIndependentApprovals, 2);
     assert.equal(roadmapStatus.task15.requiredIndependentApprovals, 2);
@@ -218,15 +219,24 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
         roadmapStatus.task16.remoteProof.measurements.modules["mcp/src/tool-risk.ts"].floor,
         90,
     );
+    assert.equal(roadmapStatus.task17.status, "implemented-awaiting-github-calibration");
+    assert.equal(roadmapStatus.task17.globalFloor, 0);
+    assert.equal(roadmapStatus.task17.globalCalibrationPending, true);
+    assert.deepEqual(roadmapStatus.task17.calibrationPending, [
+        "cli/src/commands/leaf-command.ts",
+        "cli/src/commands/resolve-refs.ts",
+        "cli/src/receipt.ts",
+    ]);
+    assert.equal(roadmapStatus.task17.remoteProofRecorded, false);
     assert.deepEqual(validateRoadmapTask3Status(roadmapStatus), []);
 
     const risk = riskRegister.risks.find((entry) => entry.id === "remote-mutation-proof-pending");
     assert.ok(risk);
     assert.match(
         risk.summary,
-        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*CLI.*aggregate.*Task 18.*incomplete/i,
+        /Tasks 14 and 15.*independently approved.*Task 16.*independently approved.*MCP safety.*Task 17.*calibration-ready.*aggregate.*Task 18.*incomplete/i,
     );
-    assert.match(risk.impact, /remotely and independently approved.*Task 18 receipt/i);
+    assert.match(risk.impact, /remotely and independently approved.*CLI calibration.*Task 18 receipt/i);
     assert.ok(
         risk.evidence.some(
             (entry) =>
@@ -285,6 +295,13 @@ test("Task 14, Task 15, and Task 16 individual proofs are pinned while aggregate
                 fixture.task15.status = "implemented-awaiting-independent-approvals";
             },
             expected: /task15\.status.*complete/i,
+        },
+        {
+            name: "premature-task17-remote-proof",
+            mutate(fixture) {
+                fixture.task17.remoteProofRecorded = true;
+            },
+            expected: /task17\.remoteProofRecorded.*false/i,
         },
         {
             name: "premature-aggregate-completion",

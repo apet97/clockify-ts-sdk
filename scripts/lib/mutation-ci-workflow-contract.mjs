@@ -15,6 +15,23 @@ const MCP_MUTATION_TEST_FILES = Object.freeze([
     "mcp/tests/tool-risk.test.ts",
 ]);
 
+const CLI_MUTATION_TEST_FILES = Object.freeze([
+    "cli/tests/command-risk.test.ts",
+    "cli/tests/mutation-leaves.test.ts",
+    "cli/tests/receipt.test.ts",
+    "cli/tests/resolve-refs.test.ts",
+]);
+
+const CLI_MUTATION_SOURCES = Object.freeze([
+    "cli/src/commands/leaf-command.ts",
+    "cli/src/commands/resolve-refs.ts",
+    "cli/src/receipt.ts",
+    "!cli/dist/**",
+    "!cli/*.config.*",
+    "!cli/tests/**",
+    "!cli/scripts/**",
+]);
+
 function parseJson(text, label, failures) {
     try {
         return JSON.parse(text);
@@ -50,7 +67,38 @@ function requireStep(step, expected, label, failures) {
     }
 }
 
-export function validateMutationCiContract({ workflow, makefile, wrapperStryker, mcpStryker }) {
+function requireExactConfig(configText, label, expected, failures) {
+    const config = parseJson(configText, `${label} Stryker config`, failures);
+    if (config == null) return;
+    for (const [key, value] of Object.entries(expected)) {
+        if (JSON.stringify(config[key]) !== JSON.stringify(value)) {
+            failures.push(`${label} Stryker ${key} must be ${JSON.stringify(value)}`);
+        }
+    }
+}
+
+function mutationRecipe(makefile) {
+    const lines = makefile.split("\n");
+    const start = lines.findIndex((line) => line === "mutation: sdk-codegen");
+    if (start < 0) return null;
+    const recipe = [];
+    for (const line of lines.slice(start + 1)) {
+        if (!line.startsWith("\t")) break;
+        recipe.push(line.slice(1));
+    }
+    return recipe;
+}
+
+export function validateMutationCiContract({
+    workflow,
+    makefile,
+    wrapperStryker,
+    mcpStryker,
+    cliStryker,
+    wrapperPackage,
+    mcpPackage,
+    cliPackage,
+}) {
     const failures = [];
     let parsed;
     try {
@@ -74,8 +122,8 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
     if (target?.required !== true) failures.push("target input must be required");
     if (target?.default !== "all") failures.push('target input must default to "all"');
     if (target?.type !== "choice") failures.push('target input type must be "choice"');
-    if (!sameValues(target?.options, ["all", "wrapper", "mcp"])) {
-        failures.push("target options must be exactly all, wrapper, mcp");
+    if (!sameValues(target?.options, ["all", "wrapper", "mcp", "cli"])) {
+        failures.push("target options must be exactly all, wrapper, mcp, cli");
     }
 
     for (const name of ["CLOCKIFY_API_KEY", "CLOCKIFY_WORKSPACE_ID"]) {
@@ -170,7 +218,60 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         "MCP floor condition",
         failures,
     );
+    requireStep(
+        namedStep(steps, "Run CLI mutation", failures),
+        {
+            if: "${{ inputs.target == 'cli' }}",
+            run: "npm run mutation -w @apet97/clockify-cli-115",
+        },
+        "CLI mutation condition",
+        failures,
+    );
+    requireStep(
+        namedStep(steps, "Check CLI mutation floor", failures),
+        {
+            if: "${{ inputs.target == 'cli' }}",
+            run: "node scripts/check-mutation-score.mjs --package cli",
+        },
+        "CLI floor condition",
+        failures,
+    );
 
+    const verifyReports = namedStep(steps, "Verify expected mutation reports", failures);
+    requireStep(
+        verifyReports,
+        { id: "mutation-reports", if: "always()", shell: "bash" },
+        "target-aware mutation report verification",
+        failures,
+    );
+    const expectedReportVerification = [
+        "all)",
+        "wrapper/reports/mutation/mutation.json",
+        "mcp/reports/mutation/mutation.json",
+        "cli/reports/mutation/mutation.json",
+        "wrapper)",
+        "mcp)",
+        "cli)",
+        "test -f \"$report\"",
+        "Unsupported mutation target",
+    ];
+    for (const marker of expectedReportVerification) {
+        if (!verifyReports?.run?.includes(marker)) {
+            failures.push(`target-aware mutation report verification must include ${JSON.stringify(marker)}`);
+        }
+    }
+    for (const reportPath of [
+        "wrapper/reports/mutation/mutation.json",
+        "mcp/reports/mutation/mutation.json",
+        "cli/reports/mutation/mutation.json",
+    ]) {
+        const occurrences = verifyReports?.run?.split(reportPath).length - 1;
+        if (occurrences !== 2) {
+            failures.push(
+                `target-aware mutation report verification must name ${reportPath} exactly for all and its focused target`,
+            );
+        }
+    }
     const upload = namedStep(steps, "Upload mutation reports", failures);
     requireStep(
         upload,
@@ -178,16 +279,20 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
         "mutation report upload",
         failures,
     );
+    if (upload?.with?.name !== "mutation-reports-${{ inputs.target }}-${{ github.run_attempt }}") {
+        failures.push("mutation report artifact name must preserve target and run attempt");
+    }
     if (upload?.with?.["if-no-files-found"] !== "error") {
-        failures.push("if-no-files-found must error when a mutation report is missing");
+        failures.push("mutation report upload must error when a mutation report is missing");
     }
     if (upload?.with?.["retention-days"] !== 14) {
         failures.push("mutation report retention must be exactly 14 days");
     }
-    for (const reportPath of ["wrapper/reports/mutation/**", "mcp/reports/mutation/**"]) {
-        if (!upload?.with?.path?.split("\n").includes(reportPath)) {
-            failures.push(`mutation report upload must include ${reportPath}`);
-        }
+    if (upload?.with?.path !== "${{ steps.mutation-reports.outputs.paths }}") {
+        failures.push("mutation report upload must use the verified target-aware path set");
+    }
+    if (steps.filter((step) => step?.uses === ACTIONS.uploadArtifact).length !== 1) {
+        failures.push("Mutation workflow must define exactly one aggregate target-aware report upload");
     }
 
     for (const step of steps.filter((candidate) => typeof candidate?.uses === "string")) {
@@ -205,31 +310,55 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
     if (perfectFullRunsLocalMutation(perfectFullLine)) {
         failures.push("perfect-full must not run local mutation");
     }
-    for (const marker of [
-        "mutation-ci:",
-        "node --test scripts/check-mutation-ci-workflow.test.mjs",
-        "node scripts/check-mutation-ci-workflow.mjs",
-        "npm run mutation -w clockify-sdk-ts-115",
-        "npm run mutation -w @apet97/clockify-mcp-115",
+    const recipe = mutationRecipe(makefile);
+    const expectedRecipe = [
+        "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w clockify-sdk-ts-115",
+        "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-mcp-115",
+        "CLOCKIFY_API_KEY='' CLOCKIFY_WORKSPACE_ID='' npm run mutation -w @apet97/clockify-cli-115",
         "node scripts/check-mutation-score.mjs",
-    ]) {
-        if (!makefile.includes(marker)) failures.push(`Makefile missing ${JSON.stringify(marker)}`);
+    ];
+    if (!sameValues(recipe, expectedRecipe)) {
+        failures.push("mutation Makefile recipe must run wrapper, MCP, CLI, then the shared checker exactly");
     }
 
-    for (const [label, text] of [
-        ["wrapper", wrapperStryker],
-        ["MCP", mcpStryker],
-    ]) {
-        const config = parseJson(text, `${label} Stryker config`, failures);
-        if (config != null && config.concurrency !== 2) {
-            failures.push(`${label} Stryker concurrency must remain 2`);
+    requireExactConfig(
+        wrapperStryker,
+        "wrapper",
+        { concurrency: 2 },
+        failures,
+    );
+    requireExactConfig(
+        mcpStryker,
+        "MCP",
+        { concurrency: 2, testFiles: MCP_MUTATION_TEST_FILES },
+        failures,
+    );
+    requireExactConfig(
+        cliStryker,
+        "CLI",
+        {
+            packageManager: "npm",
+            testRunner: "vitest",
+            vitest: { configFile: "cli/vitest.config.ts", dir: "cli", related: false },
+            coverageAnalysis: "perTest",
+            testFiles: CLI_MUTATION_TEST_FILES,
+            mutate: CLI_MUTATION_SOURCES,
+            reporters: ["json", "clear-text"],
+            jsonReporter: { fileName: "cli/reports/mutation/mutation.json" },
+            timeoutMS: 60000,
+            concurrency: 2,
+            tempDirName: "cli/.stryker-tmp",
+        },
+        failures,
+    );
+    for (const [label, manifest] of [["wrapper", wrapperPackage], ["MCP", mcpPackage], ["CLI", cliPackage]]) {
+        if (!manifest?.scripts?.mutation?.startsWith("node ../scripts/generate-package-versions.mjs && ")) {
+            failures.push(`${label} mutation entrypoint must generate manifest-derived runtime versions first`);
         }
-        if (
-            label === "MCP" &&
-            config != null &&
-            !sameValues(config.testFiles, MCP_MUTATION_TEST_FILES)
-        ) {
-            failures.push("MCP Stryker testFiles must pin every dedicated governed-module test");
+    }
+    for (const [label, manifest] of [["MCP", mcpPackage], ["CLI", cliPackage]]) {
+        if (!/generate-package-versions\.mjs && npm run build -w clockify-sdk-ts-115 &&/.test(manifest?.scripts?.mutation ?? "")) {
+            failures.push(`${label} mutation entrypoint must build its SDK workspace dependency before Vitest discovery`);
         }
     }
 

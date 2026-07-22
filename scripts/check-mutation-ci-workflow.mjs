@@ -11,11 +11,19 @@ function read(relativePath) {
     return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
+function readJson(relativePath) {
+    return JSON.parse(read(relativePath));
+}
+
 const failures = validateMutationCiContract({
     workflow: read(".github/workflows/mutation.yml"),
     makefile: read("Makefile"),
     wrapperStryker: read("wrapper/stryker.conf.json"),
     mcpStryker: read("mcp/stryker.conf.json"),
+    cliStryker: read("cli/stryker.conf.json"),
+    wrapperPackage: readJson("wrapper/package.json"),
+    mcpPackage: readJson("mcp/package.json"),
+    cliPackage: readJson("cli/package.json"),
 });
 
 if (failures.length > 0) {
