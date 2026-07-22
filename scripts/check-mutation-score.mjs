@@ -89,131 +89,81 @@ function git(args) {
     });
 }
 
-function parseGitContract(revision, label) {
+function parseGitContract(revision) {
     const result = git(["show", `${revision}:${CONTRACT_PATH}`]);
     if (result.status !== 0) {
         fail(
-            "ratchet.baseline",
-            `cannot read ${label} contract: ${result.stderr.trim() || `git exited ${result.status}`}`,
+            "ratchet.history",
+            `cannot read historical contract at ${revision}: ${result.stderr.trim() || `git exited ${result.status}`}`,
         );
         return null;
     }
     try {
         return JSON.parse(result.stdout);
     } catch (error) {
-        fail("ratchet.baseline", `${label} contract is invalid JSON: ${error.message}`);
+        fail(
+            "ratchet.history",
+            `historical contract at ${revision} is invalid JSON: ${error.message}`,
+        );
         return null;
     }
-}
-
-function sameContract(left, right) {
-    return JSON.stringify(left) === JSON.stringify(right);
 }
 
 function shallowRepository() {
     const result = git(["rev-parse", "--is-shallow-repository"]);
     if (result.status !== 0) {
         fail(
-            "ratchet.baseline",
+            "ratchet.history",
             `cannot determine whether HEAD is shallow: ${result.stderr.trim() || `git exited ${result.status}`}`,
         );
         return null;
     }
     if (!new Set(["true", "false"]).has(result.stdout.trim())) {
-        fail("ratchet.baseline", "git returned an invalid shallow-repository state");
+        fail("ratchet.history", "git returned an invalid shallow-repository state");
         return null;
     }
     return result.stdout.trim() === "true";
 }
 
-function readRatchetBaseline(worktreeContract) {
-    const headContract = parseGitContract("HEAD", "committed HEAD");
-    if (headContract == null) return { contract: null, label: "unavailable" };
-
-    if (!sameContract(worktreeContract, headContract)) {
-        return { contract: headContract, label: "committed HEAD" };
-    }
-
-    const parent = git(["rev-parse", "--verify", "HEAD^1"]);
-    if (parent.status === 0) {
-        const parentRevision = parent.stdout.trim();
-        if (!/^[0-9a-f]{40}$/.test(parentRevision)) {
-            fail("ratchet.baseline", "git returned an invalid first-parent revision");
-            return { contract: null, label: "unavailable" };
-        }
-        const parentContract = git(["cat-file", "-e", `${parentRevision}:${CONTRACT_PATH}`]);
-        if (parentContract.status === 0) {
-            return {
-                contract: parseGitContract(parentRevision, "first-parent"),
-                label: "first-parent",
-            };
-        }
-        if (!/does not exist in|exists on disk, but not in/i.test(parentContract.stderr)) {
-            fail(
-                "ratchet.baseline",
-                `cannot inspect first-parent contract: ${parentContract.stderr.trim() || `git exited ${parentContract.status}`}`,
-            );
-            return { contract: null, label: "unavailable" };
-        }
-        const shallow = shallowRepository();
-        if (shallow == null) return { contract: null, label: "unavailable" };
-        if (shallow) {
-            fail(
-                "ratchet.baseline",
-                "shallow checkout is missing the first-parent contract; full first-parent history is required before contract-introduction bootstrap",
-            );
-            return { contract: null, label: "unavailable" };
-        }
-
-        const earlierContractHistory = git([
-            "log",
-            "--first-parent",
-            "--format=%H",
-            parentRevision,
-            "--",
-            CONTRACT_PATH,
-        ]);
-        if (earlierContractHistory.status !== 0) {
-            fail(
-                "ratchet.baseline",
-                `cannot verify contract-introduction history: ${earlierContractHistory.stderr.trim() || `git exited ${earlierContractHistory.status}`}`,
-            );
-            return { contract: null, label: "unavailable" };
-        }
-        if (earlierContractHistory.stdout.trim() !== "") {
-            fail(
-                "ratchet.baseline",
-                `first parent ${parentRevision} is missing ${CONTRACT_PATH}, but earlier first-parent history contains it`,
-            );
-            return { contract: null, label: "unavailable" };
-        }
-        return { contract: null, label: "contract-introduction bootstrap" };
-    }
-
+function readRatchetHistory() {
     const shallow = shallowRepository();
-    if (shallow == null) return { contract: null, label: "unavailable" };
+    if (shallow == null) return [];
     if (shallow) {
         fail(
-            "ratchet.baseline",
-            "shallow checkout does not expose HEAD's first parent; fetch at least two commit generations",
+            "ratchet.history",
+            "complete first-parent mutation-contract history is required; shallow repositories cannot prove historical maxima or governed-path retention",
         );
-        return { contract: null, label: "unavailable" };
+        return [];
     }
 
-    const parents = git(["rev-list", "--parents", "-n", "1", "HEAD"]);
-    if (parents.status !== 0) {
+    const history = git([
+        "log",
+        "--first-parent",
+        "--format=%H",
+        "--reverse",
+        "HEAD",
+        "--",
+        CONTRACT_PATH,
+    ]);
+    if (history.status !== 0) {
         fail(
-            "ratchet.baseline",
-            `cannot inspect HEAD parents: ${parents.stderr.trim() || `git exited ${parents.status}`}`,
+            "ratchet.history",
+            `cannot enumerate complete first-parent contract history: ${history.stderr.trim() || `git exited ${history.status}`}`,
         );
-        return { contract: null, label: "unavailable" };
+        return [];
     }
-    const parentTokens = parents.stdout.trim().split(/\s+/);
-    if (parentTokens.length !== 1 || !/^[0-9a-f]{40}$/.test(parentTokens[0])) {
-        fail("ratchet.baseline", "cannot resolve HEAD's first parent in a non-shallow checkout");
-        return { contract: null, label: "unavailable" };
+
+    const revisions = history.stdout.trim() === "" ? [] : history.stdout.trim().split("\n");
+    const entries = [];
+    for (const revision of revisions) {
+        if (!/^[0-9a-f]{40}$/.test(revision)) {
+            fail("ratchet.history", `git returned an invalid historical revision ${revision}`);
+            continue;
+        }
+        const historicalContract = parseGitContract(revision);
+        if (historicalContract != null) entries.push({ revision, contract: historicalContract });
     }
-    return { contract: null, label: "root-commit bootstrap" };
+    return entries;
 }
 
 function floorValue(value, label) {
@@ -246,110 +196,176 @@ function floorObject(value) {
     return value != null && typeof value === "object" && !Array.isArray(value);
 }
 
-function assertBaselineRetention(currentPackages, baselineContract, baselineLabel) {
-    const currentById = new Map();
-    for (const [index, pkg] of currentPackages.entries()) {
+function contractFloorSnapshot(contractValue, label) {
+    if (contractValue?.schemaVersion !== 1) fail(`${label}.schemaVersion`, "must be 1");
+    if (contractValue?.ratchet !== "monotonic-up") {
+        fail(`${label}.ratchet`, 'must be "monotonic-up"');
+    }
+    if (typeof contractValue?.purpose !== "string" || contractValue.purpose.trim() === "") {
+        fail(`${label}.purpose`, "must be a non-empty string");
+    }
+    if (!Array.isArray(contractValue?.packages)) {
+        fail(`${label}.packages`, "must be an array");
+        return null;
+    }
+    if (contractValue.packages.length === 0) {
+        fail(`${label}.packages`, "must contain at least one governed package");
+        return null;
+    }
+    const historicalWiring = contractValue.wiring ?? {};
+    for (const [key, expected] of [
+        ["makeTarget", "mutation"],
+        ["checker", "scripts/check-mutation-score.mjs"],
+        ["qualityGate", "make mutation"],
+        ["inventoryId", "mutation"],
+        ["auditId", "mutation"],
+    ]) {
+        if (historicalWiring[key] !== expected) {
+            fail(`${label}.wiring.${key}`, `must be ${JSON.stringify(expected)}`);
+        }
+    }
+
+    const packages = new Map();
+    for (const [index, pkg] of contractValue.packages.entries()) {
         const id = pkg?.id;
         if (typeof id !== "string" || id.trim() === "") {
-            fail(`packages[${index}].id`, "must be a non-empty string");
+            fail(`${label}.packages[${index}].id`, "must be a non-empty string");
             continue;
         }
-        if (currentById.has(id)) {
-            fail(`packages[${index}].id`, `duplicate package id ${id}`);
+        if (packages.has(id)) {
+            fail(`${label}.packages[${index}].id`, `duplicate package id ${id}`);
             continue;
         }
-        currentById.set(id, pkg);
+        safeRelativePath(`${label}.${id}.report`, pkg.report);
+        const globalFloor = floorValue(pkg.globalFloor, `${label}.${id}.globalFloor`);
+        if (!floorObject(pkg.moduleFloors)) {
+            fail(`${label}.${id}.moduleFloors`, "must be an object");
+            continue;
+        }
+        if (Object.keys(pkg.moduleFloors).length === 0) {
+            fail(`${label}.${id}.moduleFloors`, "must contain at least one governed floor");
+            continue;
+        }
+        const moduleFloors = new Map();
+        for (const [filePath, rawFloor] of Object.entries(pkg.moduleFloors)) {
+            const safePath = safeRelativePath(`${label}.${id}.moduleFloors.${filePath}`, filePath);
+            const moduleFloor = floorValue(rawFloor, `${label}.${id}.moduleFloors.${filePath}`);
+            if (safePath != null && moduleFloor != null) moduleFloors.set(filePath, moduleFloor);
+        }
+        if (globalFloor != null) packages.set(id, { globalFloor, moduleFloors });
     }
+    return packages;
+}
 
-    if (baselineContract == null) return;
-    if (!Array.isArray(baselineContract.packages)) {
-        fail("ratchet.baseline.packages", "must be an array");
-        return;
-    }
-    if (baselineContract.packages.length === 0) {
-        fail("ratchet.baseline.packages", "must contain at least one governed package");
-        return;
-    }
+const LEGACY_MODULE_REPLACEMENT = Object.freeze({
+    revision: "0392e6943f9277dc91179328e61dd01d7c3c8d9e",
+    packageId: "mcp",
+    removedPath: "mcp/src/orchestration/confirm-guard.ts",
+    replacementPath: "mcp/src/tool-risk.ts",
+    floor: 70,
+});
 
-    const baselineIds = new Set();
-    for (const [index, prior] of baselineContract.packages.entries()) {
-        const id = prior?.id;
-        if (typeof id !== "string" || id.trim() === "") {
-            fail(`ratchet.baseline.packages[${index}].id`, "must be a non-empty string");
-            continue;
-        }
-        if (baselineIds.has(id)) {
-            fail(`ratchet.baseline.packages[${index}].id`, `duplicate package id ${id}`);
-            continue;
-        }
-        baselineIds.add(id);
+function isLegacyModuleReplacement({ revision, packageId, filePath, priorFloor, current }) {
+    const replacement = LEGACY_MODULE_REPLACEMENT;
+    return (
+        revision === replacement.revision &&
+        packageId === replacement.packageId &&
+        filePath === replacement.removedPath &&
+        priorFloor === replacement.floor &&
+        current?.moduleFloors.get(replacement.replacementPath) === replacement.floor
+    );
+}
 
-        const current = currentById.get(id);
-        if (current == null) {
-            fail(
-                `packages.${id}`,
-                `${baselineLabel} governed package is missing from the current contract`,
-            );
-            continue;
-        }
+function assertCompleteHistoryRatchet(history, worktreeContract) {
+    const maxima = new Map();
+    const retiredModules = new Map();
 
-        const priorGlobalFloor = floorValue(
-            prior.globalFloor,
-            `ratchet.baseline.${id}.globalFloor`,
-        );
-        const currentGlobalFloor = floorValue(current.globalFloor, `${id}.globalFloor`);
-        if (priorGlobalFloor != null && currentGlobalFloor != null) {
-            assertMonotonic(
-                `${id}.globalFloor`,
-                currentGlobalFloor,
-                priorGlobalFloor,
-                baselineLabel,
-            );
-        }
+    const applySnapshot = (contractValue, label, revision = null) => {
+        const current = contractFloorSnapshot(contractValue, label);
+        if (current == null) return;
 
-        if (!floorObject(prior.moduleFloors)) {
-            fail(`ratchet.baseline.${id}.moduleFloors`, "must be an object");
-            continue;
-        }
-        if (Object.keys(prior.moduleFloors).length === 0) {
-            fail(`ratchet.baseline.${id}.moduleFloors`, "must contain at least one governed floor");
-            continue;
-        }
-        if (!floorObject(current.moduleFloors)) {
-            fail(`${id}.moduleFloors`, "must be an object");
-            continue;
-        }
-
-        for (const [filePath, rawPriorFloor] of Object.entries(prior.moduleFloors)) {
-            const safePriorPath = safeRelativePath(
-                `ratchet.baseline.${id}.moduleFloors.${filePath}`,
-                filePath,
-            );
-            const priorFloor = floorValue(
-                rawPriorFloor,
-                `ratchet.baseline.${id}.moduleFloors.${filePath}`,
-            );
-            if (safePriorPath == null) continue;
-            if (!Object.hasOwn(current.moduleFloors, filePath)) {
+        for (const [packageId, prior] of maxima) {
+            const next = current.get(packageId);
+            if (next == null) {
                 fail(
-                    `${id}.moduleFloors.${filePath}`,
-                    `${baselineLabel} governed floor is missing from the current contract`,
+                    `packages.${packageId}`,
+                    `${label} is missing a historically governed package`,
                 );
                 continue;
             }
-            const currentFloor = floorValue(
-                current.moduleFloors[filePath],
-                `${id}.moduleFloors.${filePath}`,
+            assertMonotonic(
+                `${packageId}.globalFloor`,
+                next.globalFloor,
+                prior.globalFloor,
+                `historical maximum`,
             );
-            if (priorFloor != null && currentFloor != null) {
+            for (const [filePath, priorFloor] of prior.moduleFloors) {
+                if (!next.moduleFloors.has(filePath)) {
+                    if (
+                        revision != null &&
+                        isLegacyModuleReplacement({
+                            revision,
+                            packageId,
+                            filePath,
+                            priorFloor,
+                            current: next,
+                        })
+                    ) {
+                        retiredModules.set(
+                            `${packageId}:${filePath}`,
+                            LEGACY_MODULE_REPLACEMENT.revision,
+                        );
+                        prior.moduleFloors.delete(filePath);
+                        continue;
+                    }
+                    fail(
+                        `${packageId}.moduleFloors.${filePath}`,
+                        `${label} is missing a historically governed floor (${priorFloor}% historical maximum)`,
+                    );
+                    continue;
+                }
                 assertMonotonic(
-                    `${id}.moduleFloors.${filePath}`,
-                    currentFloor,
+                    `${packageId}.moduleFloors.${filePath}`,
+                    next.moduleFloors.get(filePath),
                     priorFloor,
-                    baselineLabel,
+                    "historical maximum",
                 );
             }
         }
+
+        for (const [packageId, next] of current) {
+            const prior = maxima.get(packageId);
+            if (prior == null) {
+                maxima.set(packageId, {
+                    globalFloor: next.globalFloor,
+                    moduleFloors: new Map(next.moduleFloors),
+                });
+                continue;
+            }
+            prior.globalFloor = Math.max(prior.globalFloor, next.globalFloor);
+            for (const [filePath, moduleFloor] of next.moduleFloors) {
+                const retiredAt = retiredModules.get(`${packageId}:${filePath}`);
+                if (retiredAt != null) {
+                    fail(
+                        `${packageId}.moduleFloors.${filePath}`,
+                        `${label} reintroduces a floor retired by the immutable historical replacement at ${retiredAt}`,
+                    );
+                    continue;
+                }
+                prior.moduleFloors.set(
+                    filePath,
+                    Math.max(prior.moduleFloors.get(filePath) ?? 0, moduleFloor),
+                );
+            }
+        }
+    };
+
+    for (const { revision, contract: historicalContract } of history) {
+        applySnapshot(historicalContract, `ratchet.history.${revision}`, revision);
+    }
+    const lastHistoricalContract = history.at(-1)?.contract;
+    if (JSON.stringify(lastHistoricalContract) !== JSON.stringify(worktreeContract)) {
+        applySnapshot(worktreeContract, "contract");
     }
 }
 
@@ -398,9 +414,9 @@ if (!Array.isArray(contract.packages)) {
     }
 }
 
-const ratchetBaseline = readRatchetBaseline(contract);
 const packages = Array.isArray(contract.packages) ? contract.packages : [];
-assertBaselineRetention(packages, ratchetBaseline.contract, ratchetBaseline.label);
+const ratchetHistory = readRatchetHistory();
+assertCompleteHistoryRatchet(ratchetHistory, contract);
 const knownPackageIds = new Set(
     packages.map((pkg) => pkg?.id).filter((id) => typeof id === "string"),
 );
@@ -474,5 +490,5 @@ if (failures.length > 0) {
 
 const checked = packagesToCheck.map((pkg) => pkg.id).join(" + ");
 console.log(
-    `mutation score check passed (${checked} Stryker reports, covered-mutant floors; ratchet baseline: ${ratchetBaseline.label}).`,
+    `mutation score check passed (${checked} Stryker reports, covered-mutant floors; ratchet history: ${ratchetHistory.length} complete first-parent contract revision${ratchetHistory.length === 1 ? "" : "s"}).`,
 );

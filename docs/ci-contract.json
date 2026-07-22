@@ -189,7 +189,7 @@
         "if-no-files-found: error",
         "retention-days: 14",
         "persist-credentials: false",
-        "fetch-depth: 2"
+        "fetch-depth: 0"
       ]
     }
   ],

@@ -104,9 +104,9 @@ export function validateMutationCiContract({ workflow, makefile, wrapperStryker,
     if (checkout?.with?.["persist-credentials"] !== false) {
         failures.push("Checkout persist-credentials must be false");
     }
-    if (checkout?.with?.["fetch-depth"] !== 2) {
+    if (checkout?.with?.["fetch-depth"] !== 0) {
         failures.push(
-            "Checkout fetch-depth must be 2 so the ratchet can read two commit generations",
+            "Checkout fetch-depth must be 0 so the ratchet can prove complete first-parent contract history",
         );
     }
 

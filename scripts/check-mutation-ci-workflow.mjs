@@ -25,5 +25,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-    "mutation CI workflow contract passed (dispatch-only, exact Node, immutable actions, guarded targets, retained reports)",
+    "mutation CI workflow contract passed (dispatch-only, exact Node, immutable actions, complete history, guarded targets, retained reports)",
 );

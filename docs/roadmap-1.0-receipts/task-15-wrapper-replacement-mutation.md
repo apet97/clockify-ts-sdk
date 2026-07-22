@@ -19,8 +19,8 @@ The Task 15 base is the Task 14 approval closeout
   `998d642b19afcb67da6ec8e81b04399c53cbc2f1`;
 - final conservative floor ratchet:
   `e65ec4da4c11a1e2d1bd91ac13a73f19908c4343`;
-- committed-floor checker correction: resolve the current evidence-patch
-  `HEAD` immediately before review.
+- committed-floor and complete-history checker corrections: resolve the current
+  evidence-patch `HEAD` immediately before review.
 
 The evidence patch containing this receipt must be included in the independent
 review range. Immediately before recording an approval, resolve its head and
@@ -46,12 +46,14 @@ The correction chooses the baseline from repository state:
 - fail closed on a shallow missing parent and on unexpected Git, read, or parse
   failures.
 
-The Mutation workflow now checks out two commit generations. An isolated
-end-to-end Git-repository suite proves that committed and uncommitted decreases
-fail, committed unchanged and raised floors pass, the explicit root bootstrap
-and first-contract introduction pass, and invalid predecessor JSON plus a
-depth-one shallow checkout fail closed. Per-package current positive-source/floor
-equality and mutation-report validation remain unchanged.
+That first correction gave the Mutation workflow two commit generations. Its
+isolated end-to-end Git-repository suite proved that committed and uncommitted
+decreases failed, committed unchanged and raised floors passed, the explicit
+root bootstrap and first-contract introduction passed, and invalid predecessor
+JSON plus a depth-one shallow checkout failed closed. Per-package current
+positive-source/floor equality and mutation-report validation remained
+unchanged. The complete-history correction below supersedes that checkout
+depth.
 
 Reviewer A's approval of the earlier range predates this correction and is not
 counted for the corrected frozen range. Both independent reviewers must review
@@ -73,19 +75,64 @@ correction:
    floor entirely.
 
 Both exact reproductions failed before the fix: the isolated suite reported
-8 passes and 2 failures. The checker now rejects every missing first-parent
-contract in a shallow repository; only complete, verified non-shallow history
-can establish first introduction. Before package-specific report validation it
-also validates the predecessor floor shape and requires every predecessor
-governed package and module path to remain present with an equal-or-higher
-numeric floor. New packages and modules remain allowed. The regression controls
-also cover governed-package deletion, malformed/empty predecessor floors, and
-successful additions.
+8 passes and 2 failures. That second correction rejected every missing
+first-parent contract in a shallow repository; only complete, verified
+non-shallow history could establish first introduction. Before package-specific
+report validation it also validated the predecessor floor shape and required
+every predecessor governed package and module path to remain present with an
+equal-or-higher numeric floor. New packages and modules remained allowed. The
+regression controls also covered governed-package deletion, malformed/empty
+predecessor floors, and successful additions. The complete-history correction
+below supersedes the immediate-predecessor comparison.
 
 Neither disposition from either earlier review range counts toward this new
 corrected frozen range. Both independent reviewers must review
 `afdcac212def82209fbc3a0dfb1e92ab6e5e6eee..HEAD` again; the recorded state
 remains **0/2**.
+
+## Third review correction — complete first-parent ratchet history
+
+The controller audit found that immediate-parent comparison was still
+insufficient because the Mutation workflow is dispatch-only. A floor could be
+lowered in a commit where the workflow was not run, followed by an unrelated
+commit; checking the later `HEAD` against only `HEAD^1` then compared the lower
+contract with itself and forgot the earlier maximum. The same adjacency gap
+could hide a governed source/floor deletion followed by reintroduction.
+
+TDD reproduced both exact bypasses before implementation: the isolated suite
+had 18 cases, with 16 passes and the skipped-workflow decrease plus historical
+deletion/reintroduction cases failing because the checker incorrectly passed
+them. The correction now:
+
+- rejects every shallow repository and requires a complete first-parent graph;
+- uses `git log --first-parent --reverse` scoped to the mutation contract, so it
+  reads only contract-changing revisions while retaining complete history;
+- parses and validates every used historical contract, then enforces the
+  maximum global/module floors and union of governed packages/module paths at
+  every revision and against a dirty worktree contract;
+- permits genuine root and first-contract-introduction bootstrap only when the
+  complete non-shallow history proves there was no earlier contract;
+- preserves one exact immutable historical replacement at commit
+  `0392e6943f9277dc91179328e61dd01d7c3c8d9e`: MCP
+  `mcp/src/orchestration/confirm-guard.ts` floor 70 became
+  `mcp/src/tool-risk.ts` floor 70. No configurable exception was added, and the
+  retired path cannot be reintroduced;
+- allows legitimate new packages/modules and floor raises while retaining all
+  other historical scope; and
+- changes the Mutation workflow and its machine contract to `fetch-depth: 0`.
+
+The final isolated suite has 19 passing cases. It covers a lower commit followed
+by an unchanged commit, source/floor deletion followed by reintroduction,
+historical maxima with legitimate additions/raises, shallow depths one and two,
+invalid historical JSON/floors, non-target package enforcement, and the real
+repository history beginning with wrapper-only contract
+`f8578a7ebf7a7fd76c5292c8c9242f426aa52153`. The real-history control also
+proves the immutable 0392 replacement remains accepted while later governed
+scope is retained.
+
+Neither prior reviewer disposition counts for this corrected range. Task 15
+remains **0/2**; Task 18 remains open with aggregate proof false and the
+release-blocking risk open.
 
 ## Governed wrapper scope and final floors
 
