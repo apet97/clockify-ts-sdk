@@ -43,6 +43,35 @@ const MUTATION_REPORT_PATHS_BY_TARGET = Object.freeze({
     cli: Object.freeze(["cli/reports/mutation/mutation.json"]),
 });
 
+const CANONICAL_MUTATION_REPORT_VERIFIER_SCRIPT = [
+    'case "${{ inputs.target }}" in',
+    "  all)",
+    "    reports=$'wrapper/reports/mutation/mutation.json\\nmcp/reports/mutation/mutation.json\\ncli/reports/mutation/mutation.json'",
+    "    ;;",
+    "  wrapper)",
+    "    reports='wrapper/reports/mutation/mutation.json'",
+    "    ;;",
+    "  mcp)",
+    "    reports='mcp/reports/mutation/mutation.json'",
+    "    ;;",
+    "  cli)",
+    "    reports='cli/reports/mutation/mutation.json'",
+    "    ;;",
+    "  *)",
+    '    echo "Unsupported mutation target: ${{ inputs.target }}" >&2',
+    "    exit 1",
+    "    ;;",
+    "esac",
+    "{",
+    "  echo 'paths<<EOF'",
+    '  echo "$reports"',
+    "  echo EOF",
+    '} >> "$GITHUB_OUTPUT"',
+    "while IFS= read -r report; do",
+    '  test -f "$report"',
+    'done <<< "$reports"',
+].join("\n");
+
 function parseJson(text, label, failures) {
     try {
         return JSON.parse(text);
@@ -97,6 +126,10 @@ function reportPathsForTarget(run, target) {
     );
     if (match == null) return null;
     return (match[1] ?? match[2]).split("\\n");
+}
+
+function normalizeVerifierScript(value) {
+    return typeof value === "string" ? value.replaceAll("\r\n", "\n").trimEnd() : null;
 }
 
 function mutationRecipe(makefile) {
@@ -266,6 +299,11 @@ export function validateMutationCiContract({
         "target-aware mutation report verification",
         failures,
     );
+    if (normalizeVerifierScript(verifyReports?.run) !== CANONICAL_MUTATION_REPORT_VERIFIER_SCRIPT) {
+        failures.push(
+            "target-aware mutation report verifier must equal the canonical script with exactly one GITHUB_OUTPUT write",
+        );
+    }
     const expectedReportVerification = [
         "all)",
         "wrapper/reports/mutation/mutation.json",
