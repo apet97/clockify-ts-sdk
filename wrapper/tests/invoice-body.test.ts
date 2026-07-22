@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { invoiceUpdateBodyFromExisting } from "../invoice-body.js";
+import { INVOICE_PERCENT_FIELD_MAP, invoiceUpdateBodyFromExisting } from "../invoice-body.js";
 
 /** A representative GET /invoices/{id} response (trimmed to the relevant fields). */
 function existingInvoice(): Record<string, unknown> {
@@ -33,6 +33,14 @@ function existingInvoice(): Record<string, unknown> {
 }
 
 describe("invoiceUpdateBodyFromExisting", () => {
+    it("exports the exact GET-to-PUT percentage field mapping", () => {
+        expect(INVOICE_PERCENT_FIELD_MAP).toEqual([
+            ["discount", "discountPercent"],
+            ["tax", "taxPercent"],
+            ["tax2", "tax2Percent"],
+        ]);
+    });
+
     it("maps GET tax/discount (×100 ints) to PUT *Percent names AND divides by 100", () => {
         const body = invoiceUpdateBodyFromExisting(existingInvoice());
         expect(body.discountPercent).toBe(10);
@@ -42,6 +50,12 @@ describe("invoiceUpdateBodyFromExisting", () => {
         expect(body).not.toHaveProperty("discount");
         expect(body).not.toHaveProperty("tax");
         expect(body).not.toHaveProperty("tax2");
+    });
+
+    it("divides a nonzero GET tax2 value by 100", () => {
+        expect(invoiceUpdateBodyFromExisting({ ...existingInvoice(), tax2: 250 }).tax2Percent).toBe(
+            2.5,
+        );
     });
 
     it("rebuilds the full editable set so a sparse update never wipes fields", () => {
@@ -74,6 +88,42 @@ describe("invoiceUpdateBodyFromExisting", () => {
             taxType: "SIMPLE",
             visibleZeroFields: ["TAX", "DISCOUNT"],
         });
+    });
+
+    it.each(["COMPOUND", "SIMPLE", "NONE"] as const)(
+        "carries the supported %s tax type",
+        (taxType) => {
+            expect(invoiceUpdateBodyFromExisting({ ...existingInvoice(), taxType }).taxType).toBe(
+                taxType,
+            );
+        },
+    );
+
+    it("filters invalid optional editable values instead of leaking them into the PUT body", () => {
+        const body = invoiceUpdateBodyFromExisting({
+            ...existingInvoice(),
+            billFrom: 1,
+            clientAddress: null,
+            clientId: [],
+            companyId: {},
+            note: false,
+            subject: 0,
+            taxType: "PERCENT",
+            visibleZeroFields: "UNKNOWN",
+        });
+
+        for (const field of [
+            "billFrom",
+            "clientAddress",
+            "clientId",
+            "companyId",
+            "note",
+            "subject",
+            "taxType",
+            "visibleZeroFields",
+        ]) {
+            expect(body).not.toHaveProperty(field);
+        }
     });
 
     it("never copies read-only/computed fields the PUT rejects", () => {
@@ -125,9 +175,13 @@ describe("invoiceUpdateBodyFromExisting", () => {
 
     it.each([
         ["currency", { ...existingInvoice(), currency: "" }],
+        ["currency", { ...existingInvoice(), currency: 123 }],
         ["number", { ...existingInvoice(), number: "" }],
+        ["number", { ...existingInvoice(), number: false }],
         ["issuedDate", { ...existingInvoice(), issuedDate: "not-a-date" }],
+        ["issuedDate", { ...existingInvoice(), issuedDate: 123 }],
         ["dueDate", { ...existingInvoice(), dueDate: "not-a-date" }],
+        ["dueDate", { ...existingInvoice(), dueDate: null }],
         ["discountPercent", { ...existingInvoice(), discount: Number.NaN }],
         ["taxPercent", { ...existingInvoice(), tax: Number.POSITIVE_INFINITY }],
         ["tax2Percent", { ...existingInvoice(), tax2: "missing" }],
@@ -164,11 +218,15 @@ describe("invoiceUpdateBodyFromExisting", () => {
             invoiceUpdateBodyFromExisting({ ...existingInvoice(), visibleZeroFields: "TAX_2" })
                 .visibleZeroFields,
         ).toBe("TAX_2");
-        expect(
-            invoiceUpdateBodyFromExisting({
-                ...existingInvoice(),
-                visibleZeroFields: ["TAX", "UNKNOWN"],
-            }).visibleZeroFields,
-        ).toBeUndefined();
+        const invalidString = invoiceUpdateBodyFromExisting({
+            ...existingInvoice(),
+            visibleZeroFields: "UNKNOWN",
+        });
+        const invalidArray = invoiceUpdateBodyFromExisting({
+            ...existingInvoice(),
+            visibleZeroFields: ["TAX", "UNKNOWN"],
+        });
+        expect(invalidString).not.toHaveProperty("visibleZeroFields");
+        expect(invalidArray).not.toHaveProperty("visibleZeroFields");
     });
 });

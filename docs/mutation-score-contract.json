@@ -12,17 +12,13 @@
         "wrapper/create-client.ts": 67,
         "wrapper/dates.ts": 88,
         "wrapper/errors.ts": 80,
-        "wrapper/ensure.ts": 0,
+        "wrapper/ensure.ts": 84,
         "wrapper/internal/authenticated-boundary-fetch.ts": 87,
-        "wrapper/invoice-body.ts": 0,
+        "wrapper/invoice-body.ts": 78,
         "wrapper/iter.ts": 95,
         "wrapper/money.ts": 98,
         "wrapper/webhook-url.ts": 83
-      },
-      "calibrationPending": [
-        "wrapper/ensure.ts",
-        "wrapper/invoice-body.ts"
-      ]
+      }
     },
     {
       "id": "mcp",
